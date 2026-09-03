@@ -17,35 +17,28 @@ export const GET: APIRoute = async ({ locals }) => {
     }
   } catch {}
 
-  const lines: string[] = [
-    '# =========================================================================',
-    '# Authorized App Digital Sellers (app-ads.txt) - https://iabtechlab.com/ads-txt/',
-    '# =========================================================================',
-  ];
+  const lines: string[] = [];
 
   const clientId = (config.clientId || '').trim();
   const includeGoogle = config.includeGoogleAdsTxt !== false;
   if (includeGoogle && clientId && clientId.startsWith('ca-pub-') && !clientId.includes('XXXX')) {
     const pubOnly = clientId.replace('ca-', '');
-    lines.push('');
     lines.push(`google.com, ${pubOnly}, DIRECT, f08c47fec0942fa0`);
   }
 
   const thirdParty = (config.thirdPartyAdsTxt || '').trim();
   if (thirdParty) {
-    lines.push('');
     lines.push(thirdParty);
   }
 
   const custom = (config.customAdsTxt || '').trim();
   if (custom && custom !== thirdParty) {
-    lines.push('');
     lines.push(custom);
   }
 
-  lines.push('');
+  const output = lines.join('\n').trim();
 
-  return new Response(lines.join('\n'), {
+  return new Response(output ? output + '\n' : '', {
     status: 200,
     headers: {
       'Content-Type': 'text/plain; charset=utf-8',

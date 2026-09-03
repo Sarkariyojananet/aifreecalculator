@@ -7,7 +7,7 @@ import '../../styles/global.css';
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Admin Login | AI Free Calculator</title>
+    <title>Admin Security Portal | AI Free Calculator</title>
     <meta name="robots" content="noindex, nofollow" />
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -16,22 +16,26 @@ import '../../styles/global.css';
     <meta name="apple-mobile-web-app-title" content="AIFreecalculator.com" />
     <link rel="manifest" href="/site.webmanifest" />
   </head>
-  <body class="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-950 p-4 antialiased text-slate-900 dark:text-white">
-    <div class="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+  <body class="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-950 p-4 antialiased text-slate-900 dark:text-white selection:bg-blue-600 selection:text-white">
+    <div class="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-2xl dark:border-slate-800 dark:bg-slate-900 space-y-6">
       
-      <!-- Brand Logo -->
+      <!-- Brand Logo & Security Header -->
       <div class="flex flex-col items-center text-center">
         <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 font-bold text-white text-xl shadow-lg shadow-blue-500/30">
           AI
         </div>
-        <h1 class="mt-4 text-xl font-bold tracking-tight">Admin Portal</h1>
+        <h1 class="mt-4 text-xl font-black tracking-tight flex items-center justify-center gap-2">
+          <span>🛡️</span> Admin Security Portal
+        </h1>
         <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-          Sign in to manage 42+ calculators, AdSense slots, and view analytics.
+          Protected management console for AI Free Calculator.
         </p>
       </div>
 
       <!-- Login Form -->
-      <form id="admin-login-form" class="mt-8 space-y-4">
+      <form id="admin-login-form" class="space-y-4" novalidate>
+        
+        <!-- Username -->
         <div>
           <label for="admin-user" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
             Username
@@ -39,12 +43,14 @@ import '../../styles/global.css';
           <input
             type="text"
             id="admin-user"
-            value="admin"
             required
+            autocomplete="username"
+            placeholder="Enter admin username"
             class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
           />
         </div>
 
+        <!-- Password -->
         <div>
           <label for="admin-pass" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
             Password
@@ -52,36 +58,161 @@ import '../../styles/global.css';
           <input
             type="password"
             id="admin-pass"
-            value="admin123"
             required
+            autocomplete="current-password"
+            placeholder="Enter password"
             class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
           />
         </div>
 
-        <div id="login-error" class="hidden rounded-xl bg-red-50 p-3 text-xs font-semibold text-red-600 dark:bg-red-950/50 dark:text-red-400">
-          Invalid username or password.
+        <!-- Anti-Bot Visual CAPTCHA Card -->
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-950/40 space-y-2.5">
+          <div class="flex items-center justify-between">
+            <label for="captcha-input" class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <span>🤖</span> Security Verification
+            </label>
+            <button
+              type="button"
+              id="btn-refresh-captcha"
+              title="Generate new captcha code"
+              class="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 cursor-pointer"
+            >
+              <span>↻</span> Refresh Captcha
+            </button>
+          </div>
+
+          <!-- Captcha Canvas Display -->
+          <div class="flex items-center gap-3">
+            <canvas
+              id="captcha-canvas"
+              width="180"
+              height="50"
+              class="rounded-xl border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-900 shadow-2xs shrink-0 select-none cursor-pointer"
+              title="Click to refresh"
+            ></canvas>
+
+            <input
+              type="text"
+              id="captcha-input"
+              required
+              maxlength="6"
+              placeholder="Enter code"
+              autocomplete="off"
+              spellcheck="false"
+              class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-mono font-bold tracking-widest uppercase text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+            />
+          </div>
+          <div class="text-[10px] text-slate-400">Type the 5 characters shown in the security box above.</div>
         </div>
 
+        <!-- Error Alert Message -->
+        <div id="login-error" class="hidden rounded-xl bg-red-50 p-3 text-xs font-semibold text-red-600 dark:bg-red-950/50 dark:text-red-400" role="alert" aria-live="polite"></div>
+
+        <!-- Submit Button -->
         <button
           type="submit"
           id="login-submit-btn"
-          class="w-full rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 transition"
+          class="w-full rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 active:scale-[0.98] transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
         >
           Sign In to Dashboard →
         </button>
       </form>
 
-      <div class="mt-6 border-t border-slate-100 pt-4 text-center text-xs text-slate-400 dark:border-slate-800">
+      <div class="border-t border-slate-100 pt-4 text-center text-xs text-slate-400 dark:border-slate-800">
         <a href="/" class="hover:text-blue-600 dark:hover:text-blue-400">← Return to Public Website</a>
       </div>
     </div>
 
     <script is:inline>
-      const form = document.getElementById('admin-login-form');
-      const errBox = document.getElementById('login-error');
-      const userInp = document.getElementById('admin-user');
-      const passInp = document.getElementById('admin-pass');
-      const btn = document.getElementById('login-submit-btn');
+      const form       = document.getElementById('admin-login-form');
+      const errBox     = document.getElementById('login-error');
+      const userInp    = document.getElementById('admin-user');
+      const passInp    = document.getElementById('admin-pass');
+      const captchaInp = document.getElementById('captcha-input');
+      const btn        = document.getElementById('login-submit-btn');
+      const canvas     = document.getElementById('captcha-canvas');
+      const btnRefresh = document.getElementById('btn-refresh-captcha');
+
+      let currentCaptchaCode = '';
+      let failedAttempts = 0;
+      let lockUntil = 0;
+
+      // Generate random captcha string (5 characters: clean uppercase + distinct digits)
+      function generateCaptchaText(length = 5) {
+        // Exclude ambiguous characters like 0/O, 1/I
+        const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+        let result = '';
+        for (let i = 0; i < length; i++) {
+          result += chars.charAt(Math.floor(Math.random() * chars.length));
+        }
+        return result;
+      }
+
+      // Draw stylized captcha on canvas with noise, lines, angles
+      function drawCaptcha() {
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        currentCaptchaCode = generateCaptchaText(5);
+        if (captchaInp) captchaInp.value = '';
+
+        const width = canvas.width;
+        const height = canvas.height;
+
+        // Background
+        ctx.fillStyle = document.documentElement.classList.contains('dark') ? '#0f172a' : '#f8fafc';
+        ctx.fillRect(0, 0, width, height);
+
+        // Random background noise lines
+        for (let i = 0; i < 4; i++) {
+          ctx.strokeStyle = `rgba(${Math.floor(Math.random() * 180)}, ${Math.floor(Math.random() * 180)}, ${Math.floor(Math.random() * 255)}, 0.35)`;
+          ctx.lineWidth = 1 + Math.random() * 1.5;
+          ctx.beginPath();
+          ctx.moveTo(Math.random() * width, Math.random() * height);
+          ctx.bezierCurveTo(
+            Math.random() * width, Math.random() * height,
+            Math.random() * width, Math.random() * height,
+            Math.random() * width, Math.random() * height
+          );
+          ctx.stroke();
+        }
+
+        // Random background dots
+        for (let i = 0; i < 30; i++) {
+          ctx.fillStyle = `rgba(${Math.floor(Math.random() * 200)}, ${Math.floor(Math.random() * 200)}, ${Math.floor(Math.random() * 200)}, 0.4)`;
+          ctx.beginPath();
+          ctx.arc(Math.random() * width, Math.random() * height, Math.random() * 2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Draw each character with slight rotation and color
+        const charSpacing = width / (currentCaptchaCode.length + 1);
+        ctx.font = 'bold 24px monospace';
+        ctx.textBaseline = 'middle';
+
+        for (let i = 0; i < currentCaptchaCode.length; i++) {
+          const char = currentCaptchaCode[i];
+          const x = charSpacing * (i + 0.8);
+          const y = height / 2 + (Math.random() * 6 - 3);
+          const angle = (Math.random() - 0.5) * 0.4;
+
+          ctx.save();
+          ctx.translate(x, y);
+          ctx.rotate(angle);
+
+          // Alternating colors
+          const colors = ['#2563eb', '#059669', '#7c3aed', '#ea580c', '#0284c7'];
+          ctx.fillStyle = colors[i % colors.length];
+          ctx.shadowColor = 'rgba(0,0,0,0.15)';
+          ctx.shadowBlur = 3;
+          ctx.shadowOffsetX = 1;
+          ctx.shadowOffsetY = 1;
+
+          ctx.fillText(char, 0, 0);
+          ctx.restore();
+        }
+      }
 
       // Check if already authenticated
       const existingToken = localStorage.getItem('admin_token');
@@ -96,20 +227,60 @@ import '../../styles/global.css';
         }).catch(() => {});
       }
 
-      form.addEventListener('submit', async (e) => {
+      // Refresh Captcha Listeners
+      btnRefresh?.addEventListener('click', drawCaptcha);
+      canvas?.addEventListener('click', drawCaptcha);
+
+      // Initialize Captcha
+      drawCaptcha();
+
+      // Form Submission
+      form?.addEventListener('submit', async (e) => {
         e.preventDefault();
         errBox.classList.add('hidden');
+
+        // Check rate limiting cooldown
+        const now = Date.now();
+        if (now < lockUntil) {
+          const remaining = Math.ceil((lockUntil - now) / 1000);
+          errBox.textContent = `Too many failed attempts. Please wait ${remaining}s before trying again.`;
+          errBox.classList.remove('hidden');
+          return;
+        }
+
+        const username = userInp.value.trim();
+        const password = passInp.value;
+        const enteredCaptcha = (captchaInp.value || '').trim().toUpperCase();
+
+        if (!username || !password) {
+          errBox.textContent = 'Please enter both username and password.';
+          errBox.classList.remove('hidden');
+          return;
+        }
+
+        // Verify Captcha
+        if (!enteredCaptcha || enteredCaptcha !== currentCaptchaCode) {
+          drawCaptcha();
+          failedAttempts++;
+          if (failedAttempts >= 5) {
+            lockUntil = Date.now() + 30000; // 30s cooldown
+            errBox.textContent = 'Too many failed attempts. Cooldown locked for 30 seconds.';
+          } else {
+            errBox.textContent = '❌ Invalid security captcha code. Please enter the characters shown.';
+          }
+          errBox.classList.remove('hidden');
+          captchaInp.focus();
+          return;
+        }
+
         btn.disabled = true;
-        btn.textContent = 'Verifying...';
+        btn.textContent = 'Verifying Security Token...';
 
         try {
           const res = await fetch('/api/admin/auth', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              username: userInp.value.trim(),
-              password: passInp.value,
-            }),
+            body: JSON.stringify({ username, password }),
           });
 
           const data = await res.json();
@@ -119,10 +290,18 @@ import '../../styles/global.css';
             const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/admin/dashboard/';
             window.location.href = redirectUrl;
           } else {
-            errBox.textContent = data.error || 'Invalid credentials';
+            drawCaptcha();
+            failedAttempts++;
+            if (failedAttempts >= 5) {
+              lockUntil = Date.now() + 30000;
+              errBox.textContent = 'Too many failed attempts. Cooldown locked for 30 seconds.';
+            } else {
+              errBox.textContent = data.error || 'Invalid credentials.';
+            }
             errBox.classList.remove('hidden');
           }
         } catch {
+          drawCaptcha();
           errBox.textContent = 'Connection error. Please try again.';
           errBox.classList.remove('hidden');
         } finally {
@@ -130,7 +309,6 @@ import '../../styles/global.css';
           btn.textContent = 'Sign In to Dashboard →';
         }
       });
-
     </script>
   </body>
 </html>
