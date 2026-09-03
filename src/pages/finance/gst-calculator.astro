@@ -1,0 +1,751 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="GST Calculator – Add or Remove GST Online"
+  description="Calculate GST on an amount, add GST to an exclusive price, or remove GST from an inclusive amount. View the GST amount and applicable tax breakdown instantly after calculation."
+  category="Finance"
+  calculatorName="GST Calculator"
+  slug="gst-calculator"
+  keywords={[
+    'gst calculator',
+    'gst calculator online',
+    'gst calculator india',
+    'free gst calculator',
+    'online gst calculator',
+    'reverse gst calculator',
+    'gst calculator formula',
+    'zoho gst calculator'
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- CALCULATION MODE SELECTOR TABS -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-2.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-semibold scrollbar-thin">
+        <button type="button" class="btn-gst-mode active shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 font-bold text-white shadow-xs cursor-pointer" data-mode="add">Add GST (Exclusive Price) ➕</button>
+        <button type="button" class="btn-gst-mode shrink-0 rounded-lg border border-slate-300 bg-white px-4 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-mode="remove">Remove GST (Inclusive / Reverse GST) ➖</button>
+      </div>
+    </div>
+
+    <!-- QUICK PRESETS BAR -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-center gap-1.5 text-xs">
+        <span class="font-bold text-slate-600 dark:text-slate-400 mr-1 flex items-center gap-1">
+          <span>⚡</span> Presets:
+        </span>
+        <button type="button" class="btn-gst-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-mode="add" data-amt="1000" data-rate="18" data-tx="intra">➕ Add 18% (₹1,000)</button>
+        <button type="button" class="btn-gst-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-mode="add" data-amt="10000" data-rate="5" data-tx="intra">➕ Add 5% (₹10,000)</button>
+        <button type="button" class="btn-gst-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-mode="remove" data-amt="1180" data-rate="18" data-tx="intra">➖ Remove 18% (₹1,180)</button>
+        <button type="button" class="btn-gst-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-mode="remove" data-amt="11200" data-rate="12" data-tx="intra">➖ Remove 12% (₹11,200)</button>
+      </div>
+    </div>
+
+    <!-- MAIN CALCULATOR FORM CONTAINER -->
+    <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-blue-50/30 p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/20 sm:p-7">
+      
+      <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+        <h2 id="gst-panel-title" class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <span>🧾</span> Add GST Calculator
+        </h2>
+        <p id="gst-panel-desc" class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+          Calculate GST on an amount, add GST to an exclusive price, or remove GST from an inclusive amount. View the GST amount and applicable tax breakdown instantly after calculation.
+        </p>
+      </div>
+
+      <form id="form-gst" class="mt-4 space-y-4" novalidate onsubmit="return false;">
+        
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <!-- Input Amount -->
+          <div>
+            <label for="inp-gst-amount" id="lbl-gst-amount" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Amount (₹ - Excluding GST)</label>
+            <input type="number" id="inp-gst-amount" value="1000" step="10" min="0" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="1,000" />
+          </div>
+
+          <!-- GST Slab Rate Selector -->
+          <div>
+            <label for="sel-gst-rate" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">GST Slab Rate (%)</label>
+            <select id="sel-gst-rate" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+              <option value="0">0% (Nil / Exempted)</option>
+              <option value="3">3% (Gold & Precious Metals)</option>
+              <option value="5">5% (Essential Goods)</option>
+              <option value="12">12% (Standard Goods)</option>
+              <option value="18" selected>18% (Services & Electronics)</option>
+              <option value="28">28% (Luxury & Automobiles)</option>
+              <option value="custom">Custom Rate %</option>
+            </select>
+          </div>
+
+          <!-- Transaction Type Selector -->
+          <div>
+            <label for="sel-tx-type" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Transaction Type</label>
+            <select id="sel-tx-type" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+              <option value="intra-state" selected>Intra-State (CGST + SGST Split)</option>
+              <option value="inter-state">Inter-State (Full IGST)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Custom Rate Input Row (Hidden initially) -->
+        <div id="row-custom-rate" class="hidden rounded-2xl border border-blue-200 bg-white p-3 dark:border-blue-900/60 dark:bg-slate-900">
+          <label for="inp-custom-rate" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Enter Custom GST Rate (%)</label>
+          <input type="number" id="inp-custom-rate" value="18" step="0.1" min="0" max="100" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="e.g. 7.5" />
+        </div>
+
+        <div class="flex items-center gap-2 pt-2">
+          <button type="submit" id="btn-calc-gst" class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer">
+            Calculate GST →
+          </button>
+          <button type="button" id="btn-clear-gst" class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer">
+            Clear (✕)
+          </button>
+        </div>
+
+        <p id="err-gst" class="hidden rounded-xl border border-red-200 bg-red-50 p-2.5 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300" role="alert" aria-live="polite"></p>
+
+      </form>
+
+      <!-- RESULTS PRESENTATION SECTION (Hidden Initially) -->
+      <div id="gst-results-section" class="hidden mt-6 space-y-5">
+        
+        <!-- Main Highlight Card -->
+        <div class="overflow-hidden rounded-3xl border border-emerald-200 bg-linear-to-br from-white via-emerald-50/40 to-emerald-100/50 p-5 shadow-lg shadow-emerald-500/5 dark:border-emerald-900/60 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/30 sm:p-7">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-emerald-200/80 pb-4 dark:border-slate-800">
+            <div>
+              <span id="res-main-highlight-label" class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Total Amount (Including GST)</span>
+              <div id="res-main-highlight-val" class="mt-1 text-4xl sm:text-5xl font-black text-emerald-600 dark:text-emerald-400">₹ 1,180.00</div>
+            </div>
+            <div class="sm:text-right">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total GST Component:</span>
+              <div id="res-total-gst-badge" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">₹ 180.00</div>
+            </div>
+          </div>
+
+          <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Base Price (Exclusive)</div>
+              <div id="res-base-price" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">₹ 1,000.00</div>
+            </div>
+            <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Applied GST Rate</div>
+              <div id="res-applied-rate" class="mt-1 text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">18%</div>
+            </div>
+            <div id="col-res-cgst" class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold" id="lbl-res-cgst">CGST (9%)</div>
+              <div id="res-cgst-val" class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">₹ 90.00</div>
+            </div>
+            <div id="col-res-sgst" class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold" id="lbl-res-sgst">SGST (9%)</div>
+              <div id="res-sgst-val" class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">₹ 90.00</div>
+            </div>
+            <div id="col-res-igst" class="hidden rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold" id="lbl-res-igst">IGST (18%)</div>
+              <div id="res-igst-val" class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">₹ 180.00</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- STEP-BY-STEP CALCULATION BREAKDOWN CARD -->
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 space-y-3">
+          <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+            <span>🧮</span> Step-by-Step Calculation Breakdown
+          </h3>
+          <div id="step-breakdown-container" class="space-y-2 text-xs">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- EDUCATIONAL SEO ARTICLE SLOT (Styled matching age.astro) -->
+  <Fragment slot="content">
+    <section class="gst-content">
+      <h2>How to Use This GST Calculator</h2>
+      <p>
+        Calculating GST takes just a few simple steps with this online tool:
+      </p>
+      <ol>
+        <li><strong>Choose your calculation type:</strong> Select <em>Add GST</em> to calculate tax on an exclusive base price, or <em>Remove GST</em> to extract the base amount from an inclusive price.</li>
+        <li><strong>Enter the amount:</strong> Input the price in Indian Rupees (₹).</li>
+        <li><strong>Select the applicable GST slab rate:</strong> Pick 0%, 3%, 5%, 12%, 18%, 28%, or enter a custom rate percentage.</li>
+        <li><strong>Choose the transaction type:</strong> Select <em>Intra-State</em> (for CGST and SGST split within the same state) or <em>Inter-State</em> (for single IGST across state borders).</li>
+        <li><strong>Click Calculate GST:</strong> Instantly view the base amount, exact tax amount, CGST/SGST/IGST breakdown, and final total.</li>
+        <li><strong>Review the step-by-step arithmetic:</strong> Check the formula derivation to verify your invoice numbers.</li>
+        <li><strong>Use Clear:</strong> Click <em>Clear</em> to reset inputs and start a fresh calculation.</li>
+      </ol>
+
+      <h2>GST Calculation Examples</h2>
+      <p>
+        Here are two standard scenarios demonstrating forward and reverse GST arithmetic:
+      </p>
+
+      <h3>Example 1: Adding 18% GST (Exclusive Base Price)</h3>
+      <div class="my-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900 text-xs sm:text-sm space-y-1">
+        <div>Amount before GST: <strong>₹5,000</strong></div>
+        <div>GST Rate: <strong>18%</strong></div>
+        <div>GST Tax Amount: <code>₹5,000 × 18 ÷ 100</code> = <strong>₹900</strong></div>
+        <div>Final Invoice Total: <code>₹5,000 + ₹900</code> = <strong>₹5,900</strong></div>
+      </div>
+
+      <h3>Example 2: Removing 12% GST (Inclusive Gross Price)</h3>
+      <div class="my-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900 text-xs sm:text-sm space-y-1">
+        <div>Gross Inclusive Price: <strong>₹11,200</strong></div>
+        <div>GST Rate: <strong>12%</strong></div>
+        <div>Base Taxable Amount: <code>₹11,200 × 100 ÷ (100 + 12)</code> = <strong>₹10,000</strong></div>
+        <div>Extracted GST Component: <code>₹11,200 − ₹10,000</code> = <strong>₹1,200</strong></div>
+      </div>
+      <p>
+        <em>Important Note:</em> When removing GST, never simply multiply the inclusive price by 12% or subtract 12% directly, as this results in an incorrect tax figure. Always divide by <code>(100 + GST Rate)</code>.
+      </p>
+
+      <h2>What Is GST?</h2>
+      <p>
+        The <strong>Goods and Services Tax (GST)</strong> is a destination-based, comprehensive indirect tax levied on the manufacture, sale, and consumption of goods and services across India. Enacted under a single unified tax umbrella, it replaced multiple legacy indirect taxes like VAT, Service Tax, Central Excise, and Luxury Tax.
+      </p>
+
+      <h2>GST Calculator Formula</h2>
+      <p>
+        The mathematical formulas for adding and extracting GST are:
+      </p>
+      
+      <h3>1. Formula for Adding GST (GST Exclusive)</h3>
+      <div class="my-3 rounded-2xl border border-slate-200 bg-slate-100/80 p-4 font-mono text-sm dark:border-slate-800 dark:bg-slate-900 space-y-1">
+        <div>GST Amount = (Original Base Amount × GST Rate) ÷ 100</div>
+        <div>Total Final Amount = Original Base Amount + GST Amount</div>
+      </div>
+
+      <h3>2. Formula for Removing GST (GST Inclusive / Reverse GST)</h3>
+      <div class="my-3 rounded-2xl border border-slate-200 bg-slate-100/80 p-4 font-mono text-sm dark:border-slate-800 dark:bg-slate-900 space-y-1">
+        <div>Original Base Amount = (Inclusive Amount × 100) ÷ (100 + GST Rate)</div>
+        <div>GST Amount = Inclusive Amount − Original Base Amount</div>
+      </div>
+
+      <h2>Adding GST vs Removing GST</h2>
+      <p>
+        Understanding when to use forward addition versus reverse extraction ensures accurate invoicing and accounting reconciliation:
+      </p>
+
+      <div class="overflow-x-auto my-4">
+        <table class="w-full text-left text-xs sm:text-sm border-collapse border border-slate-200 dark:border-slate-800">
+          <thead class="bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold">
+            <tr>
+              <th class="p-3 border border-slate-200 dark:border-slate-800">Calculation Type</th>
+              <th class="p-3 border border-slate-200 dark:border-slate-800">When to Use It</th>
+              <th class="p-3 border border-slate-200 dark:border-slate-800">Input Amount</th>
+              <th class="p-3 border border-slate-200 dark:border-slate-800">Result</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+            <tr>
+              <td class="p-3 font-semibold border border-slate-200 dark:border-slate-800">Add GST (Exclusive)</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Quoting prices, billing net service charges, adding tax to raw goods</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Base price excluding GST</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Higher final payable total</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold border border-slate-200 dark:border-slate-800">Remove GST (Reverse)</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Retail receipts (MRP), booking invoices, claiming Input Tax Credit (ITC)</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Gross price including GST</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Lower base price + exact tax share</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Understanding CGST, SGST and IGST</h2>
+      <p>
+        The GST framework classifies taxes depending on the geographical location of the supplier and buyer:
+      </p>
+      <ul>
+        <li><strong>CGST (Central Goods and Services Tax):</strong> Collected by the Central Government on intra-state supplies (within the same state).</li>
+        <li><strong>SGST (State Goods and Services Tax):</strong> Collected by the State Government on intra-state supplies. For an 18% slab, 9% is CGST and 9% is SGST.</li>
+        <li><strong>IGST (Integrated Goods and Services Tax):</strong> Levied on all inter-state supplies (across state boundaries or import transactions) and collected by the Central Government for revenue sharing.</li>
+      </ul>
+
+      <h2>Common Mistakes When Calculating GST</h2>
+      <ul>
+        <li><strong>Subtracting GST Directly from Inclusive Amounts:</strong> Taking 18% off ₹1,180 yields ₹967.60, which is incorrect (the true base is ₹1,000). Always use the reverse formula.</li>
+        <li><strong>Confusing Exclusive vs Inclusive Quotes:</strong> Applying forward GST on an already tax-inclusive quotation inflates the final bill.</li>
+        <li><strong>Applying Incorrect Slab Rates:</strong> Applying 18% on essential items eligible for 5% or 12% creates invoicing errors.</li>
+        <li><strong>Misapplying CGST/SGST on Inter-State Sales:</strong> Invoicing CGST/SGST across different states leads to compliance discrepancies on the GST portal.</li>
+        <li><strong>Ignoring Rounding Rules:</strong> Fractions of paisa must be rounded systematically according to GST invoice rules.</li>
+      </ul>
+
+      <h2>Comparing Online GST Calculation Tools</h2>
+      <p>
+        Different online accounting platforms and GST tools may display calculations in slightly different formats. Whether you are comparing a calculator from Zoho or another accounting platform, it is useful to check whether the amount entered is GST-inclusive or GST-exclusive and whether the applicable tax rate and transaction type have been selected correctly.
+      </p>
+      <p class="text-xs text-slate-500 italic">
+        * Notice: This calculator is an independent educational tool and is not affiliated with, sponsored by, or endorsed by Zoho or any other accounting software provider.
+      </p>
+
+      <h2>Important GST Calculation Information</h2>
+      <p>
+        Please note the following operational guidelines:
+      </p>
+      <ul>
+        <li><strong>Informational Estimates:</strong> This tool provides mathematical simulations based on user inputs and statutory rate slabs.</li>
+        <li><strong>Classification & Slabs:</strong> Specific items and services may be subject to special HSN/SAC codes, reverse charge mechanisms (RCM), compensation cesses, or composition schemes.</li>
+        <li><strong>Professional Verification:</strong> For GST return filing (GSTR-1, GSTR-3B) or complex audit questions, consult the official GST portal or a certified tax consultant.</li>
+      </ul>
+    </section>
+  </Fragment>
+
+  <!-- FAQ SECTION SLOT (EXACTLY 7 FAQs AS REQUIRED) -->
+  <Fragment slot="faq">
+    <div class="space-y-4 text-xs sm:text-sm">
+      
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open>
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            1. How does a GST calculator work?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          A GST calculator applies statutory rate formulas to your input price. In "Add GST" mode, it computes the tax on an exclusive amount and adds it to determine the total. In "Remove GST" mode, it extracts the taxable base and included tax from a gross amount.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            2. How do I add GST to an amount?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Select "Add GST", enter the net amount excluding tax, pick your slab rate (e.g. 18%), and click Calculate. The formula is: <code>GST = Amount × Rate ÷ 100</code>, and <code>Total = Amount + GST</code>.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            3. How do I remove GST from an inclusive amount?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Select "Remove GST", enter the gross amount, and choose the GST rate. The calculator applies the reverse formula: <code>Base = Inclusive Amount × 100 ÷ (100 + Rate)</code>.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            4. What is the formula for calculating GST?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          For adding GST: <code>GST Amount = (Price × Rate) ÷ 100</code>. For removing GST: <code>Base Price = (Price × 100) ÷ (100 + Rate)</code>, and <code>GST Amount = Price − Base Price</code>.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            5. What is the difference between CGST, SGST, and IGST?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          CGST and SGST apply to intra-state sales (within the same state) and split the tax equally between Central and State governments. IGST applies in full to inter-state sales across state borders.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            6. Can I use this GST calculator online for free?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Yes. This calculator is 100% free to use on any desktop, tablet, or mobile browser without registration or limits.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            7. Is the GST calculation shown by this tool always the final tax amount?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          The calculator provides exact mathematical figures based on standard slab rates. Actual final tax liability may vary if special compensation cesses, reverse charge rules, or item-specific exemptions apply.
+        </p>
+      </details>
+
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<style>
+  .gst-content h2 {
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.3;
+    color: #0f172a;
+  }
+
+  .gst-content h2:first-child {
+    margin-top: 0;
+  }
+
+  .gst-content h3 {
+    margin-top: 1.75rem;
+    margin-bottom: 0.625rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .gst-content p {
+    margin: 0 0 1rem;
+    line-height: 1.75;
+    color: #475569;
+  }
+
+  .gst-content ul {
+    margin: 0.75rem 0 1.5rem;
+    padding-left: 1.5rem;
+    list-style: disc;
+  }
+
+  .gst-content ol {
+    margin: 0.75rem 0 1.5rem;
+    padding-left: 1.5rem;
+    list-style: decimal;
+  }
+
+  .gst-content li + li {
+    margin-top: 0.5rem;
+  }
+
+  :global(.dark) .gst-content h2,
+  :global(.dark) .gst-content h3 {
+    color: #f8fafc;
+  }
+
+  :global(.dark) .gst-content p {
+    color: #cbd5e1;
+  }
+</style>
+
+<!-- FAQ Schema JSON-LD (Strictly matching the 7 FAQs) -->
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How does a GST calculator work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A GST calculator applies statutory rate formulas to your input price. In 'Add GST' mode, it computes the tax on an exclusive amount and adds it to determine the total. In 'Remove GST' mode, it extracts the taxable base and included tax from a gross amount."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I add GST to an amount?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Select 'Add GST', enter the net amount excluding tax, pick your slab rate (e.g. 18%), and click Calculate. The formula is: GST = Amount × Rate ÷ 100, and Total = Amount + GST."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I remove GST from an inclusive amount?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Select 'Remove GST', enter the gross amount, and choose the GST rate. The calculator applies the reverse formula: Base = Inclusive Amount × 100 ÷ (100 + Rate)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the formula for calculating GST?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "For adding GST: GST Amount = (Price × Rate) ÷ 100. For removing GST: Base Price = (Price × 100) ÷ (100 + Rate), and GST Amount = Price − Base Price."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between CGST, SGST, and IGST?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "CGST and SGST apply to intra-state sales (within the same state) and split the tax equally between Central and State governments. IGST applies in full to inter-state sales across state borders."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I use this GST calculator online for free?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. This calculator is 100% free to use on any desktop, tablet, or mobile browser without registration or limits."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is the GST calculation shown by this tool always the final tax amount?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The calculator provides exact mathematical figures based on standard slab rates. Actual final tax liability may vary if special compensation cesses, reverse charge rules, or item-specific exemptions apply."
+      }
+    }
+  ]
+})} />
+
+<!-- CLIENT-SIDE SCRIPT LOGIC -->
+<script is:inline>
+  // State
+  let currentCalculationType = 'add'; // 'add' | 'remove'
+
+  // DOM Elements
+  const modeButtons = document.querySelectorAll('.btn-gst-mode');
+  const gstPanelTitle = document.getElementById('gst-panel-title');
+  const lblGstAmount = document.getElementById('lbl-gst-amount');
+  const inpGstAmount = document.getElementById('inp-gst-amount');
+  const selGstRate = document.getElementById('sel-gst-rate');
+  const selTxType = document.getElementById('sel-tx-type');
+  const rowCustomRate = document.getElementById('row-custom-rate');
+  const inpCustomRate = document.getElementById('inp-custom-rate');
+
+  const btnCalcGst = document.getElementById('btn-calc-gst');
+  const btnClearGst = document.getElementById('btn-clear-gst');
+  const errGst = document.getElementById('err-gst');
+
+  // Results Elements
+  const gstResultsSection = document.getElementById('gst-results-section');
+  const resMainHighlightLabel = document.getElementById('res-main-highlight-label');
+  const resMainHighlightVal = document.getElementById('res-main-highlight-val');
+  const resTotalGstBadge = document.getElementById('res-total-gst-badge');
+  const resBasePrice = document.getElementById('res-base-price');
+  const resAppliedRate = document.getElementById('res-applied-rate');
+  const colResCgst = document.getElementById('col-res-cgst');
+  const lblResCgst = document.getElementById('lbl-res-cgst');
+  const resCgstVal = document.getElementById('res-cgst-val');
+  const colResSgst = document.getElementById('col-res-sgst');
+  const lblResSgst = document.getElementById('lbl-res-sgst');
+  const resSgstVal = document.getElementById('res-sgst-val');
+  const colResIgst = document.getElementById('col-res-igst');
+  const lblResIgst = document.getElementById('lbl-res-igst');
+  const resIgstVal = document.getElementById('res-igst-val');
+  const stepBreakdownContainer = document.getElementById('step-breakdown-container');
+
+  // Formatter
+  function formatINR(val) {
+    return `₹ ${Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  // Switch Mode Handler
+  function switchGstMode(mode) {
+    currentCalculationType = mode;
+    modeButtons.forEach((btn) => {
+      if (btn.getAttribute('data-mode') === mode) {
+        btn.className = 'btn-gst-mode active shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 font-bold text-white shadow-xs cursor-pointer';
+      } else {
+        btn.className = 'btn-gst-mode shrink-0 rounded-lg border border-slate-300 bg-white px-4 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer';
+      }
+    });
+
+    if (mode === 'add') {
+      gstPanelTitle.innerHTML = '<span>🧾</span> Add GST Calculator';
+      lblGstAmount.textContent = 'Amount (₹ - Excluding GST)';
+    } else {
+      gstPanelTitle.innerHTML = '<span>🔄</span> Remove GST (Reverse Calculator)';
+      lblGstAmount.textContent = 'Inclusive Amount (₹ - Including GST)';
+    }
+  }
+
+  modeButtons.forEach((btn) => {
+    btn.addEventListener('click', () => switchGstMode(btn.getAttribute('data-mode')));
+  });
+
+  // Custom rate dropdown listener
+  selGstRate.addEventListener('change', () => {
+    if (selGstRate.value === 'custom') {
+      rowCustomRate.classList.remove('hidden');
+    } else {
+      rowCustomRate.classList.add('hidden');
+    }
+  });
+
+  // Execute Calculation
+  function executeGstCalculation() {
+    errGst.classList.add('hidden');
+
+    const amount = parseFloat(inpGstAmount.value);
+    if (isNaN(amount) || amount < 0) {
+      errGst.textContent = 'Please enter a valid positive amount.';
+      errGst.classList.remove('hidden');
+      gstResultsSection.classList.add('hidden');
+      return;
+    }
+
+    let rate = 0;
+    if (selGstRate.value === 'custom') {
+      rate = parseFloat(inpCustomRate.value);
+      if (isNaN(rate) || rate < 0 || rate > 100) {
+        errGst.textContent = 'Please enter a valid custom GST rate between 0% and 100%.';
+        errGst.classList.remove('hidden');
+        gstResultsSection.classList.add('hidden');
+        return;
+      }
+    } else {
+      rate = parseFloat(selGstRate.value) || 0;
+    }
+
+    const txType = selTxType.value; // 'intra-state' | 'inter-state'
+
+    let baseAmount = 0;
+    let gstAmount = 0;
+    let totalAmount = 0;
+    const steps = [];
+
+    if (currentCalculationType === 'add') {
+      baseAmount = amount;
+      gstAmount = (amount * rate) / 100;
+      totalAmount = baseAmount + gstAmount;
+
+      resMainHighlightLabel.textContent = 'Total Amount (Including GST)';
+      resMainHighlightVal.textContent = formatINR(totalAmount);
+
+      steps.push({
+        title: 'Step 1: Calculate GST Amount',
+        formula: `GST Amount = Amount × (GST Rate ÷ 100)`,
+        calc: `₹ ${amount.toLocaleString('en-IN')} × (${rate} ÷ 100) = ${formatINR(gstAmount)}`,
+      });
+      steps.push({
+        title: 'Step 2: Add GST to Base Amount',
+        formula: `Final Amount = Base Amount + GST Amount`,
+        calc: `₹ ${amount.toLocaleString('en-IN')} + ${formatINR(gstAmount)} = ${formatINR(totalAmount)}`,
+      });
+    } else {
+      totalAmount = amount;
+      if (rate === 0) {
+        baseAmount = totalAmount;
+        gstAmount = 0;
+      } else {
+        baseAmount = (totalAmount * 100) / (100 + rate);
+        gstAmount = totalAmount - baseAmount;
+      }
+
+      resMainHighlightLabel.textContent = 'Base Price (Amount Before GST)';
+      resMainHighlightVal.textContent = formatINR(baseAmount);
+
+      steps.push({
+        title: 'Step 1: Extract Base Taxable Price',
+        formula: `Base Price = Inclusive Amount × 100 ÷ (100 + GST Rate)`,
+        calc: `₹ ${amount.toLocaleString('en-IN')} × 100 ÷ (100 + ${rate}) = ${formatINR(baseAmount)}`,
+      });
+      steps.push({
+        title: 'Step 2: Compute Extracted GST Tax',
+        formula: `GST Tax = Inclusive Amount − Base Price`,
+        calc: `₹ ${amount.toLocaleString('en-IN')} − ${formatINR(baseAmount)} = ${formatINR(gstAmount)}`,
+      });
+    }
+
+    resTotalGstBadge.textContent = formatINR(gstAmount);
+    resBasePrice.textContent = formatINR(baseAmount);
+    resAppliedRate.textContent = `${rate}%`;
+
+    if (txType === 'intra-state') {
+      const halfRate = rate / 2;
+      const halfTax = gstAmount / 2;
+
+      lblResCgst.textContent = `CGST (${halfRate}%)`;
+      resCgstVal.textContent = formatINR(halfTax);
+
+      lblResSgst.textContent = `SGST (${halfRate}%)`;
+      resSgstVal.textContent = formatINR(halfTax);
+
+      colResCgst.classList.remove('hidden');
+      colResSgst.classList.remove('hidden');
+      colResIgst.classList.add('hidden');
+
+      steps.push({
+        title: 'Step 3: Intra-State Tax Split',
+        formula: `CGST (${halfRate}%) + SGST (${halfRate}%)`,
+        calc: `${formatINR(halfTax)} + ${formatINR(halfTax)} = ${formatINR(gstAmount)}`,
+      });
+    } else {
+      lblResIgst.textContent = `IGST (${rate}%)`;
+      resIgstVal.textContent = formatINR(gstAmount);
+
+      colResCgst.classList.add('hidden');
+      colResSgst.classList.add('hidden');
+      colResIgst.classList.remove('hidden');
+
+      steps.push({
+        title: 'Step 3: Inter-State Integrated Tax',
+        formula: `IGST (${rate}%)`,
+        calc: `Full tax component of ${formatINR(gstAmount)} attributed to IGST.`,
+      });
+    }
+
+    // Render Steps
+    stepBreakdownContainer.innerHTML = steps.map((s) => `
+      <div class="rounded-xl border border-slate-200/80 bg-slate-50/50 p-3 dark:border-slate-800 dark:bg-slate-950/50">
+        <div class="font-bold text-slate-800 dark:text-slate-200">${s.title}</div>
+        <div class="text-[11px] text-slate-500 dark:text-slate-400 font-mono mt-0.5">${s.formula}</div>
+        <div class="text-xs font-bold text-blue-600 dark:text-blue-400 font-mono mt-1">${s.calc}</div>
+      </div>
+    `).join('');
+
+    gstResultsSection.classList.remove('hidden');
+  }
+
+  btnCalcGst.addEventListener('click', executeGstCalculation);
+
+  btnClearGst.addEventListener('click', () => {
+    inpGstAmount.value = '1000';
+    selGstRate.value = '18';
+    selTxType.value = 'intra-state';
+    rowCustomRate.classList.add('hidden');
+    inpCustomRate.value = '18';
+    errGst.classList.add('hidden');
+    gstResultsSection.classList.add('hidden');
+    switchGstMode('add');
+  });
+
+  // Preset Buttons Listener
+  document.querySelectorAll('.btn-gst-preset').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const mode = btn.getAttribute('data-mode');
+      const amt = btn.getAttribute('data-amt');
+      const rate = btn.getAttribute('data-rate');
+      const tx = btn.getAttribute('data-tx');
+
+      switchGstMode(mode);
+      if (amt) inpGstAmount.value = amt;
+      if (rate) {
+        selGstRate.value = rate;
+        selGstRate.dispatchEvent(new Event('change'));
+      }
+      if (tx) selTxType.value = tx === 'intra' ? 'intra-state' : 'inter-state';
+    });
+  });
+
+  // Enter Key Listener
+  document.querySelectorAll('form').forEach((form) => {
+    form.querySelectorAll('input, select').forEach((el) => {
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          executeGstCalculation();
+        }
+      });
+    });
+  });
+</script>

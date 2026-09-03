@@ -1,0 +1,1226 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+
+const faqs = [
+  {
+    q: 'What is a BMR calculator?',
+    a: 'A BMR calculator estimates your Basal Metabolic Rate, which is the approximate amount of energy your body may use in a 24-hour period while at rest. The estimate is usually based on factors such as age, sex, height, weight, and a selected calculation formula.',
+  },
+  {
+    q: 'What is the difference between BMR and maintenance calories?',
+    a: 'BMR estimates the energy your body uses at rest, while maintenance calories estimate your total daily energy needs after considering physical activity and movement. Maintenance calories are therefore generally higher than BMR.',
+  },
+  {
+    q: 'How does a BMR calculator work for men?',
+    a: 'A BMR calculator for men uses sex-specific constants in formulas such as Mifflin-St Jeor or Harris-Benedict. The calculator uses age, height, and weight to estimate the number of calories the body may use at rest.',
+  },
+  {
+    q: 'How does a BMR calculator work for women?',
+    a: 'A BMR calculator for women uses the appropriate female-specific constants in the selected BMR formula. Age, height, and weight are used to estimate resting energy requirements.',
+  },
+  {
+    q: 'Can I use a BMR calculator to lose weight?',
+    a: 'A BMR result can help estimate your resting calorie needs, but weight-loss calorie targets are usually based on estimated total daily energy needs rather than BMR alone. Activity level and other individual factors can affect total calorie requirements.',
+  },
+  {
+    q: 'Which BMR formula is best?',
+    a: 'Different formulas can produce slightly different estimates. Mifflin-St Jeor is commonly used for general BMR estimation, while Harris-Benedict is another established formula. Neither formula can provide an exact measurement for every individual.',
+  },
+  {
+    q: 'Is a BMR calculator medically accurate?',
+    a: 'A BMR calculator provides a mathematical estimate rather than a direct medical measurement. Actual energy expenditure can vary between individuals, and professional testing may produce different results.',
+  },
+];
+---
+
+<CalculatorLayout
+  title="BMR Calculator – Calculate Basal Metabolic Rate for Men and Women"
+  description="Estimate your basal metabolic rate (BMR) based on your age, sex, height, weight, and selected calculation formula."
+  category="Health"
+  calculatorName="BMR Calculator"
+  slug="bmr-calculator"
+  keywords={[
+    'bmr calculator',
+    'bmr calculator to lose weight',
+    'bmr calculator for women',
+    'bmr calculator for men',
+    'basal metabolic rate calculator',
+    'calculate BMR',
+    'daily calorie needs',
+    'BMR for weight loss',
+    'resting calorie estimate',
+    'metabolism calculator',
+    'Mifflin-St Jeor calculator',
+    'Harris-Benedict calculator',
+  ]}
+>
+  <div class="space-y-6">
+    <!-- Subtitle Intro -->
+    <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+      Estimate your basal metabolic rate (BMR) based on your age, sex, height, weight, and selected calculation formula.
+    </p>
+
+    <!-- Error Banner -->
+    <div
+      id="error-box"
+      class="hidden rounded-xl border border-red-200 bg-red-50/90 p-4 text-xs sm:text-sm font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/50 dark:text-red-300"
+      role="alert"
+      aria-live="polite"
+    >
+    </div>
+
+    <!-- Main Calculator Inputs Container -->
+    <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-900">
+      <div class="space-y-5">
+        
+        <!-- Row 1: Demographics (Sex, Age, Units) -->
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <label for="inp-gender" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Sex <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="inp-gender"
+              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+            >
+              <option value="male" selected>Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="inp-age" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Age (Years) <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              id="inp-age"
+              value="30"
+              min="10"
+              max="120"
+              step="1"
+              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="e.g., 30"
+            />
+          </div>
+
+          <div>
+            <label for="inp-height-unit" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Height Unit
+            </label>
+            <select
+              id="inp-height-unit"
+              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+            >
+              <option value="cm" selected>Centimeters (cm)</option>
+              <option value="ft_in">Feet & Inches (ft/in)</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="inp-weight-unit" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Weight Unit
+            </label>
+            <select
+              id="inp-weight-unit"
+              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+            >
+              <option value="kg" selected>Kilograms (kg)</option>
+              <option value="lbs">Pounds (lbs)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 2: Height & Weight Values -->
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <!-- Height Metric -->
+          <div id="wrapper-height-cm">
+            <label for="inp-height-cm" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Height (cm) <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              id="inp-height-cm"
+              value="175"
+              min="50"
+              max="270"
+              step="any"
+              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="e.g., 175"
+            />
+          </div>
+
+          <!-- Height Imperial -->
+          <div id="wrapper-height-ftin" class="hidden">
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Height (Feet & Inches) <span class="text-red-500">*</span>
+            </label>
+            <div class="mt-1.5 grid grid-cols-2 gap-2">
+              <div class="relative">
+                <input
+                  type="number"
+                  id="inp-height-ft"
+                  value="5"
+                  min="2"
+                  max="8"
+                  step="1"
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-8 text-xs sm:text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  placeholder="5"
+                />
+                <span class="pointer-events-none absolute right-2.5 top-2.5 text-xs font-bold text-slate-400">ft</span>
+              </div>
+              <div class="relative">
+                <input
+                  type="number"
+                  id="inp-height-in"
+                  value="9"
+                  min="0"
+                  max="11.9"
+                  step="0.1"
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-8 text-xs sm:text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  placeholder="9"
+                />
+                <span class="pointer-events-none absolute right-2.5 top-2.5 text-xs font-bold text-slate-400">in</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Weight -->
+          <div>
+            <label for="inp-weight" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Body Weight (<span id="lbl-weight-unit">kg</span>) <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              id="inp-weight"
+              value="75"
+              min="20"
+              max="450"
+              step="any"
+              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="e.g., 75"
+            />
+          </div>
+        </div>
+
+        <!-- Row 3: Formula Selection -->
+        <div>
+          <label for="inp-formula" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+            Calculation Formula <span class="text-red-500">*</span>
+          </label>
+          <select
+            id="inp-formula"
+            class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+          >
+            <option value="mifflin" selected>Mifflin-St Jeor (Standard / Recommended)</option>
+            <option value="harris">Revised Harris-Benedict (1984 Roza & Shizgal)</option>
+          </select>
+          <p id="hint-formula-desc" class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+            Mifflin-St Jeor is the widely recommended clinical equation for estimating baseline metabolic rate in modern adults.
+          </p>
+        </div>
+
+        <!-- Optional Advanced Section: Activity Level & Goal -->
+        <div class="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-4">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Optional: Daily Activity Level & Goal Estimate
+            </span>
+            <span class="text-[11px] text-slate-500 dark:text-slate-400">BMR itself does not require activity level</span>
+          </div>
+
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label for="inp-activity" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Activity Level <span class="text-slate-400 font-normal">(Optional)</span>
+              </label>
+              <select
+                id="inp-activity"
+                class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+              >
+                <option value="none" selected>None (Calculate BMR Only)</option>
+                <option value="sedentary">Sedentary (Little or no planned exercise)</option>
+                <option value="light">Lightly Active (Light exercise/activity on some days)</option>
+                <option value="moderate">Moderately Active (Regular exercise or active routine)</option>
+                <option value="active">Very Active (Frequent or demanding physical activity)</option>
+                <option value="very_active">Extra Active (Very high daily activity or intense training)</option>
+              </select>
+              <p id="hint-activity-desc" class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                Select an activity level to estimate your Total Daily Energy Expenditure (Maintenance Calories).
+              </p>
+            </div>
+
+            <div id="wrapper-goal-select" class="hidden">
+              <label for="inp-goal" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Weight Goal <span class="text-slate-400 font-normal">(Optional)</span>
+              </label>
+              <select
+                id="inp-goal"
+                class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+              >
+                <option value="maintain" selected>Maintain Weight (0 kcal adjustment)</option>
+                <option value="lose_gradual">Gradual Weight Loss (-250 kcal/day, ~0.25 kg/wk)</option>
+                <option value="lose_moderate">Moderate Weight Loss (-500 kcal/day, ~0.50 kg/wk)</option>
+                <option value="gain_gradual">Gradual Weight Gain (+250 kcal/day, ~0.25 kg/wk)</option>
+              </select>
+              <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                Conservative adjustments based on calculated maintenance calories.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-6 flex flex-col sm:flex-row items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <button
+            type="button"
+            id="btn-calculate-bmr"
+            class="w-full sm:flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3.5 text-center text-sm font-black text-white shadow-lg shadow-blue-500/25 transition hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] cursor-pointer"
+          >
+            Calculate BMR →
+          </button>
+          <button
+            type="button"
+            id="btn-clear-all"
+            class="w-full sm:w-auto rounded-xl border border-slate-300 bg-white px-5 py-3.5 text-center text-sm font-bold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+          >
+            Clear All
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- RESULTS SECTION (Hidden until calculation) -->
+    <!-- ========================================================= -->
+    <div id="results-section" class="hidden space-y-6">
+      
+      <!-- Primary Hero Result Card -->
+      <div class="rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-50/90 via-indigo-50/50 to-slate-50/90 p-5 sm:p-6 dark:border-blue-900/60 dark:from-blue-950/40 dark:via-indigo-950/20 dark:to-slate-900/40 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-blue-200/60 pb-3 dark:border-blue-900/50">
+          <span class="text-xs font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">
+            YOUR ESTIMATED BMR
+          </span>
+          <span id="badge-formula" class="self-start sm:self-auto rounded-md bg-blue-100 px-2 py-0.5 text-[11px] font-bold text-blue-800 dark:bg-blue-900/80 dark:text-blue-200">
+            Mifflin-St Jeor
+          </span>
+        </div>
+
+        <div class="mt-4 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
+          <div class="flex items-baseline gap-2">
+            <span id="res-hero-bmr" class="text-4xl sm:text-5xl font-black tracking-tight text-blue-600 dark:text-blue-400">
+              1,699
+            </span>
+            <span class="text-sm sm:text-base font-bold text-slate-700 dark:text-slate-300">kcal / day</span>
+          </div>
+          <div class="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
+            Alternative Formula (<span id="res-other-formula-name">Harris-Benedict</span>): <span id="res-other-formula-val" class="font-bold text-slate-900 dark:text-white">1,739 kcal</span>
+          </div>
+        </div>
+
+        <!-- BMR Explanation Card -->
+        <div class="mt-4 rounded-xl border border-blue-200/60 bg-white/70 p-3 text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-300">
+          Your BMR is an estimate of the calories your body may use in a 24-hour period while at rest. Your total daily calorie needs may be higher depending on your activity and other individual factors.
+        </div>
+
+        <!-- Low Calorie Caution Banner -->
+        <div id="banner-calorie-warning" class="hidden mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs font-semibold text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
+        </div>
+      </div>
+
+      <!-- Result Cards Grid -->
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 text-xs">
+        <div class="rounded-xl border border-slate-200/80 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/70 shadow-xs">
+          <div class="text-slate-500 dark:text-slate-400 font-semibold">Calculation Formula</div>
+          <div id="res-card-formula" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">Mifflin-St Jeor</div>
+        </div>
+
+        <div class="rounded-xl border border-slate-200/80 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/70 shadow-xs">
+          <div class="text-slate-500 dark:text-slate-400 font-semibold">Age</div>
+          <div id="res-card-age" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">30 Years</div>
+        </div>
+
+        <div class="rounded-xl border border-slate-200/80 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/70 shadow-xs">
+          <div class="text-slate-500 dark:text-slate-400 font-semibold">Sex</div>
+          <div id="res-card-sex" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">Male</div>
+        </div>
+
+        <div class="rounded-xl border border-slate-200/80 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/70 shadow-xs">
+          <div class="text-slate-500 dark:text-slate-400 font-semibold">Height</div>
+          <div id="res-card-height" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">175 cm</div>
+        </div>
+
+        <div class="rounded-xl border border-slate-200/80 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/70 shadow-xs">
+          <div class="text-slate-500 dark:text-slate-400 font-semibold">Weight</div>
+          <div id="res-card-weight" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">75 kg</div>
+        </div>
+
+        <div class="rounded-xl border border-blue-200/80 bg-blue-50/50 p-3.5 dark:border-blue-900/60 dark:bg-blue-950/30 shadow-xs">
+          <div class="text-blue-700 dark:text-blue-300 font-bold">Estimated BMR</div>
+          <div id="res-card-bmr" class="mt-1 text-sm font-black text-blue-600 dark:text-blue-400">1,699 kcal</div>
+        </div>
+      </div>
+
+      <!-- Maintenance Calories & Goal Cards (Visible when activity selected) -->
+      <div id="section-maintenance-results" class="hidden rounded-2xl border border-slate-200/80 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2 dark:border-slate-800">
+          <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+            <span>⚖️</span> Estimated Daily Energy Needs (Maintenance Calories)
+          </h3>
+          <span class="text-[11px] text-slate-500">BMR × Activity Multiplier</span>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 text-xs">
+          <div class="rounded-xl border border-slate-200/80 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-950">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Selected Activity Multiplier</div>
+            <div id="res-card-act-multiplier" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">Moderately Active (1.55×)</div>
+            <div class="mt-0.5 text-[10px] text-slate-400">Regular exercise 3–5 days/wk</div>
+          </div>
+
+          <div class="rounded-xl border border-blue-200 bg-blue-50/50 p-3.5 dark:border-blue-900/50 dark:bg-blue-950/20">
+            <div class="text-blue-800 dark:text-blue-300 font-semibold">Estimated Maintenance Calories</div>
+            <div id="res-card-maintenance" class="mt-1 text-lg sm:text-xl font-black text-blue-600 dark:text-blue-400">2,633 kcal / day</div>
+            <div class="mt-0.5 text-[10px] text-slate-500">To maintain current weight</div>
+          </div>
+
+          <div id="wrapper-goal-card" class="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3.5 dark:border-emerald-900/50 dark:bg-emerald-950/20">
+            <div class="text-emerald-800 dark:text-emerald-300 font-semibold">Estimated Daily Calorie Target</div>
+            <div id="res-card-goal-target" class="mt-1 text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-400">2,633 kcal / day</div>
+            <div id="res-card-goal-adj" class="mt-0.5 text-[10px] text-slate-500">Adjustment: 0 kcal/day</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step-by-Step Calculation Details Box -->
+      <div class="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-5 dark:border-slate-800 dark:bg-slate-900/60 shadow-xs space-y-3">
+        <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+          <span>📐</span> How Your BMR Is Calculated
+        </h3>
+        <div
+          id="txt-calc-details"
+          class="rounded-xl border border-slate-200 bg-white p-4 font-mono text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 space-y-1.5 leading-relaxed"
+        >
+        </div>
+      </div>
+
+      <!-- Download PDF Action Bar -->
+      <div class="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="text-xs text-slate-600 dark:text-slate-300">
+          <strong>Export BMR Calculation Report:</strong> Download a comprehensive, printable PDF calculation document.
+        </div>
+        <button
+          type="button"
+          id="btn-download-pdf"
+          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-xs sm:text-sm font-bold text-white transition hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700 cursor-pointer shadow-xs"
+        >
+          <span>📄</span> <span id="txt-btn-pdf">Download PDF</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Educational SEO Content Slot -->
+  <Fragment slot="content">
+    <div class="space-y-10 text-slate-700 dark:text-slate-300 leading-relaxed text-sm">
+      
+      <!-- 1. How to Use -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          How to Use the BMR Calculator
+        </h2>
+        <p>
+          Follow these simple steps to estimate your basal metabolic rate and resting energy requirements:
+        </p>
+        <ol class="list-decimal space-y-2 pl-5 text-xs sm:text-sm">
+          <li><strong>Enter your age:</strong> Input your chronological age in years.</li>
+          <li><strong>Select your sex:</strong> Choose Male or Female to apply the corresponding physiological constant.</li>
+          <li><strong>Enter your height:</strong> Provide your height in centimeters or feet and inches.</li>
+          <li><strong>Enter your current weight:</strong> Input your weight in kilograms or pounds.</li>
+          <li><strong>Choose a BMR formula:</strong> Select the default <em>Mifflin-St Jeor</em> equation or the <em>Revised Harris-Benedict</em> formula.</li>
+          <li><strong>Optionally select your activity level:</strong> If you want to estimate your Total Daily Energy Expenditure (Maintenance Calories), pick your typical exercise frequency.</li>
+          <li><strong>Choose a goal if you want an estimated calorie target:</strong> Select maintain, gradual weight loss, moderate weight loss, or gradual weight gain.</li>
+          <li><strong>Click Calculate BMR:</strong> Review your resting calorie baseline, formula breakdown, and optional maintenance estimates.</li>
+          <li><strong>Review your estimated BMR and related calorie estimates:</strong> Check the step-by-step breakdown and export your customized PDF report.</li>
+        </ol>
+      </section>
+
+      <!-- 2. What Is Basal Metabolic Rate? -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          What Is Basal Metabolic Rate?
+        </h2>
+        <p>
+          <strong>Basal Metabolic Rate (BMR)</strong> is an estimate of the minimum energy (measured in calories or kilocalories) that your body requires in a 24-hour period while resting in a neutrally temperate environment and in a post-absorptive state.
+        </p>
+        <p>
+          Even when you are completely stationary or asleep, your body continuously uses energy to sustain vital physiological processes, including:
+        </p>
+        <ul class="list-disc space-y-1.5 pl-5 text-xs sm:text-sm">
+          <li><strong>Cellular and Molecular Function:</strong> Active ion transport across cell membranes and protein synthesis.</li>
+          <li><strong>Respiratory Work:</strong> Involuntary diaphragm contraction and pulmonary ventilation.</li>
+          <li><strong>Cardiovascular Circulation:</strong> Continuous pumping of blood throughout the systemic and pulmonary vasculature.</li>
+          <li><strong>Thermoregulation:</strong> Maintaining a stable internal core body temperature (~37°C / 98.6°F).</li>
+          <li><strong>Organ Metabolism:</strong> Continuous filtration by the kidneys, neurochemical activity in the brain, and metabolic processing in the liver.</li>
+        </ul>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          <em>Important: BMR does not represent total daily calorie expenditure. Total energy requirements are higher when physical movement and digestion are included.</em>
+        </p>
+      </section>
+
+      <!-- 3. BMR Calculator for Men -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          BMR Calculator for Men
+        </h2>
+        <p>
+          When using a <strong>bmr calculator for men</strong>, the calculation incorporates male-specific physiological constants that reflect statistically higher proportions of skeletal muscle mass and bone density compared to female population averages of identical height and weight.
+        </p>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2 text-xs sm:text-sm">
+          <p class="font-bold text-slate-900 dark:text-white">Standard Male BMR Formulas:</p>
+          <div class="font-mono text-xs space-y-1 text-slate-700 dark:text-slate-300">
+            <div>• <strong>Mifflin-St Jeor (Male):</strong> BMR = (10 × Weight in kg) + (6.25 × Height in cm) − (5 × Age) + 5</div>
+            <div>• <strong>Revised Harris-Benedict (Male):</strong> BMR = 88.362 + (13.397 × Weight in kg) + (4.799 × Height in cm) − (5.677 × Age)</div>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          The calculator applies these male equations directly to estimate resting energy expenditure without making clinical health assumptions.
+        </p>
+      </section>
+
+      <!-- 4. BMR Calculator for Women -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          BMR Calculator for Women
+        </h2>
+        <p>
+          When selecting female, our <strong>bmr calculator for women</strong> applies female-specific baseline constants. Biological females naturally possess higher essential adipose tissue (10%–13%) required for hormonal and reproductive balance, which is accounted for in standardized empirical metabolic formulas.
+        </p>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2 text-xs sm:text-sm">
+          <p class="font-bold text-slate-900 dark:text-white">Standard Female BMR Formulas:</p>
+          <div class="font-mono text-xs space-y-1 text-slate-700 dark:text-slate-300">
+            <div>• <strong>Mifflin-St Jeor (Female):</strong> BMR = (10 × Weight in kg) + (6.25 × Height in cm) − (5 × Age) − 161</div>
+            <div>• <strong>Revised Harris-Benedict (Female):</strong> BMR = 447.593 + (9.247 × Weight in kg) + (3.098 × Height in cm) − (4.330 × Age)</div>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          These female-specific constants ensure appropriate mathematical scaling for resting energy estimates.
+        </p>
+      </section>
+
+      <!-- 5. BMR Calculator to Lose Weight -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          BMR Calculator to Lose Weight
+        </h2>
+        <p>
+          When using a <strong>bmr calculator to lose weight</strong>, it is crucial to recognize that your BMR is NOT the number of calories you should eat to lose weight. Eating below your baseline BMR for prolonged periods can cause muscle wasting and metabolic fatigue.
+        </p>
+        <p>
+          Instead, healthy weight loss targets are calculated from your <strong>Estimated Maintenance Calories (TDEE)</strong>:
+        </p>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 text-xs sm:text-sm">
+          <div class="rounded-xl border border-blue-200 bg-blue-50/40 p-3.5 dark:border-blue-900/50 dark:bg-blue-950/20">
+            <h3 class="font-bold text-blue-900 dark:text-blue-300">Gradual Deficit (-250 kcal/day)</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Results in an estimated ~0.25 kg (0.55 lb) fat loss per week. Recommended for preserving lean muscle mass and athletic performance.
+            </p>
+          </div>
+          <div class="rounded-xl border border-emerald-200 bg-emerald-50/40 p-3.5 dark:border-emerald-900/50 dark:bg-emerald-950/20">
+            <h3 class="font-bold text-emerald-900 dark:text-emerald-300">Moderate Deficit (-500 kcal/day)</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Results in an estimated ~0.50 kg (1.10 lbs) fat loss per week (~3,500 kcal weekly deficit). Widely recognized as a balanced, sustainable pace.
+            </p>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400 italic">
+          Caution: Daily caloric intake should rarely fall below 1,200 kcal/day for women or 1,500 kcal/day for men without direct clinical supervision.
+        </p>
+      </section>
+
+      <!-- 6. BMR vs. Maintenance Calories -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          BMR vs. Maintenance Calories
+        </h2>
+        <p>
+          Understanding the distinction between Basal Metabolic Rate and Total Daily Energy Expenditure is essential for accurate nutrition planning:
+        </p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm">
+            <thead class="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950 font-bold text-slate-800 dark:text-white">
+              <tr>
+                <th class="py-2.5 px-3">Metric</th>
+                <th class="py-2.5 px-3">Definition</th>
+                <th class="py-2.5 px-3">Components Included</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              <tr>
+                <td class="py-2.5 px-3 font-semibold text-blue-600 dark:text-blue-400">BMR (Basal Metabolic Rate)</td>
+                <td class="py-2.5 px-3 text-slate-600 dark:text-slate-300">Resting energy needed for vital cellular and organ survival.</td>
+                <td class="py-2.5 px-3 text-slate-500">Brain, heart, liver, lungs, kidneys, cell repair (at 0 movement).</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 px-3 font-semibold text-emerald-600 dark:text-emerald-400">Maintenance Calories (TDEE)</td>
+                <td class="py-2.5 px-3 text-slate-600 dark:text-slate-300">Total daily calories burned including all physical movement and food digestion.</td>
+                <td class="py-2.5 px-3 text-slate-500">BMR + Physical Exercise (EAT) + Daily Steps/NEAT + Digestion (TEF).</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 7. BMR Calculation Example -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          BMR Calculation Example
+        </h2>
+        <p>
+          Consider a 30-year-old male with a height of 175 cm and a body weight of 75 kg using the Mifflin-St Jeor formula:
+        </p>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 space-y-1.5">
+          <div>• Input Parameters: Age = 30 yrs, Sex = Male, Height = 175 cm, Weight = 75 kg</div>
+          <div>• Weight Term: 10 × 75 kg = 750 kcal</div>
+          <div>• Height Term: 6.25 × 175 cm = 1,093.75 kcal</div>
+          <div>• Age Term: 5 × 30 yrs = 150 kcal</div>
+          <div>• Sex Constant: +5 (Male)</div>
+          <div>• Evaluated BMR: 750 + 1,093.75 − 150 + 5 = 1,698.75 ≈ <strong>1,699 kcal/day</strong></div>
+          <div>• With Moderately Active Multiplier (1.55×): 1,699 × 1.55 = <strong class="text-blue-600 dark:text-blue-400">2,633 Estimated Maintenance Calories/day</strong></div>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400 italic">
+          This example is for illustration only. Individual energy needs can vary.
+        </p>
+      </section>
+
+      <!-- 8. Factors That Can Affect BMR -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          Factors That Can Affect BMR
+        </h2>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 text-xs sm:text-sm">
+          <div class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800">
+            <h3 class="font-bold text-slate-900 dark:text-white">Age</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">BMR gradually decreases with age primarily due to natural sarcopenia (loss of skeletal muscle mass) and hormonal shifts.</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800">
+            <h3 class="font-bold text-slate-900 dark:text-white">Body Size & Composition</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">Larger individuals have more metabolic tissue. Muscle tissue burns significantly more resting energy (~13 kcal/kg/day) than adipose fat tissue (~4.5 kcal/kg/day).</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800">
+            <h3 class="font-bold text-slate-900 dark:text-white">Sex-Specific Formula Differences</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">Men statistically possess greater lean muscle and higher bone density, reflected by higher mathematical formula constants.</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800">
+            <h3 class="font-bold text-slate-900 dark:text-white">Changes in Body Weight</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">Weight loss reduces total cellular mass and lowers resting energy requirements, requiring recalculated targets over time.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 9. Common Mistakes -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          Common Mistakes When Using a BMR Calculator
+        </h2>
+        <div class="space-y-2 text-xs sm:text-sm">
+          <div class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800">
+            <h3 class="font-bold text-slate-900 dark:text-white">Confusing BMR With Daily Calorie Needs</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">BMR represents estimated energy use at rest, not total daily calorie expenditure.</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800">
+            <h3 class="font-bold text-slate-900 dark:text-white">Using Incorrect Height or Weight Units</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">Ensure the selected units match the values entered (e.g. entering pounds into a kg field will severely skew the result).</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800">
+            <h3 class="font-bold text-slate-900 dark:text-white">Selecting the Wrong Activity Level</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">An inaccurate activity selection can affect estimated maintenance calories by several hundred calories per day.</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800">
+            <h3 class="font-bold text-slate-900 dark:text-white">Treating the Result as Exact</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">BMR formulas provide statistical estimates. Real-world metabolic burn varies based on genetics, climate, and thyroid function.</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800">
+            <h3 class="font-bold text-slate-900 dark:text-white">Never Updating Your Information</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">Changes in weight or routine will alter your energy expenditure. Update your values every 3 to 5 kg of weight change.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 10. Important Information and Disclaimer -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          Important Information and Disclaimer
+        </h2>
+        <div class="rounded-xl border border-amber-200 bg-amber-50/60 p-4 text-xs sm:text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300 space-y-2">
+          <p>• <strong>General Information Only:</strong> This calculator provides an estimated BMR based on mathematical formulas.</p>
+          <p>• <strong>Actual Energy Needs Vary:</strong> Real metabolic rates are influenced by genetics, body composition, and endocrine function.</p>
+          <p>• <strong>Not Medical Advice:</strong> This tool does not provide medical diagnosis, treatment plans, or individualized dietary prescriptions.</p>
+          <p>• <strong>Weight Change Disclaimer:</strong> Weight changes cannot be guaranteed from calorie estimates alone.</p>
+          <p>• <strong>Professional Guidance:</strong> For individualized nutrition or clinical health guidance, consult an appropriately qualified healthcare professional or registered dietitian.</p>
+        </div>
+      </section>
+
+    </div>
+  </Fragment>
+
+  <!-- FAQ Slot (EXACTLY 7 FAQs) -->
+  <Fragment slot="faq">
+    <div class="space-y-4 text-xs sm:text-sm">
+      {faqs.map((faq, index) => (
+        <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open={index === 0}>
+          <summary class="font-bold text-slate-900 dark:text-white cursor-pointer flex justify-between items-center">
+            <span>{index + 1}. {faq.q}</span>
+            <span class="group-open:rotate-180 transition-transform text-slate-400">▼</span>
+          </summary>
+          <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed">
+            {faq.a}
+          </p>
+        </details>
+      ))}
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<!-- FAQPage & WebApplication JSON-LD Schema -->
+<script
+  type="application/ld+json"
+  is:inline
+  set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebApplication',
+        name: 'BMR Calculator',
+        url: 'https://aifreecalculator.com/health/bmr-calculator/',
+        applicationCategory: 'HealthApplication',
+        operatingSystem: 'All',
+        description: 'Calculate your Basal Metabolic Rate (BMR) and resting daily calorie expenditure for men and women using Mifflin-St Jeor and Revised Harris-Benedict formulas.',
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: faqs.map((faq) => ({
+          '@type': 'Question',
+          name: faq.q,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: faq.a,
+          },
+        })),
+      },
+    ],
+  })}
+/>
+
+<!-- Client-Side Calculation Engine & PDF Export Script -->
+<script>
+  import {
+    calculateBmr,
+    cmToFtIn,
+    ftInToCm,
+    kgToLbs,
+    lbsToKg,
+    ACTIVITY_LEVEL_MAP,
+    GOAL_MAP,
+    type Gender,
+    type BmrFormula,
+    type ActivityLevel,
+    type WeightGoal,
+    type BmrCalculationResult,
+  } from '../../lib/calculators/bmr';
+
+  let lastResultData: {
+    result: BmrCalculationResult;
+    inputs: {
+      genderDisplay: string;
+      age: number;
+      heightDisplay: string;
+      weightDisplay: string;
+      formulaDisplay: string;
+      activityDisplay?: string;
+      goalDisplay?: string;
+    };
+  } | null = null;
+
+  // DOM Elements
+  const errorBox = document.getElementById('error-box')!;
+  const resultsSection = document.getElementById('results-section')!;
+  const btnCalculate = document.getElementById('btn-calculate-bmr') as HTMLButtonElement;
+  const btnClearAll = document.getElementById('btn-clear-all') as HTMLButtonElement;
+  const btnDownloadPdf = document.getElementById('btn-download-pdf') as HTMLButtonElement;
+
+  // Form Inputs
+  const inpGender = document.getElementById('inp-gender') as HTMLSelectElement;
+  const inpAge = document.getElementById('inp-age') as HTMLInputElement;
+  const inpHeightUnit = document.getElementById('inp-height-unit') as HTMLSelectElement;
+  const inpWeightUnit = document.getElementById('inp-weight-unit') as HTMLSelectElement;
+  const inpHeightCm = document.getElementById('inp-height-cm') as HTMLInputElement;
+  const inpHeightFt = document.getElementById('inp-height-ft') as HTMLInputElement;
+  const inpHeightIn = document.getElementById('inp-height-in') as HTMLInputElement;
+  const inpWeight = document.getElementById('inp-weight') as HTMLInputElement;
+  const inpFormula = document.getElementById('inp-formula') as HTMLSelectElement;
+  const inpActivity = document.getElementById('inp-activity') as HTMLSelectElement;
+  const inpGoal = document.getElementById('inp-goal') as HTMLSelectElement;
+
+  // UI Dynamic Wrappers
+  const wrapperHeightCm = document.getElementById('wrapper-height-cm')!;
+  const wrapperHeightFtin = document.getElementById('wrapper-height-ftin')!;
+  const wrapperGoalSelect = document.getElementById('wrapper-goal-select')!;
+  const lblWeightUnit = document.getElementById('lbl-weight-unit')!;
+  const hintActivityDesc = document.getElementById('hint-activity-desc')!;
+  const hintFormulaDesc = document.getElementById('hint-formula-desc')!;
+
+  // Results DOM Elements
+  const badgeFormula = document.getElementById('badge-formula')!;
+  const resHeroBmr = document.getElementById('res-hero-bmr')!;
+  const resOtherFormulaName = document.getElementById('res-other-formula-name')!;
+  const resOtherFormulaVal = document.getElementById('res-other-formula-val')!;
+  const bannerCalorieWarning = document.getElementById('banner-calorie-warning')!;
+  const resCardFormula = document.getElementById('res-card-formula')!;
+  const resCardAge = document.getElementById('res-card-age')!;
+  const resCardSex = document.getElementById('res-card-sex')!;
+  const resCardHeight = document.getElementById('res-card-height')!;
+  const resCardWeight = document.getElementById('res-card-weight')!;
+  const resCardBmr = document.getElementById('res-card-bmr')!;
+
+  const sectionMaintenanceResults = document.getElementById('section-maintenance-results')!;
+  const resCardActMultiplier = document.getElementById('res-card-act-multiplier')!;
+  const resCardMaintenance = document.getElementById('res-card-maintenance')!;
+  const resCardGoalTarget = document.getElementById('res-card-goal-target')!;
+  const resCardGoalAdj = document.getElementById('res-card-goal-adj')!;
+  const txtCalcDetails = document.getElementById('txt-calc-details')!;
+
+  function invalidateResults() {
+    resultsSection.classList.add('hidden');
+    if (errorBox) {
+      errorBox.classList.add('hidden');
+      errorBox.textContent = '';
+    }
+    lastResultData = null;
+  }
+
+  function showError(msg: string) {
+    if (!errorBox) return;
+    errorBox.textContent = msg;
+    errorBox.classList.remove('hidden');
+    errorBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // Activity Level Change UI Listener
+  inpActivity.addEventListener('change', () => {
+    const actKey = inpActivity.value as ActivityLevel;
+    const actData = ACTIVITY_LEVEL_MAP[actKey];
+    if (actData) {
+      hintActivityDesc.textContent = actData.description;
+    }
+    if (actKey !== 'none') {
+      wrapperGoalSelect.classList.remove('hidden');
+    } else {
+      wrapperGoalSelect.classList.add('hidden');
+    }
+    invalidateResults();
+  });
+
+  // Formula Change UI Listener
+  inpFormula.addEventListener('change', () => {
+    if (inpFormula.value === 'mifflin') {
+      hintFormulaDesc.textContent = 'Mifflin-St Jeor is the widely recommended clinical equation for estimating baseline metabolic rate in modern adults.';
+    } else {
+      hintFormulaDesc.textContent = 'Revised Harris-Benedict (1984 Roza & Shizgal) is an updated version of the historic 1919 biometric formula.';
+    }
+    invalidateResults();
+  });
+
+  // Height Unit Switcher
+  inpHeightUnit.addEventListener('change', () => {
+    const isFtIn = inpHeightUnit.value === 'ft_in';
+    if (isFtIn) {
+      const cm = parseFloat(inpHeightCm.value) || 175;
+      const { feet, inches } = cmToFtIn(cm);
+      inpHeightFt.value = String(feet);
+      inpHeightIn.value = String(inches);
+      wrapperHeightCm.classList.add('hidden');
+      wrapperHeightFtin.classList.remove('hidden');
+    } else {
+      const ft = parseFloat(inpHeightFt.value) || 5;
+      const inVal = parseFloat(inpHeightIn.value) || 9;
+      const cm = Math.round(ftInToCm(ft, inVal));
+      inpHeightCm.value = String(cm);
+      wrapperHeightCm.classList.remove('hidden');
+      wrapperHeightFtin.classList.add('hidden');
+    }
+    invalidateResults();
+  });
+
+  // Weight Unit Switcher
+  inpWeightUnit.addEventListener('change', () => {
+    const isLbs = inpWeightUnit.value === 'lbs';
+    lblWeightUnit.textContent = isLbs ? 'lbs' : 'kg';
+    const currentW = parseFloat(inpWeight.value);
+    if (!isNaN(currentW) && currentW > 0) {
+      if (isLbs) {
+        inpWeight.value = Math.round(kgToLbs(currentW)).toString();
+      } else {
+        inpWeight.value = Math.round(lbsToKg(currentW)).toString();
+      }
+    }
+    invalidateResults();
+  });
+
+  // Attach invalidation to all inputs (No live calculation while typing)
+  document.querySelectorAll('input, select').forEach((el) => {
+    el.addEventListener('input', invalidateResults);
+  });
+
+  // Main Calculation Routine
+  function performCalculation() {
+    invalidateResults();
+
+    try {
+      const gender = inpGender.value as Gender;
+      const age = parseInt(inpAge.value, 10);
+      const formula = inpFormula.value as BmrFormula;
+      const activityLevel = inpActivity.value as ActivityLevel;
+      const goal = inpGoal.value as WeightGoal;
+
+      if (isNaN(age) || age <= 0) {
+        return showError('Please enter a valid positive age.');
+      }
+
+      let heightCm = 0;
+      let heightDisplay = '';
+      if (inpHeightUnit.value === 'ft_in') {
+        const ft = parseFloat(inpHeightFt.value);
+        const inVal = parseFloat(inpHeightIn.value) || 0;
+        if (isNaN(ft) || ft <= 0) return showError('Please enter a valid height in feet.');
+        if (inVal < 0 || inVal >= 12) return showError('Inches must be between 0 and 11.9.');
+        heightCm = ftInToCm(ft, inVal);
+        heightDisplay = `${ft} ft ${inVal} in (${heightCm.toFixed(1)} cm)`;
+      } else {
+        heightCm = parseFloat(inpHeightCm.value);
+        if (isNaN(heightCm) || heightCm <= 0) return showError('Please enter a valid positive height in centimeters.');
+        const { feet, inches } = cmToFtIn(heightCm);
+        heightDisplay = `${heightCm} cm (${feet}' ${inches}")`;
+      }
+
+      let weightKg = 0;
+      let weightDisplay = '';
+      const weightVal = parseFloat(inpWeight.value);
+      if (isNaN(weightVal) || weightVal <= 0) return showError('Please enter a valid body weight.');
+
+      if (inpWeightUnit.value === 'lbs') {
+        weightKg = lbsToKg(weightVal);
+        weightDisplay = `${weightVal} lbs (${weightKg.toFixed(1)} kg)`;
+      } else {
+        weightKg = weightVal;
+        weightDisplay = `${weightKg} kg (${kgToLbs(weightKg).toFixed(1)} lbs)`;
+      }
+
+      const result = calculateBmr({
+        gender,
+        age,
+        heightCm,
+        weightKg,
+        formula,
+        activityLevel,
+        goal,
+      });
+
+      lastResultData = {
+        result,
+        inputs: {
+          genderDisplay: gender === 'male' ? 'Male' : 'Female',
+          age,
+          heightDisplay,
+          weightDisplay,
+          formulaDisplay: result.formulaLabel,
+          activityDisplay: result.activityLabel,
+          goalDisplay: result.goalLabel,
+        },
+      };
+
+      // Render Hero Card
+      badgeFormula.textContent = result.formulaLabel;
+      resHeroBmr.textContent = result.bmr.toLocaleString();
+      resOtherFormulaName.textContent = result.otherFormulaBmr.formulaLabel;
+      resOtherFormulaVal.textContent = `${result.otherFormulaBmr.bmr.toLocaleString()} kcal`;
+
+      if (result.isLowCalorieWarning && result.warningMessage) {
+        bannerCalorieWarning.textContent = result.warningMessage;
+        bannerCalorieWarning.classList.remove('hidden');
+      } else {
+        bannerCalorieWarning.classList.add('hidden');
+      }
+
+      // Render Result Cards
+      resCardFormula.textContent = result.formulaLabel;
+      resCardAge.textContent = `${age} Years`;
+      resCardSex.textContent = gender === 'male' ? 'Male' : 'Female';
+      resCardHeight.textContent = heightDisplay;
+      resCardWeight.textContent = weightDisplay;
+      resCardBmr.textContent = `${result.bmr.toLocaleString()} kcal`;
+
+      // Render Optional Maintenance Calories & Goal
+      if (result.maintenanceCalories && result.activityMultiplier) {
+        sectionMaintenanceResults.classList.remove('hidden');
+        resCardActMultiplier.textContent = `${result.activityLabel} (${result.activityMultiplier}×)`;
+        resCardMaintenance.textContent = `${result.maintenanceCalories.toLocaleString()} kcal / day`;
+
+        if (result.dailyCalorieTarget && result.goalLabel) {
+          resCardGoalTarget.textContent = `${result.dailyCalorieTarget.toLocaleString()} kcal / day`;
+          resCardGoalAdj.textContent = `Adjustment: ${result.goalAdjustmentKcal! >= 0 ? '+' : ''}${result.goalAdjustmentKcal} kcal/day (${result.goalLabel})`;
+        }
+      } else {
+        sectionMaintenanceResults.classList.add('hidden');
+      }
+
+      // Render Step-by-Step Breakdown Safely without innerHTML
+      txtCalcDetails.replaceChildren(
+        ...result.calculationSteps.map((step) => {
+          const div = document.createElement('div');
+          div.textContent = step;
+          return div;
+        })
+      );
+
+      // Reveal Results Section
+      resultsSection.classList.remove('hidden');
+      resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (err: any) {
+      showError(err.message || 'An unexpected error occurred during calculation. Please verify your inputs.');
+    }
+  }
+
+  // Clear All Functionality
+  function performClearAll() {
+    inpGender.value = 'male';
+    inpAge.value = '30';
+    inpHeightUnit.value = 'cm';
+    inpWeightUnit.value = 'kg';
+    lblWeightUnit.textContent = 'kg';
+    inpHeightCm.value = '175';
+    inpHeightFt.value = '5';
+    inpHeightIn.value = '9';
+    wrapperHeightCm.classList.remove('hidden');
+    wrapperHeightFtin.classList.add('hidden');
+    inpWeight.value = '75';
+    inpFormula.value = 'mifflin';
+    inpActivity.value = 'none';
+    hintActivityDesc.textContent = ACTIVITY_LEVEL_MAP.none.description;
+    wrapperGoalSelect.classList.add('hidden');
+    inpGoal.value = 'maintain';
+
+    invalidateResults();
+  }
+
+  btnCalculate.addEventListener('click', performCalculation);
+  btnClearAll.addEventListener('click', performClearAll);
+
+  // PDF Export Generation
+  if (btnDownloadPdf) {
+    btnDownloadPdf.addEventListener('click', async () => {
+      if (!lastResultData) {
+        performCalculation();
+        if (!lastResultData) return;
+      }
+
+      const txtBtn = document.getElementById('txt-btn-pdf');
+      if (txtBtn) txtBtn.textContent = 'Generating PDF...';
+
+      try {
+        let jsPDFModule = (window as any).jspdf;
+        if (!jsPDFModule) {
+          const script1 = document.createElement('script');
+          script1.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+          await new Promise((resolve, reject) => {
+            script1.onload = resolve;
+            script1.onerror = reject;
+            document.head.appendChild(script1);
+          });
+          const script2 = document.createElement('script');
+          script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+          await new Promise((resolve, reject) => {
+            script2.onload = resolve;
+            script2.onerror = reject;
+            document.head.appendChild(script2);
+          });
+          jsPDFModule = (window as any).jspdf;
+        }
+
+        const { jsPDF } = jsPDFModule;
+        const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+
+        const primaryColor = [37, 99, 235]; // #2563eb
+        const darkColor = [15, 23, 42]; // #0f172a
+        const slateColor = [100, 116, 139]; // #64748b
+        const lightBg = [248, 250, 252]; // #f8fafc
+
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 40;
+        let y = 45;
+
+        // Top Header Branding
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(18);
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        doc.text('AIFreecalculator.com', margin, y);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(slateColor[0], slateColor[1], slateColor[2]);
+        doc.text('Free Online Calculator Tools', margin, y + 13);
+
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        doc.text(`Generated: ${dateStr}`, pageWidth - margin, y + 5, { align: 'right' });
+
+        y += 28;
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(1);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 24;
+
+        // Title
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(15);
+        doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+        doc.text('BMR Calculation Report', margin, y);
+        y += 18;
+
+        // Summary Hero Box
+        doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
+        doc.roundedRect(margin, y, pageWidth - margin * 2, 54, 8, 8, 'F');
+        doc.setDrawColor(203, 213, 225);
+        doc.roundedRect(margin, y, pageWidth - margin * 2, 54, 8, 8, 'D');
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        doc.text(`FORMULA: ${lastResultData.inputs.formulaDisplay.toUpperCase()}`, margin + 14, y + 18);
+
+        doc.setFontSize(16);
+        doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+        doc.text(`Estimated BMR: ${lastResultData.result.bmr.toLocaleString()} kcal / day`, margin + 14, y + 38);
+
+        if (lastResultData.result.maintenanceCalories) {
+          doc.setFontSize(10);
+          doc.setTextColor(slateColor[0], slateColor[1], slateColor[2]);
+          doc.text(`Maintenance: ${lastResultData.result.maintenanceCalories.toLocaleString()} kcal/day`, pageWidth - margin - 14, y + 36, { align: 'right' });
+        }
+
+        y += 70;
+
+        // Input Parameters Table
+        const inputRows: any[] = [
+          ['Sex', lastResultData.inputs.genderDisplay],
+          ['Age', `${lastResultData.inputs.age} Years`],
+          ['Height', lastResultData.inputs.heightDisplay],
+          ['Body Weight', lastResultData.inputs.weightDisplay],
+          ['Calculation Formula', lastResultData.inputs.formulaDisplay],
+        ];
+
+        if (lastResultData.inputs.activityDisplay) {
+          inputRows.push(['Activity Level', lastResultData.inputs.activityDisplay]);
+        }
+        if (lastResultData.inputs.goalDisplay) {
+          inputRows.push(['Weight Goal', lastResultData.inputs.goalDisplay]);
+        }
+
+        (doc as any).autoTable({
+          startY: y,
+          head: [['Parameter', 'User Entered Value']],
+          body: inputRows,
+          theme: 'striped',
+          headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' },
+          margin: { left: margin, right: margin },
+          styles: { fontSize: 9, cellPadding: 4.5 },
+        });
+
+        y = (doc as any).lastAutoTable.finalY + 16;
+
+        // Results Breakdown Table
+        const resultRows: any[] = [
+          ['Estimated Basal Metabolic Rate (BMR)', `${lastResultData.result.bmr.toLocaleString()} kcal/day`],
+          [`Alternative Estimate (${lastResultData.result.otherFormulaBmr.formulaLabel})`, `${lastResultData.result.otherFormulaBmr.bmr.toLocaleString()} kcal/day`],
+        ];
+
+        if (lastResultData.result.maintenanceCalories) {
+          resultRows.push(['Estimated Maintenance Calories (TDEE)', `${lastResultData.result.maintenanceCalories.toLocaleString()} kcal/day`]);
+        }
+        if (lastResultData.result.dailyCalorieTarget) {
+          resultRows.push(['Estimated Daily Calorie Target', `${lastResultData.result.dailyCalorieTarget.toLocaleString()} kcal/day`]);
+        }
+
+        (doc as any).autoTable({
+          startY: y,
+          head: [['Calculation Metric', 'Estimated Value']],
+          body: resultRows,
+          theme: 'striped',
+          headStyles: { fillColor: darkColor, textColor: 255, fontStyle: 'bold' },
+          margin: { left: margin, right: margin },
+          styles: { fontSize: 9, cellPadding: 4.5 },
+        });
+
+        y = (doc as any).lastAutoTable.finalY + 16;
+
+        // Step-by-Step Mathematical Details
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+        doc.text('Calculation Details & Step-by-Step Breakdown', margin, y);
+        y += 14;
+
+        doc.setFont('courier', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(slateColor[0], slateColor[1], slateColor[2]);
+
+        for (const step of lastResultData.result.calculationSteps) {
+          const splitText = doc.splitTextToSize(step, pageWidth - margin * 2);
+          if (y + splitText.length * 11 > pageHeight - 60) {
+            doc.addPage();
+            y = margin;
+          }
+          doc.text(splitText, margin, y);
+          y += splitText.length * 11 + 2;
+        }
+
+        y += 10;
+
+        // Medical Disclaimer in PDF
+        const disclaimer =
+          'Disclaimer: This calculation provides mathematical estimates based on user-entered parameters and standardized population formulas. It is not a medical diagnostic tool or personalized dietary prescription. For clinical health evaluations or personalized nutrition advice, consult a qualified healthcare professional.';
+        const splitDisc = doc.splitTextToSize(disclaimer, pageWidth - margin * 2);
+
+        if (y + splitDisc.length * 10 > pageHeight - 50) {
+          doc.addPage();
+          y = margin;
+        }
+
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(7.5);
+        doc.setTextColor(150, 150, 150);
+        doc.text(splitDisc, margin, y);
+
+        // Add page numbers and footers across all pages
+        const totalPages = doc.internal.pages.length - 1;
+        for (let i = 1; i <= totalPages; i++) {
+          doc.setPage(i);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+          doc.setTextColor(slateColor[0], slateColor[1], slateColor[2]);
+          doc.text('Generated using AIFreecalculator.com', margin, pageHeight - 20);
+          doc.text(`Page ${i} of ${totalPages}`, pageWidth - margin, pageHeight - 20, { align: 'right' });
+        }
+
+        doc.save(`bmr-calculation-${dateStr}.pdf`);
+      } catch (err) {
+        console.error(err);
+        alert('Failed to generate PDF. Please try again.');
+      } finally {
+        if (txtBtn) txtBtn.textContent = 'Download PDF';
+      }
+    });
+  }
+</script>

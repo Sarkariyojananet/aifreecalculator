@@ -1,0 +1,164 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="RCC Footing Steel Calculator - Foundation Mesh BBS & Excavation"
+  description="Calculate RCC isolated pad footing mesh reinforcement steel weight, bar cutting length, pit excavation volume, and concrete requirements."
+  category="Construction"
+  calculatorName="RCC Footing Steel Calculator"
+  slug="rcc-footing-steel-calculator"
+  keywords={['rcc footing steel', 'footing bbs', 'foundation mesh rebar', 'footing excavation', 'pad footing calculation']}
+>
+  <div class="space-y-6">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div>
+        <label for="ft-len" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Footing Length L (m)</label>
+        <input type="number" id="ft-len" value="1.8" step="0.1" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
+      </div>
+      <div>
+        <label for="ft-width" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Footing Width B (m)</label>
+        <input type="number" id="ft-width" value="1.8" step="0.1" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
+      </div>
+      <div>
+        <label for="ft-depth" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Footing Depth D (mm)</label>
+        <input type="number" id="ft-depth" value="450" step="25" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
+      </div>
+
+      <div>
+        <label for="ft-dia" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Mesh Rebar Diameter (mm)</label>
+        <select id="ft-dia" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950">
+          <option value="10">10 mm</option>
+          <option value="12" selected>12 mm</option>
+          <option value="16">16 mm</option>
+        </select>
+      </div>
+      <div>
+        <label for="ft-spacing" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Mesh Spacing c/c (mm)</label>
+        <input type="number" id="ft-spacing" value="150" step="10" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
+      </div>
+      <div>
+        <label for="ft-count" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Number of Footings</label>
+        <input type="number" id="ft-count" value="6" min="1" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
+      </div>
+    </div>
+
+    <!-- Output Box -->
+    <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-950">
+      <div class="border-b border-slate-200/80 pb-4 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Steel for All Footings</span>
+          <div id="res-ft-total-steel" class="mt-1 text-3xl font-black text-blue-600 dark:text-blue-400">-- kg</div>
+        </div>
+        <div class="text-right">
+          <span class="text-xs text-slate-500">Total Concrete:</span>
+          <span id="res-ft-concrete" class="font-bold text-slate-900 dark:text-white ml-1">-- m³</span>
+        </div>
+      </div>
+
+      <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 text-xs">
+        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="text-slate-500 dark:text-slate-400">Steel Per Footing</div>
+          <div id="res-ft-single-steel" class="mt-1 text-base font-bold text-slate-900 dark:text-white">--</div>
+        </div>
+        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="text-slate-500 dark:text-slate-400">Mesh Bar Cut Length</div>
+          <div id="res-ft-cut-len" class="mt-1 text-base font-bold text-emerald-600 dark:text-emerald-400">--</div>
+        </div>
+        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="text-slate-500 dark:text-slate-400">Bars Per Footing (X+Y)</div>
+          <div id="res-ft-bars-count" class="mt-1 text-base font-bold text-slate-900 dark:text-white">-- Bars</div>
+        </div>
+        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="text-slate-500 dark:text-slate-400">Total Pit Excavation</div>
+          <div id="res-ft-excavation" class="mt-1 text-base font-bold text-slate-900 dark:text-white">-- m³</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Fragment slot="content">
+    <h2>Isolated Pad Footing Reinforcement (BBS)</h2>
+    <p>
+      Isolated footings feature a bottom orthogonal mesh mat. Each rebar extends across the footing base and bends upward by <code>(Footing Depth - 2 × Clear Cover)</code> to ensure adequate anchorage bond into the concrete.
+    </p>
+  </Fragment>
+
+  <Fragment slot="faq">
+    <div class="space-y-4 text-xs sm:text-sm">
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open>
+        <summary class="font-bold text-slate-900 dark:text-white cursor-pointer flex justify-between items-center">
+          What is the minimum clear cover required for underground footings?
+          <span class="group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Per IS 456, footings touching ground require a minimum clear cover of 50 mm (when cast against PCC) or 75 mm (if cast directly against earth).
+        </p>
+      </details>
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<script is:inline>
+  const ftL = document.getElementById('ft-len');
+  const ftB = document.getElementById('ft-width');
+  const ftD = document.getElementById('ft-depth');
+  const ftDia = document.getElementById('ft-dia');
+  const ftSp = document.getElementById('ft-spacing');
+  const ftCnt = document.getElementById('ft-count');
+
+  const resTotal = document.getElementById('res-ft-total-steel');
+  const resConc = document.getElementById('res-ft-concrete');
+  const resSingle = document.getElementById('res-ft-single-steel');
+  const resCutLen = document.getElementById('res-ft-cut-len');
+  const resBarsCnt = document.getElementById('res-ft-bars-count');
+  const resExcavation = document.getElementById('res-ft-excavation');
+
+  function calculate() {
+    const L = Math.max(0, parseFloat(ftL.value) || 0);
+    const B = Math.max(0, parseFloat(ftB.value) || 0);
+    const Dmm = Math.max(0, parseFloat(ftD.value) || 450);
+    const d = parseFloat(ftDia.value) || 12;
+    const s = Math.max(10, parseFloat(ftSp.value) || 150);
+    const count = Math.max(1, parseInt(ftCnt.value) || 1);
+    const cover = 50; // 50mm clear cover
+
+    const D = Dmm / 1000;
+    const unitWt = (d * d) / 162;
+
+    const bendUp = Math.max(0, (Dmm - 2 * cover) / 1000);
+    const cutLenX = Math.max(0, L - (2 * cover / 1000) + 2 * bendUp);
+    const cutLenY = Math.max(0, B - (2 * cover / 1000) + 2 * bendUp);
+
+    const nX = s > 0 && B > 0 ? Math.floor((B * 1000) / s) + 1 : 0;
+    const nY = s > 0 && L > 0 ? Math.floor((L * 1000) / s) + 1 : 0;
+
+    const singleFootingSteel = (nX * cutLenX + nY * cutLenY) * unitWt;
+    const totalSteel = singleFootingSteel * count;
+
+    const singleConc = L * B * D;
+    const totalConc = singleConc * count;
+
+    // Pit excavation (0.3m extra working space each side + 1.0m extra depth)
+    const excavation = (L + 0.6) * (B + 0.6) * (D + 1.0) * count;
+
+    resTotal.textContent = `${totalSteel.toFixed(1)} kg (${(totalSteel / 100).toFixed(2)} q)`;
+    resConc.textContent = `${totalConc.toFixed(2)} m³ (${count} Units)`;
+    resSingle.textContent = `${singleFootingSteel.toFixed(1)} kg`;
+    resCutLen.textContent = `${cutLenX.toFixed(2)} m (X-dir)`;
+    resBarsCnt.textContent = `${nX + nY} Bars`;
+    resExcavation.textContent = `${excavation.toFixed(1)} m³`;
+  }
+
+  [ftL, ftB, ftD, ftDia, ftSp, ftCnt].forEach((el) => {
+    el.addEventListener('input', calculate);
+    el.addEventListener('change', calculate);
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        calculate();
+      }
+    });
+  });
+  calculate();
+</script>

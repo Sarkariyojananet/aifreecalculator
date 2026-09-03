@@ -1,0 +1,1191 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="Income Tax Calculator – Estimate Tax for India & US"
+  description="Estimate your income tax based on your selected country, tax year, income, deductions, and applicable tax regime or filing status."
+  category="Finance"
+  calculatorName="Income Tax Calculator"
+  slug="income-tax-calculator"
+  keywords={[
+    'income tax calculator',
+    'income tax calculator ay 2025-26',
+    'income tax calculator new regime',
+    'income tax calculator old vs new',
+    'income tax calculator ay 2026-27',
+    'income tax calculator excel',
+    'federal income tax calculator',
+    'california income tax calculator',
+    'texas income tax calculator'
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- JURISDICTION SELECTOR TABS -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-2.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5 px-1">Select Tax Region</div>
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-semibold scrollbar-thin">
+        <button type="button" class="btn-region-tab active shrink-0 rounded-lg bg-blue-600 px-3.5 py-1.5 font-bold text-white shadow-xs cursor-pointer" data-region="india">🇮🇳 India (AY 2025-26 / 2026-27)</button>
+        <button type="button" class="btn-region-tab shrink-0 rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-region="us_federal">🇺🇸 US Federal</button>
+        <button type="button" class="btn-region-tab shrink-0 rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-region="us_california">🇺🇸 US (California)</button>
+        <button type="button" class="btn-region-tab shrink-0 rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-region="us_texas">🇺🇸 US (Texas 0% State Tax)</button>
+      </div>
+    </div>
+
+    <!-- MAIN CALCULATOR FORM CONTAINER -->
+    <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-blue-50/30 p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/20 sm:p-7">
+      
+      <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+        <div>
+          <h2 id="tax-panel-title" class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🇮🇳</span> India Income Tax Calculator
+          </h2>
+          <p id="tax-panel-desc" class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            Calculate income tax, Section 87A rebate, surcharges, and compare New vs Old Tax Regime slabs.
+          </p>
+        </div>
+      </div>
+
+      <form id="form-tax" class="mt-4 space-y-4" novalidate onsubmit="return false;">
+        
+        <!-- ROW 1: REGION-SPECIFIC SETTINGS (ASSESSMENT YEAR / REGIME / FILING STATUS) -->
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          
+          <!-- India: Assessment Year -->
+          <div id="col-ay-select">
+            <label for="sel-ay" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Assessment Year</label>
+            <select id="sel-ay" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+              <option value="AY 2025-26" selected>AY 2025-26 (FY 2024-25)</option>
+              <option value="AY 2026-27">AY 2026-27 (FY 2025-26)</option>
+            </select>
+          </div>
+
+          <!-- India: Regime Selector -->
+          <div id="col-regime-select">
+            <label for="sel-regime" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Tax Regime</label>
+            <select id="sel-regime" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+              <option value="new" selected>New Tax Regime (Default)</option>
+              <option value="old">Old Tax Regime</option>
+              <option value="compare">Compare Old vs New Regime ⚖️</option>
+            </select>
+          </div>
+
+          <!-- US: Filing Status (Hidden for India) -->
+          <div id="col-filing-status" class="hidden sm:col-span-2">
+            <label for="sel-filing-status" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Filing Status</label>
+            <select id="sel-filing-status" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+              <option value="single" selected>Single</option>
+              <option value="married_joint">Married Filing Jointly</option>
+              <option value="married_separate">Married Filing Separately</option>
+              <option value="head_household">Head of Household</option>
+            </select>
+          </div>
+
+        </div>
+
+        <!-- ROW 2: INCOME DETAILS -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
+            <span>💵</span> Income Details
+          </span>
+          
+          <div id="grid-india-income" class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div>
+              <label for="inp-salary" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Salary Income (₹)</label>
+              <input type="number" id="inp-salary" value="1200000" step="25000" min="0" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="12,00,000" />
+            </div>
+            <div>
+              <label for="inp-house-prop" class="block text-xs font-bold text-slate-700 dark:text-slate-300">House Property (₹)</label>
+              <input type="number" id="inp-house-prop" value="0" step="10000" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="0" />
+            </div>
+            <div>
+              <label for="inp-other-inc" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Other / Business / Capital Gains (₹)</label>
+              <input type="number" id="inp-other-inc" value="0" step="10000" min="0" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="0" />
+            </div>
+          </div>
+
+          <div id="grid-us-income" class="hidden grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label for="inp-us-gross" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Annual Gross Income ($)</label>
+              <input type="number" id="inp-us-gross" value="85000" step="1000" min="0" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="85,000" />
+            </div>
+            <div>
+              <label for="inp-us-itemized" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Itemized Deductions ($ optional)</label>
+              <input type="number" id="inp-us-itemized" value="0" step="500" min="0" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="Standard deduction applies if 0" />
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ROW 3: DEDUCTIONS (FOR INDIA OLD REGIME & COMPARE MODE) -->
+        <div id="box-india-deductions" class="hidden rounded-2xl border border-blue-200 bg-blue-50/30 p-4 dark:border-blue-900/60 dark:bg-blue-950/20 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
+              <span>🛡️</span> Old Regime Deductions & Exemptions
+            </span>
+            <span class="text-[11px] font-semibold text-slate-500">Standard Deduction ₹50,000 applied</span>
+          </div>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-4">
+            <div>
+              <label for="inp-80c" class="block text-xs font-bold text-slate-700 dark:text-slate-300">80C (EPF/PPF/ELSS - Max 1.5L)</label>
+              <input type="number" id="inp-80c" value="150000" step="5000" min="0" max="150000" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+            <div>
+              <label for="inp-80d" class="block text-xs font-bold text-slate-700 dark:text-slate-300">80D (Health Insurance)</label>
+              <input type="number" id="inp-80d" value="25000" step="2500" min="0" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+            <div>
+              <label for="inp-24b" class="block text-xs font-bold text-slate-700 dark:text-slate-300">24(b) (Home Loan Int - Max 2L)</label>
+              <input type="number" id="inp-24b" value="0" step="5000" min="0" max="200000" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+            <div>
+              <label for="inp-hra" class="block text-xs font-bold text-slate-700 dark:text-slate-300">HRA / Other Exemptions (₹)</label>
+              <input type="number" id="inp-hra" value="0" step="5000" min="0" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 pt-2">
+          <button type="submit" id="btn-calc-tax" class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer">
+            Calculate Tax →
+          </button>
+          <button type="button" id="btn-clear-tax" class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer">
+            Clear All (✕)
+          </button>
+        </div>
+
+        <p id="err-tax" class="hidden rounded-xl border border-red-200 bg-red-50 p-2.5 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300" role="alert" aria-live="polite"></p>
+
+      </form>
+
+      <!-- RESULTS PRESENTATION SECTION (Hidden Initially) -->
+      <div id="tax-results-section" class="hidden mt-6 space-y-5">
+        
+        <!-- 1. SINGLE REGIME RESULT CARD -->
+        <div id="card-single-result" class="overflow-hidden rounded-3xl border border-emerald-200 bg-linear-to-br from-white via-emerald-50/40 to-emerald-100/50 p-5 shadow-lg shadow-emerald-500/5 dark:border-emerald-900/60 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/30 sm:p-7">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-emerald-200/80 pb-4 dark:border-slate-800">
+            <div>
+              <span id="res-badge-label" class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Estimated Total Tax Liability</span>
+              <div id="res-total-tax" class="mt-1 text-4xl sm:text-5xl font-black text-emerald-600 dark:text-emerald-400">₹ 71,500</div>
+            </div>
+            <div class="sm:text-right">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Effective Tax Rate:</span>
+              <div id="res-effective-rate" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">5.96%</div>
+            </div>
+          </div>
+
+          <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Gross Total Income</div>
+              <div id="res-gross-income" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">₹ 12,00,000</div>
+            </div>
+            <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Total Deductions</div>
+              <div id="res-total-deduct" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">₹ 75,000</div>
+            </div>
+            <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Taxable Income</div>
+              <div id="res-taxable-income" class="mt-1 text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">₹ 11,25,000</div>
+            </div>
+            <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Net Take-Home</div>
+              <div id="res-net-takehome" class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">₹ 11,28,500</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. OLD VS NEW COMPARISON CARD (Visible in Compare Mode) -->
+        <div id="card-comparison-result" class="hidden space-y-4">
+          <div class="overflow-hidden rounded-3xl border border-blue-200 bg-white p-5 dark:border-blue-900/60 dark:bg-slate-900 sm:p-6 shadow-md">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200 pb-3 dark:border-slate-800">
+              <div>
+                <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <span>⚖️</span> Old vs New Tax Regime Comparison
+                </h3>
+                <p id="txt-comparison-recommendation" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                  Based on the entered deductions, New Tax Regime saves you ₹40,300 in taxes!
+                </p>
+              </div>
+            </div>
+
+            <!-- Comparison Table -->
+            <div class="overflow-x-auto mt-4">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold">
+                  <tr>
+                    <th class="p-2.5 rounded-l-lg">Parameter</th>
+                    <th class="p-2.5 text-right font-black text-blue-600 dark:text-blue-400">New Tax Regime</th>
+                    <th class="p-2.5 text-right font-black text-slate-700 dark:text-slate-300 rounded-r-lg">Old Tax Regime</th>
+                  </tr>
+                </thead>
+                <tbody id="cmp-tbody" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                  <!-- Injected by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. SLAB-BY-SLAB BREAKDOWN TABLE -->
+        <div id="card-slab-breakdown" class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <span>📑</span> Slab-Wise Tax Calculation Breakdown
+            </h3>
+            <div class="flex flex-wrap items-center gap-2 text-xs font-bold">
+              <button type="button" id="btn-export-excel" class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 px-3 py-1 text-xs font-bold text-white shadow-xs transition active:scale-[0.98] cursor-pointer" title="Download calculation as Excel/CSV">
+                <span>📊</span> <span id="txt-btn-excel">Download Excel</span>
+              </button>
+              <button type="button" id="btn-tax-download-pdf" class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 px-3 py-1 text-xs font-bold text-white shadow-xs transition active:scale-[0.98] cursor-pointer" title="Download calculation as PDF">
+                <span>📄</span> <span id="txt-btn-tax-pdf">Download PDF</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto max-h-96 scrollbar-thin">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold sticky top-0">
+                <tr>
+                  <th class="p-2.5 rounded-l-lg">Income Slab</th>
+                  <th class="p-2.5 text-right">Taxable in Slab</th>
+                  <th class="p-2.5 text-right">Tax Rate</th>
+                  <th class="p-2.5 text-right rounded-r-lg font-bold text-slate-900 dark:text-white">Tax Amount</th>
+                </tr>
+              </thead>
+              <tbody id="slab-tbody" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                <!-- Injected by JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- EDUCATIONAL SEO ARTICLE SLOT (Styled matching age.astro) -->
+  <Fragment slot="content">
+    <section class="tax-content">
+      <h2>How to Use This Income Tax Calculator</h2>
+      <p>
+        Estimating your annual tax liability is straightforward with this multi-jurisdiction planning tool:
+      </p>
+      <ol>
+        <li><strong>Select your tax region:</strong> Choose between India (AY 2025-26 / 2026-27), US Federal, US California, or US Texas.</li>
+        <li><strong>Select the tax year or assessment year:</strong> Ensure you are filing for the appropriate fiscal cycle.</li>
+        <li><strong>Select the regime or filing status:</strong> In India, choose New Regime, Old Regime, or Compare Old vs New. In the US, pick your filing status (Single, MFJ, MFS, or HoH).</li>
+        <li><strong>Enter your income details:</strong> Input your annual salary, business revenue, house property income, capital gains, or other sources.</li>
+        <li><strong>Add eligible deductions:</strong> Enter your Section 80C, 80D, Section 24(b) home loan interest, or HRA exemptions if calculating under the Old Regime.</li>
+        <li><strong>Click Calculate Tax:</strong> View your estimated taxable income, slab-by-slab breakdown, rebate under Section 87A, surcharge, and 4% cess.</li>
+        <li><strong>Compare Regimes:</strong> Review side-by-side tax differences to identify which regime offers lower overall tax liability.</li>
+        <li><strong>Download Summary:</strong> Click <em>Download Excel</em> or <em>Download PDF</em> to save your calculations for tax filing preparations.</li>
+      </ol>
+
+      <h2>Example Income Tax Calculation</h2>
+      <p>
+        Consider an illustrative example of a salaried professional in India for <strong>Assessment Year 2025-26</strong>:
+      </p>
+
+      <div class="my-4 rounded-2xl border border-slate-200 bg-slate-50 p-5 dark:border-slate-800 dark:bg-slate-900/60 text-xs sm:text-sm space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 font-semibold text-slate-700 dark:text-slate-300">
+          <div><span class="text-slate-500 block text-xs">Annual Gross Salary:</span> ₹12,00,000</div>
+          <div><span class="text-slate-500 block text-xs">Assessment Year:</span> AY 2025-26</div>
+          <div><span class="text-slate-500 block text-xs">Eligible 80C & 80D:</span> ₹1,75,000</div>
+        </div>
+        <hr class="border-slate-200 dark:border-slate-800 my-1" />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="p-3 rounded-xl border border-blue-200 bg-blue-50/50 dark:border-blue-900/40 dark:bg-blue-950/20">
+            <span class="font-bold text-blue-700 dark:text-blue-300 block text-xs uppercase mb-1">New Tax Regime</span>
+            <div>Gross Income: <strong>₹12,00,000</strong></div>
+            <div>Standard Deduction: <strong>-₹75,000</strong></div>
+            <div>Taxable Income: <strong>₹11,25,000</strong></div>
+            <div>Slab Tax (5%, 10%, 15%): <strong>₹68,750</strong></div>
+            <div>Health & Education Cess (4%): <strong>₹2,750</strong></div>
+            <div class="mt-1 text-sm font-black text-slate-900 dark:text-white">Total Estimated Tax: ₹71,500</div>
+          </div>
+          <div class="p-3 rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+            <span class="font-bold text-slate-700 dark:text-slate-300 block text-xs uppercase mb-1">Old Tax Regime</span>
+            <div>Gross Income: <strong>₹12,00,000</strong></div>
+            <div>Deductions (Std ₹50k + 80C/80D ₹1.75L): <strong>-₹2,25,000</strong></div>
+            <div>Taxable Income: <strong>₹9,75,000</strong></div>
+            <div>Slab Tax (5%, 20%): <strong>₹1,07,500</strong></div>
+            <div>Health & Education Cess (4%): <strong>₹4,300</strong></div>
+            <div class="mt-1 text-sm font-black text-slate-900 dark:text-white">Total Estimated Tax: ₹1,11,800</div>
+          </div>
+        </div>
+        <div class="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+          Result: The New Tax Regime results in an estimated tax savings of ₹40,300 for this taxpayer.
+        </div>
+      </div>
+      <p class="text-xs text-slate-500 italic">
+        * This is an illustrative example. Actual tax liability may vary based on exact salary components, metro HRA rules, and individual investment declarations.
+      </p>
+
+      <h2>What Is an Income Tax Calculator?</h2>
+      <p>
+        An <strong>income tax calculator</strong> is an online financial utility that computes your estimated income tax liability by applying statutory tax slabs, standard deductions, exemptions, rebates, surcharges, and health/education cesses according to the laws of your chosen tax jurisdiction.
+      </p>
+
+      <h2>How to Calculate Income Tax</h2>
+      <p>
+        Tax computation follows a structured statutory formula across jurisdictions:
+      </p>
+      <ul>
+        <li><strong>Gross Total Income:</strong> Sum of all taxable revenues (salary, business, house property, capital gains, interest).</li>
+        <li><strong>Minus Eligible Deductions:</strong> Subtract allowable statutory deductions (such as standard deductions, Section 80C/80D in India, or 401(k) / standard deductions in the US).</li>
+        <li><strong>Equals Taxable Net Income:</strong> The amount subject to progressive tax brackets.</li>
+        <li><strong>Slab-Wise Tax:</strong> Calculated progressively through each income bracket.</li>
+        <li><strong>Less Rebate:</strong> Apply statutory relief (such as Section 87A rebate in India).</li>
+        <li><strong>Plus Surcharge & Cess:</strong> Add applicable higher-income surcharges and statutory cesses (4% Health & Education Cess in India).</li>
+      </ul>
+
+      <h2>New Tax Regime vs Old Tax Regime</h2>
+      <p>
+        In India, taxpayers have the flexibility to evaluate their annual taxes under two distinct frameworks:
+      </p>
+      <ul>
+        <li><strong>New Tax Regime (Section 115BAC):</strong> Features lower progressive slab rates and a higher standard deduction of ₹75,000 for salaried individuals, with a complete tax rebate up to ₹7,00,000 taxable income. However, most Chapter VI-A deductions (80C, 80D, HRA) are disallowed.</li>
+        <li><strong>Old Tax Regime:</strong> Features higher slab rates but allows extensive itemized exemptions, including Section 80C (up to ₹1.5 Lakh), 80D (health insurance), Section 24(b) (home loan interest up to ₹2 Lakh), HRA, and LTA.</li>
+      </ul>
+
+      <h2>Understanding AY 2025-26 and AY 2026-27</h2>
+      <p>
+        In the Indian taxation system:
+      </p>
+      <ul>
+        <li><strong>Financial Year (FY):</strong> The year in which you earn your income (April 1 to March 31). For instance, FY 2024-25 spans April 1, 2024 to March 31, 2025.</li>
+        <li><strong>Assessment Year (AY):</strong> The immediate following year in which your income earned during the FY is evaluated and taxed. For income earned in FY 2024-25, the Assessment Year is <strong>AY 2025-26</strong>. Similarly, income earned in FY 2025-26 is evaluated in <strong>AY 2026-27</strong>.</li>
+      </ul>
+
+      <h2>How Tax Deductions Affect Taxable Income</h2>
+      <p>
+        Tax deductions reduce your gross income before tax brackets are applied. Under progressive taxation, deductions save money at your highest marginal tax slab. For example, claiming a ₹1,50,000 deduction under Section 80C in the 30% slab saves ₹45,000 in base tax plus cess.
+      </p>
+
+      <h2>Federal and State Income Tax in the United States</h2>
+      <p>
+        In the United States, taxpayers file annual Federal returns with the Internal Revenue Service (IRS) and may also be subject to state income taxes:
+      </p>
+      <ul>
+        <li><strong>Federal Income Tax:</strong> Progressive rates ranging from 10% to 37% based on filing status (Single, Married Filing Jointly, Head of Household).</li>
+        <li><strong>California State Income Tax:</strong> Progressive state income tax rates ranging from 1% up to 12.3% (plus a 1% mental health surcharge for income exceeding $1 Million).</li>
+        <li><strong>Texas:</strong> Texas imposes <strong>0% individual state income tax</strong>, meaning residents only calculate and pay Federal income tax.</li>
+      </ul>
+
+      <h2>Common Mistakes When Using an Income Tax Calculator</h2>
+      <ul>
+        <li><strong>Confusing Financial Year with Assessment Year:</strong> Selecting AY 2025-26 when looking for FY 2025-26 rules.</li>
+        <li><strong>Assuming All Deductions Apply in the New Regime:</strong> Section 80C and 80D cannot be claimed under the New Tax Regime.</li>
+        <li><strong>Overlooking Section 87A Marginal Relief:</strong> Not factoring in full rebate eligibility up to ₹7 Lakh taxable income.</li>
+        <li><strong>Ignoring Other Income Sources:</strong> Forgetting savings bank interest, fixed deposit interest, or dividend income.</li>
+        <li><strong>Treating Estimates as Final Assessments:</strong> Actual tax liability depends on TDS credits, Form 26AS, and AIS reconciliation.</li>
+      </ul>
+
+      <h2>Important Tax Calculation Assumptions</h2>
+      <p>
+        Please review these key principles when using this calculator:
+      </p>
+      <ul>
+        <li><strong>Educational Tool Only:</strong> This calculator provides simulated mathematical estimates based on statutory tax slabs. It does not provide certified legal or tax advisory services.</li>
+        <li><strong>Individual Variations:</strong> Calculations assume standard resident individuals under 60 years of age unless specific exemptions are declared.</li>
+        <li><strong>Regulatory Updates:</strong> Tax slabs and rebate thresholds follow verified provisions of Budget announcements. Always verify final filings with the official Income Tax e-Filing Portal or a qualified Chartered Accountant / CPA.</li>
+      </ul>
+    </section>
+  </Fragment>
+
+  <!-- FAQ SECTION SLOT (EXACTLY 7 FAQs AS REQUIRED) -->
+  <Fragment slot="faq">
+    <div class="space-y-4 text-xs sm:text-sm">
+      
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open>
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            1. How does an income tax calculator work?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          An income tax calculator takes your gross income, deducts eligible statutory exemptions (such as standard deductions or Chapter VI-A investments), and applies progressive tax slabs, Section 87A rebates, surcharges, and statutory cesses to determine your estimated tax liability.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            2. What is the difference between the old and new tax regime?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          The New Tax Regime provides lower tax slab rates, a ₹75,000 standard deduction, and full rebate up to ₹7 Lakh taxable income, but disallows itemized deductions. The Old Tax Regime has higher tax slabs but permits deductions like 80C, 80D, HRA, and home loan interest.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            3. What is the difference between a financial year and an assessment year?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          A Financial Year (FY) is the 12-month period in which you earn income (e.g. FY 2024-25). The Assessment Year (AY) is the immediately following year (e.g. AY 2025-26) in which that earned income is assessed and filed for taxation.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            4. How do I use the income tax calculator for AY 2025-26 or AY 2026-27?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Select "India" as your region, choose "AY 2025-26" or "AY 2026-27" from the Assessment Year dropdown, enter your salary and income sources, add eligible deductions, and click "Calculate Tax" or "Compare Tax Regimes".
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            5. Can I compare the old and new tax regimes?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Yes. Choose "Compare Old vs New Regime" in the tax regime dropdown. The calculator generates a side-by-side breakdown of gross income, deductions, slab taxes, and highlights the regime with the lowest estimated tax.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            6. Can I download my income tax calculation in Excel or PDF format?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Yes. After calculating your taxes, click "Download Excel" to save a structured spreadsheet (.csv) or "Download PDF" to export a professional branded summary report.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            7. Does this calculator provide an exact final tax amount?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          The calculator provides highly accurate mathematical estimates based on verified statutory tax slabs. Final payable tax or refunds may depend on specific tax credits, advance tax payments, TDS reconciliations, and individual filing nuances.
+        </p>
+      </details>
+
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<style>
+  .tax-content h2 {
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.3;
+    color: #0f172a;
+  }
+
+  .tax-content h2:first-child {
+    margin-top: 0;
+  }
+
+  .tax-content h3 {
+    margin-top: 1.75rem;
+    margin-bottom: 0.625rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .tax-content p {
+    margin: 0 0 1rem;
+    line-height: 1.75;
+    color: #475569;
+  }
+
+  .tax-content ul {
+    margin: 0.75rem 0 1.5rem;
+    padding-left: 1.5rem;
+    list-style: disc;
+  }
+
+  .tax-content ol {
+    margin: 0.75rem 0 1.5rem;
+    padding-left: 1.5rem;
+    list-style: decimal;
+  }
+
+  .tax-content li + li {
+    margin-top: 0.5rem;
+  }
+
+  :global(.dark) .tax-content h2,
+  :global(.dark) .tax-content h3 {
+    color: #f8fafc;
+  }
+
+  :global(.dark) .tax-content p {
+    color: #cbd5e1;
+  }
+</style>
+
+<!-- FAQ Schema JSON-LD (Strictly matching the 7 FAQs) -->
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How does an income tax calculator work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "An income tax calculator takes your gross income, deducts eligible statutory exemptions (such as standard deductions or Chapter VI-A investments), and applies progressive tax slabs, Section 87A rebates, surcharges, and statutory cesses to determine your estimated tax liability."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between the old and new tax regime?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The New Tax Regime provides lower tax slab rates, a ₹75,000 standard deduction, and full rebate up to ₹7 Lakh taxable income, but disallows itemized deductions. The Old Tax Regime has higher tax slabs but permits deductions like 80C, 80D, HRA, and home loan interest."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between a financial year and an assessment year?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A Financial Year (FY) is the 12-month period in which you earn income (e.g. FY 2024-25). The Assessment Year (AY) is the immediately following year (e.g. AY 2025-26) in which that earned income is assessed and filed for taxation."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I use the income tax calculator for AY 2025-26 or AY 2026-27?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Select 'India' as your region, choose 'AY 2025-26' or 'AY 2026-27' from the Assessment Year dropdown, enter your salary and income sources, add eligible deductions, and click 'Calculate Tax' or 'Compare Tax Regimes'."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I compare the old and new tax regimes?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Choose 'Compare Old vs New Regime' in the tax regime dropdown. The calculator generates a side-by-side breakdown of gross income, deductions, slab taxes, and highlights the regime with the lowest estimated tax."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I download my income tax calculation in Excel or PDF format?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. After calculating your taxes, click 'Download Excel' to save a structured spreadsheet (.csv) or 'Download PDF' to export a professional branded summary report."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does this calculator provide an exact final tax amount?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The calculator provides highly accurate mathematical estimates based on verified statutory tax slabs. Final payable tax or refunds may depend on specific tax credits, advance tax payments, TDS reconciliations, and individual filing nuances."
+      }
+    }
+  ]
+})} />
+
+<!-- CLIENT-SIDE SCRIPT LOGIC -->
+<script is:inline>
+  // State
+  let currentRegion = 'india'; // 'india' | 'us_federal' | 'us_california' | 'us_texas'
+  let lastTaxResult = null; // Single result or comparison result
+
+  // DOM Elements
+  const regionTabs = document.querySelectorAll('.btn-region-tab');
+  const taxPanelTitle = document.getElementById('tax-panel-title');
+  const taxPanelDesc = document.getElementById('tax-panel-desc');
+
+  const colAySelect = document.getElementById('col-ay-select');
+  const colRegimeSelect = document.getElementById('col-regime-select');
+  const colFilingStatus = document.getElementById('col-filing-status');
+
+  const selAy = document.getElementById('sel-ay');
+  const selRegime = document.getElementById('sel-regime');
+  const selFilingStatus = document.getElementById('sel-filing-status');
+
+  const gridIndiaIncome = document.getElementById('grid-india-income');
+  const gridUsIncome = document.getElementById('grid-us-income');
+  const boxIndiaDeductions = document.getElementById('box-india-deductions');
+
+  const inpSalary = document.getElementById('inp-salary');
+  const inpHouseProp = document.getElementById('inp-house-prop');
+  const inpOtherInc = document.getElementById('inp-other-inc');
+
+  const inpUsGross = document.getElementById('inp-us-gross');
+  const inpUsItemized = document.getElementById('inp-us-itemized');
+
+  const inp80c = document.getElementById('inp-80c');
+  const inp80d = document.getElementById('inp-80d');
+  const inp24b = document.getElementById('inp-24b');
+  const inpHra = document.getElementById('inp-hra');
+
+  const btnCalcTax = document.getElementById('btn-calc-tax');
+  const btnClearTax = document.getElementById('btn-clear-tax');
+  const errTax = document.getElementById('err-tax');
+
+  // Results Elements
+  const taxResultsSection = document.getElementById('tax-results-section');
+  const cardSingleResult = document.getElementById('card-single-result');
+  const resBadgeLabel = document.getElementById('res-badge-label');
+  const resTotalTax = document.getElementById('res-total-tax');
+  const resEffectiveRate = document.getElementById('res-effective-rate');
+  const resGrossIncome = document.getElementById('res-gross-income');
+  const resTotalDeduct = document.getElementById('res-total-deduct');
+  const resTaxableIncome = document.getElementById('res-taxable-income');
+  const resNetTakehome = document.getElementById('res-net-takehome');
+
+  const cardComparisonResult = document.getElementById('card-comparison-result');
+  const txtComparisonRec = document.getElementById('txt-comparison-recommendation');
+  const cmpTbody = document.getElementById('cmp-tbody');
+
+  const slabTbody = document.getElementById('slab-tbody');
+  const btnExportExcel = document.getElementById('btn-export-excel');
+  const btnTaxDownloadPdf = document.getElementById('btn-tax-download-pdf');
+  const txtBtnTaxPdf = document.getElementById('txt-btn-tax-pdf');
+
+  // Currency Formatter
+  function formatCurrency(val, cur = '₹') {
+    if (cur === '₹') {
+      return `₹ ${Math.round(val).toLocaleString('en-IN')}`;
+    }
+    return `$ ${Math.round(val).toLocaleString('en-US')}`;
+  }
+
+  // Switch Region Handler
+  function switchRegion(region) {
+    currentRegion = region;
+    regionTabs.forEach((btn) => {
+      if (btn.getAttribute('data-region') === region) {
+        btn.className = 'btn-region-tab active shrink-0 rounded-lg bg-blue-600 px-3.5 py-1.5 font-bold text-white shadow-xs cursor-pointer';
+      } else {
+        btn.className = 'btn-region-tab shrink-0 rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer';
+      }
+    });
+
+    if (region === 'india') {
+      taxPanelTitle.innerHTML = '<span>🇮🇳</span> India Income Tax Calculator';
+      taxPanelDesc.textContent = 'Calculate income tax, Section 87A rebate, surcharges, and compare New vs Old Tax Regime slabs.';
+      colAySelect.classList.remove('hidden');
+      colRegimeSelect.classList.remove('hidden');
+      colFilingStatus.classList.add('hidden');
+      gridIndiaIncome.classList.remove('hidden');
+      gridUsIncome.classList.add('hidden');
+      updateIndiaDeductionVisibility();
+    } else {
+      let usLabel = 'US Federal';
+      if (region === 'us_california') usLabel = 'US (California)';
+      else if (region === 'us_texas') usLabel = 'US (Texas 0% State)';
+
+      taxPanelTitle.innerHTML = `<span>🇺🇸</span> ${usLabel} Income Tax Calculator`;
+      taxPanelDesc.textContent = 'Estimate US Federal and state income taxes based on filing status and standard deductions.';
+      colAySelect.classList.add('hidden');
+      colRegimeSelect.classList.add('hidden');
+      colFilingStatus.classList.remove('hidden');
+      gridIndiaIncome.classList.add('hidden');
+      gridUsIncome.classList.remove('hidden');
+      boxIndiaDeductions.classList.add('hidden');
+    }
+  }
+
+  function updateIndiaDeductionVisibility() {
+    if (currentRegion === 'india') {
+      if (selRegime.value === 'old' || selRegime.value === 'compare') {
+        boxIndiaDeductions.classList.remove('hidden');
+      } else {
+        boxIndiaDeductions.classList.add('hidden');
+      }
+    }
+  }
+
+  selRegime.addEventListener('change', updateIndiaDeductionVisibility);
+
+  regionTabs.forEach((btn) => {
+    btn.addEventListener('click', () => switchRegion(btn.getAttribute('data-region')));
+  });
+
+  // Calculate Tax Execution
+  function executeTaxCalculation() {
+    errTax.classList.add('hidden');
+
+    if (currentRegion === 'india') {
+      const salary = parseFloat(inpSalary.value) || 0;
+      const house = parseFloat(inpHouseProp.value) || 0;
+      const other = parseFloat(inpOtherInc.value) || 0;
+      const gross = salary + house + other;
+
+      if (gross < 0) {
+        errTax.textContent = 'Gross income cannot be negative.';
+        errTax.classList.remove('hidden');
+        taxResultsSection.classList.add('hidden');
+        return;
+      }
+
+      const ay = selAy.value;
+      const regimeMode = selRegime.value;
+
+      const c80 = Math.min(150000, parseFloat(inp80c.value) || 0);
+      const d80 = Math.min(100000, parseFloat(inp80d.value) || 0);
+      const b24 = Math.min(200000, parseFloat(inp24b.value) || 0);
+      const hra = parseFloat(inpHra.value) || 0;
+
+      // New Regime Slabs & Calculation
+      const newStd = salary > 0 ? Math.min(salary, 75000) : 0;
+      const newTaxable = Math.max(0, gross - newStd);
+      let newTaxBefore = 0;
+      const newSlabs = [];
+
+      const newSlabDefs = [
+        { min: 0, max: 300000, rate: 0, label: '₹0 to ₹3,00,000' },
+        { min: 300000, max: 700000, rate: 5, label: '₹3,00,001 to ₹7,00,000' },
+        { min: 700000, max: 1000000, rate: 10, label: '₹7,00,001 to ₹10,00,000' },
+        { min: 1000000, max: 1200000, rate: 15, label: '₹10,00,001 to ₹12,00,000' },
+        { min: 1200000, max: 1500000, rate: 20, label: '₹12,00,001 to ₹15,00,000' },
+        { min: 1500000, max: Infinity, rate: 30, label: 'Above ₹15,00,000' },
+      ];
+
+      for (const s of newSlabDefs) {
+        if (newTaxable > s.min) {
+          const tInSlab = Math.min(newTaxable - s.min, s.max - s.min);
+          const sTax = (tInSlab * s.rate) / 100;
+          newTaxBefore += sTax;
+          newSlabs.push({ slab: s.label, taxable: tInSlab, rate: s.rate, tax: Math.round(sTax) });
+        } else {
+          newSlabs.push({ slab: s.label, taxable: 0, rate: s.rate, tax: 0 });
+        }
+      }
+
+      let newRebate = 0;
+      if (newTaxable <= 700000) newRebate = newTaxBefore;
+      const newTaxAfterRebate = Math.max(0, newTaxBefore - newRebate);
+      const newCess = Math.round(newTaxAfterRebate * 0.04);
+      const newTotalTax = Math.round(newTaxAfterRebate + newCess);
+
+      // Old Regime Slabs & Calculation
+      const oldStd = salary > 0 ? Math.min(salary, 50000) : 0;
+      const oldTotalDeduct = oldStd + c80 + d80 + b24 + hra;
+      const oldTaxable = Math.max(0, gross - oldTotalDeduct);
+      let oldTaxBefore = 0;
+      const oldSlabs = [];
+
+      const oldSlabDefs = [
+        { min: 0, max: 250000, rate: 0, label: '₹0 to ₹2,50,000' },
+        { min: 250000, max: 500000, rate: 5, label: '₹2,50,001 to ₹5,00,000' },
+        { min: 500000, max: 1000000, rate: 20, label: '₹5,00,001 to ₹10,00,000' },
+        { min: 1000000, max: Infinity, rate: 30, label: 'Above ₹10,00,000' },
+      ];
+
+      for (const s of oldSlabDefs) {
+        if (oldTaxable > s.min) {
+          const tInSlab = Math.min(oldTaxable - s.min, s.max - s.min);
+          const sTax = (tInSlab * s.rate) / 100;
+          oldTaxBefore += sTax;
+          oldSlabs.push({ slab: s.label, taxable: tInSlab, rate: s.rate, tax: Math.round(sTax) });
+        } else {
+          oldSlabs.push({ slab: s.label, taxable: 0, rate: s.rate, tax: 0 });
+        }
+      }
+
+      let oldRebate = 0;
+      if (oldTaxable <= 500000) oldRebate = Math.min(12500, oldTaxBefore);
+      const oldTaxAfterRebate = Math.max(0, oldTaxBefore - oldRebate);
+      const oldCess = Math.round(oldTaxAfterRebate * 0.04);
+      const oldTotalTax = Math.round(oldTaxAfterRebate + oldCess);
+
+      // Save calculation state
+      lastTaxResult = {
+        isIndia: true,
+        gross,
+        ay,
+        regimeMode,
+        new: { totalTax: newTotalTax, taxable: newTaxable, deduct: newStd, cess: newCess, rebate: newRebate, slabs: newSlabs },
+        old: { totalTax: oldTotalTax, taxable: oldTaxable, deduct: oldTotalDeduct, cess: oldCess, rebate: oldRebate, slabs: oldSlabs },
+      };
+
+      if (regimeMode === 'compare') {
+        cardComparisonResult.classList.remove('hidden');
+        const savings = Math.abs(oldTotalTax - newTotalTax);
+        const lower = newTotalTax <= oldTotalTax ? 'New Tax Regime' : 'Old Tax Regime';
+        txtComparisonRec.textContent = `Based on your declarations, ${lower} offers estimated tax savings of ₹ ${savings.toLocaleString('en-IN')}!`;
+
+        cmpTbody.innerHTML = `
+          <tr><td class="p-2.5 font-bold">Gross Total Income</td><td class="p-2.5 text-right font-bold text-blue-600">${formatCurrency(gross)}</td><td class="p-2.5 text-right font-bold">${formatCurrency(gross)}</td></tr>
+          <tr><td class="p-2.5">Total Deductions</td><td class="p-2.5 text-right">${formatCurrency(newStd)}</td><td class="p-2.5 text-right">${formatCurrency(oldTotalDeduct)}</td></tr>
+          <tr><td class="p-2.5 font-bold">Taxable Income</td><td class="p-2.5 text-right font-bold text-blue-600">${formatCurrency(newTaxable)}</td><td class="p-2.5 text-right font-bold">${formatCurrency(oldTaxable)}</td></tr>
+          <tr><td class="p-2.5">Section 87A Rebate</td><td class="p-2.5 text-right">${formatCurrency(newRebate)}</td><td class="p-2.5 text-right">${formatCurrency(oldRebate)}</td></tr>
+          <tr><td class="p-2.5">Health & Education Cess (4%)</td><td class="p-2.5 text-right">${formatCurrency(newCess)}</td><td class="p-2.5 text-right">${formatCurrency(oldCess)}</td></tr>
+          <tr class="bg-slate-50 dark:bg-slate-800/80 font-black text-sm"><td class="p-2.5">Total Estimated Tax</td><td class="p-2.5 text-right text-emerald-600">${formatCurrency(newTotalTax)}</td><td class="p-2.5 text-right text-slate-900 dark:text-white">${formatCurrency(oldTotalTax)}</td></tr>
+        `;
+
+        // Default Single card to the recommended regime
+        const chosen = newTotalTax <= oldTotalTax ? lastTaxResult.new : lastTaxResult.old;
+        const chosenLabel = newTotalTax <= oldTotalTax ? 'New Tax Regime (Recommended)' : 'Old Tax Regime (Recommended)';
+        renderSingleCard(chosen.totalTax, gross, chosen.deduct, chosen.taxable, chosenLabel, '₹');
+        renderSlabTable(chosen.slabs, '₹');
+      } else {
+        cardComparisonResult.classList.add('hidden');
+        const activeData = regimeMode === 'new' ? lastTaxResult.new : lastTaxResult.old;
+        const label = regimeMode === 'new' ? 'New Tax Regime' : 'Old Tax Regime';
+        renderSingleCard(activeData.totalTax, gross, activeData.deduct, activeData.taxable, label, '₹');
+        renderSlabTable(activeData.slabs, '₹');
+      }
+    } else {
+      // US Tax Calculation
+      const gross = parseFloat(inpUsGross.value) || 0;
+      const itemized = parseFloat(inpUsItemized.value) || 0;
+      const status = selFilingStatus.value;
+
+      const stdDeductions = { single: 15000, married_joint: 30000, married_separate: 15000, head_household: 22500 };
+      const totalDeduct = Math.max(stdDeductions[status] || 15000, itemized);
+      const taxable = Math.max(0, gross - totalDeduct);
+
+      // US Federal Brackets
+      const fedBrackets = [
+        { rate: 10, single: [0, 11925], married_joint: [0, 23850], married_separate: [0, 11925], head_household: [0, 17000] },
+        { rate: 12, single: [11925, 48475], married_joint: [23850, 96950], married_separate: [11925, 48475], head_household: [17000, 64850] },
+        { rate: 22, single: [48475, 103350], married_joint: [96950, 206700], married_separate: [48475, 103350], head_household: [64850, 103350] },
+        { rate: 24, single: [103350, 197300], married_joint: [206700, 394600], married_separate: [103350, 197300], head_household: [103350, 197300] },
+        { rate: 32, single: [197300, 250525], married_joint: [394600, 501050], married_separate: [197300, 250525], head_household: [197300, 250525] },
+        { rate: 35, single: [250525, 626350], married_joint: [501050, 751600], married_separate: [250525, 375800], head_household: [250525, 626350] },
+        { rate: 37, single: [626350, Infinity], married_joint: [751600, Infinity], married_separate: [375800, Infinity], head_household: [626350, Infinity] },
+      ];
+
+      let fedTax = 0;
+      const usSlabs = [];
+      for (const b of fedBrackets) {
+        const [min, max] = b[status];
+        if (taxable > min) {
+          const tInSlab = Math.min(taxable - min, max - min);
+          const sTax = (tInSlab * b.rate) / 100;
+          fedTax += sTax;
+          usSlabs.push({
+            slab: `$${min.toLocaleString()} to ${max === Infinity ? 'Above' : '$' + max.toLocaleString()}`,
+            taxable: tInSlab,
+            rate: b.rate,
+            tax: Math.round(sTax),
+          });
+        } else {
+          usSlabs.push({
+            slab: `$${min.toLocaleString()} to ${max === Infinity ? 'Above' : '$' + max.toLocaleString()}`,
+            taxable: 0,
+            rate: b.rate,
+            tax: 0,
+          });
+        }
+      }
+
+      let stateTax = 0;
+      if (currentRegion === 'us_california') {
+        const caStd = status === 'married_joint' ? 11080 : 5540;
+        const caTaxable = Math.max(0, gross - caStd);
+        if (caTaxable > 1000000) stateTax = 100000 + (caTaxable - 1000000) * 0.133;
+        else if (caTaxable > 350000) stateTax = 30000 + (caTaxable - 350000) * 0.113;
+        else if (caTaxable > 100000) stateTax = 6000 + (caTaxable - 100000) * 0.093;
+        else if (caTaxable > 50000) stateTax = 1500 + (caTaxable - 50000) * 0.06;
+        else stateTax = caTaxable * 0.02;
+      }
+
+      const totalTax = Math.round(fedTax + stateTax);
+      lastTaxResult = {
+        isIndia: false,
+        gross,
+        status,
+        totalTax,
+        taxable,
+        deduct: totalDeduct,
+        stateTax,
+        slabs: usSlabs,
+      };
+
+      cardComparisonResult.classList.add('hidden');
+      renderSingleCard(totalTax, gross, totalDeduct, taxable, `${selFilingStatus.options[selFilingStatus.selectedIndex].text} (US)`, '$');
+      renderSlabTable(usSlabs, '$');
+    }
+
+    taxResultsSection.classList.remove('hidden');
+  }
+
+  function renderSingleCard(totalTax, gross, deduct, taxable, label, cur) {
+    resBadgeLabel.textContent = `Estimated Tax Liability (${label})`;
+    resTotalTax.textContent = formatCurrency(totalTax, cur);
+    resGrossIncome.textContent = formatCurrency(gross, cur);
+    resTotalDeduct.textContent = formatCurrency(deduct, cur);
+    resTaxableIncome.textContent = formatCurrency(taxable, cur);
+    resNetTakehome.textContent = formatCurrency(Math.max(0, gross - totalTax), cur);
+    resEffectiveRate.textContent = gross > 0 ? `${((totalTax / gross) * 100).toFixed(2)}%` : '0%';
+  }
+
+  function renderSlabTable(slabs, cur) {
+    slabTbody.innerHTML = slabs.map((s) => `
+      <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+        <td class="p-2.5 font-bold text-slate-900 dark:text-white">${s.slab}</td>
+        <td class="p-2.5 text-right text-slate-600 dark:text-slate-400">${formatCurrency(s.taxable, cur)}</td>
+        <td class="p-2.5 text-right font-bold text-blue-600 dark:text-blue-400">${s.rate}%</td>
+        <td class="p-2.5 text-right font-black text-slate-900 dark:text-white">${formatCurrency(s.tax, cur)}</td>
+      </tr>
+    `).join('');
+  }
+
+  btnCalcTax.addEventListener('click', executeTaxCalculation);
+
+  btnClearTax.addEventListener('click', () => {
+    inpSalary.value = '1200000';
+    inpHouseProp.value = '0';
+    inpOtherInc.value = '0';
+    inpUsGross.value = '85000';
+    inpUsItemized.value = '0';
+    inp80c.value = '150000';
+    inp80d.value = '25000';
+    inp24b.value = '0';
+    inpHra.value = '0';
+    errTax.classList.add('hidden');
+    taxResultsSection.classList.add('hidden');
+    lastTaxResult = null;
+  });
+
+  // Export Excel / CSV Functionality
+  btnExportExcel.addEventListener('click', () => {
+    if (!lastTaxResult) {
+      alert('Please calculate your income tax first before downloading the Excel sheet.');
+      return;
+    }
+
+    let csvContent = 'data:text/csv;charset=utf-8,';
+    csvContent += 'Income Tax Calculation Summary - AIFreecalculator.com\n\n';
+
+    if (lastTaxResult.isIndia) {
+      csvContent += `Assessment Year,${lastTaxResult.ay}\n`;
+      csvContent += `Gross Total Income,Rs. ${lastTaxResult.gross}\n\n`;
+
+      if (lastTaxResult.regimeMode === 'compare') {
+        csvContent += 'Parameter,New Tax Regime,Old Tax Regime\n';
+        csvContent += `Total Deductions,Rs. ${lastTaxResult.new.deduct},Rs. ${lastTaxResult.old.deduct}\n`;
+        csvContent += `Taxable Income,Rs. ${lastTaxResult.new.taxable},Rs. ${lastTaxResult.old.taxable}\n`;
+        csvContent += `Section 87A Rebate,Rs. ${lastTaxResult.new.rebate},Rs. ${lastTaxResult.old.rebate}\n`;
+        csvContent += `Cess (4%),Rs. ${lastTaxResult.new.cess},Rs. ${lastTaxResult.old.cess}\n`;
+        csvContent += `Total Tax Payable,Rs. ${lastTaxResult.new.totalTax},Rs. ${lastTaxResult.old.totalTax}\n\n`;
+      } else {
+        const active = lastTaxResult.regimeMode === 'new' ? lastTaxResult.new : lastTaxResult.old;
+        csvContent += `Regime,${lastTaxResult.regimeMode === 'new' ? 'New Tax Regime' : 'Old Tax Regime'}\n`;
+        csvContent += `Total Deductions,Rs. ${active.deduct}\n`;
+        csvContent += `Taxable Income,Rs. ${active.taxable}\n`;
+        csvContent += `Total Estimated Tax,Rs. ${active.totalTax}\n\n`;
+
+        csvContent += 'Income Slab,Taxable in Slab,Rate %,Tax Amount\n';
+        active.slabs.forEach((s) => {
+          csvContent += `"${s.slab}",Rs. ${s.taxable},${s.rate}%,Rs. ${s.tax}\n`;
+        });
+      }
+    } else {
+      csvContent += `Filing Status,${lastTaxResult.status}\n`;
+      csvContent += `Gross Income,$${lastTaxResult.gross}\n`;
+      csvContent += `Deductions,$${lastTaxResult.deduct}\n`;
+      csvContent += `Taxable Income,$${lastTaxResult.taxable}\n`;
+      csvContent += `Total Estimated Tax,$${lastTaxResult.totalTax}\n\n`;
+
+      csvContent += 'Income Bracket,Taxable Amount,Rate %,Tax Amount\n';
+      lastTaxResult.slabs.forEach((s) => {
+        csvContent += `"${s.slab}",$${s.taxable},${s.rate}%,$${s.tax}\n`;
+      });
+    }
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `income-tax-calculation-${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+
+  // Download PDF Functionality
+  async function generateTaxPdf() {
+    if (!lastTaxResult) {
+      alert('Please calculate your income tax first before downloading the PDF.');
+      return;
+    }
+
+    btnTaxDownloadPdf.disabled = true;
+    const originalText = txtBtnTaxPdf.textContent;
+    txtBtnTaxPdf.textContent = 'Generating PDF...';
+
+    try {
+      if (!window.jspdf) {
+        await new Promise((resolve, reject) => {
+          const s1 = document.createElement('script');
+          s1.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+          s1.onload = () => {
+            const s2 = document.createElement('script');
+            s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+            s2.onload = resolve;
+            s2.onerror = reject;
+            document.head.appendChild(s2);
+          };
+          s1.onerror = reject;
+          document.head.appendChild(s1);
+        });
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+      // 1. Header & Website Branding
+      doc.setFillColor(37, 99, 235); // Blue #2563eb
+      doc.rect(0, 0, 210, 20, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(15);
+      doc.setFont('helvetica', 'bold');
+      doc.text('AIFreecalculator.com', 14, 13);
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Free Online Calculator Tools', 210 - 14, 13, { align: 'right' });
+
+      // 2. Document Title
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Income Tax Calculation Summary', 14, 29);
+
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Generated on: ${dateStr}`, 210 - 14, 29, { align: 'right' });
+
+      // 3. Tax Summary Box
+      doc.setDrawColor(226, 232, 240);
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(14, 33, 182, 26, 2, 2, 'FD');
+
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(51, 65, 85);
+      doc.text('TAX SUMMARY', 18, 38);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(71, 85, 105);
+
+      if (lastTaxResult.isIndia) {
+        doc.text(`Assessment Year: ${lastTaxResult.ay}`, 18, 44);
+        doc.text(`Gross Income: Rs. ${lastTaxResult.gross.toLocaleString('en-IN')}`, 18, 49);
+        doc.text(`Regime: ${lastTaxResult.regimeMode === 'compare' ? 'Comparison Mode' : lastTaxResult.regimeMode === 'new' ? 'New Tax Regime' : 'Old Tax Regime'}`, 18, 54);
+
+        const chosen = lastTaxResult.regimeMode === 'old' ? lastTaxResult.old : lastTaxResult.new;
+        doc.text(`Taxable Income: Rs. ${chosen.taxable.toLocaleString('en-IN')}`, 85, 44);
+        doc.text(`Total Deductions: Rs. ${chosen.deduct.toLocaleString('en-IN')}`, 85, 49);
+        doc.text(`Cess (4%): Rs. ${chosen.cess.toLocaleString('en-IN')}`, 85, 54);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(16, 185, 129);
+        doc.text(`Estimated Tax: Rs. ${chosen.totalTax.toLocaleString('en-IN')}`, 145, 49);
+      } else {
+        doc.text(`Region: US (${lastTaxResult.status})`, 18, 44);
+        doc.text(`Gross Income: $${lastTaxResult.gross.toLocaleString('en-US')}`, 18, 49);
+        doc.text(`Taxable Income: $${lastTaxResult.taxable.toLocaleString('en-US')}`, 85, 44);
+        doc.text(`Deductions: $${lastTaxResult.deduct.toLocaleString('en-US')}`, 85, 49);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(16, 185, 129);
+        doc.text(`Estimated Tax: $${lastTaxResult.totalTax.toLocaleString('en-US')}`, 145, 49);
+      }
+
+      // 4. Slab Breakdown Table
+      const slabsToExport = lastTaxResult.isIndia
+        ? (lastTaxResult.regimeMode === 'old' ? lastTaxResult.old.slabs : lastTaxResult.new.slabs)
+        : lastTaxResult.slabs;
+
+      const tableData = slabsToExport.map((s) => [
+        s.slab,
+        (lastTaxResult.isIndia ? 'Rs. ' : '$') + s.taxable.toLocaleString(),
+        `${s.rate}%`,
+        (lastTaxResult.isIndia ? 'Rs. ' : '$') + s.tax.toLocaleString()
+      ]);
+
+      doc.autoTable({
+        startY: 63,
+        head: [['Income Slab / Bracket', 'Taxable in Slab', 'Rate', 'Tax Amount']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [37, 99, 235],
+          textColor: [255, 255, 255],
+          fontSize: 8,
+          fontStyle: 'bold',
+          halign: 'center'
+        },
+        columnStyles: {
+          0: { cellWidth: 70 },
+          1: { halign: 'right' },
+          2: { halign: 'center' },
+          3: { halign: 'right', fontStyle: 'bold' }
+        },
+        styles: {
+          fontSize: 7.5,
+          cellPadding: 2,
+          font: 'helvetica'
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252]
+        },
+        margin: { top: 22, bottom: 18, left: 14, right: 14 },
+        didDrawPage: function (data) {
+          const pageCount = doc.internal.getNumberOfPages();
+          const currentPage = data.pageNumber;
+
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(148, 163, 184);
+
+          doc.text('Generated using AIFreecalculator.com', 14, 290);
+          doc.text(`Page ${currentPage} of ${pageCount}`, 210 - 14, 290, { align: 'right' });
+        }
+      });
+
+      const today = new Date().toISOString().split('T')[0];
+      doc.save(`income-tax-calculation-${today}.pdf`);
+    } catch (err) {
+      console.error('PDF Generation Error:', err);
+      alert('An error occurred while generating the PDF. Please try again.');
+    } finally {
+      btnTaxDownloadPdf.disabled = false;
+      txtBtnTaxPdf.textContent = originalText;
+    }
+  }
+
+  btnTaxDownloadPdf.addEventListener('click', generateTaxPdf);
+
+  // Enter Key Calculation
+  document.querySelectorAll('form').forEach((form) => {
+    form.querySelectorAll('input').forEach((inp) => {
+      inp.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          executeTaxCalculation();
+        }
+      });
+    });
+  });
+</script>

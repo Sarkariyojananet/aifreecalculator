@@ -1,0 +1,331 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro';
+import { calculators, categories } from '../../data/calculators';
+import { ADS_CONFIG } from '../../lib/ads-config';
+
+const totalCalculators = calculators.length;
+const featuredCount = calculators.filter((c) => c.featured).length;
+---
+
+<AdminLayout title="Admin Dashboard | AI Free Calculator" activeTab="dashboard">
+  <div class="space-y-8">
+    
+    <!-- Top Stats Cards -->
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400">
+          <span class="text-xs font-bold uppercase tracking-wider">Total Calculators</span>
+          <span class="text-lg">🧮</span>
+        </div>
+        <div class="mt-2 text-3xl font-black text-slate-900 dark:text-white">{totalCalculators}</div>
+        <div class="mt-1 text-xs text-emerald-600 font-semibold">100% Operational</div>
+      </div>
+
+      <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400">
+          <span class="text-xs font-bold uppercase tracking-wider">Categories</span>
+          <span class="text-lg">📂</span>
+        </div>
+        <div class="mt-2 text-3xl font-black text-slate-900 dark:text-white">{categories.length}</div>
+        <div class="mt-1 text-xs text-blue-600 font-semibold">General, Civil, Finance, Health, Math</div>
+      </div>
+
+      <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400">
+          <span class="text-xs font-bold uppercase tracking-wider">Featured Tools</span>
+          <span class="text-lg">⭐</span>
+        </div>
+        <div class="mt-2 text-3xl font-black text-slate-900 dark:text-white">{featuredCount}</div>
+        <div class="mt-1 text-xs text-amber-600 font-semibold">Highlighted on Homepage</div>
+      </div>
+
+      <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400">
+          <span class="text-xs font-bold uppercase tracking-wider">AdSense Engine</span>
+          <span class="text-lg">📢</span>
+        </div>
+        <div id="dash-ads-status" class="mt-2 text-2xl font-black text-slate-700 dark:text-slate-300">
+          Checking...
+        </div>
+        <div id="dash-ads-sub" class="mt-1 text-xs text-slate-400 truncate">Connecting to D1 / Config...</div>
+      </div>
+    </div>
+
+    <!-- Category Health Breakdown -->
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+      <!-- Calculators by Category -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-4">
+          Calculators by Category
+        </h3>
+        <div class="space-y-3">
+          {categories.map((cat) => {
+            const count = calculators.filter((c) => c.category === cat.name).length;
+            const pct = Math.round((count / totalCalculators) * 100);
+            return (
+              <div>
+                <div class="flex justify-between text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                  <span>{cat.icon} {cat.name}</span>
+                  <span>{count} Tools ({pct}%)</span>
+                </div>
+                <div class="h-2 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                  <div class="h-full bg-blue-600 rounded-full" style={`width: ${pct}%`}></div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <!-- System & Environment Status -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-4">
+          Engine & Integration Health
+        </h3>
+        <div class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+          <div class="py-2.5 flex justify-between items-center">
+            <span class="text-slate-600 dark:text-slate-400">Framework</span>
+            <span class="font-bold text-slate-900 dark:text-white">Astro 5 (SSR / Static)</span>
+          </div>
+          <div class="py-2.5 flex justify-between items-center">
+            <span class="text-slate-600 dark:text-slate-400">Styling</span>
+            <span class="font-bold text-slate-900 dark:text-white">Tailwind CSS 4</span>
+          </div>
+          <div class="py-2.5 flex justify-between items-center">
+            <span class="text-slate-600 dark:text-slate-400">Cloudflare D1 DB</span>
+            <span class="font-bold text-emerald-600 dark:text-emerald-400">Binding Connected (Auto-Fallback)</span>
+          </div>
+          <div class="py-2.5 flex justify-between items-center">
+            <span class="text-slate-600 dark:text-slate-400">Google Analytics 4</span>
+            <span class="font-bold text-blue-600 dark:text-blue-400">gtag.js Component Ready</span>
+          </div>
+          <div class="py-2.5 flex justify-between items-center">
+            <span class="text-slate-600 dark:text-slate-400">AdSense ads.txt</span>
+            <span class="font-bold text-emerald-600 dark:text-emerald-400">Published at /ads.txt</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AdSense Quick Control Panel -->
+    <section class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900/80 space-y-5">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📢</span> Google AdSense Settings & Slots
+          </h2>
+          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Configure publisher client ID and assign ad-unit slot IDs for all 4 site placement locations.
+          </p>
+        </div>
+        <a
+          href="/admin/settings/"
+          class="inline-flex items-center gap-1.5 rounded-xl bg-blue-50 px-3.5 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300 dark:hover:bg-blue-900 transition"
+        >
+          <span>Open Full AdSense Console</span> →
+        </a>
+      </div>
+
+      <form id="adsense-quick-form" class="space-y-5" novalidate>
+        <!-- Master Switch, Test Mode & Publisher ID Row -->
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div>
+            <label for="adsense-client-id" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+              Publisher Client ID
+            </label>
+            <input
+              id="adsense-client-id"
+              required
+              placeholder="ca-pub-1234567890123456"
+              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-mono font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+            />
+          </div>
+
+          <div class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950">
+            <div>
+              <div class="text-xs font-bold text-slate-900 dark:text-white">Master Switch</div>
+              <div class="text-[10px] text-slate-400">Site-wide ads</div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="adsense-enabled-toggle" class="sr-only peer" />
+              <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600 dark:bg-slate-700"></div>
+            </label>
+          </div>
+
+          <div class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-950">
+            <div>
+              <div class="text-xs font-bold text-slate-900 dark:text-white">Test Mode</div>
+              <div class="text-[10px] text-slate-400">Mock banners (safe)</div>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="adsense-test-mode-toggle" class="sr-only peer" />
+              <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-500 dark:bg-slate-700"></div>
+            </label>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 dark:border-slate-800 dark:bg-slate-950/40">
+            <div class="text-xs font-bold text-slate-800 dark:text-slate-200">Top Banner</div>
+            <div class="text-[10px] text-slate-400 mb-1.5">Below page header (728x90)</div>
+            <input data-ad-slot="top" placeholder="Slot ID" class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-mono font-bold dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+          </div>
+
+          <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 dark:border-slate-800 dark:bg-slate-950/40">
+            <div class="text-xs font-bold text-slate-800 dark:text-slate-200">In-Content</div>
+            <div class="text-[10px] text-slate-400 mb-1.5">After result (336x280)</div>
+            <input data-ad-slot="inline" placeholder="Slot ID" class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-mono font-bold dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+          </div>
+
+          <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 dark:border-slate-800 dark:bg-slate-950/40">
+            <div class="text-xs font-bold text-slate-800 dark:text-slate-200">Sticky Sidebar</div>
+            <div class="text-[10px] text-slate-400 mb-1.5">Desktop right column (300x600)</div>
+            <input data-ad-slot="sidebar" placeholder="Slot ID" class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-mono font-bold dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+          </div>
+
+          <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 dark:border-slate-800 dark:bg-slate-950/40">
+            <div class="text-xs font-bold text-slate-800 dark:text-slate-200">Footer Banner</div>
+            <div class="text-[10px] text-slate-400 mb-1.5">Above footer (728x90)</div>
+            <input data-ad-slot="footer" placeholder="Slot ID" class="w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-mono font-bold dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+          <div class="flex items-center gap-3">
+            <button type="submit" class="rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 cursor-pointer">
+              Save Quick Settings
+            </button>
+            <a href="/admin/settings/" class="text-xs font-semibold text-blue-600 hover:underline dark:text-blue-400">
+              Go to Advanced Settings & Preview →
+            </a>
+          </div>
+          <p id="adsense-status" class="text-xs font-semibold" role="status"></p>
+        </div>
+      </form>
+    </section>
+
+    <!-- Quick Navigation Actions -->
+    <div class="flex flex-wrap gap-3">
+      <a
+        href="/admin/calculators/"
+        class="rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700"
+      >
+        Manage All 42+ Calculators →
+      </a>
+      <a
+        href="/admin/analytics/"
+        class="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+      >
+        View Usage Analytics →
+      </a>
+    </div>
+
+  </div>
+</AdminLayout>
+
+<script is:inline>
+  const adsenseForm = document.getElementById('adsense-quick-form');
+  const clientInput = document.getElementById('adsense-client-id');
+  const enabledToggle = document.getElementById('adsense-enabled-toggle');
+  const testModeToggle = document.getElementById('adsense-test-mode-toggle');
+  const slotInputs = document.querySelectorAll('[data-ad-slot]');
+  const adsenseStatus = document.getElementById('adsense-status');
+  const dashAdsStatus = document.getElementById('dash-ads-status');
+  const dashAdsSub = document.getElementById('dash-ads-sub');
+
+  let currentSettings = null;
+
+  async function loadAdSenseSettings() {
+    try {
+      const response = await fetch('/api/adsense-config/?t=' + Date.now(), {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache' },
+      });
+      if (!response.ok) return;
+      currentSettings = await response.json();
+      clientInput.value = currentSettings.clientId || '';
+      enabledToggle.checked = Boolean(currentSettings.enabled);
+      testModeToggle.checked = currentSettings.testMode === true;
+      slotInputs.forEach((input) => {
+        const slotKey = input.dataset.adSlot;
+        input.value = currentSettings.slots?.[slotKey]?.slotId || '';
+      });
+
+      if (dashAdsStatus) {
+        if (currentSettings.testMode === true) {
+          dashAdsStatus.textContent = 'Test Mode';
+          dashAdsStatus.className = 'mt-2 text-2xl font-black text-amber-500';
+        } else if (currentSettings.enabled) {
+          dashAdsStatus.textContent = 'Live Active';
+          dashAdsStatus.className = 'mt-2 text-2xl font-black text-emerald-600 dark:text-emerald-400';
+        } else {
+          dashAdsStatus.textContent = 'Disabled';
+          dashAdsStatus.className = 'mt-2 text-2xl font-black text-slate-500 dark:text-slate-400';
+        }
+      }
+      if (dashAdsSub) {
+        dashAdsSub.textContent = currentSettings.clientId || 'Not configured';
+      }
+    } catch (e) {
+      if (dashAdsStatus) dashAdsStatus.textContent = 'Offline';
+    }
+  }
+
+  adsenseForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    adsenseStatus.textContent = 'Saving...';
+    adsenseStatus.className = 'text-xs font-semibold text-blue-600';
+
+    const slots = { ...(currentSettings?.slots || {}) };
+    slotInputs.forEach((input) => {
+      const key = input.dataset.adSlot;
+      slots[key] = {
+        ...(slots[key] || {}),
+        slotId: input.value.trim(),
+        enabled: Boolean(input.value.trim()),
+      };
+    });
+
+    const payload = {
+      ...(currentSettings || {}),
+      enabled: enabledToggle.checked,
+      testMode: testModeToggle.checked,
+      clientId: clientInput.value.trim(),
+      slots,
+    };
+
+    try {
+      const token = localStorage.getItem('admin_token') || '';
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
+      const response = await fetch('/api/adsense-config/', {
+        method: 'POST',
+        credentials: 'include',
+        headers,
+        body: JSON.stringify(payload),
+      });
+      const result = await response.json();
+      if (response.ok) {
+        adsenseStatus.textContent = '✅ Saved. Settings are now active.';
+        adsenseStatus.className = 'text-xs font-semibold text-emerald-600';
+        loadAdSenseSettings();
+      } else {
+        if (response.status === 401) {
+          adsenseStatus.innerHTML = `❌ Session expired. <a href="/admin/login/?redirect=${encodeURIComponent(window.location.pathname)}" class="underline font-bold">Sign in here</a>`;
+        } else {
+          adsenseStatus.textContent = `❌ ${result.error || 'Could not save settings.'}`;
+        }
+        adsenseStatus.className = 'text-xs font-semibold text-red-600';
+      }
+    } catch (err) {
+      adsenseStatus.textContent = '❌ Failed to save settings.';
+      adsenseStatus.className = 'text-xs font-semibold text-red-600';
+    }
+  });
+
+
+  loadAdSenseSettings();
+</script>

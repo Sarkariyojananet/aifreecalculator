@@ -1,0 +1,1391 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+
+const faqs = [
+  {
+    q: 'What is a body fat percentage calculator?',
+    a: 'A body fat percentage calculator is an online estimation tool that calculates the proportion of fat mass relative to total body weight using mathematical models, such as the U.S. Navy circumference method or BMI-based estimations. It provides a screening estimate and does not provide a clinical medical diagnosis.',
+  },
+  {
+    q: 'How accurate is the U.S. Navy Body Fat formula?',
+    a: 'The U.S. Navy circumference equation generally estimates body fat within approximately 3% to 4% of clinical DEXA or hydrostatic weighing for most individuals. However, variations in visceral fat, muscularity, and tape measurement technique can influence individual results.',
+  },
+  {
+    q: 'What is a healthy body fat percentage for men and women?',
+    a: 'According to reference ranges from the American Council on Exercise (ACE), healthy fitness and average ranges are approximately 14% to 24% for adult men and 21% to 31% for adult women. Women naturally possess higher essential body fat (10% to 13%) required for hormonal balance and reproductive biology.',
+  },
+  {
+    q: 'Why does the female formula require hip circumference?',
+    a: 'Biological females naturally store higher proportions of essential and subcutaneous fat around the pelvic region, hips, and thighs (gynoid fat distribution). The U.S. Navy and Army equations include hip measurements to accurately account for female body composition.',
+  },
+  {
+    q: 'Can this calculator diagnose medical conditions?',
+    a: 'No. This calculator is strictly for educational, fitness tracking, and general screening purposes. It cannot diagnose cardiovascular disease, metabolic syndrome, or clinical obesity. For medical evaluations, consult a licensed healthcare professional or registered dietitian.',
+  },
+  {
+    q: 'How often should I measure and track my body fat percentage?',
+    a: 'Because body water fluctuations, hydration, and measurement technique can cause temporary variations, measuring circumferences every 2 to 4 weeks under identical conditions (such as morning before eating) provides the most reliable trend data.',
+  },
+  {
+    q: 'What is the difference between fat mass and lean body mass?',
+    a: 'Fat mass represents the total weight of adipose tissue (both essential fat and storage fat). Lean body mass (LBM) encompasses everything else: skeletal muscle, bones, organs, connective tissue, blood volume, and intracellular water.',
+  },
+];
+---
+
+<CalculatorLayout
+  title="Body Fat Percentage Calculator – Accurate Navy & BMI Methods"
+  description="Calculate your estimated body fat percentage, fat mass, and lean body mass using the validated U.S. Navy circumference and BMI methods."
+  category="Health"
+  calculatorName="Body Fat Calculator"
+  slug="body-fat-calculator"
+  keywords={[
+    'body fat percentage calculator',
+    'ideal body fat percentage calculator',
+    'body fat percentage calculator women',
+    'army body fat percentage calculator',
+    'calculate body fat percentage',
+    'body fat estimate',
+    'body fat calculator for men',
+    'body composition calculator',
+    'lean body mass',
+    'fat mass',
+    'us navy body fat formula',
+  ]}
+>
+  <div class="space-y-6">
+    <!-- Calculation Method Selector Tabs -->
+    <div class="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-1.5 dark:border-slate-800 dark:bg-slate-900/50">
+      <div class="grid grid-cols-3 gap-1.5" id="method-tabs" role="tablist">
+        <button
+          type="button"
+          data-method="navy"
+          class="method-btn active flex items-center justify-center gap-1.5 rounded-xl border border-blue-600 bg-blue-50 px-3 py-2.5 text-xs sm:text-sm font-bold text-blue-700 shadow-sm transition dark:border-blue-500 dark:bg-blue-950/60 dark:text-blue-300 cursor-pointer text-center"
+          role="tab"
+          aria-selected="true"
+        >
+          <span>⚓</span> U.S. Navy Method
+        </button>
+        <button
+          type="button"
+          data-method="bmi"
+          class="method-btn flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs sm:text-sm font-bold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer text-center"
+          role="tab"
+          aria-selected="false"
+        >
+          <span>⚖️</span> BMI-Based
+        </button>
+        <button
+          type="button"
+          data-method="army"
+          class="method-btn flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs sm:text-sm font-bold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer text-center"
+          role="tab"
+          aria-selected="false"
+        >
+          <span>🎖️</span> Army Tape Test
+        </button>
+      </div>
+    </div>
+
+    <!-- Error Banner -->
+    <div
+      id="error-box"
+      class="hidden rounded-xl border border-red-200 bg-red-50/90 p-4 text-xs sm:text-sm font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/50 dark:text-red-300"
+      role="alert"
+      aria-live="polite"
+    >
+    </div>
+
+    <!-- Input Form Container -->
+    <div class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-900">
+      <div class="space-y-5">
+        
+        <!-- Row 1: Sex & Units -->
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <label for="inp-gender" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Biological Sex <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="inp-gender"
+              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+            >
+              <option value="male" selected>Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="inp-height-unit" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Height Unit
+            </label>
+            <select
+              id="inp-height-unit"
+              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+            >
+              <option value="cm" selected>Centimeters (cm)</option>
+              <option value="ft_in">Feet & Inches (ft/in)</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="inp-weight-unit" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Weight Unit
+            </label>
+            <select
+              id="inp-weight-unit"
+              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+            >
+              <option value="kg" selected>Kilograms (kg)</option>
+              <option value="lbs">Pounds (lbs)</option>
+            </select>
+          </div>
+
+          <div id="wrapper-circ-unit">
+            <label for="inp-circ-unit" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Circumference Unit
+            </label>
+            <select
+              id="inp-circ-unit"
+              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+            >
+              <option value="cm" selected>Centimeters (cm)</option>
+              <option value="in">Inches (in)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 2: Height, Weight & Age -->
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <!-- Height Metric -->
+          <div id="wrapper-height-cm">
+            <label for="inp-height-cm" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Height (cm) <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              id="inp-height-cm"
+              value="178"
+              min="60"
+              max="260"
+              step="any"
+              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="e.g., 178"
+            />
+          </div>
+
+          <!-- Height Imperial -->
+          <div id="wrapper-height-ftin" class="hidden">
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Height (Feet & Inches) <span class="text-red-500">*</span>
+            </label>
+            <div class="mt-1.5 grid grid-cols-2 gap-2">
+              <div class="relative">
+                <input
+                  type="number"
+                  id="inp-height-ft"
+                  value="5"
+                  min="2"
+                  max="8"
+                  step="1"
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-8 text-xs sm:text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  placeholder="5"
+                />
+                <span class="pointer-events-none absolute right-2.5 top-2.5 text-xs font-bold text-slate-400">ft</span>
+              </div>
+              <div class="relative">
+                <input
+                  type="number"
+                  id="inp-height-in"
+                  value="10"
+                  min="0"
+                  max="11.9"
+                  step="0.1"
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-8 text-xs sm:text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  placeholder="10"
+                />
+                <span class="pointer-events-none absolute right-2.5 top-2.5 text-xs font-bold text-slate-400">in</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Body Weight -->
+          <div>
+            <label for="inp-weight" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Body Weight (<span id="lbl-weight-unit">kg</span>) <span id="weight-req-star" class="text-slate-400 font-normal">(Optional for Navy)</span>
+            </label>
+            <input
+              type="number"
+              id="inp-weight"
+              value="76"
+              min="20"
+              max="400"
+              step="any"
+              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="e.g., 76"
+            />
+          </div>
+
+          <!-- Age (Only for BMI & Army) -->
+          <div id="wrapper-age">
+            <label for="inp-age" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Age (Years) <span id="age-req-star" class="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              id="inp-age"
+              value="30"
+              min="18"
+              max="120"
+              step="1"
+              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="e.g., 30"
+            />
+          </div>
+        </div>
+
+        <!-- Row 3: Tape Circumferences (Navy & Army) -->
+        <div id="wrapper-circumferences" class="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Body Tape Circumferences (<span class="lbl-circ-unit">cm</span>)
+            </span>
+            <span class="text-[11px] text-slate-500 dark:text-slate-400">Measure horizontally without compressing skin</span>
+          </div>
+
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <label for="inp-neck" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Neck Circumference <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                id="inp-neck"
+                value="38"
+                min="20"
+                max="80"
+                step="any"
+                class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="Measure below larynx"
+              />
+              <span class="text-[10px] text-slate-400">Below Adam's apple</span>
+            </div>
+
+            <div>
+              <label for="inp-waist" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Waist Circumference <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                id="inp-waist"
+                value="84"
+                min="40"
+                max="250"
+                step="any"
+                class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="At naval/narrowest point"
+              />
+              <span class="text-[10px] text-slate-400">At navel level (Men) / narrowest (Women)</span>
+            </div>
+
+            <div id="wrapper-hip">
+              <label for="inp-hip" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Hip Circumference <span class="text-red-500">* (Females)</span>
+              </label>
+              <input
+                type="number"
+                id="inp-hip"
+                value="96"
+                min="40"
+                max="250"
+                step="any"
+                class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="Widest point around buttocks"
+              />
+              <span class="text-[10px] text-slate-400">Widest horizontal point</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-6 flex flex-col sm:flex-row items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <button
+            type="button"
+            id="btn-calculate-bf"
+            class="w-full sm:flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3.5 text-center text-sm font-black text-white shadow-lg shadow-blue-500/25 transition hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] cursor-pointer"
+          >
+            Calculate Body Fat % →
+          </button>
+          <button
+            type="button"
+            id="btn-clear-all"
+            class="w-full sm:w-auto rounded-xl border border-slate-300 bg-white px-5 py-3.5 text-center text-sm font-bold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+          >
+            Clear All
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="results-section" class="hidden space-y-6">
+      
+      <!-- Primary Hero Result Card -->
+      <div class="rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-50/90 via-indigo-50/50 to-slate-50/90 p-5 sm:p-6 dark:border-blue-900/60 dark:from-blue-950/40 dark:via-indigo-950/20 dark:to-slate-900/40 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-blue-200/60 pb-3 dark:border-blue-900/50">
+          <span class="text-xs font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">
+            ESTIMATED BODY COMPOSITION RESULT
+          </span>
+          <span id="badge-method" class="self-start sm:self-auto rounded-md bg-blue-100 px-2 py-0.5 text-[11px] font-bold text-blue-800 dark:bg-blue-900/80 dark:text-blue-200">
+            U.S. Navy Method
+          </span>
+        </div>
+
+        <div class="mt-4 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
+          <div class="flex items-baseline gap-2">
+            <span id="res-hero-bf" class="text-4xl sm:text-5xl font-black tracking-tight text-blue-600 dark:text-blue-400">
+              15.7%
+            </span>
+            <span class="text-sm sm:text-base font-bold text-slate-700 dark:text-slate-300">Body Fat</span>
+          </div>
+          <div class="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
+            Classification: <span id="res-hero-category" class="font-bold text-slate-900 dark:text-white">Fitness</span>
+          </div>
+        </div>
+
+        <p id="res-hero-desc" class="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+          Fitness reference range (14% – 17%) reflecting lean physical conditioning.
+        </p>
+      </div>
+
+      <!-- Result Cards Grid -->
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-4 text-xs">
+        <div id="res-card-bmi-container" class="rounded-xl border border-slate-200/80 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/70 shadow-xs">
+          <div class="text-slate-500 dark:text-slate-400 font-semibold">Body Mass Index (BMI)</div>
+          <div id="res-card-bmi" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">--</div>
+        </div>
+
+        <div class="rounded-xl border border-slate-200/80 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/70 shadow-xs">
+          <div class="text-slate-500 dark:text-slate-400 font-semibold">Estimated Fat Mass</div>
+          <div id="res-card-fat-mass" class="mt-1 text-sm sm:text-base font-bold text-amber-600 dark:text-amber-400">--</div>
+        </div>
+
+        <div class="rounded-xl border border-slate-200/80 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/70 shadow-xs">
+          <div class="text-slate-500 dark:text-slate-400 font-semibold">Estimated Lean Mass</div>
+          <div id="res-card-lean-mass" class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">--</div>
+        </div>
+
+        <div class="rounded-xl border border-slate-200/80 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/70 shadow-xs">
+          <div class="text-slate-500 dark:text-slate-400 font-semibold">General Ideal Range</div>
+          <div id="res-card-ideal" class="mt-1 text-sm sm:text-base font-bold text-indigo-600 dark:text-indigo-400">10% – 20%</div>
+        </div>
+      </div>
+
+      <!-- Body Fat Category Visualization / Progress Bar -->
+      <div class="rounded-2xl border border-slate-200/80 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/80 shadow-xs space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2 dark:border-slate-800">
+          <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+            <span>📊</span> Body Fat Reference Range & Category Scale
+          </h3>
+          <span class="text-[11px] text-slate-500 dark:text-slate-400">American Council on Exercise (ACE)</span>
+        </div>
+
+        <!-- Scale Container -->
+        <div class="pt-6 pb-2">
+          <!-- Marker Position Bubble -->
+          <div class="relative w-full h-0">
+            <div
+              id="scale-marker"
+              class="absolute -top-6 -translate-x-1/2 flex flex-col items-center transition-all duration-300"
+              style="left: 35%;"
+            >
+              <span id="scale-marker-text" class="rounded bg-slate-900 px-1.5 py-0.5 text-[10px] font-extrabold text-white shadow-sm dark:bg-blue-600">
+                15.7%
+              </span>
+              <span class="text-[10px] text-slate-900 dark:text-blue-400 leading-none">▼</span>
+            </div>
+          </div>
+
+          <!-- Colored Segments Bar -->
+          <div class="grid grid-cols-5 h-4 w-full overflow-hidden rounded-full border border-slate-200 dark:border-slate-700">
+            <div class="bg-amber-300 dark:bg-amber-600" title="Essential Fat"></div>
+            <div class="bg-emerald-400 dark:bg-emerald-600" title="Athletic"></div>
+            <div class="bg-blue-400 dark:bg-blue-600" title="Fitness"></div>
+            <div class="bg-indigo-300 dark:bg-indigo-600" title="Average"></div>
+            <div class="bg-rose-400 dark:bg-rose-600" title="Higher Body Fat"></div>
+          </div>
+
+          <!-- Labels Grid Below Bar -->
+          <div class="mt-2.5 grid grid-cols-5 text-center text-[10px] sm:text-xs">
+            <div class="px-0.5">
+              <div class="font-bold text-amber-700 dark:text-amber-400">Essential</div>
+              <div id="lbl-range-essential" class="text-[9px] sm:text-[10px] text-slate-500">2–5%</div>
+            </div>
+            <div class="px-0.5">
+              <div class="font-bold text-emerald-700 dark:text-emerald-400">Athletic</div>
+              <div id="lbl-range-athletic" class="text-[9px] sm:text-[10px] text-slate-500">6–13%</div>
+            </div>
+            <div class="px-0.5">
+              <div class="font-bold text-blue-700 dark:text-blue-400">Fitness</div>
+              <div id="lbl-range-fitness" class="text-[9px] sm:text-[10px] text-slate-500">14–17%</div>
+            </div>
+            <div class="px-0.5">
+              <div class="font-bold text-indigo-700 dark:text-indigo-400">Average</div>
+              <div id="lbl-range-average" class="text-[9px] sm:text-[10px] text-slate-500">18–24%</div>
+            </div>
+            <div class="px-0.5">
+              <div class="font-bold text-rose-700 dark:text-rose-400">Higher Fat</div>
+              <div id="lbl-range-higher" class="text-[9px] sm:text-[10px] text-slate-500">25%+</div>
+            </div>
+          </div>
+        </div>
+
+        <p class="text-[11px] text-slate-500 dark:text-slate-400 italic">
+          * Note: Category ranges are general statistical population benchmarks and do not constitute an individualized medical diagnosis.
+        </p>
+      </div>
+
+      <!-- Step-by-Step Calculation Details -->
+      <div class="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-5 dark:border-slate-800 dark:bg-slate-900/60 shadow-xs space-y-3">
+        <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+          <span>📐</span> Calculation Details & Mathematical Breakdown
+        </h3>
+        <div
+          id="txt-calc-details"
+          class="rounded-xl border border-slate-200 bg-white p-4 font-mono text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 space-y-1.5 leading-relaxed"
+        >
+        </div>
+      </div>
+
+      <!-- Download PDF Action Bar -->
+      <div class="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="text-xs text-slate-600 dark:text-slate-300">
+          <strong>Export Body Composition Report:</strong> Download a comprehensive, printable PDF estimate document.
+        </div>
+        <button
+          type="button"
+          id="btn-download-pdf"
+          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-xs sm:text-sm font-bold text-white transition hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700 cursor-pointer shadow-xs"
+        >
+          <span>📄</span> <span id="txt-btn-pdf">Download PDF</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Educational SEO Content Slot -->
+  <Fragment slot="content">
+    <div class="space-y-10 text-slate-700 dark:text-slate-300 leading-relaxed text-sm">
+      
+      <!-- 1. How to Use -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          How to Use the Body Fat Percentage Calculator
+        </h2>
+        <p>
+          Estimating your body fat percentage with precision requires accurate, consistent measurements taken under identical conditions:
+        </p>
+        <ol class="list-decimal space-y-2 pl-5 text-xs sm:text-sm">
+          <li><strong>Select your preferred calculation method:</strong> Choose between the <em>U.S. Navy Method</em> (circumference-based, most accurate field estimate), <em>BMI-Based</em> (requires only height, weight, and age), or <em>Army Tape Test</em> (AR 600-9 standard).</li>
+          <li><strong>Select biological sex:</strong> Biological sex dictates the specific logarithmic equation and essential adipose tissue reference ranges used.</li>
+          <li><strong>Enter height and body weight:</strong> Input height and weight in either Metric (cm, kg) or Imperial (feet/inches, lbs) units.</li>
+          <li><strong>Record circumferences with a flexible tape measure:</strong>
+            <ul class="list-disc pl-5 mt-1 space-y-1 text-xs">
+              <li><strong>Neck:</strong> Measure horizontally just below the larynx (Adam's apple), with your head upright.</li>
+              <li><strong>Waist:</strong> Measure horizontally across the navel for men, or at the level of smallest natural width for women.</li>
+              <li><strong>Hips (Females only):</strong> Measure horizontally at the widest point across the buttocks and hips.</li>
+            </ul>
+          </li>
+          <li><strong>Click "Calculate Body Fat %":</strong> The calculator evaluates your body density, fat mass, lean tissue mass, and ACE category classification.</li>
+        </ol>
+      </section>
+
+      <!-- 2. What Is Body Fat Percentage? -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          What Is Body Fat Percentage and Why Does It Matter?
+        </h2>
+        <p>
+          <strong>Body fat percentage (BF%)</strong> is the total mass of adipose tissue divided by total body weight, multiplied by 100. Unlike standard Body Mass Index (BMI)—which simply relates total mass to height without distinguishing between bone, water, lean skeletal muscle, and adipose tissue—body fat percentage provides direct insight into human body composition.
+        </p>
+        <p>
+          Human body fat is categorized into two distinct physiological types:
+        </p>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 text-xs sm:text-sm">
+          <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+            <h3 class="font-bold text-slate-900 dark:text-white">1. Essential Body Fat</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              The minimal amount of fat required for physiological survival, central nervous system insulation, hormone regulation, cellular membrane integrity, and organ protection. Essential fat is approximately 2% to 5% for adult men and 10% to 13% for adult women.
+            </p>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+            <h3 class="font-bold text-slate-900 dark:text-white">2. Storage Body Fat</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Consists of subcutaneous adipose tissue (fat directly beneath the dermis) and visceral adipose tissue (fat surrounding internal abdominal organs). Storage fat functions as the body's primary metabolic energy reserve.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Formula Explanations -->
+      <section class="space-y-4">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          Calculation Methods & Mathematical Formulas
+        </h2>
+
+        <div class="space-y-3">
+          <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+            1. U.S. Navy Circumference Method (Hodgdon & Beckett / Siri Equation)
+          </h3>
+          <p>
+            Developed by the Naval Health Research Center, this method uses logarithmic circumference differences to estimate whole-body density ($D$), which is then converted into percentage body fat using the Siri equation:
+          </p>
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-xs text-slate-800 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 space-y-2">
+            <div><strong>Men:</strong> Density (D) = 1.0324 − 0.19077 × log₁₀(waist − neck) + 0.15456 × log₁₀(height)</div>
+            <div><strong>Women:</strong> Density (D) = 1.29579 − 0.35004 × log₁₀(waist + hip − neck) + 0.22100 × log₁₀(height)</div>
+            <div><strong>Siri Equation:</strong> Body Fat % = (495 / D) − 450</div>
+            <div class="text-[11px] text-slate-500">*(All circumference and height measurements in centimeters)*</div>
+          </div>
+        </div>
+
+        <div class="space-y-3 pt-3">
+          <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+            2. Adult BMI-Based Formula (Deurenberg et al.)
+          </h3>
+          <p>
+            The Deurenberg empirical model correlates standard Body Mass Index (BMI = kg/m²) with age and biological sex to estimate body fat:
+          </p>
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-xs text-slate-800 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200">
+            Body Fat % = (1.20 × BMI) + (0.23 × Age) − (10.8 × Sex) − 5.4<br />
+            <span class="text-[11px] text-slate-500">*(where Sex = 1 for male, and Sex = 0 for female)*</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. ACE Reference Chart -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          Body Fat Percentage Reference Ranges (ACE Guidelines)
+        </h2>
+        <p>
+          The American Council on Exercise provides the widely adopted standard demographic classifications for adult body fat:
+        </p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm">
+            <thead class="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950 font-bold text-slate-800 dark:text-white">
+              <tr>
+                <th class="py-2.5 px-3">Classification</th>
+                <th class="py-2.5 px-3">Men (% Fat)</th>
+                <th class="py-2.5 px-3">Women (% Fat)</th>
+                <th class="py-2.5 px-3">General Description</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              <tr>
+                <td class="py-2.5 px-3 font-semibold text-amber-600 dark:text-amber-400">Essential Fat</td>
+                <td class="py-2.5 px-3">2% – 5%</td>
+                <td class="py-2.5 px-3">10% – 13%</td>
+                <td class="py-2.5 px-3 text-slate-500">Minimum physiological threshold for survival</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 px-3 font-semibold text-emerald-600 dark:text-emerald-400">Athletes</td>
+                <td class="py-2.5 px-3">6% – 13%</td>
+                <td class="py-2.5 px-3">14% – 20%</td>
+                <td class="py-2.5 px-3 text-slate-500">Competitive endurance & physique athletes</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 px-3 font-semibold text-blue-600 dark:text-blue-400">Fitness</td>
+                <td class="py-2.5 px-3">14% – 17%</td>
+                <td class="py-2.5 px-3">21% – 24%</td>
+                <td class="py-2.5 px-3 text-slate-500">Lean, regular fitness conditioning</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 px-3 font-semibold text-indigo-600 dark:text-indigo-400">Average</td>
+                <td class="py-2.5 px-3">18% – 24%</td>
+                <td class="py-2.5 px-3">25% – 31%</td>
+                <td class="py-2.5 px-3 text-slate-500">Typical healthy adult population norm</td>
+              </tr>
+              <tr>
+                <td class="py-2.5 px-3 font-semibold text-rose-600 dark:text-rose-400">Higher Body Fat</td>
+                <td class="py-2.5 px-3">25%+</td>
+                <td class="py-2.5 px-3">32%+</td>
+                <td class="py-2.5 px-3 text-slate-500">Consult healthcare professional for guidance</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 5. Practical Example -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          Practical Calculation Example (U.S. Navy Method)
+        </h2>
+        <p>
+          Consider a 30-year-old male with a height of <strong>178 cm</strong>, body weight of <strong>76 kg</strong>, neck circumference of <strong>38 cm</strong>, and waist circumference of <strong>84 cm</strong>:
+        </p>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 space-y-1.5">
+          <div>• Circumference Difference: 84 − 38 = 46 cm (log₁₀(46) = 1.6628)</div>
+          <div>• Height Factor: log₁₀(178) = 2.2504</div>
+          <div>• Estimated Body Density: 1.0324 − (0.19077 × 1.6628) + (0.15456 × 2.2504) = 1.0631 g/cm³</div>
+          <div>• Siri Equation: (495 / 1.0631) − 450 = <strong>15.6% Estimated Body Fat</strong></div>
+          <div>• Estimated Fat Mass: 76 kg × 15.6% = <strong>11.9 kg</strong> (26.2 lbs)</div>
+          <div>• Estimated Lean Body Mass: 76 kg − 11.9 kg = <strong>64.1 kg</strong> (141.3 lbs)</div>
+          <div>• Classification: <strong class="text-blue-600 dark:text-blue-400">Fitness Range (14% – 17%)</strong></div>
+        </div>
+      </section>
+
+      <!-- 6. Tips for Accurate Measurements -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          Best Practices for Taking Body Measurements
+        </h2>
+        <ul class="list-disc space-y-1.5 pl-5 text-xs sm:text-sm">
+          <li><strong>Use a non-elastic vinyl tape measure:</strong> Cloth tapes can stretch over time, skewing measurements.</li>
+          <li><strong>Maintain consistent tension:</strong> Keep the tape snug against the skin without indenting or compressing soft tissue.</li>
+          <li><strong>Measure first thing in the morning:</strong> Take measurements before eating, drinking, or exercise to minimize digestive bloating and hydration shifts.</li>
+          <li><strong>Take 2–3 consecutive readings:</strong> Average multiple measurements to minimize human recording error.</li>
+        </ul>
+      </section>
+
+      <!-- 7. Health and Medical Disclaimer -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          Important Health & Non-Diagnostic Disclaimer
+        </h2>
+        <div class="rounded-xl border border-amber-200 bg-amber-50/60 p-4 text-xs sm:text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300 space-y-2">
+          <p>
+            <strong>General Information Only:</strong> The calculations provided by this website are mathematical estimates based on empirical formulas and population averages. This calculator does not provide medical diagnoses, treatment plans, or health advice.
+          </p>
+          <p>
+            <strong>Clinical Body Composition:</strong> For definitive medical assessment, dual-energy X-ray absorptiometry (DEXA), 3D body scanning, air displacement plethysmography (Bod Pod), or underwater hydrostatic weighing supervised by medical professionals are recommended.
+          </p>
+        </div>
+      </section>
+
+    </div>
+  </Fragment>
+
+  <!-- FAQ Slot (EXACTLY 7 FAQs) -->
+  <Fragment slot="faq">
+    <div class="space-y-4 text-xs sm:text-sm">
+      {faqs.map((faq, index) => (
+        <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open={index === 0}>
+          <summary class="font-bold text-slate-900 dark:text-white cursor-pointer flex justify-between items-center">
+            <span>{index + 1}. {faq.q}</span>
+            <span class="group-open:rotate-180 transition-transform text-slate-400">▼</span>
+          </summary>
+          <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed">
+            {faq.a}
+          </p>
+        </details>
+      ))}
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<!-- FAQPage & WebApplication JSON-LD Schema -->
+<script
+  type="application/ld+json"
+  is:inline
+  set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebApplication',
+        name: 'Body Fat Percentage Calculator',
+        url: 'https://aifreecalculator.com/health/body-fat-calculator/',
+        applicationCategory: 'HealthApplication',
+        operatingSystem: 'All',
+        description: 'Estimate body fat percentage using U.S. Navy circumference, BMI-based, and Army methods with lean body mass and fat mass breakdowns.',
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: faqs.map((faq) => ({
+          '@type': 'Question',
+          name: faq.q,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: faq.a,
+          },
+        })),
+      },
+    ],
+  })}
+/>
+
+<!-- Client-Side Calculation Engine & PDF Export Script -->
+<script>
+  import {
+    calculateNavyBodyFat,
+    calculateBmiBodyFat,
+    calculateArmyBodyFat,
+    calculateVisualMarkerPosition,
+    cmToInches,
+    inchesToCm,
+    ftInToCm,
+    cmToFtIn,
+    kgToLbs,
+    lbsToKg,
+    type CalculationMethod,
+    type Gender,
+    type BodyFatResult,
+  } from '../../lib/calculators/body-fat';
+
+  let currentMethod: CalculationMethod = 'navy';
+  let lastResultData: {
+    result: BodyFatResult;
+    inputs: {
+      gender: Gender;
+      age?: number;
+      heightDisplay: string;
+      weightDisplay?: string;
+      neckDisplay?: string;
+      waistDisplay?: string;
+      hipDisplay?: string;
+    };
+  } | null = null;
+
+  // DOM Elements
+  const methodButtons = document.querySelectorAll<HTMLButtonElement>('.method-btn');
+  const errorBox = document.getElementById('error-box')!;
+  const resultsSection = document.getElementById('results-section')!;
+  const btnCalculate = document.getElementById('btn-calculate-bf') as HTMLButtonElement;
+  const btnClearAll = document.getElementById('btn-clear-all') as HTMLButtonElement;
+  const btnDownloadPdf = document.getElementById('btn-download-pdf') as HTMLButtonElement;
+
+  // Form Inputs
+  const inpGender = document.getElementById('inp-gender') as HTMLSelectElement;
+  const inpHeightUnit = document.getElementById('inp-height-unit') as HTMLSelectElement;
+  const inpWeightUnit = document.getElementById('inp-weight-unit') as HTMLSelectElement;
+  const inpCircUnit = document.getElementById('inp-circ-unit') as HTMLSelectElement;
+
+  const inpHeightCm = document.getElementById('inp-height-cm') as HTMLInputElement;
+  const inpHeightFt = document.getElementById('inp-height-ft') as HTMLInputElement;
+  const inpHeightIn = document.getElementById('inp-height-in') as HTMLInputElement;
+  const inpWeight = document.getElementById('inp-weight') as HTMLInputElement;
+  const inpAge = document.getElementById('inp-age') as HTMLInputElement;
+
+  const inpNeck = document.getElementById('inp-neck') as HTMLInputElement;
+  const inpWaist = document.getElementById('inp-waist') as HTMLInputElement;
+  const inpHip = document.getElementById('inp-hip') as HTMLInputElement;
+
+  // Form Wrappers & Dynamic UI Labels
+  const wrapperHeightCm = document.getElementById('wrapper-height-cm')!;
+  const wrapperHeightFtin = document.getElementById('wrapper-height-ftin')!;
+  const wrapperCircUnit = document.getElementById('wrapper-circ-unit')!;
+  const wrapperCircumferences = document.getElementById('wrapper-circumferences')!;
+  const wrapperHip = document.getElementById('wrapper-hip')!;
+  const wrapperAge = document.getElementById('wrapper-age')!;
+  const lblWeightUnit = document.getElementById('lbl-weight-unit')!;
+  const weightReqStar = document.getElementById('weight-req-star')!;
+
+  // Results Elements
+  const badgeMethod = document.getElementById('badge-method')!;
+  const resHeroBf = document.getElementById('res-hero-bf')!;
+  const resHeroCategory = document.getElementById('res-hero-category')!;
+  const resHeroDesc = document.getElementById('res-hero-desc')!;
+  const resCardBmiContainer = document.getElementById('res-card-bmi-container')!;
+  const resCardBmi = document.getElementById('res-card-bmi')!;
+  const resCardFatMass = document.getElementById('res-card-fat-mass')!;
+  const resCardLeanMass = document.getElementById('res-card-lean-mass')!;
+  const resCardIdeal = document.getElementById('res-card-ideal')!;
+  const scaleMarker = document.getElementById('scale-marker')!;
+  const scaleMarkerText = document.getElementById('scale-marker-text')!;
+  const txtCalcDetails = document.getElementById('txt-calc-details')!;
+
+  // Scale Range Labels
+  const lblRangeEssential = document.getElementById('lbl-range-essential')!;
+  const lblRangeAthletic = document.getElementById('lbl-range-athletic')!;
+  const lblRangeFitness = document.getElementById('lbl-range-fitness')!;
+  const lblRangeAverage = document.getElementById('lbl-range-average')!;
+  const lblRangeHigher = document.getElementById('lbl-range-higher')!;
+
+  function invalidateResults() {
+    resultsSection.classList.add('hidden');
+    errorBox.classList.add('hidden');
+    errorBox.textContent = '';
+    lastResultData = null;
+  }
+
+  function showError(msg: string) {
+    errorBox.textContent = msg;
+    errorBox.classList.remove('hidden');
+    errorBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function updateScaleLabels(gender: Gender) {
+    if (gender === 'male') {
+      lblRangeEssential.textContent = '2–5%';
+      lblRangeAthletic.textContent = '6–13%';
+      lblRangeFitness.textContent = '14–17%';
+      lblRangeAverage.textContent = '18–24%';
+      lblRangeHigher.textContent = '25%+';
+    } else {
+      lblRangeEssential.textContent = '10–13%';
+      lblRangeAthletic.textContent = '14–20%';
+      lblRangeFitness.textContent = '21–24%';
+      lblRangeAverage.textContent = '25–31%';
+      lblRangeHigher.textContent = '32%+';
+    }
+  }
+
+  function updateUiVisibility() {
+    const isFemale = inpGender.value === 'female';
+    updateScaleLabels(inpGender.value as Gender);
+
+    if (currentMethod === 'navy' || currentMethod === 'army') {
+      wrapperCircUnit.classList.remove('hidden');
+      wrapperCircumferences.classList.remove('hidden');
+      weightReqStar.textContent = '(Optional for Navy)';
+
+      if (isFemale) {
+        wrapperHip.classList.remove('hidden');
+      } else {
+        wrapperHip.classList.add('hidden');
+      }
+
+      if (currentMethod === 'navy') {
+        wrapperAge.classList.add('hidden');
+      } else {
+        wrapperAge.classList.remove('hidden');
+      }
+    } else if (currentMethod === 'bmi') {
+      wrapperCircUnit.classList.add('hidden');
+      wrapperCircumferences.classList.add('hidden');
+      wrapperAge.classList.remove('hidden');
+      weightReqStar.textContent = '*';
+    }
+  }
+
+  // Method Switcher
+  methodButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const method = (btn.getAttribute('data-method') as CalculationMethod) || 'navy';
+      if (method === currentMethod) return;
+      currentMethod = method;
+
+      methodButtons.forEach((b) => {
+        b.classList.remove(
+          'active',
+          'border-blue-600',
+          'bg-blue-50',
+          'text-blue-700',
+          'dark:border-blue-500',
+          'dark:bg-blue-950/60',
+          'dark:text-blue-300'
+        );
+        b.classList.add(
+          'border-slate-300',
+          'bg-white',
+          'text-slate-700',
+          'dark:border-slate-700',
+          'dark:bg-slate-800',
+          'dark:text-slate-200'
+        );
+        b.setAttribute('aria-selected', 'false');
+      });
+
+      btn.classList.add(
+        'active',
+        'border-blue-600',
+        'bg-blue-50',
+        'text-blue-700',
+        'dark:border-blue-500',
+        'dark:bg-blue-950/60',
+        'dark:text-blue-300'
+      );
+      btn.classList.remove(
+        'border-slate-300',
+        'bg-white',
+        'text-slate-700',
+        'dark:border-slate-700',
+        'dark:bg-slate-800',
+        'dark:text-slate-200'
+      );
+      btn.setAttribute('aria-selected', 'true');
+
+      updateUiVisibility();
+      invalidateResults();
+    });
+  });
+
+  // Gender Switcher
+  inpGender.addEventListener('change', () => {
+    updateUiVisibility();
+    invalidateResults();
+  });
+
+  // Height Unit Switcher
+  inpHeightUnit.addEventListener('change', () => {
+    const isFtIn = inpHeightUnit.value === 'ft_in';
+    if (isFtIn) {
+      const cm = parseFloat(inpHeightCm.value) || 178;
+      const { feet, inches } = cmToFtIn(cm);
+      inpHeightFt.value = String(feet);
+      inpHeightIn.value = String(inches);
+      wrapperHeightCm.classList.add('hidden');
+      wrapperHeightFtin.classList.remove('hidden');
+    } else {
+      const ft = parseFloat(inpHeightFt.value) || 5;
+      const inVal = parseFloat(inpHeightIn.value) || 10;
+      const cm = Math.round(ftInToCm(ft, inVal));
+      inpHeightCm.value = String(cm);
+      wrapperHeightCm.classList.remove('hidden');
+      wrapperHeightFtin.classList.add('hidden');
+    }
+    invalidateResults();
+  });
+
+  // Weight Unit Switcher
+  inpWeightUnit.addEventListener('change', () => {
+    const isLbs = inpWeightUnit.value === 'lbs';
+    lblWeightUnit.textContent = isLbs ? 'lbs' : 'kg';
+    const currentW = parseFloat(inpWeight.value);
+    if (!isNaN(currentW) && currentW > 0) {
+      if (isLbs) {
+        inpWeight.value = Math.round(kgToLbs(currentW)).toString();
+      } else {
+        inpWeight.value = Math.round(lbsToKg(currentW)).toString();
+      }
+    }
+    invalidateResults();
+  });
+
+  // Circumference Unit Switcher
+  inpCircUnit.addEventListener('change', () => {
+    const isInch = inpCircUnit.value === 'in';
+    document.querySelectorAll('.lbl-circ-unit').forEach((el) => (el.textContent = isInch ? 'in' : 'cm'));
+
+    const neck = parseFloat(inpNeck.value);
+    const waist = parseFloat(inpWaist.value);
+    const hip = parseFloat(inpHip.value);
+
+    if (!isNaN(neck) && neck > 0) {
+      inpNeck.value = isInch ? cmToInches(neck).toFixed(1) : Math.round(inchesToCm(neck)).toString();
+    }
+    if (!isNaN(waist) && waist > 0) {
+      inpWaist.value = isInch ? cmToInches(waist).toFixed(1) : Math.round(inchesToCm(waist)).toString();
+    }
+    if (!isNaN(hip) && hip > 0) {
+      inpHip.value = isInch ? cmToInches(hip).toFixed(1) : Math.round(inchesToCm(hip)).toString();
+    }
+    invalidateResults();
+  });
+
+  // Attach invalidation to all inputs (No live calculation while typing)
+  document.querySelectorAll('input, select').forEach((el) => {
+    el.addEventListener('input', invalidateResults);
+  });
+
+  // Main Calculation Routine
+  function performCalculation() {
+    invalidateResults();
+
+    try {
+      const gender = inpGender.value as Gender;
+      const isFemale = gender === 'female';
+
+      // Parse Height
+      let heightCm = 0;
+      let heightDisplay = '';
+      if (inpHeightUnit.value === 'ft_in') {
+        const ft = parseFloat(inpHeightFt.value);
+        const inVal = parseFloat(inpHeightIn.value) || 0;
+        if (isNaN(ft) || ft <= 0) {
+          return showError('Please enter a valid height in feet.');
+        }
+        if (inVal < 0 || inVal >= 12) {
+          return showError('Inches must be between 0 and 11.9.');
+        }
+        heightCm = ftInToCm(ft, inVal);
+        heightDisplay = `${ft} ft ${inVal} in (${heightCm.toFixed(1)} cm)`;
+      } else {
+        heightCm = parseFloat(inpHeightCm.value);
+        if (isNaN(heightCm) || heightCm <= 0) {
+          return showError('Please enter a valid positive height in centimeters.');
+        }
+        const { feet, inches } = cmToFtIn(heightCm);
+        heightDisplay = `${heightCm} cm (${feet}' ${inches}")`;
+      }
+
+      // Parse Weight (Optional for Navy, Required for BMI)
+      let weightKg: number | undefined;
+      let weightDisplay: string | undefined;
+      const weightVal = parseFloat(inpWeight.value);
+      if (!isNaN(weightVal) && weightVal > 0) {
+        if (inpWeightUnit.value === 'lbs') {
+          weightKg = lbsToKg(weightVal);
+          weightDisplay = `${weightVal} lbs (${weightKg.toFixed(1)} kg)`;
+        } else {
+          weightKg = weightVal;
+          weightDisplay = `${weightKg} kg (${kgToLbs(weightKg).toFixed(1)} lbs)`;
+        }
+      }
+
+      // Parse Age
+      let age: number | undefined;
+      if (currentMethod === 'bmi' || currentMethod === 'army') {
+        age = parseInt(inpAge.value, 10);
+        if (isNaN(age) || age < 18) {
+          return showError('Please enter a valid age of 18 or older.');
+        }
+      }
+
+      let result: BodyFatResult;
+
+      if (currentMethod === 'navy' || currentMethod === 'army') {
+        const isInch = inpCircUnit.value === 'in';
+        let neckCm = parseFloat(inpNeck.value);
+        let waistCm = parseFloat(inpWaist.value);
+        let hipCm = isFemale ? parseFloat(inpHip.value) : undefined;
+
+        if (isNaN(neckCm) || neckCm <= 0) return showError('Please enter a valid positive neck circumference.');
+        if (isNaN(waistCm) || waistCm <= 0) return showError('Please enter a valid positive waist circumference.');
+        if (isFemale && (hipCm === undefined || isNaN(hipCm) || hipCm <= 0)) {
+          return showError('Hip circumference is required for females.');
+        }
+
+        const neckDisplay = isInch ? `${neckCm}" (${inchesToCm(neckCm).toFixed(1)} cm)` : `${neckCm} cm (${cmToInches(neckCm).toFixed(1)}")`;
+        const waistDisplay = isInch ? `${waistCm}" (${inchesToCm(waistCm).toFixed(1)} cm)` : `${waistCm} cm (${cmToInches(waistCm).toFixed(1)}")`;
+        const hipDisplay = isFemale ? (isInch ? `${hipCm}" (${inchesToCm(hipCm!).toFixed(1)} cm)` : `${hipCm} cm (${cmToInches(hipCm!).toFixed(1)}")`) : undefined;
+
+        if (isInch) {
+          neckCm = inchesToCm(neckCm);
+          waistCm = inchesToCm(waistCm);
+          if (isFemale && hipCm !== undefined) hipCm = inchesToCm(hipCm);
+        }
+
+        if (currentMethod === 'navy') {
+          result = calculateNavyBodyFat({ gender, heightCm, neckCm, waistCm, hipCm, weightKg });
+        } else {
+          result = calculateArmyBodyFat({ gender, heightCm, neckCm, waistCm, hipCm, weightKg, age });
+        }
+
+        lastResultData = {
+          result,
+          inputs: {
+            gender,
+            age,
+            heightDisplay,
+            weightDisplay,
+            neckDisplay,
+            waistDisplay,
+            hipDisplay,
+          },
+        };
+      } else {
+        if (!weightKg || isNaN(weightKg) || weightKg <= 0) {
+          return showError('Body weight is required for the BMI-based calculation method.');
+        }
+        result = calculateBmiBodyFat({ gender, age: age!, heightCm, weightKg });
+
+        lastResultData = {
+          result,
+          inputs: {
+            gender,
+            age,
+            heightDisplay,
+            weightDisplay,
+          },
+        };
+      }
+
+      // Render Hero Card
+      badgeMethod.textContent = result.methodLabel;
+      resHeroBf.textContent = `${result.bodyFatPercentage}%`;
+      resHeroCategory.textContent = result.category;
+      resHeroDesc.textContent = result.categoryDescription;
+
+      // Render Metrics Grid
+      if (result.bmi && result.bmi > 0) {
+        resCardBmiContainer.classList.remove('hidden');
+        resCardBmi.textContent = `${result.bmi} kg/m²`;
+      } else {
+        resCardBmiContainer.classList.add('hidden');
+      }
+
+      const isLbsUnit = inpWeightUnit.value === 'lbs';
+      if (result.fatMassKg && result.leanMassKg) {
+        resCardFatMass.textContent = isLbsUnit ? `${result.fatMassLbs} lbs` : `${result.fatMassKg} kg`;
+        resCardLeanMass.textContent = isLbsUnit ? `${result.leanMassLbs} lbs` : `${result.leanMassKg} kg`;
+      } else {
+        resCardFatMass.textContent = 'Enter Weight';
+        resCardLeanMass.textContent = 'Enter Weight';
+      }
+
+      resCardIdeal.textContent = result.idealRange;
+
+      // Position Marker on Visual Progress Scale (Exact Piecewise Mapping)
+      const pctPos = calculateVisualMarkerPosition(gender, result.bodyFatPercentage);
+      scaleMarker.style.left = `${pctPos.toFixed(1)}%`;
+      scaleMarkerText.textContent = `${result.bodyFatPercentage}%`;
+
+      // Render Calculation Steps safely without innerHTML
+      txtCalcDetails.replaceChildren(
+        ...result.calculationSteps.map((step) => {
+          const div = document.createElement('div');
+          div.textContent = step;
+          return div;
+        })
+      );
+
+      // Reveal Results Section
+      resultsSection.classList.remove('hidden');
+      resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (err: any) {
+      showError(err.message || 'An unexpected error occurred during calculation. Please verify your inputs.');
+    }
+  }
+
+  // Clear All Functionality
+  function performClearAll() {
+    currentMethod = 'navy';
+    methodButtons[0].click();
+
+    inpGender.value = 'male';
+
+    inpAge.value = '30';
+    inpHeightUnit.value = 'cm';
+    inpCircUnit.value = 'cm';
+    inpHeightCm.value = '178';
+    inpHeightFt.value = '5';
+    inpHeightIn.value = '10';
+    wrapperHeightCm.classList.remove('hidden');
+    wrapperHeightFtin.classList.add('hidden');
+
+    inpWeight.value = '76';
+    inpWeightUnit.value = 'kg';
+
+    inpNeck.value = '38';
+    inpWaist.value = '84';
+    inpHip.value = '96';
+
+    document.querySelectorAll('.lbl-circ-unit').forEach((el) => (el.textContent = 'cm'));
+    document.querySelectorAll('.lbl-height-unit').forEach((el) => (el.textContent = 'cm'));
+
+    updateUiVisibility();
+    invalidateResults();
+  }
+
+  btnCalculate.addEventListener('click', performCalculation);
+  btnClearAll.addEventListener('click', performClearAll);
+
+  // PDF Export Generation
+  if (btnDownloadPdf) {
+    btnDownloadPdf.addEventListener('click', async () => {
+      if (!lastResultData) {
+        performCalculation();
+        if (!lastResultData) return;
+      }
+
+      const txtBtn = document.getElementById('txt-btn-pdf');
+      if (txtBtn) txtBtn.textContent = 'Generating PDF...';
+
+      try {
+        let jsPDFModule = (window as any).jspdf;
+        if (!jsPDFModule) {
+          const script1 = document.createElement('script');
+          script1.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+          await new Promise((resolve, reject) => {
+            script1.onload = resolve;
+            script1.onerror = reject;
+            document.head.appendChild(script1);
+          });
+          const script2 = document.createElement('script');
+          script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+          await new Promise((resolve, reject) => {
+            script2.onload = resolve;
+            script2.onerror = reject;
+            document.head.appendChild(script2);
+          });
+          jsPDFModule = (window as any).jspdf;
+        }
+
+        const { jsPDF } = jsPDFModule;
+        const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+
+        const primaryColor = [37, 99, 235]; // #2563eb
+        const darkColor = [15, 23, 42]; // #0f172a
+        const slateColor = [100, 116, 139]; // #64748b
+        const lightBg = [248, 250, 252]; // #f8fafc
+
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 40;
+        let y = 45;
+
+        // Top Header Branding
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(18);
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        doc.text('AIFreecalculator.com', margin, y);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(slateColor[0], slateColor[1], slateColor[2]);
+        doc.text('Free Online Calculator Tools', margin, y + 13);
+
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        doc.text(`Generated: ${dateStr}`, pageWidth - margin, y + 5, { align: 'right' });
+
+        y += 28;
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(1);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 24;
+
+        // Title
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(15);
+        doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+        doc.text('Body Fat Percentage Calculation', margin, y);
+        y += 18;
+
+        // Summary Hero Box
+        doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
+        doc.roundedRect(margin, y, pageWidth - margin * 2, 54, 8, 8, 'F');
+        doc.setDrawColor(203, 213, 225);
+        doc.roundedRect(margin, y, pageWidth - margin * 2, 54, 8, 8, 'D');
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        doc.text(`METHOD: ${lastResultData.result.methodLabel.toUpperCase()}`, margin + 14, y + 18);
+
+        doc.setFontSize(16);
+        doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+        doc.text(`Estimated Body Fat: ${lastResultData.result.bodyFatPercentage}%`, margin + 14, y + 38);
+
+        doc.setFontSize(10);
+        doc.setTextColor(slateColor[0], slateColor[1], slateColor[2]);
+        doc.text(`Category: ${lastResultData.result.category} (${lastResultData.result.idealRange} Ideal)`, pageWidth - margin - 14, y + 36, { align: 'right' });
+
+        y += 70;
+
+        // Input Parameters Table
+        const inputRows: any[] = [
+          ['Biological Sex', lastResultData.inputs.gender === 'male' ? 'Male' : 'Female'],
+          ['Height', lastResultData.inputs.heightDisplay],
+        ];
+
+        if (lastResultData.inputs.age) {
+          inputRows.push(['Age', `${lastResultData.inputs.age} Years`]);
+        }
+        if (lastResultData.inputs.weightDisplay) {
+          inputRows.push(['Body Weight', lastResultData.inputs.weightDisplay]);
+        }
+        if (lastResultData.inputs.neckDisplay) {
+          inputRows.push(['Neck Circumference', lastResultData.inputs.neckDisplay]);
+        }
+        if (lastResultData.inputs.waistDisplay) {
+          inputRows.push(['Waist Circumference', lastResultData.inputs.waistDisplay]);
+        }
+        if (lastResultData.inputs.hipDisplay) {
+          inputRows.push(['Hip Circumference', lastResultData.inputs.hipDisplay]);
+        }
+
+        (doc as any).autoTable({
+          startY: y,
+          head: [['Parameter', 'User Entered Value']],
+          body: inputRows,
+          theme: 'striped',
+          headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' },
+          margin: { left: margin, right: margin },
+          styles: { fontSize: 9, cellPadding: 5 },
+        });
+
+        y = (doc as any).lastAutoTable.finalY + 18;
+
+        // Results Breakdown Table
+        const resultRows: any[] = [
+          ['Estimated Body Fat', `${lastResultData.result.bodyFatPercentage}%`],
+          ['Reference Classification', lastResultData.result.category],
+          ['General Ideal Range', lastResultData.result.idealRange],
+        ];
+
+        if (lastResultData.result.bmi && lastResultData.result.bmi > 0) {
+          resultRows.push(['Body Mass Index (BMI)', `${lastResultData.result.bmi} kg/m²`]);
+        }
+        if (lastResultData.result.fatMassKg && lastResultData.result.leanMassKg) {
+          resultRows.push(['Estimated Fat Mass', `${lastResultData.result.fatMassKg} kg (${lastResultData.result.fatMassLbs} lbs)`]);
+          resultRows.push(['Estimated Lean Body Mass', `${lastResultData.result.leanMassKg} kg (${lastResultData.result.leanMassLbs} lbs)`]);
+        }
+
+        (doc as any).autoTable({
+          startY: y,
+          head: [['Metric', 'Estimated Value']],
+          body: resultRows,
+          theme: 'striped',
+          headStyles: { fillColor: darkColor, textColor: 255, fontStyle: 'bold' },
+          margin: { left: margin, right: margin },
+          styles: { fontSize: 9, cellPadding: 5 },
+        });
+
+        y = (doc as any).lastAutoTable.finalY + 18;
+
+        // Calculation Details Section
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+        doc.text('Calculation Details & Step-by-Step Breakdown', margin, y);
+        y += 14;
+
+        doc.setFont('courier', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(slateColor[0], slateColor[1], slateColor[2]);
+
+        for (const step of lastResultData.result.calculationSteps) {
+          const splitText = doc.splitTextToSize(step, pageWidth - margin * 2);
+          if (y + splitText.length * 11 > pageHeight - 60) {
+            doc.addPage();
+            y = margin;
+          }
+          doc.text(splitText, margin, y);
+          y += splitText.length * 11 + 2;
+        }
+
+        y += 10;
+
+        // Medical Disclaimer in PDF
+        const disclaimer =
+          'Disclaimer: This calculation provides mathematical estimates based on user-entered parameters and standardized population formulas. It is not a medical diagnostic tool. For clinical health evaluations or DEXA scan body composition assessments, consult a qualified healthcare professional.';
+        const splitDisc = doc.splitTextToSize(disclaimer, pageWidth - margin * 2);
+
+        if (y + splitDisc.length * 10 > pageHeight - 50) {
+          doc.addPage();
+          y = margin;
+        }
+
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(8);
+        doc.setTextColor(150, 150, 150);
+        doc.text(splitDisc, margin, y);
+
+        // Add page numbers and footers across all pages
+        const totalPages = doc.internal.pages.length - 1;
+        for (let i = 1; i <= totalPages; i++) {
+          doc.setPage(i);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+          doc.setTextColor(slateColor[0], slateColor[1], slateColor[2]);
+          doc.text('Generated using AIFreecalculator.com', margin, pageHeight - 20);
+          doc.text(`Page ${i} of ${totalPages}`, pageWidth - margin, pageHeight - 20, { align: 'right' });
+        }
+
+        doc.save(`body-fat-percentage-${dateStr}.pdf`);
+      } catch (err) {
+        console.error(err);
+        alert('Failed to generate PDF. Please try again.');
+      } finally {
+        if (txtBtn) txtBtn.textContent = 'Download PDF';
+      }
+    });
+  }
+
+  // Initial State Setup
+  updateUiVisibility();
+</script>

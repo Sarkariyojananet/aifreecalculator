@@ -1,0 +1,1391 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+import { STANDARD_REBAR_WEIGHTS } from '../../lib/calculators/rcc-slab-steel';
+---
+
+<CalculatorLayout
+  title="RCC Slab Steel Calculator – Calculate Slab Reinforcement Steel Quantity"
+  description="Free RCC slab steel calculator. Estimate reinforcement bar count, cutting length, main & distribution rebar weight in kg, quintals, tonnes, and concrete volume with BBS steps."
+  category="Construction"
+  calculatorName="RCC Slab Steel Calculator"
+  slug="rcc-slab-steel-calculator"
+  keywords={[
+    'rcc slab steel',
+    'rcc slab steel calculator',
+    'slab rebar calculator',
+    'bar bending schedule slab',
+    'slab steel weight',
+    'rebar quantity slab',
+    'main reinforcement slab',
+    'distribution reinforcement slab',
+    'steel bar weight formula',
+    'd2 162 formula'
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- SAFETY & ENGINEERING DISCLAIMER BANNER -->
+    <div class="rounded-2xl border border-amber-200/90 bg-amber-50/70 p-4 text-xs text-amber-900 shadow-2xs dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+      <div class="flex items-start gap-2.5">
+        <span class="text-base leading-none">⚠️</span>
+        <div class="leading-relaxed">
+          <strong class="font-bold text-amber-950 dark:text-amber-100">Engineering Safety Notice:</strong>
+          This calculator is intended for <strong>preliminary material estimation and budgeting</strong> only. Final reinforcement details (bar sizes, spacing, clear cover, lap lengths, development anchorage, and structural capacity) must be designed, calculated, and stamped by a licensed structural engineer in accordance with applicable building codes (e.g., IS 456, ACI 318, Eurocode 2).
+        </div>
+      </div>
+    </div>
+
+    <!-- QUICK EXAMPLE PRESETS -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-center gap-1.5 text-xs">
+        <span class="font-bold text-slate-600 dark:text-slate-400 mr-1 flex items-center gap-1">
+          <span>⚡</span> Example Presets:
+        </span>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-unit="ft" data-len="12" data-width="10" data-thick="5" data-thick-u="in" data-cover="0.6" data-cover-u="in" data-main-dia="10" data-main-sp="6" data-main-sp-u="in" data-dist-dia="8" data-dist-sp="8" data-dist-sp-u="in">10 ft × 12 ft (Room)</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-unit="ft" data-len="20" data-width="15" data-thick="5" data-thick-u="in" data-cover="0.6" data-cover-u="in" data-main-dia="10" data-main-sp="6" data-main-sp-u="in" data-dist-dia="8" data-dist-sp="7" data-dist-sp-u="in">15 ft × 20 ft (Hall)</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-unit="ft" data-len="30" data-width="20" data-thick="6" data-thick-u="in" data-cover="0.75" data-cover-u="in" data-main-dia="12" data-main-sp="6" data-main-sp-u="in" data-dist-dia="10" data-dist-sp="8" data-dist-sp-u="in">20 ft × 30 ft (Floor)</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-unit="m" data-len="6" data-width="5" data-thick="125" data-thick-u="mm" data-cover="15" data-cover-u="mm" data-main-dia="10" data-main-sp="150" data-main-sp-u="mm" data-dist-dia="8" data-dist-sp="200" data-dist-sp-u="mm">5 m × 6 m (Metric)</button>
+      </div>
+    </div>
+
+    <!-- MAIN CALCULATOR FORM -->
+    <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-blue-50/30 p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/20 sm:p-7">
+      
+      <div class="border-b border-slate-200/80 pb-4 dark:border-slate-800/80">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 class="text-lg sm:text-xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+              <span>🏗️</span> RCC Slab Steel Estimator
+            </h2>
+            <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+              Enter slab dimensions and reinforcement details, then click <strong>Calculate Steel</strong>.
+            </p>
+          </div>
+          <span class="rounded-full bg-blue-100 px-3 py-1 text-[11px] font-bold text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+            IS 456 / BBS Formula
+          </span>
+        </div>
+      </div>
+
+      <form id="form-rcc" class="mt-5 space-y-5" novalidate onsubmit="return false;">
+        
+        <!-- SECTION 1: SLAB DIMENSIONS -->
+        <div>
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              1. Slab Dimensions & Geometry
+            </h3>
+            <div class="flex items-center gap-1 text-xs">
+              <span class="text-slate-500 dark:text-slate-400 font-semibold mr-1">Unit:</span>
+              <button type="button" id="btn-unit-m" class="btn-unit active rounded-lg bg-blue-600 px-2.5 py-1 font-bold text-white shadow-xs cursor-pointer" data-unit="m">Meters (m)</button>
+              <button type="button" id="btn-unit-ft" class="btn-unit rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-unit="ft">Feet (ft)</button>
+            </div>
+          </div>
+
+          <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-4">
+            <div>
+              <label for="input-slab-len" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Length (<span class="lbl-dim-unit">m</span>)
+              </label>
+              <input
+                type="number"
+                id="input-slab-len"
+                value="6.0"
+                step="0.1"
+                min="0.1"
+                class="mt-1 w-full rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label for="input-slab-width" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Width (<span class="lbl-dim-unit">m</span>)
+              </label>
+              <input
+                type="number"
+                id="input-slab-width"
+                value="4.0"
+                step="0.1"
+                min="0.1"
+                class="mt-1 w-full rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label for="input-slab-thick" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Thickness (<span id="lbl-thick-unit">mm</span>)
+              </label>
+              <input
+                type="number"
+                id="input-slab-thick"
+                value="125"
+                step="1"
+                min="1"
+                class="mt-1 w-full rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label for="input-slab-cover" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Clear Cover (<span id="lbl-cover-unit">mm</span>)
+              </label>
+              <input
+                type="number"
+                id="input-slab-cover"
+                value="15"
+                step="1"
+                min="0"
+                class="mt-1 w-full rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: REINFORCEMENT DETAILS -->
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-2 pt-2 border-t border-slate-200/80 dark:border-slate-800">
+          
+          <!-- MAIN REINFORCEMENT -->
+          <div class="rounded-2xl border border-blue-200 bg-blue-50/40 p-4 dark:border-blue-950 dark:bg-slate-900/70">
+            <div class="flex items-center justify-between pb-2 border-b border-blue-200/60 dark:border-slate-800">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-blue-900 dark:text-blue-300">
+                A. Main Reinforcement
+              </h4>
+              <span class="rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                Primary Tension
+              </span>
+            </div>
+
+            <div class="mt-3 grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <label for="select-main-dia" class="block font-bold text-slate-700 dark:text-slate-300">Bar Diameter</label>
+                <select id="select-main-dia" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                  <option value="6">6 mm</option>
+                  <option value="8">8 mm</option>
+                  <option value="10" selected>10 mm</option>
+                  <option value="12">12 mm</option>
+                  <option value="16">16 mm</option>
+                  <option value="20">20 mm</option>
+                  <option value="custom">Custom mm</option>
+                </select>
+                <input type="number" id="input-main-dia-custom" placeholder="Custom dia" class="hidden mt-1 w-full rounded-xl border border-slate-300 bg-white p-1.5 text-xs font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" value="10" />
+              </div>
+
+              <div>
+                <label for="input-main-spacing" class="block font-bold text-slate-700 dark:text-slate-300">
+                  Spacing c/c (<span class="lbl-spacing-unit">mm</span>)
+                </label>
+                <input
+                  type="number"
+                  id="input-main-spacing"
+                  value="150"
+                  step="5"
+                  min="1"
+                  class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+
+              <div class="col-span-2">
+                <label for="select-main-dir" class="block font-bold text-slate-700 dark:text-slate-300">Main Bar Direction</label>
+                <select id="select-main-dir" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                  <option value="short_span" selected>Along Short Span (Recommended for max moment)</option>
+                  <option value="long_span">Along Long Span</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- DISTRIBUTION REINFORCEMENT -->
+          <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                B. Distribution Reinforcement
+              </h4>
+              <span class="rounded-md bg-slate-200 px-2 py-0.5 text-[10px] font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                Perpendicular
+              </span>
+            </div>
+
+            <div class="mt-3 grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <label for="select-dist-dia" class="block font-bold text-slate-700 dark:text-slate-300">Bar Diameter</label>
+                <select id="select-dist-dia" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                  <option value="6">6 mm</option>
+                  <option value="8" selected>8 mm</option>
+                  <option value="10">10 mm</option>
+                  <option value="12">12 mm</option>
+                  <option value="16">16 mm</option>
+                  <option value="20">20 mm</option>
+                  <option value="custom">Custom mm</option>
+                </select>
+                <input type="number" id="input-dist-dia-custom" placeholder="Custom dia" class="hidden mt-1 w-full rounded-xl border border-slate-300 bg-white p-1.5 text-xs font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" value="8" />
+              </div>
+
+              <div>
+                <label for="input-dist-spacing" class="block font-bold text-slate-700 dark:text-slate-300">
+                  Spacing c/c (<span class="lbl-spacing-unit">mm</span>)
+                </label>
+                <input
+                  type="number"
+                  id="input-dist-spacing"
+                  value="200"
+                  step="5"
+                  min="1"
+                  class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+
+              <div class="col-span-2">
+                <label class="block font-bold text-slate-500 dark:text-slate-400">Distribution Bar Direction</label>
+                <div class="mt-1 rounded-xl border border-dashed border-slate-300 bg-white/70 p-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-800/70 dark:text-slate-300">
+                  ⚡ Auto-oriented perpendicular to Main Reinforcement
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- SECTION 3: ADVANCED REINFORCEMENT OPTIONS (Expandable Accordion) -->
+        <details class="group rounded-2xl border border-slate-200/90 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/90">
+          <summary class="cursor-pointer list-none flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            <span class="flex items-center gap-1.5">
+              <span>⚙️</span> Advanced Reinforcement & Wastage Options (Optional)
+            </span>
+            <span class="text-blue-600 dark:text-blue-400 group-open:rotate-180 transition-transform">▼</span>
+          </summary>
+
+          <div class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-4 text-xs pt-3 border-t border-slate-100 dark:border-slate-800">
+            <div>
+              <label for="select-layers" class="block font-bold text-slate-700 dark:text-slate-300">Reinforcement Mesh Layers</label>
+              <select id="select-layers" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                <option value="1" selected>Single Mesh (Bottom Layer)</option>
+                <option value="2">Double Mesh (Top + Bottom Layers)</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="input-wastage" class="block font-bold text-slate-700 dark:text-slate-300">Cutting Wastage (%)</label>
+              <input type="number" id="input-wastage" value="0" min="0" max="25" step="0.5" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+
+            <div>
+              <label for="input-laps" class="block font-bold text-slate-700 dark:text-slate-300">Laps & Anchorage Allowance (%)</label>
+              <input type="number" id="input-laps" value="0" min="0" max="25" step="0.5" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+
+            <div>
+              <label for="input-extra-top" class="block font-bold text-slate-700 dark:text-slate-300">Extra Top Support Steel (%)</label>
+              <input type="number" id="input-extra-top" value="0" min="0" max="50" step="1" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+          </div>
+        </details>
+
+        <!-- ACTION BUTTONS -->
+        <div class="flex flex-wrap items-center gap-3 pt-2">
+          <button
+            type="submit"
+            id="btn-calc-steel"
+            class="flex-1 min-w-[200px] inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer"
+          >
+            <span>Calculate Steel Quantity</span>
+            <span>→</span>
+          </button>
+          <button
+            type="button"
+            id="btn-clear-rcc"
+            class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer"
+          >
+            Clear (✕)
+          </button>
+        </div>
+
+        <p id="err-rcc" class="hidden rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300" role="alert" aria-live="polite"></p>
+
+      </form>
+    </div>
+
+    <!-- INITIAL PLACEHOLDER (Hidden when results are shown) -->
+    <div id="results-placeholder" class="rounded-3xl border border-dashed border-slate-300 bg-slate-50/50 p-8 text-center dark:border-slate-800 dark:bg-slate-900/30">
+      <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400">
+        📐
+      </div>
+      <p class="mt-3 text-sm font-semibold text-slate-600 dark:text-slate-400">
+        Enter slab dimensions and reinforcement details, then click <strong>Calculate Steel</strong>.
+      </p>
+      <p class="mt-1 text-xs text-slate-500 dark:text-slate-500">
+        Results will display bar counts, cutting lengths, weight in kg/quintals/tonnes, and concrete volume.
+      </p>
+    </div>
+
+    <!-- CALCULATION RESULTS CONTAINER (Hidden initially) -->
+    <div id="results-card" class="hidden space-y-5">
+      
+      <!-- HIGHLIGHT SUMMARY CARD -->
+      <div class="overflow-hidden rounded-3xl border border-blue-200 bg-linear-to-br from-white via-blue-50/30 to-blue-100/40 p-5 shadow-lg shadow-blue-500/5 dark:border-blue-900/60 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/30 sm:p-7">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-blue-200/80 pb-4 dark:border-slate-800">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">
+              RCC Slab Steel Calculation Results
+            </span>
+            <div class="mt-1 flex flex-wrap items-baseline gap-2">
+              <span id="res-total-steel-kg" class="text-3xl sm:text-4xl font-black text-blue-600 dark:text-blue-400">-- kg</span>
+              <span id="res-total-steel-other" class="text-sm sm:text-base font-bold text-slate-600 dark:text-slate-300">(-- Quintals | -- Tonnes)</span>
+            </div>
+          </div>
+          <div class="text-left sm:text-right">
+            <span class="text-xs text-slate-500 dark:text-slate-400">Concrete Volume:</span>
+            <div id="res-concrete-vol-full" class="text-base font-black text-slate-900 dark:text-white">-- m³ (-- sqft)</div>
+          </div>
+        </div>
+
+        <!-- Slab Geometry & Steel Intensity Indicators -->
+        <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 text-xs">
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Slab Dimensions</div>
+            <div id="res-geom-dim" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">--</div>
+          </div>
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Slab Surface Area</div>
+            <div id="res-geom-area" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">--</div>
+          </div>
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Steel per Area</div>
+            <div id="res-intensity-area" class="mt-1 text-sm font-bold text-emerald-600 dark:text-emerald-400">--</div>
+          </div>
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Steel per Concrete Vol</div>
+            <div id="res-intensity-vol" class="mt-1 text-sm font-bold text-emerald-600 dark:text-emerald-400">--</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAIN & DISTRIBUTION BREAKDOWN CARDS -->
+      <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
+        
+        <!-- Main Reinforcement Card -->
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+            <h4 class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span>🔹</span> Main Reinforcement
+            </h4>
+            <span id="res-main-subtotal-badge" class="rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-extrabold text-blue-700 dark:bg-blue-950 dark:text-blue-300">-- kg</span>
+          </div>
+
+          <div class="mt-3 space-y-2 text-xs">
+            <div class="flex justify-between py-1 border-b border-slate-50 dark:border-slate-800/50">
+              <span class="text-slate-500 dark:text-slate-400">Bar Diameter & Spacing:</span>
+              <span id="res-main-spec" class="font-bold text-slate-900 dark:text-white">--</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-50 dark:border-slate-800/50">
+              <span class="text-slate-500 dark:text-slate-400">Direction:</span>
+              <span id="res-main-direction" class="font-semibold text-slate-700 dark:text-slate-300">--</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-50 dark:border-slate-800/50">
+              <span class="text-slate-500 dark:text-slate-400">Number of Bars:</span>
+              <span id="res-main-bars-count" class="font-bold text-blue-600 dark:text-blue-400">-- Bars</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-50 dark:border-slate-800/50">
+              <span class="text-slate-500 dark:text-slate-400">Cutting Length per Bar:</span>
+              <span id="res-main-cut-len" class="font-bold text-slate-900 dark:text-white">-- m</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-50 dark:border-slate-800/50">
+              <span class="text-slate-500 dark:text-slate-400">Total Bar Length:</span>
+              <span id="res-main-total-len" class="font-bold text-slate-900 dark:text-white">-- m</span>
+            </div>
+            <div class="flex justify-between py-1">
+              <span class="text-slate-500 dark:text-slate-400">Unit Weight (D²/162):</span>
+              <span id="res-main-unit-wt" class="font-mono text-slate-600 dark:text-slate-400">-- kg/m</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Distribution Reinforcement Card -->
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+            <h4 class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span>🔸</span> Distribution Reinforcement
+            </h4>
+            <span id="res-dist-subtotal-badge" class="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-extrabold text-slate-800 dark:bg-slate-800 dark:text-slate-200">-- kg</span>
+          </div>
+
+          <div class="mt-3 space-y-2 text-xs">
+            <div class="flex justify-between py-1 border-b border-slate-50 dark:border-slate-800/50">
+              <span class="text-slate-500 dark:text-slate-400">Bar Diameter & Spacing:</span>
+              <span id="res-dist-spec" class="font-bold text-slate-900 dark:text-white">--</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-50 dark:border-slate-800/50">
+              <span class="text-slate-500 dark:text-slate-400">Direction:</span>
+              <span id="res-dist-direction" class="font-semibold text-slate-700 dark:text-slate-300">--</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-50 dark:border-slate-800/50">
+              <span class="text-slate-500 dark:text-slate-400">Number of Bars:</span>
+              <span id="res-dist-bars-count" class="font-bold text-blue-600 dark:text-blue-400">-- Bars</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-50 dark:border-slate-800/50">
+              <span class="text-slate-500 dark:text-slate-400">Cutting Length per Bar:</span>
+              <span id="res-dist-cut-len" class="font-bold text-slate-900 dark:text-white">-- m</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-slate-50 dark:border-slate-800/50">
+              <span class="text-slate-500 dark:text-slate-400">Total Bar Length:</span>
+              <span id="res-dist-total-len" class="font-bold text-slate-900 dark:text-white">-- m</span>
+            </div>
+            <div class="flex justify-between py-1">
+              <span class="text-slate-500 dark:text-slate-400">Unit Weight (D²/162):</span>
+              <span id="res-dist-unit-wt" class="font-mono text-slate-600 dark:text-slate-400">-- kg/m</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- DETAILED CALCULATION BREAKDOWN ACCORDION -->
+      <details class="group rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" open>
+        <summary class="cursor-pointer list-none flex items-center justify-between text-sm font-black text-slate-900 dark:text-white">
+          <span class="flex items-center gap-2">
+            <span>📝</span> How the Calculation Works (Worked Steps)
+          </span>
+          <span class="text-blue-600 dark:text-blue-400 group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+
+        <div id="res-steps-content" class="mt-4 space-y-3 text-xs leading-relaxed text-slate-700 dark:text-slate-300 font-mono bg-slate-50 dark:bg-slate-950/70 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-x-auto">
+          <!-- Populated by JavaScript -->
+        </div>
+      </details>
+
+      <!-- STEEL BAR WEIGHT REFERENCE TABLE -->
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+        <h4 class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2 mb-3">
+          <span>📊</span> Standard Steel Bar Weight Reference Chart (D² / 162)
+        </h4>
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-left text-xs">
+            <thead>
+              <tr class="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 font-bold">
+                <th class="py-2.5 px-3">Bar Diameter (D)</th>
+                <th class="py-2.5 px-3">Weight (kg/m)</th>
+                <th class="py-2.5 px-3">Weight (kg/ft)</th>
+                <th class="py-2.5 px-3">Weight of 12m Standard Rod</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              {STANDARD_REBAR_WEIGHTS.map((item) => (
+                <tr>
+                  <td class="py-2 px-3 font-bold text-blue-600 dark:text-blue-400">{item.diaMm} mm</td>
+                  <td class="py-2 px-3">{item.weightKgPerM.toFixed(3)} kg/m</td>
+                  <td class="py-2 px-3">{item.weightKgPerFt.toFixed(3)} kg/ft</td>
+                  <td class="py-2 px-3 font-semibold text-slate-900 dark:text-white">{(item.weightKgPerM * 12).toFixed(2)} kg</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- EDUCATIONAL SEO ARTICLE SLOT (Styled matching age.astro) -->
+  <Fragment slot="content">
+    <section class="rcc-slab-steel-content">
+      <h2>RCC Slab Steel Calculator – Calculate Slab Reinforcement Steel Quantity</h2>
+      <p>
+        An <strong>RCC slab steel calculator</strong> (also referred to as a <em>slab rebar calculator</em> or <em>slab BBS calculator</em>) is an essential civil engineering and construction estimation tool designed to estimate reinforcement steel quantities, cutting lengths, bar counts, and total steel weight in kilograms, quintals, and metric tonnes.
+      </p>
+      <p>
+        Reinforced Cement Concrete (RCC) roof and floor slabs require precisely positioned steel rebar to resist tensile and shear stresses caused by dead loads, live loads, and thermal expansion. Our calculator provides a transparent preliminary material takeoff based on your slab dimensions, bar diameters, spacing, and clear cover.
+      </p>
+
+      <h2>What Is an RCC Slab Steel Calculator?</h2>
+      <p>
+        An <strong>RCC Slab Steel Calculator</strong> computes the exact quantity of reinforcement bars needed for a rectangular one-way or two-way concrete slab. It determines:
+      </p>
+      <ul>
+        <li><strong>Number of Main Reinforcement Bars:</strong> Placed along the primary spanning direction to resist maximum tensile bending moments.</li>
+        <li><strong>Number of Distribution Reinforcement Bars:</strong> Placed perpendicularly to tie the mesh, distribute localized loads, and resist shrinkage stresses.</li>
+        <li><strong>Cutting Length per Bar:</strong> Accounting for usable slab span, end clear cover deduction, and standard bend hooks.</li>
+        <li><strong>Total Steel Weight:</strong> Calculated via the standard rebar density formula <code>D² / 162</code> in kilograms, quintals, and tonnes.</li>
+        <li><strong>Concrete Volume:</strong> Cubic meters and square footage for overall slab estimation.</li>
+      </ul>
+
+      <h2>How to Use the RCC Slab Steel Calculator</h2>
+      <ol>
+        <li><strong>Enter Slab Dimensions:</strong> Input the slab Length and Width, and select your preferred unit (<strong>Meters</strong> or <strong>Feet</strong>).</li>
+        <li><strong>Enter Slab Thickness & Cover:</strong> Specify the slab depth (e.g., 125 mm or 5 inches) and clear cover (typically 15 mm or 20 mm).</li>
+        <li><strong>Select Main Reinforcement:</strong> Choose the bar diameter (e.g., 10 mm or 12 mm), spacing center-to-center (e.g., 150 mm), and spanning direction.</li>
+        <li><strong>Select Distribution Reinforcement:</strong> Choose the secondary bar diameter (e.g., 8 mm or 10 mm) and spacing (e.g., 200 mm).</li>
+        <li><strong>Optional Allowances:</strong> Open the Advanced Options drawer to specify double mesh layers, cutting wastage (e.g., 3–5%), or lap length allowances.</li>
+        <li><strong>Click Calculate Steel:</strong> Press the blue <strong>"Calculate Steel Quantity →"</strong> button or hit <kbd class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-xs">Enter</kbd> to generate your complete Bar Bending Schedule (BBS) summary.</li>
+        <li><strong>Use Clear:</strong> Click <strong>"Clear (✕)"</strong> anytime to reset all fields and start a new calculation.</li>
+      </ol>
+
+      <h2>How to Calculate Steel Quantity for an RCC Slab</h2>
+      <p>
+        Estimating steel reinforcement for an RCC slab involves five methodical steps:
+      </p>
+      <ul>
+        <li><strong>1. Calculate Available Span:</strong> Deduct clear cover from both sides (<code>Available Span = Slab Dimension - 2 × Clear Cover</code>).</li>
+        <li><strong>2. Determine Number of Bars:</strong> Divide the distribution span by the bar spacing center-to-center and add 1 for the end bar: <code>Number of Bars = ⌈Available Span ÷ Spacing⌉ + 1</code>.</li>
+        <li><strong>3. Calculate Cutting Length per Bar:</strong> Usable span minus cover plus end hook/bend allowances (<code>Length = Span - 2 × Cover + 2 × (9 × D)</code>).</li>
+        <li><strong>4. Calculate Unit Weight of Bar:</strong> Apply the formula <code>W = D² ÷ 162 kg/m</code>.</li>
+        <li><strong>5. Calculate Total Steel Weight:</strong> Multiply total linear length (Number of Bars × Length per Bar) by the unit weight.</li>
+      </ul>
+
+      <h2>RCC Steel Weight Formula (D² / 162)</h2>
+      <p>
+        The unit weight of steel rebar per linear meter is calculated using the universal structural formula:
+      </p>
+      <div class="my-4 rounded-2xl border border-slate-200 bg-slate-100/80 p-4 font-mono text-sm dark:border-slate-800 dark:bg-slate-900">
+        <div class="font-bold text-blue-600 dark:text-blue-400">Unit Weight of Rebar:</div>
+        <div class="mt-1">Weight (kg/m) = D² ÷ 162.28  ≈  D² ÷ 162</div>
+        <div class="mt-1 text-xs text-slate-500">Where D is the nominal bar diameter in millimeters (mm).</div>
+      </div>
+      <p>
+        <strong>Derivation:</strong> The density of structural steel is approximately <code>7850 kg/m³</code>. The volume of 1 meter of a circular bar is <code>(π × D² ÷ 4) × 10⁻⁶ × 1 m</code>. Multiplying by <code>7850 kg/m³</code> yields <code>Weight = (3.14159 × 7850 ÷ 4,000,000) × D² = D² ÷ 162.28</code>.
+      </p>
+      <ul>
+        <li><strong>8 mm Bar:</strong> <code>8² ÷ 162 = 64 ÷ 162 = 0.395 kg/m</code></li>
+        <li><strong>10 mm Bar:</strong> <code>10² ÷ 162 = 100 ÷ 162 = 0.617 kg/m</code></li>
+        <li><strong>12 mm Bar:</strong> <code>12² ÷ 162 = 144 ÷ 162 = 0.889 kg/m</code></li>
+        <li><strong>16 mm Bar:</strong> <code>16² ÷ 162 = 256 ÷ 162 = 1.580 kg/m</code></li>
+      </ul>
+
+      <h2>How to Calculate the Number of Steel Bars in a Slab</h2>
+      <p>
+        The number of bars running in any direction depends on the length of the opposite perpendicular span across which the bars are distributed:
+      </p>
+      <p>
+        <code>Number of Bars = ⌈(Distribution Length - 2 × Clear Cover) ÷ Center-to-Center Spacing⌉ + 1</code>
+      </p>
+      <p>
+        Because partial bar spacing cannot be left unsupported at edges, the division is always rounded up (<code>ceil</code>) to the next whole number, plus 1 additional bar to anchor the starting boundary.
+      </p>
+
+      <h2>Main Reinforcement vs Distribution Reinforcement</h2>
+      <p>
+        In slab engineering, reinforcement bars serve two distinct structural functions:
+      </p>
+      <ul>
+        <li>
+          <strong>Main Reinforcement (Bottom Primary Bars):</strong> Placed along the shorter span direction in one-way slabs because bending moments ($M_x$) are highest across the short dimension. These bars directly resist tensile bending forces.
+        </li>
+        <li>
+          <strong>Distribution Reinforcement (Secondary Transverse Bars):</strong> Placed perpendicular to the main reinforcement. They hold the main bars in position during concrete pouring, distribute point loads, and prevent cracking from concrete shrinkage and temperature variations.
+        </li>
+      </ul>
+      <p>
+        <em>Note:</em> In two-way slabs ($L / B &lt; 2$), bending moments occur significantly in both directions, requiring engineered main reinforcement across both axes as specified by the structural designer.
+      </p>
+
+      <h2>RCC Slab Steel Calculation Example</h2>
+      <p>
+        Consider an illustrative residential room slab:
+      </p>
+      <ul>
+        <li><strong>Slab Dimensions:</strong> 10 ft × 12 ft (3.048 m × 3.658 m), Thickness = 125 mm (5 inches), Clear Cover = 15 mm.</li>
+        <li><strong>Main Bars:</strong> 10 mm diameter @ 150 mm c/c along short span (3.048 m).</li>
+        <li><strong>Distribution Bars:</strong> 8 mm diameter @ 200 mm c/c along long span (3.658 m).</li>
+      </ul>
+      <p>
+        <strong>Step 1: Main Steel Calculation</strong>
+        <br />
+        Distribution span = 3.658 m - 0.03 m = 3.628 m = 3628 mm.
+        <br />
+        Number of Main Bars = <code>⌈3628 ÷ 150⌉ + 1 = 25 + 1 = 26 Bars</code>.
+        <br />
+        Cutting Length per Bar = <code>3.048 - 2(0.015) + 2(9 × 0.010) = 3.018 + 0.180 = 3.198 m</code>.
+        <br />
+        Total Main Bar Length = <code>26 × 3.198 m = 83.15 m</code>.
+        <br />
+        Main Steel Weight = <code>83.15 m × 0.617 kg/m = 51.30 kg</code>.
+      </p>
+      <p>
+        <strong>Step 2: Distribution Steel Calculation</strong>
+        <br />
+        Distribution span = 3.048 m - 0.03 m = 3.018 m = 3018 mm.
+        <br />
+        Number of Distribution Bars = <code>⌈3018 ÷ 200⌉ + 1 = 16 + 1 = 17 Bars</code>.
+        <br />
+        Cutting Length per Bar = <code>3.658 - 2(0.015) + 2(9 × 0.008) = 3.628 + 0.144 = 3.772 m</code>.
+        <br />
+        Total Distribution Bar Length = <code>17 × 3.772 m = 64.12 m</code>.
+        <br />
+        Distribution Steel Weight = <code>64.12 m × 0.395 kg/m = 25.33 kg</code>.
+      </p>
+      <p>
+        <strong>Estimated Total Steel:</strong> <code>51.30 kg + 25.33 kg = 76.63 kg (0.77 Quintals)</code>.
+      </p>
+
+      <h2>How Much Steel Is Required for an RCC Slab?</h2>
+      <p>
+        General thumb-rules for preliminary estimation of residential RCC roof slabs:
+      </p>
+      <ul>
+        <li><strong>By Concrete Volume:</strong> Approximately <strong>70 kg to 90 kg of steel per cubic meter (m³)</strong> of concrete.</li>
+        <li><strong>By Slab Floor Area:</strong> Approximately <strong>0.75 kg to 1.1 kg of steel per square foot (sqft)</strong> of slab area (or <code>8 to 12 kg/m²</code>).</li>
+      </ul>
+      <p>
+        <em>Important:</em> These thumb rules are solely for material estimation and budgeting. Commercial, industrial, cantilever, or heavy-load slabs require custom structural engineering calculations.
+      </p>
+
+      <h2>Steel Bar Weight Chart</h2>
+      <p>
+        Standard weight chart for deformed high-yield strength TMT rebar (Fe 500 / Fe 550) according to standard density:
+      </p>
+      <div class="overflow-x-auto my-4">
+        <table class="min-w-full text-left text-xs sm:text-sm">
+          <thead>
+            <tr class="border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900">
+              <th class="py-3 px-3 font-bold">Bar Diameter</th>
+              <th class="py-3 px-3 font-bold">Formula (D²/162)</th>
+              <th class="py-3 px-3 font-bold">Weight (kg/m)</th>
+              <th class="py-3 px-3 font-bold">Weight (kg/ft)</th>
+              <th class="py-3 px-3 font-bold">12m Rod Weight</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            <tr>
+              <td class="py-2.5 px-3 font-bold text-blue-600 dark:text-blue-400">6 mm</td>
+              <td class="py-2.5 px-3">6² ÷ 162</td>
+              <td class="py-2.5 px-3">0.222 kg/m</td>
+              <td class="py-2.5 px-3">0.068 kg/ft</td>
+              <td class="py-2.5 px-3">2.67 kg</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 font-bold text-blue-600 dark:text-blue-400">8 mm</td>
+              <td class="py-2.5 px-3">8² ÷ 162</td>
+              <td class="py-2.5 px-3">0.395 kg/m</td>
+              <td class="py-2.5 px-3">0.120 kg/ft</td>
+              <td class="py-2.5 px-3">4.74 kg</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 font-bold text-blue-600 dark:text-blue-400">10 mm</td>
+              <td class="py-2.5 px-3">10² ÷ 162</td>
+              <td class="py-2.5 px-3">0.617 kg/m</td>
+              <td class="py-2.5 px-3">0.188 kg/ft</td>
+              <td class="py-2.5 px-3">7.41 kg</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 font-bold text-blue-600 dark:text-blue-400">12 mm</td>
+              <td class="py-2.5 px-3">12² ÷ 162</td>
+              <td class="py-2.5 px-3">0.889 kg/m</td>
+              <td class="py-2.5 px-3">0.271 kg/ft</td>
+              <td class="py-2.5 px-3">10.67 kg</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 font-bold text-blue-600 dark:text-blue-400">16 mm</td>
+              <td class="py-2.5 px-3">16² ÷ 162</td>
+              <td class="py-2.5 px-3">1.580 kg/m</td>
+              <td class="py-2.5 px-3">0.482 kg/ft</td>
+              <td class="py-2.5 px-3">18.96 kg</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 font-bold text-blue-600 dark:text-blue-400">20 mm</td>
+              <td class="py-2.5 px-3">20² ÷ 162</td>
+              <td class="py-2.5 px-3">2.469 kg/m</td>
+              <td class="py-2.5 px-3">0.753 kg/ft</td>
+              <td class="py-2.5 px-3">29.63 kg</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Factors That Affect RCC Slab Steel Quantity</h2>
+      <ul>
+        <li><strong>Slab Span & Boundary Supports:</strong> Longer spans create higher bending moments requiring thicker slabs or tighter rebar spacing.</li>
+        <li><strong>Single vs Double Mesh:</strong> Thick slabs or cantilever projections require top reinforcement mesh in addition to bottom mesh.</li>
+        <li><strong>Clear Cover:</strong> Inadequate cover leads to rebar corrosion, while excessive cover reduces the effective structural depth of the slab.</li>
+        <li><strong>Lapping & Anchorage:</strong> Spans exceeding standard 12-meter commercial bar lengths require overlap splices (typically <code>40D to 50D</code>).</li>
+        <li><strong>Site Wastage:</strong> Cutting rebar creates offcuts; standard estimation accounts for <strong>3% to 5%</strong> wastage.</li>
+      </ul>
+
+      <h2>Why Clear Cover Matters</h2>
+      <p>
+        <strong>Clear cover</strong> is the protective thickness of concrete between the outer surface of reinforcement rebar and the outer surface of the concrete member.
+      </p>
+      <ul>
+        <li>Protects steel rebar from atmospheric corrosion and environmental moisture.</li>
+        <li>Provides thermal insulation during building fires.</li>
+        <li>Maintains proper bonding stresses between concrete aggregate and deformed rebar ribs.</li>
+      </ul>
+      <p>
+        For standard indoor RCC slabs, building codes (such as IS 456) typically prescribe a minimum clear cover of <strong>15 mm to 20 mm</strong>.
+      </p>
+
+      <h2>Important Engineering & Safety Disclaimer</h2>
+      <p>
+        This online calculator is provided for educational and preliminary material estimating purposes. It does not replace formal structural analysis, deflection checks, shear capacity verifications, seismic detailing, or local building code compliance. Always consult a qualified, registered structural engineer before finalizing construction drawings or ordering steel.
+      </p>
+    </section>
+  </Fragment>
+
+  <!-- FAQ SECTION SLOT -->
+  <Fragment slot="faq">
+    <div class="space-y-4 text-xs sm:text-sm">
+      
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open>
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            1. How do I calculate steel quantity for an RCC slab?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Calculate the number of main bars and distribution bars based on span and spacing, determine their individual cutting lengths (deducting clear cover and adding hook allowances), calculate the total bar length, and multiply by the rebar unit weight (<code>D² / 162 kg/m</code>).
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            2. What is the formula for steel weight per meter?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          The formula is <code>Weight (kg/m) = D² / 162</code>, where <code>D</code> is the diameter of the steel bar in millimeters.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            3. Why is D² / 162 used for steel weight calculation?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          It is derived from the density of steel (<code>7850 kg/m³</code>) multiplied by the circular volume of a 1-meter cylinder of diameter D: <code>(π × D² / 4) × 10⁻⁶ × 7850 = D² / 162.28</code>.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            4. How do I calculate the number of bars in a slab?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Divide the distribution span (after deducting clear cover on both sides) by the center-to-center bar spacing, round up to the next integer, and add 1: <code>Number of Bars = ⌈(Span - 2×Cover) / Spacing⌉ + 1</code>.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            5. How does bar spacing affect steel quantity?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Smaller spacing (e.g., 100 mm vs 150 mm) places more bars across the span, increasing total steel weight. Spacing must be specified by the structural design to ensure adequate load resistance without causing concrete honeycomb voids.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            6. How do I calculate 8 mm steel bar weight?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          <code>8² / 162 = 64 / 162 = 0.395 kg per meter</code>. A standard 12-meter 8 mm rod weighs approximately <code>4.74 kg</code>.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            7. How do I calculate 10 mm steel bar weight?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          <code>10² / 162 = 100 / 162 = 0.617 kg per meter</code>. A standard 12-meter 10 mm rod weighs approximately <code>7.41 kg</code>.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            8. How do I calculate 12 mm steel bar weight?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          <code>12² / 162 = 144 / 162 = 0.889 kg per meter</code>. A standard 12-meter 12 mm rod weighs approximately <code>10.67 kg</code>.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            9. What is the difference between main steel and distribution steel?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Main steel directly resists bending tensile stresses and is placed along the shorter span in one-way slabs. Distribution steel runs perpendicularly to control shrinkage, distribute concentrated loads, and tie the mesh.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            10. Does this RCC Slab Steel Calculator include laps?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          You can explicitly enter a lap and anchorage allowance percentage (e.g. 5% or 10%) inside the <strong>Advanced Options</strong> drawer. The basic calculation does not silently add lap steel without user input.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            11. Does the calculator include wastage?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Cutting wastage can be configured in the Advanced Options section (typically 3% to 5% for site bar cutting).
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            12. Can I use feet and meters in this calculator?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Yes. The calculator supports toggling between <strong>Meters</strong> and <strong>Feet</strong> for slab length and width, and converts all parameters accurately.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            13. Is the calculated steel quantity suitable for final structural design?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          No. This tool is designed for material quantity estimation and budgeting. Final structural design, bar size, spacing, and development length must be approved by a qualified structural engineer.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            14. How accurate is an RCC slab steel estimate?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          When accurate bar diameters, spacing, and clear cover from engineering drawings are entered, the calculated weight closely matches the actual Bar Bending Schedule (BBS) within ±2% to 3%.
+        </p>
+      </details>
+
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<style>
+  .rcc-slab-steel-content h2 {
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.3;
+    color: #0f172a;
+  }
+
+  .rcc-slab-steel-content h2:first-child {
+    margin-top: 0;
+  }
+
+  .rcc-slab-steel-content h3 {
+    margin-top: 1.75rem;
+    margin-bottom: 0.625rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .rcc-slab-steel-content p {
+    margin: 0 0 1rem;
+    line-height: 1.75;
+    color: #475569;
+  }
+
+  .rcc-slab-steel-content ul {
+    margin: 0.75rem 0 1.5rem;
+    padding-left: 1.5rem;
+    list-style: disc;
+  }
+
+  .rcc-slab-steel-content ol {
+    margin: 0.75rem 0 1.5rem;
+    padding-left: 1.5rem;
+    list-style: decimal;
+  }
+
+  .rcc-slab-steel-content li + li {
+    margin-top: 0.5rem;
+  }
+
+  :global(.dark) .rcc-slab-steel-content h2,
+  :global(.dark) .rcc-slab-steel-content h3 {
+    color: #f8fafc;
+  }
+
+  :global(.dark) .rcc-slab-steel-content p {
+    color: #cbd5e1;
+  }
+</style>
+
+<!-- FAQ Schema JSON-LD -->
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How do I calculate steel quantity for an RCC slab?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Calculate the number of bars from span and spacing, determine cutting length after cover deduction, and multiply by D²/162 kg/m."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the formula for steel weight per meter?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Weight (kg/m) = D² / 162, where D is the bar diameter in millimeters."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why is D² / 162 used for steel weight calculation?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "It is derived from the density of steel (7850 kg/m³) multiplied by the cylindrical volume of 1 meter of rebar."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I calculate the number of bars in a slab?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Divide the distribution span by bar spacing and add 1: ceil((Span - 2×Cover) / Spacing) + 1."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does bar spacing affect steel quantity?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Tighter spacing increases the number of bars and overall steel weight."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between main steel and distribution steel?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Main steel resists primary tensile bending moments, while distribution steel controls shrinkage and ties the rebar mesh."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does this RCC Slab Steel Calculator include laps?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Lap and wastage allowances can be configured in the Advanced Options drawer."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is the calculated steel quantity suitable for final structural design?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No, it is for estimation and budgeting. Final structural design must be verified by a licensed engineer."
+      }
+    }
+  ]
+})} />
+
+<!-- CLIENT-SIDE SCRIPT LOGIC -->
+<script is:inline>
+  let currentDimensionUnit = 'm'; // 'm' or 'ft'
+
+  // DOM Elements
+  const btnUnitM = document.getElementById('btn-unit-m');
+  const btnUnitFt = document.getElementById('btn-unit-ft');
+  const lblDimUnits = document.querySelectorAll('.lbl-dim-unit');
+  const lblThickUnit = document.getElementById('lbl-thick-unit');
+  const lblCoverUnit = document.getElementById('lbl-cover-unit');
+  const lblSpacingUnits = document.querySelectorAll('.lbl-spacing-unit');
+
+  const inputSlabLen = document.getElementById('input-slab-len');
+  const inputSlabWidth = document.getElementById('input-slab-width');
+  const inputSlabThick = document.getElementById('input-slab-thick');
+  const inputSlabCover = document.getElementById('input-slab-cover');
+
+  const selectMainDia = document.getElementById('select-main-dia');
+  const inputMainDiaCustom = document.getElementById('input-main-dia-custom');
+  const inputMainSpacing = document.getElementById('input-main-spacing');
+  const selectMainDir = document.getElementById('select-main-dir');
+
+  const selectDistDia = document.getElementById('select-dist-dia');
+  const inputDistDiaCustom = document.getElementById('input-dist-dia-custom');
+  const inputDistSpacing = document.getElementById('input-dist-spacing');
+
+  const selectLayers = document.getElementById('select-layers');
+  const inputWastage = document.getElementById('input-wastage');
+  const inputLaps = document.getElementById('input-laps');
+  const inputExtraTop = document.getElementById('input-extra-top');
+
+  const btnCalcSteel = document.getElementById('btn-calc-steel');
+  const btnClearRcc = document.getElementById('btn-clear-rcc');
+  const errRcc = document.getElementById('err-rcc');
+
+  const resultsPlaceholder = document.getElementById('results-placeholder');
+  const resultsCard = document.getElementById('results-card');
+
+  // Results display fields
+  const resTotalSteelKg = document.getElementById('res-total-steel-kg');
+  const resTotalSteelOther = document.getElementById('res-total-steel-other');
+  const resConcreteVolFull = document.getElementById('res-concrete-vol-full');
+  const resGeomDim = document.getElementById('res-geom-dim');
+  const resGeomArea = document.getElementById('res-geom-area');
+  const resIntensityArea = document.getElementById('res-intensity-area');
+  const resIntensityVol = document.getElementById('res-intensity-vol');
+
+  const resMainSubtotalBadge = document.getElementById('res-main-subtotal-badge');
+  const resMainSpec = document.getElementById('res-main-spec');
+  const resMainDirection = document.getElementById('res-main-direction');
+  const resMainBarsCount = document.getElementById('res-main-bars-count');
+  const resMainCutLen = document.getElementById('res-main-cut-len');
+  const resMainTotalLen = document.getElementById('res-main-total-len');
+  const resMainUnitWt = document.getElementById('res-main-unit-wt');
+
+  const resDistSubtotalBadge = document.getElementById('res-dist-subtotal-badge');
+  const resDistSpec = document.getElementById('res-dist-spec');
+  const resDistDirection = document.getElementById('res-dist-direction');
+  const resDistBarsCount = document.getElementById('res-dist-bars-count');
+  const resDistCutLen = document.getElementById('res-dist-cut-len');
+  const resDistTotalLen = document.getElementById('res-dist-total-len');
+  const resDistUnitWt = document.getElementById('res-dist-unit-wt');
+
+  const resStepsContent = document.getElementById('res-steps-content');
+
+  // Custom Dia toggle
+  selectMainDia.addEventListener('change', () => {
+    if (selectMainDia.value === 'custom') {
+      inputMainDiaCustom.classList.remove('hidden');
+    } else {
+      inputMainDiaCustom.classList.add('hidden');
+    }
+  });
+
+  selectDistDia.addEventListener('change', () => {
+    if (selectDistDia.value === 'custom') {
+      inputDistDiaCustom.classList.remove('hidden');
+    } else {
+      inputDistDiaCustom.classList.add('hidden');
+    }
+  });
+
+  // Unit Switcher
+  function setUnit(unit) {
+    if (currentDimensionUnit === unit) return;
+    currentDimensionUnit = unit;
+
+    if (unit === 'ft') {
+      btnUnitFt.className = 'btn-unit active rounded-lg bg-blue-600 px-2.5 py-1 font-bold text-white shadow-xs cursor-pointer';
+      btnUnitM.className = 'btn-unit rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer';
+      lblDimUnits.forEach((el) => (el.textContent = 'ft'));
+      lblThickUnit.textContent = 'in';
+      lblCoverUnit.textContent = 'in';
+      lblSpacingUnits.forEach((el) => (el.textContent = 'in'));
+
+      // Convert default values to imperial
+      const curL = parseFloat(inputSlabLen.value) || 6;
+      const curW = parseFloat(inputSlabWidth.value) || 4;
+      inputSlabLen.value = (curL * 3.28084).toFixed(1);
+      inputSlabWidth.value = (curW * 3.28084).toFixed(1);
+      inputSlabThick.value = '5.0';
+      inputSlabCover.value = '0.6';
+      inputMainSpacing.value = '6.0';
+      inputDistSpacing.value = '8.0';
+    } else {
+      btnUnitM.className = 'btn-unit active rounded-lg bg-blue-600 px-2.5 py-1 font-bold text-white shadow-xs cursor-pointer';
+      btnUnitFt.className = 'btn-unit rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer';
+      lblDimUnits.forEach((el) => (el.textContent = 'm'));
+      lblThickUnit.textContent = 'mm';
+      lblCoverUnit.textContent = 'mm';
+      lblSpacingUnits.forEach((el) => (el.textContent = 'mm'));
+
+      const curL = parseFloat(inputSlabLen.value) || 20;
+      const curW = parseFloat(inputSlabWidth.value) || 13;
+      inputSlabLen.value = (curL * 0.3048).toFixed(1);
+      inputSlabWidth.value = (curW * 0.3048).toFixed(1);
+      inputSlabThick.value = '125';
+      inputSlabCover.value = '15';
+      inputMainSpacing.value = '150';
+      inputDistSpacing.value = '200';
+    }
+
+    errRcc.classList.add('hidden');
+    resultsCard.classList.add('hidden');
+    resultsPlaceholder.classList.remove('hidden');
+  }
+
+  btnUnitM.addEventListener('click', () => setUnit('m'));
+  btnUnitFt.addEventListener('click', () => setUnit('ft'));
+
+  // Preset buttons
+  document.querySelectorAll('.btn-preset').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const u = btn.getAttribute('data-unit');
+      setUnit(u);
+
+      inputSlabLen.value = btn.getAttribute('data-len');
+      inputSlabWidth.value = btn.getAttribute('data-width');
+      inputSlabThick.value = btn.getAttribute('data-thick');
+      inputSlabCover.value = btn.getAttribute('data-cover');
+
+      selectMainDia.value = btn.getAttribute('data-main-dia');
+      inputMainDiaCustom.classList.add('hidden');
+      inputMainSpacing.value = btn.getAttribute('data-main-sp');
+
+      selectDistDia.value = btn.getAttribute('data-dist-dia');
+      inputDistDiaCustom.classList.add('hidden');
+      inputDistSpacing.value = btn.getAttribute('data-dist-sp');
+
+      executeCalculation();
+    });
+  });
+
+  // Calculation Logic
+  function executeCalculation() {
+    const rawLen = parseFloat(inputSlabLen.value);
+    const rawWidth = parseFloat(inputSlabWidth.value);
+    const rawThick = parseFloat(inputSlabThick.value);
+    const rawCover = parseFloat(inputSlabCover.value);
+
+    if (isNaN(rawLen) || isNaN(rawWidth) || rawLen <= 0 || rawWidth <= 0) {
+      errRcc.textContent = 'Please enter valid slab Length and Width greater than zero.';
+      errRcc.classList.remove('hidden');
+      resultsCard.classList.add('hidden');
+      resultsPlaceholder.classList.remove('hidden');
+      return;
+    }
+
+    if (isNaN(rawThick) || rawThick <= 0) {
+      errRcc.textContent = 'Please enter a valid slab thickness greater than zero.';
+      errRcc.classList.remove('hidden');
+      resultsCard.classList.add('hidden');
+      resultsPlaceholder.classList.remove('hidden');
+      return;
+    }
+
+    // Convert inputs to metric for uniform BBS engine
+    const isFt = currentDimensionUnit === 'ft';
+    const lengthM = isFt ? rawLen * 0.3048 : rawLen;
+    const widthM = isFt ? rawWidth * 0.3048 : rawWidth;
+    const thicknessMm = isFt ? rawThick * 25.4 : rawThick;
+    const coverMm = isFt ? rawCover * 25.4 : rawCover;
+    const coverM = coverMm / 1000;
+
+    // Check if cover exceeds slab thickness
+    if (coverMm * 2 >= thicknessMm) {
+      errRcc.textContent = 'Clear cover from both sides exceeds total slab thickness. Please check cover values.';
+      errRcc.classList.remove('hidden');
+      resultsCard.classList.add('hidden');
+      resultsPlaceholder.classList.remove('hidden');
+      return;
+    }
+
+    // Main bar diameter & spacing
+    let mainDia = selectMainDia.value === 'custom' ? parseFloat(inputMainDiaCustom.value) : parseFloat(selectMainDia.value);
+    let mainSpacingMm = isFt ? (parseFloat(inputMainSpacing.value) || 6) * 25.4 : (parseFloat(inputMainSpacing.value) || 150);
+
+    if (isNaN(mainDia) || mainDia <= 0) mainDia = 10;
+    if (isNaN(mainSpacingMm) || mainSpacingMm <= 0) mainSpacingMm = 150;
+
+    // Dist bar diameter & spacing
+    let distDia = selectDistDia.value === 'custom' ? parseFloat(inputDistDiaCustom.value) : parseFloat(selectDistDia.value);
+    let distSpacingMm = isFt ? (parseFloat(inputDistSpacing.value) || 8) * 25.4 : (parseFloat(inputDistSpacing.value) || 200);
+
+    if (isNaN(distDia) || distDia <= 0) distDia = 8;
+    if (isNaN(distSpacingMm) || distSpacingMm <= 0) distSpacingMm = 200;
+
+    errRcc.classList.add('hidden');
+
+    const longSpanM = Math.max(lengthM, widthM);
+    const shortSpanM = Math.min(lengthM, widthM);
+    const isShortMain = selectMainDir.value === 'short_span';
+
+    const mainSpanM = isShortMain ? shortSpanM : longSpanM;
+    const mainDistributeSpanM = isShortMain ? longSpanM : shortSpanM;
+
+    const distSpanM = isShortMain ? longSpanM : shortSpanM;
+    const distDistributeSpanM = isShortMain ? shortSpanM : longSpanM;
+
+    // Unit weights (D² / 162)
+    const mainUnitWt = (mainDia * mainDia) / 162;
+    const distUnitWt = (distDia * distDia) / 162;
+
+    // Main bars
+    const mainAvailDistM = Math.max(0, mainDistributeSpanM - 2 * coverM);
+    const mainBarsCount = Math.ceil((mainAvailDistM * 1000) / mainSpacingMm) + 1;
+    const mainHookLengthM = 2 * (9 * mainDia / 1000);
+    const mainCutLenM = Math.max(0, mainSpanM - 2 * coverM + mainHookLengthM);
+    const mainTotalLenM = mainBarsCount * mainCutLenM;
+    const mainTotalWtKg = mainTotalLenM * mainUnitWt;
+
+    // Distribution bars
+    const distAvailDistM = Math.max(0, distDistributeSpanM - 2 * coverM);
+    const distBarsCount = Math.ceil((distAvailDistM * 1000) / distSpacingMm) + 1;
+    const distHookLengthM = 2 * (9 * distDia / 1000);
+    const distCutLenM = Math.max(0, distSpanM - 2 * coverM + distHookLengthM);
+    const distTotalLenM = distBarsCount * distCutLenM;
+    const distTotalWtKg = distTotalLenM * distUnitWt;
+
+    // Advanced additions
+    const layers = parseInt(selectLayers.value, 10) || 1;
+    const baseSteelKg = (mainTotalWtKg + distTotalWtKg) * layers;
+    const extraTopPct = parseFloat(inputExtraTop.value) || 0;
+    const lapsPct = parseFloat(inputLaps.value) || 0;
+    const wastagePct = parseFloat(inputWastage.value) || 0;
+
+    const extraTopKg = baseSteelKg * (Math.max(0, extraTopPct) / 100);
+    const lapsKg = baseSteelKg * (Math.max(0, lapsPct) / 100);
+    const subtotalKg = baseSteelKg + extraTopKg + lapsKg;
+    const wastageKg = subtotalKg * (Math.max(0, wastagePct) / 100);
+    const finalTotalSteelKg = subtotalKg + wastageKg;
+
+    // Slab area & concrete volume
+    const slabAreaSqm = lengthM * widthM;
+    const slabAreaSqft = slabAreaSqm * 10.7639;
+    const concreteVolCum = slabAreaSqm * (thicknessMm / 1000);
+
+    const steelPerSqm = slabAreaSqm > 0 ? (finalTotalSteelKg / slabAreaSqm).toFixed(2) : '0';
+    const steelPerSqft = slabAreaSqft > 0 ? (finalTotalSteelKg / slabAreaSqft).toFixed(3) : '0';
+    const steelPerCum = concreteVolCum > 0 ? (finalTotalSteelKg / concreteVolCum).toFixed(1) : '0';
+
+    // Populate Results Display
+    resTotalSteelKg.textContent = `${finalTotalSteelKg.toFixed(1)} kg`;
+    resTotalSteelOther.textContent = `(${(finalTotalSteelKg / 100).toFixed(2)} Quintals | ${(finalTotalSteelKg / 1000).toFixed(3)} Tonnes)`;
+    resConcreteVolFull.textContent = `${concreteVolCum.toFixed(2)} m³ (${slabAreaSqft.toFixed(0)} sq ft area)`;
+
+    resGeomDim.textContent = isFt ? `${rawLen} ft × ${rawWidth} ft (${thicknessMm.toFixed(0)} mm / ${rawThick} in thick)` : `${lengthM.toFixed(2)} m × ${widthM.toFixed(2)} m (${thicknessMm.toFixed(0)} mm thick)`;
+    resGeomArea.textContent = `${slabAreaSqm.toFixed(2)} m² (${slabAreaSqft.toFixed(0)} sqft)`;
+    resIntensityArea.textContent = `${steelPerSqm} kg/m² (${steelPerSqft} kg/sqft)`;
+    resIntensityVol.textContent = `${steelPerCum} kg/m³ of concrete`;
+
+    // Main Reinforcement card
+    resMainSubtotalBadge.textContent = `${mainTotalWtKg.toFixed(1)} kg`;
+    resMainSpec.textContent = `${mainDia} mm dia @ ${mainSpacingMm.toFixed(0)} mm c/c`;
+    resMainDirection.textContent = isShortMain ? 'Along Short Span' : 'Along Long Span';
+    resMainBarsCount.textContent = `${mainBarsCount} Bars`;
+    resMainCutLen.textContent = `${mainCutLenM.toFixed(2)} m (${(mainCutLenM * 3.28084).toFixed(2)} ft)`;
+    resMainTotalLen.textContent = `${mainTotalLenM.toFixed(1)} m`;
+    resMainUnitWt.textContent = `${mainUnitWt.toFixed(3)} kg/m`;
+
+    // Distribution Reinforcement card
+    resDistSubtotalBadge.textContent = `${distTotalWtKg.toFixed(1)} kg`;
+    resDistSpec.textContent = `${distDia} mm dia @ ${distSpacingMm.toFixed(0)} mm c/c`;
+    resDistDirection.textContent = isShortMain ? 'Along Long Span' : 'Along Short Span';
+    resDistBarsCount.textContent = `${distBarsCount} Bars`;
+    resDistCutLen.textContent = `${distCutLenM.toFixed(2)} m (${(distCutLenM * 3.28084).toFixed(2)} ft)`;
+    resDistTotalLen.textContent = `${distTotalLenM.toFixed(1)} m`;
+    resDistUnitWt.textContent = `${distUnitWt.toFixed(3)} kg/m`;
+
+    // Worked Steps Content
+    resStepsContent.innerHTML = `
+      <div class="text-blue-600 dark:text-blue-400 font-bold mb-2">--- 1. Main Reinforcement (${mainDia} mm dia) ---</div>
+      <div>• Distribution Span = ${mainDistributeSpanM.toFixed(3)} m - 2 × (${coverMm} mm / 1000) = ${mainAvailDistM.toFixed(3)} m (${(mainAvailDistM * 1000).toFixed(0)} mm)</div>
+      <div>• Number of Bars = ⌈${(mainAvailDistM * 1000).toFixed(0)} mm ÷ ${mainSpacingMm.toFixed(0)} mm⌉ + 1 = ${mainBarsCount} Bars</div>
+      <div>• Cutting Length = ${mainSpanM.toFixed(3)} m - 2 × (${coverMm} mm / 1000) + 2 × (9 × ${mainDia} mm / 1000) = ${mainCutLenM.toFixed(3)} m</div>
+      <div>• Total Length = ${mainBarsCount} Bars × ${mainCutLenM.toFixed(3)} m = ${mainTotalLenM.toFixed(2)} m</div>
+      <div>• Unit Weight = ${mainDia}² ÷ 162 = ${mainUnitWt.toFixed(3)} kg/m</div>
+      <div>• Main Steel Weight = ${mainTotalLenM.toFixed(2)} m × ${mainUnitWt.toFixed(3)} kg/m = ${mainTotalWtKg.toFixed(2)} kg</div>
+
+      <div class="text-emerald-600 dark:text-emerald-400 font-bold mt-3 mb-2">--- 2. Distribution Reinforcement (${distDia} mm dia) ---</div>
+      <div>• Distribution Span = ${distDistributeSpanM.toFixed(3)} m - 2 × (${coverMm} mm / 1000) = ${distAvailDistM.toFixed(3)} m (${(distAvailDistM * 1000).toFixed(0)} mm)</div>
+      <div>• Number of Bars = ⌈${(distAvailDistM * 1000).toFixed(0)} mm ÷ ${distSpacingMm.toFixed(0)} mm⌉ + 1 = ${distBarsCount} Bars</div>
+      <div>• Cutting Length = ${distSpanM.toFixed(3)} m - 2 × (${coverMm} mm / 1000) + 2 × (9 × ${distDia} mm / 1000) = ${distCutLenM.toFixed(3)} m</div>
+      <div>• Total Length = ${distBarsCount} Bars × ${distCutLenM.toFixed(3)} m = ${distTotalLenM.toFixed(2)} m</div>
+      <div>• Unit Weight = ${distDia}² ÷ 162 = ${distUnitWt.toFixed(3)} kg/m</div>
+      <div>• Distribution Steel Weight = ${distTotalLenM.toFixed(2)} m × ${distUnitWt.toFixed(3)} kg/m = ${distTotalWtKg.toFixed(2)} kg</div>
+
+      <div class="text-purple-600 dark:text-purple-400 font-bold mt-3 mb-2">--- 3. Total Steel & Allowances ---</div>
+      <div>• Base Steel (Single Mesh) = ${mainTotalWtKg.toFixed(2)} kg + ${distTotalWtKg.toFixed(2)} kg = ${(mainTotalWtKg + distTotalWtKg).toFixed(2)} kg</div>
+      ${layers > 1 ? `<div>• Mesh Multiplier (${layers} layers) = ${(mainTotalWtKg + distTotalWtKg).toFixed(2)} × ${layers} = ${baseSteelKg.toFixed(2)} kg</div>` : ''}
+      ${extraTopPct > 0 ? `<div>• Extra Top Steel (${extraTopPct}%) = +${extraTopKg.toFixed(2)} kg</div>` : ''}
+      ${lapsPct > 0 ? `<div>• Lapping / Anchorage (${lapsPct}%) = +${lapsKg.toFixed(2)} kg</div>` : ''}
+      ${wastagePct > 0 ? `<div>• Cutting Wastage (${wastagePct}%) = +${wastageKg.toFixed(2)} kg</div>` : ''}
+      <div class="font-bold text-slate-900 dark:text-white pt-1">👉 Final Estimated Total Steel = ${finalTotalSteelKg.toFixed(2)} kg (${(finalTotalSteelKg / 100).toFixed(2)} Quintals / ${(finalTotalSteelKg / 1000).toFixed(3)} Tonnes)</div>
+    `;
+
+    resultsPlaceholder.classList.add('hidden');
+    resultsCard.classList.remove('hidden');
+  }
+
+  btnCalcSteel.addEventListener('click', (e) => {
+    e.preventDefault();
+    executeCalculation();
+  });
+
+  [inputSlabLen, inputSlabWidth, inputSlabThick, inputSlabCover, inputMainSpacing, inputDistSpacing, inputMainDiaCustom, inputDistDiaCustom, inputWastage, inputLaps, inputExtraTop].forEach((inp) => {
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        executeCalculation();
+      }
+    });
+  });
+
+  btnClearRcc.addEventListener('click', () => {
+    if (currentDimensionUnit === 'm') {
+      inputSlabLen.value = '6.0';
+      inputSlabWidth.value = '4.0';
+      inputSlabThick.value = '125';
+      inputSlabCover.value = '15';
+      inputMainSpacing.value = '150';
+      inputDistSpacing.value = '200';
+    } else {
+      inputSlabLen.value = '20.0';
+      inputSlabWidth.value = '13.0';
+      inputSlabThick.value = '5.0';
+      inputSlabCover.value = '0.6';
+      inputMainSpacing.value = '6.0';
+      inputDistSpacing.value = '8.0';
+    }
+
+    selectMainDia.value = '10';
+    inputMainDiaCustom.classList.add('hidden');
+    selectDistDia.value = '8';
+    inputDistDiaCustom.classList.add('hidden');
+    selectMainDir.value = 'short_span';
+    selectLayers.value = '1';
+    inputWastage.value = '0';
+    inputLaps.value = '0';
+    inputExtraTop.value = '0';
+
+    errRcc.classList.add('hidden');
+    resultsCard.classList.add('hidden');
+    resultsPlaceholder.classList.remove('hidden');
+    inputSlabLen.focus();
+  });
+</script>

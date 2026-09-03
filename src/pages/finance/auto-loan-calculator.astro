@@ -1,0 +1,1821 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="Auto & Car Loan Calculator – Calculate EMI, Interest & Repayment"
+  description="Estimate your monthly car loan payment, total interest, and repayment schedule based on your vehicle price, down payment, interest rate, and loan term."
+  category="Finance"
+  calculatorName="Auto & Car Loan Calculator"
+  slug="auto-loan-calculator"
+  keywords={[
+    'auto & car loan calculator',
+    'used car loan calculator',
+    'simple car loan calculator',
+    'refinance car loan calculator',
+    'sbi car loan calculator',
+    'hdfc car loan calculator',
+    'car loan calculator emi',
+    'emi car loan calculator',
+    'auto loan calculator',
+    'vehicle loan payment',
+    'car payment calculator'
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- QUICK PRESETS BAR -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-center gap-1.5 text-xs">
+        <span class="font-bold text-slate-600 dark:text-slate-400 mr-1 flex items-center gap-1">
+          <span>⚡</span> Quick Presets:
+        </span>
+        <button type="button" class="btn-auto-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-type="new" data-price="1000000" data-down="200000" data-trade="0" data-disc="0" data-tax="0" data-rate="8.5" data-term="60" data-extra="0">🚗 New Car 5-Yr (₹10L, 20% Down @ 8.5%)</button>
+        <button type="button" class="btn-auto-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-type="used" data-price="600000" data-down="100000" data-trade="50000" data-disc="0" data-tax="0" data-rate="11.0" data-term="36" data-extra="0">🚙 Used Car 3-Yr (₹6L, ₹1.5L Down+Trade @ 11%)</button>
+        <button type="button" class="btn-auto-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-type="new" data-price="1800000" data-down="360000" data-trade="100000" data-disc="25000" data-tax="0" data-rate="8.75" data-term="84" data-extra="0">🚘 Premium SUV 7-Yr (₹18L @ 8.75%)</button>
+        <button type="button" class="btn-auto-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-type="refinance" data-price="500000" data-down="0" data-trade="0" data-disc="0" data-tax="5000" data-rate="8.25" data-term="48" data-extra="0" data-currate="10.5" data-curpay="12800">🔄 Auto Refinance (₹5L from 10.5% to 8.25%)</button>
+      </div>
+    </div>
+
+    <!-- MAIN CALCULATOR FORM CONTAINER -->
+    <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-blue-50/30 p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/20 sm:p-7">
+      
+      <div class="border-b border-slate-200/80 pb-4 dark:border-slate-800">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+              <span>🚗</span> Auto & Car Loan Calculator
+            </h2>
+            <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+              Calculate your monthly car loan EMI, total interest, amortization schedule, and prepayment savings.
+            </p>
+          </div>
+
+          <!-- LOAN TYPE SELECTOR -->
+          <div class="inline-flex rounded-2xl border border-slate-300 bg-white p-1 shadow-2xs dark:border-slate-700 dark:bg-slate-900 text-xs font-bold shrink-0">
+            <button type="button" id="tab-type-new" class="type-tab-btn active rounded-xl bg-blue-600 px-3 py-1.5 text-white shadow-xs transition cursor-pointer" data-mode="new">
+              🚗 New Car Loan
+            </button>
+            <button type="button" id="tab-type-used" class="type-tab-btn rounded-xl px-3 py-1.5 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition cursor-pointer" data-mode="used">
+              🚙 Used Car Loan
+            </button>
+            <button type="button" id="tab-type-refinance" class="type-tab-btn rounded-xl px-3 py-1.5 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition cursor-pointer" data-mode="refinance">
+              🔄 Car Loan Refinance
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <form id="form-auto-loan" class="mt-5 space-y-4" novalidate onsubmit="return false;">
+        
+        <!-- SECTION 1: PURCHASE INPUTS (NEW / USED CAR) -->
+        <div id="section-purchase-inputs" class="space-y-4">
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            
+            <!-- Vehicle Purchase Price -->
+            <div>
+              <label for="inp-auto-price" id="lbl-auto-price" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Vehicle Purchase Price (₹)
+              </label>
+              <input type="number" id="inp-auto-price" value="1000000" step="10000" min="1" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="10,00,000" />
+            </div>
+
+            <!-- Down Payment (Amount & Sync %) -->
+            <div>
+              <div class="flex items-center justify-between">
+                <label for="inp-auto-down" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Down Payment (₹)</label>
+                <span id="lbl-auto-down-pct" class="text-[11px] font-bold text-blue-600 dark:text-blue-400">20%</span>
+              </div>
+              <div class="mt-1.5 flex rounded-xl border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-800">
+                <input type="number" id="inp-auto-down" value="200000" step="5000" min="0" class="w-full rounded-l-xl border-0 p-2.5 text-sm font-bold text-slate-900 focus:ring-0 dark:bg-slate-800 dark:text-white" placeholder="2,00,000" />
+                <input type="number" id="inp-auto-down-pct-input" value="20" min="0" max="100" step="0.5" class="w-16 rounded-r-xl border-l border-slate-300 bg-slate-50 p-2 text-center text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300" title="Down payment percentage (%)" />
+              </div>
+            </div>
+
+            <!-- Trade-In Value (Optional) -->
+            <div>
+              <label for="inp-auto-trade" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Trade-In Allowance (₹) <span class="text-slate-400 font-normal lowercase">(optional)</span></label>
+              <input type="number" id="inp-auto-trade" value="0" step="5000" min="0" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="0" />
+            </div>
+
+          </div>
+
+          <!-- OPTIONAL CREDITS & TAXES ACCORDION -->
+          <details class="group rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+            <summary class="cursor-pointer list-none flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              <span class="flex items-center gap-1.5">
+                <span>🏷️</span> Optional Credits, Discounts & Financed Taxes/Fees
+              </span>
+              <span class="text-blue-600 dark:text-blue-400 font-semibold text-[11px] group-open:rotate-180 transition-transform">▼ Expand</span>
+            </summary>
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
+              <div>
+                <label for="inp-auto-disc" class="block font-bold text-slate-700 dark:text-slate-300">Manufacturer Rebates / Dealer Discounts (₹)</label>
+                <input type="number" id="inp-auto-disc" value="0" step="1000" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="0" />
+              </div>
+              <div>
+                <label for="inp-auto-tax-fees" class="block font-bold text-slate-700 dark:text-slate-300">Financed Taxes, Registration & Processing Fees (₹)</label>
+                <input type="number" id="inp-auto-tax-fees" value="0" step="1000" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="0" />
+              </div>
+            </div>
+          </details>
+
+          <!-- ESTIMATED NET LOAN AMOUNT PREVIEW -->
+          <div class="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-blue-200 bg-blue-50/40 p-3 dark:border-blue-900/60 dark:bg-blue-950/20 text-xs">
+            <div class="flex items-center gap-1.5 font-bold text-blue-800 dark:text-blue-300">
+              <span>💳</span> Estimated Financed Loan Principal: 
+              <span id="txt-auto-loan-calc-preview" class="font-black text-slate-900 dark:text-white ml-1">₹ 8,00,000 (80% Financed)</span>
+            </div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">
+              Formula: Price − Down − Trade − Discounts + Fees
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: REFINANCE INPUTS (WHEN REFINANCE MODE IS ACTIVE) -->
+        <div id="section-refinance-inputs" class="hidden space-y-4">
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            
+            <!-- Current Outstanding Balance -->
+            <div>
+              <label for="inp-ref-balance" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Current Outstanding Loan Balance (₹)
+              </label>
+              <input type="number" id="inp-ref-balance" value="500000" step="10000" min="1" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="5,00,000" />
+            </div>
+
+            <!-- Refinancing Fees -->
+            <div>
+              <label for="inp-ref-fees" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Refinancing / Processing Fees (₹) <span class="text-slate-400 font-normal lowercase">(optional)</span>
+              </label>
+              <input type="number" id="inp-ref-fees" value="0" step="1000" min="0" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="0" />
+            </div>
+
+            <!-- Cash Out Amount -->
+            <div>
+              <label for="inp-ref-cashout" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Cash-Out Amount (₹) <span class="text-slate-400 font-normal lowercase">(optional)</span>
+              </label>
+              <input type="number" id="inp-ref-cashout" value="0" step="10000" min="0" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="0" />
+            </div>
+
+          </div>
+
+          <!-- OPTIONAL EXISTING LOAN DETAILS FOR COMPARISON -->
+          <details class="group rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900" open>
+            <summary class="cursor-pointer list-none flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              <span class="flex items-center gap-1.5">
+                <span>⚖️</span> Optional Existing Loan Details (For Side-by-Side Savings Comparison)
+              </span>
+              <span class="text-blue-600 dark:text-blue-400 font-semibold text-[11px] group-open:rotate-180 transition-transform">▼ Toggle</span>
+            </summary>
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
+              <div>
+                <label for="inp-ref-cur-pay" class="block font-bold text-slate-700 dark:text-slate-300">Current Monthly Payment (₹)</label>
+                <input type="number" id="inp-ref-cur-pay" value="12800" step="100" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="12,800" />
+              </div>
+              <div>
+                <label for="inp-ref-cur-rate" class="block font-bold text-slate-700 dark:text-slate-300">Existing Interest Rate (% p.a.)</label>
+                <input type="number" id="inp-ref-cur-rate" value="10.5" step="0.1" min="0" max="40" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="10.5" />
+              </div>
+            </div>
+          </details>
+        </div>
+
+        <!-- SECTION 3: COMMON LOAN SETTINGS (INTEREST RATE, TERM, START DATE) -->
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          
+          <!-- Annual Interest Rate -->
+          <div>
+            <label for="inp-auto-rate" id="lbl-auto-rate" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Annual Interest Rate (% p.a.)
+            </label>
+            <input type="number" id="inp-auto-rate" value="8.5" step="0.1" min="0" max="40" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="8.5" />
+          </div>
+
+          <!-- Loan Term & Unit -->
+          <div>
+            <label for="inp-auto-term" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Loan Term / Tenure</label>
+            <div class="mt-1.5 flex rounded-xl border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-800">
+              <input type="number" id="inp-auto-term" value="60" step="1" min="1" max="120" class="w-full rounded-l-xl border-0 p-2.5 text-sm font-bold text-slate-900 focus:ring-0 dark:bg-slate-800 dark:text-white" placeholder="60" />
+              <select id="sel-auto-term-unit" class="rounded-r-xl border-l border-slate-300 bg-slate-50 px-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 cursor-pointer">
+                <option value="months" selected>Months</option>
+                <option value="years">Years</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Optional Loan Start Date -->
+          <div>
+            <label for="inp-auto-start-date" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Loan Start Date</label>
+            <input type="month" id="inp-auto-start-date" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+          </div>
+
+        </div>
+
+        <!-- QUICK TERM BUTTONS BAR -->
+        <div class="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-slate-200 bg-slate-50/70 p-2.5 dark:border-slate-800 dark:bg-slate-900/60 text-xs">
+          <span class="text-slate-600 dark:text-slate-400 font-bold flex items-center gap-1">
+            <span>⏱️</span> Popular Car Loan Tenures:
+          </span>
+          <div class="flex flex-wrap items-center gap-1">
+            <button type="button" class="btn-auto-quick-term rounded-md border border-slate-300 bg-white px-2 py-0.5 font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-months="12">12 Mos (1Y)</button>
+            <button type="button" class="btn-auto-quick-term rounded-md border border-slate-300 bg-white px-2 py-0.5 font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-months="24">24 Mos (2Y)</button>
+            <button type="button" class="btn-auto-quick-term rounded-md border border-slate-300 bg-white px-2 py-0.5 font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-months="36">36 Mos (3Y)</button>
+            <button type="button" class="btn-auto-quick-term rounded-md border border-slate-300 bg-white px-2 py-0.5 font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-months="48">48 Mos (4Y)</button>
+            <button type="button" class="btn-auto-quick-term active rounded-md bg-blue-600 px-2 py-0.5 font-bold text-white shadow-2xs cursor-pointer" data-months="60">60 Mos (5Y)</button>
+            <button type="button" class="btn-auto-quick-term rounded-md border border-slate-300 bg-white px-2 py-0.5 font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-months="72">72 Mos (6Y)</button>
+            <button type="button" class="btn-auto-quick-term rounded-md border border-slate-300 bg-white px-2 py-0.5 font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-months="84">84 Mos (7Y)</button>
+          </div>
+        </div>
+
+        <!-- SECTION 4: EXTRA CAR LOAN PAYMENTS (ACCORDION) -->
+        <details class="group rounded-2xl border border-emerald-200 bg-emerald-50/20 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/10">
+          <summary class="cursor-pointer list-none flex items-center justify-between text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+            <span class="flex items-center gap-1.5">
+              <span>🚀</span> Extra Car Loan Payments (Prepayment & Principal Reductions)
+            </span>
+            <span class="text-emerald-600 dark:text-emerald-400 font-semibold text-[11px] group-open:rotate-180 transition-transform">▼ Expand</span>
+          </summary>
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 mt-3 pt-3 border-t border-emerald-100 dark:border-emerald-900/40 text-xs">
+            <div>
+              <label for="inp-auto-extra-mo" class="block font-bold text-slate-700 dark:text-slate-300">Extra Monthly Payment (₹)</label>
+              <input type="number" id="inp-auto-extra-mo" value="0" step="500" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="0" />
+            </div>
+            <div>
+              <label for="inp-auto-extra-yr" class="block font-bold text-slate-700 dark:text-slate-300">Extra Annual Payment (₹)</label>
+              <input type="number" id="inp-auto-extra-yr" value="0" step="5000" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="0" />
+            </div>
+            <div>
+              <label for="inp-auto-extra-once" class="block font-bold text-slate-700 dark:text-slate-300">One-Time Extra Payment (₹)</label>
+              <input type="number" id="inp-auto-extra-once" value="0" step="10000" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="0" />
+            </div>
+          </div>
+        </details>
+
+        <!-- ACTION BUTTONS (Calculate & Clear All) -->
+        <div class="flex items-center gap-2 pt-2">
+          <button type="submit" id="btn-calc-auto" class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer">
+            Calculate Car Loan →
+          </button>
+          <button type="button" id="btn-clear-auto" class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer">
+            Clear All (✕)
+          </button>
+        </div>
+
+        <!-- ACCESSIBLE VALIDATION ERROR -->
+        <p id="err-auto" class="hidden rounded-xl border border-red-200 bg-red-50 p-2.5 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300" role="alert" aria-live="polite"></p>
+
+      </form>
+
+      <!-- RESULTS PRESENTATION SECTION (Hidden initially, displayed only upon Calculate) -->
+      <div id="auto-results-section" class="hidden mt-6 space-y-6">
+        
+        <!-- 1. MAIN RESULT HIGHLIGHT CARD -->
+        <div class="overflow-hidden rounded-3xl border border-blue-200 bg-linear-to-br from-white via-blue-50/40 to-blue-100/50 p-5 shadow-lg shadow-blue-500/5 dark:border-blue-900/60 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/30 sm:p-7">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-blue-200/80 pb-4 dark:border-slate-800">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">ESTIMATED MONTHLY PAYMENT</span>
+              <div id="res-auto-monthly-emi" class="mt-1 text-4xl sm:text-5xl font-black text-blue-600 dark:text-blue-400">₹ 16,413.48</div>
+            </div>
+            <div class="sm:text-right">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Interest Payable:</span>
+              <div id="res-auto-total-int" class="text-2xl sm:text-3xl font-black text-red-600 dark:text-red-400">₹ 1,84,809.00</div>
+            </div>
+          </div>
+
+          <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Estimated Loan Amount</div>
+              <div id="res-auto-loan-amt" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">₹ 8,00,000</div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Interest Rate</div>
+              <div id="res-auto-rate-val" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">8.5% per year</div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Total Amount Payable</div>
+              <div id="res-auto-total-payable" class="mt-1 text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">₹ 9,84,809</div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Estimated Payoff Date</div>
+              <div id="res-auto-payoff-date" class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">Sep 2031</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. CAR LOAN SUMMARY BREAKDOWN -->
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 space-y-3">
+          <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+            <span>📋</span> Car Loan Summary Breakdown
+          </h3>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="rounded-xl border border-slate-100 bg-slate-50/70 p-2.5 dark:border-slate-800 dark:bg-slate-800/50">
+              <span class="text-slate-500 dark:text-slate-400 block" id="lbl-sum-vehicle-price">Vehicle Price</span>
+              <span id="sum-vehicle-price" class="font-bold text-slate-900 dark:text-white">₹ 10,00,000</span>
+            </div>
+            <div class="rounded-xl border border-slate-100 bg-slate-50/70 p-2.5 dark:border-slate-800 dark:bg-slate-800/50">
+              <span class="text-slate-500 dark:text-slate-400 block" id="lbl-sum-down-payment">Down Payment</span>
+              <span id="sum-down-payment" class="font-bold text-slate-900 dark:text-white">₹ 2,00,000 (20%)</span>
+            </div>
+            <div class="rounded-xl border border-slate-100 bg-slate-50/70 p-2.5 dark:border-slate-800 dark:bg-slate-800/50">
+              <span class="text-slate-500 dark:text-slate-400 block" id="lbl-sum-trade-disc">Trade-In & Discounts</span>
+              <span id="sum-trade-disc" class="font-bold text-slate-900 dark:text-white">₹ 0</span>
+            </div>
+            <div class="rounded-xl border border-slate-100 bg-slate-50/70 p-2.5 dark:border-slate-800 dark:bg-slate-800/50">
+              <span class="text-slate-500 dark:text-slate-400 block" id="lbl-sum-taxes-fees">Taxes & Fees Financed</span>
+              <span id="sum-taxes-fees" class="font-bold text-slate-900 dark:text-white">₹ 0</span>
+            </div>
+            <div class="rounded-xl border border-slate-100 bg-slate-50/70 p-2.5 dark:border-slate-800 dark:bg-slate-800/50">
+              <span class="text-slate-500 dark:text-slate-400 block">Loan Principal Financed</span>
+              <span id="sum-net-loan" class="font-bold text-slate-900 dark:text-white">₹ 8,00,000</span>
+            </div>
+            <div class="rounded-xl border border-slate-100 bg-slate-50/70 p-2.5 dark:border-slate-800 dark:bg-slate-800/50">
+              <span class="text-slate-500 dark:text-slate-400 block">Loan Term Duration</span>
+              <span id="sum-loan-term" class="font-bold text-slate-900 dark:text-white">60 Months (5 Yrs)</span>
+            </div>
+            <div class="rounded-xl border border-slate-100 bg-slate-50/70 p-2.5 dark:border-slate-800 dark:bg-slate-800/50">
+              <span class="text-slate-500 dark:text-slate-400 block">Total Interest</span>
+              <span id="sum-total-interest" class="font-bold text-red-600 dark:text-red-400">₹ 1,84,809</span>
+            </div>
+            <div class="rounded-xl border border-slate-100 bg-slate-50/70 p-2.5 dark:border-slate-800 dark:bg-slate-800/50">
+              <span class="text-slate-500 dark:text-slate-400 block">Total Vehicle Out-of-Pocket</span>
+              <span id="sum-total-out-of-pocket" class="font-bold text-blue-600 dark:text-blue-400">₹ 11,84,809</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. PRINCIPAL VS INTEREST ACCESSIBLE CHART -->
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <span>📊</span> Principal vs Interest Breakdown
+            </h3>
+            <span class="text-[11px] text-slate-500 dark:text-slate-400">
+              Visual proportion of borrowed capital vs lender interest cost
+            </span>
+          </div>
+
+          <!-- Progress Ratio Bar -->
+          <div class="space-y-2">
+            <div class="h-4 w-full overflow-hidden rounded-full bg-slate-100 flex dark:bg-slate-800" role="progressbar" aria-label="Principal vs Interest Ratio">
+              <div id="bar-auto-principal" class="bg-blue-600 transition-all duration-500" style="width: 81.2%;" title="Principal Borrowed"></div>
+              <div id="bar-auto-interest" class="bg-red-500 transition-all duration-500" style="width: 18.8%;" title="Interest Charged"></div>
+            </div>
+            <div class="flex flex-wrap items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400">
+              <span class="flex items-center gap-1.5">
+                <span class="inline-block h-3 w-3 rounded-full bg-blue-600"></span>
+                <span id="lbl-chart-principal">Principal Borrowed: ₹8,00,000 (81.2%)</span>
+              </span>
+              <span class="flex items-center gap-1.5">
+                <span class="inline-block h-3 w-3 rounded-full bg-red-500"></span>
+                <span id="lbl-chart-interest">Total Interest: ₹1,84,809 (18.8%)</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. EXTRA PAYMENT SAVINGS COMPARISON (Displayed when prepayments are entered) -->
+        <div id="card-auto-extra-comparison" class="hidden overflow-hidden rounded-3xl border border-emerald-200 bg-white p-5 dark:border-emerald-900/60 dark:bg-slate-900 shadow-md">
+          <h3 class="text-sm font-black text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5 border-b border-slate-200 pb-2.5 dark:border-slate-800">
+            <span>🚀</span> Prepayment Impact & Interest Savings (Without vs With Extra Payments)
+          </h3>
+          <div class="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Estimated Interest Saved</div>
+              <div id="res-auto-int-saved" class="mt-1 text-base font-black text-emerald-600 dark:text-emerald-400">₹ 24,150</div>
+            </div>
+            <div class="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Repayment Time Saved</div>
+              <div id="res-auto-time-saved" class="mt-1 text-base font-black text-blue-600 dark:text-blue-400">8 Months</div>
+            </div>
+            <div class="rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">New Loan Duration</div>
+              <div id="res-auto-new-duration" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">4.3 Yrs (52 Mos)</div>
+            </div>
+            <div class="rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">New Total Interest</div>
+              <div id="res-auto-new-int" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">₹ 1,60,659</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. REFINANCE COMPARISON CARD (Displayed when Refinance mode has existing loan data) -->
+        <div id="card-auto-refinance-comparison" class="hidden overflow-hidden rounded-3xl border border-blue-200 bg-white p-5 dark:border-blue-900/60 dark:bg-slate-900 shadow-md space-y-3">
+          <h3 class="text-sm font-black text-blue-700 dark:text-blue-300 flex items-center gap-1.5 border-b border-slate-200 pb-2.5 dark:border-slate-800">
+            <span>🔄</span> Refinance Comparison: Existing Loan vs Refinanced Loan
+          </h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <div class="rounded-xl border border-slate-200 p-3.5 space-y-1.5 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30">
+              <div class="font-bold text-slate-900 dark:text-white border-b border-slate-200 pb-1 dark:border-slate-800">Existing Loan Profile</div>
+              <div class="flex justify-between text-slate-600 dark:text-slate-400"><span>Monthly Payment:</span> <strong id="cmp-cur-pay" class="text-slate-900 dark:text-white">₹ 12,800</strong></div>
+              <div class="flex justify-between text-slate-600 dark:text-slate-400"><span>Interest Rate:</span> <strong id="cmp-cur-rate" class="text-slate-900 dark:text-white">10.5%</strong></div>
+              <div class="flex justify-between text-slate-600 dark:text-slate-400"><span>Estimated Remaining Interest:</span> <strong id="cmp-cur-int" class="text-red-600 dark:text-red-400">₹ 1,14,400</strong></div>
+            </div>
+            <div class="rounded-xl border border-blue-200 p-3.5 space-y-1.5 dark:border-blue-900/50 bg-blue-50/30 dark:bg-blue-950/20">
+              <div class="font-bold text-blue-900 dark:text-blue-300 border-b border-blue-200 pb-1 dark:border-blue-900/50">New Refinanced Loan</div>
+              <div class="flex justify-between text-slate-600 dark:text-slate-400"><span>New Monthly Payment:</span> <strong id="cmp-new-pay" class="text-blue-600 dark:text-blue-400">₹ 12,271</strong></div>
+              <div class="flex justify-between text-slate-600 dark:text-slate-400"><span>New Interest Rate:</span> <strong id="cmp-new-rate" class="text-blue-600 dark:text-blue-400">8.25%</strong></div>
+              <div class="flex justify-between text-slate-600 dark:text-slate-400"><span>New Total Interest:</span> <strong id="cmp-new-int" class="text-slate-900 dark:text-white">₹ 89,010</strong></div>
+            </div>
+          </div>
+          <div class="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 dark:border-emerald-900/40 dark:bg-emerald-950/20 text-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <span class="text-emerald-800 dark:text-emerald-300 font-bold">Estimated Total Savings: </span>
+              <span id="cmp-net-savings" class="font-black text-emerald-600 dark:text-emerald-400 text-sm">₹ 25,390</span>
+              <span id="cmp-mo-savings" class="text-slate-600 dark:text-slate-400 ml-2">(₹ 529/mo saved)</span>
+            </div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 italic">
+              Based on the information entered, this refinance option may result in a different estimated repayment cost.
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. AMORTIZATION SCHEDULE (YEARLY SUMMARY & MONTHLY SCHEDULE TABS) -->
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <div>
+              <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <span>📅</span> Car Loan Amortization Schedule
+              </h3>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                View yearly summary or complete monthly principal, interest, and prepayment breakdown.
+              </p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <!-- View Switcher Tabs -->
+              <div class="inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800 text-xs font-bold">
+                <button type="button" id="tab-auto-yearly" class="active rounded-lg bg-white px-3 py-1 text-slate-900 shadow-xs dark:bg-slate-900 dark:text-white cursor-pointer">
+                  Yearly Summary
+                </button>
+                <button type="button" id="tab-auto-monthly" class="rounded-lg px-3 py-1 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer">
+                  Monthly Schedule
+                </button>
+              </div>
+
+              <!-- Download PDF Button -->
+              <button type="button" id="btn-auto-download-pdf" class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-[0.98] cursor-pointer" title="Download active schedule as PDF">
+                <span>📄</span> <span id="txt-btn-auto-pdf">Download PDF</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Schedule Table Container -->
+          <div class="overflow-x-auto max-h-96 scrollbar-thin">
+            <table class="w-full text-left text-xs">
+              <thead id="auto-sched-thead" class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold sticky top-0">
+                <!-- Injected dynamically -->
+              </thead>
+              <tbody id="auto-sched-tbody" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                <!-- Injected dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- EDUCATIONAL CONTENT SLOT -->
+  <Fragment slot="content">
+    <section class="auto-loan-content">
+      
+      <!-- 1. HOW TO USE THIS CALCULATOR -->
+      <h2>How to Use This Auto & Car Loan Calculator</h2>
+      <p>
+        Estimating your vehicle financing costs and loan repayment plan is easy and straightforward:
+      </p>
+      <ol>
+        <li><strong>Select Calculation Type:</strong> Choose between <em>New Car Loan</em>, <em>Used Car Loan</em>, or <em>Car Loan Refinance</em> to load the relevant inputs.</li>
+        <li><strong>Enter the vehicle price or loan balance:</strong> Input the showroom on-road price or your current outstanding auto loan balance in Indian Rupees (₹).</li>
+        <li><strong>Enter your down payment or trade-in value:</strong> Specify your cash down payment (in ₹ or %) and any trade-in allowance for your old vehicle.</li>
+        <li><strong>Add optional taxes, discounts, and fees:</strong> Include dealer discounts, manufacturer cash rebates, or registration charges if you plan to finance them.</li>
+        <li><strong>Enter the annual interest rate:</strong> Input the annual percentage rate (e.g. 8.5% p.a. or 9.0% p.a.).</li>
+        <li><strong>Select your loan term:</strong> Choose your financing tenure in <em>Months</em> or <em>Years</em>, or click one of the quick buttons (36M, 48M, 60M, 72M, 84M).</li>
+        <li><strong>Add optional extra payments:</strong> Experiment with extra monthly, annual, or lump-sum principal prepayments to see your interest savings.</li>
+        <li><strong>Click Calculate Car Loan:</strong> View your estimated monthly EMI, total interest, principal ratio, and total vehicle cost.</li>
+        <li><strong>Review your loan summary & charts:</strong> Check the breakdown of principal vs interest paid.</li>
+        <li><strong>Check the repayment schedule:</strong> Toggle between the <em>Yearly Summary</em> and <em>Monthly Schedule</em>.</li>
+        <li><strong>Download PDF:</strong> Export your active amortization table into a professionally formatted PDF report.</li>
+      </ol>
+
+      <!-- 2. CAR LOAN PAYMENT EXAMPLE -->
+      <h2>Car Loan Payment Example</h2>
+      <p>
+        Here is a realistic car loan financing scenario calculated using standard monthly reducing balance amortizing logic:
+      </p>
+      <div class="my-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900 text-xs sm:text-sm space-y-1.5 font-mono">
+        <div>Vehicle Purchase Price: <strong>₹10,00,000</strong></div>
+        <div>Down Payment (20%): <strong>₹2,00,000</strong></div>
+        <div>Estimated Loan Principal Amount: <strong>₹8,00,000</strong></div>
+        <div>Annual Interest Rate: <strong>9.0% per annum</strong></div>
+        <div>Loan Tenure: <strong>5 Years (60 Monthly Installments)</strong></div>
+        <div class="text-blue-600 dark:text-blue-400 font-bold">Estimated Monthly Car EMI: ₹16,607 / month</div>
+        <div class="text-red-600 dark:text-red-400 font-bold">Total Interest Payable: ₹1,96,396</div>
+        <div class="text-slate-900 dark:text-white font-bold">Total Amount Payable (Loan): ₹9,96,396</div>
+        <div>Total Out-of-Pocket Vehicle Cost (Down Payment + Loan): <strong>₹11,96,396</strong></div>
+      </div>
+      <p class="text-xs text-slate-500 italic">
+        * This example is for illustration. Actual car loan payments may vary based on lender terms, interest rates, fees, taxes, and other applicable conditions.
+      </p>
+
+      <!-- 3. USED CAR LOAN SECTION -->
+      <h2>Used Car Loan Calculator</h2>
+      <p>
+        Financing a pre-owned vehicle follows similar principles to buying a new vehicle, but lenders often apply customized terms based on the pre-owned vehicle's profile. Using a <strong>used car loan calculator</strong> helps you estimate your monthly commitment based on the vehicle purchase price, upfront down payment, applicable interest rate, loan term, and registration fees.
+      </p>
+      <p>
+        Financing terms and interest rates for used vehicles may differ depending on several key factors:
+      </p>
+      <ul>
+        <li><strong>Vehicle Age & Kilometers Driven:</strong> Most lenders restrict the maximum age of the car (often up to 8 to 10 years at loan maturity).</li>
+        <li><strong>Vehicle Condition & Valuation:</strong> Certified pre-owned vehicles from authorized dealerships may qualify for better financing terms than private-party sales.</li>
+        <li><strong>Lender Policies:</strong> Banks and NBFCs evaluate risk differently for used cars, typically offering loan-to-value (LTV) ratios between 70% and 90%.</li>
+        <li><strong>Borrower Eligibility:</strong> Credit scores, income stability, and repayment history influence the sanctioned interest rate.</li>
+        <li><strong>Loan Tenure:</strong> Used car tenures are generally shorter (typically 24 to 60 months) compared to new car loans.</li>
+      </ul>
+
+      <!-- 4. SIMPLE CAR LOAN PAYMENT ESTIMATE -->
+      <h2>Simple Car Loan Payment Estimate</h2>
+      <p>
+        If you only know the core parameters of your borrowing plan—namely the loan amount, interest rate, and repayment duration—you can use this tool as a <strong>simple car loan calculator</strong> without filling out optional trade-ins, extra fees, or discounts.
+      </p>
+      <p>
+        By entering just the principal, annual rate, and number of months, you can quickly estimate your baseline monthly EMI and see how different interest rate quotes impact your budget before stepping into a dealership.
+      </p>
+
+      <!-- 5. REFINANCE CAR LOAN SECTION -->
+      <h2>Refinance Car Loan Calculator</h2>
+      <p>
+        Car loan refinancing involves replacing an existing auto loan with a new financing agreement from a different or current lender, often featuring an updated interest rate, loan duration, or monthly installment structure.
+      </p>
+      <p>
+        Using our <strong>refinance car loan calculator</strong> allows you to compare your remaining balance against a new loan offer. However, it is important to remember that a lower monthly payment does not automatically mean lower overall borrowing costs:
+      </p>
+      <ul>
+        <li><strong>Extending the Loan Term:</strong> Stretching out your remaining months will reduce each monthly EMI, but may increase total interest over time.</li>
+        <li><strong>Lowering the Interest Rate:</strong> Securing an interest rate reduction while keeping the remaining tenure the same creates genuine interest savings.</li>
+        <li><strong>Refinancing Fees & Prepayment Charges:</strong> Factor in any loan processing fees, document charges, or foreclosure fees charged by your previous lender.</li>
+      </ul>
+
+      <!-- 6. ESTIMATING YOUR CAR LOAN BEFORE COMPARING LENDERS -->
+      <h2>Estimating Your Car Loan Before Comparing Lenders</h2>
+      <p>
+        When shopping for automobile financing, borrowers frequently explore bank-specific repayment estimation tools. Whether you are comparing estimates from a general car loan calculator, an <strong>sbi car loan calculator</strong>, or an <strong>hdfc car loan calculator</strong>, comparing the loan amount, interest rate, term, and applicable fees can help you understand the potential repayment difference across various public and private sector lenders.
+      </p>
+      <p>
+        Evaluating loan proposals side-by-side allows you to inspect processing charges, foreclosure restrictions, floating vs fixed interest rates, and special festive discounts.
+      </p>
+      <p class="text-xs text-slate-500 italic">
+        * This independent calculator provides general repayment estimates. Actual rates, eligibility, fees, and loan terms depend on the lender and the specific loan offer. This tool is not affiliated with or endorsed by SBI, HDFC, or any other financial institution.
+      </p>
+
+      <!-- 7. CAR LOAN EMI SECTION -->
+      <h2>Car Loan EMI Calculator</h2>
+      <p>
+        A <strong>car loan calculator emi</strong> uses standard reducing balance mathematics to compute your Equated Monthly Installment. Monthly installment calculations generally depend on three primary variables:
+      </p>
+      <ul>
+        <li><strong>Loan Amount (Principal):</strong> The total amount borrowed after subtracting down payments and trade-in credits from the total purchase price.</li>
+        <li><strong>Interest Rate:</strong> The annual percentage rate charged by the financier, converted to a monthly periodic rate (<code>Rate / 12 / 100</code>).</li>
+        <li><strong>Loan Tenure:</strong> The total number of monthly payments (e.g. 36, 48, 60, or 84 months).</li>
+      </ul>
+      <p>
+        Understanding how an <strong>emi car loan calculator</strong> structures each monthly payment helps you plan your monthly household budget effectively while considering additional vehicle operating costs such as insurance, fuel, and routine maintenance.
+      </p>
+
+      <!-- 8. HOW LOAN TERM AFFECTS YOUR CAR LOAN EMI -->
+      <h2>How Loan Term Affects Your Car Loan EMI</h2>
+      <p>
+        Selecting your car loan tenure is a direct trade-off between monthly cash flow affordability and the total cumulative interest paid:
+      </p>
+
+      <div class="overflow-x-auto my-4">
+        <table class="w-full text-left text-xs sm:text-sm border-collapse border border-slate-200 dark:border-slate-800">
+          <thead class="bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold">
+            <tr>
+              <th class="p-3 border border-slate-200 dark:border-slate-800">Factor</th>
+              <th class="p-3 border border-slate-200 dark:border-slate-800">Shorter Loan Term (e.g. 36 to 48 Months)</th>
+              <th class="p-3 border border-slate-200 dark:border-slate-800">Longer Loan Term (e.g. 72 to 84 Months)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+            <tr>
+              <td class="p-3 font-semibold border border-slate-200 dark:border-slate-800">Monthly EMI Payment</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Higher monthly payment requirement</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Lower, more manageable monthly installments</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold border border-slate-200 dark:border-slate-800">Total Interest Paid</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Significantly lower cumulative interest expense</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Substantially higher total interest paid over time</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold border border-slate-200 dark:border-slate-800">Vehicle Equity Building</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Builds positive vehicle equity rapidly</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Higher risk of "negative equity" (owing more than the car is worth)</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold border border-slate-200 dark:border-slate-800">Budget Impact</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Requires higher monthly cash buffer</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Frees up monthly cash flow for other expenses</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- 9. DOWN PAYMENT IMPACT -->
+      <h2>How a Down Payment Affects Your Car Loan</h2>
+      <p>
+        Paying a larger upfront down payment directly reduces the amount of money you must borrow from the financier. A higher down payment can provide significant advantages:
+      </p>
+      <ul>
+        <li><strong>Reduced Borrowing Amount:</strong> Lowers the initial loan principal balance immediately.</li>
+        <li><strong>Lower Monthly EMI:</strong> Since interest is calculated on a smaller balance, your required monthly installment decreases.</li>
+        <li><strong>Lower Lifetime Interest:</strong> Reduces the compounding interest charges across the entire life of the loan.</li>
+        <li><strong>Protection Against Depreciation:</strong> Vehicles depreciate quickly in the first 2–3 years; a solid down payment (15% to 20%) prevents you from owing more than the vehicle's market value.</li>
+      </ul>
+      <p class="text-xs text-slate-500 italic">
+        * Financing decisions depend on personal finances, emergency savings reserves, and loan terms. This information does not constitute personalized financial advice.
+      </p>
+
+      <!-- 10. PRINCIPAL VS INTEREST -->
+      <h2>Principal vs Interest in a Car Loan</h2>
+      <p>
+        In an amortizing auto loan, every monthly payment is divided into two distinct components:
+      </p>
+      <ul>
+        <li><strong>Principal:</strong> The actual borrowed money that goes directly toward paying off the vehicle purchase balance.</li>
+        <li><strong>Interest:</strong> The finance fee charged by the lender for providing the loan.</li>
+      </ul>
+      <p>
+        Because interest is calculated on your remaining unpaid loan balance at the beginning of each monthly cycle, your early monthly installments consist of a higher percentage of interest. As you gradually repay the principal, the interest portion decreases each month, allowing a greater share of your EMI to pay down the remaining principal.
+      </p>
+
+      <!-- 11. COMMON MISTAKES -->
+      <h2>Common Mistakes When Using a Car Loan Calculator</h2>
+      
+      <h3>Looking only at the monthly EMI</h3>
+      <p>
+        Focusing solely on securing a low monthly payment can tempt buyers into 72 or 84-month loan terms. While the monthly payment looks attractive, the total interest paid over 7 years can add tens of thousands of rupees to the vehicle's true cost.
+      </p>
+
+      <h3>Forgetting taxes and fees</h3>
+      <p>
+        Vehicle showroom prices often exclude road taxes, registration charges (RTO), documentation fees, and dealer processing costs. If these costs are added to your loan balance, your financing principal increases.
+      </p>
+
+      <h3>Ignoring the down payment</h3>
+      <p>
+        Opting for zero down payment or minimal cash down leads to higher borrowing costs and increases the chance of having negative equity if you decide to sell or trade in the car before the loan ends.
+      </p>
+
+      <h3>Ignoring total interest</h3>
+      <p>
+        The monthly payment alone does not show the complete borrowing cost. Always inspect the total interest figure and total out-of-pocket expenditure when evaluating loan options.
+      </p>
+
+      <h3>Not checking refinance costs</h3>
+      <p>
+        When refinancing, failing to account for prepayment penalties on your existing loan or upfront processing charges on the new loan can erase expected savings.
+      </p>
+
+      <h3>Treating the estimate as a final loan offer</h3>
+      <p>
+        Calculator figures are mathematical estimates based on user inputs. Final approved interest rates, processing fees, and loan terms depend on formal lender underwriting, income verification, and credit bureau scores.
+      </p>
+
+      <!-- 12. IMPORTANT ASSUMPTIONS AND DISCLAIMER -->
+      <h2>Important Assumptions and Information</h2>
+      <p>
+        Please keep the following guidelines in mind when reviewing your car loan calculation results:
+      </p>
+      <ul>
+        <li><strong>Standard Amortization Model:</strong> Calculations utilize the standard monthly reducing balance amortizing formula.</li>
+        <li><strong>Estimates Only:</strong> Results are mathematical estimates and do not represent a guaranteed loan approval, official sanction letter, or binding quote.</li>
+        <li><strong>Interest Rates & Eligibility:</strong> Actual interest rates and loan sanctions depend on your credit profile, monthly income, vehicle age, and lender policies.</li>
+        <li><strong>Taxes & Insurance:</strong> Insurance premiums, annual road taxes, maintenance costs, and accessory charges are excluded unless explicitly entered into the calculator.</li>
+        <li><strong>Prepayment Rules:</strong> Prepayment calculations assume that extra payments are applied directly to principal reduction without prepayment penalty restrictions. Verify your lender's part-prepayment terms.</li>
+        <li><strong>Independent Platform:</strong> This calculator is an independent financial education tool and does not sell loans or represent any specific bank or automobile brand.</li>
+      </ul>
+
+    </section>
+  </Fragment>
+
+  <!-- FAQ SECTION SLOT (EXACTLY 7 FAQs AS REQUIRED) -->
+  <Fragment slot="faq">
+    <div class="space-y-4 text-xs sm:text-sm">
+      
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open>
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            1. How does an auto and car loan calculator work?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          An auto and car loan calculator uses your vehicle purchase price, down payment, trade-in value, interest rate, and loan term to calculate your monthly EMI payment, total interest payable, principal vs interest ratio, and complete amortization schedule.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            2. How is a car loan EMI calculated?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Car loan EMIs are calculated using the standard amortizing formula: <code>M = P × [r(1+r)^n] / [(1+r)^n − 1]</code>, where <em>P</em> is the loan principal, <em>r</em> is the monthly interest rate (annual rate / 12 / 100), and <em>n</em> is the total number of monthly payments. If the interest rate is 0%, the monthly payment equals the loan principal divided by the number of months.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            3. How does a down payment affect my car loan?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          A larger down payment reduces the initial loan amount you need to finance. This directly lowers your monthly EMI payment, decreases total interest paid over the loan term, and helps protect you against vehicle depreciation.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            4. Can I use this calculator for a used car loan?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Yes. Select the "Used Car Loan" calculation type to enter pre-owned vehicle prices, trade-in values, and interest rates. Used car loans often carry slightly different interest rates and tenure limits compared to new car financing.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            5. How does a car loan refinance calculator work?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Selecting "Car Loan Refinance" allows you to enter your current outstanding balance, new interest rate, and remaining term. If you provide your existing monthly payment and interest rate, the calculator compares the two loans side-by-side to show estimated monthly and total interest savings.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            6. Can extra payments reduce total car loan interest?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Yes. Making extra monthly, annual, or one-time prepayments reduces the principal balance directly. Because future interest is calculated on a smaller remaining balance, extra payments shorten the loan payoff period and save significant interest.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            7. Can I download my car loan repayment schedule as a PDF?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Yes. Clicking "Download PDF" generates a branded PDF report containing your complete car loan summary and exporting ONLY your currently active schedule (either the Yearly Summary or the Monthly Schedule table, depending on which tab is selected).
+        </p>
+      </details>
+
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<style>
+  .auto-loan-content h2 {
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.3;
+    color: #0f172a;
+  }
+
+  .auto-loan-content h2:first-child {
+    margin-top: 0;
+  }
+
+  .auto-loan-content h3 {
+    margin-top: 1.75rem;
+    margin-bottom: 0.625rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .auto-loan-content p {
+    margin: 0 0 1rem;
+    line-height: 1.75;
+    color: #475569;
+  }
+
+  .auto-loan-content ul {
+    margin: 0.75rem 0 1.5rem;
+    padding-left: 1.5rem;
+    list-style: disc;
+  }
+
+  .auto-loan-content ol {
+    margin: 0.75rem 0 1.5rem;
+    padding-left: 1.5rem;
+    list-style: decimal;
+  }
+
+  .auto-loan-content li + li {
+    margin-top: 0.5rem;
+  }
+
+  :global(.dark) .auto-loan-content h2,
+  :global(.dark) .auto-loan-content h3 {
+    color: #f8fafc;
+  }
+
+  :global(.dark) .auto-loan-content p {
+    color: #cbd5e1;
+  }
+</style>
+
+<!-- FAQ Schema JSON-LD (Strictly matching the EXACT 7 FAQs) -->
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How does an auto and car loan calculator work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "An auto and car loan calculator uses your vehicle purchase price, down payment, trade-in value, interest rate, and loan term to calculate your monthly EMI payment, total interest payable, principal vs interest ratio, and complete amortization schedule."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How is a car loan EMI calculated?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Car loan EMIs are calculated using the standard amortizing formula: M = P × [r(1+r)^n] / [(1+r)^n − 1], where P is the loan principal, r is the monthly interest rate (annual rate / 12 / 100), and n is the total number of monthly payments. If the interest rate is 0%, the monthly payment equals the loan principal divided by the number of months."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does a down payment affect my car loan?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A larger down payment reduces the initial loan amount you need to finance. This directly lowers your monthly EMI payment, decreases total interest paid over the loan term, and helps protect you against vehicle depreciation."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I use this calculator for a used car loan?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Select the 'Used Car Loan' calculation type to enter pre-owned vehicle prices, trade-in values, and interest rates. Used car loans often carry slightly different interest rates and tenure limits compared to new car financing."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does a car loan refinance calculator work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Selecting 'Car Loan Refinance' allows you to enter your current outstanding balance, new interest rate, and remaining term. If you provide your existing monthly payment and interest rate, the calculator compares the two loans side-by-side to show estimated monthly and total interest savings."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can extra payments reduce total car loan interest?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Making extra monthly, annual, or one-time prepayments reduces the principal balance directly. Because future interest is calculated on a smaller remaining balance, extra payments shorten the loan payoff period and save significant interest."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I download my car loan repayment schedule as a PDF?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Clicking 'Download PDF' generates a branded PDF report containing your complete car loan summary and exporting ONLY your currently active schedule (either the Yearly Summary or the Monthly Schedule table, depending on which tab is selected)."
+      }
+    }
+  ]
+})} />
+
+<!-- CLIENT-SIDE SCRIPT LOGIC -->
+<script is:inline>
+  // State Management
+  let currentLoanType = 'new'; // 'new' | 'used' | 'refinance'
+  let lastCalculatedAutoLoan = null;
+  let activeScheduleView = 'yearly'; // 'yearly' | 'monthly'
+
+  // Type Switcher Tabs
+  const tabTypeNew = document.getElementById('tab-type-new');
+  const tabTypeUsed = document.getElementById('tab-type-used');
+  const tabTypeRefinance = document.getElementById('tab-type-refinance');
+  const typeTabBtns = [tabTypeNew, tabTypeUsed, tabTypeRefinance];
+
+  const sectionPurchaseInputs = document.getElementById('section-purchase-inputs');
+  const sectionRefinanceInputs = document.getElementById('section-refinance-inputs');
+
+  const lblAutoPrice = document.getElementById('lbl-auto-price');
+  const lblAutoRate = document.getElementById('lbl-auto-rate');
+
+  // Purchase Inputs
+  const inpAutoPrice = document.getElementById('inp-auto-price');
+  const inpAutoDown = document.getElementById('inp-auto-down');
+  const inpAutoDownPctInput = document.getElementById('inp-auto-down-pct-input');
+  const lblAutoDownPct = document.getElementById('lbl-auto-down-pct');
+  const inpAutoTrade = document.getElementById('inp-auto-trade');
+  const inpAutoDisc = document.getElementById('inp-auto-disc');
+  const inpAutoTaxFees = document.getElementById('inp-auto-tax-fees');
+  const txtAutoLoanCalcPreview = document.getElementById('txt-auto-loan-calc-preview');
+
+  // Refinance Inputs
+  const inpRefBalance = document.getElementById('inp-ref-balance');
+  const inpRefFees = document.getElementById('inp-ref-fees');
+  const inpRefCashout = document.getElementById('inp-ref-cashout');
+  const inpRefCurPay = document.getElementById('inp-ref-cur-pay');
+  const inpRefCurRate = document.getElementById('inp-ref-cur-rate');
+
+  // Common Loan Settings
+  const inpAutoRate = document.getElementById('inp-auto-rate');
+  const inpAutoTerm = document.getElementById('inp-auto-term');
+  const selAutoTermUnit = document.getElementById('sel-auto-term-unit');
+  const inpAutoStartDate = document.getElementById('inp-auto-start-date');
+
+  // Extra Payments
+  const inpAutoExtraMo = document.getElementById('inp-auto-extra-mo');
+  const inpAutoExtraYr = document.getElementById('inp-auto-extra-yr');
+  const inpAutoExtraOnce = document.getElementById('inp-auto-extra-once');
+
+  // Buttons & Error
+  const btnCalcAuto = document.getElementById('btn-calc-auto');
+  const btnClearAuto = document.getElementById('btn-clear-auto');
+  const errAuto = document.getElementById('err-auto');
+
+  // Results Section
+  const autoResultsSection = document.getElementById('auto-results-section');
+  const resAutoMonthlyEmi = document.getElementById('res-auto-monthly-emi');
+  const resAutoTotalInt = document.getElementById('res-auto-total-int');
+  const resAutoLoanAmt = document.getElementById('res-auto-loan-amt');
+  const resAutoRateVal = document.getElementById('res-auto-rate-val');
+  const resAutoTotalPayable = document.getElementById('res-auto-total-payable');
+  const resAutoPayoffDate = document.getElementById('res-auto-payoff-date');
+
+  // Summary Elements
+  const lblSumVehiclePrice = document.getElementById('lbl-sum-vehicle-price');
+  const sumVehiclePrice = document.getElementById('sum-vehicle-price');
+  const lblSumDownPayment = document.getElementById('lbl-sum-down-payment');
+  const sumDownPayment = document.getElementById('sum-down-payment');
+  const lblSumTradeDisc = document.getElementById('lbl-sum-trade-disc');
+  const sumTradeDisc = document.getElementById('sum-trade-disc');
+  const lblSumTaxesFees = document.getElementById('lbl-sum-taxes-fees');
+  const sumTaxesFees = document.getElementById('sum-taxes-fees');
+  const sumNetLoan = document.getElementById('sum-net-loan');
+  const sumLoanTerm = document.getElementById('sum-loan-term');
+  const sumTotalInterest = document.getElementById('sum-total-interest');
+  const sumTotalOutOfPocket = document.getElementById('sum-total-out-of-pocket');
+
+  // Chart Elements
+  const barAutoPrincipal = document.getElementById('bar-auto-principal');
+  const barAutoInterest = document.getElementById('bar-auto-interest');
+  const lblChartPrincipal = document.getElementById('lbl-chart-principal');
+  const lblChartInterest = document.getElementById('lbl-chart-interest');
+
+  // Extra Payments Card
+  const cardAutoExtraComparison = document.getElementById('card-auto-extra-comparison');
+  const resAutoIntSaved = document.getElementById('res-auto-int-saved');
+  const resAutoTimeSaved = document.getElementById('res-auto-time-saved');
+  const resAutoNewDuration = document.getElementById('res-auto-new-duration');
+  const resAutoNewInt = document.getElementById('res-auto-new-int');
+
+  // Refinance Comparison Card
+  const cardAutoRefinanceComparison = document.getElementById('card-auto-refinance-comparison');
+  const cmpCurPay = document.getElementById('cmp-cur-pay');
+  const cmpCurRate = document.getElementById('cmp-cur-rate');
+  const cmpCurInt = document.getElementById('cmp-cur-int');
+  const cmpNewPay = document.getElementById('cmp-new-pay');
+  const cmpNewRate = document.getElementById('cmp-new-rate');
+  const cmpNewInt = document.getElementById('cmp-new-int');
+  const cmpNetSavings = document.getElementById('cmp-net-savings');
+  const cmpMoSavings = document.getElementById('cmp-mo-savings');
+
+  // Schedule Table Elements
+  const tabAutoYearly = document.getElementById('tab-auto-yearly');
+  const tabAutoMonthly = document.getElementById('tab-auto-monthly');
+  const btnAutoDownloadPdf = document.getElementById('btn-auto-download-pdf');
+  const txtBtnAutoPdf = document.getElementById('txt-btn-auto-pdf');
+  const autoSchedThead = document.getElementById('auto-sched-thead');
+  const autoSchedTbody = document.getElementById('auto-sched-tbody');
+
+  // Set default start date to current month
+  const todayDate = new Date();
+  const currentMonthStr = `${todayDate.getFullYear()}-${String(todayDate.getMonth() + 1).padStart(2, '0')}`;
+  inpAutoStartDate.value = currentMonthStr;
+
+  // Number Formatter (Indian Currency Standard)
+  function formatINR(val, includeDecimals = true) {
+    const num = Number(val);
+    if (isNaN(num)) return '₹ 0';
+    if (!includeDecimals) {
+      return `₹ ${Math.round(num).toLocaleString('en-IN')}`;
+    }
+    return `₹ ${num.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  // Synchronize Down Payment Amount & Percentage
+  function syncDownPaymentFromAmount() {
+    const price = parseFloat(inpAutoPrice.value) || 0;
+    const downAmt = parseFloat(inpAutoDown.value) || 0;
+    if (price > 0) {
+      const pct = Math.min(100, Math.max(0, (downAmt / price) * 100));
+      inpAutoDownPctInput.value = pct.toFixed(1).replace(/\.0$/, '');
+      lblAutoDownPct.textContent = `${pct.toFixed(1).replace(/\.0$/, '')}%`;
+    } else {
+      inpAutoDownPctInput.value = '0';
+      lblAutoDownPct.textContent = '0%';
+    }
+    updateNetLoanPrincipalBadge();
+  }
+
+  function syncDownPaymentFromPercent() {
+    const price = parseFloat(inpAutoPrice.value) || 0;
+    const pct = parseFloat(inpAutoDownPctInput.value) || 0;
+    const downAmt = (price * pct) / 100;
+    inpAutoDown.value = Math.round(downAmt);
+    lblAutoDownPct.textContent = `${pct}%`;
+    updateNetLoanPrincipalBadge();
+  }
+
+  function updateNetLoanPrincipalBadge() {
+    const price = parseFloat(inpAutoPrice.value) || 0;
+    const down = parseFloat(inpAutoDown.value) || 0;
+    const trade = parseFloat(inpAutoTrade.value) || 0;
+    const disc = parseFloat(inpAutoDisc.value) || 0;
+    const taxFees = parseFloat(inpAutoTaxFees.value) || 0;
+
+    const net = Math.max(0, price - down - trade - disc + taxFees);
+    const financedPct = price > 0 ? ((net / price) * 100).toFixed(0) : '0';
+    txtAutoLoanCalcPreview.textContent = `${formatINR(net, false)} (${financedPct}% Financed)`;
+  }
+
+  inpAutoPrice.addEventListener('input', syncDownPaymentFromPercent);
+  inpAutoDown.addEventListener('input', syncDownPaymentFromAmount);
+  inpAutoDownPctInput.addEventListener('input', syncDownPaymentFromPercent);
+  [inpAutoTrade, inpAutoDisc, inpAutoTaxFees].forEach((el) => {
+    el.addEventListener('input', updateNetLoanPrincipalBadge);
+  });
+
+  // Switch Calculation Types
+  function setCalculationType(mode) {
+    currentLoanType = mode;
+    typeTabBtns.forEach((btn) => {
+      if (btn.getAttribute('data-mode') === mode) {
+        btn.className = 'type-tab-btn active rounded-xl bg-blue-600 px-3 py-1.5 text-white shadow-xs transition cursor-pointer';
+      } else {
+        btn.className = 'type-tab-btn rounded-xl px-3 py-1.5 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition cursor-pointer';
+      }
+    });
+
+    // Update Field Visibility & Labels
+    if (mode === 'refinance') {
+      sectionPurchaseInputs.classList.add('hidden');
+      sectionRefinanceInputs.classList.remove('hidden');
+      lblAutoRate.textContent = 'New Annual Interest Rate (% p.a.)';
+    } else {
+      sectionPurchaseInputs.classList.remove('hidden');
+      sectionRefinanceInputs.classList.add('hidden');
+      lblAutoRate.textContent = 'Annual Interest Rate (% p.a.)';
+
+      if (mode === 'used') {
+        lblAutoPrice.textContent = 'Used Vehicle Purchase Price (₹)';
+      } else {
+        lblAutoPrice.textContent = 'Vehicle Purchase Price (₹)';
+      }
+    }
+
+    // Hide previous results when changing loan type
+    autoResultsSection.classList.add('hidden');
+    lastCalculatedAutoLoan = null;
+    errAuto.classList.add('hidden');
+  }
+
+  tabTypeNew.addEventListener('click', () => setCalculationType('new'));
+  tabTypeUsed.addEventListener('click', () => setCalculationType('used'));
+  tabTypeRefinance.addEventListener('click', () => setCalculationType('refinance'));
+
+  // Quick Term Buttons
+  document.querySelectorAll('.btn-auto-quick-term').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.btn-auto-quick-term').forEach((b) => {
+        b.className = 'btn-auto-quick-term rounded-md border border-slate-300 bg-white px-2 py-0.5 font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer';
+      });
+      btn.className = 'btn-auto-quick-term active rounded-md bg-blue-600 px-2 py-0.5 font-bold text-white shadow-2xs cursor-pointer';
+      inpAutoTerm.value = btn.getAttribute('data-months');
+      selAutoTermUnit.value = 'months';
+    });
+  });
+
+  // Master Calculation Execution
+  function executeCarLoanCalculation() {
+    errAuto.classList.add('hidden');
+
+    const rateAnnual = parseFloat(inpAutoRate.value);
+    const termVal = parseFloat(inpAutoTerm.value);
+    const termUnit = selAutoTermUnit.value; // 'months' | 'years'
+
+    const extraMo = parseFloat(inpAutoExtraMo.value) || 0;
+    const extraYr = parseFloat(inpAutoExtraYr.value) || 0;
+    const extraOnce = parseFloat(inpAutoExtraOnce.value) || 0;
+
+    if (isNaN(rateAnnual) || rateAnnual < 0) {
+      errAuto.textContent = 'Please enter a valid interest rate of 0% or higher.';
+      errAuto.classList.remove('hidden');
+      autoResultsSection.classList.add('hidden');
+      return;
+    }
+
+    if (isNaN(termVal) || termVal <= 0) {
+      errAuto.textContent = 'Please enter a valid loan term greater than 0.';
+      errAuto.classList.remove('hidden');
+      autoResultsSection.classList.add('hidden');
+      return;
+    }
+
+    const totalMonths = termUnit === 'years' ? Math.round(termVal * 12) : Math.round(termVal);
+    if (totalMonths <= 0) {
+      errAuto.textContent = 'Total loan months must be at least 1.';
+      errAuto.classList.remove('hidden');
+      autoResultsSection.classList.add('hidden');
+      return;
+    }
+
+    let vehiclePrice = 0;
+    let downPayment = 0;
+    let tradeIn = 0;
+    let discounts = 0;
+    let taxesAndFees = 0;
+    let netLoanAmount = 0;
+
+    let refCurPay = 0;
+    let refCurRate = 0;
+    let hasRefinanceComparison = false;
+
+    if (currentLoanType === 'refinance') {
+      const currentBalance = parseFloat(inpRefBalance.value) || 0;
+      const refFees = parseFloat(inpRefFees.value) || 0;
+      const cashout = parseFloat(inpRefCashout.value) || 0;
+
+      if (currentBalance <= 0) {
+        errAuto.textContent = 'Current loan balance must be greater than 0.';
+        errAuto.classList.remove('hidden');
+        autoResultsSection.classList.add('hidden');
+        return;
+      }
+
+      vehiclePrice = currentBalance;
+      taxesAndFees = refFees;
+      netLoanAmount = Math.max(0, currentBalance + refFees + cashout);
+
+      refCurPay = parseFloat(inpRefCurPay.value) || 0;
+      refCurRate = parseFloat(inpRefCurRate.value) || 0;
+      if (refCurPay > 0 && refCurRate > 0) {
+        hasRefinanceComparison = true;
+      }
+    } else {
+      vehiclePrice = parseFloat(inpAutoPrice.value) || 0;
+      downPayment = parseFloat(inpAutoDown.value) || 0;
+      tradeIn = parseFloat(inpAutoTrade.value) || 0;
+      discounts = parseFloat(inpAutoDisc.value) || 0;
+      taxesAndFees = parseFloat(inpAutoTaxFees.value) || 0;
+
+      if (vehiclePrice <= 0) {
+        errAuto.textContent = 'Vehicle purchase price must be greater than 0.';
+        errAuto.classList.remove('hidden');
+        autoResultsSection.classList.add('hidden');
+        return;
+      }
+
+      if (downPayment < 0 || tradeIn < 0 || discounts < 0 || taxesAndFees < 0) {
+        errAuto.textContent = 'Down payment, trade-in, discounts, and fees cannot be negative.';
+        errAuto.classList.remove('hidden');
+        autoResultsSection.classList.add('hidden');
+        return;
+      }
+
+      netLoanAmount = Math.max(0, vehiclePrice - downPayment - tradeIn - discounts + taxesAndFees);
+
+      if (netLoanAmount <= 0) {
+        errAuto.textContent = 'Your down payment and trade-in exceed the vehicle purchase cost (Loan Amount is 0).';
+        errAuto.classList.remove('hidden');
+        autoResultsSection.classList.add('hidden');
+        return;
+      }
+    }
+
+    // Monthly Interest Rate
+    const r = rateAnnual / 12 / 100;
+    let monthlyPayment = 0;
+    if (r === 0) {
+      monthlyPayment = netLoanAmount / totalMonths;
+    } else {
+      const factor = Math.pow(1 + r, totalMonths);
+      monthlyPayment = (netLoanAmount * r * factor) / (factor - 1);
+    }
+
+    const originalTotalInterest = r > 0 ? Math.max(0, monthlyPayment * totalMonths - netLoanAmount) : 0;
+
+    // Date parsing
+    let startYear = todayDate.getFullYear();
+    let startMonth = todayDate.getMonth();
+    if (inpAutoStartDate.value) {
+      const parts = inpAutoStartDate.value.split('-');
+      if (parts.length === 2) {
+        const y = parseInt(parts[0], 10);
+        const m = parseInt(parts[1], 10) - 1;
+        if (!isNaN(y)) startYear = y;
+        if (!isNaN(m) && m >= 0 && m < 12) startMonth = m;
+      }
+    }
+
+    // Amortization Schedule Calculation
+    const yearlySchedule = [];
+    const monthlySchedule = [];
+
+    let balance = netLoanAmount;
+    let totalInterestPaid = 0;
+    let totalPrincipalPaid = 0;
+    let totalExtraPaid = 0;
+
+    let currentYear = 1;
+    let yearOpeningBalance = balance;
+    let yearPrincipal = 0;
+    let yearInterest = 0;
+    let yearExtra = 0;
+    let yearTotalPaid = 0;
+
+    let month = 1;
+    const maxSafety = Math.max(12, totalMonths * 3);
+
+    while (balance > 0.001 && month <= maxSafety) {
+      const monthOpening = balance;
+      const monthInterest = r > 0 ? balance * r : 0;
+
+      let regularPrincipal = Math.min(balance, monthlyPayment - monthInterest);
+      if (regularPrincipal < 0) regularPrincipal = 0;
+
+      const schedPayment = regularPrincipal + monthInterest;
+
+      let extraThisMonth = extraMo;
+      if (extraYr > 0 && month % 12 === 1) extraThisMonth += extraYr;
+      if (extraOnce > 0 && month === 1) extraThisMonth += extraOnce;
+
+      const remAfterRegular = Math.max(0, balance - regularPrincipal);
+      extraThisMonth = Math.min(remAfterRegular, extraThisMonth);
+
+      const totalPrincipalThisMonth = regularPrincipal + extraThisMonth;
+      const totalPaymentThisMonth = schedPayment + extraThisMonth;
+
+      balance = Math.max(0, balance - totalPrincipalThisMonth);
+
+      totalInterestPaid += monthInterest;
+      totalPrincipalPaid += regularPrincipal;
+      totalExtraPaid += extraThisMonth;
+
+      yearPrincipal += regularPrincipal;
+      yearInterest += monthInterest;
+      yearExtra += extraThisMonth;
+      yearTotalPaid += totalPaymentThisMonth;
+
+      const paymentDate = new Date(startYear, startMonth + month, 1);
+      const dateStr = paymentDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+
+      monthlySchedule.push({
+        paymentNumber: month,
+        paymentDateStr: dateStr,
+        openingBalance: monthOpening,
+        scheduledPayment: schedPayment,
+        principalPaid: regularPrincipal,
+        interestPaid: monthInterest,
+        extraPayment: extraThisMonth,
+        totalPayment: totalPaymentThisMonth,
+        closingBalance: balance,
+      });
+
+      if (month % 12 === 0 || balance <= 0.001) {
+        yearlySchedule.push({
+          year: currentYear,
+          openingBalance: yearOpeningBalance,
+          principalPaid: yearPrincipal,
+          interestPaid: yearInterest,
+          extraPaid: yearExtra,
+          totalPaid: yearTotalPaid,
+          closingBalance: balance,
+        });
+
+        currentYear++;
+        yearOpeningBalance = balance;
+        yearPrincipal = 0;
+        yearInterest = 0;
+        yearExtra = 0;
+        yearTotalPaid = 0;
+      }
+
+      if (balance <= 0.001) break;
+      month++;
+    }
+
+    const actualPaymentsCount = monthlySchedule.length;
+    const interestSaved = Math.max(0, originalTotalInterest - totalInterestPaid);
+    const monthsSaved = Math.max(0, totalMonths - actualPaymentsCount);
+    const yearsSaved = Math.floor(monthsSaved / 12);
+    const remMonthsSaved = monthsSaved % 12;
+    const timeSavedStr = yearsSaved > 0
+      ? `${yearsSaved} Yr${yearsSaved > 1 ? 's' : ''} ${remMonthsSaved} Mo${remMonthsSaved !== 1 ? 's' : ''}`
+      : `${remMonthsSaved} Month${remMonthsSaved !== 1 ? 's' : ''}`;
+
+    const payoffDate = new Date(startYear, startMonth + actualPaymentsCount, 1);
+    const payoffDateStr = payoffDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+
+    const totalAmountPayable = netLoanAmount + totalInterestPaid;
+    const totalOutOfPocket = currentLoanType === 'refinance'
+      ? totalAmountPayable
+      : (downPayment + tradeIn + discounts + totalAmountPayable);
+
+    // Save State
+    lastCalculatedAutoLoan = {
+      loanType: currentLoanType,
+      vehiclePrice,
+      downPayment,
+      downPaymentPercent: vehiclePrice > 0 ? (downPayment / vehiclePrice) * 100 : 0,
+      tradeIn,
+      discounts,
+      taxesAndFees,
+      netLoanAmount,
+      rateAnnual,
+      termVal,
+      termUnit,
+      totalMonths,
+      monthlyPayment,
+      totalInterestPaid,
+      totalPrincipalPaid: totalPrincipalPaid + totalExtraPaid,
+      totalAmountPayable,
+      totalOutOfPocket,
+      payoffDateStr,
+      actualPaymentsCount,
+      hasExtraPayments: (extraMo > 0 || extraYr > 0 || extraOnce > 0),
+      interestSaved,
+      monthsSaved,
+      timeSavedStr,
+      yearlySchedule,
+      monthlySchedule,
+    };
+
+    // Update Result Hero Card
+    resAutoMonthlyEmi.textContent = formatINR(monthlyPayment);
+    resAutoTotalInt.textContent = formatINR(totalInterestPaid);
+    resAutoLoanAmt.textContent = formatINR(netLoanAmount);
+    resAutoRateVal.textContent = `${rateAnnual}% per year`;
+    resAutoTotalPayable.textContent = formatINR(totalAmountPayable);
+    resAutoPayoffDate.textContent = payoffDateStr;
+
+    // Update Loan Summary Grid
+    if (currentLoanType === 'refinance') {
+      lblSumVehiclePrice.textContent = 'Current Loan Balance';
+      sumVehiclePrice.textContent = formatINR(vehiclePrice);
+      lblSumDownPayment.textContent = 'Refinance Fees Financed';
+      sumDownPayment.textContent = formatINR(taxesAndFees);
+      lblSumTradeDisc.textContent = 'Cash-Out Financed';
+      sumTradeDisc.textContent = formatINR(parseFloat(inpRefCashout.value) || 0);
+      lblSumTaxesFees.textContent = 'New Rate & Term';
+      sumTaxesFees.textContent = `${rateAnnual}% / ${totalMonths} Mos`;
+    } else {
+      lblSumVehiclePrice.textContent = currentLoanType === 'used' ? 'Used Vehicle Price' : 'Vehicle Price';
+      sumVehiclePrice.textContent = formatINR(vehiclePrice);
+      lblSumDownPayment.textContent = 'Down Payment';
+      sumDownPayment.textContent = `${formatINR(downPayment)} (${lastCalculatedAutoLoan.downPaymentPercent.toFixed(1)}%)`;
+      lblSumTradeDisc.textContent = 'Trade-In & Discounts';
+      sumTradeDisc.textContent = formatINR(tradeIn + discounts);
+      lblSumTaxesFees.textContent = 'Taxes & Fees Financed';
+      sumTaxesFees.textContent = formatINR(taxesAndFees);
+    }
+
+    sumNetLoan.textContent = formatINR(netLoanAmount);
+    sumLoanTerm.textContent = `${totalMonths} Months (${(totalMonths / 12).toFixed(1)} Yrs)`;
+    sumTotalInterest.textContent = formatINR(totalInterestPaid);
+    sumTotalOutOfPocket.textContent = formatINR(totalOutOfPocket);
+
+    // Update Chart Ratio Bar
+    const chartTotal = totalAmountPayable > 0 ? totalAmountPayable : 1;
+    const principalPct = ((netLoanAmount / chartTotal) * 100).toFixed(1);
+    const interestPct = ((totalInterestPaid / chartTotal) * 100).toFixed(1);
+
+    barAutoPrincipal.style.width = `${principalPct}%`;
+    barAutoInterest.style.width = `${interestPct}%`;
+
+    lblChartPrincipal.textContent = `Principal: ${formatINR(netLoanAmount)} (${principalPct}%)`;
+    lblChartInterest.textContent = `Total Interest: ${formatINR(totalInterestPaid)} (${interestPct}%)`;
+
+    // Extra Payment Savings Box
+    if (lastCalculatedAutoLoan.hasExtraPayments && monthsSaved > 0) {
+      cardAutoExtraComparison.classList.remove('hidden');
+      resAutoIntSaved.textContent = formatINR(interestSaved);
+      resAutoTimeSaved.textContent = timeSavedStr;
+      resAutoNewDuration.textContent = `${(actualPaymentsCount / 12).toFixed(1)} Yrs (${actualPaymentsCount} Mos)`;
+      resAutoNewInt.textContent = formatINR(totalInterestPaid);
+    } else {
+      cardAutoExtraComparison.classList.add('hidden');
+    }
+
+    // Refinance Comparison Box
+    if (currentLoanType === 'refinance' && hasRefinanceComparison) {
+      cardAutoRefinanceComparison.classList.remove('hidden');
+      const curRemainingInt = Math.max(0, refCurPay * totalMonths - vehiclePrice);
+      const moSavings = refCurPay - monthlyPayment;
+      const totalIntSavings = curRemainingInt - totalInterestPaid;
+      const netSavings = totalIntSavings - taxesAndFees;
+
+      cmpCurPay.textContent = formatINR(refCurPay);
+      cmpCurRate.textContent = `${refCurRate}%`;
+      cmpCurInt.textContent = formatINR(curRemainingInt);
+
+      cmpNewPay.textContent = formatINR(monthlyPayment);
+      cmpNewRate.textContent = `${rateAnnual}%`;
+      cmpNewInt.textContent = formatINR(totalInterestPaid);
+
+      cmpNetSavings.textContent = formatINR(netSavings);
+      cmpMoSavings.textContent = `(${formatINR(moSavings)}/mo difference)`;
+    } else {
+      cardAutoRefinanceComparison.classList.add('hidden');
+    }
+
+    // Render Active Schedule Table
+    renderScheduleTable();
+
+    // Show Result Container
+    autoResultsSection.classList.remove('hidden');
+  }
+
+  // Render Amortization Table (Yearly vs Monthly)
+  function renderScheduleTable() {
+    if (!lastCalculatedAutoLoan) return;
+
+    if (activeScheduleView === 'yearly') {
+      autoSchedThead.innerHTML = `
+        <tr>
+          <th class="p-2.5 rounded-l-lg">Year</th>
+          <th class="p-2.5 text-right">Opening Balance</th>
+          <th class="p-2.5 text-right">Principal Paid</th>
+          <th class="p-2.5 text-right">Interest Paid</th>
+          <th class="p-2.5 text-right">Extra Payments</th>
+          <th class="p-2.5 text-right">Total Payments</th>
+          <th class="p-2.5 text-right rounded-r-lg font-bold text-slate-900 dark:text-white">Closing Balance</th>
+        </tr>
+      `;
+
+      autoSchedTbody.innerHTML = lastCalculatedAutoLoan.yearlySchedule.map((row) => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+          <td class="p-2.5 font-bold text-slate-900 dark:text-white">Year ${row.year}</td>
+          <td class="p-2.5 text-right text-slate-600 dark:text-slate-400">${formatINR(row.openingBalance)}</td>
+          <td class="p-2.5 text-right text-blue-600 dark:text-blue-400 font-semibold">${formatINR(row.principalPaid)}</td>
+          <td class="p-2.5 text-right text-red-600 dark:text-red-400 font-semibold">${formatINR(row.interestPaid)}</td>
+          <td class="p-2.5 text-right text-emerald-600 dark:text-emerald-400 font-semibold">${formatINR(row.extraPaid)}</td>
+          <td class="p-2.5 text-right text-slate-900 dark:text-white font-bold">${formatINR(row.totalPaid)}</td>
+          <td class="p-2.5 text-right font-black text-slate-900 dark:text-white">${formatINR(row.closingBalance)}</td>
+        </tr>
+      `).join('');
+    } else {
+      autoSchedThead.innerHTML = `
+        <tr>
+          <th class="p-2.5 rounded-l-lg">#</th>
+          <th class="p-2.5">Date</th>
+          <th class="p-2.5 text-right">Opening Bal</th>
+          <th class="p-2.5 text-right">Scheduled EMI</th>
+          <th class="p-2.5 text-right">Principal</th>
+          <th class="p-2.5 text-right">Interest</th>
+          <th class="p-2.5 text-right">Extra Payment</th>
+          <th class="p-2.5 text-right">Total Payment</th>
+          <th class="p-2.5 text-right rounded-r-lg font-bold text-slate-900 dark:text-white">Closing Balance</th>
+        </tr>
+      `;
+
+      autoSchedTbody.innerHTML = lastCalculatedAutoLoan.monthlySchedule.map((row) => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+          <td class="p-2.5 font-bold text-slate-900 dark:text-white">${row.paymentNumber}</td>
+          <td class="p-2.5 text-slate-600 dark:text-slate-400 font-semibold">${row.paymentDateStr}</td>
+          <td class="p-2.5 text-right text-slate-600 dark:text-slate-400">${formatINR(row.openingBalance)}</td>
+          <td class="p-2.5 text-right text-slate-900 dark:text-white font-semibold">${formatINR(row.scheduledPayment)}</td>
+          <td class="p-2.5 text-right text-blue-600 dark:text-blue-400 font-semibold">${formatINR(row.principalPaid)}</td>
+          <td class="p-2.5 text-right text-red-600 dark:text-red-400 font-semibold">${formatINR(row.interestPaid)}</td>
+          <td class="p-2.5 text-right text-emerald-600 dark:text-emerald-400 font-semibold">${formatINR(row.extraPayment)}</td>
+          <td class="p-2.5 text-right text-slate-900 dark:text-white font-bold">${formatINR(row.totalPayment)}</td>
+          <td class="p-2.5 text-right font-black text-slate-900 dark:text-white">${formatINR(row.closingBalance)}</td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  // Switch Amortization Schedule Tabs
+  tabAutoYearly.addEventListener('click', () => {
+    activeScheduleView = 'yearly';
+    tabAutoYearly.className = 'active rounded-lg bg-white px-3 py-1 text-slate-900 shadow-xs dark:bg-slate-900 dark:text-white cursor-pointer';
+    tabAutoMonthly.className = 'rounded-lg px-3 py-1 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer';
+    renderScheduleTable();
+  });
+
+  tabAutoMonthly.addEventListener('click', () => {
+    activeScheduleView = 'monthly';
+    tabAutoMonthly.className = 'active rounded-lg bg-white px-3 py-1 text-slate-900 shadow-xs dark:bg-slate-900 dark:text-white cursor-pointer';
+    tabAutoYearly.className = 'rounded-lg px-3 py-1 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer';
+    renderScheduleTable();
+  });
+
+  // Calculate Button
+  btnCalcAuto.addEventListener('click', executeCarLoanCalculation);
+
+  // Clear All Button
+  btnClearAuto.addEventListener('click', () => {
+    setCalculationType('new');
+    inpAutoPrice.value = '1000000';
+    inpAutoDown.value = '200000';
+    inpAutoDownPctInput.value = '20';
+    lblAutoDownPct.textContent = '20%';
+    inpAutoTrade.value = '0';
+    inpAutoDisc.value = '0';
+    inpAutoTaxFees.value = '0';
+
+    inpRefBalance.value = '500000';
+    inpRefFees.value = '0';
+    inpRefCashout.value = '0';
+    inpRefCurPay.value = '12800';
+    inpRefCurRate.value = '10.5';
+
+    inpAutoRate.value = '8.5';
+    inpAutoTerm.value = '60';
+    selAutoTermUnit.value = 'months';
+    inpAutoStartDate.value = currentMonthStr;
+
+    inpAutoExtraMo.value = '0';
+    inpAutoExtraYr.value = '0';
+    inpAutoExtraOnce.value = '0';
+
+    updateNetLoanPrincipalBadge();
+
+    errAuto.classList.add('hidden');
+    autoResultsSection.classList.add('hidden');
+    lastCalculatedAutoLoan = null;
+    activeScheduleView = 'yearly';
+    tabAutoYearly.click();
+  });
+
+  // Preset Buttons Listener
+  document.querySelectorAll('.btn-auto-preset').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const mode = btn.getAttribute('data-mode') || btn.getAttribute('data-type') || 'new';
+      setCalculationType(mode);
+
+      const price = btn.getAttribute('data-price');
+      const down = btn.getAttribute('data-down');
+      const trade = btn.getAttribute('data-trade');
+      const disc = btn.getAttribute('data-disc');
+      const tax = btn.getAttribute('data-tax');
+      const rate = btn.getAttribute('data-rate');
+      const term = btn.getAttribute('data-term');
+      const extra = btn.getAttribute('data-extra');
+
+      if (mode === 'refinance') {
+        if (price) inpRefBalance.value = price;
+        if (tax) inpRefFees.value = tax;
+        const curPay = btn.getAttribute('data-curpay');
+        const curRate = btn.getAttribute('data-currate');
+        if (curPay) inpRefCurPay.value = curPay;
+        if (curRate) inpRefCurRate.value = curRate;
+      } else {
+        if (price) inpAutoPrice.value = price;
+        if (down) inpAutoDown.value = down;
+        if (trade) inpAutoTrade.value = trade;
+        if (disc) inpAutoDisc.value = disc;
+        if (tax) inpAutoTaxFees.value = tax;
+        syncDownPaymentFromAmount();
+      }
+
+      if (rate) inpAutoRate.value = rate;
+      if (term) {
+        inpAutoTerm.value = term;
+        selAutoTermUnit.value = 'months';
+      }
+      if (extra) inpAutoExtraMo.value = extra;
+    });
+  });
+
+  // Enter Key Triggers Calculation
+  document.querySelectorAll('form').forEach((form) => {
+    form.querySelectorAll('input, select').forEach((el) => {
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          executeCarLoanCalculation();
+        }
+      });
+    });
+  });
+
+  // Tab-Selective Branded PDF Export
+  async function generateAutoLoanPdf() {
+    if (!lastCalculatedAutoLoan) {
+      alert('Please calculate your car loan first.');
+      return;
+    }
+
+    btnAutoDownloadPdf.disabled = true;
+    const originalText = txtBtnAutoPdf.textContent;
+    txtBtnAutoPdf.textContent = 'Generating PDF...';
+
+    try {
+      if (!window.jspdf) {
+        await new Promise((resolve, reject) => {
+          const s1 = document.createElement('script');
+          s1.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+          s1.onload = () => {
+            const s2 = document.createElement('script');
+            s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+            s2.onload = resolve;
+            s2.onerror = reject;
+            document.head.appendChild(s2);
+          };
+          s1.onerror = reject;
+          document.head.appendChild(s1);
+        });
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+      // 1. Header Branding
+      doc.setFillColor(37, 99, 235); // Blue #2563eb
+      doc.rect(0, 0, 210, 20, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(15);
+      doc.setFont('helvetica', 'bold');
+      doc.text('AIFreecalculator.com', 14, 13);
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Free Online Calculator Tools', 210 - 14, 13, { align: 'right' });
+
+      // 2. Document Title
+      const pdfTitle = activeScheduleView === 'yearly'
+        ? 'Auto & Car Loan Amortization – Yearly Summary'
+        : 'Auto & Car Loan Amortization – Monthly Schedule';
+
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text(pdfTitle, 14, 29);
+
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Generated on: ${dateStr}`, 210 - 14, 29, { align: 'right' });
+
+      // 3. Calculation Summary Box
+      doc.setDrawColor(226, 232, 240);
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(14, 33, 182, 30, 2, 2, 'FD');
+
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(51, 65, 85);
+      doc.text('CAR LOAN SUMMARY', 18, 38);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(71, 85, 105);
+
+      const typeLabel = lastCalculatedAutoLoan.loanType === 'refinance'
+        ? 'Refinance'
+        : (lastCalculatedAutoLoan.loanType === 'used' ? 'Used Car' : 'New Car');
+
+      doc.text(`Calculation Type: ${typeLabel}`, 18, 44);
+      doc.text(`Vehicle / Balance: Rs. ${lastCalculatedAutoLoan.vehiclePrice.toLocaleString('en-IN')}`, 18, 49);
+      doc.text(`Financed Principal: Rs. ${lastCalculatedAutoLoan.netLoanAmount.toLocaleString('en-IN')}`, 18, 54);
+      doc.text(`Interest Rate: ${lastCalculatedAutoLoan.rateAnnual}% p.a.`, 18, 59);
+
+      doc.text(`Monthly EMI: Rs. ${lastCalculatedAutoLoan.monthlyPayment.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`, 85, 44);
+      doc.text(`Loan Tenure: ${lastCalculatedAutoLoan.totalMonths} Months`, 85, 49);
+      doc.text(`Estimated Payoff: ${lastCalculatedAutoLoan.payoffDateStr}`, 85, 54);
+      doc.text(`Schedule View: ${activeScheduleView === 'yearly' ? 'Yearly Summary' : 'Monthly Schedule'}`, 85, 59);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(220, 38, 38);
+      doc.text(`Total Interest: Rs. ${lastCalculatedAutoLoan.totalInterestPaid.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`, 140, 46);
+      doc.setTextColor(37, 99, 235);
+      doc.text(`Total Repayment: Rs. ${lastCalculatedAutoLoan.totalAmountPayable.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`, 140, 52);
+
+      // 4. Tab-Selective Table Data
+      let tableHead = [];
+      let tableData = [];
+
+      if (activeScheduleView === 'yearly') {
+        tableHead = [['Year', 'Opening Bal', 'Principal Paid', 'Interest Paid', 'Extra Payments', 'Total Payments', 'Closing Balance']];
+        tableData = lastCalculatedAutoLoan.yearlySchedule.map((r) => [
+          `Year ${r.year}`,
+          'Rs. ' + r.openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          'Rs. ' + r.principalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          'Rs. ' + r.interestPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          'Rs. ' + r.extraPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          'Rs. ' + r.totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          'Rs. ' + r.closingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        ]);
+      } else {
+        tableHead = [['#', 'Date', 'Opening Bal', 'Scheduled EMI', 'Principal', 'Interest', 'Extra Paid', 'Closing Balance']];
+        tableData = lastCalculatedAutoLoan.monthlySchedule.map((r) => [
+          `${r.paymentNumber}`,
+          r.paymentDateStr,
+          'Rs. ' + r.openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          'Rs. ' + r.scheduledPayment.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          'Rs. ' + r.principalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          'Rs. ' + r.interestPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          'Rs. ' + r.extraPayment.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          'Rs. ' + r.closingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        ]);
+      }
+
+      doc.autoTable({
+        startY: 68,
+        head: tableHead,
+        body: tableData,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [37, 99, 235],
+          textColor: [255, 255, 255],
+          fontSize: 8,
+          fontStyle: 'bold',
+          halign: 'center'
+        },
+        columnStyles: {
+          0: { cellWidth: 16, halign: 'left', fontStyle: 'bold' },
+          1: { cellWidth: 20, halign: 'left' },
+          2: { halign: 'right' },
+          3: { halign: 'right' },
+          4: { halign: 'right', fontStyle: 'bold', textColor: [37, 99, 235] },
+          5: { halign: 'right', textColor: [220, 38, 38] },
+          6: { halign: 'right', textColor: [16, 185, 129] },
+          7: { halign: 'right', fontStyle: 'bold' }
+        },
+        styles: {
+          fontSize: 7.5,
+          cellPadding: 2,
+          font: 'helvetica'
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252]
+        },
+        margin: { top: 22, bottom: 18, left: 14, right: 14 },
+        didDrawPage: function (data) {
+          const pageCount = doc.internal.getNumberOfPages();
+          const currentPage = data.pageNumber;
+
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(148, 163, 184);
+
+          doc.text('Generated using AIFreecalculator.com', 14, 290);
+          doc.text(`Page ${currentPage} of ${pageCount}`, 210 - 14, 290, { align: 'right' });
+        }
+      });
+
+      const today = new Date().toISOString().split('T')[0];
+      const filename = activeScheduleView === 'yearly'
+        ? `car-loan-yearly-summary-${today}.pdf`
+        : `car-loan-monthly-schedule-${today}.pdf`;
+
+      doc.save(filename);
+    } catch (err) {
+      console.error('PDF Generation Error:', err);
+      alert('An error occurred while generating the PDF. Please try again.');
+    } finally {
+      btnAutoDownloadPdf.disabled = false;
+      txtBtnAutoPdf.textContent = originalText;
+    }
+  }
+
+  btnAutoDownloadPdf.addEventListener('click', generateAutoLoanPdf);
+</script>

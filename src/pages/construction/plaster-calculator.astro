@@ -1,0 +1,1675 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+import {
+  calculateWallPlaster,
+  calculateGeneralMortar,
+  calculateTileMortar,
+  calculateGamingMortar,
+} from '../../lib/calculators/plaster';
+
+// Metadata and SEO schema definitions
+const title = "Plaster & Mortar Calculator – Cement, Sand, Tile Mortar & Gaming Tools | AI Free Calculator";
+const description = "Calculate plaster and mortar quantities, estimate cement and sand requirements, and use dedicated mortar tools for tile work and supported games.";
+const keywords = [
+  "plaster & mortar calculator",
+  "arma reforger mortar calculator",
+  "arma mortar calculator",
+  "squad mortar calculator",
+  "tile mortar calculator",
+  "plaster material calculator",
+  "cement and sand calculator",
+  "mortar quantity estimator",
+  "plaster volume calculation",
+  "cement mortar mix",
+  "wall plaster calculation",
+  "floor mortar quantity",
+  "tile adhesive estimator",
+  "mortar range calculator",
+  "mortar targeting calculator",
+  "gaming artillery calculator",
+  "construction calculator"
+];
+
+// 7 FAQs matching 1-to-1 with JSON-LD schema
+const faqs = [
+  {
+    q: "What is a plaster and mortar calculator?",
+    a: "A plaster and mortar calculator is a versatile engineering and estimation utility that computes the exact volumes of cement, sand, water, and dry mortar required for wall plastering, masonry joints, and tile beds. It also includes a dedicated gaming mode for artillery coordinate targeting in games like Arma Reforger, Arma 3, and Squad."
+  },
+  {
+    q: "How do I calculate plaster quantity for a wall?",
+    a: "First calculate the total wall area (Length × Height × Number of Walls) and deduct all door and window openings to find the Net Plaster Area. Next, multiply the net area by the plaster thickness to get the wet mortar volume. Multiply wet volume by a dry volume factor (typically 1.30 to 1.33) plus wastage (10%) to determine the required dry mortar volume, then divide according to your cement-to-sand ratio."
+  },
+  {
+    q: "How are cement and sand quantities estimated?",
+    a: "From the total dry mortar volume, materials are divided by the mix ratio parts (e.g., 1:4 mix has 1+4=5 parts). Cement volume is (Dry Volume × 1/5) × 1440 kg/m³ to get weight in kg and 50kg bags. Sand volume is (Dry Volume × 4/5) in cubic meters or multiplied by 35.3147 to convert to Cubic Feet (CFT)."
+  },
+  {
+    q: "How does a tile mortar calculator work?",
+    a: "The tile mortar calculator determines the total floor or wall area to be tiled and multiplies it by the manufacturer's recommended adhesive coverage rate (typically 4.0 to 6.0 kg/m² depending on tile format and trowel notch depth) plus a 10% allowance for cuts and wastage, providing the total weight and required bag count."
+  },
+  {
+    q: "Can I include wastage in the calculation?",
+    a: "Yes. Construction sites experience rebound loss, wall unevenness, joint filling, and handling waste. You can customize the wastage percentage (default is 10% for plaster and tile adhesive, adjustable to 15% or 20% for rough or exterior surfaces)."
+  },
+  {
+    q: "Can I use this tool as an Arma Reforger or Squad mortar calculator?",
+    a: "Yes. The Gaming Mortar Calculator mode is a completely separate utility designed for tactical military simulators. It calculates Euclidean distance, azimuth/bearing in degrees and NATO mils, and provides reference aiming elevation values for standard mortar tubes without mixing real-world construction math."
+  },
+  {
+    q: "Can I download my calculation as a PDF?",
+    a: "Yes. After clicking Calculate in any of the four modes (Wall Plaster, General Mortar, Tile Mortar, or Gaming Mortar), click the Download PDF button to export a professionally formatted report with AIFreecalculator.com header branding, complete parameter breakdowns, and Page X of Y footers."
+  }
+];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqs.map(item => ({
+    "@type": "Question",
+    "name": item.q,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": item.a
+    }
+  }))
+};
+---
+
+<CalculatorLayout
+  title={title}
+  description={description}
+  category="Construction"
+  calculatorName="Plaster & Mortar Calculator"
+  slug="plaster-calculator"
+  keywords={keywords}
+>
+  <!-- Inject FAQPage Schema -->
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <div class="space-y-6">
+    <!-- SUBTITLE BELOW H1 -->
+    <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed -mt-2">
+      Calculate plaster and mortar quantities, estimate cement and sand requirements, and use dedicated mortar tools for tile work and supported games.
+    </p>
+
+    <!-- CALCULATOR MODE SELECTOR -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          Calculator Mode:
+        </span>
+        <span id="lbl-mode-badge" class="rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+          Construction Tool
+        </span>
+      </div>
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs font-bold" id="mode-tabs-container">
+        <button
+          type="button"
+          class="btn-pm-tab active rounded-xl border border-blue-600 bg-blue-50 py-2.5 text-blue-700 dark:border-blue-500 dark:bg-blue-950/60 dark:text-blue-300 transition cursor-pointer flex items-center justify-center gap-1.5"
+          data-mode="wall_plaster"
+        >
+          <span>🧱</span> Wall Plaster
+        </button>
+        <button
+          type="button"
+          class="btn-pm-tab rounded-xl border border-slate-300 bg-white py-2.5 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 hover:border-slate-400 transition cursor-pointer flex items-center justify-center gap-1.5"
+          data-mode="general_mortar"
+        >
+          <span>📦</span> Mortar Quantity
+        </button>
+        <button
+          type="button"
+          class="btn-pm-tab rounded-xl border border-slate-300 bg-white py-2.5 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 hover:border-slate-400 transition cursor-pointer flex items-center justify-center gap-1.5"
+          data-mode="tile_mortar"
+        >
+          <span>🔲</span> Tile Mortar
+        </button>
+        <button
+          type="button"
+          class="btn-pm-tab rounded-xl border border-slate-300 bg-white py-2.5 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 hover:border-slate-400 transition cursor-pointer flex items-center justify-center gap-1.5"
+          data-mode="gaming_mortar"
+        >
+          <span>🎯</span> Gaming Mortar
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN FORM CONTAINER -->
+    <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-blue-50/30 p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/20 sm:p-7">
+      
+      <form id="form-plaster-mortar" novalidate onsubmit="return false;" class="space-y-5">
+        
+        <!-- ========================================================= -->
+        <!-- 1. WALL PLASTER INPUTS (DEFAULT MODE) -->
+        <!-- ========================================================= -->
+        <div id="section-input-wall-plaster" class="space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200/80 pb-2 dark:border-slate-800">
+            <h2 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+              <span>🧱</span> Wall Plaster Dimensions & Mix Ratio
+            </h2>
+            <div class="flex items-center gap-1.5 text-xs font-semibold">
+              <label class="text-slate-500">Units:</label>
+              <select id="inp-wp-unit" class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                <option value="metric" selected>Metric (Meters / mm)</option>
+                <option value="imperial">Imperial (Feet / Inches)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div>
+              <label for="inp-wp-length" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Wall Length (<span class="unit-len-label">m</span>)
+              </label>
+              <input type="number" id="inp-wp-length" value="10" min="0.1" step="any" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="10" />
+            </div>
+
+            <div>
+              <label for="inp-wp-height" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Wall Height (<span class="unit-len-label">m</span>)
+              </label>
+              <input type="number" id="inp-wp-height" value="3" min="0.1" step="any" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="3" />
+            </div>
+
+            <div>
+              <label for="inp-wp-walls" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Number of Walls
+              </label>
+              <input type="number" id="inp-wp-walls" value="1" min="1" step="1" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="1" />
+            </div>
+          </div>
+
+          <!-- Openings Deduction -->
+          <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
+            <div class="flex items-center justify-between">
+              <label for="inp-wp-openings" class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <span>🚪</span> Openings Deduction (Doors, Windows, Vents)
+              </label>
+              <span class="text-[11px] text-slate-500">Area in <span class="unit-area-label">m²</span></span>
+            </div>
+            <input type="number" id="inp-wp-openings" value="0" min="0" step="any" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="Total deduction area e.g. 3.5" />
+          </div>
+
+          <!-- Plaster Thickness & Ratio Grid -->
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div>
+              <label for="inp-wp-thick-preset" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Plaster Thickness
+              </label>
+              <select id="inp-wp-thick-preset" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                <option value="10">10 mm (Rough Ceiling / Internal)</option>
+                <option value="12">12 mm (Standard Smooth Internal)</option>
+                <option value="15" selected>15 mm (Rough Masonry / Single Coat)</option>
+                <option value="20">20 mm (External Sand-Faced)</option>
+                <option value="25">25 mm (Heavy External / Double Coat)</option>
+                <option value="custom">Custom Thickness</option>
+              </select>
+              <div id="div-wp-custom-thick" class="hidden mt-2 flex gap-2">
+                <input type="number" id="inp-wp-custom-thick-val" value="15" min="1" step="any" class="w-2/3 rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="15" />
+                <select id="inp-wp-custom-thick-unit" class="w-1/3 rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                  <option value="mm" selected>mm</option>
+                  <option value="cm">cm</option>
+                  <option value="in">in</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label for="inp-wp-ratio" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Mortar Mix Ratio (Cement : Sand)
+              </label>
+              <select id="inp-wp-ratio" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                <option value="1:3">1 : 3 (Ceiling & Waterproofing)</option>
+                <option value="1:4" selected>1 : 4 (Standard Wall Plaster)</option>
+                <option value="1:5">1 : 5 (Medium Strength Plaster)</option>
+                <option value="1:6">1 : 6 (Economical Internal Wall)</option>
+                <option value="custom">Custom Ratio</option>
+              </select>
+              <div id="div-wp-custom-ratio" class="hidden mt-2 grid grid-cols-2 gap-2">
+                <input type="number" id="inp-wp-custom-c" value="1" min="1" step="1" class="rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="Cement Part" />
+                <input type="number" id="inp-wp-custom-s" value="4" min="1" step="1" class="rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="Sand Part" />
+              </div>
+            </div>
+
+            <div>
+              <label for="inp-wp-wastage" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Wastage & Joint Allowance (%)
+              </label>
+              <input type="number" id="inp-wp-wastage" value="10" min="0" max="50" step="1" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="10" />
+            </div>
+          </div>
+
+          <!-- Advanced Engineering Parameter: Dry Volume Factor -->
+          <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-100 dark:border-slate-800">
+            <span class="text-slate-500 dark:text-slate-400">Dry Volume Multiplier Factor (IS/ACI Standard):</span>
+            <div class="flex items-center gap-1.5">
+              <input type="number" id="inp-wp-dry-factor" value="1.30" min="1.1" max="1.6" step="0.01" class="w-20 rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white text-right" />
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- 2. GENERAL MORTAR QUANTITY INPUTS -->
+        <!-- ========================================================= -->
+        <div id="section-input-general-mortar" class="hidden space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200/80 pb-2 dark:border-slate-800">
+            <h2 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+              <span>📦</span> Mortar Bed / Joint Volume & Ratio
+            </h2>
+            <div class="flex items-center gap-1.5 text-xs font-semibold">
+              <label class="text-slate-500">Units:</label>
+              <select id="inp-gm-unit" class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                <option value="metric" selected>Metric (Meters / mm)</option>
+                <option value="imperial">Imperial (Feet / Inches)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-4">
+            <div>
+              <label for="inp-gm-length" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Length (<span class="unit-gm-len">m</span>)
+              </label>
+              <input type="number" id="inp-gm-length" value="5" min="0.1" step="any" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="5" />
+            </div>
+
+            <div>
+              <label for="inp-gm-width" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Width (<span class="unit-gm-len">m</span>)
+              </label>
+              <input type="number" id="inp-gm-width" value="4" min="0.1" step="any" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="4" />
+            </div>
+
+            <div>
+              <label for="inp-gm-depth" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Depth / Thickness
+              </label>
+              <div class="mt-1 flex gap-1.5">
+                <input type="number" id="inp-gm-depth" value="50" min="0.1" step="any" class="w-2/3 rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="50" />
+                <select id="inp-gm-depth-unit" class="w-1/3 rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                  <option value="mm" selected>mm</option>
+                  <option value="cm">cm</option>
+                  <option value="m">m</option>
+                  <option value="in">in</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label for="inp-gm-sections" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Sections / Slabs
+              </label>
+              <input type="number" id="inp-gm-sections" value="1" min="1" step="1" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="1" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div>
+              <label for="inp-gm-ratio" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Mortar Ratio (Cement : Sand)
+              </label>
+              <select id="inp-gm-ratio" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                <option value="1:3" selected>1 : 3 (High Strength Bed / Screed)</option>
+                <option value="1:4">1 : 4 (Standard Masonry / Flooring)</option>
+                <option value="1:5">1 : 5 (Medium Joint Mix)</option>
+                <option value="1:6">1 : 6 (Low Strength Mortar)</option>
+                <option value="custom">Custom Ratio</option>
+              </select>
+              <div id="div-gm-custom-ratio" class="hidden mt-2 grid grid-cols-2 gap-2">
+                <input type="number" id="inp-gm-custom-c" value="1" min="1" step="1" class="rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="Cement Part" />
+                <input type="number" id="inp-gm-custom-s" value="3" min="1" step="1" class="rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="Sand Part" />
+              </div>
+            </div>
+
+            <div>
+              <label for="inp-gm-wastage" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Wastage Allowance (%)
+              </label>
+              <input type="number" id="inp-gm-wastage" value="10" min="0" max="50" step="1" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="10" />
+            </div>
+
+            <div>
+              <label for="inp-gm-dry-factor" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Dry Volume Factor
+              </label>
+              <input type="number" id="inp-gm-dry-factor" value="1.30" min="1.1" max="1.6" step="0.01" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- 3. TILE MORTAR & ADHESIVE INPUTS -->
+        <!-- ========================================================= -->
+        <div id="section-input-tile-mortar" class="hidden space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-200/80 pb-2 dark:border-slate-800">
+            <h2 class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2">
+              <span>🔲</span> Tile Mortar / Adhesive Estimator
+            </h2>
+            <div class="flex items-center gap-1.5 text-xs font-semibold">
+              <label class="text-slate-500">Area Unit:</label>
+              <select id="inp-tm-unit" class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                <option value="metric" selected>Square Meters (m²)</option>
+                <option value="imperial">Square Feet (sq.ft)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div>
+              <label for="inp-tm-area" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Total Tiling Area (<span class="unit-tm-area-label">m²</span>)
+              </label>
+              <input type="number" id="inp-tm-area" value="50" min="0.1" step="any" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="50" />
+            </div>
+
+            <div>
+              <label for="inp-tm-type" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Tile Application Type
+              </label>
+              <select id="inp-tm-type" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                <option value="floor" selected>Floor Tile (Thicker Bed)</option>
+                <option value="wall">Wall Tile (Thin-Set Adhesive)</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="inp-tm-preset" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Tile Format / Size
+              </label>
+              <select id="inp-tm-preset" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">
+                <option value="300x300">300 × 300 mm (Small / Standard)</option>
+                <option value="600x600" selected>600 × 600 mm (Medium Format)</option>
+                <option value="600x1200">600 × 1200 mm (Large Vitrified Slab)</option>
+                <option value="custom">Custom Format</option>
+              </select>
+              <div id="div-tm-custom-size" class="hidden mt-2 grid grid-cols-2 gap-2">
+                <div>
+                  <label for="inp-tm-custom-len" class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Tile Length (mm)</label>
+                  <input type="number" id="inp-tm-custom-len" value="800" min="20" step="1" class="mt-0.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="800" />
+                </div>
+                <div>
+                  <label for="inp-tm-custom-wid" class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Tile Width (mm)</label>
+                  <input type="number" id="inp-tm-custom-wid" value="800" min="20" step="1" class="mt-0.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="800" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-4">
+            <div>
+              <label for="inp-tm-thick" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Bed Thickness (mm)
+              </label>
+              <input type="number" id="inp-tm-thick" value="6" min="1" max="25" step="0.5" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="6" />
+            </div>
+
+            <div>
+              <label for="inp-tm-coverage" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Coverage Rate (kg/m²)
+              </label>
+              <input type="number" id="inp-tm-coverage" value="5.0" min="0.5" max="30" step="0.1" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="5.0" />
+            </div>
+
+            <div>
+              <label for="inp-tm-bag-size" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Packaging Bag Size
+              </label>
+              <select id="inp-tm-bag-size" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                <option value="20" selected>20 kg Bag (Standard)</option>
+                <option value="25">25 kg Bag</option>
+                <option value="30">30 kg Bag</option>
+                <option value="40">40 kg Bag</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="inp-tm-wastage" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Wastage Allowance (%)
+              </label>
+              <input type="number" id="inp-tm-wastage" value="10" min="0" max="40" step="1" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="10" />
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- 4. GAMING MORTAR CALCULATOR INPUTS -->
+        <!-- ========================================================= -->
+        <div id="section-input-gaming-mortar" class="hidden space-y-4">
+          <div class="flex items-center justify-between border-b border-amber-200/80 pb-2 dark:border-amber-900/50">
+            <h2 class="text-sm sm:text-base font-extrabold text-amber-900 dark:text-amber-400 flex items-center gap-2">
+              <span>🎯</span> Gaming Artillery Coordinate Calculator
+            </h2>
+            <div class="flex items-center gap-1.5 text-xs font-semibold">
+              <label class="text-slate-500">Game Preset:</label>
+              <select id="inp-gm-game" class="rounded-lg border border-amber-300 bg-amber-50/50 px-2.5 py-1 text-xs font-bold text-amber-900 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-300">
+                <option value="squad" selected>Squad (81mm / 82mm)</option>
+                <option value="arma_reforger">Arma Reforger</option>
+                <option value="arma">Arma 3 (Mk6 82mm)</option>
+                <option value="generic">Generic Coordinate Artillery</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="rounded-2xl border border-amber-200/60 bg-amber-50/40 p-3.5 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/20 dark:text-amber-300">
+            <strong>Note:</strong> Gaming mortar mode computes coordinate distances, ballistic azimuth angles, and reference mil elevations for video games. It operates separately from physical construction calculations.
+          </div>
+
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <!-- Mortar Position -->
+            <div class="rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/80 space-y-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 flex items-center gap-1">
+                <span>📍</span> Mortar / Tube Position (X1, Y1)
+              </span>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label for="inp-game-x1" class="text-[11px] font-semibold text-slate-500">X-Coordinate (Easting)</label>
+                  <input type="number" id="inp-game-x1" value="1000" step="any" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="1000" />
+                </div>
+                <div>
+                  <label for="inp-game-y1" class="text-[11px] font-semibold text-slate-500">Y-Coordinate (Northing)</label>
+                  <input type="number" id="inp-game-y1" value="1000" step="any" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="1000" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Target Position -->
+            <div class="rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/80 space-y-2">
+              <span class="text-xs font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 flex items-center gap-1">
+                <span>🎯</span> Target Position (X2, Y2)
+              </span>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label for="inp-game-x2" class="text-[11px] font-semibold text-slate-500">X-Coordinate (Easting)</label>
+                  <input type="number" id="inp-game-x2" value="1600" step="any" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="1600" />
+                </div>
+                <div>
+                  <label for="inp-game-y2" class="text-[11px] font-semibold text-slate-500">Y-Coordinate (Northing)</label>
+                  <input type="number" id="inp-game-y2" value="1800" step="any" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="1800" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Elevation Difference -->
+          <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
+            <div class="flex items-center justify-between">
+              <label for="inp-game-elev" class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <span>⛰️</span> Optional Elevation Difference (Target Height − Mortar Height)
+              </label>
+              <span class="text-[11px] text-slate-500">Meters (+ or −)</span>
+            </div>
+            <input type="number" id="inp-game-elev" value="0" step="any" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="0 (Level ground)" />
+          </div>
+        </div>
+
+        <!-- ACTION BUTTONS -->
+        <div class="flex items-center gap-2 pt-2">
+          <button
+            type="submit"
+            id="btn-calc-pm"
+            class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer"
+          >
+            Calculate Plaster & Mortar →
+          </button>
+          <button
+            type="button"
+            id="btn-clear-pm"
+            class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer"
+          >
+            Clear All (✕)
+          </button>
+        </div>
+
+        <!-- ACCESSIBLE ERROR -->
+        <p
+          id="err-pm"
+          class="hidden rounded-xl border border-red-200 bg-red-50 p-2.5 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
+          role="alert"
+          aria-live="polite"
+        ></p>
+      </form>
+
+      <!-- RESULTS SECTION (HIDDEN INITIALLY) -->
+      <div id="pm-results-section" class="hidden mt-6 space-y-6">
+        
+        <!-- HERO RESULT CARD -->
+        <div class="overflow-hidden rounded-3xl border border-blue-200 bg-linear-to-br from-white via-blue-50/40 to-blue-100/50 p-5 shadow-lg shadow-blue-500/5 dark:border-blue-900/60 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/30 sm:p-7">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-blue-200/80 pb-4 dark:border-slate-800">
+            <div>
+              <span id="lbl-hero-tag" class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">
+                ESTIMATED MATERIAL REQUIREMENT
+              </span>
+              <div id="res-hero-main" class="mt-1 text-3xl sm:text-4xl lg:text-5xl font-black text-blue-600 dark:text-blue-400">
+                --
+              </div>
+              <div id="res-hero-sub" class="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">
+                --
+              </div>
+            </div>
+            <div>
+              <button
+                type="button"
+                id="btn-pm-download-pdf"
+                class="rounded-xl bg-emerald-600 hover:bg-emerald-700 px-4 py-2.5 text-xs font-bold text-white shadow-xs transition active:scale-[0.98] cursor-pointer flex items-center gap-1.5"
+              >
+                <span>📄</span> <span id="txt-btn-pm-pdf">Download PDF</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- DYNAMIC RESULT METRICS GRID -->
+          <div id="grid-result-metrics" class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <!-- Populated dynamically based on mode -->
+          </div>
+        </div>
+
+        <!-- STEP-BY-STEP CALCULATION BREAKDOWN -->
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 space-y-3">
+          <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+            <span>📐</span> Calculation Details & Mathematical Breakdown
+          </h3>
+          <div id="txt-calc-details" class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/40 space-y-2 text-xs font-mono">
+            <!-- Injected dynamically -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- SEO EDUCATIONAL CONTENT SECTIONS (EXACT STRUCTURE) -->
+    <!-- ========================================================= -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/60 sm:p-8">
+      <div class="prose prose-slate max-w-none dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-a:text-blue-600 dark:prose-a:text-blue-400 space-y-6">
+
+        <!-- 1. HOW TO USE -->
+        <section>
+          <h2 class="text-xl font-bold text-slate-900 dark:text-white">How to Use the Plaster & Mortar Calculator</h2>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Estimating plaster, mortar, and tile adhesive requirements requires just a few straightforward steps:
+          </p>
+          <ol class="list-decimal pl-5 text-xs sm:text-sm text-slate-600 dark:text-slate-300 space-y-1.5">
+            <li><strong>Select the calculation type:</strong> Choose between Wall Plaster, Mortar Quantity, Tile Mortar, or Gaming Mortar.</li>
+            <li><strong>Enter the required dimensions or coordinates:</strong> Specify wall lengths, heights, bed depths, or target grid positions.</li>
+            <li><strong>Choose the correct units:</strong> Toggle between Metric (meters/mm) and Imperial (feet/inches) systems.</li>
+            <li><strong>Select the mortar ratio or game:</strong> Choose standard cement-to-sand mixes (1:3, 1:4, 1:5, 1:6) or select your target game preset.</li>
+            <li><strong>Add wastage or optional details if needed:</strong> Account for door deductions, wall unevenness, and handling losses.</li>
+            <li><strong>Click Calculate:</strong> Instantly generate material summaries, cement bags, sand volume, or artillery targeting data.</li>
+            <li><strong>Review the material estimate or target calculation:</strong> Check the hero card and step-by-step breakdown.</li>
+            <li><strong>Download the result as a PDF if required:</strong> Export a clean, branded PDF summary for on-site execution or team sharing.</li>
+          </ol>
+        </section>
+
+        <!-- 2. HOW TO CALCULATE PLASTER QUANTITY -->
+        <section>
+          <h2 class="text-xl font-bold text-slate-900 dark:text-white">How to Calculate Plaster Quantity</h2>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Accurate estimation of wall plaster quantity follows standard civil engineering principles:
+          </p>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            First calculate the total plaster area by multiplying wall length by wall height and multiplying by the number of walls. Then deduct doors, windows, and other openings to arrive at the <strong>Net Plaster Area</strong>. Multiply the net area by the specified plaster thickness (e.g. 12mm or 15mm) to estimate wet mortar volume.
+          </p>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Because dry sand has internal void spaces that shrink when mixed with water and cement, apply the selected dry volume assumption (a dry factor of 1.30 to 1.33). Then add a wastage percentage (10% to 15%) and divide the dry mortar quantity according to the selected cement-to-sand ratio.
+          </p>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Actual material requirements can vary because of surface condition, uneven masonry walls, workmanship, mortar thickness variations, material wastage, and mix design.
+          </p>
+        </section>
+
+        <!-- 3. UNDERSTANDING CEMENT AND SAND MORTAR RATIOS -->
+        <section>
+          <h2 class="text-xl font-bold text-slate-900 dark:text-white">Understanding Cement and Sand Mortar Ratios</h2>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            The proportions of cement to sand dictate compressive strength, bond adhesion, and water resistance:
+          </p>
+          <ul class="list-disc pl-5 text-xs sm:text-sm text-slate-600 dark:text-slate-300 space-y-2">
+            <li><strong>1:3 Mix:</strong> 1 part cement and 3 parts sand. A rich, high-strength mix used for RCC ceiling plaster, water retaining structures, damp-proof courses (DPC), and structural repairs.</li>
+            <li><strong>1:4 Mix:</strong> 1 part cement and 4 parts sand. The international benchmark for standard internal wall plastering and single-brick masonry joints.</li>
+            <li><strong>1:5 Mix:</strong> 1 part cement and 5 parts sand. A balanced, cost-effective mix suitable for general internal plastering on flat blockwork.</li>
+            <li><strong>1:6 Mix:</strong> 1 part cement and 6 parts sand. An economical lean mix commonly specified for thick internal plaster coats and non-load-bearing partitions.</li>
+          </ul>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            The correct ratio depends on the application and project specifications. Always verify with local building codes before ordering materials.
+          </p>
+        </section>
+
+        <!-- 4. TILE MORTAR CALCULATOR -->
+        <section>
+          <h2 class="text-xl font-bold text-slate-900 dark:text-white">Tile Mortar Calculator</h2>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Our specialized <strong>tile mortar calculator</strong> helps contractors, tilers, and homeowners estimate dry adhesive and cementitious mortar bed requirements based on total floor or wall area, tile type (ceramic, porcelain, vitrified), adhesive coverage rates, bed thickness, bag size, and wastage allowances.
+          </p>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Adhesive consumption varies by notched trowel profile: standard 6mm square notches consume roughly 4.0 to 4.5 kg/m², while 10mm to 12mm notches for large format vitrified tiles consume 5.5 to 7.0 kg/m². Manufacturer coverage specifications should always be checked for accurate product-specific procurement.
+          </p>
+        </section>
+
+        <!-- 5. GAMING MORTAR CALCULATORS -->
+        <section>
+          <h2 class="text-xl font-bold text-slate-900 dark:text-white">Gaming Mortar Calculator</h2>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            The gaming artillery section provides tactical simulation enthusiasts with precise 2D Euclidean distance and azimuth calculations derived from map grid coordinates (Delta X = X2 − X1, Delta Y = Y2 − Y1, Distance = sqrt((X2 − X1)² + (Y2 − Y1)²)).
+          </p>
+
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-4">Arma Reforger Mortar Calculator</h3>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            The <strong>arma reforger mortar calculator</strong> tool computes direct range and magnetic azimuth in standard 6400 NATO milliradians, enabling rapid battery deployment across Everon and Arland conflict zones.
+          </p>
+
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-4">Arma Mortar Calculator</h3>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Using the <strong>arma mortar calculator</strong> mode, players operating the Mk6 82mm mortar can verify target distances and select optimal propellant charges (Charge 0, 1, or 2) for high-angle indirect fire missions.
+          </p>
+
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white mt-4">Squad Mortar Calculator</h3>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            The <strong>squad mortar calculator</strong> calculates target distance and converts meters into tube elevation mils using the standard 81mm/82mm ballistic reference curve (ranging between 50m and 1250m), accounting for positive or negative target elevation differentials.
+          </p>
+        </section>
+
+        <!-- 6. PRACTICAL EXAMPLE -->
+        <section>
+          <h2 class="text-xl font-bold text-slate-900 dark:text-white">Plaster Quantity Calculation Example</h2>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Consider a typical residential room wall requiring internal smooth plaster:
+          </p>
+          <ul class="list-disc pl-5 text-xs sm:text-sm text-slate-600 dark:text-slate-300 space-y-1">
+            <li><strong>Wall Length:</strong> 10.0 m</li>
+            <li><strong>Wall Height:</strong> 3.0 m</li>
+            <li><strong>Gross Wall Area:</strong> 10 × 3 = 30 m²</li>
+            <li><strong>Openings Deduction:</strong> 0 m²</li>
+            <li><strong>Plaster Thickness:</strong> 15 mm (0.015 m)</li>
+            <li><strong>Mortar Ratio:</strong> 1:4 (1 part cement : 4 parts sand)</li>
+            <li><strong>Dry Volume Factor:</strong> 1.30</li>
+            <li><strong>Wastage Allowance:</strong> 10%</li>
+          </ul>
+          <div class="rounded-2xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900/50 dark:bg-blue-950/20 text-xs font-mono space-y-1 mt-3">
+            <div>• Net Plaster Area = 30.00 m² (322.92 sq.ft)</div>
+            <div>• Wet Mortar Volume = 30.00 × 0.015 = 0.450 m³</div>
+            <div>• Dry Mortar Volume = 0.450 × 1.30 × 1.10 = 0.644 m³ (22.73 CFT)</div>
+            <div>• Cement Required = (0.644 × 1/5) × 1440 = <strong>185.3 kg (3.71 Bags of 50kg)</strong></div>
+            <div>• Sand Required = (0.644 × 4/5) = <strong>0.515 m³ = 18.18 CFT (0.82 Tonnes)</strong></div>
+          </div>
+          <p class="text-xs text-slate-500 mt-2 italic">
+            This example is for estimation purposes. Actual material requirements may vary.
+          </p>
+        </section>
+
+        <!-- 7. COMMON MISTAKES -->
+        <section>
+          <h2 class="text-xl font-bold text-slate-900 dark:text-white">Common Mistakes When Calculating Plaster and Mortar</h2>
+          
+          <h3 class="text-base font-bold text-slate-900 dark:text-white mt-3">Forgetting Openings</h3>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Failing to deduct large patio doors, French windows, and ventilation openings results in significant over-ordering of cement and sand.
+          </p>
+
+          <h3 class="text-base font-bold text-slate-900 dark:text-white mt-3">Using the Wrong Thickness</h3>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Specifying 12mm on unlevel brickwork where 18mm to 20mm is needed creates immediate material shortages on the job site.
+          </p>
+
+          <h3 class="text-base font-bold text-slate-900 dark:text-white mt-3">Ignoring Wastage</h3>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Mortar dropping onto scaffolding boards, rebound loss during throwing, and mixer residues routinely account for 8% to 15% material loss.
+          </p>
+
+          <h3 class="text-base font-bold text-slate-900 dark:text-white mt-3">Using the Wrong Mix Ratio</h3>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Applying an excessively rich 1:3 mix on internal walls causes shrinkage cracks, whereas a weak 1:6 mix on exposed external walls leads to damp penetration.
+          </p>
+
+          <h3 class="text-base font-bold text-slate-900 dark:text-white mt-3">Mixing Unit Systems</h3>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Combining wall measurements in feet with thickness in millimeters without proper conversion produces severe mathematical errors.
+          </p>
+
+          <h3 class="text-base font-bold text-slate-900 dark:text-white mt-3">Assuming Tile Adhesive Coverage Is Always the Same</h3>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Adhesive coverage fluctuates dramatically between small ceramic subway tiles and large vitrified floor tiles requiring deep notch trowels.
+          </p>
+        </section>
+
+        <!-- 8. IMPORTANT INFORMATION -->
+        <section>
+          <h2 class="text-xl font-bold text-slate-900 dark:text-white">Important Information</h2>
+          <ul class="list-disc pl-5 text-xs sm:text-sm text-slate-600 dark:text-slate-300 space-y-1.5 leading-relaxed">
+            <li>Results provided by this calculator are engineering estimates based on entered theoretical parameters.</li>
+            <li>Actual material requirements may vary due to surface conditions, joint thickness, sand moisture bulking, and site workmanship.</li>
+            <li>Construction specifications should always follow approved architectural drawings and structural project requirements.</li>
+            <li>Mortar ratios should be selected according to the intended application and environmental exposure.</li>
+            <li>Tile adhesive coverage can vary by product, substrate porosity, and manufacturer instructions.</li>
+            <li>Critical engineering or structural decisions should be verified by a qualified professional civil engineer.</li>
+            <li>Gaming mortar calculations are reference coordinate tools and may not perfectly match every in-game server patch or weather modification.</li>
+          </ul>
+        </section>
+
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- FAQ SECTION (EXACTLY 7 FAQS) -->
+    <!-- ========================================================= -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/60 sm:p-8">
+      <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+        <span>❓</span> Frequently Asked Questions
+      </h2>
+      <div class="space-y-4 text-xs sm:text-sm">
+        {faqs.map((faq, index) => (
+          <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open={index === 0}>
+            <summary class="cursor-pointer list-none">
+              <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+                {index + 1}. {faq.q}
+                <span class="group-open:rotate-180 transition-transform">▼</span>
+              </h3>
+            </summary>
+            <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed">
+              {faq.a}
+            </p>
+          </details>
+        ))}
+      </div>
+    </div>
+
+  </div>
+</CalculatorLayout>
+
+<!-- CLIENT SCRIPT -->
+<script is:inline>
+  // State variables
+  let currentMode = 'wall_plaster';
+  let lastResultData = null;
+
+  // Mode tabs
+  const modeButtons = document.querySelectorAll('.btn-pm-tab');
+  const modeBadge = document.getElementById('lbl-mode-badge');
+  const sectionWallPlaster = document.getElementById('section-input-wall-plaster');
+  const sectionGeneralMortar = document.getElementById('section-input-general-mortar');
+  const sectionTileMortar = document.getElementById('section-input-tile-mortar');
+  const sectionGamingMortar = document.getElementById('section-input-gaming-mortar');
+
+  // Action Buttons & Result Containers
+  const btnCalc = document.getElementById('btn-calc-pm');
+  const btnClear = document.getElementById('btn-clear-pm');
+  const errBox = document.getElementById('err-pm');
+  const resultsSection = document.getElementById('pm-results-section');
+  const btnDownloadPdf = document.getElementById('btn-pm-download-pdf');
+
+  // Hero Result Elements
+  const lblHeroTag = document.getElementById('lbl-hero-tag');
+  const resHeroMain = document.getElementById('res-hero-main');
+  const resHeroSub = document.getElementById('res-hero-sub');
+  const gridResultMetrics = document.getElementById('grid-result-metrics');
+  const txtCalcDetails = document.getElementById('txt-calc-details');
+
+  // Input Elements - Wall Plaster
+  const wpUnit = document.getElementById('inp-wp-unit');
+  const wpLength = document.getElementById('inp-wp-length');
+  const wpHeight = document.getElementById('inp-wp-height');
+  const wpWalls = document.getElementById('inp-wp-walls');
+  const wpOpenings = document.getElementById('inp-wp-openings');
+  const wpThickPreset = document.getElementById('inp-wp-thick-preset');
+  const divWpCustomThick = document.getElementById('div-wp-custom-thick');
+  const wpCustomThickVal = document.getElementById('inp-wp-custom-thick-val');
+  const wpCustomThickUnit = document.getElementById('inp-wp-custom-thick-unit');
+  const wpRatio = document.getElementById('inp-wp-ratio');
+  const divWpCustomRatio = document.getElementById('div-wp-custom-ratio');
+  const wpCustomC = document.getElementById('inp-wp-custom-c');
+  const wpCustomS = document.getElementById('inp-wp-custom-s');
+  const wpWastage = document.getElementById('inp-wp-wastage');
+  const wpDryFactor = document.getElementById('inp-wp-dry-factor');
+
+  // Input Elements - General Mortar
+  const gmUnit = document.getElementById('inp-gm-unit');
+  const gmLength = document.getElementById('inp-gm-length');
+  const gmWidth = document.getElementById('inp-gm-width');
+  const gmDepth = document.getElementById('inp-gm-depth');
+  const gmDepthUnit = document.getElementById('inp-gm-depth-unit');
+  const gmSections = document.getElementById('inp-gm-sections');
+  const gmRatio = document.getElementById('inp-gm-ratio');
+  const divGmCustomRatio = document.getElementById('div-gm-custom-ratio');
+  const gmCustomC = document.getElementById('inp-gm-custom-c');
+  const gmCustomS = document.getElementById('inp-gm-custom-s');
+  const gmWastage = document.getElementById('inp-gm-wastage');
+  const gmDryFactor = document.getElementById('inp-gm-dry-factor');
+
+  // Input Elements - Tile Mortar
+  const tmUnit = document.getElementById('inp-tm-unit');
+  const tmArea = document.getElementById('inp-tm-area');
+  const tmType = document.getElementById('inp-tm-type');
+  const tmPreset = document.getElementById('inp-tm-preset');
+  const divTmCustomSize = document.getElementById('div-tm-custom-size');
+  const tmCustomLen = document.getElementById('inp-tm-custom-len');
+  const tmCustomWid = document.getElementById('inp-tm-custom-wid');
+  const tmThick = document.getElementById('inp-tm-thick');
+  const tmCoverage = document.getElementById('inp-tm-coverage');
+  const tmBagSize = document.getElementById('inp-tm-bag-size');
+  const tmWastage = document.getElementById('inp-tm-wastage');
+
+  // Input Elements - Gaming Mortar
+  const gameSelect = document.getElementById('inp-gm-game');
+  const gameX1 = document.getElementById('inp-game-x1');
+  const gameY1 = document.getElementById('inp-game-y1');
+  const gameX2 = document.getElementById('inp-game-x2');
+  const gameY2 = document.getElementById('inp-game-y2');
+  const gameElev = document.getElementById('inp-game-elev');
+
+  // Invalidate and hide results when inputs change
+  function invalidateResult() {
+    if (resultsSection) resultsSection.classList.add('hidden');
+    if (errBox) {
+      errBox.classList.add('hidden');
+      errBox.textContent = '';
+    }
+    lastResultData = null;
+  }
+
+  // Handle Tab Switch
+  modeButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const mode = btn.getAttribute('data-mode');
+      if (mode === currentMode) return;
+      currentMode = mode;
+
+      modeButtons.forEach((b) => {
+        b.classList.remove('active', 'border-blue-600', 'bg-blue-50', 'text-blue-700', 'dark:border-blue-500', 'dark:bg-blue-950/60', 'dark:text-blue-300');
+        b.classList.add('border-slate-300', 'bg-white', 'text-slate-700', 'dark:border-slate-700', 'dark:bg-slate-800', 'dark:text-slate-200');
+      });
+
+      btn.classList.add('active', 'border-blue-600', 'bg-blue-50', 'text-blue-700', 'dark:border-blue-500', 'dark:bg-blue-950/60', 'dark:text-blue-300');
+      btn.classList.remove('border-slate-300', 'bg-white', 'text-slate-700', 'dark:border-slate-700', 'dark:bg-slate-800', 'dark:text-slate-200');
+
+      sectionWallPlaster.classList.add('hidden');
+      sectionGeneralMortar.classList.add('hidden');
+      sectionTileMortar.classList.add('hidden');
+      sectionGamingMortar.classList.add('hidden');
+
+      if (mode === 'wall_plaster') {
+        sectionWallPlaster.classList.remove('hidden');
+        if (modeBadge) modeBadge.textContent = 'Construction Tool';
+        btnCalc.textContent = 'Calculate Wall Plaster →';
+      } else if (mode === 'general_mortar') {
+        sectionGeneralMortar.classList.remove('hidden');
+        if (modeBadge) modeBadge.textContent = 'Mortar Tool';
+        btnCalc.textContent = 'Calculate Mortar Quantity →';
+      } else if (mode === 'tile_mortar') {
+        sectionTileMortar.classList.remove('hidden');
+        if (modeBadge) modeBadge.textContent = 'Tile Work';
+        btnCalc.textContent = 'Calculate Tile Mortar →';
+      } else if (mode === 'gaming_mortar') {
+        sectionGamingMortar.classList.remove('hidden');
+        if (modeBadge) modeBadge.textContent = 'Gaming Artillery';
+        btnCalc.textContent = 'Calculate Coordinates & Range →';
+      }
+
+      invalidateResult();
+    });
+  });
+
+  // Toggle Custom Inputs
+  if (wpThickPreset) {
+    wpThickPreset.addEventListener('change', () => {
+      divWpCustomThick.classList.toggle('hidden', wpThickPreset.value !== 'custom');
+      invalidateResult();
+    });
+  }
+
+  if (wpRatio) {
+    wpRatio.addEventListener('change', () => {
+      divWpCustomRatio.classList.toggle('hidden', wpRatio.value !== 'custom');
+      invalidateResult();
+    });
+  }
+
+  if (gmRatio) {
+    gmRatio.addEventListener('change', () => {
+      divGmCustomRatio.classList.toggle('hidden', gmRatio.value !== 'custom');
+      invalidateResult();
+    });
+  }
+
+  // Helper to auto-estimate recommended bed thickness and coverage from tile dimensions
+  function updateTileDefaultsFromSize() {
+    if (tmPreset.value === '300x300') {
+      tmThick.value = 4;
+      tmCoverage.value = 4.0;
+    } else if (tmPreset.value === '600x600') {
+      tmThick.value = 6;
+      tmCoverage.value = 5.0;
+    } else if (tmPreset.value === '600x1200') {
+      tmThick.value = 8;
+      tmCoverage.value = 6.5;
+    } else if (tmPreset.value === 'custom') {
+      const cLen = parseFloat(tmCustomLen.value) || 800;
+      const cWid = parseFloat(tmCustomWid.value) || 800;
+      const maxDim = Math.max(cLen, cWid);
+      if (maxDim <= 250) {
+        tmThick.value = 4;
+        tmCoverage.value = 3.8;
+      } else if (maxDim <= 500) {
+        tmThick.value = 5;
+        tmCoverage.value = 4.5;
+      } else if (maxDim <= 800) {
+        tmThick.value = 6.5;
+        tmCoverage.value = 5.5;
+      } else if (maxDim <= 1200) {
+        tmThick.value = 8;
+        tmCoverage.value = 6.5;
+      } else {
+        tmThick.value = 10;
+        tmCoverage.value = 7.5;
+      }
+    }
+  }
+
+  // Dynamic Tile Preset and Custom Size listeners
+  if (tmPreset) {
+    tmPreset.addEventListener('change', () => {
+      if (divTmCustomSize) {
+        divTmCustomSize.classList.toggle('hidden', tmPreset.value !== 'custom');
+      }
+      updateTileDefaultsFromSize();
+      invalidateResult();
+    });
+  }
+
+  if (tmCustomLen) {
+    tmCustomLen.addEventListener('input', () => {
+      updateTileDefaultsFromSize();
+      invalidateResult();
+    });
+  }
+
+  if (tmCustomWid) {
+    tmCustomWid.addEventListener('input', () => {
+      updateTileDefaultsFromSize();
+      invalidateResult();
+    });
+  }
+
+  // Unit Labels update
+  if (wpUnit) {
+    wpUnit.addEventListener('change', () => {
+      const isImp = wpUnit.value === 'imperial';
+      document.querySelectorAll('.unit-len-label').forEach(el => el.textContent = isImp ? 'ft' : 'm');
+      document.querySelectorAll('.unit-area-label').forEach(el => el.textContent = isImp ? 'sq.ft' : 'm²');
+      invalidateResult();
+    });
+  }
+
+  if (gmUnit) {
+    gmUnit.addEventListener('change', () => {
+      const isImp = gmUnit.value === 'imperial';
+      document.querySelectorAll('.unit-gm-len').forEach(el => el.textContent = isImp ? 'ft' : 'm');
+      invalidateResult();
+    });
+  }
+
+  if (tmUnit) {
+    tmUnit.addEventListener('change', () => {
+      const isImp = tmUnit.value === 'imperial';
+      document.querySelectorAll('.unit-tm-area-label').forEach(el => el.textContent = isImp ? 'sq.ft' : 'm²');
+      invalidateResult();
+    });
+  }
+
+  // Attach change listeners to all form inputs
+  document.querySelectorAll('#form-plaster-mortar input, #form-plaster-mortar select').forEach((inp) => {
+    inp.addEventListener('input', invalidateResult);
+    inp.addEventListener('change', invalidateResult);
+  });
+
+  // Show Error Helper
+  function showError(msg) {
+    if (!errBox) return;
+    errBox.textContent = msg;
+    errBox.classList.remove('hidden');
+    if (resultsSection) resultsSection.classList.add('hidden');
+    lastResultData = null;
+  }
+
+  // Main Calculation Routine
+  function performCalculation() {
+    if (errBox) {
+      errBox.classList.add('hidden');
+      errBox.textContent = '';
+    }
+
+    try {
+      if (currentMode === 'wall_plaster') {
+        const u = wpUnit.value;
+        const len = parseFloat(wpLength.value);
+        const ht = parseFloat(wpHeight.value);
+        const walls = parseInt(wpWalls.value, 10) || 1;
+        const openDed = parseFloat(wpOpenings.value) || 0;
+        const wastage = parseFloat(wpWastage.value) || 0;
+        const dryFactor = parseFloat(wpDryFactor.value) || 1.30;
+
+        if (isNaN(len) || len <= 0) return showError('Please enter a valid Wall Length greater than zero.');
+        if (isNaN(ht) || ht <= 0) return showError('Please enter a valid Wall Height greater than zero.');
+        if (walls <= 0) return showError('Number of walls must be at least 1.');
+        if (openDed < 0) return showError('Openings deduction cannot be negative.');
+
+        let thick = 15;
+        let thickUnit = 'mm';
+        if (wpThickPreset.value === 'custom') {
+          thick = parseFloat(wpCustomThickVal.value);
+          thickUnit = wpCustomThickUnit.value;
+          if (isNaN(thick) || thick <= 0) return showError('Please enter a valid plaster thickness.');
+        } else {
+          thick = parseFloat(wpThickPreset.value);
+        }
+
+        const ratio = wpRatio.value;
+        let customC = 1;
+        let customS = 4;
+        if (ratio === 'custom') {
+          customC = parseFloat(wpCustomC.value);
+          customS = parseFloat(wpCustomS.value);
+          if (isNaN(customC) || customC <= 0 || isNaN(customS) || customS <= 0) {
+            return showError('Please enter valid custom mortar ratio parts.');
+          }
+        }
+
+        // Calculations
+        let totalWallAreaSqm = (u === 'imperial') ? (len * ht * walls) / 10.7639 : (len * ht * walls);
+        let openingsAreaSqm = (u === 'imperial') ? openDed / 10.7639 : openDed;
+
+        if (openingsAreaSqm >= totalWallAreaSqm) {
+          return showError('Openings deduction area cannot exceed or equal total wall area.');
+        }
+
+        const netAreaSqm = totalWallAreaSqm - openingsAreaSqm;
+        const netAreaSqft = netAreaSqm * 10.7639;
+
+        let thicknessM = (thickUnit === 'cm') ? thick / 100 : (thickUnit === 'in') ? (thick * 25.4) / 1000 : thick / 1000;
+        let wetVolCum = netAreaSqm * thicknessM;
+        let dryVolCum = wetVolCum * dryFactor * (1 + wastage / 100);
+
+        let cPart = (ratio === 'custom') ? customC : parseInt(ratio.split(':')[0], 10);
+        let sPart = (ratio === 'custom') ? customS : parseInt(ratio.split(':')[1], 10);
+        let totalParts = cPart + sPart;
+
+        let cementVolCum = (dryVolCum * cPart) / totalParts;
+        let cementKg = cementVolCum * 1440;
+        let cementBags = cementKg / 50;
+
+        let sandVolCum = (dryVolCum * sPart) / totalParts;
+        let sandCft = sandVolCum * 35.3147;
+        let sandTons = (sandVolCum * 1600) / 1000;
+
+        lastResultData = {
+          mode: 'wall_plaster',
+          title: 'Plaster Material Calculation',
+          netAreaSqm: netAreaSqm.toFixed(2),
+          netAreaSqft: netAreaSqft.toFixed(2),
+          thickMm: (thickUnit === 'cm' ? thick * 10 : thickUnit === 'in' ? thick * 25.4 : thick).toFixed(1),
+          wetVolCum: wetVolCum.toFixed(3),
+          wetVolCft: (wetVolCum * 35.3147).toFixed(2),
+          dryVolCum: dryVolCum.toFixed(3),
+          dryVolCft: (dryVolCum * 35.3147).toFixed(2),
+          cementKg: cementKg.toFixed(1),
+          cementBags: cementBags.toFixed(2),
+          cementBagsRound: Math.ceil(cementBags),
+          sandCft: sandCft.toFixed(2),
+          sandTons: sandTons.toFixed(2),
+          ratioLabel: `${cPart}:${sPart}`,
+          wastage: wastage,
+          dryFactor: dryFactor,
+        };
+
+        // Render Hero
+        lblHeroTag.textContent = 'ESTIMATED MATERIAL REQUIREMENT';
+        resHeroMain.textContent = `${lastResultData.cementBagsRound} Cement Bags (50kg)`;
+        resHeroSub.textContent = `Exact: ${lastResultData.cementBags} Bags (${lastResultData.cementKg} kg) + ${lastResultData.sandCft} CFT Sand`;
+
+        // Render Grid
+        gridResultMetrics.innerHTML = `
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Net Plaster Area</div>
+            <div class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">${lastResultData.netAreaSqm} m² <span class="text-xs font-normal text-slate-500">(${lastResultData.netAreaSqft} sq.ft)</span></div>
+          </div>
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Wet Mortar Volume</div>
+            <div class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">${lastResultData.wetVolCum} m³ <span class="text-xs font-normal text-slate-500">(${lastResultData.wetVolCft} CFT)</span></div>
+          </div>
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Sand Required</div>
+            <div class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">${lastResultData.sandCft} CFT <span class="text-xs font-normal text-slate-500">(${lastResultData.sandTons} Tonnes)</span></div>
+          </div>
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Dry Volume (with ${lastResultData.wastage}% waste)</div>
+            <div class="mt-1 text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">${lastResultData.dryVolCum} m³ <span class="text-xs font-normal text-slate-500">(${lastResultData.dryVolCft} CFT)</span></div>
+          </div>
+        `;
+
+        // Render Calculation Breakdown
+        txtCalcDetails.innerHTML = `
+          <div>1. Total Wall Area = ${len} × ${ht} × ${walls} = ${(len * ht * walls).toFixed(2)} ${u === 'imperial' ? 'sq.ft' : 'm²'}</div>
+          <div>2. Openings Deduction = ${openDed.toFixed(2)} ${u === 'imperial' ? 'sq.ft' : 'm²'} ➔ Net Area = ${lastResultData.netAreaSqm} m² (${lastResultData.netAreaSqft} sq.ft)</div>
+          <div>3. Wet Mortar Volume = ${lastResultData.netAreaSqm} m² × ${lastResultData.thickMm}mm = ${lastResultData.wetVolCum} m³ (${lastResultData.wetVolCft} CFT)</div>
+          <div>4. Dry Factor (${dryFactor}) + Wastage (${wastage}%) ➔ Dry Volume = ${lastResultData.wetVolCum} × ${dryFactor} × ${(1 + wastage / 100).toFixed(2)} = ${lastResultData.dryVolCum} m³</div>
+          <div>5. Mortar Ratio ${lastResultData.ratioLabel} (${cPart} part Cement, ${sPart} parts Sand)</div>
+          <div>   • Cement Volume = (${lastResultData.dryVolCum} × ${cPart}/${totalParts}) = ${(cementVolCum).toFixed(3)} m³ ➔ ${lastResultData.cementKg} kg ➔ ${lastResultData.cementBags} Bags (50kg)</div>
+          <div>   • Sand Volume = (${lastResultData.dryVolCum} × ${sPart}/${totalParts}) = ${(sandVolCum).toFixed(3)} m³ ➔ ${lastResultData.sandCft} CFT ➔ ${lastResultData.sandTons} Tonnes</div>
+        `;
+
+      } else if (currentMode === 'general_mortar') {
+        const u = gmUnit.value;
+        const len = parseFloat(gmLength.value);
+        const wid = parseFloat(gmWidth.value);
+        const depth = parseFloat(gmDepth.value);
+        const depthUnit = gmDepthUnit.value;
+        const sections = parseInt(gmSections.value, 10) || 1;
+        const wastage = parseFloat(gmWastage.value) || 0;
+        const dryFactor = parseFloat(gmDryFactor.value) || 1.30;
+
+        if (isNaN(len) || len <= 0 || isNaN(wid) || wid <= 0 || isNaN(depth) || depth <= 0) {
+          return showError('Please enter valid Length, Width, and Depth greater than zero.');
+        }
+
+        let lenM = (u === 'imperial') ? len * 0.3048 : len;
+        let widM = (u === 'imperial') ? wid * 0.3048 : wid;
+        let depthM = (depthUnit === 'mm') ? depth / 1000 : (depthUnit === 'cm') ? depth / 100 : (depthUnit === 'in') ? (depth * 25.4) / 1000 : depth;
+
+        let wetVolCum = lenM * widM * depthM * sections;
+        let dryVolCum = wetVolCum * dryFactor * (1 + wastage / 100);
+
+        const ratio = gmRatio.value;
+        let cPart = (ratio === 'custom') ? parseFloat(gmCustomC.value) : parseInt(ratio.split(':')[0], 10);
+        let sPart = (ratio === 'custom') ? parseFloat(gmCustomS.value) : parseInt(ratio.split(':')[1], 10);
+        let totalParts = cPart + sPart;
+
+        let cementVolCum = (dryVolCum * cPart) / totalParts;
+        let cementKg = cementVolCum * 1440;
+        let cementBags = cementKg / 50;
+
+        let sandVolCum = (dryVolCum * sPart) / totalParts;
+        let sandCft = sandVolCum * 35.3147;
+        let sandTons = (sandVolCum * 1600) / 1000;
+
+        lastResultData = {
+          mode: 'general_mortar',
+          title: 'Mortar Quantity Calculation',
+          wetVolCum: wetVolCum.toFixed(3),
+          wetVolCft: (wetVolCum * 35.3147).toFixed(2),
+          dryVolCum: dryVolCum.toFixed(3),
+          dryVolCft: (dryVolCum * 35.3147).toFixed(2),
+          cementKg: cementKg.toFixed(1),
+          cementBags: cementBags.toFixed(2),
+          cementBagsRound: Math.ceil(cementBags),
+          sandCft: sandCft.toFixed(2),
+          sandTons: sandTons.toFixed(2),
+          ratioLabel: `${cPart}:${sPart}`,
+          wastage: wastage,
+          dryFactor: dryFactor,
+        };
+
+        lblHeroTag.textContent = 'ESTIMATED MORTAR QUANTITY';
+        resHeroMain.textContent = `${lastResultData.cementBagsRound} Bags Cement + ${lastResultData.sandCft} CFT Sand`;
+        resHeroSub.textContent = `Wet Volume: ${lastResultData.wetVolCum} m³ (${lastResultData.wetVolCft} CFT) | Dry Volume: ${lastResultData.dryVolCum} m³`;
+
+        gridResultMetrics.innerHTML = `
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Total Wet Volume</div>
+            <div class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">${lastResultData.wetVolCum} m³ <span class="text-xs font-normal text-slate-500">(${lastResultData.wetVolCft} CFT)</span></div>
+          </div>
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Cement Required</div>
+            <div class="mt-1 text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">${lastResultData.cementBagsRound} Bags <span class="text-xs font-normal text-slate-500">(${lastResultData.cementKg} kg)</span></div>
+          </div>
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Sand Required</div>
+            <div class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">${lastResultData.sandCft} CFT <span class="text-xs font-normal text-slate-500">(${lastResultData.sandTons} Tonnes)</span></div>
+          </div>
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Mix Ratio</div>
+            <div class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">${lastResultData.ratioLabel} <span class="text-xs font-normal text-slate-500">(Wastage: ${wastage}%)</span></div>
+          </div>
+        `;
+
+        txtCalcDetails.innerHTML = `
+          <div>1. Wet Volume = ${lenM.toFixed(2)}m × ${widM.toFixed(2)}m × ${depthM.toFixed(3)}m × ${sections} = ${lastResultData.wetVolCum} m³ (${lastResultData.wetVolCft} CFT)</div>
+          <div>2. Dry Volume = ${lastResultData.wetVolCum} × ${dryFactor} × ${(1 + wastage / 100).toFixed(2)} = ${lastResultData.dryVolCum} m³ (${lastResultData.dryVolCft} CFT)</div>
+          <div>3. Cement Portion = (${lastResultData.dryVolCum} × ${cPart}/${totalParts}) × 1440 kg/m³ = ${lastResultData.cementKg} kg ➔ ${lastResultData.cementBags} Bags (50kg)</div>
+          <div>4. Sand Portion = (${lastResultData.dryVolCum} × ${sPart}/${totalParts}) × 35.3147 = ${lastResultData.sandCft} CFT (${lastResultData.sandTons} Tonnes)</div>
+        `;
+
+      } else if (currentMode === 'tile_mortar') {
+        const u = tmUnit.value;
+        const area = parseFloat(tmArea.value);
+        const tileType = tmType.value;
+        const thickness = parseFloat(tmThick.value) || 6;
+        const coverage = parseFloat(tmCoverage.value);
+        const bagSize = parseFloat(tmBagSize.value) || 20;
+        const wastage = parseFloat(tmWastage.value) || 10;
+
+        if (isNaN(area) || area <= 0 || isNaN(coverage) || coverage <= 0) {
+          return showError('Please enter valid Tiling Area and Coverage Rate.');
+        }
+
+        let tilePresetLabel = '600 × 600 mm (Medium Format)';
+        if (tmPreset.value === 'custom') {
+          const cLen = parseFloat(tmCustomLen.value);
+          const cWid = parseFloat(tmCustomWid.value);
+          if (isNaN(cLen) || cLen <= 0 || isNaN(cWid) || cWid <= 0) {
+            return showError('Please enter valid Custom Tile Length and Width in millimeters.');
+          }
+          tilePresetLabel = `Custom (${cLen} × ${cWid} mm)`;
+        } else {
+          tilePresetLabel = tmPreset.options[tmPreset.selectedIndex].text;
+        }
+
+        let areaSqm = (u === 'imperial') ? area / 10.7639 : area;
+        let areaSqft = (u === 'imperial') ? area : area * 10.7639;
+
+        let baseKg = areaSqm * coverage;
+        let wasteKg = baseKg * (wastage / 100);
+        let totalKg = baseKg + wasteKg;
+        let exactBags = totalKg / bagSize;
+        let roundBags = Math.ceil(exactBags);
+
+        lastResultData = {
+          mode: 'tile_mortar',
+          title: 'Tile Mortar Calculation',
+          areaSqm: areaSqm.toFixed(2),
+          areaSqft: areaSqft.toFixed(2),
+          tileType: tileType === 'floor' ? 'Floor Tile' : 'Wall Tile',
+          tilePresetLabel: tilePresetLabel,
+          thicknessMm: thickness,
+          coverage: coverage.toFixed(1),
+          baseKg: baseKg.toFixed(1),
+          wasteKg: wasteKg.toFixed(1),
+          totalKg: totalKg.toFixed(1),
+          bagSize: bagSize,
+          exactBags: exactBags.toFixed(2),
+          roundBags: roundBags,
+          wastage: wastage,
+        };
+
+        lblHeroTag.textContent = 'ESTIMATED TILE MORTAR REQUIRED';
+        resHeroMain.textContent = `${roundBags} Bags (${bagSize}kg each)`;
+        resHeroSub.textContent = `Total Weight: ${lastResultData.totalKg} kg (Base: ${lastResultData.baseKg} kg + Wastage: ${lastResultData.wasteKg} kg) | Format: ${tilePresetLabel}`;
+
+        gridResultMetrics.innerHTML = `
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Tiling Surface Area</div>
+            <div class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">${lastResultData.areaSqm} m² <span class="text-xs font-normal text-slate-500">(${lastResultData.areaSqft} sq.ft)</span></div>
+          </div>
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Tile Size & Bed</div>
+            <div class="mt-1 text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400 truncate" title="${tilePresetLabel}">${tilePresetLabel} <span class="text-xs font-normal text-slate-500">(${thickness}mm bed)</span></div>
+          </div>
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Total Adhesive Required</div>
+            <div class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">${lastResultData.totalKg} kg <span class="text-xs font-normal text-slate-500">(${roundBags} Bags)</span></div>
+          </div>
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Wastage Included</div>
+            <div class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">${wastage}% <span class="text-xs font-normal text-slate-500">(${lastResultData.wasteKg} kg)</span></div>
+          </div>
+        `;
+
+        txtCalcDetails.innerHTML = `
+          <div>1. Total Tiling Area = ${lastResultData.areaSqm} m² (${lastResultData.areaSqft} sq.ft) | Format: ${tilePresetLabel}</div>
+          <div>2. Base Adhesive Requirement = ${lastResultData.areaSqm} m² × ${lastResultData.coverage} kg/m² = ${lastResultData.baseKg} kg (${thickness}mm bed)</div>
+          <div>3. Wastage Allowance (${wastage}%) = ${lastResultData.baseKg} kg × ${(wastage / 100).toFixed(2)} = ${lastResultData.wasteKg} kg</div>
+          <div>4. Total Adhesive Weight = ${lastResultData.baseKg} + ${lastResultData.wasteKg} = ${lastResultData.totalKg} kg</div>
+          <div>5. Number of ${bagSize}kg Bags = ${lastResultData.totalKg} / ${bagSize} = ${lastResultData.exactBags} ➔ <strong>${roundBags} Bags (rounded up)</strong></div>
+        `;
+
+      } else if (currentMode === 'gaming_mortar') {
+        const game = gameSelect.value;
+        const x1 = parseFloat(gameX1.value);
+        const y1 = parseFloat(gameY1.value);
+        const x2 = parseFloat(gameX2.value);
+        const y2 = parseFloat(gameY2.value);
+        const elev = parseFloat(gameElev.value) || 0;
+
+        if (isNaN(x1) || isNaN(y1) || isNaN(x2) || isNaN(y2)) {
+          return showError('Please enter valid numeric X and Y coordinates for Mortar and Target.');
+        }
+
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist === 0) {
+          return showError('Mortar position and Target position cannot be identical.');
+        }
+
+        let bearingRad = Math.atan2(dx, dy);
+        let bearingDeg = (bearingRad * 180) / Math.PI;
+        if (bearingDeg < 0) bearingDeg += 360;
+
+        const natoMils = Math.round((bearingDeg / 360) * 6400);
+        const warsawMils = Math.round((bearingDeg / 360) * 6000);
+
+        const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+        const compass = directions[Math.round(((bearingDeg % 360) / 22.5)) % 16];
+
+        let aimingRef = 'Azimuth: ' + bearingDeg.toFixed(1) + '° / ' + natoMils + ' NATO Mils';
+        let aimingNotes = 'Reference geometric coordinate targeting.';
+
+        if (game === 'squad') {
+          if (dist < 50) {
+            aimingRef = 'Below Min Range (<50m)';
+            aimingNotes = 'Target is within minimum arming distance (50m).';
+          } else if (dist > 1250) {
+            aimingRef = 'Out of Range (>1250m)';
+            aimingNotes = 'Target exceeds maximum effective range of Squad 81/82mm tube (1250m).';
+          } else {
+            const baseMil = 1579 - (dist - 50) * 0.8325;
+            const finalMil = Math.round(baseMil - elev / 3.5);
+            aimingRef = `${finalMil} Mils Elevation`;
+            aimingNotes = `Squad 81mm/82mm standard tube reference. Est flight time ~28s. Elevation diff: ${elev >= 0 ? '+' : ''}${elev}m.`;
+          }
+        } else if (game === 'arma_reforger') {
+          aimingRef = `Azimuth: ${natoMils} Mils (Range: ${Math.round(dist)}m)`;
+          aimingNotes = 'Arma Reforger grid targeting reference.';
+        } else if (game === 'arma') {
+          let charge = 'Charge 0 (Close: 50-450m)';
+          if (dist > 450 && dist <= 1800) charge = 'Charge 1 (Medium: 150-1800m)';
+          else if (dist > 1800 && dist <= 3300) charge = 'Charge 2 (Far: 300-3300m)';
+          else if (dist > 3300) charge = 'Out of Range (>3300m)';
+          aimingRef = charge;
+          aimingNotes = `Arma 3 Mk6 82mm reference. Range: ${Math.round(dist)}m, Bearing: ${bearingDeg.toFixed(1)}° (${natoMils} Mils).`;
+        }
+
+        lastResultData = {
+          mode: 'gaming_mortar',
+          title: 'Gaming Mortar Calculation',
+          gameName: gameSelect.options[gameSelect.selectedIndex].text,
+          mortarCoords: `(${x1}, ${y1})`,
+          targetCoords: `(${x2}, ${y2})`,
+          dx: dx.toFixed(1),
+          dy: dy.toFixed(1),
+          distM: dist.toFixed(1),
+          distKm: (dist / 1000).toFixed(3),
+          bearingDeg: bearingDeg.toFixed(1),
+          compass: compass,
+          natoMils: natoMils,
+          warsawMils: warsawMils,
+          elevDiff: elev,
+          aimingRef: aimingRef,
+          aimingNotes: aimingNotes,
+        };
+
+        lblHeroTag.textContent = 'TARGET DISTANCE & BEARING';
+        resHeroMain.textContent = `${lastResultData.distM} meters`;
+        resHeroSub.textContent = `Bearing: ${lastResultData.bearingDeg}° (${compass}) | ${natoMils} Mils NATO | ${aimingRef}`;
+
+        gridResultMetrics.innerHTML = `
+          <div class="rounded-xl border border-amber-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Horizontal Distance</div>
+            <div class="mt-1 text-sm sm:text-base font-bold text-amber-600 dark:text-amber-400">${lastResultData.distM} m <span class="text-xs font-normal text-slate-500">(${lastResultData.distKm} km)</span></div>
+          </div>
+          <div class="rounded-xl border border-amber-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Direction / Azimuth</div>
+            <div class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">${lastResultData.bearingDeg}° <span class="text-xs font-normal text-blue-600">(${compass})</span></div>
+          </div>
+          <div class="rounded-xl border border-amber-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">NATO Mils</div>
+            <div class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">${natoMils} Mils <span class="text-xs font-normal text-slate-500">(6400 scale)</span></div>
+          </div>
+          <div class="rounded-xl border border-amber-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Aiming / Elevation</div>
+            <div class="mt-1 text-xs sm:text-sm font-bold text-emerald-600 dark:text-emerald-400">${aimingRef}</div>
+          </div>
+        `;
+
+        txtCalcDetails.innerHTML = `
+          <div>1. Mortar Position = ${lastResultData.mortarCoords} | Target Position = ${lastResultData.targetCoords}</div>
+          <div>2. ΔX (Easting Difference) = ${x2} − ${x1} = ${lastResultData.dx} m</div>
+          <div>3. ΔY (Northing Difference) = ${y2} − ${y1} = ${lastResultData.dy} m</div>
+          <div>4. 2D Euclidean Distance = √(${lastResultData.dx}² + ${lastResultData.dy}²) = <strong>${lastResultData.distM} meters</strong></div>
+          <div>5. Azimuth Bearing = atan2(${lastResultData.dx}, ${lastResultData.dy}) = <strong>${lastResultData.bearingDeg}° (${compass})</strong> = ${natoMils} NATO Mils</div>
+          <div>6. Reference Aiming Guidance: ${aimingNotes}</div>
+        `;
+      }
+
+      resultsSection.classList.remove('hidden');
+      resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (e) {
+      showError('An unexpected error occurred during calculation.');
+    }
+  }
+
+  // Clear All
+  function performClearAll() {
+    // Reset inputs
+    wpLength.value = '10';
+    wpHeight.value = '3';
+    wpWalls.value = '1';
+    wpOpenings.value = '0';
+    wpThickPreset.value = '15';
+    divWpCustomThick.classList.add('hidden');
+    wpCustomThickVal.value = '15';
+    wpRatio.value = '1:4';
+    divWpCustomRatio.classList.add('hidden');
+    wpCustomC.value = '1';
+    wpCustomS.value = '4';
+    wpWastage.value = '10';
+    wpDryFactor.value = '1.30';
+
+    gmLength.value = '5';
+    gmWidth.value = '4';
+    gmDepth.value = '50';
+    gmDepthUnit.value = 'mm';
+    gmSections.value = '1';
+    gmRatio.value = '1:3';
+    divGmCustomRatio.classList.add('hidden');
+    gmCustomC.value = '1';
+    gmCustomS.value = '3';
+    gmWastage.value = '10';
+    gmDryFactor.value = '1.30';
+
+    tmArea.value = '50';
+    tmType.value = 'floor';
+    tmPreset.value = '600x600';
+    if (divTmCustomSize) divTmCustomSize.classList.add('hidden');
+    if (tmCustomLen) tmCustomLen.value = '800';
+    if (tmCustomWid) tmCustomWid.value = '800';
+    tmThick.value = '6';
+    tmCoverage.value = '5.0';
+    tmBagSize.value = '20';
+    tmWastage.value = '10';
+
+    gameSelect.value = 'squad';
+    gameX1.value = '1000';
+    gameY1.value = '1000';
+    gameX2.value = '1600';
+    gameY2.value = '1800';
+    gameElev.value = '0';
+
+    // Reset to Wall Plaster mode
+    modeButtons[0].click();
+
+    invalidateResult();
+  }
+
+  btnCalc.addEventListener('click', performCalculation);
+  btnClear.addEventListener('click', performClearAll);
+
+  // Enter Key Handler
+  document.querySelectorAll('input').forEach((inp) => {
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        performCalculation();
+      }
+    });
+  });
+
+  // PDF Export
+  if (btnDownloadPdf) {
+    btnDownloadPdf.addEventListener('click', async () => {
+      if (!lastResultData) return;
+
+      const txtBtn = document.getElementById('txt-btn-pm-pdf');
+      if (txtBtn) txtBtn.textContent = 'Generating...';
+
+      try {
+        let jsPDFModule = window.jspdf;
+        if (!jsPDFModule) {
+          const script = document.createElement('script');
+          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+          await new Promise((resolve, reject) => {
+            script.onload = resolve;
+            script.onerror = reject;
+            document.head.appendChild(script);
+          });
+          jsPDFModule = window.jspdf;
+        }
+
+        const { jsPDF } = jsPDFModule;
+        const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+
+        const primaryColor = [37, 99, 235]; // #2563eb
+        const darkColor = [15, 23, 42]; // #0f172a
+        const slateColor = [100, 116, 139]; // #64748b
+        const lightBg = [248, 250, 252]; // #f8fafc
+
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 40;
+        let y = 45;
+
+        // Header Branding
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(18);
+        doc.setTextColor(...primaryColor);
+        doc.text('AIFreecalculator.com', margin, y);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(...slateColor);
+        doc.text('Free Online Calculator Tools', margin, y + 13);
+
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        doc.text(`Generated: ${dateStr}`, pageWidth - margin, y + 5, { align: 'right' });
+
+        y += 28;
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(1);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 24;
+
+        // Title
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(15);
+        doc.setTextColor(...darkColor);
+        doc.text(lastResultData.title, margin, y);
+        y += 18;
+
+        // Summary Hero Box
+        doc.setFillColor(...lightBg);
+        doc.roundedRect(margin, y, pageWidth - margin * 2, 54, 8, 8, 'F');
+        doc.setDrawColor(203, 213, 225);
+        doc.roundedRect(margin, y, pageWidth - margin * 2, 54, 8, 8, 'D');
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(...primaryColor);
+        doc.text(lblHeroTag.textContent, margin + 14, y + 18);
+
+        doc.setFontSize(14);
+        doc.setTextColor(...darkColor);
+        doc.text(resHeroMain.textContent, margin + 14, y + 36);
+
+        y += 72;
+
+        // Summary Table Rows based on Mode
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(...darkColor);
+        doc.text('Calculation Breakdown & Parameters', margin, y);
+        y += 14;
+
+        let tableRows = [];
+        if (lastResultData.mode === 'wall_plaster') {
+          tableRows = [
+            ['Net Plaster Area', `${lastResultData.netAreaSqm} m² (${lastResultData.netAreaSqft} sq.ft)`],
+            ['Plaster Thickness', `${lastResultData.thickMm} mm`],
+            ['Mortar Mix Ratio', `1:${lastResultData.ratioLabel.split(':')[1] || '4'} (Cement : Sand)`],
+            ['Wet Mortar Volume', `${lastResultData.wetVolCum} m³ (${lastResultData.wetVolCft} CFT)`],
+            ['Dry Mortar Volume', `${lastResultData.dryVolCum} m³ (${lastResultData.dryVolCft} CFT)`],
+            ['Dry Factor & Wastage', `Multiplier: ${lastResultData.dryFactor} | Wastage: ${lastResultData.wastage}%`],
+            ['Cement Required', `${lastResultData.cementBagsRound} Bags of 50kg (${lastResultData.cementKg} kg)`],
+            ['Sand Required', `${lastResultData.sandCft} CFT (${lastResultData.sandTons} Tonnes)`],
+          ];
+        } else if (lastResultData.mode === 'general_mortar') {
+          tableRows = [
+            ['Total Wet Volume', `${lastResultData.wetVolCum} m³ (${lastResultData.wetVolCft} CFT)`],
+            ['Total Dry Volume', `${lastResultData.dryVolCum} m³ (${lastResultData.dryVolCft} CFT)`],
+            ['Mix Ratio', lastResultData.ratioLabel],
+            ['Wastage Allowance', `${lastResultData.wastage}%`],
+            ['Cement Required', `${lastResultData.cementBagsRound} Bags of 50kg (${lastResultData.cementKg} kg)`],
+            ['Sand Required', `${lastResultData.sandCft} CFT (${lastResultData.sandTons} Tonnes)`],
+          ];
+        } else if (lastResultData.mode === 'tile_mortar') {
+          tableRows = [
+            ['Tiling Area', `${lastResultData.areaSqm} m² (${lastResultData.areaSqft} sq.ft)`],
+            ['Tile Application & Format', `${lastResultData.tileType} | ${lastResultData.tilePresetLabel}`],
+            ['Bed Thickness & Coverage', `${lastResultData.thicknessMm}mm bed @ ${lastResultData.coverage} kg/m²`],
+            ['Base Adhesive Weight', `${lastResultData.baseKg} kg`],
+            ['Wastage Allowance', `${lastResultData.wastage}% (${lastResultData.wasteKg} kg)`],
+            ['Total Required Weight', `${lastResultData.totalKg} kg`],
+            ['Package Requirement', `${lastResultData.roundBags} Bags (${lastResultData.bagSize}kg each)`],
+          ];
+        } else if (lastResultData.mode === 'gaming_mortar') {
+          tableRows = [
+            ['Game Mode', lastResultData.gameName],
+            ['Mortar Coordinates', lastResultData.mortarCoords],
+            ['Target Coordinates', lastResultData.targetCoords],
+            ['Coordinate Differences', `ΔX = ${lastResultData.dx}m, ΔY = ${lastResultData.dy}m`],
+            ['Direct Distance', `${lastResultData.distM} meters (${lastResultData.distKm} km)`],
+            ['Azimuth / Bearing', `${lastResultData.bearingDeg}° (${lastResultData.compass}) | ${lastResultData.natoMils} NATO Mils`],
+            ['Elevation Differential', `${lastResultData.elevDiff} meters`],
+            ['Aiming Reference', lastResultData.aimingRef],
+          ];
+        }
+
+        // Draw Table
+        tableRows.forEach(([label, val], idx) => {
+          const rowY = y + idx * 22;
+          doc.setFillColor(idx % 2 === 0 ? 255 : 248, idx % 2 === 0 ? 255 : 250, idx % 2 === 0 ? 255 : 252);
+          doc.rect(margin, rowY - 12, pageWidth - margin * 2, 22, 'F');
+          doc.setDrawColor(241, 245, 249);
+          doc.line(margin, rowY + 10, pageWidth - margin * 2, rowY + 10);
+
+          doc.setFont('helvetica', 'bold');
+          doc.setFontSize(9);
+          doc.setTextColor(...darkColor);
+          doc.text(label, margin + 10, rowY + 2);
+
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(...primaryColor);
+          doc.text(val, pageWidth - margin - 10, rowY + 2, { align: 'right' });
+        });
+
+        y += tableRows.length * 22 + 30;
+
+        // Footer on page
+        doc.setDrawColor(226, 232, 240);
+        doc.line(margin, pageHeight - 35, pageWidth - margin, pageHeight - 35);
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(...slateColor);
+        doc.text('Generated using AIFreecalculator.com', margin, pageHeight - 20);
+        doc.text('Page 1 of 1', pageWidth - margin, pageHeight - 20, { align: 'right' });
+
+        const filename = `plaster-mortar-calculation-${dateStr}.pdf`;
+        doc.save(filename);
+      } catch (err) {
+        console.error('PDF export error:', err);
+      } finally {
+        if (txtBtn) txtBtn.textContent = 'Download PDF';
+      }
+    });
+  }
+</script>

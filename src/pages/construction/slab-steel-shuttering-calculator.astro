@@ -1,0 +1,921 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="Slab Steel & Shuttering Calculator - Formwork & Scaffolding Area"
+  description="Estimate slab bottom soffit shuttering, side edge formwork, opening deductions, Acrow staging props count, and reinforcement steel quantity."
+  category="Construction"
+  calculatorName="Slab Steel & Shuttering Calculator"
+  slug="slab-steel-shuttering-calculator"
+  keywords={[
+    'slab steel and shuttering calculator',
+    'slab shuttering calculator',
+    'formwork area calculator',
+    'slab formwork calculation',
+    'acrow props calculator',
+    'bottom soffit shuttering',
+    'side shuttering area',
+    'slab centering calculation',
+    'slab steel estimate'
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- SAFETY & PRELIMINARY ESTIMATION NOTICE -->
+    <div class="rounded-2xl border border-amber-200/90 bg-amber-50/70 p-4 text-xs leading-relaxed text-amber-900 shadow-2xs dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
+      <div class="flex items-start gap-2.5">
+        <span class="text-base shrink-0">⚠️</span>
+        <div>
+          <strong class="font-bold">Preliminary Quantity Estimation Notice:</strong>
+          This calculator is designed strictly for preliminary material budgeting and quantity surveying. It is <strong>NOT</strong> a structural or formwork design tool. Final slab thickness, reinforcement steel detailing (diameter, spacing, lap length, cover), formwork design, load capacity, and staging prop spacing must be verified by a qualified structural engineer or construction professional in accordance with structural drawings and local building codes.
+        </div>
+      </div>
+    </div>
+
+    <!-- QUICK EXAMPLE PRESETS -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-center gap-1.5 text-xs">
+        <span class="font-bold text-slate-600 dark:text-slate-400 mr-1 flex items-center gap-1">
+          <span>⚡</span> Quick Presets:
+        </span>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-l="10" data-lu="m" data-w="9" data-wu="m" data-t="125" data-tu="mm" data-pl="1.2" data-pw="1.2">10 m × 9 m Slab (125 mm)</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-l="20" data-lu="ft" data-w="30" data-wu="ft" data-t="5" data-tu="in" data-pl="4" data-pw="4">20 ft × 30 ft Slab (5 inch)</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-l="5" data-lu="m" data-w="6" data-wu="m" data-t="150" data-tu="mm" data-pl="1.0" data-pw="1.0">5 m × 6 m Slab (150 mm)</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-l="10" data-lu="m" data-w="12" data-wu="m" data-t="125" data-tu="mm" data-pl="1.0" data-pw="1.0">10 m × 12 m (1.0m Prop Spacing)</button>
+      </div>
+    </div>
+
+    <!-- MAIN FORM CONTAINER -->
+    <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-blue-50/30 p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/20 sm:p-7">
+      
+      <div class="border-b border-slate-200/80 pb-4 dark:border-slate-800/80">
+        <h2 class="text-lg sm:text-xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <span>📐</span> Slab Formwork, Steel & Props Estimator
+        </h2>
+        <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+          Enter slab geometry, configure shuttering edges and openings, choose steel estimation method, and click <strong>Calculate</strong>.
+        </p>
+      </div>
+
+      <form id="form-slab-shuttering" class="mt-5 space-y-6" novalidate onsubmit="return false;">
+
+        <!-- 1. BASIC SLAB INPUTS -->
+        <div>
+          <h3 class="text-xs font-black uppercase tracking-wider text-blue-700 dark:text-blue-400 mb-3 flex items-center gap-1.5">
+            <span>1️⃣</span> Basic Slab Dimensions
+          </h3>
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            
+            <!-- Length -->
+            <div>
+              <label for="input-slab-len" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Slab Length</label>
+              <div class="mt-1.5 flex rounded-xl border border-slate-300 bg-white shadow-2xs dark:border-slate-700 dark:bg-slate-900">
+                <input type="number" id="input-slab-len" value="10" step="any" min="0.1" class="w-full rounded-l-xl p-2.5 text-sm font-bold text-slate-900 dark:bg-slate-900 dark:text-white focus:outline-hidden" />
+                <select id="unit-slab-len" class="rounded-r-xl border-l border-slate-200 bg-slate-50 px-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer">
+                  <option value="m" selected>Meters (m)</option>
+                  <option value="ft">Feet (ft)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Width -->
+            <div>
+              <label for="input-slab-width" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Slab Width</label>
+              <div class="mt-1.5 flex rounded-xl border border-slate-300 bg-white shadow-2xs dark:border-slate-700 dark:bg-slate-900">
+                <input type="number" id="input-slab-width" value="9" step="any" min="0.1" class="w-full rounded-l-xl p-2.5 text-sm font-bold text-slate-900 dark:bg-slate-900 dark:text-white focus:outline-hidden" />
+                <select id="unit-slab-width" class="rounded-r-xl border-l border-slate-200 bg-slate-50 px-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer">
+                  <option value="m" selected>Meters (m)</option>
+                  <option value="ft">Feet (ft)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Thickness -->
+            <div>
+              <label for="input-slab-thick" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Slab Thickness</label>
+              <div class="mt-1.5 flex rounded-xl border border-slate-300 bg-white shadow-2xs dark:border-slate-700 dark:bg-slate-900">
+                <input type="number" id="input-slab-thick" value="125" step="any" min="1" class="w-full rounded-l-xl p-2.5 text-sm font-bold text-slate-900 dark:bg-slate-900 dark:text-white focus:outline-hidden" />
+                <select id="unit-slab-thick" class="rounded-r-xl border-l border-slate-200 bg-slate-50 px-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer">
+                  <option value="mm" selected>MM (mm)</option>
+                  <option value="in">Inches (in)</option>
+                </select>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 2. SHUTTERING DETAILS -->
+        <div class="rounded-2xl border border-slate-200/90 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/90">
+          <h3 class="text-xs font-black uppercase tracking-wider text-blue-700 dark:text-blue-400 mb-3 flex items-center gap-1.5">
+            <span>2️⃣</span> Shuttering & Formwork Settings
+          </h3>
+          
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3 items-center">
+            
+            <!-- Bottom Soffit Toggle -->
+            <label class="flex items-center gap-2.5 text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
+              <input type="checkbox" id="chk-bottom-soffit" checked class="h-4 w-4 rounded border-slate-300 accent-blue-600 cursor-pointer" />
+              <span>Include Bottom Soffit Shuttering (L × W)</span>
+            </label>
+
+            <!-- Side Shuttering Toggle -->
+            <label class="flex items-center gap-2.5 text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
+              <input type="checkbox" id="chk-side-shuttering" checked class="h-4 w-4 rounded border-slate-300 accent-blue-600 cursor-pointer" />
+              <span>Include Side Edge Shuttering (Perimeter × Thickness)</span>
+            </label>
+
+            <!-- Opening Deduction -->
+            <div>
+              <label for="input-opening-area" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Opening Deduction (Staircase / Cutouts)</label>
+              <div class="mt-1 flex rounded-xl border border-slate-300 bg-white shadow-2xs dark:border-slate-700 dark:bg-slate-900">
+                <input type="number" id="input-opening-area" value="0" step="any" min="0" placeholder="0" class="w-full rounded-l-xl p-2 text-xs font-bold text-slate-900 dark:bg-slate-900 dark:text-white focus:outline-hidden" />
+                <select id="unit-opening-area" class="rounded-r-xl border-l border-slate-200 bg-slate-50 px-2 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer">
+                  <option value="sqm" selected>m²</option>
+                  <option value="sqft">sq.ft</option>
+                </select>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- 3. STEEL QUANTITY DETAILS -->
+        <div class="rounded-2xl border border-slate-200/90 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/90">
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <h3 class="text-xs font-black uppercase tracking-wider text-blue-700 dark:text-blue-400 flex items-center gap-1.5">
+              <span>3️⃣</span> Reinforcement Steel Quantity Details
+            </h3>
+            
+            <!-- Steel Mode Toggle -->
+            <div class="flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800 text-xs">
+              <button type="button" id="btn-steel-mode-simple" class="rounded-lg bg-blue-600 px-3 py-1 font-bold text-white shadow-xs cursor-pointer">Simple Steel Rate</button>
+              <button type="button" id="btn-steel-mode-detailed" class="rounded-lg px-3 py-1 font-semibold text-slate-700 hover:text-blue-600 dark:text-slate-300 cursor-pointer">Detailed Rebar (D²/162)</button>
+            </div>
+          </div>
+
+          <!-- A. SIMPLE STEEL RATE -->
+          <div id="container-steel-simple" class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label for="input-steel-rate" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Estimated Steel Quantity Rate</label>
+              <div class="mt-1.5 flex rounded-xl border border-slate-300 bg-white shadow-2xs dark:border-slate-700 dark:bg-slate-900">
+                <input type="number" id="input-steel-rate" value="10" step="any" min="0" class="w-full rounded-l-xl p-2.5 text-sm font-bold text-slate-900 dark:bg-slate-900 dark:text-white focus:outline-hidden" />
+                <select id="unit-steel-rate" class="rounded-r-xl border-l border-slate-200 bg-slate-50 px-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer">
+                  <option value="kg_sqm" selected>kg per m²</option>
+                  <option value="kg_sqft">kg per sq.ft</option>
+                </select>
+              </div>
+              <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+                * Note: Steel quantity is based purely on the user-provided rate (typical residential RCC slabs range from 8 to 12 kg/m² or 0.8 to 1.1 kg/sq.ft).
+              </p>
+            </div>
+          </div>
+
+          <!-- B. DETAILED REINFORCEMENT -->
+          <div id="container-steel-detailed" class="hidden space-y-3">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              
+              <!-- Bottom Dir 1 (Main) -->
+              <div class="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                <span class="text-xs font-bold text-slate-900 dark:text-white">Bottom Main Reinforcement (Dir 1)</span>
+                <div class="mt-2 grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <label for="det-b1-dia" class="text-slate-500">Bar Diameter</label>
+                    <select id="det-b1-dia" class="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white">
+                      <option value="8">8 mm</option>
+                      <option value="10" selected>10 mm</option>
+                      <option value="12">12 mm</option>
+                      <option value="16">16 mm</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="det-b1-spacing" class="text-slate-500">Spacing (mm)</label>
+                    <input type="number" id="det-b1-spacing" value="150" min="50" step="10" class="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                  </div>
+                </div>
+              </div>
+
+              <!-- Bottom Dir 2 (Distribution) -->
+              <div class="rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                <span class="text-xs font-bold text-slate-900 dark:text-white">Bottom Distribution Reinforcement (Dir 2)</span>
+                <div class="mt-2 grid grid-cols-2 gap-2 text-xs">
+                  <div>
+                    <label for="det-b2-dia" class="text-slate-500">Bar Diameter</label>
+                    <select id="det-b2-dia" class="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white">
+                      <option value="8" selected>8 mm</option>
+                      <option value="10">10 mm</option>
+                      <option value="12">12 mm</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label for="det-b2-spacing" class="text-slate-500">Spacing (mm)</label>
+                    <input type="number" id="det-b2-spacing" value="175" min="50" step="10" class="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <!-- Top Steel & Wastage -->
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-1 text-xs">
+              <label class="flex items-center gap-2 font-bold text-slate-800 dark:text-slate-200 cursor-pointer">
+                <input type="checkbox" id="chk-top-steel" class="h-4 w-4 rounded border-slate-300 accent-blue-600" />
+                <span>Include Top Reinforcement / Extra Crank Bars</span>
+              </label>
+
+              <div class="flex items-center gap-2">
+                <label for="det-wastage" class="font-bold text-slate-700 dark:text-slate-300">Wastage %:</label>
+                <input type="number" id="det-wastage" value="0" min="0" max="25" step="1" class="w-16 rounded-lg border border-slate-300 bg-white p-1.5 text-center font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 4. ACROW PROPS ESTIMATE -->
+        <div class="rounded-2xl border border-slate-200/90 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/90">
+          <h3 class="text-xs font-black uppercase tracking-wider text-blue-700 dark:text-blue-400 mb-1 flex items-center gap-1.5">
+            <span>4️⃣</span> Acrow Props Staging Grid Settings
+          </h3>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">
+            Props count is estimated strictly from user-entered spacing intervals.
+          </p>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
+              <label for="input-prop-len" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Prop Spacing Along Length</label>
+              <div class="mt-1 flex rounded-xl border border-slate-300 bg-white shadow-2xs dark:border-slate-700 dark:bg-slate-900">
+                <input type="number" id="input-prop-len" value="1.2" step="0.1" min="0.3" class="w-full rounded-l-xl p-2 text-xs font-bold text-slate-900 dark:bg-slate-900 dark:text-white focus:outline-hidden" />
+                <select id="unit-prop-len" class="rounded-r-xl border-l border-slate-200 bg-slate-50 px-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer">
+                  <option value="m" selected>Meters</option>
+                  <option value="ft">Feet</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label for="input-prop-width" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Prop Spacing Along Width</label>
+              <div class="mt-1 flex rounded-xl border border-slate-300 bg-white shadow-2xs dark:border-slate-700 dark:bg-slate-900">
+                <input type="number" id="input-prop-width" value="1.2" step="0.1" min="0.3" class="w-full rounded-l-xl p-2 text-xs font-bold text-slate-900 dark:bg-slate-900 dark:text-white focus:outline-hidden" />
+                <select id="unit-prop-width" class="rounded-r-xl border-l border-slate-200 bg-slate-50 px-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer">
+                  <option value="m" selected>Meters</option>
+                  <option value="ft">Feet</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTION BUTTONS -->
+        <div class="flex flex-wrap items-center gap-3 pt-2">
+          <button
+            type="submit"
+            id="btn-calc-shuttering"
+            class="flex-1 min-w-[200px] inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer"
+          >
+            <span>Calculate Formwork & Steel</span>
+            <span>→</span>
+          </button>
+          <button
+            type="button"
+            id="btn-clear-shuttering"
+            class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer"
+          >
+            Clear (✕)
+          </button>
+        </div>
+
+        <p id="err-shuttering" class="hidden rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300" role="alert" aria-live="polite"></p>
+
+      </form>
+    </div>
+
+    <!-- INITIAL PLACEHOLDER (Hidden when results are shown) -->
+    <div id="results-placeholder" class="rounded-3xl border border-dashed border-slate-300 bg-slate-50/50 p-8 text-center dark:border-slate-800 dark:bg-slate-900/30">
+      <div class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400">
+        🏗️
+      </div>
+      <p class="mt-3 text-sm font-semibold text-slate-600 dark:text-slate-400">
+        Enter the slab dimensions and required details, then click <strong>Calculate Formwork & Steel</strong>.
+      </p>
+      <p class="mt-1 text-xs text-slate-500 dark:text-slate-500">
+        Results will display total shuttering area in sq.ft and m², Acrow staging props, and steel reinforcement weight.
+      </p>
+    </div>
+
+    <!-- CALCULATION RESULTS CONTAINER (Hidden initially) -->
+    <div id="results-card" class="hidden space-y-5">
+      
+      <!-- PRIMARY HEADLINE RESULT CARD -->
+      <div class="overflow-hidden rounded-3xl border border-blue-200 bg-linear-to-br from-white via-blue-50/30 to-blue-100/40 p-5 shadow-lg shadow-blue-500/5 dark:border-blue-900/60 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/30 sm:p-7">
+        
+        <div class="border-b border-blue-200/80 pb-4 dark:border-slate-800">
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">
+            Total Shuttering / Formwork Area
+          </span>
+          <div class="mt-1 flex flex-wrap items-baseline gap-2">
+            <span id="res-total-shuttering-sqft" class="text-3xl sm:text-4xl font-black text-blue-600 dark:text-blue-400">-- sq.ft</span>
+            <span id="res-total-shuttering-sqm" class="text-sm sm:text-base font-bold text-slate-600 dark:text-slate-300">(-- m²)</span>
+          </div>
+        </div>
+
+        <!-- 4 SUB-CARDS -->
+        <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 text-xs">
+          
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Bottom Soffit Area</div>
+            <div id="res-bottom-area" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">--</div>
+          </div>
+
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Side Shuttering Area</div>
+            <div id="res-side-area" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">--</div>
+          </div>
+
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Approx Steel Weight</div>
+            <div id="res-steel-weight" class="mt-1 text-sm font-bold text-emerald-600 dark:text-emerald-400">-- kg</div>
+          </div>
+
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Estimated Acrow Props</div>
+            <div id="res-props-count" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">-- Props</div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- DETAILED CALCULATION BREAKDOWN ACCORDION -->
+      <details class="group rounded-3xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900" open>
+        <summary class="cursor-pointer list-none flex items-center justify-between text-sm font-black text-slate-900 dark:text-white">
+          <span class="flex items-center gap-2">
+            <span>📝</span> Detailed Calculation Breakdown (Worked Formulas)
+          </span>
+          <span class="text-blue-600 dark:text-blue-400 group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+
+        <div id="res-steps-content" class="mt-4 space-y-2 text-xs leading-relaxed text-slate-700 dark:text-slate-300 font-mono bg-slate-50 dark:bg-slate-950/70 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-x-auto">
+          <!-- Populated by JS -->
+        </div>
+      </details>
+
+    </div>
+
+  </div>
+
+  <!-- EDUCATIONAL SEO ARTICLE SLOT (Styled matching age.astro) -->
+  <Fragment slot="content">
+    <section class="slab-shuttering-content">
+      <h2>Slab Steel & Shuttering Calculator</h2>
+      <p>
+        The <strong>Slab Steel & Shuttering Calculator</strong> is a specialized quantity surveying tool designed to estimate formwork centering area, bottom soffit boards, side edge shuttering, Acrow staging scaffolding props, and approximate reinforcement steel requirements for RCC floors and roof slabs.
+      </p>
+      <p>
+        Whether planning residential building construction, commercial framed structures, or casting a concrete roof, accurate formwork and steel estimation is crucial for material procurement, scaffolding rental scheduling, and labor contracting.
+      </p>
+
+      <h2>What Is a Slab Steel & Shuttering Calculator?</h2>
+      <p>
+        A <strong>slab steel and shuttering calculator</strong> calculates three critical components required to cast an RCC slab:
+      </p>
+      <ul>
+        <li><strong>Bottom Soffit Shuttering Area:</strong> The horizontal contact area of plywood or steel plates supporting the underside of the wet concrete.</li>
+        <li><strong>Side Edge Formwork:</strong> The vertical side shuttering boards running along the perimeter of the slab to retain wet concrete up to the required slab depth.</li>
+        <li><strong>Acrow Staging Props:</strong> The number of adjustable vertical steel props or jacks needed to support the shuttering plates safely.</li>
+        <li><strong>Reinforcement Steel:</strong> The approximate quantity of TMT rebar in kilograms or metric tonnes needed for the slab volume.</li>
+      </ul>
+
+      <h2>How to Calculate Slab Shuttering Area</h2>
+      <p>
+        Slab shuttering comprises two distinct surface areas:
+      </p>
+      <div class="my-4 rounded-2xl border border-slate-200 bg-slate-100/80 p-4 font-mono text-sm dark:border-slate-800 dark:bg-slate-900">
+        <div class="font-bold text-blue-600 dark:text-blue-400">Shuttering Mathematical Formulas:</div>
+        <div class="mt-1">1. Bottom Soffit Area = Length × Width  (Minus Opening Deductions)</div>
+        <div class="mt-1">2. Slab Perimeter = 2 × (Length + Width)</div>
+        <div class="mt-1">3. Side Shuttering Area = Perimeter × Slab Thickness</div>
+        <div class="mt-1 font-bold text-slate-900 dark:text-white pt-1">4. Total Shuttering Area = Bottom Soffit Area + Side Shuttering Area</div>
+      </div>
+      <p>
+        <strong>Worked Example:</strong> For a <strong>10.0 m × 9.0 m</strong> slab of <strong>125 mm (0.125 m)</strong> thickness:
+        <br />
+        <code>Bottom Soffit Area = 10.0 × 9.0 = 90.0 m² = 968.75 sq.ft</code>.
+        <br />
+        <code>Perimeter = 2 × (10.0 + 9.0) = 38.0 m</code>.
+        <br />
+        <code>Side Shuttering Area = 38.0 × 0.125 = 4.75 m² = 51.13 sq.ft</code>.
+        <br />
+        <code>Total Formwork Area = 90.0 + 4.75 = 94.75 m² = 1019.88 sq.ft</code>.
+      </p>
+
+      <h2>How to Estimate Steel Quantity for a Slab</h2>
+      <p>
+        Our calculator supports two reliable engineering estimation methods:
+      </p>
+      <ol>
+        <li>
+          <strong>Area-Based Steel Rate:</strong> Multiplying the net slab area by a user-provided steel density rate (e.g., <code>10 kg/m²</code> for 90 m² = <code>900 kg</code>).
+        </li>
+        <li>
+          <strong>Detailed Reinforcement Calculation:</strong> Using the bar diameter (D) and spacing to find the number of bars and bar cutting lengths. The unit weight of each rebar diameter is computed using the formula:
+          <br />
+          <code>Unit Weight (kg/m) = D² ÷ 162.28</code> (where D is nominal diameter in mm).
+        </li>
+      </ol>
+
+      <h2>How Are Acrow Props Estimated?</h2>
+      <p>
+        Acrow staging props are estimated based on a rectangular grid arrangement determined by the user's selected prop spacing:
+      </p>
+      <div class="my-4 rounded-2xl border border-slate-200 bg-slate-100/80 p-4 font-mono text-sm dark:border-slate-800 dark:bg-slate-900">
+        <div class="font-bold text-blue-600 dark:text-blue-400">Acrow Props Grid Formula:</div>
+        <div class="mt-1">Rows Along Length = Ceiling(Slab Length ÷ Prop Spacing Length) + 1</div>
+        <div class="mt-1">Rows Along Width = Ceiling(Slab Width ÷ Prop Spacing Width) + 1</div>
+        <div class="mt-1 font-bold text-slate-900 dark:text-white pt-1">Total Estimated Props = Rows Along Length × Rows Along Width</div>
+      </div>
+      <p>
+        <em>Note:</em> Standard staging guidelines typically place props at <strong>1.0 m to 1.2 m (3.3 ft to 4.0 ft)</strong> intervals, but exact propping schedules must consider concrete wet weight, beam loads, and prop load limits.
+      </p>
+
+      <h2>Factors That Affect Slab Steel and Shuttering Quantity</h2>
+      <ul>
+        <li><strong>Slab Thickness:</strong> Thicker slabs increase the side edge shuttering area, concrete volume, and required prop support.</li>
+        <li><strong>Staircase & Duct Openings:</strong> Cutouts reduce the bottom soffit area and concrete volume, but increase perimeter side shuttering around the cutout opening.</li>
+        <li><strong>Two-Way vs. One-Way Action:</strong> Two-way slabs require heavy reinforcement in both orthogonal directions, whereas one-way slabs require primary reinforcement along the shorter span.</li>
+        <li><strong>Wastage Allowance:</strong> Cutting waste, lap overlaps, and bar end hooks typically add <code>3% to 5%</code> extra steel on construction sites.</li>
+      </ul>
+    </section>
+  </Fragment>
+
+  <!-- FAQ SECTION SLOT (EXACTLY 6 FAQs AS REQUIRED) -->
+  <Fragment slot="faq">
+    <div class="space-y-4 text-xs sm:text-sm">
+      
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open>
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            1. How do I calculate slab shuttering area?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          The bottom soffit area is calculated as <code>Length × Width</code> (minus any openings), and the side shuttering area is calculated as <code>Slab Perimeter × Slab Thickness</code>. The total shuttering area is the sum of both.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            2. How is slab steel quantity calculated?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Slab steel can be estimated using an area-based rate (e.g. <code>kg/m²</code>) or through a detailed reinforcement breakdown by calculating bar count, total cutting length, and multiplying by unit weight for each diameter.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            3. What is the formula for steel bar weight?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          The standard unit weight formula is <code>Weight (kg/m) = D² / 162.28</code>, where <code>D</code> is the rebar diameter in millimeters.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            4. Does the calculator include side shuttering?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Yes. Side edge shuttering is computed based on the slab perimeter and thickness, and can be toggled on or off according to your project requirements.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            5. How are Acrow props estimated?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Acrow props are estimated by creating a grid across the slab length and width based on user-entered spacing intervals: <code>(Rows along Length) × (Rows along Width)</code>.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            6. Is this calculator suitable for final structural or formwork design?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          No. This calculator is strictly intended for preliminary material estimation. Final structural design, rebar detailing, and formwork safety must be certified by a qualified engineer.
+        </p>
+      </details>
+
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<style>
+  .slab-shuttering-content h2 {
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.3;
+    color: #0f172a;
+  }
+
+  .slab-shuttering-content h2:first-child {
+    margin-top: 0;
+  }
+
+  .slab-shuttering-content h3 {
+    margin-top: 1.75rem;
+    margin-bottom: 0.625rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .slab-shuttering-content p {
+    margin: 0 0 1rem;
+    line-height: 1.75;
+    color: #475569;
+  }
+
+  .slab-shuttering-content ul {
+    margin: 0.75rem 0 1.5rem;
+    padding-left: 1.5rem;
+    list-style: disc;
+  }
+
+  .slab-shuttering-content ol {
+    margin: 0.75rem 0 1.5rem;
+    padding-left: 1.5rem;
+    list-style: decimal;
+  }
+
+  .slab-shuttering-content li + li {
+    margin-top: 0.5rem;
+  }
+
+  :global(.dark) .slab-shuttering-content h2,
+  :global(.dark) .slab-shuttering-content h3 {
+    color: #f8fafc;
+  }
+
+  :global(.dark) .slab-shuttering-content p {
+    color: #cbd5e1;
+  }
+</style>
+
+<!-- FAQ Schema JSON-LD (Strictly matching the 6 FAQs) -->
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How do I calculate slab shuttering area?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The bottom soffit area is Length × Width (minus openings), and the side shuttering area is Slab Perimeter × Slab Thickness."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How is slab steel quantity calculated?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Slab steel can be estimated using an area-based rate (kg/m²) or detailed reinforcement bar count and spacing multiplied by unit weight (D²/162.28)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the formula for steel bar weight?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Weight (kg/m) = D² / 162.28, where D is the nominal diameter in millimeters."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does the calculator include side shuttering?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Side edge shuttering is computed based on perimeter and thickness and can be toggled on or off."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How are Acrow props estimated?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Acrow props are estimated using a grid across slab length and width based on user-entered spacing intervals."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is this calculator suitable for final structural or formwork design?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. It is intended for preliminary material estimation only. Final structural and formwork design must be verified by a qualified engineer."
+      }
+    }
+  ]
+})} />
+
+<!-- CLIENT-SIDE SCRIPT LOGIC -->
+<script is:inline>
+  // DOM Elements
+  const inputSlabLen = document.getElementById('input-slab-len');
+  const unitSlabLen = document.getElementById('unit-slab-len');
+  const inputSlabWidth = document.getElementById('input-slab-width');
+  const unitSlabWidth = document.getElementById('unit-slab-width');
+  const inputSlabThick = document.getElementById('input-slab-thick');
+  const unitSlabThick = document.getElementById('unit-slab-thick');
+
+  const chkBottomSoffit = document.getElementById('chk-bottom-soffit');
+  const chkSideShuttering = document.getElementById('chk-side-shuttering');
+  const inputOpeningArea = document.getElementById('input-opening-area');
+  const unitOpeningArea = document.getElementById('unit-opening-area');
+
+  // Steel Modes
+  let steelMode = 'simple';
+  const btnSteelModeSimple = document.getElementById('btn-steel-mode-simple');
+  const btnSteelModeDetailed = document.getElementById('btn-steel-mode-detailed');
+  const containerSteelSimple = document.getElementById('container-steel-simple');
+  const containerSteelDetailed = document.getElementById('container-steel-detailed');
+
+  const inputSteelRate = document.getElementById('input-steel-rate');
+  const unitSteelRate = document.getElementById('unit-steel-rate');
+
+  const detB1Dia = document.getElementById('det-b1-dia');
+  const detB1Spacing = document.getElementById('det-b1-spacing');
+  const detB2Dia = document.getElementById('det-b2-dia');
+  const detB2Spacing = document.getElementById('det-b2-spacing');
+  const chkTopSteel = document.getElementById('chk-top-steel');
+  const detWastage = document.getElementById('det-wastage');
+
+  // Props
+  const inputPropLen = document.getElementById('input-prop-len');
+  const unitPropLen = document.getElementById('unit-prop-len');
+  const inputPropWidth = document.getElementById('input-prop-width');
+  const unitPropWidth = document.getElementById('unit-prop-width');
+
+  // Buttons & Alerts
+  const btnCalcShuttering = document.getElementById('btn-calc-shuttering');
+  const btnClearShuttering = document.getElementById('btn-clear-shuttering');
+  const errShuttering = document.getElementById('err-shuttering');
+
+  // Results Displays
+  const resultsPlaceholder = document.getElementById('results-placeholder');
+  const resultsCard = document.getElementById('results-card');
+  const resTotalShutteringSqft = document.getElementById('res-total-shuttering-sqft');
+  const resTotalShutteringSqm = document.getElementById('res-total-shuttering-sqm');
+  const resBottomArea = document.getElementById('res-bottom-area');
+  const resSideArea = document.getElementById('res-side-area');
+  const resSteelWeight = document.getElementById('res-steel-weight');
+  const resPropsCount = document.getElementById('res-props-count');
+  const resStepsContent = document.getElementById('res-steps-content');
+
+  // Switch Steel Mode
+  btnSteelModeSimple.addEventListener('click', () => {
+    steelMode = 'simple';
+    btnSteelModeSimple.className = 'rounded-lg bg-blue-600 px-3 py-1 font-bold text-white shadow-xs cursor-pointer';
+    btnSteelModeDetailed.className = 'rounded-lg px-3 py-1 font-semibold text-slate-700 hover:text-blue-600 dark:text-slate-300 cursor-pointer';
+    containerSteelSimple.classList.remove('hidden');
+    containerSteelDetailed.classList.add('hidden');
+  });
+
+  btnSteelModeDetailed.addEventListener('click', () => {
+    steelMode = 'detailed';
+    btnSteelModeDetailed.className = 'rounded-lg bg-blue-600 px-3 py-1 font-bold text-white shadow-xs cursor-pointer';
+    btnSteelModeSimple.className = 'rounded-lg px-3 py-1 font-semibold text-slate-700 hover:text-blue-600 dark:text-slate-300 cursor-pointer';
+    containerSteelDetailed.classList.remove('hidden');
+    containerSteelSimple.classList.add('hidden');
+  });
+
+  // Calculate Function
+  function executeCalculation() {
+    errShuttering.classList.add('hidden');
+
+    // Unit Normalization to SI (Meters, mm, m²)
+    let rawL = parseFloat(inputSlabLen.value);
+    let rawW = parseFloat(inputSlabWidth.value);
+    let rawT = parseFloat(inputSlabThick.value);
+
+    if (isNaN(rawL) || rawL <= 0 || isNaN(rawW) || rawW <= 0 || isNaN(rawT) || rawT <= 0) {
+      errShuttering.textContent = 'Please enter valid positive dimensions for length, width, and thickness.';
+      errShuttering.classList.remove('hidden');
+      resultsCard.classList.add('hidden');
+      resultsPlaceholder.classList.remove('hidden');
+      return;
+    }
+
+    const L = unitSlabLen.value === 'ft' ? rawL * 0.3048 : rawL;
+    const W = unitSlabWidth.value === 'ft' ? rawW * 0.3048 : rawW;
+    const T = unitSlabThick.value === 'in' ? (rawT * 25.4) / 1000 : rawT / 1000;
+
+    const grossAreaSqm = L * W;
+    const grossAreaSqft = grossAreaSqm * 10.7639;
+
+    let rawOpening = parseFloat(inputOpeningArea.value) || 0;
+    let openingSqm = unitOpeningArea.value === 'sqft' ? rawOpening / 10.7639 : rawOpening;
+
+    if (openingSqm >= grossAreaSqm) {
+      errShuttering.textContent = 'Opening area cannot be greater than or equal to the total slab area.';
+      errShuttering.classList.remove('hidden');
+      resultsCard.classList.add('hidden');
+      resultsPlaceholder.classList.remove('hidden');
+      return;
+    }
+
+    const netSlabAreaSqm = grossAreaSqm - openingSqm;
+    const netSlabAreaSqft = netSlabAreaSqm * 10.7639;
+    const perimeterM = 2 * (L + W);
+
+    // 1. Shuttering Area
+    const incBottom = chkBottomSoffit.checked;
+    const incSide = chkSideShuttering.checked;
+
+    const bottomSqm = incBottom ? netSlabAreaSqm : 0;
+    const bottomSqft = bottomSqm * 10.7639;
+
+    const sideSqm = incSide ? perimeterM * T : 0;
+    const sideSqft = sideSqm * 10.7639;
+
+    const totalSqm = bottomSqm + sideSqm;
+    const totalSqft = totalSqm * 10.7639;
+
+    // 2. Steel Weight
+    let totalSteelKg = 0;
+    let steelBreakdownHTML = '';
+
+    if (steelMode === 'simple') {
+      const rawRate = parseFloat(inputSteelRate.value) || 0;
+      const rateSqm = unitSteelRate.value === 'kg_sqft' ? rawRate * 10.7639 : rawRate;
+      totalSteelKg = netSlabAreaSqm * rateSqm;
+      steelBreakdownHTML = `
+        <div class="text-blue-600 dark:text-blue-400 font-bold">• Steel Estimation (User-Provided Rate):</div>
+        <div>• Area = ${netSlabAreaSqm.toFixed(2)} m² × ${rawRate} ${unitSteelRate.value === 'kg_sqft' ? 'kg/sq.ft' : 'kg/m²'} = ${totalSteelKg.toFixed(1)} kg (${(totalSteelKg/1000).toFixed(3)} MT)</div>
+      `;
+    } else {
+      // Detailed BBS
+      const b1Dia = parseFloat(detB1Dia.value);
+      const b1Spacing = parseFloat(detB1Spacing.value) / 1000;
+      const b1Count = Math.ceil(L / b1Spacing) + 1;
+      const b1TotalLen = b1Count * W;
+      const b1UnitWt = (b1Dia * b1Dia) / 162.28;
+      const b1Wt = b1TotalLen * b1UnitWt;
+
+      const b2Dia = parseFloat(detB2Dia.value);
+      const b2Spacing = parseFloat(detB2Spacing.value) / 1000;
+      const b2Count = Math.ceil(W / b2Spacing) + 1;
+      const b2TotalLen = b2Count * L;
+      const b2UnitWt = (b2Dia * b2Dia) / 162.28;
+      const b2Wt = b2TotalLen * b2UnitWt;
+
+      let topWt = 0;
+      let topHtml = '';
+      if (chkTopSteel.checked) {
+        const t1Count = Math.ceil(L / 0.2) + 1;
+        const t1TotalLen = t1Count * W;
+        const t1Wt = t1TotalLen * ((8 * 8) / 162.28);
+
+        const t2Count = Math.ceil(W / 0.2) + 1;
+        const t2TotalLen = t2Count * L;
+        const t2Wt = t2TotalLen * ((8 * 8) / 162.28);
+        topWt = t1Wt + t2Wt;
+        topHtml = `<div>• Top Reinforcement (8mm @ 200mm c/c) = ${topWt.toFixed(1)} kg</div>`;
+      }
+
+      const baseSteel = b1Wt + b2Wt + topWt;
+      const wastagePct = parseFloat(detWastage.value) || 0;
+      const wastageKg = baseSteel * (wastagePct / 100);
+      totalSteelKg = baseSteel + wastageKg;
+
+      steelBreakdownHTML = `
+        <div class="text-blue-600 dark:text-blue-400 font-bold">• Detailed Reinforcement (D²/162.28):</div>
+        <div>• Bottom Main Bars (Ø${b1Dia} mm @ ${b1Spacing*1000}mm): ${b1Count} bars × ${W.toFixed(2)}m = ${b1TotalLen.toFixed(1)}m × ${b1UnitWt.toFixed(3)} kg/m = ${b1Wt.toFixed(1)} kg</div>
+        <div>• Bottom Dist. Bars (Ø${b2Dia} mm @ ${b2Spacing*1000}mm): ${b2Count} bars × ${L.toFixed(2)}m = ${b2TotalLen.toFixed(1)}m × ${b2UnitWt.toFixed(3)} kg/m = ${b2Wt.toFixed(1)} kg</div>
+        ${topHtml}
+        ${wastagePct > 0 ? `<div>• Wastage Allowance (${wastagePct}%): +${wastageKg.toFixed(1)} kg</div>` : ''}
+        <div class="font-bold text-slate-900 dark:text-white pt-0.5">👉 Total Calculated Steel = ${totalSteelKg.toFixed(1)} kg (${(totalSteelKg/1000).toFixed(3)} MT)</div>
+      `;
+    }
+
+    // 3. Acrow Props
+    let rawPL = parseFloat(inputPropLen.value) || 1.2;
+    let rawPW = parseFloat(inputPropWidth.value) || 1.2;
+    const propSpL = unitPropLen.value === 'ft' ? rawPL * 0.3048 : rawPL;
+    const propSpW = unitPropWidth.value === 'ft' ? rawPW * 0.3048 : rawPW;
+
+    const rowsL = Math.ceil(L / propSpL) + 1;
+    const rowsW = Math.ceil(W / propSpW) + 1;
+    const totalProps = rowsL * rowsW;
+
+    // Populate Results
+    resTotalShutteringSqft.textContent = `${totalSqft.toFixed(1)} sq.ft`;
+    resTotalShutteringSqm.textContent = `(${totalSqm.toFixed(2)} m²)`;
+
+    resBottomArea.textContent = `${bottomSqft.toFixed(1)} sq.ft (${bottomSqm.toFixed(2)} m²)`;
+    resSideArea.textContent = `${sideSqft.toFixed(1)} sq.ft (${sideSqm.toFixed(2)} m²)`;
+    resSteelWeight.textContent = `${totalSteelKg.toFixed(0)} kg (${(totalSteelKg/1000).toFixed(2)} MT)`;
+    resPropsCount.textContent = `${totalProps} Props`;
+
+    resStepsContent.innerHTML = `
+      <div class="text-blue-600 dark:text-blue-400 font-bold">• Slab Dimensions: ${L.toFixed(2)} m × ${W.toFixed(2)} m × ${(T*1000).toFixed(0)} mm (${(L*3.28084).toFixed(1)} ft × ${(W*3.28084).toFixed(1)} ft)</div>
+      <div>• Gross Slab Area = ${L.toFixed(2)} m × ${W.toFixed(2)} m = ${grossAreaSqm.toFixed(2)} m² (${grossAreaSqft.toFixed(1)} sq.ft)</div>
+      ${openingSqm > 0 ? `<div>• Opening Cutout Deducted = -${openingSqm.toFixed(2)} m² (${(openingSqm*10.7639).toFixed(1)} sq.ft)</div>` : ''}
+      <div>• Bottom Soffit Area = ${bottomSqm.toFixed(2)} m² (${bottomSqft.toFixed(1)} sq.ft)</div>
+      <div>• Slab Perimeter = 2 × (${L.toFixed(2)} + ${W.toFixed(2)}) = ${perimeterM.toFixed(2)} m</div>
+      <div>• Side Shuttering Area = ${perimeterM.toFixed(2)} m × ${T.toFixed(3)} m = ${sideSqm.toFixed(2)} m² (${sideSqft.toFixed(1)} sq.ft)</div>
+      <div class="font-bold text-slate-900 dark:text-white pt-1">👉 Total Shuttering Area = ${bottomSqm.toFixed(2)} + ${sideSqm.toFixed(2)} = ${totalSqm.toFixed(2)} m² (${totalSqft.toFixed(1)} sq.ft)</div>
+      <div class="pt-2">${steelBreakdownHTML}</div>
+      <div class="pt-2 text-blue-600 dark:text-blue-400 font-bold">• Acrow Props Grid (Spacing: ${rawPL}${unitPropLen.value} × ${rawPW}${unitPropWidth.value}):</div>
+      <div>• Rows along Length = Ceiling(${L.toFixed(2)} ÷ ${propSpL.toFixed(2)}) + 1 = ${rowsL} rows</div>
+      <div>• Rows along Width = Ceiling(${W.toFixed(2)} ÷ ${propSpW.toFixed(2)}) + 1 = ${rowsW} rows</div>
+      <div class="font-bold text-slate-900 dark:text-white pt-0.5">👉 Total Staging Props = ${rowsL} × ${rowsW} = ${totalProps} Props</div>
+    `;
+
+    resultsPlaceholder.classList.add('hidden');
+    resultsCard.classList.remove('hidden');
+  }
+
+  btnCalcShuttering.addEventListener('click', (e) => {
+    e.preventDefault();
+    executeCalculation();
+  });
+
+  // Preset Buttons
+  document.querySelectorAll('.btn-preset').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      inputSlabLen.value = btn.getAttribute('data-l');
+      unitSlabLen.value = btn.getAttribute('data-lu');
+      inputSlabWidth.value = btn.getAttribute('data-w');
+      unitSlabWidth.value = btn.getAttribute('data-wu');
+      inputSlabThick.value = btn.getAttribute('data-t');
+      unitSlabThick.value = btn.getAttribute('data-tu');
+      inputPropLen.value = btn.getAttribute('data-pl');
+      inputPropWidth.value = btn.getAttribute('data-pw');
+      executeCalculation();
+    });
+  });
+
+  // Clear Button
+  btnClearShuttering.addEventListener('click', () => {
+    inputSlabLen.value = '10';
+    unitSlabLen.value = 'm';
+    inputSlabWidth.value = '9';
+    unitSlabWidth.value = 'm';
+    inputSlabThick.value = '125';
+    unitSlabThick.value = 'mm';
+
+    chkBottomSoffit.checked = true;
+    chkSideShuttering.checked = true;
+    inputOpeningArea.value = '0';
+    unitOpeningArea.value = 'sqm';
+
+    steelMode = 'simple';
+    btnSteelModeSimple.className = 'rounded-lg bg-blue-600 px-3 py-1 font-bold text-white shadow-xs cursor-pointer';
+    btnSteelModeDetailed.className = 'rounded-lg px-3 py-1 font-semibold text-slate-700 hover:text-blue-600 dark:text-slate-300 cursor-pointer';
+    containerSteelSimple.classList.remove('hidden');
+    containerSteelDetailed.classList.add('hidden');
+    inputSteelRate.value = '10';
+    unitSteelRate.value = 'kg_sqm';
+
+    inputPropLen.value = '1.2';
+    unitPropLen.value = 'm';
+    inputPropWidth.value = '1.2';
+    unitPropWidth.value = 'm';
+
+    errShuttering.classList.add('hidden');
+    resultsCard.classList.add('hidden');
+    resultsPlaceholder.classList.remove('hidden');
+  });
+
+  // Enter Key Handler
+  document.querySelectorAll('input').forEach((inp) => {
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        executeCalculation();
+      }
+    });
+  });
+</script>

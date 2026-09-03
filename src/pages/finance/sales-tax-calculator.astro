@@ -1,0 +1,1132 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="Sales Tax Calculator – Calculate Tax, Total Price & Reverse Sales Tax"
+  description="Calculate sales tax, total purchase cost, or the original price before tax using a custom or selected tax rate."
+  category="Finance"
+  calculatorName="Sales Tax Calculator"
+  slug="sales-tax-calculator"
+  keywords={[
+    'sales tax calculator',
+    'reverse sales tax calculator',
+    'nj sales tax calculator',
+    'california sales tax calculator',
+    'nyc sales tax calculator',
+    'missouri sales tax calculator',
+    'car sales tax calculator',
+    'ohio sales tax calculator',
+    'mn sales tax calculator',
+    'ny sales tax calculator'
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- CALCULATION MODE SELECTOR TABS -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex items-center justify-between gap-2">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 hidden sm:inline">
+          Mode:
+        </span>
+        <div class="grid grid-cols-3 gap-1.5 w-full sm:w-auto text-xs font-bold">
+          <button type="button" class="btn-st-mode active rounded-xl border border-blue-600 bg-blue-50 px-4 py-2 text-blue-700 dark:border-blue-500 dark:bg-blue-950/60 dark:text-blue-300 transition cursor-pointer text-center" data-mode="add">
+            ➕ Add Sales Tax
+          </button>
+          <button type="button" class="btn-st-mode rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 hover:border-slate-400 transition cursor-pointer text-center" data-mode="reverse">
+            🔄 Reverse Sales Tax
+          </button>
+          <button type="button" class="btn-st-mode rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 hover:border-slate-400 transition cursor-pointer text-center" data-mode="car">
+            🚗 Car Sales Tax
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CALCULATOR FORM CONTAINER -->
+    <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-blue-50/30 p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/20 sm:p-7">
+      
+      <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+        <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <span>🏷️</span> Sales Tax Calculator
+        </h2>
+        <p id="txt-st-subtitle" class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+          Calculate sales tax amount and total purchase cost using a custom or state estimated tax rate.
+        </p>
+      </div>
+
+      <form id="form-sales-tax" class="mt-4 space-y-4" novalidate onsubmit="return false;">
+        
+        <!-- SECTION 1: PRICE & TAX RATE INPUTS -->
+        <div class="rounded-2xl border border-slate-200/80 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/50 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <span>💵</span> 1. Purchase Amount & Tax Rate
+            </span>
+            <span id="badge-st-location" class="text-[11px] font-bold text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-md border border-blue-200 dark:border-blue-900/50">
+              Custom Rate Applied
+            </span>
+          </div>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <!-- Amount Input (Dynamic Label) -->
+            <div>
+              <label for="inp-st-amount" id="lbl-st-amount" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Price Before Tax ($ / ₹)</label>
+              <input type="number" id="inp-st-amount" value="1000" step="10" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="1,000" />
+            </div>
+
+            <!-- Tax Rate Input -->
+            <div>
+              <label for="inp-st-rate" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Sales Tax Rate (% percentage)</label>
+              <input type="number" id="inp-st-rate" value="7.25" step="0.05" min="0" max="40" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="7.25" />
+            </div>
+          </div>
+
+          <!-- Location Presets Dropdown & Quick Buttons -->
+          <div class="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <label for="sel-st-location" class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                State & City Estimated Rate Presets:
+              </label>
+              <select id="sel-st-location" class="rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">
+                <option value="custom" selected>Custom Tax Rate (Manual)</option>
+                <option value="ca">California Estimate (7.25% Base)</option>
+                <option value="nj">New Jersey Estimate (6.625% Statewide)</option>
+                <option value="ny">New York State (4.00% Base)</option>
+                <option value="nyc">New York City (8.875% Combined)</option>
+                <option value="mo">Missouri Estimate (4.225% Base)</option>
+                <option value="oh">Ohio Estimate (5.75% Base)</option>
+                <option value="mn">Minnesota Estimate (6.875% Base)</option>
+              </select>
+            </div>
+
+            <!-- Quick Preset Badges -->
+            <div class="flex flex-wrap items-center gap-1.5 text-[11px]">
+              <span class="text-slate-500 dark:text-slate-400 font-semibold mr-1">Quick Select:</span>
+              <button type="button" class="btn-st-loc-badge rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-loc="ca" data-rate="7.25">California (7.25%)</button>
+              <button type="button" class="btn-st-loc-badge rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-loc="nj" data-rate="6.625">New Jersey (6.625%)</button>
+              <button type="button" class="btn-st-loc-badge rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-loc="nyc" data-rate="8.875">NYC (8.875%)</button>
+              <button type="button" class="btn-st-loc-badge rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-loc="mo" data-rate="4.225">Missouri (4.225%)</button>
+              <button type="button" class="btn-st-loc-badge rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-loc="oh" data-rate="5.75">Ohio (5.75%)</button>
+              <button type="button" class="btn-st-loc-badge rounded-md border border-slate-200 bg-slate-50 px-2 py-0.5 font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-loc="mn" data-rate="6.875">Minnesota (6.875%)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: CAR SALES TAX SPECIFIC INPUTS (Visible in Car Mode only) -->
+        <div id="sec-st-car-inputs" class="hidden rounded-2xl border border-blue-200/80 bg-blue-50/40 p-4 dark:border-blue-900/60 dark:bg-blue-950/20 space-y-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-900 dark:text-blue-200 flex items-center gap-1.5">
+            <span>🚗</span> 2. Vehicle Trade-In, Rebates & Taxable Fees
+          </span>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div>
+              <label for="inp-st-tradein" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Trade-In Allowance ($ / ₹)</label>
+              <input type="number" id="inp-st-tradein" value="5000" step="500" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="5,000" />
+            </div>
+
+            <div>
+              <label for="inp-st-rebate" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Manufacturer Rebates / Discount</label>
+              <input type="number" id="inp-st-rebate" value="1500" step="250" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="1,500" />
+            </div>
+
+            <div>
+              <label for="inp-st-fees" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Taxable Documentation / Fees</label>
+              <input type="number" id="inp-st-fees" value="500" step="50" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="500" />
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400 italic">
+            * Note: Taxable treatment of trade-in credits, manufacturer rebates, and dealer doc fees varies by jurisdiction.
+          </p>
+        </div>
+
+        <!-- ACTION BUTTONS -->
+        <div class="flex items-center gap-2 pt-2">
+          <button type="submit" id="btn-calc-st" class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer">
+            Calculate Sales Tax →
+          </button>
+          <button type="button" id="btn-clear-st" class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer">
+            Clear All (✕)
+          </button>
+        </div>
+
+        <!-- ACCESSIBLE ERROR -->
+        <p id="err-st" class="hidden rounded-xl border border-red-200 bg-red-50 p-2.5 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300" role="alert" aria-live="polite"></p>
+
+      </form>
+
+      <!-- RESULTS PRESENTATION SECTION (Hidden initially) -->
+      <div id="st-results-section" class="hidden mt-6 space-y-6">
+        
+        <!-- 1. MAIN RESULT HERO CARD -->
+        <div class="overflow-hidden rounded-3xl border border-blue-200 bg-linear-to-br from-white via-blue-50/40 to-blue-100/50 p-5 shadow-lg shadow-blue-500/5 dark:border-blue-900/60 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/30 sm:p-7">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-blue-200/80 pb-4 dark:border-slate-800">
+            <div>
+              <span id="lbl-st-hero-title" class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">TOTAL PRICE INCLUDING TAX</span>
+              <div id="res-st-hero-amount" class="mt-1 text-3xl sm:text-4xl lg:text-5xl font-black text-blue-600 dark:text-blue-400">$ 1,072.50</div>
+              <div id="res-st-hero-subtitle" class="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">Calculated using 7.25% Sales Tax Rate</div>
+            </div>
+            <div class="sm:text-right">
+              <span id="lbl-st-hero-secondary" class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Sales Tax Amount:</span>
+              <div id="res-st-hero-secondary" class="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">+ $ 72.50</div>
+            </div>
+          </div>
+
+          <div id="grid-st-summary" class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div id="lbl-st-grid-1" class="text-slate-500 dark:text-slate-400 font-semibold">Price Before Tax</div>
+              <div id="res-st-grid-1" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">$ 1,000.00</div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Effective Tax Rate</div>
+              <div id="res-st-grid-2" class="mt-1 text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">7.25%</div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Tax Amount</div>
+              <div id="res-st-grid-3" class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">$ 72.50</div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div id="lbl-st-grid-4" class="text-slate-500 dark:text-slate-400 font-semibold">Total Cost</div>
+              <div id="res-st-grid-4" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">$ 1,072.50</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. STEP-BY-STEP CALCULATION BREAKDOWN -->
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-200 pb-3 dark:border-slate-800">
+            <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <span>📐</span> Sales Tax Calculation Breakdown
+            </h3>
+            <span class="text-[11px] text-slate-500 dark:text-slate-400 font-mono" id="txt-st-formula-name">
+              Standard Sales Tax Formula
+            </span>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/40 space-y-2 text-xs font-mono">
+            <div class="text-slate-600 dark:text-slate-400">Formula: <strong id="txt-st-breakdown-formula" class="text-slate-900 dark:text-white font-mono">Tax = Price × (Rate ÷ 100)</strong></div>
+            <div class="pt-1 border-t border-slate-200/80 dark:border-slate-800">
+              <div>Step 1: <span id="txt-st-breakdown-step1" class="font-bold text-emerald-600 dark:text-emerald-400">$1,000.00 × 0.0725 = $72.50 Sales Tax</span></div>
+              <div class="mt-1">Step 2: <span id="txt-st-breakdown-step2" class="font-bold text-slate-900 dark:text-white">$1,000.00 + $72.50 = $1,072.50 Total Cost</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. TAX RATE COMPARISON TABLE & PDF DOWNLOAD -->
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
+            <div>
+              <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <span>📊</span> Tax Rate Comparison
+              </h3>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                Compare your purchase across different state and local sales tax percentages.
+              </p>
+            </div>
+
+            <!-- Download PDF Button -->
+            <button type="button" id="btn-st-download-pdf" class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-[0.98] cursor-pointer" title="Download calculation as PDF">
+              <span>📄</span> <span id="txt-btn-st-pdf">Download PDF</span>
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold">
+                <tr>
+                  <th class="p-2.5 rounded-l-lg">Sales Tax Rate</th>
+                  <th class="p-2.5 text-right">Tax Amount</th>
+                  <th class="p-2.5 text-right rounded-r-lg font-bold text-slate-900 dark:text-white">Total Price</th>
+                </tr>
+              </thead>
+              <tbody id="tbl-st-comparison" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                <!-- Injected dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- EDUCATIONAL CONTENT SLOT -->
+  <Fragment slot="content">
+    <section class="st-content">
+      
+      <!-- 1. HOW TO USE THE CALCULATOR -->
+      <h2>How to Use the Sales Tax Calculator</h2>
+      <p>
+        Calculating sales tax, estimating total checkout costs, or determining pre-tax prices is straightforward:
+      </p>
+      <ol>
+        <li><strong>Choose your calculation mode:</strong> Select <em>Add Sales Tax</em> (to add tax to a net price), <em>Reverse Sales Tax</em> (to extract tax from a gross price), or <em>Car Sales Tax</em> (to factor in vehicle trade-ins and rebates).</li>
+        <li><strong>Enter the purchase price or total amount:</strong> Type the monetary amount in dollars or your local currency.</li>
+        <li><strong>Select a location estimate or enter a custom tax rate:</strong> Choose a state preset (e.g. California, New Jersey, New York City) or input your exact municipal percentage.</li>
+        <li><strong>Add trade-in, rebate, discount, or taxable fees if using the vehicle calculator:</strong> Deduct eligible credits to reach the net taxable car amount.</li>
+        <li><strong>Click Calculate Sales Tax:</strong> Review your itemized sales tax amount, total price, and step-by-step mathematical breakdown.</li>
+        <li><strong>Review the tax rate comparison matrix:</strong> Compare the impact of various tax percentages on your purchase.</li>
+        <li><strong>Download the calculation as a PDF:</strong> Save a branded PDF report for your personal budgeting or bookkeeping records.</li>
+      </ol>
+
+      <!-- 2. REVERSE SALES TAX CALCULATOR SECTION -->
+      <h2>Reverse Sales Tax Calculator</h2>
+      <p>
+        A <strong>reverse sales tax calculator</strong> enables consumers and accountants to find the original pre-tax price from a tax-inclusive receipt total. Rather than incorrectly subtracting a flat percentage from the final amount, reverse sales tax uses division:
+      </p>
+      <p>
+        <code>Original Price Before Tax = Total Price ÷ (1 + Tax Rate / 100)</code>
+      </p>
+      <p>
+        For example, if you paid <strong>$107.00</strong> at a <strong>7%</strong> sales tax rate, dividing $107 by 1.07 yields an exact base price of <strong>$100.00</strong>, with <strong>$7.00</strong> in sales tax. Actual transaction totals may differ slightly due to penny-rounding rules at the item level.
+      </p>
+
+      <!-- 3. SALES TAX CALCULATION EXAMPLE -->
+      <h2>Sales Tax Calculation Example</h2>
+      <p>
+        Consider a standard retail purchase of $1,000 at a 7.25% combined sales tax rate:
+      </p>
+      <div class="my-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900 text-xs sm:text-sm space-y-1.5 font-mono">
+        <div>Purchase Price (Pre-Tax): <strong>$1,000.00</strong></div>
+        <div>Sales Tax Rate: <strong>7.25%</strong></div>
+        <div class="text-emerald-600 dark:text-emerald-400 font-bold">Sales Tax Amount: $1,000.00 × 0.0725 = $72.50</div>
+        <div class="text-blue-600 dark:text-blue-400 font-bold">Total Price: $1,000.00 + $72.50 = $1,072.50</div>
+        <div class="text-slate-600 dark:text-slate-400 pt-1 border-t border-slate-200 dark:border-slate-800">
+          Reverse Check: $1,072.50 ÷ 1.0725 = $1,000.00 Base Price ($72.50 Tax)
+        </div>
+      </div>
+      <p class="text-xs text-slate-500 italic">
+        * This example is for illustration. Actual tax liabilities can vary based on local district taxes, product taxability exemptions, and point-of-sale rounding.
+      </p>
+
+      <!-- 4. CALIFORNIA SALES TAX SECTION -->
+      <h2>California Sales Tax Calculator</h2>
+      <p>
+        When estimating purchases in the Golden State, using a <strong>california sales tax calculator</strong> helps you account for both state and local district levies. California maintains a statewide base sales tax rate of 7.25% (composed of 6.00% state tax and 1.25% mandatory local county/city operational funds).
+      </p>
+      <p>
+        Because local special tax districts (such as transportation authorities) add supplementary percentages, total effective sales tax rates in California cities typically range between <strong>7.75% and 10.75%</strong> (e.g., Los Angeles and San Francisco).
+      </p>
+
+      <!-- 5. NEW JERSEY SALES TAX SECTION -->
+      <h2>NJ Sales Tax Calculator</h2>
+      <p>
+        Shoppers in the Garden State frequently search for an <strong>nj sales tax calculator</strong> to forecast retail costs. New Jersey operates a uniform statewide sales tax rate of <strong>6.625%</strong>.
+      </p>
+      <p>
+        Unlike many other states, New Jersey generally does not permit additional county or municipal sales taxes. Furthermore, qualifying retail businesses located in designated Urban Enterprise Zones (UEZ) charge a reduced sales tax rate of <strong>3.3125%</strong>, and clothing and most unprepared groceries are exempt from sales tax statewide.
+      </p>
+
+      <!-- 6. NEW YORK AND NYC SALES TAX -->
+      <h2>NY and NYC Sales Tax Calculator</h2>
+      <p>
+        In New York, sales tax is composed of state-level, county-level, and municipal rates. Utilizing an <strong>ny sales tax calculator</strong> or a dedicated <strong>nyc sales tax calculator</strong> helps clarify these regional differences:
+      </p>
+      <ul>
+        <li><strong>New York State:</strong> The base statewide sales tax rate is <strong>4.00%</strong>.</li>
+        <li><strong>New York City (NYC):</strong> Purchases in the five boroughs incur a combined sales tax rate of <strong>8.875%</strong> (4.00% NY State + 4.50% NYC City + 0.375% Metropolitan Commuter Transportation District surcharge).</li>
+        <li><strong>Upstate & Long Island Counties:</strong> Total combined sales tax rates across New York counties generally range between <strong>7.00% and 8.875%</strong>.</li>
+      </ul>
+
+      <!-- 7. MISSOURI SALES TAX CALCULATOR -->
+      <h2>Missouri Sales Tax Calculator</h2>
+      <p>
+        In Missouri, the state base sales tax is <strong>4.225%</strong>. Using our <strong>missouri sales tax calculator</strong> allows you to input your exact municipal rate because local city, county, and special transportation development districts (TDDs) frequently raise the combined tax rate between <strong>6.00% and 10.00%+</strong> (e.g., in St. Louis and Kansas City).
+      </p>
+
+      <!-- 8. OHIO SALES TAX CALCULATOR -->
+      <h2>Ohio Sales Tax Calculator</h2>
+      <p>
+        Our <strong>ohio sales tax calculator</strong> estimates retail purchases across the Buckeye State. Ohio sets a base state sales tax of <strong>5.75%</strong>, with individual county "piggyback" taxes and regional transit authority levies bringing total rates between <strong>6.50% and 8.00%</strong> (e.g., 8.00% in Cuyahoga County).
+      </p>
+
+      <!-- 9. MINNESOTA SALES TAX CALCULATOR -->
+      <h2>MN Sales Tax Calculator</h2>
+      <p>
+        Using an <strong>mn sales tax calculator</strong> helps Minnesota shoppers budget effectively. Minnesota assesses a statewide sales tax rate of <strong>6.875%</strong>. In cities like Minneapolis and St. Paul, additional municipal and transit taxes result in combined rates between <strong>7.50% and 9.00%+</strong>, while essential clothing and prescription drugs remain exempt from state sales tax.
+      </p>
+
+      <!-- 10. CAR SALES TAX CALCULATOR CONTENT -->
+      <h2>Car Sales Tax Calculator</h2>
+      <p>
+        Automotive purchases involve substantial transactions where sales tax represents thousands of dollars. Using a specialized <strong>car sales tax calculator</strong> helps buyers understand how trade-in vehicles, manufacturer rebates, and dealer document fees impact taxable amounts:
+      </p>
+      <ul>
+        <li><strong>Trade-In Tax Credit:</strong> In most US states, the value of a traded-in vehicle is subtracted from the purchase price before sales tax is calculated (e.g., a $30,000 car with a $10,000 trade-in is taxed only on $20,000).</li>
+        <li><strong>Manufacturer Rebates:</strong> In many jurisdictions, manufacturer cash-back rebates are considered customer cash down payments and do not reduce the taxable vehicle amount.</li>
+        <li><strong>Taxable Dealer Fees:</strong> Documentation and delivery fees are frequently subject to sales tax, while government registration and title fees are generally non-taxable.</li>
+      </ul>
+
+      <!-- 11. COMMON MISTAKES -->
+      <h2>Common Mistakes When Calculating Sales Tax</h2>
+
+      <h3>Using the Wrong Tax Rate</h3>
+      <p>
+        Relying solely on the state base rate without factoring in local municipal, county, and transit district surcharges leads to underestimating checkout totals.
+      </p>
+
+      <h3>Adding Tax to an Already Tax-Inclusive Price</h3>
+      <p>
+        If an invoice or receipt total already includes sales tax, adding another percentage overcharges the buyer. Use the reverse calculation mode to extract the pre-tax base.
+      </p>
+
+      <h3>Ignoring Taxable Fees</h3>
+      <p>
+        Shipping, handling, processing, and dealer doc fees are often subject to sales tax depending on state regulations.
+      </p>
+
+      <h3>Assuming Every Product Is Taxed the Same Way</h3>
+      <p>
+        Many states exempt essential groceries, prescription medications, or apparel from sales tax, while taxing luxury goods and electronics at standard rates.
+      </p>
+
+      <h3>Ignoring Rounding</h3>
+      <p>
+        Point-of-sale cash registers compute tax per line item or on total invoice amounts using standard rounding rules (half-cent up), which may cause one-cent discrepancies.
+      </p>
+
+      <!-- 12. IMPORTANT ASSUMPTIONS AND DISCLAIMER -->
+      <h2>Important Information and Disclaimer</h2>
+      <p>
+        Please keep the following principles in mind when reviewing your sales tax calculation results:
+      </p>
+      <ul>
+        <li><strong>Mathematical Simulation:</strong> Calculations apply standard percentage formulas based on the exact rate entered.</li>
+        <li><strong>Estimates Not Legal Advice:</strong> State and municipal tax rates change periodically through legislative updates. This calculator provides planning estimates and does not represent official tax advisory services or government tax certification.</li>
+        <li><strong>Exemptions & Special Rules:</strong> Non-profit organizations, resale certificate holders, and exempt product categories should consult state departments of revenue for formal filing guidelines.</li>
+      </ul>
+
+    </section>
+  </Fragment>
+
+  <!-- FAQ SECTION SLOT (EXACTLY 7 FAQs AS REQUIRED) -->
+  <Fragment slot="faq">
+    <div class="space-y-4 text-xs sm:text-sm">
+      
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open>
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            1. What is a sales tax calculator?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          A sales tax calculator is a financial tool that computes the tax added to retail purchases, the total price including tax, or the original pre-tax price from a tax-inclusive total using custom or regional tax rates.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            2. How do I calculate sales tax?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          To calculate sales tax, multiply the pre-tax item price by the sales tax rate expressed as a decimal (e.g. $100 × 0.07 for 7% tax = $7.00 tax). Then add the tax to the base price to get the final total ($107.00).
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            3. How does a reverse sales tax calculator work?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Reverse sales tax calculates the original pre-tax price by dividing the total price by (1 + Tax Rate / 100). For example, a $107 total with 7% tax is divided by 1.07, revealing a base price of $100 and a tax amount of $7.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            4. Can I use this calculator for California or New Jersey sales tax?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Yes. The calculator includes quick presets for California (7.25% base) and New Jersey (6.625% statewide). You can edit or customize the percentage to reflect specific city or local district rates where applicable.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            5. Can I calculate New York City sales tax with this calculator?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Yes. Selecting the NYC preset loads the combined 8.875% rate (comprising 4.0% NY State tax, 4.5% NYC municipal tax, and 0.375% MCTD transit surcharge).
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            6. How is car sales tax calculated?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Car sales tax is computed by applying the tax rate to the taxable vehicle amount, which is typically the vehicle purchase price minus eligible trade-in allowances and rebates, plus taxable dealer document fees.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            7. Can I download my sales tax calculation as a PDF?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Yes. Clicking "Download PDF" generates a branded PDF report containing your calculation summary, step-by-step mathematical breakdown, and the comparative tax rate matrix for your selected mode.
+        </p>
+      </details>
+
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<style>
+  .st-content h2 {
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.3;
+    color: #0f172a;
+  }
+
+  .st-content h2:first-child {
+    margin-top: 0;
+  }
+
+  .st-content h3 {
+    margin-top: 1.75rem;
+    margin-bottom: 0.625rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .st-content p {
+    margin: 0 0 1rem;
+    line-height: 1.75;
+    color: #475569;
+  }
+
+  .st-content ul {
+    margin: 0.75rem 0 1.5rem;
+    padding-left: 1.5rem;
+    list-style: disc;
+  }
+
+  .st-content ol {
+    margin: 0.75rem 0 1.5rem;
+    padding-left: 1.5rem;
+    list-style: decimal;
+  }
+
+  .st-content li + li {
+    margin-top: 0.5rem;
+  }
+
+  :global(.dark) .st-content h2,
+  :global(.dark) .st-content h3 {
+    color: #f8fafc;
+  }
+
+  :global(.dark) .st-content p {
+    color: #cbd5e1;
+  }
+</style>
+
+<!-- FAQ Schema JSON-LD (Strictly matching the EXACT 7 FAQs) -->
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is a sales tax calculator?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A sales tax calculator is a financial tool that computes the tax added to retail purchases, the total price including tax, or the original pre-tax price from a tax-inclusive total using custom or regional tax rates."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I calculate sales tax?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "To calculate sales tax, multiply the pre-tax item price by the sales tax rate expressed as a decimal (e.g. $100 × 0.07 for 7% tax = $7.00 tax). Then add the tax to the base price to get the final total ($107.00)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does a reverse sales tax calculator work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Reverse sales tax calculates the original pre-tax price by dividing the total price by (1 + Tax Rate / 100). For example, a $107 total with 7% tax is divided by 1.07, revealing a base price of $100 and a tax amount of $7."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I use this calculator for California or New Jersey sales tax?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. The calculator includes quick presets for California (7.25% base) and New Jersey (6.625% statewide). You can edit or customize the percentage to reflect specific city or local district rates where applicable."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I calculate New York City sales tax with this calculator?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Selecting the NYC preset loads the combined 8.875% rate (comprising 4.0% NY State tax, 4.5% NYC municipal tax, and 0.375% MCTD transit surcharge)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How is car sales tax calculated?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Car sales tax is computed by applying the tax rate to the taxable vehicle amount, which is typically the vehicle purchase price minus eligible trade-in allowances and rebates, plus taxable dealer document fees."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I download my sales tax calculation as a PDF?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Clicking 'Download PDF' generates a branded PDF report containing your calculation summary, step-by-step mathematical breakdown, and the comparative tax rate matrix for your selected mode."
+      }
+    }
+  ]
+})} />
+
+<!-- CLIENT-SIDE SCRIPT LOGIC -->
+<script is:inline>
+  // State
+  let activeSalesTaxMode = 'add'; // 'add' | 'reverse' | 'car'
+  let lastCalculatedSalesTax = null;
+
+  // DOM Elements
+  const lblStAmount = document.getElementById('lbl-st-amount');
+  const inpStAmount = document.getElementById('inp-st-amount');
+  const inpStRate = document.getElementById('inp-st-rate');
+  const selStLocation = document.getElementById('sel-st-location');
+  const badgeStLocation = document.getElementById('badge-st-location');
+  const txtStSubtitle = document.getElementById('txt-st-subtitle');
+
+  const secStCarInputs = document.getElementById('sec-st-car-inputs');
+  const inpStTradeIn = document.getElementById('inp-st-tradein');
+  const inpStRebate = document.getElementById('inp-st-rebate');
+  const inpStFees = document.getElementById('inp-st-fees');
+
+  const btnCalcSt = document.getElementById('btn-calc-st');
+  const btnClearSt = document.getElementById('btn-clear-st');
+  const errSt = document.getElementById('err-st');
+
+  // Results Elements
+  const stResultsSection = document.getElementById('st-results-section');
+  const lblStHeroTitle = document.getElementById('lbl-st-hero-title');
+  const resStHeroAmount = document.getElementById('res-st-hero-amount');
+  const resStHeroSubtitle = document.getElementById('res-st-hero-subtitle');
+  const lblStHeroSecondary = document.getElementById('lbl-st-hero-secondary');
+  const resStHeroSecondary = document.getElementById('res-st-hero-secondary');
+
+  const lblStGrid1 = document.getElementById('lbl-st-grid-1');
+  const resStGrid1 = document.getElementById('res-st-grid-1');
+  const resStGrid2 = document.getElementById('res-st-grid-2');
+  const resStGrid3 = document.getElementById('res-st-grid-3');
+  const lblStGrid4 = document.getElementById('lbl-st-grid-4');
+  const resStGrid4 = document.getElementById('res-st-grid-4');
+
+  const txtStFormulaName = document.getElementById('txt-st-formula-name');
+  const txtStBreakdownFormula = document.getElementById('txt-st-breakdown-formula');
+  const txtStBreakdownStep1 = document.getElementById('txt-st-breakdown-step1');
+  const txtStBreakdownStep2 = document.getElementById('txt-st-breakdown-step2');
+
+  const tblStComparison = document.getElementById('tbl-st-comparison');
+  const btnStDownloadPdf = document.getElementById('btn-st-download-pdf');
+  const txtBtnStPdf = document.getElementById('txt-btn-st-pdf');
+
+  // Currency Formatter
+  function formatMoney(val) {
+    const num = Number(val);
+    if (isNaN(num)) return '$0.00';
+    return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // Preset Location Rates Map
+  const locationRates = {
+    custom: 7.0,
+    ca: 7.25,
+    nj: 6.625,
+    ny: 4.0,
+    nyc: 8.875,
+    mo: 4.225,
+    oh: 5.75,
+    mn: 6.875,
+  };
+
+  const locationNames = {
+    custom: 'Custom Tax Rate',
+    ca: 'California Estimate (7.25%)',
+    nj: 'New Jersey Estimate (6.625%)',
+    ny: 'New York State (4.00%)',
+    nyc: 'New York City (8.875%)',
+    mo: 'Missouri Estimate (4.225%)',
+    oh: 'Ohio Estimate (5.75%)',
+    mn: 'Minnesota Estimate (6.875%)',
+  };
+
+  // Location Selector Handler
+  selStLocation.addEventListener('change', () => {
+    const loc = selStLocation.value;
+    if (loc in locationRates) {
+      inpStRate.value = `${locationRates[loc]}`;
+      if (loc === 'custom') {
+        badgeStLocation.textContent = 'Custom Rate Applied';
+      } else {
+        badgeStLocation.textContent = locationNames[loc];
+      }
+    }
+  });
+
+  // Location Badges Handler
+  document.querySelectorAll('.btn-st-loc-badge').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const loc = btn.getAttribute('data-loc');
+      const rate = btn.getAttribute('data-rate');
+      selStLocation.value = loc;
+      inpStRate.value = rate;
+      badgeStLocation.textContent = locationNames[loc] || 'Custom Rate Applied';
+    });
+  });
+
+  // Manual Rate Edit
+  inpStRate.addEventListener('input', () => {
+    const r = parseFloat(inpStRate.value);
+    let matched = false;
+    for (const [key, val] of Object.entries(locationRates)) {
+      if (key !== 'custom' && Math.abs(val - r) < 0.0001) {
+        selStLocation.value = key;
+        badgeStLocation.textContent = locationNames[key];
+        matched = true;
+        break;
+      }
+    }
+    if (!matched) {
+      selStLocation.value = 'custom';
+      badgeStLocation.textContent = 'Custom Rate Applied';
+    }
+  });
+
+  // Mode Switcher Handler
+  document.querySelectorAll('.btn-st-mode').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.btn-st-mode').forEach((b) => {
+        b.className = 'btn-st-mode rounded-xl border border-slate-300 bg-white px-4 py-2 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 hover:border-slate-400 transition cursor-pointer text-center';
+      });
+      btn.className = 'btn-st-mode active rounded-xl border border-blue-600 bg-blue-50 px-4 py-2 text-blue-700 dark:border-blue-500 dark:bg-blue-950/60 dark:text-blue-300 transition cursor-pointer text-center';
+      
+      activeSalesTaxMode = btn.getAttribute('data-mode') || 'add';
+      stResultsSection.classList.add('hidden');
+      lastCalculatedSalesTax = null;
+
+      if (activeSalesTaxMode === 'add') {
+        lblStAmount.textContent = 'Price Before Tax ($ / ₹)';
+        inpStAmount.placeholder = '1,000';
+        secStCarInputs.classList.add('hidden');
+        txtStSubtitle.textContent = 'Calculate sales tax amount and total purchase cost using a custom or state estimated tax rate.';
+      } else if (activeSalesTaxMode === 'reverse') {
+        lblStAmount.textContent = 'Total Price Including Tax ($ / ₹)';
+        inpStAmount.placeholder = '1,072.50';
+        secStCarInputs.classList.add('hidden');
+        txtStSubtitle.textContent = 'Extract the original price before tax and tax amount from a tax-inclusive total price.';
+      } else {
+        // Car Mode
+        lblStAmount.textContent = 'Vehicle Purchase Price ($ / ₹)';
+        inpStAmount.placeholder = '30,000';
+        secStCarInputs.classList.remove('hidden');
+        txtStSubtitle.textContent = 'Estimate vehicle sales tax factoring in trade-in allowances, rebates, and taxable dealer fees.';
+      }
+    });
+  });
+
+  // Master Calculation Execution
+  function executeSalesTaxCalculation() {
+    errSt.classList.add('hidden');
+
+    const amt = parseFloat(inpStAmount.value);
+    if (isNaN(amt) || amt < 0) {
+      errSt.textContent = 'Please enter a valid price amount (0 or greater).';
+      errSt.classList.remove('hidden');
+      stResultsSection.classList.add('hidden');
+      return;
+    }
+
+    if (activeSalesTaxMode === 'car' && amt <= 0) {
+      errSt.textContent = 'Vehicle purchase price must be greater than 0.';
+      errSt.classList.remove('hidden');
+      stResultsSection.classList.add('hidden');
+      return;
+    }
+
+    const rate = parseFloat(inpStRate.value);
+    if (isNaN(rate) || rate < 0) {
+      errSt.textContent = 'Sales tax rate cannot be negative.';
+      errSt.classList.remove('hidden');
+      stResultsSection.classList.add('hidden');
+      return;
+    }
+
+    const tradeIn = activeSalesTaxMode === 'car' ? Math.max(0, parseFloat(inpStTradeIn.value) || 0) : 0;
+    const rebate = activeSalesTaxMode === 'car' ? Math.max(0, parseFloat(inpStRebate.value) || 0) : 0;
+    const fees = activeSalesTaxMode === 'car' ? Math.max(0, parseFloat(inpStFees.value) || 0) : 0;
+
+    let priceBeforeTax = 0;
+    let salesTaxAmount = 0;
+    let totalPriceWithTax = 0;
+    let taxableAmount = 0;
+
+    let formulaText = '';
+    let step1Text = '';
+    let step2Text = '';
+
+    if (activeSalesTaxMode === 'add') {
+      priceBeforeTax = amt;
+      salesTaxAmount = Number(((priceBeforeTax * rate) / 100).toFixed(2));
+      totalPriceWithTax = Number((priceBeforeTax + salesTaxAmount).toFixed(2));
+
+      formulaText = 'Tax = Price × (Rate ÷ 100) | Total = Price + Tax';
+      step1Text = `${formatMoney(priceBeforeTax)} × (${rate}% ÷ 100) = ${formatMoney(salesTaxAmount)} Tax`;
+      step2Text = `${formatMoney(priceBeforeTax)} + ${formatMoney(salesTaxAmount)} = ${formatMoney(totalPriceWithTax)} Total`;
+
+      lblStHeroTitle.textContent = 'TOTAL PRICE INCLUDING TAX';
+      resStHeroAmount.textContent = formatMoney(totalPriceWithTax);
+      resStHeroSubtitle.textContent = `Calculated using ${rate}% Sales Tax Rate`;
+      lblStHeroSecondary.textContent = 'Sales Tax Added:';
+      resStHeroSecondary.textContent = `+ ${formatMoney(salesTaxAmount)}`;
+
+      lblStGrid1.textContent = 'Price Before Tax';
+      resStGrid1.textContent = formatMoney(priceBeforeTax);
+      resStGrid2.textContent = `${rate}%`;
+      resStGrid3.textContent = formatMoney(salesTaxAmount);
+      lblStGrid4.textContent = 'Total Price';
+      resStGrid4.textContent = formatMoney(totalPriceWithTax);
+      txtStFormulaName.textContent = 'Standard Sales Tax Formula';
+    } else if (activeSalesTaxMode === 'reverse') {
+      totalPriceWithTax = amt;
+      if (rate === 0) {
+        priceBeforeTax = totalPriceWithTax;
+        salesTaxAmount = 0;
+      } else {
+        priceBeforeTax = Number((totalPriceWithTax / (1 + rate / 100)).toFixed(2));
+        salesTaxAmount = Number((totalPriceWithTax - priceBeforeTax).toFixed(2));
+      }
+
+      formulaText = 'Pre-Tax Price = Total Price ÷ (1 + Rate ÷ 100)';
+      step1Text = `${formatMoney(totalPriceWithTax)} ÷ (1 + ${rate / 100}) = ${formatMoney(priceBeforeTax)} Base Price`;
+      step2Text = `${formatMoney(totalPriceWithTax)} − ${formatMoney(priceBeforeTax)} = ${formatMoney(salesTaxAmount)} Tax Included`;
+
+      lblStHeroTitle.textContent = 'ORIGINAL PRICE BEFORE TAX';
+      resStHeroAmount.textContent = formatMoney(priceBeforeTax);
+      resStHeroSubtitle.textContent = `Extracted from ${formatMoney(totalPriceWithTax)} at ${rate}% Tax`;
+      lblStHeroSecondary.textContent = 'Sales Tax Included:';
+      resStHeroSecondary.textContent = formatMoney(salesTaxAmount);
+
+      lblStGrid1.textContent = 'Total Price (Gross)';
+      resStGrid1.textContent = formatMoney(totalPriceWithTax);
+      resStGrid2.textContent = `${rate}%`;
+      resStGrid3.textContent = formatMoney(salesTaxAmount);
+      lblStGrid4.textContent = 'Price Before Tax (Net)';
+      resStGrid4.textContent = formatMoney(priceBeforeTax);
+      txtStFormulaName.textContent = 'Reverse Sales Tax Formula';
+    } else {
+      // Car Mode
+      const vehiclePrice = amt;
+      taxableAmount = Math.max(0, vehiclePrice - tradeIn - rebate + fees);
+      salesTaxAmount = Number(((taxableAmount * rate) / 100).toFixed(2));
+      totalPriceWithTax = Number((vehiclePrice - tradeIn - rebate + fees + salesTaxAmount).toFixed(2));
+      priceBeforeTax = vehiclePrice;
+
+      formulaText = 'Taxable Amount = Price − Trade-in − Rebate + Fees | Tax = Taxable × Rate';
+      step1Text = `(${formatMoney(vehiclePrice)} − ${formatMoney(tradeIn)} − ${formatMoney(rebate)} + ${formatMoney(fees)}) = ${formatMoney(taxableAmount)} Taxable`;
+      step2Text = `${formatMoney(taxableAmount)} × ${rate}% = ${formatMoney(salesTaxAmount)} Tax | Total: ${formatMoney(totalPriceWithTax)}`;
+
+      lblStHeroTitle.textContent = 'ESTIMATED VEHICLE SALES TAX';
+      resStHeroAmount.textContent = formatMoney(salesTaxAmount);
+      resStHeroSubtitle.textContent = `Applied to ${formatMoney(taxableAmount)} taxable basis at ${rate}%`;
+      lblStHeroSecondary.textContent = 'Total Estimated Cost:';
+      resStHeroSecondary.textContent = formatMoney(totalPriceWithTax);
+
+      lblStGrid1.textContent = 'Vehicle Price';
+      resStGrid1.textContent = formatMoney(vehiclePrice);
+      resStGrid2.textContent = `${rate}% (Taxable: ${formatMoney(taxableAmount)})`;
+      resStGrid3.textContent = formatMoney(salesTaxAmount);
+      lblStGrid4.textContent = 'Final Out-of-Pocket';
+      resStGrid4.textContent = formatMoney(totalPriceWithTax);
+      txtStFormulaName.textContent = 'Vehicle Sales Tax Formula';
+    }
+
+    // Step-by-step UI Update
+    txtStBreakdownFormula.textContent = formulaText;
+    txtStBreakdownStep1.textContent = step1Text;
+    txtStBreakdownStep2.textContent = step2Text;
+
+    // Tax Rate Comparison Matrix
+    const baseForComp = activeSalesTaxMode === 'car' ? taxableAmount : priceBeforeTax;
+    const ratesList = [5.0, 6.0, 7.0, 8.0, 9.0];
+    if (!ratesList.includes(rate)) {
+      ratesList.push(rate);
+      ratesList.sort((a, b) => a - b);
+    }
+
+    tblStComparison.innerHTML = ratesList.map((r) => {
+      const tax = Number(((baseForComp * r) / 100).toFixed(2));
+      const tot = Number((baseForComp + tax).toFixed(2));
+      const isCur = Math.abs(r - rate) < 0.0001;
+
+      return `
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 ${isCur ? 'bg-blue-50/50 dark:bg-blue-950/30 font-bold' : ''}">
+          <td class="p-2.5 font-sans font-bold text-slate-900 dark:text-white">
+            ${r}% ${isCur ? '<span class="text-blue-600 dark:text-blue-400 text-[11px]">(Selected)</span>' : ''}
+          </td>
+          <td class="p-2.5 text-right text-emerald-600 dark:text-emerald-400 font-semibold">${formatMoney(tax)}</td>
+          <td class="p-2.5 text-right font-bold text-slate-900 dark:text-white">${formatMoney(tot)}</td>
+        </tr>
+      `;
+    }).join('');
+
+    // Save State
+    lastCalculatedSalesTax = {
+      mode: activeSalesTaxMode,
+      locationName: selStLocation.options[selStLocation.selectedIndex].text,
+      amount: amt,
+      rate,
+      priceBeforeTax,
+      salesTaxAmount,
+      totalPriceWithTax,
+      tradeIn,
+      rebate,
+      fees,
+      taxableAmount,
+      ratesList: ratesList.map((r) => ({
+        rate: r,
+        tax: Number(((baseForComp * r) / 100).toFixed(2)),
+        tot: Number((baseForComp + ((baseForComp * r) / 100)).toFixed(2)),
+        isCurrent: Math.abs(r - rate) < 0.0001,
+      })),
+    };
+
+    stResultsSection.classList.remove('hidden');
+  }
+
+  // Clear All Button
+  btnClearSt.addEventListener('click', () => {
+    const addModeBtn = document.querySelector('.btn-st-mode[data-mode="add"]');
+    if (addModeBtn) addModeBtn.click();
+
+    inpStAmount.value = '1000';
+    inpStRate.value = '7.25';
+    selStLocation.value = 'ca';
+    badgeStLocation.textContent = 'California Estimate (7.25%)';
+
+    inpStTradeIn.value = '5000';
+    inpStRebate.value = '1500';
+    inpStFees.value = '500';
+
+    errSt.classList.add('hidden');
+    stResultsSection.classList.add('hidden');
+    lastCalculatedSalesTax = null;
+  });
+
+  // Calculate Button
+  btnCalcSt.addEventListener('click', executeSalesTaxCalculation);
+
+  // Enter Key Triggers Calculation
+  document.querySelectorAll('form').forEach((form) => {
+    form.querySelectorAll('input, select').forEach((el) => {
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          executeSalesTaxCalculation();
+        }
+      });
+    });
+  });
+
+  // Tab-Selective Branded PDF Export
+  async function generateSalesTaxPdf() {
+    if (!lastCalculatedSalesTax) {
+      alert('Please calculate your sales tax first.');
+      return;
+    }
+
+    btnStDownloadPdf.disabled = true;
+    const originalText = txtBtnStPdf.textContent;
+    txtBtnStPdf.textContent = 'Generating PDF...';
+
+    try {
+      if (!window.jspdf) {
+        await new Promise((resolve, reject) => {
+          const s1 = document.createElement('script');
+          s1.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+          s1.onload = () => {
+            const s2 = document.createElement('script');
+            s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+            s2.onload = resolve;
+            s2.onerror = reject;
+            document.head.appendChild(s2);
+          };
+          s1.onerror = reject;
+          document.head.appendChild(s1);
+        });
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+      // 1. Header Branding
+      doc.setFillColor(37, 99, 235); // Blue #2563eb
+      doc.rect(0, 0, 210, 20, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(15);
+      doc.setFont('helvetica', 'bold');
+      doc.text('AIFreecalculator.com', 14, 13);
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Free Online Calculator Tools', 210 - 14, 13, { align: 'right' });
+
+      // 2. Document Title
+      let docTitle = 'Sales Tax Calculation';
+      let filenamePrefix = 'sales-tax-calculation';
+      if (lastCalculatedSalesTax.mode === 'reverse') {
+        docTitle = 'Reverse Sales Tax Calculation';
+        filenamePrefix = 'reverse-sales-tax-calculation';
+      } else if (lastCalculatedSalesTax.mode === 'car') {
+        docTitle = 'Car Sales Tax Calculation';
+        filenamePrefix = 'car-sales-tax-calculation';
+      }
+
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text(docTitle, 14, 29);
+
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Generated on: ${dateStr}`, 210 - 14, 29, { align: 'right' });
+
+      // 3. Calculation Summary Box
+      doc.setDrawColor(226, 232, 240);
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(14, 33, 182, 32, 2, 2, 'FD');
+
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(51, 65, 85);
+      doc.text('SALES TAX SUMMARY', 18, 38);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(71, 85, 105);
+
+      if (lastCalculatedSalesTax.mode === 'car') {
+        doc.text(`Vehicle Price: $${lastCalculatedSalesTax.priceBeforeTax.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 18, 44);
+        doc.text(`Trade-In Credit: $${lastCalculatedSalesTax.tradeIn.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 18, 49);
+        doc.text(`Rebates / Discount: $${lastCalculatedSalesTax.rebate.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 18, 54);
+        doc.text(`Taxable Basis: $${lastCalculatedSalesTax.taxableAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 18, 59);
+
+        doc.text(`Tax Rate: ${lastCalculatedSalesTax.rate}%`, 85, 44);
+        doc.text(`Location: ${lastCalculatedSalesTax.locationName}`, 85, 49);
+        doc.text(`Taxable Fees: $${lastCalculatedSalesTax.fees.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 85, 54);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(16, 185, 129);
+        doc.text(`Sales Tax: $${lastCalculatedSalesTax.salesTaxAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 145, 44);
+        doc.setTextColor(37, 99, 235);
+        doc.text(`Total Cost: $${lastCalculatedSalesTax.totalPriceWithTax.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 145, 50);
+      } else {
+        doc.text(`Pre-Tax Price: $${lastCalculatedSalesTax.priceBeforeTax.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 18, 44);
+        doc.text(`Sales Tax Rate: ${lastCalculatedSalesTax.rate}%`, 18, 49);
+        doc.text(`Location Preset: ${lastCalculatedSalesTax.locationName}`, 18, 54);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(16, 185, 129);
+        doc.text(`Sales Tax Amount: $${lastCalculatedSalesTax.salesTaxAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 85, 44);
+        doc.setTextColor(37, 99, 235);
+        doc.text(`Total Amount: $${lastCalculatedSalesTax.totalPriceWithTax.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 85, 50);
+      }
+
+      // 4. Comparison Table
+      const tableHead = [['Sales Tax Rate', 'Tax Amount', 'Total Purchase Price']];
+      const tableData = lastCalculatedSalesTax.ratesList.map((r) => [
+        `${r.rate}% ${r.isCurrent ? '(Selected)' : ''}`,
+        `$${r.tax.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+        `$${r.tot.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+      ]);
+
+      doc.autoTable({
+        startY: 70,
+        head: tableHead,
+        body: tableData,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [37, 99, 235],
+          textColor: [255, 255, 255],
+          fontSize: 8,
+          fontStyle: 'bold',
+          halign: 'center'
+        },
+        columnStyles: {
+          0: { halign: 'left', fontStyle: 'bold' },
+          1: { halign: 'right', fontStyle: 'bold', textColor: [16, 185, 129] },
+          2: { halign: 'right', fontStyle: 'bold', textColor: [37, 99, 235] }
+        },
+        styles: {
+          fontSize: 7.5,
+          cellPadding: 2.2,
+          font: 'helvetica'
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252]
+        },
+        margin: { top: 22, bottom: 18, left: 14, right: 14 },
+        didDrawPage: function (data) {
+          const pageCount = doc.internal.getNumberOfPages();
+          const currentPage = data.pageNumber;
+
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(148, 163, 184);
+
+          doc.text('Generated using AIFreecalculator.com', 14, 290);
+          doc.text(`Page ${currentPage} of ${pageCount}`, 210 - 14, 290, { align: 'right' });
+        }
+      });
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      doc.save(`${filenamePrefix}-${todayStr}.pdf`);
+    } catch (err) {
+      console.error('PDF Generation Error:', err);
+      alert('An error occurred while generating the PDF. Please try again.');
+    } finally {
+      btnStDownloadPdf.disabled = false;
+      txtBtnStPdf.textContent = originalText;
+    }
+  }
+
+  btnStDownloadPdf.addEventListener('click', generateSalesTaxPdf);
+</script>

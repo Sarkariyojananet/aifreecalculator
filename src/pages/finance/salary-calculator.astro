@@ -1,0 +1,1175 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="Salary & Take-Home Pay Calculator – Estimate Your In-Hand Salary"
+  description="Estimate your monthly and annual take-home salary after accounting for salary components, taxes, and applicable deductions."
+  category="Finance"
+  calculatorName="Salary & Take-Home Pay Calculator"
+  slug="salary-calculator"
+  keywords={[
+    'salary calculator',
+    'take home salary calculator',
+    'take home pay calculator',
+    'salary calculator india',
+    'in hand salary calculator',
+    'ctc to in hand salary calculator',
+    'monthly salary calculator',
+    'annual salary calculator',
+    'net salary calculator',
+    'gross salary calculator'
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- SALARY INPUT TYPE TABS -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-2.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5 px-1">Choose Salary Input Type</div>
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-semibold scrollbar-thin">
+        <button type="button" class="btn-sal-type active shrink-0 rounded-lg bg-blue-600 px-3.5 py-1.5 font-bold text-white shadow-xs cursor-pointer" data-type="ctc">Annual CTC (Cost to Company) 💼</button>
+        <button type="button" class="btn-sal-type shrink-0 rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-type="gross">Annual Gross Salary 💰</button>
+        <button type="button" class="btn-sal-type shrink-0 rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-type="monthly">Monthly Gross Salary 🗓️</button>
+      </div>
+    </div>
+
+    <!-- QUICK PRESETS BAR -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-center gap-1.5 text-xs">
+        <span class="font-bold text-slate-600 dark:text-slate-400 mr-1 flex items-center gap-1">
+          <span>⚡</span> Quick Presets:
+        </span>
+        <button type="button" class="btn-sal-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-type="ctc" data-amt="1200000" data-bonus="100000">💼 Mid-Level CTC (₹12L + ₹1L Bonus)</button>
+        <button type="button" class="btn-sal-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-type="ctc" data-amt="600000" data-bonus="0">🚀 Entry-Level CTC (₹6 Lakh)</button>
+        <button type="button" class="btn-sal-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-type="ctc" data-amt="2500000" data-bonus="300000">👑 Senior CTC (₹25L + ₹3L Bonus)</button>
+        <button type="button" class="btn-sal-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-type="monthly" data-amt="75000" data-bonus="0">🗓️ Monthly Gross (₹75,000/mo)</button>
+      </div>
+    </div>
+
+    <!-- MAIN CALCULATOR FORM CONTAINER -->
+    <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-blue-50/30 p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/20 sm:p-7">
+      
+      <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+        <h2 id="sal-panel-title" class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <span>💵</span> CTC to In-Hand Salary Calculator
+        </h2>
+        <p id="sal-panel-desc" class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+          Estimate your monthly and annual take-home salary after accounting for salary components, taxes, and applicable deductions.
+        </p>
+      </div>
+
+      <form id="form-sal" class="mt-4 space-y-4" novalidate onsubmit="return false;">
+        
+        <!-- ROW 1: PRIMARY SALARY INPUT & TAX REGIME -->
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <!-- Salary Amount Input -->
+          <div>
+            <label for="inp-sal-amount" id="lbl-sal-amount" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Annual CTC (₹)</label>
+            <input type="number" id="inp-sal-amount" value="1200000" step="25000" min="1" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="12,00,000" />
+          </div>
+
+          <!-- Annual Bonus / Variable Pay (Only in CTC / Gross mode) -->
+          <div id="col-sal-bonus">
+            <label for="inp-sal-bonus" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Annual Bonus / Variable (₹)</label>
+            <input type="number" id="inp-sal-bonus" value="100000" step="10000" min="0" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="1,00,000" />
+          </div>
+
+          <!-- Income Tax Regime -->
+          <div>
+            <label for="sel-sal-regime" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Income Tax Regime</label>
+            <select id="sel-sal-regime" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+              <option value="new" selected>New Tax Regime (Default)</option>
+              <option value="old">Old Tax Regime</option>
+              <option value="compare">Compare Both ⚖️</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- ROW 2: SALARY STRUCTURE & DEDUCTION OVERRIDES (ACCORDION STYLE / COLLAPSIBLE) -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300 flex items-center gap-1.5">
+              <span>⚙️</span> Salary Structure & Deductions Breakdown
+            </span>
+            <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Configurable parameters</span>
+          </div>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-4 text-xs">
+            <div>
+              <label for="inp-sal-basic-pct" class="block font-bold text-slate-700 dark:text-slate-300">Basic Salary (% of Gross)</label>
+              <input type="number" id="inp-sal-basic-pct" value="45" step="5" min="20" max="80" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+            <div>
+              <label for="inp-sal-hra-pct" class="block font-bold text-slate-700 dark:text-slate-300">HRA (% of Gross)</label>
+              <input type="number" id="inp-sal-hra-pct" value="20" step="5" min="0" max="50" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+            <div>
+              <label for="inp-sal-pt" class="block font-bold text-slate-700 dark:text-slate-300">Professional Tax (₹/mo)</label>
+              <input type="number" id="inp-sal-pt" value="200" step="50" min="0" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+            <div>
+              <label for="inp-sal-other-deduct" class="block font-bold text-slate-700 dark:text-slate-300">Insurance/Other (₹/mo)</label>
+              <input type="number" id="inp-sal-other-deduct" value="500" step="100" min="0" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 pt-2">
+          <button type="submit" id="btn-calc-sal" class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer">
+            Calculate Take-Home Pay →
+          </button>
+          <button type="button" id="btn-clear-sal" class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer">
+            Clear All (✕)
+          </button>
+        </div>
+
+        <p id="err-sal" class="hidden rounded-xl border border-red-200 bg-red-50 p-2.5 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300" role="alert" aria-live="polite"></p>
+
+      </form>
+
+      <!-- RESULTS PRESENTATION SECTION (Hidden Initially) -->
+      <div id="sal-results-section" class="hidden mt-6 space-y-5">
+        
+        <!-- 1. Main Highlight Result Card -->
+        <div class="overflow-hidden rounded-3xl border border-emerald-200 bg-linear-to-br from-white via-emerald-50/40 to-emerald-100/50 p-5 shadow-lg shadow-emerald-500/5 dark:border-emerald-900/60 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/30 sm:p-7">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-emerald-200/80 pb-4 dark:border-slate-800">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Estimated Monthly In-Hand Take-Home</span>
+              <div id="res-sal-monthly-inhand" class="mt-1 text-4xl sm:text-5xl font-black text-emerald-600 dark:text-emerald-400">₹ 80,500.00</div>
+            </div>
+            <div class="sm:text-right">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Estimated Annual In-Hand:</span>
+              <div id="res-sal-annual-inhand" class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">₹ 9,66,000.00</div>
+            </div>
+          </div>
+
+          <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Annual CTC</div>
+              <div id="res-sal-ctc" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">₹ 12,00,000</div>
+            </div>
+            <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Monthly Gross Salary</div>
+              <div id="res-sal-gross-monthly" class="mt-1 text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">₹ 91,667</div>
+            </div>
+            <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Total Monthly Deductions</div>
+              <div id="res-sal-total-deduct" class="mt-1 text-sm sm:text-base font-bold text-red-600 dark:text-red-400">₹ 11,167</div>
+            </div>
+            <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Estimated Monthly TDS</div>
+              <div id="res-sal-tds-monthly" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">₹ 5,958</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. TAKE-HOME PAY RATIO CHART -->
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 space-y-4">
+          <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+            <span>📊</span> Take-Home Pay vs Deductions Breakdown
+          </h3>
+
+          <div class="space-y-2">
+            <div class="h-4 w-full overflow-hidden rounded-full bg-slate-100 flex dark:bg-slate-800">
+              <div id="bar-sal-takehome" class="bg-emerald-500 transition-all duration-500" style="width: 87.8%;" title="Take Home Pay"></div>
+              <div id="bar-sal-pf" class="bg-blue-500 transition-all duration-500" style="width: 5.5%;" title="EPF & Statutory"></div>
+              <div id="bar-sal-tax" class="bg-red-500 transition-all duration-500" style="width: 6.7%;" title="Income Tax / TDS"></div>
+            </div>
+            <div class="flex flex-wrap items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400">
+              <span class="flex items-center gap-1.5">
+                <span class="inline-block h-3 w-3 rounded-full bg-emerald-500"></span>
+                <span id="lbl-chart-takehome">Net Take-Home: ₹80,500 (87.8%)</span>
+              </span>
+              <span class="flex items-center gap-1.5">
+                <span class="inline-block h-3 w-3 rounded-full bg-blue-500"></span>
+                <span id="lbl-chart-pf">EPF & PT: ₹5,150 (5.6%)</span>
+              </span>
+              <span class="flex items-center gap-1.5">
+                <span class="inline-block h-3 w-3 rounded-full bg-red-500"></span>
+                <span id="lbl-chart-tax">Tax/TDS: ₹5,958 (6.5%)</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. OLD VS NEW TAX REGIME COMPARISON (Visible in Compare Mode) -->
+        <div id="card-sal-comparison" class="hidden space-y-4">
+          <div class="overflow-hidden rounded-3xl border border-blue-200 bg-white p-5 dark:border-blue-900/60 dark:bg-slate-900 sm:p-6 shadow-md">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-200 pb-3 dark:border-slate-800">
+              <div>
+                <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-1.5">
+                  <span>⚖️</span> Old vs New Tax Regime Comparison
+                </h3>
+                <p id="txt-sal-comparison-rec" class="text-xs font-bold text-emerald-600 dark:text-emerald-400 mt-1">
+                  Based on the entered salary structure, New Tax Regime provides ₹3,358 higher monthly take-home pay!
+                </p>
+              </div>
+            </div>
+
+            <!-- Comparison Table -->
+            <div class="overflow-x-auto mt-4">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold">
+                  <tr>
+                    <th class="p-2.5 rounded-l-lg">Parameter</th>
+                    <th class="p-2.5 text-right font-black text-blue-600 dark:text-blue-400">New Tax Regime</th>
+                    <th class="p-2.5 text-right font-black text-slate-700 dark:text-slate-300 rounded-r-lg">Old Tax Regime</th>
+                  </tr>
+                </thead>
+                <tbody id="sal-cmp-tbody" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                  <!-- Injected by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. SALARY BREAKDOWN TABLE (MONTHLY & ANNUAL VIEW TABS) -->
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <div>
+              <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <span>📑</span> Detailed Salary Breakdown Table
+              </h3>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                Itemized earnings and statutory deductions.
+              </p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <!-- View Switcher Tabs -->
+              <div class="inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800 text-xs font-bold">
+                <button type="button" id="tab-sal-monthly" class="active rounded-lg bg-white px-3 py-1 text-slate-900 shadow-xs dark:bg-slate-900 dark:text-white cursor-pointer">
+                  Monthly View
+                </button>
+                <button type="button" id="tab-sal-annual" class="rounded-lg px-3 py-1 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer">
+                  Annual View
+                </button>
+              </div>
+
+              <!-- Download PDF Button -->
+              <button type="button" id="btn-sal-download-pdf" class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-[0.98] cursor-pointer" title="Download Salary Breakdown as PDF">
+                <span>📄</span> <span id="txt-btn-sal-pdf">Download PDF</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Table Container -->
+          <div class="overflow-x-auto max-h-96 scrollbar-thin">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold sticky top-0">
+                <tr>
+                  <th class="p-2.5 rounded-l-lg">Salary Component</th>
+                  <th class="p-2.5">Category</th>
+                  <th class="p-2.5 text-right rounded-r-lg font-bold text-slate-900 dark:text-white" id="th-sal-amount">Monthly Amount (₹)</th>
+                </tr>
+              </thead>
+              <tbody id="sal-breakdown-tbody" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                <!-- Injected dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- EDUCATIONAL SEO ARTICLE SLOT (Styled matching age.astro) -->
+  <Fragment slot="content">
+    <section class="salary-content">
+      <h2>How to Use This Salary & Take-Home Pay Calculator</h2>
+      <p>
+        Estimating your actual in-hand take-home salary is simple with this interactive payroll model:
+      </p>
+      <ol>
+        <li><strong>Select your salary input type:</strong> Choose whether you are starting from your <em>Annual CTC</em>, <em>Annual Gross Salary</em>, or <em>Monthly Gross Salary</em>.</li>
+        <li><strong>Enter your compensation amount:</strong> Input your numerical salary in Indian Rupees (₹).</li>
+        <li><strong>Include bonus or variable pay:</strong> If you receive an annual performance bonus, enter it to separate fixed monthly pay from annual variable payouts.</li>
+        <li><strong>Review or adjust structure percentages:</strong> Modify Basic Salary (% of Gross), HRA (%), and monthly Professional Tax (PT) if your employer uses custom percentages.</li>
+        <li><strong>Select your Income Tax Regime:</strong> Choose between the <em>New Tax Regime</em> (default with ₹75,000 standard deduction) or <em>Old Tax Regime</em>, or select <em>Compare Both</em>.</li>
+        <li><strong>Click Calculate Take-Home Pay:</strong> View your estimated monthly in-hand cash, annual take-home total, and itemized deductions.</li>
+        <li><strong>Inspect the Salary Breakdown:</strong> Toggle between the <em>Monthly View</em> and <em>Annual View</em> to examine exact deductions for EPF, PT, and TDS.</li>
+        <li><strong>Download PDF:</strong> Save your structured payslip breakdown for salary negotiations and tax planning.</li>
+      </ol>
+
+      <h2>Example Take-Home Salary Calculation</h2>
+      <p>
+        Consider an employee with an <strong>Annual CTC of ₹12,00,000</strong> including a <strong>₹1,00,000 annual bonus</strong> under the <strong>New Tax Regime</strong>:
+      </p>
+      <div class="my-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900 text-xs sm:text-sm space-y-1.5 font-mono">
+        <div>Annual Cost to Company (CTC) = ₹12,00,000</div>
+        <div>Annual Bonus (Variable) = ₹1,00,000 | Fixed Annual CTC = ₹11,00,000</div>
+        <div>Monthly Gross Salary = ₹91,667</div>
+        <hr class="border-slate-200 dark:border-slate-800 my-1" />
+        <div>Basic Salary (45%) = ₹41,250 / month</div>
+        <div>Employee EPF Deduction (12% of Basic) = -₹4,950 / month</div>
+        <div>Professional Tax (PT) = -₹200 / month</div>
+        <div>Estimated Monthly TDS (New Regime) = -₹5,958 / month</div>
+        <div class="text-red-600 dark:text-red-400">Total Monthly Deductions = -₹11,108 / month</div>
+        <div class="text-emerald-600 dark:text-emerald-400 font-bold text-sm">Estimated Monthly Take-Home Pay = ₹80,559 / month</div>
+        <div class="text-blue-600 dark:text-blue-400 font-bold">Estimated Annual Take-Home (including bonus) = ₹10,66,708 / year</div>
+      </div>
+      <p class="text-xs text-slate-500 italic">
+        * This is an illustrative estimate. Actual salary and deductions may vary based on your employer, salary structure, tax rules, and other applicable factors.
+      </p>
+
+      <h2>CTC vs In-Hand Salary</h2>
+      <p>
+        Many job offers advertise a high Cost to Company (CTC) figure, but the actual cash transferred to the employee's bank account every month is lower:
+      </p>
+
+      <div class="overflow-x-auto my-4">
+        <table class="w-full text-left text-xs sm:text-sm border-collapse border border-slate-200 dark:border-slate-800">
+          <thead class="bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold">
+            <tr>
+              <th class="p-3 border border-slate-200 dark:border-slate-800">Factor</th>
+              <th class="p-3 border border-slate-200 dark:border-slate-800">Cost to Company (CTC)</th>
+              <th class="p-3 border border-slate-200 dark:border-slate-800">Gross Salary</th>
+              <th class="p-3 border border-slate-200 dark:border-slate-800">In-Hand Salary (Net Pay)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+            <tr>
+              <td class="p-3 font-semibold border border-slate-200 dark:border-slate-800">Definition</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Total expense incurred by the employer on an employee</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Total earnings before employee statutory deductions</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Actual net cash credited to the employee's bank account</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold border border-slate-200 dark:border-slate-800">Employer Contributions</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Includes employer EPF, gratuity, insurance</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Excludes employer-side overheads</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Excludes all employer costs</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold border border-slate-200 dark:border-slate-800">Deductions Included</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Does not subtract employee deductions</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Does not subtract employee deductions</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Subtracted (EPF, PT, TDS, Insurance)</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold border border-slate-200 dark:border-slate-800">Monthly Cash Availability</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Not received directly</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Theoretical pre-tax earning</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Directly credited every month</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>What Is In-Hand Salary?</h2>
+      <p>
+        <strong>In-hand salary</strong> (also called <em>take-home pay</em> or <em>net salary</em>) is the net liquid compensation that an employee receives at the end of each monthly payroll cycle. It is calculated by taking the Gross Monthly Salary and subtracting all mandatory and voluntary employee deductions:
+      </p>
+      <ul>
+        <li><strong>Employee Provident Fund (EPF):</strong> 12% of basic salary deducted monthly for retirement savings under EPFO.</li>
+        <li><strong>Professional Tax (PT):</strong> State-level tax levied on salaried earners (typically ₹200 per month, capped at ₹2,500 annually in India).</li>
+        <li><strong>Tax Deducted at Source (TDS):</strong> Estimated income tax withheld by the employer based on your projected annual taxable income and chosen tax regime.</li>
+        <li><strong>Other Deductions:</strong> Group medical insurance premiums, loan repayments, or voluntary provident fund (VPF).</li>
+      </ul>
+
+      <h2>Salary Calculator for Indian Employees</h2>
+      <p>
+        In India, compensation is formatted according to Indian numbering standards (e.g. <strong>₹50,000</strong>, <strong>₹1,00,000</strong>, and <strong>₹10,00,000</strong>). Indian corporate salary structures typically consist of Basic Pay (40% to 50%), House Rent Allowance (HRA), Special Allowance, and annual variable components. Actual payroll structures may vary depending on employer policies and state tax laws.
+      </p>
+
+      <h2>Common Mistakes When Calculating Take-Home Salary</h2>
+      <ul>
+        <li><strong>Confusing CTC with Gross Salary:</strong> Forgetting that employer EPF and gratuity are bundled inside CTC but not paid as monthly salary.</li>
+        <li><strong>Assuming Fixed Bonuses:</strong> Annual variable bonuses are paid annually or quarterly and are not part of routine monthly take-home cash.</li>
+        <li><strong>Ignoring the Tax Regime Impact:</strong> The choice between the New Tax Regime (with ₹75k standard deduction) and Old Tax Regime significantly changes monthly TDS withholding.</li>
+        <li><strong>Overlooking Professional Tax:</strong> Failing to account for mandatory state professional tax deductions.</li>
+        <li><strong>Treating the Calculation as a Final Payslip:</strong> Final payslips may include reimbursements, leave encashments, or custom company deductions.</li>
+      </ul>
+
+      <h2>Important Assumptions and Information</h2>
+      <p>
+        Please review these operational guidelines:
+      </p>
+      <ul>
+        <li><strong>Standard Payroll Assumptions:</strong> Standard calculations assume EPF is 12% of basic pay and professional tax is ₹200/month.</li>
+        <li><strong>Tax Estimation:</strong> TDS is estimated using statutory tax slabs and standard deductions. Actual year-end tax liability may differ based on full Form 16 reconciliation.</li>
+        <li><strong>Informational Tool:</strong> This calculator provides mathematical estimates and should not be considered certified legal, financial, or tax advisory services.</li>
+      </ul>
+    </section>
+  </Fragment>
+
+  <!-- FAQ SECTION SLOT (EXACTLY 7 FAQs AS REQUIRED) -->
+  <Fragment slot="faq">
+    <div class="space-y-4 text-xs sm:text-sm">
+      
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open>
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            1. How does a take-home salary calculator work?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          A take-home salary calculator breaks down your annual CTC or gross salary into basic pay, HRA, and allowances, then subtracts statutory deductions like Employee EPF, Professional Tax, and estimated TDS to calculate your net in-hand monthly pay.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            2. What is the difference between CTC and in-hand salary?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          CTC (Cost to Company) represents the total annual expenditure an employer spends on you, including employer EPF, gratuity, and bonuses. In-hand salary is the actual net cash deposited in your bank account after all deductions.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            3. How is monthly take-home pay calculated?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Monthly take-home pay is calculated as: <code>Net In-Hand = Monthly Gross Salary − (Employee EPF + Professional Tax + Monthly TDS + Insurance Deductions)</code>.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            4. What deductions can reduce my in-hand salary?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Major deductions include Employee Provident Fund (EPF 12% of basic), Professional Tax (PT ~₹200/mo), Income Tax (TDS), group health insurance premiums, and voluntary deductions like NPS or VPF.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            5. Can I calculate my take-home salary from my CTC?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Yes. Select "Annual CTC" mode, enter your CTC amount and annual bonus. The calculator automatically isolates employer overheads and estimates your net monthly take-home pay.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            6. Does the tax regime affect take-home salary?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Yes. The New Tax Regime offers lower tax rates and a ₹75,000 standard deduction, while the Old Tax Regime allows deductions under 80C, 80D, and HRA. Selecting the regime with lower tax results in higher monthly take-home pay.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            7. Is the salary calculation shown by this tool exact?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          The calculator provides an estimate based on standard payroll conventions. Actual take-home pay can vary based on individual employer salary structures, state-specific professional tax rules, reimbursements, and final tax declarations.
+        </p>
+      </details>
+
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<style>
+  .salary-content h2 {
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.3;
+    color: #0f172a;
+  }
+
+  .salary-content h2:first-child {
+    margin-top: 0;
+  }
+
+  .salary-content h3 {
+    margin-top: 1.75rem;
+    margin-bottom: 0.625rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .salary-content p {
+    margin: 0 0 1rem;
+    line-height: 1.75;
+    color: #475569;
+  }
+
+  .salary-content ul {
+    margin: 0.75rem 0 1.5rem;
+    padding-left: 1.5rem;
+    list-style: disc;
+  }
+
+  .salary-content ol {
+    margin: 0.75rem 0 1.5rem;
+    padding-left: 1.5rem;
+    list-style: decimal;
+  }
+
+  .salary-content li + li {
+    margin-top: 0.5rem;
+  }
+
+  :global(.dark) .salary-content h2,
+  :global(.dark) .salary-content h3 {
+    color: #f8fafc;
+  }
+
+  :global(.dark) .salary-content p {
+    color: #cbd5e1;
+  }
+</style>
+
+<!-- FAQ Schema JSON-LD (Strictly matching the 7 FAQs) -->
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How does a take-home salary calculator work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A take-home salary calculator breaks down your annual CTC or gross salary into basic pay, HRA, and allowances, then subtracts statutory deductions like Employee EPF, Professional Tax, and estimated TDS to calculate your net in-hand monthly pay."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between CTC and in-hand salary?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "CTC (Cost to Company) represents the total annual expenditure an employer spends on you, including employer EPF, gratuity, and bonuses. In-hand salary is the actual net cash deposited in your bank account after all deductions."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How is monthly take-home pay calculated?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Monthly take-home pay is calculated as: Net In-Hand = Monthly Gross Salary − (Employee EPF + Professional Tax + Monthly TDS + Insurance Deductions)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What deductions can reduce my in-hand salary?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Major deductions include Employee Provident Fund (EPF 12% of basic), Professional Tax (PT ~₹200/mo), Income Tax (TDS), group health insurance premiums, and voluntary deductions like NPS or VPF."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I calculate my take-home salary from my CTC?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Select 'Annual CTC' mode, enter your CTC amount and annual bonus. The calculator automatically isolates employer overheads and estimates your net monthly take-home pay."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does the tax regime affect take-home salary?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. The New Tax Regime offers lower tax rates and a ₹75,000 standard deduction, while the Old Tax Regime allows deductions under 80C, 80D, and HRA. Selecting the regime with lower tax results in higher monthly take-home pay."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is the salary calculation shown by this tool exact?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The calculator provides an estimate based on standard payroll conventions. Actual take-home pay can vary based on individual employer salary structures, state-specific professional tax rules, reimbursements, and final tax declarations."
+      }
+    }
+  ]
+})} />
+
+<!-- CLIENT-SIDE SCRIPT LOGIC -->
+<script is:inline>
+  // State
+  let currentSalaryType = 'ctc'; // 'ctc' | 'gross' | 'monthly'
+  let activeBreakdownView = 'monthly'; // 'monthly' | 'annual'
+  let lastCalculatedSalary = null;
+
+  // DOM Elements
+  const typeButtons = document.querySelectorAll('.btn-sal-type');
+  const salPanelTitle = document.getElementById('sal-panel-title');
+  const lblSalAmount = document.getElementById('lbl-sal-amount');
+  const inpSalAmount = document.getElementById('inp-sal-amount');
+  const colSalBonus = document.getElementById('col-sal-bonus');
+  const inpSalBonus = document.getElementById('inp-sal-bonus');
+  const selSalRegime = document.getElementById('sel-sal-regime');
+
+  const inpSalBasicPct = document.getElementById('inp-sal-basic-pct');
+  const inpSalHraPct = document.getElementById('inp-sal-hra-pct');
+  const inpSalPt = document.getElementById('inp-sal-pt');
+  const inpSalOtherDeduct = document.getElementById('inp-sal-other-deduct');
+
+  const btnCalcSal = document.getElementById('btn-calc-sal');
+  const btnClearSal = document.getElementById('btn-clear-sal');
+  const errSal = document.getElementById('err-sal');
+
+  // Results Elements
+  const salResultsSection = document.getElementById('sal-results-section');
+  const resSalMonthlyInhand = document.getElementById('res-sal-monthly-inhand');
+  const resSalAnnualInhand = document.getElementById('res-sal-annual-inhand');
+  const resSalCtc = document.getElementById('res-sal-ctc');
+  const resSalGrossMonthly = document.getElementById('res-sal-gross-monthly');
+  const resSalTotalDeduct = document.getElementById('res-sal-total-deduct');
+  const resSalTdsMonthly = document.getElementById('res-sal-tds-monthly');
+
+  const barSalTakehome = document.getElementById('bar-sal-takehome');
+  const barSalPf = document.getElementById('bar-sal-pf');
+  const barSalTax = document.getElementById('bar-sal-tax');
+  const lblChartTakehome = document.getElementById('lbl-chart-takehome');
+  const lblChartPf = document.getElementById('lbl-chart-pf');
+  const lblChartTax = document.getElementById('lbl-chart-tax');
+
+  const cardSalComparison = document.getElementById('card-sal-comparison');
+  const txtSalComparisonRec = document.getElementById('txt-sal-comparison-rec');
+  const salCmpTbody = document.getElementById('sal-cmp-tbody');
+
+  const tabSalMonthly = document.getElementById('tab-sal-monthly');
+  const tabSalAnnual = document.getElementById('tab-sal-annual');
+  const thSalAmount = document.getElementById('th-sal-amount');
+  const salBreakdownTbody = document.getElementById('sal-breakdown-tbody');
+  const btnSalDownloadPdf = document.getElementById('btn-sal-download-pdf');
+  const txtBtnSalPdf = document.getElementById('txt-btn-sal-pdf');
+
+  // Currency Formatter
+  function formatINR(val) {
+    return `₹ ${Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  // Switch Salary Type Mode
+  function switchSalaryType(type) {
+    currentSalaryType = type;
+    typeButtons.forEach((btn) => {
+      if (btn.getAttribute('data-type') === type) {
+        btn.className = 'btn-sal-type active shrink-0 rounded-lg bg-blue-600 px-3.5 py-1.5 font-bold text-white shadow-xs cursor-pointer';
+      } else {
+        btn.className = 'btn-sal-type shrink-0 rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer';
+      }
+    });
+
+    if (type === 'ctc') {
+      salPanelTitle.innerHTML = '<span>💼</span> CTC to In-Hand Salary Calculator';
+      lblSalAmount.textContent = 'Annual CTC (₹)';
+      colSalBonus.classList.remove('hidden');
+    } else if (type === 'gross') {
+      salPanelTitle.innerHTML = '<span>💰</span> Annual Gross Salary Calculator';
+      lblSalAmount.textContent = 'Annual Gross Salary (₹)';
+      colSalBonus.classList.remove('hidden');
+    } else {
+      salPanelTitle.innerHTML = '<span>🗓️</span> Monthly Gross Salary Calculator';
+      lblSalAmount.textContent = 'Monthly Gross Salary (₹)';
+      colSalBonus.classList.add('hidden');
+    }
+  }
+
+  typeButtons.forEach((btn) => {
+    btn.addEventListener('click', () => switchSalaryType(btn.getAttribute('data-type')));
+  });
+
+  // Tax Engine Helper
+  function computeTax(gross, regime) {
+    if (gross <= 0) return 0;
+    if (regime === 'new') {
+      const taxable = Math.max(0, gross - 75000);
+      if (taxable <= 700000) return 0;
+      let tax = 0;
+      if (taxable > 1500000) tax = 140000 + (taxable - 1500000) * 0.30;
+      else if (taxable > 1200000) tax = 80000 + (taxable - 1200000) * 0.20;
+      else if (taxable > 1000000) tax = 50000 + (taxable - 1000000) * 0.15;
+      else if (taxable > 700000) tax = 20000 + (taxable - 700000) * 0.10;
+      else if (taxable > 300000) tax = (taxable - 300000) * 0.05;
+      return Math.round(tax * 1.04);
+    } else {
+      const taxable = Math.max(0, gross - 50000 - 150000); // assume std ded + 80C
+      if (taxable <= 500000) return 0;
+      let tax = 0;
+      if (taxable > 1000000) tax = 112500 + (taxable - 1000000) * 0.30;
+      else if (taxable > 500000) tax = 12500 + (taxable - 500000) * 0.20;
+      else if (taxable > 250000) tax = (taxable - 250000) * 0.05;
+      return Math.round(tax * 1.04);
+    }
+  }
+
+  // Calculate Salary Logic
+  function executeSalaryCalculation() {
+    errSal.classList.add('hidden');
+
+    const rawAmount = parseFloat(inpSalAmount.value);
+    if (isNaN(rawAmount) || rawAmount <= 0) {
+      errSal.textContent = 'Please enter a valid salary amount greater than 0.';
+      errSal.classList.remove('hidden');
+      salResultsSection.classList.add('hidden');
+      return;
+    }
+
+    const bonusAnnual = currentSalaryType === 'monthly' ? 0 : (parseFloat(inpSalBonus.value) || 0);
+    const basicPct = Math.max(10, Math.min(80, parseFloat(inpSalBasicPct.value) || 45));
+    const hraPct = Math.max(0, Math.min(50, parseFloat(inpSalHraPct.value) || 20));
+    const ptMonthly = parseFloat(inpSalPt.value) || 0;
+    const otherMonthly = parseFloat(inpSalOtherDeduct.value) || 0;
+    const regime = selSalRegime.value; // 'new' | 'old' | 'compare'
+
+    let annualCtc = 0;
+    let annualGross = 0;
+    let monthlyGross = 0;
+
+    if (currentSalaryType === 'ctc') {
+      annualCtc = rawAmount;
+      const fixedCtc = Math.max(0, annualCtc - bonusAnnual);
+      const estBasic = (fixedCtc * basicPct) / 100;
+      const estEmployerPf = (estBasic * 0.12);
+      annualGross = Math.max(0, fixedCtc - estEmployerPf);
+      monthlyGross = Math.round(annualGross / 12);
+    } else if (currentSalaryType === 'gross') {
+      annualGross = rawAmount;
+      monthlyGross = Math.round(annualGross / 12);
+      const estBasic = (annualGross * basicPct) / 100;
+      const estEmployerPf = (estBasic * 0.12);
+      annualCtc = annualGross + estEmployerPf + bonusAnnual;
+    } else {
+      monthlyGross = rawAmount;
+      annualGross = monthlyGross * 12;
+      const estBasic = (annualGross * basicPct) / 100;
+      const estEmployerPf = (estBasic * 0.12);
+      annualCtc = annualGross + estEmployerPf + bonusAnnual;
+    }
+
+    const monthlyBasic = Math.round((monthlyGross * basicPct) / 100);
+    const annualBasic = monthlyBasic * 12;
+
+    const monthlyHra = Math.round((monthlyGross * hraPct) / 100);
+    const annualHra = monthlyHra * 12;
+
+    const monthlySpecial = Math.max(0, monthlyGross - monthlyBasic - monthlyHra);
+    const annualSpecial = monthlySpecial * 12;
+
+    const monthlyEmployeePf = Math.round(monthlyBasic * 0.12);
+    const annualEmployeePf = monthlyEmployeePf * 12;
+
+    const annualPt = ptMonthly * 12;
+    const annualOther = otherMonthly * 12;
+
+    // Compute Tax under New & Old
+    const newTaxAnnual = computeTax(annualGross + bonusAnnual, 'new');
+    const newMonthlyTds = Math.round(newTaxAnnual / 12);
+    const newTotalMonthlyDeduct = monthlyEmployeePf + ptMonthly + newMonthlyTds + otherMonthly;
+    const newInHandMonthly = Math.max(0, monthlyGross - newTotalMonthlyDeduct);
+    const newInHandAnnual = newInHandMonthly * 12 + bonusAnnual;
+
+    const oldTaxAnnual = computeTax(annualGross + bonusAnnual, 'old');
+    const oldMonthlyTds = Math.round(oldTaxAnnual / 12);
+    const oldTotalMonthlyDeduct = monthlyEmployeePf + ptMonthly + oldMonthlyTds + otherMonthly;
+    const oldInHandMonthly = Math.max(0, monthlyGross - oldTotalMonthlyDeduct);
+    const oldInHandAnnual = oldInHandMonthly * 12 + bonusAnnual;
+
+    // Active Regime Result
+    const activeRegime = regime === 'old' ? 'old' : 'new';
+    const activeMonthlyTds = activeRegime === 'new' ? newMonthlyTds : oldMonthlyTds;
+    const activeAnnualTds = activeRegime === 'new' ? newTaxAnnual : oldTaxAnnual;
+    const activeTotalMonthlyDeduct = activeRegime === 'new' ? newTotalMonthlyDeduct : oldTotalMonthlyDeduct;
+    const activeTotalAnnualDeduct = activeTotalMonthlyDeduct * 12;
+    const activeInHandMonthly = activeRegime === 'new' ? newInHandMonthly : oldInHandMonthly;
+    const activeInHandAnnual = activeRegime === 'new' ? newInHandAnnual : oldInHandAnnual;
+
+    // Save calculation state
+    lastCalculatedSalary = {
+      salaryType: currentSalaryType,
+      regime,
+      annualCtc,
+      annualGross,
+      monthlyGross,
+      annualBonus: bonusAnnual,
+      monthlyBasic,
+      annualBasic,
+      monthlyHra,
+      annualHra,
+      monthlySpecial,
+      annualSpecial,
+      monthlyEmployeePf,
+      annualEmployeePf,
+      monthlyPt: ptMonthly,
+      annualPt,
+      monthlyOther: otherMonthly,
+      annualOther,
+      activeMonthlyTds,
+      activeAnnualTds,
+      activeTotalMonthlyDeduct,
+      activeTotalAnnualDeduct,
+      activeInHandMonthly,
+      activeInHandAnnual,
+      newRegime: { taxAnnual: newTaxAnnual, taxMonthly: newMonthlyTds, inHandMonthly: newInHandMonthly, inHandAnnual: newInHandAnnual },
+      oldRegime: { taxAnnual: oldTaxAnnual, taxMonthly: oldMonthlyTds, inHandMonthly: oldInHandMonthly, inHandAnnual: oldInHandAnnual },
+    };
+
+    // Update Result Card
+    resSalMonthlyInhand.textContent = formatINR(activeInHandMonthly);
+    resSalAnnualInhand.textContent = formatINR(activeInHandAnnual);
+    resSalCtc.textContent = formatINR(annualCtc);
+    resSalGrossMonthly.textContent = formatINR(monthlyGross);
+    resSalTotalDeduct.textContent = formatINR(activeTotalMonthlyDeduct);
+    resSalTdsMonthly.textContent = formatINR(activeMonthlyTds);
+
+    // Update Chart & Ratio Bar
+    const totalPie = monthlyGross > 0 ? monthlyGross : 1;
+    const inHandPct = ((activeInHandMonthly / totalPie) * 100).toFixed(1);
+    const pfPct = (((monthlyEmployeePf + ptMonthly) / totalPie) * 100).toFixed(1);
+    const taxPct = ((activeMonthlyTds / totalPie) * 100).toFixed(1);
+
+    barSalTakehome.style.width = `${inHandPct}%`;
+    barSalPf.style.width = `${pfPct}%`;
+    barSalTax.style.width = `${taxPct}%`;
+
+    lblChartTakehome.textContent = `Net Take-Home: ${formatINR(activeInHandMonthly)} (${inHandPct}%)`;
+    lblChartPf.textContent = `EPF & PT: ${formatINR(monthlyEmployeePf + ptMonthly)} (${pfPct}%)`;
+    lblChartTax.textContent = `Tax/TDS: ${formatINR(activeMonthlyTds)} (${taxPct}%)`;
+
+    // Handle Comparison Drawer
+    if (regime === 'compare') {
+      cardSalComparison.classList.remove('hidden');
+      const higher = newInHandMonthly >= oldInHandMonthly ? 'New Tax Regime' : 'Old Tax Regime';
+      const monthlyDiff = Math.abs(newInHandMonthly - oldInHandMonthly);
+      const annualDiff = Math.abs(newInHandAnnual - oldInHandAnnual);
+
+      txtSalComparisonRec.textContent = `Based on standard allowances, ${higher} provides ₹${monthlyDiff.toLocaleString('en-IN')} higher monthly take-home pay (₹${annualDiff.toLocaleString('en-IN')}/yr savings)!`;
+
+      salCmpTbody.innerHTML = `
+        <tr><td class="p-2.5 font-bold">Estimated Annual Tax / TDS</td><td class="p-2.5 text-right font-bold text-blue-600">${formatINR(newTaxAnnual)}</td><td class="p-2.5 text-right font-bold">${formatINR(oldTaxAnnual)}</td></tr>
+        <tr><td class="p-2.5">Estimated Monthly TDS</td><td class="p-2.5 text-right">${formatINR(newMonthlyTds)}</td><td class="p-2.5 text-right">${formatINR(oldMonthlyTds)}</td></tr>
+        <tr class="bg-emerald-50/50 dark:bg-emerald-950/20 font-bold"><td class="p-2.5">Monthly Take-Home Pay</td><td class="p-2.5 text-right text-emerald-600">${formatINR(newInHandMonthly)}</td><td class="p-2.5 text-right text-slate-900 dark:text-white">${formatINR(oldInHandMonthly)}</td></tr>
+        <tr class="bg-slate-50 dark:bg-slate-800/80 font-black text-sm"><td class="p-2.5">Annual Take-Home Pay</td><td class="p-2.5 text-right text-emerald-600">${formatINR(newInHandAnnual)}</td><td class="p-2.5 text-right text-slate-900 dark:text-white">${formatINR(oldInHandAnnual)}</td></tr>
+      `;
+    } else {
+      cardSalComparison.classList.add('hidden');
+    }
+
+    // Render Table
+    renderBreakdownTable();
+
+    salResultsSection.classList.remove('hidden');
+  }
+
+  // Render Table
+  function renderBreakdownTable() {
+    if (!lastCalculatedSalary) return;
+
+    const s = lastCalculatedSalary;
+    const isMonthly = activeBreakdownView === 'monthly';
+    thSalAmount.textContent = isMonthly ? 'Monthly Amount (₹)' : 'Annual Amount (₹)';
+
+    const rows = [
+      { name: 'Basic Salary', cat: 'Earning', val: isMonthly ? s.monthlyBasic : s.annualBasic, isEarn: true },
+      { name: 'House Rent Allowance (HRA)', cat: 'Earning', val: isMonthly ? s.monthlyHra : s.annualHra, isEarn: true },
+      { name: 'Special / Other Allowances', cat: 'Earning', val: isMonthly ? s.monthlySpecial : s.annualSpecial, isEarn: true },
+    ];
+
+    if (s.annualBonus > 0) {
+      rows.push({
+        name: 'Performance Bonus / Variable',
+        cat: 'Earning',
+        val: isMonthly ? Math.round(s.annualBonus / 12) : s.annualBonus,
+        isEarn: true
+      });
+    }
+
+    rows.push({
+      name: 'Gross Total Salary',
+      cat: 'Total Earning',
+      val: isMonthly ? s.monthlyGross : s.annualGross + s.annualBonus,
+      isBold: true
+    });
+
+    rows.push(
+      { name: 'Employee Provident Fund (EPF 12%)', cat: 'Deduction', val: isMonthly ? s.monthlyEmployeePf : s.annualEmployeePf, isDeduct: true },
+      { name: 'Professional Tax (PT)', cat: 'Deduction', val: isMonthly ? s.monthlyPt : s.annualPt, isDeduct: true },
+      { name: 'Estimated Income Tax / TDS', cat: 'Deduction', val: isMonthly ? s.activeMonthlyTds : s.activeAnnualTds, isDeduct: true }
+    );
+
+    if (s.monthlyOther > 0) {
+      rows.push({ name: 'Insurance & Other Deductions', cat: 'Deduction', val: isMonthly ? s.monthlyOther : s.annualOther, isDeduct: true });
+    }
+
+    rows.push({
+      name: 'Total Deductions',
+      cat: 'Total Deduction',
+      val: isMonthly ? s.activeTotalMonthlyDeduct : s.activeTotalAnnualDeduct,
+      isBold: true,
+      isDeductTotal: true
+    });
+
+    rows.push({
+      name: 'Net Take-Home Salary (In-Hand)',
+      cat: 'Net Pay',
+      val: isMonthly ? s.activeInHandMonthly : s.activeInHandAnnual,
+      isFinal: true
+    });
+
+    salBreakdownTbody.innerHTML = rows.map((r) => {
+      let trClass = 'hover:bg-slate-50 dark:hover:bg-slate-800/50';
+      let valClass = 'text-slate-900 dark:text-white';
+
+      if (r.isFinal) {
+        trClass = 'bg-emerald-50 dark:bg-emerald-950/30 font-black text-sm';
+        valClass = 'text-emerald-600 dark:text-emerald-400';
+      } else if (r.isBold) {
+        trClass = 'bg-slate-100/70 dark:bg-slate-800/80 font-bold';
+      } else if (r.isDeduct) {
+        valClass = 'text-red-600 dark:text-red-400';
+      }
+
+      return `
+        <tr class="${trClass}">
+          <td class="p-2.5 font-bold ${r.isFinal ? 'text-emerald-700 dark:text-emerald-300' : ''}">${r.name}</td>
+          <td class="p-2.5 text-slate-500 dark:text-slate-400">${r.cat}</td>
+          <td class="p-2.5 text-right font-bold ${valClass}">${r.isDeduct ? '- ' : ''}${formatINR(r.val)}</td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // Switch View Tabs
+  tabSalMonthly.addEventListener('click', () => {
+    activeBreakdownView = 'monthly';
+    tabSalMonthly.className = 'active rounded-lg bg-white px-3 py-1 text-slate-900 shadow-xs dark:bg-slate-900 dark:text-white cursor-pointer';
+    tabSalAnnual.className = 'rounded-lg px-3 py-1 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer';
+    renderBreakdownTable();
+  });
+
+  tabSalAnnual.addEventListener('click', () => {
+    activeBreakdownView = 'annual';
+    tabSalAnnual.className = 'active rounded-lg bg-white px-3 py-1 text-slate-900 shadow-xs dark:bg-slate-900 dark:text-white cursor-pointer';
+    tabSalMonthly.className = 'rounded-lg px-3 py-1 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer';
+    renderBreakdownTable();
+  });
+
+  btnCalcSal.addEventListener('click', executeSalaryCalculation);
+
+  btnClearSal.addEventListener('click', () => {
+    inpSalAmount.value = '1200000';
+    inpSalBonus.value = '100000';
+    inpSalBasicPct.value = '45';
+    inpSalHraPct.value = '20';
+    inpSalPt.value = '200';
+    inpSalOtherDeduct.value = '500';
+    selSalRegime.value = 'new';
+    errSal.classList.add('hidden');
+    salResultsSection.classList.add('hidden');
+    lastCalculatedSalary = null;
+    switchSalaryType('ctc');
+  });
+
+  // Preset Buttons Listener
+  document.querySelectorAll('.btn-sal-preset').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const type = btn.getAttribute('data-type');
+      const amt = btn.getAttribute('data-amt');
+      const bonus = btn.getAttribute('data-bonus');
+
+      switchSalaryType(type);
+      if (amt) inpSalAmount.value = amt;
+      if (bonus) inpSalBonus.value = bonus;
+    });
+  });
+
+  // Enter Key Listener
+  document.querySelectorAll('form').forEach((form) => {
+    form.querySelectorAll('input, select').forEach((el) => {
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          executeSalaryCalculation();
+        }
+      });
+    });
+  });
+
+  // Download PDF Functionality
+  async function generateSalPdf() {
+    if (!lastCalculatedSalary) {
+      alert('Please calculate your take-home pay first.');
+      return;
+    }
+
+    btnSalDownloadPdf.disabled = true;
+    const originalText = txtBtnSalPdf.textContent;
+    txtBtnSalPdf.textContent = 'Generating PDF...';
+
+    try {
+      if (!window.jspdf) {
+        await new Promise((resolve, reject) => {
+          const s1 = document.createElement('script');
+          s1.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+          s1.onload = () => {
+            const s2 = document.createElement('script');
+            s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+            s2.onload = resolve;
+            s2.onerror = reject;
+            document.head.appendChild(s2);
+          };
+          s1.onerror = reject;
+          document.head.appendChild(s1);
+        });
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+      // 1. Header Branding
+      doc.setFillColor(37, 99, 235); // Blue #2563eb
+      doc.rect(0, 0, 210, 20, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(15);
+      doc.setFont('helvetica', 'bold');
+      doc.text('AIFreecalculator.com', 14, 13);
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Free Online Calculator Tools', 210 - 14, 13, { align: 'right' });
+
+      // 2. Document Title
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text('Salary & Take-Home Pay Calculation', 14, 29);
+
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Generated on: ${dateStr}`, 210 - 14, 29, { align: 'right' });
+
+      // 3. Calculation Summary Box
+      doc.setDrawColor(226, 232, 240);
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(14, 33, 182, 28, 2, 2, 'FD');
+
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(51, 65, 85);
+      doc.text('PAYROLL SUMMARY', 18, 38);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(71, 85, 105);
+      doc.text(`Annual CTC: Rs. ${lastCalculatedSalary.annualCtc.toLocaleString('en-IN')}`, 18, 44);
+      doc.text(`Monthly Gross: Rs. ${lastCalculatedSalary.monthlyGross.toLocaleString('en-IN')}`, 18, 49);
+      doc.text(`Tax Regime: ${lastCalculatedSalary.regime === 'compare' ? 'Comparison Mode' : lastCalculatedSalary.regime === 'new' ? 'New Tax Regime' : 'Old Tax Regime'}`, 18, 54);
+
+      doc.text(`Monthly EPF: Rs. ${lastCalculatedSalary.monthlyEmployeePf.toLocaleString('en-IN')}`, 85, 44);
+      doc.text(`Monthly TDS: Rs. ${lastCalculatedSalary.activeMonthlyTds.toLocaleString('en-IN')}`, 85, 49);
+      doc.text(`Monthly Deductions: Rs. ${lastCalculatedSalary.activeTotalMonthlyDeduct.toLocaleString('en-IN')}`, 85, 54);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(16, 185, 129);
+      doc.text(`Monthly In-Hand: Rs. ${lastCalculatedSalary.activeInHandMonthly.toLocaleString('en-IN')}`, 140, 46);
+      doc.setTextColor(37, 99, 235);
+      doc.text(`Annual In-Hand: Rs. ${lastCalculatedSalary.activeInHandAnnual.toLocaleString('en-IN')}`, 140, 52);
+
+      // 4. Breakdown Table
+      const s = lastCalculatedSalary;
+      const isMonthly = activeBreakdownView === 'monthly';
+
+      const tableData = [
+        ['Basic Salary', 'Earning', 'Rs. ' + (isMonthly ? s.monthlyBasic : s.annualBasic).toLocaleString('en-IN')],
+        ['House Rent Allowance (HRA)', 'Earning', 'Rs. ' + (isMonthly ? s.monthlyHra : s.annualHra).toLocaleString('en-IN')],
+        ['Special / Other Allowances', 'Earning', 'Rs. ' + (isMonthly ? s.monthlySpecial : s.annualSpecial).toLocaleString('en-IN')],
+      ];
+
+      if (s.annualBonus > 0) {
+        tableData.push(['Performance Bonus', 'Earning', 'Rs. ' + (isMonthly ? Math.round(s.annualBonus / 12) : s.annualBonus).toLocaleString('en-IN')]);
+      }
+
+      tableData.push(
+        ['Gross Total Salary', 'Total Earning', 'Rs. ' + (isMonthly ? s.monthlyGross : s.annualGross + s.annualBonus).toLocaleString('en-IN')],
+        ['Employee EPF (12%)', 'Deduction', '- Rs. ' + (isMonthly ? s.monthlyEmployeePf : s.annualEmployeePf).toLocaleString('en-IN')],
+        ['Professional Tax (PT)', 'Deduction', '- Rs. ' + (isMonthly ? s.monthlyPt : s.annualPt).toLocaleString('en-IN')],
+        ['Estimated Income Tax / TDS', 'Deduction', '- Rs. ' + (isMonthly ? s.activeMonthlyTds : s.activeAnnualTds).toLocaleString('en-IN')]
+      );
+
+      if (s.monthlyOther > 0) {
+        tableData.push(['Insurance / Other', 'Deduction', '- Rs. ' + (isMonthly ? s.monthlyOther : s.annualOther).toLocaleString('en-IN')]);
+      }
+
+      tableData.push(
+        ['Total Deductions', 'Total Deduction', '- Rs. ' + (isMonthly ? s.activeTotalMonthlyDeduct : s.activeTotalAnnualDeduct).toLocaleString('en-IN')],
+        ['Net Take-Home Pay (In-Hand)', 'Net Pay', 'Rs. ' + (isMonthly ? s.activeInHandMonthly : s.activeInHandAnnual).toLocaleString('en-IN')]
+      );
+
+      doc.autoTable({
+        startY: 65,
+        head: [['Component', 'Category', isMonthly ? 'Monthly Amount' : 'Annual Amount']],
+        body: tableData,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [37, 99, 235],
+          textColor: [255, 255, 255],
+          fontSize: 8,
+          fontStyle: 'bold',
+          halign: 'center'
+        },
+        columnStyles: {
+          0: { cellWidth: 80, halign: 'left', fontStyle: 'bold' },
+          1: { halign: 'center' },
+          2: { halign: 'right', fontStyle: 'bold' }
+        },
+        styles: {
+          fontSize: 7.5,
+          cellPadding: 2,
+          font: 'helvetica'
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252]
+        },
+        margin: { top: 22, bottom: 18, left: 14, right: 14 },
+        didDrawPage: function (data) {
+          const pageCount = doc.internal.getNumberOfPages();
+          const currentPage = data.pageNumber;
+
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(148, 163, 184);
+
+          doc.text('Generated using AIFreecalculator.com', 14, 290);
+          doc.text(`Page ${currentPage} of ${pageCount}`, 210 - 14, 290, { align: 'right' });
+        }
+      });
+
+      const today = new Date().toISOString().split('T')[0];
+      doc.save(`salary-take-home-pay-${today}.pdf`);
+    } catch (err) {
+      console.error('PDF Generation Error:', err);
+      alert('An error occurred while generating the PDF. Please try again.');
+    } finally {
+      btnSalDownloadPdf.disabled = false;
+      txtBtnSalPdf.textContent = originalText;
+    }
+  }
+
+  btnSalDownloadPdf.addEventListener('click', generateSalPdf);
+</script>

@@ -1,0 +1,733 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CalculatorCard from '../components/CalculatorCard.astro';
+import CategoryTabs from '../components/CategoryTabs.astro';
+import AdSlotTop from '../components/ads/AdSlotTop.astro';
+import AdSlotFooter from '../components/ads/AdSlotFooter.astro';
+import { calculators, categories, getFeaturedCalculators } from '../data/calculators';
+
+const featuredCalculators = getFeaturedCalculators();
+
+const stats = [
+  { value: `${calculators.length}+`, label: 'Active Calculators' },
+  { value: `${categories.length}`, label: 'Core Categories' },
+  { value: '100%', label: 'Free Forever' },
+  { value: '0ms', label: 'Instant Execution' },
+];
+
+const categoryCounts = categories.reduce<Record<string, number>>((acc, cat) => {
+  acc[cat.name.toLowerCase()] = calculators.filter((c) => c.category.toLowerCase() === cat.name.toLowerCase()).length;
+  return acc;
+}, {});
+---
+
+<BaseLayout
+  title="Free Online Calculators for Finance, Health, Construction & More | AIFreeCalculator"
+  description="Use free online calculators for finance, health, construction, education, percentages, conversions, time and everyday calculations."
+>
+  <Fragment slot="head">
+    <!-- WebSite & Organization JSON-LD Schema -->
+    <script
+      type="application/ld+json"
+      is:inline
+      set:html={JSON.stringify({
+        '@context': 'https://schema.org',
+        '@graph': [
+          {
+            '@type': 'WebSite',
+            name: 'AIFreeCalculator',
+            url: 'https://aifreecalculator.com/',
+            description: 'Free online calculators for finance, health, construction, education, percentages, conversions, time and everyday calculations.',
+            potentialAction: {
+              '@type': 'SearchAction',
+              target: 'https://aifreecalculator.com/?q={search_term_string}',
+              'query-input': 'required name=search_term_string',
+            },
+          },
+          {
+            '@type': 'Organization',
+            name: 'AIFreeCalculator',
+            url: 'https://aifreecalculator.com/',
+            logo: 'https://aifreecalculator.com/favicon.svg',
+          },
+        ],
+      })}
+    />
+  </Fragment>
+
+  <!-- Hero Section -->
+  <section class="relative overflow-hidden border-b border-slate-200 bg-white px-4 py-16 sm:py-24 dark:border-slate-800 dark:bg-slate-900/40">
+    <div class="pointer-events-none absolute inset-0">
+      <div class="absolute left-1/2 top-0 h-96 w-96 -translate-x-1/2 rounded-full bg-blue-500/10 blur-3xl dark:bg-blue-500/15"></div>
+    </div>
+
+    <div class="relative mx-auto max-w-5xl text-center">
+      <div class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3.5 py-1.5 text-xs font-bold tracking-wide text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/60 dark:text-blue-400">
+        <span class="h-2 w-2 rounded-full bg-blue-600 dark:bg-blue-400 animate-pulse"></span>
+        {calculators.length}+ PRO CALCULATION ENGINES
+      </div>
+
+      <h1 class="mx-auto mt-6 max-w-4xl text-3xl font-black tracking-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
+        Free Online Calculators for
+        <span class="block bg-gradient-to-r from-blue-600 via-indigo-600 to-sky-500 bg-clip-text text-transparent">
+          Work, Finance, Health & Everyday Needs
+        </span>
+      </h1>
+
+      <p class="mx-auto mt-5 max-w-2xl text-sm leading-relaxed text-slate-600 dark:text-slate-300 sm:text-base">
+        AIFreeCalculator.com offers free online calculators for finance, loans, investments, health, education, construction, conversions, time and everyday calculations.
+      </p>
+
+      <!-- Instant Search Box with Live Autocomplete -->
+      <div class="relative mx-auto mt-8 max-w-xl text-left">
+        <div class="relative">
+          <input
+            type="text"
+            id="main-calculator-search"
+            aria-label="Search calculators"
+            placeholder="Search by keyword (e.g. slab steel, emi, income tax, bmi, concrete)..."
+            class="w-full rounded-2xl border border-slate-300 bg-white py-4 pl-12 pr-12 text-sm font-medium text-slate-900 shadow-lg shadow-slate-200/50 focus:border-blue-500 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-white dark:shadow-none transition"
+            autocomplete="off"
+          />
+          <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+          </div>
+          <!-- Clear Button -->
+          <button
+            type="button"
+            id="hero-search-clear"
+            aria-label="Clear search query"
+            class="hidden absolute inset-y-0 right-0 flex items-center pr-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition"
+          >
+            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Hero Quick Search Dropdown -->
+        <div
+          id="hero-search-dropdown"
+          class="hidden absolute left-0 right-0 top-full z-30 mt-2 rounded-2xl border border-slate-200 bg-white shadow-2xl transition-all dark:border-slate-800 dark:bg-slate-900 overflow-hidden"
+        >
+          <div id="hero-dropdown-items" class="max-h-72 overflow-y-auto p-2 divide-y divide-slate-100 dark:divide-slate-800/60">
+            <!-- Populated via JS -->
+          </div>
+          <div id="hero-dropdown-footer" class="border-t border-slate-100 bg-slate-50 px-4 py-2.5 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-950 flex items-center justify-between">
+            <span id="hero-match-count">0 tools match</span>
+            <button
+              type="button"
+              id="hero-jump-directory-btn"
+              class="font-semibold text-blue-600 hover:underline dark:text-blue-400 flex items-center gap-1"
+            >
+              <span>View full directory</span>
+              <span>↓</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="mx-auto mt-12 grid max-w-3xl grid-cols-2 gap-3 sm:grid-cols-4">
+        {stats.map((stat) => (
+          <div class="rounded-2xl border border-slate-200/80 bg-white/80 p-4 backdrop-blur-xs dark:border-slate-800 dark:bg-slate-900/60 transition hover:border-blue-500/30">
+            <div class="text-2xl font-black text-slate-900 dark:text-white">{stat.value}</div>
+            <div class="mt-1 text-xs font-medium text-slate-500 dark:text-slate-400">{stat.label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Top Ad Slot -->
+  <div class="mx-auto max-w-7xl px-4">
+    <AdSlotTop />
+  </div>
+
+  <!-- Categories Section -->
+  <section class="border-b border-slate-200/80 bg-slate-50 px-4 py-12 dark:border-slate-800 dark:bg-slate-950">
+    <div class="mx-auto max-w-7xl">
+      <div class="flex items-center justify-between mb-8">
+        <div>
+          <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-2xl">
+            Browse By Category
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Choose your specialized calculation suite
+          </p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {categories.map((cat) => {
+          const count = calculators.filter((c) => c.category === cat.name).length;
+          return (
+            <a
+              href={cat.path}
+              class="group relative flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-xs transition-all duration-200 hover:-translate-y-1 hover:border-blue-500/40 hover:shadow-lg dark:border-slate-800 dark:bg-slate-900/70 dark:hover:border-blue-500/40"
+            >
+              <div>
+                <div class="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-50 text-2xl group-hover:scale-110 transition-transform dark:bg-slate-800">
+                  {cat.icon}
+                </div>
+                <h3 class="mt-4 text-base font-bold text-slate-900 group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400">
+                  {cat.name}
+                </h3>
+                <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">
+                  {cat.description}
+                </p>
+              </div>
+              <div class="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 text-xs font-semibold text-slate-600 dark:border-slate-800 dark:text-slate-300">
+                <span>{count} Tools</span>
+                <span class="text-blue-600 dark:text-blue-400 group-hover:translate-x-1 transition-transform">→</span>
+              </div>
+            </a>
+          );
+        })}
+      </div>
+    </div>
+  </section>
+
+  <!-- Featured Popular Calculators -->
+  <section class="border-b border-slate-200/80 bg-white px-4 py-12 dark:border-slate-800 dark:bg-slate-900/30">
+    <div class="mx-auto max-w-7xl">
+      <div class="mb-8 flex items-center justify-between">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">
+            🔥 TRENDING NOW
+          </span>
+          <h2 class="mt-1 text-xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-2xl">
+            Featured Popular Tools
+          </h2>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {featuredCalculators.slice(0, 6).map((calculator) => (
+          <CalculatorCard calculator={calculator} />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Complete Directory of All Calculators (Searchable with In-Page Filtering) -->
+  <section id="all-calculators" class="bg-slate-50/70 px-4 py-12 dark:bg-slate-950">
+    <div class="mx-auto max-w-7xl space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            All Calculators Directory
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Complete list of {calculators.length}+ verified calculation tools
+          </p>
+        </div>
+
+        <!-- In-Page Interactive Category Filter Pills -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-2 scrollbar-none" id="directory-category-filters">
+          <button
+            type="button"
+            data-category="all"
+            class="directory-filter-btn active inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-all bg-blue-600 text-white shadow-md shadow-blue-500/20"
+          >
+            <span>✨</span>
+            <span>All ({calculators.length})</span>
+          </button>
+          {categories.map((cat) => {
+            const count = categoryCounts[cat.name.toLowerCase()] || 0;
+            return (
+              <button
+                type="button"
+                data-category={cat.name.toLowerCase()}
+                class="directory-filter-btn inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 transition-all"
+              >
+                <span>{cat.icon}</span>
+                <span>{cat.name} ({count})</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <!-- Directory Status & Active Query Bar -->
+      <div id="directory-status-bar" class="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+        <span id="directory-count-label">Showing all {calculators.length} calculators</span>
+        <button
+          type="button"
+          id="reset-filter-btn"
+          class="hidden text-blue-600 hover:underline dark:text-blue-400 font-semibold cursor-pointer"
+        >
+          Reset filters ✕
+        </button>
+      </div>
+
+      <!-- Live Search Grid -->
+      <div id="calculators-grid" class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {calculators.map((calculator) => (
+          <div
+            class="calculator-item"
+            data-name={calculator.name.toLowerCase()}
+            data-category={calculator.category.toLowerCase()}
+            data-keywords={(calculator.keywords || []).join(' ').toLowerCase()}
+            data-desc={calculator.description.toLowerCase()}
+          >
+            <CalculatorCard calculator={calculator} />
+          </div>
+        ))}
+      </div>
+
+      <!-- Empty State -->
+      <div id="no-results" class="hidden rounded-3xl border border-dashed border-slate-300 bg-white p-12 text-center dark:border-slate-800 dark:bg-slate-900/40">
+        <div class="text-4xl mb-3">🔍</div>
+        <h3 class="text-base font-bold text-slate-900 dark:text-white">No calculators found</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
+          We couldn't find any calculator matching your current search or category filter.
+        </p>
+        <div class="mt-4 flex flex-wrap justify-center gap-2">
+          <button type="button" class="quick-suggest-btn rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700" data-query="emi">💳 Loan EMI</button>
+          <button type="button" class="quick-suggest-btn rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700" data-query="slab steel">🏗️ Slab Steel</button>
+          <button type="button" class="quick-suggest-btn rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700" data-query="income tax">💰 Income Tax</button>
+          <button type="button" class="quick-suggest-btn rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700" data-query="bmi">⚖️ BMI</button>
+          <button type="button" class="quick-suggest-btn rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-700 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700" data-query="sip">📈 SIP</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========================================================= -->
+  <!-- NEW SEO CONTENT SECTION (Between Directory & Bottom Ad) -->
+  <!-- ========================================================= -->
+  <section class="border-t border-slate-200 bg-white px-4 py-14 dark:border-slate-800 dark:bg-slate-900/30">
+    <div class="mx-auto max-w-4xl space-y-12 text-slate-700 dark:text-slate-300 leading-relaxed text-sm">
+      
+      <!-- 1. Free Online Calculators in One Place -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          Free Online Calculators in One Place
+        </h2>
+        <p>
+          AIFreeCalculator.com brings together a comprehensive suite of free, accurate online calculation tools designed for everyday problem solving, financial planning, civil engineering estimates, and wellness tracking. Whether you are figuring out monthly loan and EMI payments, calculating investment growth through systematic investment planning, evaluating percentage increases, or finding GPA and CGPA scores, our platform delivers fast and transparent calculations without requiring account sign-ups or subscription fees.
+        </p>
+        <p>
+          From structural concrete material breakups and steel reinforcement bar bending schedules to resting BMR, daily calorie needs, BMI classifications, and time or date difference calculations, each tool runs instantly directly in your browser with step-by-step mathematical explanations.
+        </p>
+      </section>
+
+      <!-- 2. Explore Calculator Categories -->
+      <section class="space-y-4">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          Explore Calculator Categories
+        </h2>
+        <p>
+          Our calculation engines are organized into dedicated categories to help you quickly navigate directly to the specific solution you need:
+        </p>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 text-xs sm:text-sm">
+          <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+            <h3 class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span>💰</span> <a href="/finance/" class="hover:text-blue-600 dark:hover:text-blue-400 underline decoration-slate-300">Finance & Money</a>
+            </h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Loan and EMI calculators, SIP wealth estimators, compound interest, Indian income tax comparisons, salary take-home pay, and mortgage planning.
+            </p>
+          </div>
+
+          <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+            <h3 class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span>📐</span> <a href="/math/" class="hover:text-blue-600 dark:hover:text-blue-400 underline decoration-slate-300">Math & Everyday Use</a>
+            </h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Academic GPA and CGPA tools, percentage changes, fraction arithmetic, scientific math engines, and standard deviation calculations.
+            </p>
+          </div>
+
+          <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+            <h3 class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span>❤️</span> <a href="/health/" class="hover:text-blue-600 dark:hover:text-blue-400 underline decoration-slate-300">Health & Fitness</a>
+            </h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Resting BMR calculators, daily maintenance calorie targets (TDEE), body fat percentages using Navy formulas, and general BMI assessments.
+            </p>
+          </div>
+
+          <div class="rounded-xl border border-slate-200 p-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+            <h3 class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span>🏗️</span> <a href="/construction/" class="hover:text-blue-600 dark:hover:text-blue-400 underline decoration-slate-300">Construction & Engineering</a>
+            </h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Civil engineering tools for concrete mix design, brickwork mortar ratios, plaster materials, and RCC beam, column, footing, and slab steel BOQ.
+            </p>
+          </div>
+
+          <div class="sm:col-span-2 rounded-xl border border-slate-200 p-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+            <h3 class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span>⚙️</span> <a href="/general/" class="hover:text-blue-600 dark:hover:text-blue-400 underline decoration-slate-300">Conversions & Time</a>
+            </h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Universal weight converters (kg, lbs, stones, gold Troy ounces), height converters (ft/in to cm), elapsed time arithmetic, and exact date difference tools.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. Simple Calculations, Clear Results -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          Simple Calculations, Clear Results
+        </h2>
+        <p>
+          We believe calculation tools should be intuitive, transparent, and uncluttered. Using any tool across our directory follows a straightforward workflow:
+        </p>
+        <ol class="list-decimal space-y-1.5 pl-5 text-xs sm:text-sm">
+          <li><strong>Choose your tool:</strong> Select the calculator matching your calculation goal.</li>
+          <li><strong>Enter your parameters:</strong> Input your project measurements, financial numbers, or biometric values.</li>
+          <li><strong>Toggle units:</strong> Switch seamlessly between Metric and Imperial units where supported.</li>
+          <li><strong>Click Calculate:</strong> Trigger instant, mathematically verified calculations without waiting for server reload delays.</li>
+          <li><strong>Review your breakdown:</strong> Inspect formatted results, formula explanations, visual schedules, and downloadable PDF reports where available.</li>
+        </ol>
+      </section>
+
+      <!-- 4. Calculators for Work, Study, Planning and Daily Life -->
+      <section class="space-y-4">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          Calculators for Work, Study, Planning and Daily Life
+        </h2>
+        <p>
+          Our platform is tailored to support a wide spectrum of users facing diverse mathematical and planning challenges:
+        </p>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 text-xs sm:text-sm">
+          <div class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800">
+            <h3 class="font-bold text-slate-900 dark:text-white">Students & Learners</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Calculate semester GPA, cumulative CGPA, solve multi-step fractions, evaluate statistical variance, or execute complex scientific expressions with clear step-by-step math breakdowns.
+            </p>
+          </div>
+
+          <div class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800">
+            <h3 class="font-bold text-slate-900 dark:text-white">Financial Planning</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Model personal loan EMIs, simulate long-term mutual fund SIP compounding, compare Indian New vs. Old Tax Slabs, and structure auto or home mortgage repayment schedules.
+            </p>
+          </div>
+
+          <div class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800">
+            <h3 class="font-bold text-slate-900 dark:text-white">Construction Professionals</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Estimate quantities for cement, sand, aggregate, standard red bricks, plaster mortar, structural RCC bar bending schedules, and steel reinforcement tonnage directly for site BOQ preparation.
+            </p>
+          </div>
+
+          <div class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800">
+            <h3 class="font-bold text-slate-900 dark:text-white">Health & Fitness</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Estimate resting basal metabolism (BMR) with Mifflin-St Jeor and Harris-Benedict equations, calculate daily calorie expenditure (TDEE), and estimate body fat percentage using circumference measurements.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 5. Why Use AIFreeCalculator.com? -->
+      <section class="space-y-4">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          Why Use AIFreeCalculator.com?
+        </h2>
+        <p>
+          We focus on providing clean, dependable, and high-performance calculation utilities built for privacy and convenience:
+        </p>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 text-xs">
+          <div class="rounded-xl border border-slate-200 p-3.5 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/60">
+            <div class="text-xl mb-1">🎁</div>
+            <h3 class="font-bold text-slate-900 dark:text-white">Free to Use</h3>
+            <p class="mt-1 text-slate-500 dark:text-slate-400">No account registrations, no locked premium paywalls, and no hidden subscriptions.</p>
+          </div>
+
+          <div class="rounded-xl border border-slate-200 p-3.5 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/60">
+            <div class="text-xl mb-1">⚡</div>
+            <h3 class="font-bold text-slate-900 dark:text-white">Fast Results</h3>
+            <p class="mt-1 text-slate-500 dark:text-slate-400">Calculations run locally on your device for instant results with zero server delay.</p>
+          </div>
+
+          <div class="rounded-xl border border-slate-200 p-3.5 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/60">
+            <div class="text-xl mb-1">🎯</div>
+            <h3 class="font-bold text-slate-900 dark:text-white">Simple Inputs</h3>
+            <p class="mt-1 text-slate-500 dark:text-slate-400">Streamlined form layouts with smart biometric and engineering unit switchers.</p>
+          </div>
+
+          <div class="rounded-xl border border-slate-200 p-3.5 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-900/60">
+            <div class="text-xl mb-1">🗂️</div>
+            <h3 class="font-bold text-slate-900 dark:text-white">Multiple Categories</h3>
+            <p class="mt-1 text-slate-500 dark:text-slate-400">Explore financial, engineering, wellness, academic, and unit conversion suites in one place.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. Important Information -->
+      <section class="rounded-xl border border-amber-200 bg-amber-50/60 p-4 text-xs sm:text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300 space-y-2">
+        <h3 class="font-bold text-amber-950 dark:text-amber-200">
+          Important Information
+        </h3>
+        <p>
+          All calculations provided on this website are mathematical estimates based on user-entered values, standardized empirical formulas, and general baseline assumptions. Real-world financial interest rates, tax liability rules, construction material wastage factors, and individual health parameters may vary depending on local regulations, specific site conditions, or clinical circumstances. We encourage verifying critical financial, structural, or medical decisions with appropriately qualified professionals or official authorities.
+        </p>
+      </section>
+
+      <!-- 7. Final CTA -->
+      <section class="rounded-2xl border border-blue-100 bg-gradient-to-br from-blue-50/80 to-indigo-50/50 p-6 text-center dark:border-blue-900/40 dark:from-blue-950/30 dark:to-indigo-950/20 space-y-3">
+        <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white">
+          Find the Calculator You Need
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 max-w-xl mx-auto">
+          Browse our growing collection of free online calculators and choose the tool that matches your calculation needs.
+        </p>
+        <div class="pt-1">
+          <a
+            href="#all-calculators"
+            class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md shadow-blue-500/20 transition hover:bg-blue-700 active:scale-95 cursor-pointer"
+          >
+            <span>Explore All Calculators</span>
+            <span>↓</span>
+          </a>
+        </div>
+      </section>
+
+    </div>
+  </section>
+
+  <!-- Bottom Ad -->
+  <div class="mx-auto max-w-7xl px-4">
+    <AdSlotFooter />
+  </div>
+
+  <!-- Client-side Interactive Search & Category Filter Script inside BaseLayout -->
+  <script is:inline>
+    (function initHomePageEngine() {
+      const searchInput = document.getElementById('main-calculator-search');
+      const searchClearBtn = document.getElementById('hero-search-clear');
+      const searchDropdown = document.getElementById('hero-search-dropdown');
+      const dropdownItems = document.getElementById('hero-dropdown-items');
+      const matchCountLabel = document.getElementById('hero-match-count');
+      const jumpDirectoryBtn = document.getElementById('hero-jump-directory-btn');
+
+      const items = Array.from(document.querySelectorAll('.calculator-item'));
+      const noResults = document.getElementById('no-results');
+      const filterBtns = Array.from(document.querySelectorAll('.directory-filter-btn'));
+      const directoryCountLabel = document.getElementById('directory-count-label');
+      const resetFilterBtn = document.getElementById('reset-filter-btn');
+      const quickSuggestBtns = Array.from(document.querySelectorAll('.quick-suggest-btn'));
+
+      let activeCategory = 'all';
+      let currentQuery = '';
+
+      function filterDirectory() {
+        let matchCount = 0;
+        const q = currentQuery.toLowerCase().trim();
+
+        items.forEach((item) => {
+          const name = item.getAttribute('data-name') || '';
+          const cat = item.getAttribute('data-category') || '';
+          const kw = item.getAttribute('data-keywords') || '';
+          const desc = item.getAttribute('data-desc') || '';
+
+          const matchCat = activeCategory === 'all' || cat === activeCategory.toLowerCase();
+          const matchQ = !q || name.includes(q) || cat.includes(q) || kw.includes(q) || desc.includes(q);
+
+          if (matchCat && matchQ) {
+            item.classList.remove('hidden');
+            matchCount++;
+          } else {
+            item.classList.add('hidden');
+          }
+        });
+
+        if (noResults) {
+          if (matchCount === 0) {
+            noResults.classList.remove('hidden');
+          } else {
+            noResults.classList.add('hidden');
+          }
+        }
+
+        if (directoryCountLabel) {
+          if (!q && activeCategory === 'all') {
+            directoryCountLabel.textContent = `Showing all ${items.length} calculators`;
+          } else if (q && activeCategory !== 'all') {
+            directoryCountLabel.textContent = `Found ${matchCount} ${activeCategory} calculators for "${q}"`;
+          } else if (q) {
+            directoryCountLabel.textContent = `Found ${matchCount} calculators matching "${q}"`;
+          } else {
+            directoryCountLabel.textContent = `Showing ${matchCount} ${activeCategory} calculators`;
+          }
+        }
+
+        if (resetFilterBtn) {
+          if (q || activeCategory !== 'all') {
+            resetFilterBtn.classList.remove('hidden');
+          } else {
+            resetFilterBtn.classList.add('hidden');
+          }
+        }
+      }
+
+      function updateHeroDropdown() {
+        const q = currentQuery.toLowerCase().trim();
+        if (!q) {
+          if (searchDropdown) searchDropdown.classList.add('hidden');
+          if (searchClearBtn) searchClearBtn.classList.add('hidden');
+          return;
+        }
+
+        if (searchClearBtn) searchClearBtn.classList.remove('hidden');
+
+        const allData = window.__CALCULATORS_DATA__ || [];
+        const matches = allData.filter((c) => {
+          const nameMatch = c.name.toLowerCase().includes(q);
+          const descMatch = (c.desc || '').toLowerCase().includes(q);
+          const kwMatch = (c.keywords || []).some((k) => k.toLowerCase().includes(q));
+          const catMatch = c.category.toLowerCase().includes(q);
+          return nameMatch || descMatch || kwMatch || catMatch;
+        });
+
+        if (matchCountLabel) {
+          matchCountLabel.textContent = `${matches.length} ${matches.length === 1 ? 'tool' : 'tools'} match`;
+        }
+
+        if (dropdownItems) {
+          if (matches.length === 0) {
+            dropdownItems.innerHTML = `
+              <div class="py-4 text-center text-xs text-slate-400">
+                <p class="font-semibold text-slate-600 dark:text-slate-300">No calculators found for "${q}"</p>
+                <p class="mt-0.5">Try searching 'EMI', 'Concrete', 'Tax', or 'BMI'</p>
+              </div>
+            `;
+          } else {
+            dropdownItems.innerHTML = matches.slice(0, 5).map((item) => `
+              <a
+                href="${item.path}"
+                class="flex items-center justify-between p-2.5 rounded-xl transition hover:bg-blue-50/80 dark:hover:bg-slate-800/80 group"
+              >
+                <div class="flex items-center gap-2.5 min-w-0 pr-2">
+                  <span class="text-xl shrink-0 p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800">${item.icon}</span>
+                  <div class="min-w-0">
+                    <div class="font-bold text-xs text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">
+                      ${item.name}
+                    </div>
+                    <div class="text-[11px] text-slate-400 line-clamp-1">
+                      ${item.desc}
+                    </div>
+                  </div>
+                </div>
+                <div class="shrink-0 flex items-center gap-1">
+                  <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                    ${item.category}
+                  </span>
+                  <span class="text-slate-400 text-xs group-hover:translate-x-0.5 transition-transform">→</span>
+                </div>
+              </a>
+            `).join('');
+          }
+        }
+
+        if (searchDropdown) searchDropdown.classList.remove('hidden');
+      }
+
+      if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+          currentQuery = e.target.value;
+          filterDirectory();
+          updateHeroDropdown();
+        });
+
+        searchInput.addEventListener('focus', () => {
+          if (currentQuery.trim()) {
+            updateHeroDropdown();
+          }
+        });
+
+        searchInput.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape') {
+            if (searchDropdown) searchDropdown.classList.add('hidden');
+          } else if (e.key === 'Enter') {
+            if (searchDropdown) searchDropdown.classList.add('hidden');
+            const target = document.getElementById('all-calculators');
+            if (target) target.scrollIntoView({ behavior: 'smooth' });
+          }
+        });
+      }
+
+      if (searchClearBtn) {
+        searchClearBtn.addEventListener('click', () => {
+          if (searchInput) {
+            searchInput.value = '';
+            currentQuery = '';
+            searchInput.focus();
+          }
+          filterDirectory();
+          updateHeroDropdown();
+        });
+      }
+
+      if (jumpDirectoryBtn) {
+        jumpDirectoryBtn.addEventListener('click', () => {
+          if (searchDropdown) searchDropdown.classList.add('hidden');
+          const target = document.getElementById('all-calculators');
+          if (target) target.scrollIntoView({ behavior: 'smooth' });
+        });
+      }
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (e) => {
+        if (!searchInput?.contains(e.target) && !searchDropdown?.contains(e.target)) {
+          if (searchDropdown) searchDropdown.classList.add('hidden');
+        }
+      });
+
+      // Category filter buttons in directory
+      filterBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          filterBtns.forEach((b) => {
+            b.className = 'directory-filter-btn inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 transition-all';
+          });
+          btn.className = 'directory-filter-btn active inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-all bg-blue-600 text-white shadow-md shadow-blue-500/20';
+
+          activeCategory = btn.getAttribute('data-category') || 'all';
+          filterDirectory();
+        });
+      });
+
+      // Reset filter button
+      if (resetFilterBtn) {
+        resetFilterBtn.addEventListener('click', () => {
+          activeCategory = 'all';
+          currentQuery = '';
+          if (searchInput) searchInput.value = '';
+          if (searchClearBtn) searchClearBtn.classList.add('hidden');
+          if (searchDropdown) searchDropdown.classList.add('hidden');
+
+          filterBtns.forEach((b) => {
+            if (b.getAttribute('data-category') === 'all') {
+              b.className = 'directory-filter-btn active inline-flex shrink-0 items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-bold transition-all bg-blue-600 text-white shadow-md shadow-blue-500/20';
+            } else {
+              b.className = 'directory-filter-btn inline-flex shrink-0 items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 transition-all';
+            }
+          });
+
+          filterDirectory();
+        });
+      }
+
+      // Quick suggest buttons in empty state
+      quickSuggestBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const q = btn.getAttribute('data-query') || '';
+          currentQuery = q;
+          if (searchInput) {
+            searchInput.value = q;
+            searchInput.focus();
+          }
+          filterDirectory();
+        });
+      });
+    })();
+  </script>
+</BaseLayout>

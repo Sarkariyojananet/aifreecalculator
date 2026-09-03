@@ -1,0 +1,161 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="RCC Column Steel Calculator - Vertical Rebar & Lateral Ties BBS"
+  description="Calculate RCC column main vertical bars, lateral tie rings cutting length, total steel reinforcement weight, and concrete volume."
+  category="Construction"
+  calculatorName="RCC Column Steel Calculator"
+  slug="rcc-column-steel-calculator"
+  keywords={['rcc column steel', 'column bbs', 'column tie rings', 'vertical rebar column', 'column steel weight']}
+>
+  <div class="space-y-6">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div>
+        <label for="col-height" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Column Height (m)</label>
+        <input type="number" id="col-height" value="3.0" step="0.1" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
+      </div>
+      <div>
+        <label for="col-w" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Width / Diameter (mm)</label>
+        <input type="number" id="col-w" value="300" step="25" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
+      </div>
+      <div>
+        <label for="col-d" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Depth (mm) (Rectangular)</label>
+        <input type="number" id="col-d" value="300" step="25" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
+      </div>
+
+      <div>
+        <label for="col-main-count" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Main Bars Count</label>
+        <input type="number" id="col-main-count" value="4" min="4" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
+      </div>
+      <div>
+        <label for="col-main-dia" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Main Bar Diameter (mm)</label>
+        <select id="col-main-dia" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950">
+          <option value="12">12 mm</option>
+          <option value="16" selected>16 mm</option>
+          <option value="20">20 mm</option>
+          <option value="25">25 mm</option>
+        </select>
+      </div>
+      <div>
+        <label for="col-tie-spacing" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">8mm Ties Spacing (mm)</label>
+        <input type="number" id="col-tie-spacing" value="150" step="10" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
+      </div>
+    </div>
+
+    <!-- Output Box -->
+    <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-950">
+      <div class="border-b border-slate-200/80 pb-4 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Column Steel Weight</span>
+          <div id="res-col-total-steel" class="mt-1 text-3xl font-black text-blue-600 dark:text-blue-400">-- kg</div>
+        </div>
+        <div class="text-right">
+          <span class="text-xs text-slate-500">Concrete Volume:</span>
+          <span id="res-col-concrete" class="font-bold text-slate-900 dark:text-white ml-1">-- m³</span>
+        </div>
+      </div>
+
+      <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 text-xs">
+        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="text-slate-500 dark:text-slate-400">Vertical Bars Cutting Length</div>
+          <div id="res-col-main-len" class="mt-1 text-base font-bold text-slate-900 dark:text-white">--</div>
+        </div>
+        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="text-slate-500 dark:text-slate-400">Vertical Bars Total Wt</div>
+          <div id="res-col-main-wt" class="mt-1 text-base font-bold text-slate-900 dark:text-white">--</div>
+        </div>
+        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="text-slate-500 dark:text-slate-400">Tie Ring Cutting Length</div>
+          <div id="res-col-tie-len" class="mt-1 text-base font-bold text-emerald-600 dark:text-emerald-400">--</div>
+        </div>
+        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="text-slate-500 dark:text-slate-400">Lateral Ties Total Wt</div>
+          <div id="res-col-tie-wt" class="mt-1 text-base font-bold text-slate-900 dark:text-white">--</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Fragment slot="content">
+    <h2>RCC Column Steel Engineering Thumb Rules</h2>
+    <p>
+      Columns are compression structural members. Minimum longitudinal reinforcement is 0.8% of gross cross-sectional area (per IS 456), with a minimum of 4 vertical bars in rectangular columns and 6 bars in circular columns.
+    </p>
+  </Fragment>
+
+  <Fragment slot="faq">
+    <div class="space-y-4 text-xs sm:text-sm">
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open>
+        <summary class="font-bold text-slate-900 dark:text-white cursor-pointer flex justify-between items-center">
+          What is the minimum clear cover required for RCC columns?
+          <span class="group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Standard RCC columns require a minimum clear cover of 40 mm to protect longitudinal reinforcement from corrosion and ensure fire resistance.
+        </p>
+      </details>
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<script is:inline>
+  const colH = document.getElementById('col-height');
+  const colW = document.getElementById('col-w');
+  const colD = document.getElementById('col-d');
+  const mainC = document.getElementById('col-main-count');
+  const mainD = document.getElementById('col-main-dia');
+  const tieS = document.getElementById('col-tie-spacing');
+
+  const resTotal = document.getElementById('res-col-total-steel');
+  const resConc = document.getElementById('res-col-concrete');
+  const resMainLen = document.getElementById('res-col-main-len');
+  const resMainWt = document.getElementById('res-col-main-wt');
+  const resTieLen = document.getElementById('res-col-tie-len');
+  const resTieWt = document.getElementById('res-col-tie-wt');
+
+  function calculate() {
+    const H = Math.max(0, parseFloat(colH.value) || 0);
+    const Wm = Math.max(0.05, (parseFloat(colW.value) || 300) / 1000);
+    const Dm = Math.max(0.05, (parseFloat(colD.value) || 300) / 1000);
+    const nMain = Math.max(4, parseInt(mainC.value) || 4);
+    const dMain = parseFloat(mainD.value) || 16;
+    const sTie = Math.max(10, parseFloat(tieS.value) || 150);
+    const dTie = 8;
+    const cover = 40; // 40mm clear cover
+
+    const concVol = H * Wm * Dm;
+
+    // Lap length 50d + bend hook 16d
+    const mainCutLen = H + (50 * dMain / 1000) + (16 * dMain / 1000);
+    const mainWt = nMain * mainCutLen * ((dMain * dMain) / 162);
+
+    const coreW = Math.max(0, Wm * 1000 - 2 * cover);
+    const coreD = Math.max(0, Dm * 1000 - 2 * cover);
+    const tieCutLen = Math.max(0, (2 * (coreW + coreD) + 2 * (10 * dTie) - 6 * dTie) / 1000);
+    const nTies = sTie > 0 && H > 0 ? Math.floor((H * 1000) / sTie) + 1 : 0;
+    const tieWt = nTies * tieCutLen * ((dTie * dTie) / 162);
+
+    const totalSteel = mainWt + tieWt;
+
+    resTotal.textContent = `${totalSteel.toFixed(1)} kg`;
+    resConc.textContent = `${concVol.toFixed(3)} m³`;
+    resMainLen.textContent = `${mainCutLen.toFixed(2)} m`;
+    resMainWt.textContent = `${mainWt.toFixed(1)} kg (${nMain} Nos)`;
+    resTieLen.textContent = `${tieCutLen.toFixed(2)} m`;
+    resTieWt.textContent = `${tieWt.toFixed(1)} kg (${nTies} Ties)`;
+  }
+
+  [colH, colW, colD, mainC, mainD, tieS].forEach((el) => {
+    el.addEventListener('input', calculate);
+    el.addEventListener('change', calculate);
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        calculate();
+      }
+    });
+  });
+  calculate();
+</script>

@@ -1,0 +1,136 @@
+---
+import '../../styles/global.css';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Admin Login | AI Free Calculator</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="shortcut icon" href="/favicon.ico" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-title" content="AIFreecalculator.com" />
+    <link rel="manifest" href="/site.webmanifest" />
+  </head>
+  <body class="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-950 p-4 antialiased text-slate-900 dark:text-white">
+    <div class="w-full max-w-md rounded-3xl border border-slate-200 bg-white p-8 shadow-xl dark:border-slate-800 dark:bg-slate-900">
+      
+      <!-- Brand Logo -->
+      <div class="flex flex-col items-center text-center">
+        <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-600 font-bold text-white text-xl shadow-lg shadow-blue-500/30">
+          AI
+        </div>
+        <h1 class="mt-4 text-xl font-bold tracking-tight">Admin Portal</h1>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Sign in to manage 42+ calculators, AdSense slots, and view analytics.
+        </p>
+      </div>
+
+      <!-- Login Form -->
+      <form id="admin-login-form" class="mt-8 space-y-4">
+        <div>
+          <label for="admin-user" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            Username
+          </label>
+          <input
+            type="text"
+            id="admin-user"
+            value="admin"
+            required
+            class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+          />
+        </div>
+
+        <div>
+          <label for="admin-pass" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            Password
+          </label>
+          <input
+            type="password"
+            id="admin-pass"
+            value="admin123"
+            required
+            class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-medium text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+          />
+        </div>
+
+        <div id="login-error" class="hidden rounded-xl bg-red-50 p-3 text-xs font-semibold text-red-600 dark:bg-red-950/50 dark:text-red-400">
+          Invalid username or password.
+        </div>
+
+        <button
+          type="submit"
+          id="login-submit-btn"
+          class="w-full rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 transition"
+        >
+          Sign In to Dashboard →
+        </button>
+      </form>
+
+      <div class="mt-6 border-t border-slate-100 pt-4 text-center text-xs text-slate-400 dark:border-slate-800">
+        <a href="/" class="hover:text-blue-600 dark:hover:text-blue-400">← Return to Public Website</a>
+      </div>
+    </div>
+
+    <script is:inline>
+      const form = document.getElementById('admin-login-form');
+      const errBox = document.getElementById('login-error');
+      const userInp = document.getElementById('admin-user');
+      const passInp = document.getElementById('admin-pass');
+      const btn = document.getElementById('login-submit-btn');
+
+      // Check if already authenticated
+      const existingToken = localStorage.getItem('admin_token');
+      if (existingToken) {
+        fetch('/api/admin/auth', {
+          headers: { 'Authorization': `Bearer ${existingToken}` },
+        }).then((res) => {
+          if (res.ok) {
+            const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/admin/dashboard/';
+            window.location.href = redirectUrl;
+          }
+        }).catch(() => {});
+      }
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        errBox.classList.add('hidden');
+        btn.disabled = true;
+        btn.textContent = 'Verifying...';
+
+        try {
+          const res = await fetch('/api/admin/auth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              username: userInp.value.trim(),
+              password: passInp.value,
+            }),
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success && data.token) {
+            localStorage.setItem('admin_token', data.token);
+            document.cookie = `admin_session=${data.token}; Path=/; Max-Age=86400; SameSite=Lax;`;
+            const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/admin/dashboard/';
+            window.location.href = redirectUrl;
+          } else {
+            errBox.textContent = data.error || 'Invalid credentials';
+            errBox.classList.remove('hidden');
+          }
+        } catch {
+          errBox.textContent = 'Connection error. Please try again.';
+          errBox.classList.remove('hidden');
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Sign In to Dashboard →';
+        }
+      });
+
+    </script>
+  </body>
+</html>

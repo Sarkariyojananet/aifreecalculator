@@ -1,0 +1,2808 @@
+---
+import CalculatorLayout from "../../layouts/CalculatorLayout.astro";
+
+const faqs = [
+  {
+    q: "What is a brickwork calculator?",
+    a: "A brickwork calculator is a tool that estimates the number of bricks required for a wall or other masonry project. By entering the wall dimensions, brick size, mortar joint thickness, openings, and wastage allowance, you can get an approximate estimate of the bricks and, where supported, the mortar materials required.",
+  },
+  {
+    q: "How do I calculate the number of bricks required for a wall?",
+    a: "First, calculate the total wall area or volume and deduct the area of doors, windows, and other openings. Then use the effective brick dimensions, including the mortar joint where applicable, to estimate how many bricks are needed. Finally, add a suitable wastage allowance for cuts, breakage, and handling.",
+  },
+  {
+    q: "Should doors and windows be deducted from the brickwork calculation?",
+    a: "Yes. In most cases, the area of doors, windows, and other large openings should be deducted from the total wall area to avoid overestimating the number of bricks required. However, small openings or specific construction details may be handled differently depending on the project specifications.",
+  },
+  {
+    q: "How is mortar quantity calculated for brickwork?",
+    a: "Mortar quantity is generally estimated by calculating the total brickwork volume and subtracting the estimated volume occupied by the bricks. The remaining quantity gives the approximate wet mortar volume. A dry volume factor and the selected cement-to-sand mix ratio can then be used to estimate the required cement and sand.",
+  },
+  {
+    q: "How much wastage should I include when calculating bricks?",
+    a: "The appropriate wastage allowance depends on the project, brick type, layout, cutting requirements, transportation, and site conditions. A common estimate may be around 5% to 10%, but projects with complex layouts or significant cutting may require a higher allowance.",
+  },
+  {
+    q: "Can I use custom brick dimensions?",
+    a: "Yes. Custom brick dimensions can be used when the bricks on your project differ from standard or preset sizes. For the most accurate estimate, enter the actual brick length, width, and height, along with the expected mortar joint thickness.",
+  },
+  {
+    q: "Can I download my brickwork calculation as a PDF?",
+    a: "Yes. After completing a calculation, you can download the result as a PDF. The PDF can include the entered dimensions, opening deductions, brick size, mortar joint thickness, wastage percentage, estimated brick quantity, and other calculated material requirements, depending on the selected calculator mode.",
+  },
+];
+---
+
+<CalculatorLayout
+  title="Brickwork & Mortar Calculator – Calculate Bricks, Cement & Sand | AI Free Calculator"
+  description="Calculate the number of bricks, mortar volume, cement bags, sand quantities, and paving bricks required for walls and masonry projects with opening deductions and wastage analysis."
+  category="Construction"
+  calculatorName="Brickwork & Mortar Calculator"
+  slug="brickwork-calculator"
+  keywords={[
+    "brickwork calculator",
+    "bricks calculator",
+    "paving bricks calculator",
+    "bricks calculator for wall",
+    "number of bricks calculator",
+    "brickwork calculator india",
+    "brick quantity calculator",
+    "wall brick calculator",
+    "calculate number of bricks",
+    "brick wall estimator",
+    "mortar quantity calculator",
+    "cement and sand for brickwork",
+    "paving block calculator",
+    "brick masonry calculator",
+  ]}
+>
+  <div class="space-y-6">
+    <!-- Mode Selector Tabs -->
+    <div
+      class="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-1.5 dark:border-slate-800 dark:bg-slate-900/50"
+    >
+      <div class="grid grid-cols-2 gap-1.5 sm:grid-cols-4" id="mode-tabs">
+        <button
+          type="button"
+          data-mode="wall_brickwork"
+          class="mode-btn active flex items-center justify-center gap-2 rounded-xl border border-blue-600 bg-blue-50 px-3 py-2.5 text-xs sm:text-sm font-bold text-blue-700 shadow-sm transition dark:border-blue-500 dark:bg-blue-950/60 dark:text-blue-300 cursor-pointer"
+        >
+          <span>🧱</span> Wall Brickwork
+        </button>
+        <button
+          type="button"
+          data-mode="brick_mortar"
+          class="mode-btn flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs sm:text-sm font-bold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+        >
+          <span>📦</span> Brick Mortar
+        </button>
+        <button
+          type="button"
+          data-mode="paving_bricks"
+          class="mode-btn flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs sm:text-sm font-bold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+        >
+          <span>🔲</span> Paving Bricks
+        </button>
+        <button
+          type="button"
+          data-mode="custom_brickwork"
+          class="mode-btn flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs sm:text-sm font-bold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+        >
+          <span>⚙️</span> Custom Brickwork
+        </button>
+      </div>
+    </div>
+
+    <!-- Error Banner -->
+    <div
+      id="error-box"
+      class="hidden rounded-xl border border-red-200 bg-red-50/90 p-4 text-xs sm:text-sm font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/50 dark:text-red-300"
+      role="alert"
+      aria-live="polite"
+    >
+    </div>
+
+    <!-- Calculator Input Form Container -->
+    <div
+      class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-900"
+    >
+      <!-- ========================================================= -->
+      <!-- 1. WALL BRICKWORK INPUTS -->
+      <!-- ========================================================= -->
+      <div id="section-input-wall-brickwork" class="space-y-4">
+        <div
+          class="flex items-center justify-between border-b border-slate-200/80 pb-2 dark:border-slate-800"
+        >
+          <h2
+            class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2"
+          >
+            <span>🧱</span> Wall Dimensions & Brick Specifications
+          </h2>
+          <div class="flex items-center gap-1.5 text-xs font-semibold">
+            <label for="inp-wb-unit" class="text-slate-500">Unit System:</label>
+            <select
+              id="inp-wb-unit"
+              class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+            >
+              <option value="metric" selected>Metric (Meters, mm)</option>
+              <option value="imperial">Imperial (Feet, Inches)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div>
+            <label
+              for="inp-wb-length"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Wall Length (<span class="unit-len-label">m</span>)
+            </label>
+            <input
+              type="number"
+              id="inp-wb-length"
+              value="10"
+              min="0.1"
+              step="any"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="10"
+            />
+          </div>
+
+          <div>
+            <label
+              for="inp-wb-height"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Wall Height (<span class="unit-len-label">m</span>)
+            </label>
+            <input
+              type="number"
+              id="inp-wb-height"
+              value="3.0"
+              min="0.1"
+              step="any"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="3.0"
+            />
+          </div>
+
+          <div>
+            <label
+              for="inp-wb-walls"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Number of Similar Walls
+            </label>
+            <input
+              type="number"
+              id="inp-wb-walls"
+              value="1"
+              min="1"
+              step="1"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="1"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <label
+              for="inp-wb-thickness-preset"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Wall Thickness
+            </label>
+            <select
+              id="inp-wb-thickness-preset"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+            >
+              <option value="half_brick"
+                >Half Brick Wall (4.5" / 115 mm / Partition)</option
+              >
+              <option value="one_brick" selected
+                >One Brick Wall (9" / 230 mm / Main Wall)</option
+              >
+              <option value="one_half_brick"
+                >One & Half Brick Wall (13.5" / 345 mm / Load Bearing)</option
+              >
+              <option value="custom">Custom Thickness</option>
+            </select>
+            <div id="div-wb-custom-thick" class="hidden mt-2 flex gap-2">
+              <input
+                type="number"
+                id="inp-wb-custom-thick-val"
+                value="230"
+                min="10"
+                step="any"
+                class="w-2/3 rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="230"
+              />
+              <select
+                id="inp-wb-custom-thick-unit"
+                class="w-1/3 rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+              >
+                <option value="mm" selected>mm</option>
+                <option value="cm">cm</option>
+                <option value="in">in</option>
+                <option value="m">m</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label
+              for="inp-wb-brick-preset"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Brick Size Standard
+            </label>
+            <select
+              id="inp-wb-brick-preset"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+            >
+              <option value="modular_metric" selected
+                >Standard Metric Modular (190 × 90 × 90 mm)</option
+              >
+              <option value="indian_traditional"
+                >Indian Traditional Red Clay (225 × 112.5 × 75 mm / 9"×4.25"×3")</option
+              >
+              <option value="uk_standard"
+                >UK Standard Facing (215 × 102.5 × 65 mm)</option
+              >
+              <option value="us_modular"
+                >US Modular Brick (194 × 92 × 57 mm / 7⅝"×3⅝"×2¼")</option
+              >
+              <option value="custom">Custom Brick Size</option>
+            </select>
+            <div
+              id="div-wb-custom-brick"
+              class="hidden mt-2 grid grid-cols-3 gap-2"
+            >
+              <div>
+                <label
+                  for="inp-wb-custom-bl"
+                  class="text-[10px] font-bold text-slate-500 dark:text-slate-400"
+                  >Length (mm)</label
+                >
+                <input
+                  type="number"
+                  id="inp-wb-custom-bl"
+                  value="190"
+                  min="10"
+                  step="1"
+                  class="mt-0.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  placeholder="190"
+                />
+              </div>
+              <div>
+                <label
+                  for="inp-wb-custom-bw"
+                  class="text-[10px] font-bold text-slate-500 dark:text-slate-400"
+                  >Width (mm)</label
+                >
+                <input
+                  type="number"
+                  id="inp-wb-custom-bw"
+                  value="90"
+                  min="10"
+                  step="1"
+                  class="mt-0.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  placeholder="90"
+                />
+              </div>
+              <div>
+                <label
+                  for="inp-wb-custom-bh"
+                  class="text-[10px] font-bold text-slate-500 dark:text-slate-400"
+                  >Height (mm)</label
+                >
+                <input
+                  type="number"
+                  id="inp-wb-custom-bh"
+                  value="90"
+                  min="10"
+                  step="1"
+                  class="mt-0.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  placeholder="90"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div>
+            <label
+              for="inp-wb-joint"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Mortar Joint Thickness (mm)
+            </label>
+            <input
+              type="number"
+              id="inp-wb-joint"
+              value="10"
+              min="0"
+              max="50"
+              step="1"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="10"
+            />
+          </div>
+
+          <div>
+            <label
+              for="inp-wb-openings"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Doors & Windows Deduction (<span class="unit-area-label">m²</span
+              >)
+            </label>
+            <input
+              type="number"
+              id="inp-wb-openings"
+              value="4.0"
+              min="0"
+              step="any"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="4.0"
+            />
+          </div>
+
+          <div>
+            <label
+              for="inp-wb-wastage"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Brick Wastage Allowance (%)
+            </label>
+            <input
+              type="number"
+              id="inp-wb-wastage"
+              value="5"
+              min="0"
+              max="30"
+              step="1"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="5"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- 2. BRICK MORTAR INPUTS -->
+      <!-- ========================================================= -->
+      <div id="section-input-brick-mortar" class="hidden space-y-4">
+        <div
+          class="flex items-center justify-between border-b border-slate-200/80 pb-2 dark:border-slate-800"
+        >
+          <h2
+            class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2"
+          >
+            <span>📦</span> Mortar Volume & Cement/Sand Mix Estimation
+          </h2>
+          <div class="flex items-center gap-1.5 text-xs font-semibold">
+            <label for="inp-bm-unit" class="text-slate-500">Unit System:</label>
+            <select
+              id="inp-bm-unit"
+              class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+            >
+              <option value="metric" selected>Metric (Meters, mm)</option>
+              <option value="imperial">Imperial (Feet, Inches)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-4">
+          <div>
+            <label
+              for="inp-bm-length"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Wall Length (<span class="unit-len-label">m</span>)
+            </label>
+            <input
+              type="number"
+              id="inp-bm-length"
+              value="10"
+              min="0.1"
+              step="any"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="10"
+            />
+          </div>
+
+          <div>
+            <label
+              for="inp-bm-height"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Wall Height (<span class="unit-len-label">m</span>)
+            </label>
+            <input
+              type="number"
+              id="inp-bm-height"
+              value="3.0"
+              min="0.1"
+              step="any"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="3.0"
+            />
+          </div>
+
+          <div>
+            <label
+              for="inp-bm-thickness"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Wall Thickness (mm)
+            </label>
+            <input
+              type="number"
+              id="inp-bm-thickness"
+              value="230"
+              min="10"
+              step="1"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="230"
+            />
+          </div>
+
+          <div>
+            <label
+              for="inp-bm-openings"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Deductions (<span class="unit-area-label">m²</span>)
+            </label>
+            <input
+              type="number"
+              id="inp-bm-openings"
+              value="4.0"
+              min="0"
+              step="any"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="4.0"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <label
+              for="inp-bm-brick-preset"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Brick Size
+            </label>
+            <select
+              id="inp-bm-brick-preset"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+            >
+              <option value="modular_metric" selected
+                >Standard Metric Modular (190 × 90 × 90 mm)</option
+              >
+              <option value="indian_traditional"
+                >Indian Traditional Red Clay (225 × 112.5 × 75 mm)</option
+              >
+              <option value="uk_standard"
+                >UK Standard Facing (215 × 102.5 × 65 mm)</option
+              >
+              <option value="us_modular"
+                >US Modular Brick (194 × 92 × 57 mm)</option
+              >
+              <option value="custom">Custom Brick Size</option>
+            </select>
+            <div
+              id="div-bm-custom-brick"
+              class="hidden mt-2 grid grid-cols-3 gap-2"
+            >
+              <input
+                type="number"
+                id="inp-bm-custom-bl"
+                value="190"
+                min="10"
+                step="1"
+                class="rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="L (mm)"
+              />
+              <input
+                type="number"
+                id="inp-bm-custom-bw"
+                value="90"
+                min="10"
+                step="1"
+                class="rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="W (mm)"
+              />
+              <input
+                type="number"
+                id="inp-bm-custom-bh"
+                value="90"
+                min="10"
+                step="1"
+                class="rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="H (mm)"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              for="inp-bm-ratio"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Mortar Mix Ratio (Cement : Sand)
+            </label>
+            <select
+              id="inp-bm-ratio"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+            >
+              <option value="1:3"
+                >1 : 3 (High Strength / Parapet & Retaining)</option
+              >
+              <option value="1:4">1 : 4 (Load-Bearing Masonry)</option>
+              <option value="1:5">1 : 5 (Medium Strength Masonry)</option>
+              <option value="1:6" selected
+                >1 : 6 (Standard Brick Masonry Wall)</option
+              >
+              <option value="custom">Custom Mix Ratio</option>
+            </select>
+            <div
+              id="div-bm-custom-ratio"
+              class="hidden mt-2 grid grid-cols-2 gap-2"
+            >
+              <input
+                type="number"
+                id="inp-bm-custom-c"
+                value="1"
+                min="1"
+                step="1"
+                class="rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="Cement Part (e.g. 1)"
+              />
+              <input
+                type="number"
+                id="inp-bm-custom-s"
+                value="6"
+                min="1"
+                step="1"
+                class="rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="Sand Part (e.g. 6)"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div>
+            <label
+              for="inp-bm-joint"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Mortar Joint (mm)
+            </label>
+            <input
+              type="number"
+              id="inp-bm-joint"
+              value="10"
+              min="1"
+              max="30"
+              step="1"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="10"
+            />
+          </div>
+
+          <div>
+            <label
+              for="inp-bm-wastage"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Mortar Wastage (%)
+            </label>
+            <input
+              type="number"
+              id="inp-bm-wastage"
+              value="10"
+              min="0"
+              max="40"
+              step="1"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="10"
+            />
+          </div>
+
+          <div>
+            <label
+              for="inp-bm-dry-factor"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Dry Volume Factor (IS/ACI)
+            </label>
+            <input
+              type="number"
+              id="inp-bm-dry-factor"
+              value="1.33"
+              min="1.1"
+              max="1.5"
+              step="0.01"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="1.33"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- 3. PAVING BRICKS INPUTS -->
+      <!-- ========================================================= -->
+      <div id="section-input-paving-bricks" class="hidden space-y-4">
+        <div
+          class="flex items-center justify-between border-b border-slate-200/80 pb-2 dark:border-slate-800"
+        >
+          <h2
+            class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2"
+          >
+            <span>🔲</span> Paving Area & Interlocking Paver Blocks
+          </h2>
+          <div class="flex items-center gap-1.5 text-xs font-semibold">
+            <label for="inp-pb-unit" class="text-slate-500">Area Unit:</label>
+            <select
+              id="inp-pb-unit"
+              class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+            >
+              <option value="sqm" selected>Square Meters (m²)</option>
+              <option value="sqft">Square Feet (sq.ft)</option>
+              <option value="sqyd">Square Yards (sq.yd)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <label
+              for="inp-pb-area"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Total Paving Area (<span class="unit-pb-area-label">m²</span>)
+            </label>
+            <input
+              type="number"
+              id="inp-pb-area"
+              value="50"
+              min="0.1"
+              step="any"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="50"
+            />
+          </div>
+
+          <div>
+            <label
+              for="inp-pb-preset"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Paving Brick / Paver Block Format
+            </label>
+            <select
+              id="inp-pb-preset"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+            >
+              <option value="200x100" selected
+                >200 × 100 mm (Standard Rectangular Paver)</option
+              >
+              <option value="225x112.5"
+                >225 × 112.5 mm (Traditional Clay Paver / 9"×4.5")</option
+              >
+              <option value="100x100"
+                >100 × 100 mm (Square Cobblestone Cube)</option
+              >
+              <option value="300x300">300 × 300 mm (Square Patio Slab)</option>
+              <option value="custom">Custom Paver Size</option>
+            </select>
+            <div
+              id="div-pb-custom-size"
+              class="hidden mt-2 grid grid-cols-2 gap-2"
+            >
+              <div>
+                <label
+                  for="inp-pb-custom-l"
+                  class="text-[10px] font-bold text-slate-500 dark:text-slate-400"
+                  >Length (mm)</label
+                >
+                <input
+                  type="number"
+                  id="inp-pb-custom-l"
+                  value="200"
+                  min="20"
+                  step="1"
+                  class="mt-0.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  placeholder="200"
+                />
+              </div>
+              <div>
+                <label
+                  for="inp-pb-custom-w"
+                  class="text-[10px] font-bold text-slate-500 dark:text-slate-400"
+                  >Width (mm)</label
+                >
+                <input
+                  type="number"
+                  id="inp-pb-custom-w"
+                  value="100"
+                  min="20"
+                  step="1"
+                  class="mt-0.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  placeholder="100"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div>
+            <label
+              for="inp-pb-joint"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Joint / Gap Spacing (mm)
+            </label>
+            <input
+              type="number"
+              id="inp-pb-joint"
+              value="3"
+              min="0"
+              max="30"
+              step="0.5"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="3"
+            />
+          </div>
+
+          <div>
+            <label
+              for="inp-pb-wastage"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Wastage & Edge Cuts (%)
+            </label>
+            <input
+              type="number"
+              id="inp-pb-wastage"
+              value="5"
+              min="0"
+              max="30"
+              step="1"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="5"
+            />
+          </div>
+
+          <div>
+            <label
+              for="inp-pb-bedding"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Optional Sand Bedding Depth (mm)
+            </label>
+            <input
+              type="number"
+              id="inp-pb-bedding"
+              value="50"
+              min="0"
+              max="200"
+              step="5"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="50 (0 to disable)"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- 4. CUSTOM BRICKWORK INPUTS -->
+      <!-- ========================================================= -->
+      <div id="section-input-custom-brickwork" class="hidden space-y-4">
+        <div
+          class="flex items-center justify-between border-b border-slate-200/80 pb-2 dark:border-slate-800"
+        >
+          <h2
+            class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2"
+          >
+            <span>⚙️</span> Custom Masonry Structure & Proportions
+          </h2>
+          <div class="flex items-center gap-1.5 text-xs font-semibold">
+            <span class="text-xs text-slate-500"
+              >Unit: Metric (Meters / mm)</span
+            >
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div>
+            <label
+              for="inp-cb-len"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Structure Length (m)
+            </label>
+            <input
+              type="number"
+              id="inp-cb-len"
+              value="6"
+              min="0.1"
+              step="any"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="6"
+            />
+          </div>
+
+          <div>
+            <label
+              for="inp-cb-wid"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Structure Width / Thickness (m)
+            </label>
+            <input
+              type="number"
+              id="inp-cb-wid"
+              value="0.30"
+              min="0.05"
+              step="any"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="0.30"
+            />
+          </div>
+
+          <div>
+            <label
+              for="inp-cb-ht"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Structure Height (m)
+            </label>
+            <input
+              type="number"
+              id="inp-cb-ht"
+              value="2.5"
+              min="0.1"
+              step="any"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="2.5"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div>
+            <label
+              for="inp-cb-brick-l"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Brick Length (mm)</label
+            >
+            <input
+              type="number"
+              id="inp-cb-brick-l"
+              value="225"
+              min="10"
+              step="1"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="225"
+            />
+          </div>
+          <div>
+            <label
+              for="inp-cb-brick-w"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Brick Width (mm)</label
+            >
+            <input
+              type="number"
+              id="inp-cb-brick-w"
+              value="112.5"
+              min="10"
+              step="1"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="112.5"
+            />
+          </div>
+          <div>
+            <label
+              for="inp-cb-brick-h"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Brick Height (mm)</label
+            >
+            <input
+              type="number"
+              id="inp-cb-brick-h"
+              value="75"
+              min="10"
+              step="1"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="75"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-4">
+          <div>
+            <label
+              for="inp-cb-joint"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Mortar Joint (mm)</label
+            >
+            <input
+              type="number"
+              id="inp-cb-joint"
+              value="10"
+              min="1"
+              max="40"
+              step="1"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="10"
+            />
+          </div>
+          <div>
+            <label
+              for="inp-cb-ratio"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Mix Ratio</label
+            >
+            <select
+              id="inp-cb-ratio"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+            >
+              <option value="1:4">1 : 4 (Rich)</option>
+              <option value="1:5">1 : 5 (Medium)</option>
+              <option value="1:6" selected>1 : 6 (Standard)</option>
+            </select>
+          </div>
+          <div>
+            <label
+              for="inp-cb-brick-waste"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Brick Waste (%)</label
+            >
+            <input
+              type="number"
+              id="inp-cb-brick-waste"
+              value="5"
+              min="0"
+              max="30"
+              step="1"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="5"
+            />
+          </div>
+          <div>
+            <label
+              for="inp-cb-mortar-waste"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Mortar Waste (%)</label
+            >
+            <input
+              type="number"
+              id="inp-cb-mortar-waste"
+              value="10"
+              min="0"
+              max="40"
+              step="1"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="10"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div
+        class="mt-6 flex flex-col sm:flex-row items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800"
+      >
+        <button
+          type="button"
+          id="btn-calculate"
+          class="w-full sm:flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3.5 text-center text-sm font-black text-white shadow-lg shadow-blue-500/25 transition hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] cursor-pointer"
+        >
+          Calculate Wall Brickwork →
+        </button>
+        <button
+          type="button"
+          id="btn-clear-all"
+          class="w-full sm:w-auto rounded-xl border border-slate-300 bg-white px-5 py-3.5 text-center text-sm font-bold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+        >
+          Clear All
+        </button>
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- RESULTS SECTION -->
+    <!-- ========================================================= -->
+    <div id="results-section" class="hidden space-y-6">
+      <!-- Result Card Hero -->
+      <div
+        class="rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-50/90 via-indigo-50/50 to-slate-50/90 p-5 sm:p-6 dark:border-blue-900/60 dark:from-blue-950/40 dark:via-indigo-950/20 dark:to-slate-900/40 shadow-sm"
+      >
+        <div
+          class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-blue-200/60 pb-3 dark:border-blue-900/50"
+        >
+          <span
+            id="lbl-hero-tag"
+            class="text-xs font-black uppercase tracking-wider text-blue-600 dark:text-blue-400"
+          >
+            ESTIMATED BRICKS REQUIRED
+          </span>
+          <span
+            id="badge-calc-mode"
+            class="self-start sm:self-auto rounded-md bg-blue-100 px-2 py-0.5 text-[11px] font-bold text-blue-800 dark:bg-blue-900/80 dark:text-blue-200"
+          >
+            Wall Brickwork
+          </span>
+        </div>
+
+        <div class="mt-4">
+          <div
+            id="res-hero-main"
+            class="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white"
+          >
+            -- Bricks
+          </div>
+          <div
+            id="res-hero-sub"
+            class="mt-1 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300"
+          >
+            --
+          </div>
+        </div>
+
+        <!-- Metric Grid -->
+        <div
+          id="grid-result-metrics"
+          class="mt-5 grid grid-cols-2 gap-3 text-xs sm:grid-cols-4 sm:text-sm"
+        >
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Step-by-Step Calculation Breakdown -->
+      <div
+        class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+      >
+        <h3
+          class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2"
+        >
+          <span>📐</span> Calculation Details & Volumetric Formulas
+        </h3>
+        <div
+          id="txt-calc-details"
+          class="mt-3 rounded-xl bg-slate-50 p-4 font-mono text-xs leading-relaxed text-slate-700 dark:bg-slate-950/80 dark:text-slate-300 space-y-1.5 border border-slate-200/70 dark:border-slate-800"
+        >
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Brick Requirement Comparison Table -->
+      <div
+        id="section-comparison-table"
+        class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+      >
+        <h3
+          class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2"
+        >
+          <span>📊</span> Brick Requirement Comparison Across Wastage Allowances
+        </h3>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Compare how on-site handling, transport breakage, and edge-cutting
+          wastage impact total procurement quantities.
+        </p>
+        <div class="mt-3 overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm border-collapse">
+            <thead>
+              <tr
+                class="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800"
+              >
+                <th
+                  class="py-2.5 px-3 font-bold text-slate-700 dark:text-slate-200"
+                  >Wastage Allowance (%)</th
+                >
+                <th
+                  class="py-2.5 px-3 font-bold text-slate-700 dark:text-slate-200"
+                  >Base Bricks</th
+                >
+                <th
+                  class="py-2.5 px-3 font-bold text-slate-700 dark:text-slate-200"
+                  >Wastage Bricks</th
+                >
+                <th
+                  class="py-2.5 px-3 font-bold text-blue-600 dark:text-blue-400"
+                  >Final Estimated Quantity</th
+                >
+              </tr>
+            </thead>
+            <tbody
+              id="tbody-comparison"
+              class="divide-y divide-slate-100 dark:divide-slate-800"
+            >
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Download PDF Action Box -->
+      <div
+        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl border border-slate-200/80 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/60 shadow-xs"
+      >
+        <div>
+          <h4
+            class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white"
+          >
+            Save Calculation Report
+          </h4>
+          <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
+            Download a branded PDF summary with all dimensions, ratios, and
+            materials.
+          </p>
+        </div>
+        <button
+          type="button"
+          id="btn-download-pdf"
+          class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 cursor-pointer"
+        >
+          <span>📄</span>
+          <span id="txt-btn-pdf">Download PDF</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- SEO CONTENT SECTIONS (SLOT="CONTENT") -->
+  <!-- ========================================================= -->
+  <Fragment slot="content">
+    <div class="space-y-10">
+      <!-- 1. How to Use -->
+      <section class="space-y-3">
+        <h2
+          class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white"
+        >
+          How to Use the Brickwork & Mortar Calculator
+        </h2>
+        <p class="text-sm leading-relaxed">
+          Follow these simple steps to estimate material quantities for any
+          brick masonry, wall construction, or paving project:
+        </p>
+        <ol
+          class="list-decimal space-y-2 pl-5 text-xs sm:text-sm leading-relaxed"
+        >
+          <li>
+            <strong>Select the Calculation Mode:</strong> Choose between <em
+              >Wall Brickwork</em
+            >, <em>Brick Mortar</em>, <em>Paving Bricks</em>, or <em
+              >Custom Brickwork</em
+            > based on your project requirements.
+          </li>
+          <li>
+            <strong>Enter Dimensions:</strong> Input the wall length, wall height,
+            or total paving area using either metric (meters, mm) or imperial (feet,
+            inches) units.
+          </li>
+          <li>
+            <strong>Select Measurement Units:</strong> Ensure your selected units
+            align with your architectural plans or site tape measurements.
+          </li>
+          <li>
+            <strong>Choose a Brick Size:</strong> Pick a standard preset (e.g., Metric
+            Modular, Indian Red Clay, UK Standard, US Modular) or specify custom brick
+            dimensions.
+          </li>
+          <li>
+            <strong>Specify Wall Thickness:</strong> Choose from half-brick (4.5"),
+            one-brick (9"), one-and-a-half-brick (13.5"), or enter a custom thickness
+            in millimeters.
+          </li>
+          <li>
+            <strong>Add Door & Window Deductions:</strong> Subtract the combined surface
+            area of all openings so you do not over-purchase masonry materials.
+          </li>
+          <li>
+            <strong>Select Mortar Mix Ratio:</strong> If calculating mortar quantities,
+            choose from standard structural ratios (1:3, 1:4, 1:5, 1:6) or a custom
+            cement-to-sand ratio.
+          </li>
+          <li>
+            <strong>Configure Wastage Allowance:</strong> Set an allowance (typically
+            5% for bricks and 10% for mortar) to accommodate site cutting, breakage,
+            and joint unevenness.
+          </li>
+          <li>
+            <strong>Click Calculate:</strong> Review the instant calculation breakdown,
+            material summary cards, and wastage comparison table.
+          </li>
+          <li>
+            <strong>Download PDF Report:</strong> Save or print a professional estimate
+            document for procurement, site supervisors, or client quotation records.
+          </li>
+        </ol>
+      </section>
+
+      <!-- 2. How to Calculate Number of Bricks -->
+      <section class="space-y-3">
+        <h2
+          class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white"
+        >
+          How to Calculate the Number of Bricks for a Wall
+        </h2>
+        <p class="text-sm leading-relaxed">
+          Using a <strong>number of bricks calculator</strong> or <strong
+            >bricks calculator for wall</strong
+          > construction relies on calculating the total masonry volume and dividing
+          it by the nominal volume of an individual brick, which includes its surrounding
+          mortar joint.
+        </p>
+        <div
+          class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs sm:text-sm dark:border-slate-800 dark:bg-slate-900"
+        >
+          <p class="font-bold text-slate-900 dark:text-white">
+            Standard Volumetric Step-by-Step Method:
+          </p>
+          <ul class="mt-2 list-disc space-y-1.5 pl-5">
+            <li>
+              <strong>Gross Wall Area:</strong> Length × Height × Number of Walls
+            </li>
+            <li>
+              <strong>Net Wall Area:</strong> Gross Wall Area − Total Opening Deductions
+              (Doors, Windows, Voids)
+            </li>
+            <li>
+              <strong>Brickwork Volume:</strong> Net Wall Area × Wall Thickness
+            </li>
+            <li>
+              <strong>Nominal Brick Dimensions:</strong> (Brick Length + Mortar Joint)
+              × (Brick Width + Mortar Joint) × (Brick Height + Mortar Joint)
+            </li>
+            <li>
+              <strong>Base Brick Count:</strong> Brickwork Volume / Nominal Single
+              Brick Volume
+            </li>
+            <li>
+              <strong>Final Brick Count:</strong> Base Brick Count × (1 + Wastage
+              % / 100) (rounded up to nearest whole brick)
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 3. How to Calculate Mortar Quantity -->
+      <section class="space-y-3">
+        <h2
+          class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white"
+        >
+          How to Calculate Mortar Quantity for Brickwork
+        </h2>
+        <p class="text-sm leading-relaxed">
+          Mortar fills the joints between bricks to transfer vertical and
+          lateral loads. Estimating cement and sand involves finding the volume
+          left unoccupied by the solid bricks:
+        </p>
+        <ol
+          class="list-decimal space-y-2 pl-5 text-xs sm:text-sm leading-relaxed"
+        >
+          <li>
+            <strong>Calculate Total Masonry Volume:</strong> Determine the overall
+            volume of the finished wall.
+          </li>
+          <li>
+            <strong>Determine Solid Brick Volume:</strong> Multiply the total brick
+            count by the actual brick volume without mortar (Length × Width × Height).
+          </li>
+          <li>
+            <strong>Calculate Wet Mortar Volume:</strong> Subtract the solid brick
+            volume from the total masonry volume. In standard modular brickwork, wet
+            mortar accounts for approximately 23% to 30% of total wall volume.
+          </li>
+          <li>
+            <strong>Apply Dry Volume Multiplier:</strong> Dry cement and sand shrink
+            when mixed with water and fill microscopic voids. A standard dry volume
+            multiplier factor of <strong>1.33</strong> (a 33% increase) is applied
+            along with a 10% wastage factor.
+          </li>
+          <li>
+            <strong>Apportion Cement and Sand:</strong> Divide the dry volume by the
+            sum of parts in the mix ratio (e.g., 1 + 6 = 7 parts for a 1:6 mix). Multiply
+            the cement volume by cement density (1,440 kg/m³) to determine total kilograms
+            and 50 kg bags. Sand volume is converted into cubic feet (CFT) and metric
+            tonnes (1,600 kg/m³ density).
+          </li>
+        </ol>
+      </section>
+
+      <!-- 4. Brickwork Calculator India -->
+      <section class="space-y-3">
+        <h2
+          class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white"
+        >
+          Brickwork Calculator for Indian Construction
+        </h2>
+        <p class="text-sm leading-relaxed">
+          When using a <strong>brickwork calculator india</strong> context, civil
+          engineers and contractors encounter two primary brick categories recognized
+          under Indian Standard codes (IS 1077 and IS 2212):
+        </p>
+        <ul
+          class="list-disc space-y-1.5 pl-5 text-xs sm:text-sm leading-relaxed"
+        >
+          <li>
+            <strong>Standard Modular Bricks:</strong> Manufactured with dimensions
+            of 190 × 90 × 90 mm. With a standard 10 mm mortar joint, their nominal
+            dimensions become 200 × 100 × 100 mm, yielding exactly <strong
+              >500 bricks per cubic meter (m³)</strong
+            > of masonry work.
+          </li>
+          <li>
+            <strong>Traditional Country Red Clay Bricks:</strong> Frequently fired
+            in local kilns with nominal sizes of 225 × 112.5 × 75 mm (commonly called
+            9-inch × 4.25-inch × 3-inch bricks). Because traditional bricks are slightly
+            larger, roughly 430 to 460 bricks are consumed per cubic meter.
+          </li>
+        </ul>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          <em
+            >Note: Brick sizes vary by state, kiln technology, and local
+            manufacturer molds across India. Always measure a sample batch on
+            site before finalizing procurement orders.</em
+          >
+        </p>
+      </section>
+
+      <!-- 5. Paving Bricks Calculator -->
+      <section class="space-y-3">
+        <h2
+          class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white"
+        >
+          Paving Bricks Calculator
+        </h2>
+        <p class="text-sm leading-relaxed">
+          A dedicated <strong>paving bricks calculator</strong> estimates the number
+          of interlocking concrete pavers, clay bricks, or cobblestones required to
+          surface driveways, walkways, patios, and parking lots. The effective coverage
+          area is determined by adding the joint gap width (typically 2 mm to 5 mm)
+          to the paver's length and width.
+        </p>
+        <p class="text-sm leading-relaxed">
+          Because perimeter edges, curves, and herringbone or diagonal laying
+          patterns require cutting border bricks, an allowance of <strong
+            >5% to 10% wastage</strong
+          > is standard practice in landscape engineering.
+        </p>
+      </section>
+
+      <!-- 6. Practical Example -->
+      <section class="space-y-3">
+        <h2
+          class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white"
+        >
+          Brickwork Calculation Example
+        </h2>
+        <p class="text-sm leading-relaxed">
+          Consider a standard single-leaf residential wall project with the
+          following dimensions:
+        </p>
+        <div
+          class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs sm:text-sm dark:border-slate-800 dark:bg-slate-900"
+        >
+          <ul class="space-y-1 text-slate-700 dark:text-slate-300">
+            <li>
+              • <strong>Wall Dimensions:</strong> 5.0 meters length × 3.0 meters height
+              = 15.0 m² gross area
+            </li>
+            <li>
+              • <strong>Door Opening Deduction:</strong> 1.0m × 2.1m = 2.10 m²
+            </li>
+            <li>• <strong>Net Wall Area:</strong> 15.0 − 2.10 = 12.90 m²</li>
+            <li>
+              • <strong>Wall Thickness:</strong> 230 mm (0.23 m / 9-inch wall) ➔ <strong
+                >Wall Volume:</strong
+              > 12.90 × 0.23 = 2.967 m³
+            </li>
+            <li>
+              • <strong>Brick Spec:</strong> Standard Metric (190 × 90 × 90 mm) with
+              10 mm mortar joint (0.002 m³ nominal)
+            </li>
+            <li>
+              • <strong>Base Bricks:</strong> 2.967 / 0.002 = 1,484 bricks
+            </li>
+            <li>
+              • <strong>Wastage Allowance (5%):</strong> 1,484 × 0.05 = 74 bricks
+            </li>
+            <li>
+              • <strong>Total Procurement Quantity:</strong>
+              <strong>1,558 Bricks</strong>
+            </li>
+          </ul>
+        </div>
+        <p class="text-xs text-slate-500 italic">
+          This example is for estimation purposes. Actual material requirements
+          may vary based on site cutting, frog mortar filling, and bond design.
+        </p>
+      </section>
+
+      <!-- 7. Common Mistakes -->
+      <section class="space-y-3">
+        <h2
+          class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white"
+        >
+          Common Mistakes When Estimating Brickwork
+        </h2>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 text-xs sm:text-sm">
+          <div
+            class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800"
+          >
+            <h3 class="font-bold text-slate-900 dark:text-white">
+              Forgetting Doors and Windows
+            </h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Failing to deduct large openings, archways, and structural column
+              cutouts leads to substantial over-purchasing and extra material
+              storage costs.
+            </p>
+          </div>
+          <div
+            class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800"
+          >
+            <h3 class="font-bold text-slate-900 dark:text-white">
+              Ignoring Mortar Joint Thickness
+            </h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Calculating bricks using pure dry dimensions instead of nominal
+              joint dimensions (+10 mm) overestimates the brick count by 15% to
+              25%.
+            </p>
+          </div>
+          <div
+            class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800"
+          >
+            <h3 class="font-bold text-slate-900 dark:text-white">
+              Using the Wrong Brick Dimensions
+            </h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Assuming all bricks are modular metric when using regional country
+              red clay bricks or oversized engineering bricks results in
+              significant calculation errors.
+            </p>
+          </div>
+          <div
+            class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800"
+          >
+            <h3 class="font-bold text-slate-900 dark:text-white">
+              Not Including Wastage
+            </h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Transport breakage, half-bat cuts at wall ends, and handling
+              damage require a 5% to 10% contingency buffer to prevent work
+              stoppages.
+            </p>
+          </div>
+          <div
+            class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800"
+          >
+            <h3 class="font-bold text-slate-900 dark:text-white">
+              Mixing Units
+            </h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Entering wall lengths in feet while specifying brick dimensions in
+              millimeters without conversion leads to distorted volume outputs.
+            </p>
+          </div>
+          <div
+            class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800"
+          >
+            <h3 class="font-bold text-slate-900 dark:text-white">
+              Assuming Material Consumption Is Exact
+            </h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Mortar consumption increases when brick frogs (indentations) are
+              deep or when joints are raked out for sand-faced plastering.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 8. Important Information & Disclaimer -->
+      <section class="space-y-3">
+        <h2
+          class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white"
+        >
+          Important Information
+        </h2>
+        <div
+          class="rounded-xl border border-amber-200 bg-amber-50/60 p-4 text-xs sm:text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300 space-y-2"
+        >
+          <p>
+            • All numerical outputs provided by this calculator are engineering
+            estimates based on user-entered parameters and standardized nominal
+            assumptions.
+          </p>
+          <p>
+            • Brick dimensions, joint profiles, absorption characteristics, and
+            mortar consumption fluctuate across manufacturers, regional kilns,
+            and ambient weather conditions.
+          </p>
+          <p>
+            • Always cross-reference material estimates against approved
+            structural drawings, site measurements, and local building codes
+            before placing commercial procurement orders.
+          </p>
+          <p>
+            • Critical load-bearing masonry, seismic reinforcement, and
+            foundation retaining walls must be verified by a licensed structural
+            engineer.
+          </p>
+        </div>
+      </section>
+    </div>
+  </Fragment>
+
+  <!-- ========================================================= -->
+  <!-- FAQ SECTION (SLOT="FAQ") (EXACTLY 7 FAQS) -->
+  <!-- ========================================================= -->
+  <Fragment slot="faq">
+    <div class="space-y-4 text-xs sm:text-sm">
+      {
+        faqs.map((faq, index) => (
+          <details
+            class="group rounded-2xl border border-slate-200 p-4 dark:border-slate-800 transition-colors"
+            open={index === 0}
+          >
+            <summary class="cursor-pointer list-none">
+              <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+                <span class="text-sm sm:text-base">
+                  {index + 1}. {faq.q}
+                </span>
+                <span class="ml-2 text-slate-400 transition-transform duration-200 group-open:rotate-180">
+                  ▼
+                </span>
+              </h3>
+            </summary>
+            <p class="mt-2.5 text-slate-600 dark:text-slate-300 leading-relaxed">
+              {faq.a}
+            </p>
+          </details>
+        ))
+      }
+    </div>
+  </Fragment>
+
+  <!-- FAQPage & WebApplication JSON-LD Schema -->
+  <script
+    type="application/ld+json"
+    is:inline
+    set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          name: "Brickwork & Mortar Calculator",
+          url: "https://aifreecalculator.com/construction/brickwork-calculator/",
+          applicationCategory: "ConstructionApplication",
+          operatingSystem: "All",
+          description:
+            "Calculate the number of bricks, mortar volume, cement bags, and sand required for walls, masonry work, and paving projects.",
+        },
+        {
+          "@type": "FAQPage",
+          mainEntity: faqs.map((faq) => ({
+            "@type": "Question",
+            name: faq.q,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: faq.a,
+            },
+          })),
+        },
+      ],
+    })}
+  />
+
+  <!-- Client-Side Engine Integration Script -->
+  <script>
+    import {
+      calculateWallBrickwork,
+      calculateBrickMortar,
+      calculatePavingBricks,
+      calculateCustomBrickwork,
+      BRICK_PRESETS,
+    } from "../../lib/calculators/brickwork";
+
+    let currentMode = "wall_brickwork";
+    let lastResultData: any = null;
+
+    // UI DOM Elements
+    const modeButtons =
+      document.querySelectorAll<HTMLButtonElement>(".mode-btn");
+    const errorBox = document.getElementById("error-box")!;
+    const resultsSection = document.getElementById("results-section")!;
+    const btnCalculate = document.getElementById(
+      "btn-calculate",
+    ) as HTMLButtonElement;
+    const btnClearAll = document.getElementById(
+      "btn-clear-all",
+    ) as HTMLButtonElement;
+    const btnDownloadPdf = document.getElementById(
+      "btn-download-pdf",
+    ) as HTMLButtonElement;
+
+    const sectionWallBrickwork = document.getElementById(
+      "section-input-wall-brickwork",
+    )!;
+    const sectionBrickMortar = document.getElementById(
+      "section-input-brick-mortar",
+    )!;
+    const sectionPavingBricks = document.getElementById(
+      "section-input-paving-bricks",
+    )!;
+    const sectionCustomBrickwork = document.getElementById(
+      "section-input-custom-brickwork",
+    )!;
+
+    const lblHeroTag = document.getElementById("lbl-hero-tag")!;
+    const badgeCalcMode = document.getElementById("badge-calc-mode")!;
+    const resHeroMain = document.getElementById("res-hero-main")!;
+    const resHeroSub = document.getElementById("res-hero-sub")!;
+    const gridResultMetrics = document.getElementById("grid-result-metrics")!;
+    const txtCalcDetails = document.getElementById("txt-calc-details")!;
+    const tbodyComparison = document.getElementById("tbody-comparison")!;
+    const sectionComparison = document.getElementById(
+      "section-comparison-table",
+    )!;
+
+    // 1. Wall Brickwork Inputs
+    const wbUnit = document.getElementById("inp-wb-unit") as HTMLSelectElement;
+    const wbLength = document.getElementById(
+      "inp-wb-length",
+    ) as HTMLInputElement;
+    const wbHeight = document.getElementById(
+      "inp-wb-height",
+    ) as HTMLInputElement;
+    const wbWalls = document.getElementById("inp-wb-walls") as HTMLInputElement;
+    const wbThicknessPreset = document.getElementById(
+      "inp-wb-thickness-preset",
+    ) as HTMLSelectElement;
+    const divWbCustomThick = document.getElementById("div-wb-custom-thick")!;
+    const wbCustomThickVal = document.getElementById(
+      "inp-wb-custom-thick-val",
+    ) as HTMLInputElement;
+    const wbCustomThickUnit = document.getElementById(
+      "inp-wb-custom-thick-unit",
+    ) as HTMLSelectElement;
+    const wbBrickPreset = document.getElementById(
+      "inp-wb-brick-preset",
+    ) as HTMLSelectElement;
+    const divWbCustomBrick = document.getElementById("div-wb-custom-brick")!;
+    const wbCustomBl = document.getElementById(
+      "inp-wb-custom-bl",
+    ) as HTMLInputElement;
+    const wbCustomBw = document.getElementById(
+      "inp-wb-custom-bw",
+    ) as HTMLInputElement;
+    const wbCustomBh = document.getElementById(
+      "inp-wb-custom-bh",
+    ) as HTMLInputElement;
+    const wbJoint = document.getElementById("inp-wb-joint") as HTMLInputElement;
+    const wbOpenings = document.getElementById(
+      "inp-wb-openings",
+    ) as HTMLInputElement;
+    const wbWastage = document.getElementById(
+      "inp-wb-wastage",
+    ) as HTMLInputElement;
+
+    // 2. Brick Mortar Inputs
+    const bmUnit = document.getElementById("inp-bm-unit") as HTMLSelectElement;
+    const bmLength = document.getElementById(
+      "inp-bm-length",
+    ) as HTMLInputElement;
+    const bmHeight = document.getElementById(
+      "inp-bm-height",
+    ) as HTMLInputElement;
+    const bmThickness = document.getElementById(
+      "inp-bm-thickness",
+    ) as HTMLInputElement;
+    const bmOpenings = document.getElementById(
+      "inp-bm-openings",
+    ) as HTMLInputElement;
+    const bmBrickPreset = document.getElementById(
+      "inp-bm-brick-preset",
+    ) as HTMLSelectElement;
+    const divBmCustomBrick = document.getElementById("div-bm-custom-brick")!;
+    const bmCustomBl = document.getElementById(
+      "inp-bm-custom-bl",
+    ) as HTMLInputElement;
+    const bmCustomBw = document.getElementById(
+      "inp-bm-custom-bw",
+    ) as HTMLInputElement;
+    const bmCustomBh = document.getElementById(
+      "inp-bm-custom-bh",
+    ) as HTMLInputElement;
+    const bmRatio = document.getElementById(
+      "inp-bm-ratio",
+    ) as HTMLSelectElement;
+    const divBmCustomRatio = document.getElementById("div-bm-custom-ratio")!;
+    const bmCustomC = document.getElementById(
+      "inp-bm-custom-c",
+    ) as HTMLInputElement;
+    const bmCustomS = document.getElementById(
+      "inp-bm-custom-s",
+    ) as HTMLInputElement;
+    const bmJoint = document.getElementById("inp-bm-joint") as HTMLInputElement;
+    const bmWastage = document.getElementById(
+      "inp-bm-wastage",
+    ) as HTMLInputElement;
+    const bmDryFactor = document.getElementById(
+      "inp-bm-dry-factor",
+    ) as HTMLInputElement;
+
+    // 3. Paving Bricks Inputs
+    const pbUnit = document.getElementById("inp-pb-unit") as HTMLSelectElement;
+    const pbArea = document.getElementById("inp-pb-area") as HTMLInputElement;
+    const pbPreset = document.getElementById(
+      "inp-pb-preset",
+    ) as HTMLSelectElement;
+    const divPbCustomSize = document.getElementById("div-pb-custom-size")!;
+    const pbCustomL = document.getElementById(
+      "inp-pb-custom-l",
+    ) as HTMLInputElement;
+    const pbCustomW = document.getElementById(
+      "inp-pb-custom-w",
+    ) as HTMLInputElement;
+    const pbJoint = document.getElementById("inp-pb-joint") as HTMLInputElement;
+    const pbWastage = document.getElementById(
+      "inp-pb-wastage",
+    ) as HTMLInputElement;
+    const pbBedding = document.getElementById(
+      "inp-pb-bedding",
+    ) as HTMLInputElement;
+
+    // 4. Custom Brickwork Inputs
+    const cbLen = document.getElementById("inp-cb-len") as HTMLInputElement;
+    const cbWid = document.getElementById("inp-cb-wid") as HTMLInputElement;
+    const cbHt = document.getElementById("inp-cb-ht") as HTMLInputElement;
+    const cbBrickL = document.getElementById(
+      "inp-cb-brick-l",
+    ) as HTMLInputElement;
+    const cbBrickW = document.getElementById(
+      "inp-cb-brick-w",
+    ) as HTMLInputElement;
+    const cbBrickH = document.getElementById(
+      "inp-cb-brick-h",
+    ) as HTMLInputElement;
+    const cbJoint = document.getElementById("inp-cb-joint") as HTMLInputElement;
+    const cbRatio = document.getElementById(
+      "inp-cb-ratio",
+    ) as HTMLSelectElement;
+    const cbBrickWaste = document.getElementById(
+      "inp-cb-brick-waste",
+    ) as HTMLInputElement;
+    const cbMortarWaste = document.getElementById(
+      "inp-cb-mortar-waste",
+    ) as HTMLInputElement;
+
+    // Invalidate and hide results when inputs change
+    function invalidateResults() {
+      if (resultsSection) resultsSection.classList.add("hidden");
+      if (errorBox) {
+        errorBox.classList.add("hidden");
+        errorBox.textContent = "";
+      }
+      lastResultData = null;
+    }
+
+    function showError(msg: string) {
+      if (!errorBox) return;
+      errorBox.textContent = msg;
+      errorBox.classList.remove("hidden");
+      errorBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    // Tab Switch Listener
+    modeButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const mode = btn.getAttribute("data-mode") || "wall_brickwork";
+        if (mode === currentMode) return;
+        currentMode = mode;
+
+        modeButtons.forEach((b) => {
+          b.classList.remove(
+            "active",
+            "border-blue-600",
+            "bg-blue-50",
+            "text-blue-700",
+            "dark:border-blue-500",
+            "dark:bg-blue-950/60",
+            "dark:text-blue-300",
+          );
+          b.classList.add(
+            "border-slate-300",
+            "bg-white",
+            "text-slate-700",
+            "dark:border-slate-700",
+            "dark:bg-slate-800",
+            "dark:text-slate-200",
+          );
+        });
+
+        btn.classList.add(
+          "active",
+          "border-blue-600",
+          "bg-blue-50",
+          "text-blue-700",
+          "dark:border-blue-500",
+          "dark:bg-blue-950/60",
+          "dark:text-blue-300",
+        );
+        btn.classList.remove(
+          "border-slate-300",
+          "bg-white",
+          "text-slate-700",
+          "dark:border-slate-700",
+          "dark:bg-slate-800",
+          "dark:text-slate-200",
+        );
+
+        sectionWallBrickwork.classList.add("hidden");
+        sectionBrickMortar.classList.add("hidden");
+        sectionPavingBricks.classList.add("hidden");
+        sectionCustomBrickwork.classList.add("hidden");
+
+        if (mode === "wall_brickwork") {
+          sectionWallBrickwork.classList.remove("hidden");
+          btnCalculate.textContent = "Calculate Wall Brickwork →";
+        } else if (mode === "brick_mortar") {
+          sectionBrickMortar.classList.remove("hidden");
+          btnCalculate.textContent = "Calculate Mortar & Materials →";
+        } else if (mode === "paving_bricks") {
+          sectionPavingBricks.classList.remove("hidden");
+          btnCalculate.textContent = "Calculate Paving Bricks →";
+        } else if (mode === "custom_brickwork") {
+          sectionCustomBrickwork.classList.remove("hidden");
+          btnCalculate.textContent = "Calculate Custom Brickwork →";
+        }
+
+        invalidateResults();
+      });
+    });
+
+    // Toggle Custom Inputs
+    if (wbThicknessPreset) {
+      wbThicknessPreset.addEventListener("change", () => {
+        divWbCustomThick.classList.toggle(
+          "hidden",
+          wbThicknessPreset.value !== "custom",
+        );
+        invalidateResults();
+      });
+    }
+
+    if (wbBrickPreset) {
+      wbBrickPreset.addEventListener("change", () => {
+        divWbCustomBrick.classList.toggle(
+          "hidden",
+          wbBrickPreset.value !== "custom",
+        );
+        invalidateResults();
+      });
+    }
+
+    if (bmBrickPreset) {
+      bmBrickPreset.addEventListener("change", () => {
+        divBmCustomBrick.classList.toggle(
+          "hidden",
+          bmBrickPreset.value !== "custom",
+        );
+        invalidateResults();
+      });
+    }
+
+    if (bmRatio) {
+      bmRatio.addEventListener("change", () => {
+        divBmCustomRatio.classList.toggle("hidden", bmRatio.value !== "custom");
+        invalidateResults();
+      });
+    }
+
+    if (pbPreset) {
+      pbPreset.addEventListener("change", () => {
+        divPbCustomSize.classList.toggle("hidden", pbPreset.value !== "custom");
+        invalidateResults();
+      });
+    }
+
+    // Unit Conversion Label Updates (Scoped to respective section)
+    if (wbUnit) {
+      wbUnit.addEventListener("change", () => {
+        const isImp = wbUnit.value === "imperial";
+        sectionWallBrickwork
+          .querySelectorAll(".unit-len-label")
+          .forEach((el) => (el.textContent = isImp ? "ft" : "m"));
+        sectionWallBrickwork
+          .querySelectorAll(".unit-area-label")
+          .forEach((el) => (el.textContent = isImp ? "sq.ft" : "m²"));
+        invalidateResults();
+      });
+    }
+
+    if (bmUnit) {
+      bmUnit.addEventListener("change", () => {
+        const isImp = bmUnit.value === "imperial";
+        sectionBrickMortar
+          .querySelectorAll(".unit-len-label")
+          .forEach((el) => (el.textContent = isImp ? "ft" : "m"));
+        sectionBrickMortar
+          .querySelectorAll(".unit-area-label")
+          .forEach((el) => (el.textContent = isImp ? "sq.ft" : "m²"));
+        invalidateResults();
+      });
+    }
+
+    if (pbUnit) {
+      pbUnit.addEventListener("change", () => {
+        const unit = pbUnit.value;
+        const label =
+          unit === "sqft" ? "sq.ft" : unit === "sqyd" ? "sq.yd" : "m²";
+        sectionPavingBricks
+          .querySelectorAll(".unit-pb-area-label")
+          .forEach((el) => (el.textContent = label));
+        invalidateResults();
+      });
+    }
+
+    // Attach invalidation to all inputs
+    document.querySelectorAll("input, select").forEach((el) => {
+      el.addEventListener("input", invalidateResults);
+      el.addEventListener("change", invalidateResults);
+    });
+
+    // Enter Key Handler for instant calculation
+    document.querySelectorAll("input").forEach((inp) => {
+      inp.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          performCalculation();
+        }
+      });
+    });
+
+    // Calculation Routine
+    function performCalculation() {
+      invalidateResults();
+
+      try {
+        if (currentMode === "wall_brickwork") {
+          const unit = wbUnit.value as "metric" | "imperial";
+          const len = parseFloat(wbLength.value);
+          const ht = parseFloat(wbHeight.value);
+          const walls = parseInt(wbWalls.value, 10) || 1;
+          const thPreset = wbThicknessPreset.value as any;
+          const openDed = parseFloat(wbOpenings.value) || 0;
+          const joint = parseFloat(wbJoint.value) || 10;
+          const wastage = parseFloat(wbWastage.value) || 0;
+
+          if (isNaN(len) || len <= 0 || isNaN(ht) || ht <= 0 || walls <= 0) {
+            return showError(
+              "Please enter valid positive Wall Length and Height.",
+            );
+          }
+
+          let customThickMeters = 0.23;
+          if (thPreset === "custom") {
+            const val = parseFloat(wbCustomThickVal.value);
+            const u = wbCustomThickUnit.value;
+            if (isNaN(val) || val <= 0)
+              return showError("Please enter a valid custom wall thickness.");
+            customThickMeters =
+              u === "mm"
+                ? val / 1000
+                : u === "cm"
+                  ? val / 100
+                  : u === "in"
+                    ? (val * 25.4) / 1000
+                    : val;
+          }
+
+          let brickL = 190;
+          let brickW = 90;
+          let brickH = 90;
+          let brickName = "Standard Metric Modular (190 × 90 × 90 mm)";
+
+          if (wbBrickPreset.value === "custom") {
+            brickL = parseFloat(wbCustomBl.value);
+            brickW = parseFloat(wbCustomBw.value);
+            brickH = parseFloat(wbCustomBh.value);
+            if (
+              isNaN(brickL) ||
+              brickL <= 0 ||
+              isNaN(brickW) ||
+              brickW <= 0 ||
+              isNaN(brickH) ||
+              brickH <= 0
+            ) {
+              return showError("Please enter valid custom brick dimensions.");
+            }
+            brickName = `Custom (${brickL} × ${brickW} × ${brickH} mm)`;
+          } else {
+            const found = BRICK_PRESETS.find(
+              (p) => p.id === wbBrickPreset.value,
+            );
+            if (found) {
+              brickL = found.lengthMm;
+              brickW = found.widthMm;
+              brickH = found.heightMm;
+              brickName = found.name;
+            }
+          }
+
+          const res = calculateWallBrickwork({
+            unitSystem: unit,
+            wallLength: len,
+            wallHeight: ht,
+            wallThicknessType: thPreset,
+            customThicknessMeters: customThickMeters,
+            numberOfWalls: walls,
+            openingsDeductionArea: openDed,
+            brickLengthMm: brickL,
+            brickWidthMm: brickW,
+            brickHeightMm: brickH,
+            mortarJointMm: joint,
+            wastagePercent: wastage,
+          });
+
+          lastResultData = {
+            mode: "wall_brickwork",
+            title: "Brickwork Calculation Report",
+            brickName,
+            ...res,
+          };
+
+          // Render Hero
+          lblHeroTag.textContent = "ESTIMATED BRICKS REQUIRED";
+          badgeCalcMode.textContent = "Wall Brickwork";
+          resHeroMain.textContent = `${res.finalEstimatedBricks.toLocaleString()} Bricks`;
+          resHeroSub.textContent = `Base: ${res.bricksBeforeWastage.toLocaleString()} Bricks + ${res.wastageCount.toLocaleString()} (${res.wastagePercent}% Wastage) | Wall Volume: ${res.wallVolumeCum} m³ (${res.wallVolumeCft} CFT)`;
+
+          // Render Grid
+          gridResultMetrics.innerHTML = `
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Net Wall Area</div>
+              <div class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">${res.netWallAreaSqm} m² <span class="text-xs font-normal text-slate-500">(${res.netWallAreaSqft} sq.ft)</span></div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Masonry Volume</div>
+              <div class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">${res.wallVolumeCum} m³ <span class="text-xs font-normal text-slate-500">(${res.wallVolumeCft} CFT)</span></div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Brick Size & Joint</div>
+              <div class="mt-1 text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400 truncate" title="${brickName}">${res.brickLengthMm}×${res.brickWidthMm}×${res.brickHeightMm}mm <span class="text-xs font-normal text-slate-500">(${res.mortarJointMm}mm joint)</span></div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Wall Thickness</div>
+              <div class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">${(res.wallThicknessMeters * 1000).toFixed(0)} mm <span class="text-xs font-normal text-slate-500">(${res.wallThicknessLabel.split("(")[0].trim()})</span></div>
+            </div>
+          `;
+
+          // Render Calculation Breakdown
+          const isImp = unit === "imperial";
+          const lenUnitStr = isImp ? "ft" : "m";
+          const primaryAreaVal = isImp
+            ? `${res.totalWallAreaSqft} sq.ft`
+            : `${res.totalWallAreaSqm} m²`;
+          const altAreaVal = isImp
+            ? `${res.totalWallAreaSqm} m²`
+            : `${res.totalWallAreaSqft} sq.ft`;
+          const primaryOpenVal = isImp
+            ? `${res.openingsAreaSqft} sq.ft`
+            : `${res.openingsAreaSqm} m²`;
+          const altOpenVal = isImp
+            ? `${res.openingsAreaSqm} m²`
+            : `${res.openingsAreaSqft} sq.ft`;
+          const primaryNetVal = isImp
+            ? `${res.netWallAreaSqft} sq.ft`
+            : `${res.netWallAreaSqm} m²`;
+          const altNetVal = isImp
+            ? `${res.netWallAreaSqm} m²`
+            : `${res.netWallAreaSqft} sq.ft`;
+
+          txtCalcDetails.innerHTML = `
+            <div>1. Gross Wall Area = ${len} ${lenUnitStr} × ${ht} ${lenUnitStr} × ${walls} = <strong>${primaryAreaVal} (${altAreaVal})</strong></div>
+            <div>2. Openings Deduction = ${primaryOpenVal} (${altOpenVal}) ➔ Net Wall Area = <strong>${primaryNetVal} (${altNetVal})</strong></div>
+            <div>3. Total Masonry Volume = ${res.netWallAreaSqm} m² × ${res.wallThicknessMeters}m = <strong>${res.wallVolumeCum} m³ (${res.wallVolumeCft} CFT)</strong></div>
+            <div>4. Nominal Single Brick Size = (${res.nominalBrickLengthMm} × ${res.nominalBrickWidthMm} × ${res.nominalBrickHeightMm} mm) = ${res.singleNominalBrickVolumeCum} m³</div>
+            <div>5. Bricks Before Wastage = ${res.wallVolumeCum} m³ / ${res.singleNominalBrickVolumeCum} m³ = <strong>${res.bricksBeforeWastage.toLocaleString()} Bricks</strong></div>
+            <div>6. Wastage Allowance (${res.wastagePercent}%) = ${res.wastageCount.toLocaleString()} Bricks ➔ Final Quantity = <strong>${res.finalEstimatedBricks.toLocaleString()} Bricks (rounded up)</strong></div>
+          `;
+
+          // Render Comparison Table
+          sectionComparison.classList.remove("hidden");
+          tbodyComparison.innerHTML = res.comparisonTable
+            .map(
+              (row) => `
+              <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                <td class="py-2.5 px-3 font-semibold text-slate-700 dark:text-slate-300">${row.wastagePct}% Wastage</td>
+                <td class="py-2.5 px-3 text-slate-600 dark:text-slate-400">${res.bricksBeforeWastage.toLocaleString()}</td>
+                <td class="py-2.5 px-3 text-slate-600 dark:text-slate-400">${(row.totalBricks - res.bricksBeforeWastage).toLocaleString()}</td>
+                <td class="py-2.5 px-3 font-bold text-blue-600 dark:text-blue-400">${row.totalBricks.toLocaleString()} Bricks</td>
+              </tr>
+            `,
+            )
+            .join("");
+        } else if (currentMode === "brick_mortar") {
+          const unit = bmUnit.value as "metric" | "imperial";
+          const len = parseFloat(bmLength.value);
+          const ht = parseFloat(bmHeight.value);
+          const thickMm = parseFloat(bmThickness.value);
+          const openDed = parseFloat(bmOpenings.value) || 0;
+          const joint = parseFloat(bmJoint.value) || 10;
+          const ratio = bmRatio.value;
+          const wastage = parseFloat(bmWastage.value) || 10;
+          const dryFactor = parseFloat(bmDryFactor.value) || 1.33;
+
+          if (
+            isNaN(len) ||
+            len <= 0 ||
+            isNaN(ht) ||
+            ht <= 0 ||
+            isNaN(thickMm) ||
+            thickMm <= 0
+          ) {
+            return showError(
+              "Please enter valid Wall Length, Height, and Thickness.",
+            );
+          }
+
+          let brickL = 190;
+          let brickW = 90;
+          let brickH = 90;
+          let brickName = "Standard Metric Modular (190 × 90 × 90 mm)";
+
+          if (bmBrickPreset.value === "custom") {
+            brickL = parseFloat(bmCustomBl.value);
+            brickW = parseFloat(bmCustomBw.value);
+            brickH = parseFloat(bmCustomBh.value);
+            if (
+              isNaN(brickL) ||
+              brickL <= 0 ||
+              isNaN(brickW) ||
+              brickW <= 0 ||
+              isNaN(brickH) ||
+              brickH <= 0
+            ) {
+              return showError("Please enter valid custom brick dimensions.");
+            }
+            brickName = `Custom (${brickL} × ${brickW} × ${brickH} mm)`;
+          } else {
+            const found = BRICK_PRESETS.find(
+              (p) => p.id === bmBrickPreset.value,
+            );
+            if (found) {
+              brickL = found.lengthMm;
+              brickW = found.widthMm;
+              brickH = found.heightMm;
+              brickName = found.name;
+            }
+          }
+
+          let customC = 1;
+          let customS = 6;
+          if (ratio === "custom") {
+            customC = parseFloat(bmCustomC.value) || 1;
+            customS = parseFloat(bmCustomS.value) || 6;
+          }
+
+          const res = calculateBrickMortar({
+            unitSystem: unit,
+            wallLength: len,
+            wallHeight: ht,
+            wallThicknessMeters: thickMm / 1000,
+            numberOfWalls: 1,
+            openingsDeductionArea: openDed,
+            brickLengthMm: brickL,
+            brickWidthMm: brickW,
+            brickHeightMm: brickH,
+            mortarJointMm: joint,
+            mortarRatio: ratio,
+            customCementPart: customC,
+            customSandPart: customS,
+            mortarWastagePercent: wastage,
+            dryVolumeFactor: dryFactor,
+          });
+
+          lastResultData = {
+            mode: "brick_mortar",
+            title: "Brickwork & Mortar Calculation Report",
+            brickName,
+            ...res,
+          };
+
+          lblHeroTag.textContent = "ESTIMATED MORTAR REQUIREMENT";
+          badgeCalcMode.textContent = "Brick Mortar";
+          resHeroMain.textContent = `${res.cementBags50kg} Bags Cement + ${res.sandVolumeCft} CFT Sand`;
+          resHeroSub.textContent = `Cement: ${res.cementWeightKg} kg | Sand: ${res.sandWeightTons} Tonnes | Dry Mortar Volume: ${res.dryMortarVolumeCum} m³`;
+
+          gridResultMetrics.innerHTML = `
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Total Masonry Volume</div>
+              <div class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">${res.totalBrickworkVolumeCum} m³ <span class="text-xs font-normal text-slate-500">(${res.totalBrickworkVolumeCft} CFT)</span></div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Wet Mortar Volume</div>
+              <div class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">${res.wetMortarVolumeCum} m³ <span class="text-xs font-normal text-slate-500">(${res.wetMortarVolumeCft} CFT)</span></div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Cement Required</div>
+              <div class="mt-1 text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">${res.cementBags50kg} Bags <span class="text-xs font-normal text-slate-500">(${res.cementWeightKg} kg)</span></div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Sand Required</div>
+              <div class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">${res.sandVolumeCft} CFT <span class="text-xs font-normal text-slate-500">(${res.sandWeightTons} Tonnes)</span></div>
+            </div>
+          `;
+
+          const isBmImp = unit === "imperial";
+          const primaryBmNet = isBmImp
+            ? `${(res.netWallAreaSqm * 10.7639).toFixed(2)} sq.ft`
+            : `${res.netWallAreaSqm} m²`;
+          const altBmNet = isBmImp
+            ? `${res.netWallAreaSqm} m²`
+            : `${(res.netWallAreaSqm * 10.7639).toFixed(2)} sq.ft`;
+
+          txtCalcDetails.innerHTML = `
+            <div>1. Net Wall Area = <strong>${primaryBmNet} (${altBmNet})</strong> | Wall Thickness = ${(thickMm / 1000).toFixed(3)}m (${thickMm} mm)</div>
+            <div>2. Total Brickwork Volume = ${res.netWallAreaSqm} m² × ${(thickMm / 1000).toFixed(3)}m = <strong>${res.totalBrickworkVolumeCum} m³ (${res.totalBrickworkVolumeCft} CFT)</strong></div>
+            <div>3. Bricks Count = ${res.totalBricksCount.toLocaleString()} ➔ Solid Bricks Volume = ${res.actualBricksVolumeCum} m³</div>
+            <div>4. Wet Mortar Volume = Total Volume (${res.totalBrickworkVolumeCum} m³) − Solid Bricks (${res.actualBricksVolumeCum} m³) = <strong>${res.wetMortarVolumeCum} m³</strong></div>
+            <div>5. Dry Volume Conversion (Factor: ${dryFactor}, Wastage: ${wastage}%) = ${res.wetMortarVolumeCum} × ${dryFactor} × ${(1 + wastage / 100).toFixed(2)} = <strong>${res.dryMortarVolumeCum} m³ (${res.dryMortarVolumeCft} CFT)</strong></div>
+            <div>6. Mortar Mix Ratio ${res.ratioLabel} (${res.cementPart} part Cement, ${res.sandPart} parts Sand)</div>
+            <div>   • Cement Portion = (${res.dryMortarVolumeCum} × ${res.cementPart}/${res.cementPart + res.sandPart}) × 1440 kg/m³ = <strong>${res.cementWeightKg} kg ➔ ${res.cementBags50kg} Bags (50kg)</strong></div>
+            <div>   • Sand Portion = (${res.dryMortarVolumeCum} × ${res.sandPart}/${res.cementPart + res.sandPart}) × 35.3147 = <strong>${res.sandVolumeCft} CFT ➔ ${res.sandWeightTons} Tonnes</strong></div>
+          `;
+
+          sectionComparison.classList.add("hidden");
+        } else if (currentMode === "paving_bricks") {
+          const u = pbUnit.value as "sqm" | "sqft" | "sqyd";
+          const area = parseFloat(pbArea.value);
+          const joint = parseFloat(pbJoint.value) || 0;
+          const wastage = parseFloat(pbWastage.value) || 5;
+          const bedding = parseFloat(pbBedding.value) || 0;
+
+          if (isNaN(area) || area <= 0) {
+            return showError("Please enter a valid positive Paving Area.");
+          }
+
+          let paverL = 200;
+          let paverW = 100;
+          let paverLabel = "200 × 100 mm (Standard Rectangular Paver)";
+
+          if (pbPreset.value === "custom") {
+            paverL = parseFloat(pbCustomL.value);
+            paverW = parseFloat(pbCustomW.value);
+            if (isNaN(paverL) || paverL <= 0 || isNaN(paverW) || paverW <= 0) {
+              return showError("Please enter valid custom paver dimensions.");
+            }
+            paverLabel = `Custom (${paverL} × ${paverW} mm)`;
+          } else if (pbPreset.value === "225x112.5") {
+            paverL = 225;
+            paverW = 112.5;
+            paverLabel = "225 × 112.5 mm (Traditional Clay Paver)";
+          } else if (pbPreset.value === "100x100") {
+            paverL = 100;
+            paverW = 100;
+            paverLabel = "100 × 100 mm (Square Cobblestone)";
+          } else if (pbPreset.value === "300x300") {
+            paverL = 300;
+            paverW = 300;
+            paverLabel = "300 × 300 mm (Square Patio Slab)";
+          }
+
+          const res = calculatePavingBricks({
+            unitSystem: "metric",
+            pavingArea: area,
+            areaUnit: u,
+            paverLengthMm: paverL,
+            paverWidthMm: paverW,
+            jointGapMm: joint,
+            wastagePercent: wastage,
+            beddingThicknessMm: bedding,
+          });
+
+          lastResultData = {
+            mode: "paving_bricks",
+            title: "Paving Bricks Calculation Report",
+            paverLabel,
+            ...res,
+          };
+
+          lblHeroTag.textContent = "ESTIMATED PAVING BRICKS REQUIRED";
+          badgeCalcMode.textContent = "Paving Bricks";
+          resHeroMain.textContent = `${res.finalEstimatedPavers.toLocaleString()} Pavers`;
+          resHeroSub.textContent = `Base: ${res.paversBeforeWastage.toLocaleString()} + ${res.wastageCount.toLocaleString()} (${res.wastagePercent}% Wastage) | Format: ${paverLabel}`;
+
+          gridResultMetrics.innerHTML = `
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Total Paving Area</div>
+              <div class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">${res.pavingAreaSqm} m² <span class="text-xs font-normal text-slate-500">(${res.pavingAreaSqft} sq.ft)</span></div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Paver Block Coverage</div>
+              <div class="mt-1 text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">${res.paversPerSqm} pavers/m² <span class="text-xs font-normal text-slate-500">(${res.paversPerSqft} /sq.ft)</span></div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Base Paver Count</div>
+              <div class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">${res.paversBeforeWastage.toLocaleString()} Pcs <span class="text-xs font-normal text-slate-500">(0% Waste)</span></div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Sand Bedding</div>
+              <div class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">${res.beddingSandVolumeCum ? `${res.beddingSandVolumeCum} m³ (${res.beddingSandVolumeCft} CFT)` : "Not specified"}</div>
+            </div>
+          `;
+
+          txtCalcDetails.innerHTML = `
+            <div>1. Total Paving Surface Area = ${res.pavingAreaSqm} m² (${res.pavingAreaSqft} sq.ft)</div>
+            <div>2. Individual Paver Dimensions = ${paverL}mm × ${paverW}mm | Joint Gap = ${joint}mm</div>
+            <div>3. Effective Paver Footprint = (${(paverL + joint) / 1000}m × ${(paverW + joint) / 1000}m) = ${res.singleEffectivePaverAreaSqm} m²</div>
+            <div>4. Base Pavers = ${res.pavingAreaSqm} m² / ${res.singleEffectivePaverAreaSqm} m² = <strong>${res.paversBeforeWastage.toLocaleString()} Pavers</strong></div>
+            <div>5. Wastage Allowance (${wastage}%) = <strong>${res.wastageCount.toLocaleString()} Pavers</strong></div>
+            <div>6. Final Estimated Pavers = <strong>${res.finalEstimatedPavers.toLocaleString()} Pavers (rounded up)</strong></div>
+            ${res.beddingSandVolumeCum ? `<div>7. Sand Bedding (${bedding}mm layer) = ${res.pavingAreaSqm} m² × ${bedding / 1000}m = <strong>${res.beddingSandVolumeCum} m³ (${res.beddingSandVolumeCft} CFT / ${res.beddingSandTons} Tonnes)</strong></div>` : ""}
+          `;
+
+          sectionComparison.classList.add("hidden");
+        } else if (currentMode === "custom_brickwork") {
+          const l = parseFloat(cbLen.value);
+          const w = parseFloat(cbWid.value);
+          const h = parseFloat(cbHt.value);
+          const bl = parseFloat(cbBrickL.value);
+          const bw = parseFloat(cbBrickW.value);
+          const bh = parseFloat(cbBrickH.value);
+          const joint = parseFloat(cbJoint.value) || 10;
+          const ratio = cbRatio.value;
+          const bWaste = parseFloat(cbBrickWaste.value) || 5;
+          const mWaste = parseFloat(cbMortarWaste.value) || 10;
+
+          if (
+            isNaN(l) ||
+            l <= 0 ||
+            isNaN(w) ||
+            w <= 0 ||
+            isNaN(h) ||
+            h <= 0 ||
+            isNaN(bl) ||
+            bl <= 0 ||
+            isNaN(bw) ||
+            bw <= 0 ||
+            isNaN(bh) ||
+            bh <= 0
+          ) {
+            return showError(
+              "Please enter valid positive dimensions for structure and custom bricks.",
+            );
+          }
+
+          const res = calculateCustomBrickwork({
+            unitSystem: "metric",
+            lengthM: l,
+            widthM: w,
+            heightM: h,
+            brickLengthMm: bl,
+            brickWidthMm: bw,
+            brickHeightMm: bh,
+            mortarJointMm: joint,
+            mortarRatio: ratio,
+            brickWastagePercent: bWaste,
+            mortarWastagePercent: mWaste,
+            dryVolumeFactor: 1.33,
+          });
+
+          lastResultData = {
+            mode: "custom_brickwork",
+            title: "Custom Brickwork Calculation Report",
+            brickSpec: `${bl} × ${bw} × ${bh} mm`,
+            ...res,
+          };
+
+          lblHeroTag.textContent = "ESTIMATED CUSTOM BRICKWORK MATERIALS";
+          badgeCalcMode.textContent = "Custom Brickwork";
+          resHeroMain.textContent = `${res.finalBricks.toLocaleString()} Bricks + ${res.cementBags50kg} Bags Cement`;
+          resHeroSub.textContent = `Total Volume: ${res.totalVolumeCum} m³ | Sand: ${res.sandVolumeCft} CFT (${res.sandWeightTons} Tonnes) | Mortar Dry Volume: ${res.dryMortarVolumeCum} m³`;
+
+          gridResultMetrics.innerHTML = `
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Total Structure Volume</div>
+              <div class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">${res.totalVolumeCum} m³ <span class="text-xs font-normal text-slate-500">(${res.totalVolumeCft} CFT)</span></div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Total Bricks Required</div>
+              <div class="mt-1 text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">${res.finalBricks.toLocaleString()} Bricks <span class="text-xs font-normal text-slate-500">(Base: ${res.baseBricks})</span></div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Cement Required</div>
+              <div class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">${res.cementBags50kg} Bags <span class="text-xs font-normal text-slate-500">(${res.cementWeightKg} kg)</span></div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Sand Required</div>
+              <div class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">${res.sandVolumeCft} CFT <span class="text-xs font-normal text-slate-500">(${res.sandWeightTons} Tonnes)</span></div>
+            </div>
+          `;
+
+          txtCalcDetails.innerHTML = `
+            <div>1. Total Custom Masonry Volume = ${l}m × ${w}m × ${h}m = <strong>${res.totalVolumeCum} m³ (${res.totalVolumeCft} CFT)</strong></div>
+            <div>2. Custom Brick Nominal Size = (${bl + joint} × ${bw + joint} × ${bh + joint} mm)</div>
+            <div>3. Base Bricks Required = <strong>${res.baseBricks.toLocaleString()} Bricks</strong> ➔ with ${bWaste}% Wastage = <strong>${res.finalBricks.toLocaleString()} Bricks</strong></div>
+            <div>4. Dry Mortar Volume = <strong>${res.dryMortarVolumeCum} m³ (${res.dryMortarVolumeCft} CFT)</strong> (Ratio ${res.ratioLabel})</div>
+            <div>5. Cement = <strong>${res.cementBags50kg} Bags (50kg)</strong> | Sand = <strong>${res.sandVolumeCft} CFT (${res.sandWeightTons} Tonnes)</strong></div>
+          `;
+
+          sectionComparison.classList.add("hidden");
+        }
+
+        resultsSection.classList.remove("hidden");
+        resultsSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      } catch (err) {
+        showError(
+          "An unexpected error occurred during calculation. Please check your inputs.",
+        );
+      }
+    }
+
+    // Clear All Functionality
+    function performClearAll() {
+      // 1. Reset inputs for Wall Brickwork
+      wbLength.value = "10";
+      wbHeight.value = "3.0";
+      wbWalls.value = "1";
+      wbThicknessPreset.value = "one_brick";
+      divWbCustomThick.classList.add("hidden");
+      wbCustomThickVal.value = "230";
+      wbCustomThickUnit.value = "mm";
+      wbBrickPreset.value = "modular_metric";
+      divWbCustomBrick.classList.add("hidden");
+      wbCustomBl.value = "190";
+      wbCustomBw.value = "90";
+      wbCustomBh.value = "90";
+      wbJoint.value = "10";
+      wbOpenings.value = "4.0";
+      wbWastage.value = "5";
+
+      // 2. Reset inputs for Brick Mortar
+      bmLength.value = "10";
+      bmHeight.value = "3.0";
+      bmThickness.value = "230";
+      bmOpenings.value = "4.0";
+      bmBrickPreset.value = "modular_metric";
+      divBmCustomBrick.classList.add("hidden");
+      bmCustomBl.value = "190";
+      bmCustomBw.value = "90";
+      bmCustomBh.value = "90";
+      bmRatio.value = "1:6";
+      divBmCustomRatio.classList.add("hidden");
+      bmCustomC.value = "1";
+      bmCustomS.value = "6";
+      bmJoint.value = "10";
+      bmWastage.value = "10";
+      bmDryFactor.value = "1.33";
+
+      // 3. Reset inputs for Paving Bricks
+      pbArea.value = "50";
+      pbPreset.value = "200x100";
+      divPbCustomSize.classList.add("hidden");
+      pbCustomL.value = "200";
+      pbCustomW.value = "100";
+      pbJoint.value = "3";
+      pbWastage.value = "5";
+      pbBedding.value = "50";
+
+      // 4. Reset inputs for Custom Brickwork
+      cbLen.value = "6";
+      cbWid.value = "0.30";
+      cbHt.value = "2.5";
+      cbBrickL.value = "225";
+      cbBrickW.value = "112.5";
+      cbBrickH.value = "75";
+      cbJoint.value = "10";
+      cbRatio.value = "1:6";
+      cbBrickWaste.value = "5";
+      cbMortarWaste.value = "10";
+
+      // Reset Tab to Wall Brickwork
+      modeButtons[0].click();
+
+      invalidateResults();
+    }
+
+    btnCalculate.addEventListener("click", performCalculation);
+    btnClearAll.addEventListener("click", performClearAll);
+
+    // PDF Export Generation
+    if (btnDownloadPdf) {
+      btnDownloadPdf.addEventListener("click", async () => {
+        if (!lastResultData) return;
+
+        const txtBtn = document.getElementById("txt-btn-pdf");
+        if (txtBtn) txtBtn.textContent = "Generating PDF...";
+
+        try {
+          let jsPDFModule = (window as any).jspdf;
+          if (!jsPDFModule) {
+            const script = document.createElement("script");
+            script.src =
+              "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+            await new Promise((resolve, reject) => {
+              script.onload = resolve;
+              script.onerror = reject;
+              document.head.appendChild(script);
+            });
+            jsPDFModule = (window as any).jspdf;
+          }
+
+          const { jsPDF } = jsPDFModule;
+          const doc = new jsPDF({ unit: "pt", format: "a4" });
+
+          const primaryColor = [37, 99, 235]; // #2563eb
+          const darkColor = [15, 23, 42]; // #0f172a
+          const slateColor = [100, 116, 139]; // #64748b
+          const lightBg = [248, 250, 252]; // #f8fafc
+
+          const pageWidth = doc.internal.pageSize.getWidth();
+          const pageHeight = doc.internal.pageSize.getHeight();
+          const margin = 40;
+          let y = 45;
+
+          // Top Header Branding
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(18);
+          doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+          doc.text("AIFreecalculator.com", margin, y);
+
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(9);
+          doc.setTextColor(slateColor[0], slateColor[1], slateColor[2]);
+          doc.text("Free Online Calculator Tools", margin, y + 13);
+
+          const now = new Date();
+          const dateStr = now.toISOString().split("T")[0];
+          doc.text(`Generated: ${dateStr}`, pageWidth - margin, y + 5, {
+            align: "right",
+          });
+
+          y += 28;
+          doc.setDrawColor(226, 232, 240);
+          doc.setLineWidth(1);
+          doc.line(margin, y, pageWidth - margin, y);
+          y += 24;
+
+          // Mode-Specific Title
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(15);
+          doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+          doc.text(lastResultData.title, margin, y);
+          y += 18;
+
+          // Summary Hero Box
+          doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
+          doc.roundedRect(margin, y, pageWidth - margin * 2, 54, 8, 8, "F");
+          doc.setDrawColor(203, 213, 225);
+          doc.roundedRect(margin, y, pageWidth - margin * 2, 54, 8, 8, "D");
+
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(10);
+          doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+          doc.text(
+            lblHeroTag.textContent || "CALCULATION SUMMARY",
+            margin + 14,
+            y + 18,
+          );
+
+          doc.setFontSize(14);
+          doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+          doc.text(resHeroMain.textContent || "", margin + 14, y + 36);
+
+          y += 72;
+
+          // Summary Table Rows based on Mode
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(11);
+          doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+          doc.text("Calculation Breakdown & Parameters", margin, y);
+          y += 14;
+
+          let tableRows: Array<[string, string]> = [];
+          if (lastResultData.mode === "wall_brickwork") {
+            tableRows = [
+              [
+                "Net Wall Area",
+                `${lastResultData.netWallAreaSqm} m² (${lastResultData.netWallAreaSqft} sq.ft)`,
+              ],
+              [
+                "Wall Thickness",
+                `${(lastResultData.wallThicknessMeters * 1000).toFixed(0)} mm (${lastResultData.wallThicknessLabel})`,
+              ],
+              [
+                "Total Masonry Volume",
+                `${lastResultData.wallVolumeCum} m³ (${lastResultData.wallVolumeCft} CFT)`,
+              ],
+              [
+                "Brick Specifications",
+                `${lastResultData.brickLengthMm} × ${lastResultData.brickWidthMm} × ${lastResultData.brickHeightMm} mm`,
+              ],
+              ["Mortar Joint Thickness", `${lastResultData.mortarJointMm} mm`],
+              [
+                "Base Bricks (0% Wastage)",
+                `${lastResultData.bricksBeforeWastage.toLocaleString()} Bricks`,
+              ],
+              [
+                "Wastage Allowance",
+                `${lastResultData.wastagePercent}% (${lastResultData.wastageCount.toLocaleString()} Bricks)`,
+              ],
+              [
+                "Final Estimated Bricks",
+                `${lastResultData.finalEstimatedBricks.toLocaleString()} Bricks`,
+              ],
+            ];
+          } else if (lastResultData.mode === "brick_mortar") {
+            tableRows = [
+              [
+                "Total Brickwork Volume",
+                `${lastResultData.totalBrickworkVolumeCum} m³ (${lastResultData.totalBrickworkVolumeCft} CFT)`,
+              ],
+              [
+                "Solid Bricks Volume",
+                `${lastResultData.actualBricksVolumeCum} m³`,
+              ],
+              [
+                "Wet Mortar Volume",
+                `${lastResultData.wetMortarVolumeCum} m³ (${lastResultData.wetMortarVolumeCft} CFT)`,
+              ],
+              [
+                "Dry Mortar Volume",
+                `${lastResultData.dryMortarVolumeCum} m³ (Factor: ${lastResultData.dryVolumeFactor})`,
+              ],
+              [
+                "Mortar Mix Ratio",
+                `1:${lastResultData.ratioLabel.split(":")[1] || "6"} (Cement : Sand)`,
+              ],
+              [
+                "Mortar Wastage Allowance",
+                `${lastResultData.mortarWastagePercent}%`,
+              ],
+              [
+                "Cement Required",
+                `${lastResultData.cementBags50kg} Bags of 50kg (${lastResultData.cementWeightKg} kg)`,
+              ],
+              [
+                "Sand Required",
+                `${lastResultData.sandVolumeCft} CFT (${lastResultData.sandWeightTons} Tonnes)`,
+              ],
+            ];
+          } else if (lastResultData.mode === "paving_bricks") {
+            tableRows = [
+              [
+                "Total Paving Area",
+                `${lastResultData.pavingAreaSqm} m² (${lastResultData.pavingAreaSqft} sq.ft)`,
+              ],
+              [
+                "Paver Format / Type",
+                `${lastResultData.paverLengthMm} × ${lastResultData.paverWidthMm} mm (${lastResultData.paverLabel})`,
+              ],
+              ["Joint Gap Spacing", `${lastResultData.jointGapMm} mm`],
+              [
+                "Coverage Density",
+                `${lastResultData.paversPerSqm} pavers/m² (${lastResultData.paversPerSqft} /sq.ft)`,
+              ],
+              [
+                "Base Pavers Count",
+                `${lastResultData.paversBeforeWastage.toLocaleString()} Pavers`,
+              ],
+              [
+                "Wastage & Edge Cuts",
+                `${lastResultData.wastagePercent}% (${lastResultData.wastageCount.toLocaleString()} Pavers)`,
+              ],
+              [
+                "Final Estimated Pavers",
+                `${lastResultData.finalEstimatedPavers.toLocaleString()} Pavers`,
+              ],
+              [
+                "Sand Bedding Layer",
+                lastResultData.beddingSandVolumeCum
+                  ? `${lastResultData.beddingSandVolumeCum} m³ (${lastResultData.beddingSandVolumeCft} CFT / ${lastResultData.beddingSandTons} Tonnes)`
+                  : "None specified",
+              ],
+            ];
+          } else if (lastResultData.mode === "custom_brickwork") {
+            tableRows = [
+              [
+                "Total Structure Volume",
+                `${lastResultData.totalVolumeCum} m³ (${lastResultData.totalVolumeCft} CFT)`,
+              ],
+              ["Custom Brick Format", lastResultData.brickSpec],
+              [
+                "Base Bricks Required",
+                `${lastResultData.baseBricks.toLocaleString()} Bricks`,
+              ],
+              [
+                "Final Estimated Bricks",
+                `${lastResultData.finalBricks.toLocaleString()} Bricks`,
+              ],
+              [
+                "Dry Mortar Volume",
+                `${lastResultData.dryMortarVolumeCum} m³ (${lastResultData.dryMortarVolumeCft} CFT)`,
+              ],
+              ["Mortar Mix Ratio", lastResultData.ratioLabel],
+              [
+                "Cement Required",
+                `${lastResultData.cementBags50kg} Bags (${lastResultData.cementWeightKg} kg)`,
+              ],
+              [
+                "Sand Required",
+                `${lastResultData.sandVolumeCft} CFT (${lastResultData.sandWeightTons} Tonnes)`,
+              ],
+            ];
+          }
+
+          // Draw Table Rows
+          tableRows.forEach(([label, val], idx) => {
+            const rowY = y + idx * 22;
+            doc.setFillColor(
+              idx % 2 === 0 ? 255 : 248,
+              idx % 2 === 0 ? 255 : 250,
+              idx % 2 === 0 ? 255 : 252,
+            );
+            doc.rect(margin, rowY - 12, pageWidth - margin * 2, 22, "F");
+            doc.setDrawColor(241, 245, 249);
+            doc.line(margin, rowY + 10, pageWidth - margin * 2, rowY + 10);
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(9);
+            doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+            doc.text(label, margin + 10, rowY + 2);
+
+            doc.setFont("helvetica", "normal");
+            doc.text(val, pageWidth - margin - 10, rowY + 2, {
+              align: "right",
+            });
+          });
+
+          // Footer Branding on every page
+          const totalPages = doc.internal.getNumberOfPages();
+          for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8);
+            doc.setTextColor(slateColor[0], slateColor[1], slateColor[2]);
+            doc.text(
+              "Generated using AIFreecalculator.com",
+              margin,
+              pageHeight - 20,
+            );
+            doc.text(
+              `Page ${i} of ${totalPages}`,
+              pageWidth - margin,
+              pageHeight - 20,
+              { align: "right" },
+            );
+          }
+
+          const fileDate = dateStr;
+          const fileName = `brickwork-calculation-${fileDate}.pdf`;
+          doc.save(fileName);
+        } catch (e) {
+          console.error("PDF generation error:", e);
+        } finally {
+          if (txtBtn) txtBtn.textContent = "Download PDF";
+        }
+      });
+    }
+  </script>
+</CalculatorLayout>

@@ -1,0 +1,136 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="Height Converter - Feet, Inches, CM & Meters"
+  description="Convert height between centimeters, meters, feet, and inches with percentile chart comparisons."
+  category="General"
+  calculatorName="Height Converter"
+  slug="height-calculator"
+  keywords={['height converter', 'feet to cm', 'cm to feet and inches', 'meters to feet', 'height calculator']}
+>
+  <div class="space-y-6">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <!-- Input Value & Unit -->
+      <div>
+        <label for="input-height-val" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+          Height Value
+        </label>
+        <input
+          type="number"
+          id="input-height-val"
+          value="175"
+          step="any"
+          class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+        />
+      </div>
+
+      <div>
+        <label for="select-height-unit" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+          From Unit
+        </label>
+        <select
+          id="select-height-unit"
+          class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+        >
+          <option value="cm" selected>Centimeters (cm)</option>
+          <option value="m">Meters (m)</option>
+          <option value="inches">Inches (in)</option>
+          <option value="feet">Decimal Feet (ft)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Conversion Results Grid -->
+    <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-950">
+      <div class="border-b border-slate-200/80 pb-4 dark:border-slate-800">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Feet & Inches Equivalent</span>
+        <div id="res-ft-in" class="mt-1 text-3xl font-black text-blue-600 dark:text-blue-400">
+          5' 8.9"
+        </div>
+      </div>
+
+      <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 text-xs">
+        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="text-slate-500 dark:text-slate-400">Centimeters</div>
+          <div id="res-cm" class="mt-1 text-base font-bold text-slate-900 dark:text-white">175 cm</div>
+        </div>
+        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="text-slate-500 dark:text-slate-400">Meters</div>
+          <div id="res-m" class="mt-1 text-base font-bold text-slate-900 dark:text-white">1.75 m</div>
+        </div>
+        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="text-slate-500 dark:text-slate-400">Total Inches</div>
+          <div id="res-in" class="mt-1 text-base font-bold text-slate-900 dark:text-white">68.9 in</div>
+        </div>
+        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="text-slate-500 dark:text-slate-400">Decimal Feet</div>
+          <div id="res-ft-dec" class="mt-1 text-base font-bold text-slate-900 dark:text-white">5.74 ft</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Fragment slot="content">
+    <h2>Height Conversion Formulas</h2>
+    <p>
+      Conversion between imperial feet/inches and metric units:
+      <ul>
+        <li><strong>1 inch</strong> = 2.54 cm</li>
+        <li><strong>1 foot</strong> = 12 inches = 30.48 cm</li>
+        <li><strong>1 meter</strong> = 100 cm = 3.28084 feet</li>
+      </ul>
+    </p>
+  </Fragment>
+
+  <Fragment slot="faq">
+    <div class="space-y-4 text-xs sm:text-sm">
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open>
+        <summary class="font-bold text-slate-900 dark:text-white cursor-pointer flex justify-between items-center">
+          How many centimeters is 5 feet 10 inches?
+          <span class="group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          5 feet 10 inches equals 70 inches total, which is exactly 177.8 cm (1.778 meters).
+        </p>
+      </details>
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<script is:inline>
+  const heightVal = document.getElementById('input-height-val');
+  const heightUnit = document.getElementById('select-height-unit');
+  const resFtIn = document.getElementById('res-ft-in');
+  const resCm = document.getElementById('res-cm');
+  const resM = document.getElementById('res-m');
+  const resIn = document.getElementById('res-in');
+  const resFtDec = document.getElementById('res-ft-dec');
+
+  function convert() {
+    const val = parseFloat(heightVal.value) || 0;
+    const unit = heightUnit.value;
+
+    let cm = 0;
+    if (unit === 'cm') cm = val;
+    else if (unit === 'm') cm = val * 100;
+    else if (unit === 'inches') cm = val * 2.54;
+    else if (unit === 'feet') cm = val * 30.48;
+
+    const meters = (cm / 100).toFixed(3);
+    const totalInches = (cm / 2.54);
+    const ft = Math.floor(totalInches / 12);
+    const inch = (totalInches % 12).toFixed(1);
+
+    resFtIn.textContent = `${ft}' ${inch}"`;
+    resCm.textContent = `${cm.toFixed(1)} cm`;
+    resM.textContent = `${meters} m`;
+    resIn.textContent = `${totalInches.toFixed(1)} in`;
+    resFtDec.textContent = `${(totalInches / 12).toFixed(2)} ft`;
+  }
+
+  heightVal.addEventListener('input', convert);
+  heightUnit.addEventListener('change', convert);
+  convert();
+</script>

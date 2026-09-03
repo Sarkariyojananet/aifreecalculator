@@ -1,0 +1,1266 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="Mortgage Loan Calculator – Estimate Your Monthly Payment"
+  description="Estimate your monthly mortgage payment, total interest, and loan repayment schedule based on your home price, down payment, interest rate, and loan term."
+  category="Finance"
+  calculatorName="Mortgage Loan Calculator"
+  slug="mortgage-calculator"
+  keywords={[
+    'mortgage loan calculator',
+    'mortgage calculator',
+    'monthly mortgage calculator',
+    'home loan calculator',
+    'mortgage payment calculator',
+    'mortgage amortization calculator',
+    'mortgage calculator with extra payments',
+    'house loan calculator',
+    'principal and interest calculator'
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- QUICK PRESETS BAR -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-center gap-1.5 text-xs">
+        <span class="font-bold text-slate-600 dark:text-slate-400 mr-1 flex items-center gap-1">
+          <span>⚡</span> Quick Presets:
+        </span>
+        <button type="button" class="btn-mg-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-price="5000000" data-down="1000000" data-rate="8.5" data-term="20" data-extra="0">🏡 Standard 20-Yr (₹50L @ 8.5%, 20% Down)</button>
+        <button type="button" class="btn-mg-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-price="7500000" data-down="1125000" data-rate="8.25" data-term="30" data-extra="0">🏛️ 30-Yr Long Term (₹75L @ 8.25%, 15% Down)</button>
+        <button type="button" class="btn-mg-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-price="4000000" data-down="1000000" data-rate="8.0" data-term="15" data-extra="0">⚡ 15-Yr Accelerated (₹40L @ 8.0%, 25% Down)</button>
+        <button type="button" class="btn-mg-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-price="5000000" data-down="1000000" data-rate="8.5" data-term="20" data-extra="5000">💰 Prepayment (₹50L + ₹5k/mo Extra)</button>
+      </div>
+    </div>
+
+    <!-- MAIN CALCULATOR FORM CONTAINER -->
+    <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-blue-50/30 p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/20 sm:p-7">
+      
+      <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+        <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <span>🏡</span> Mortgage Loan Calculator
+        </h2>
+        <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+          Estimate your monthly mortgage payment, total interest, and loan repayment schedule based on your home price, down payment, interest rate, and loan term.
+        </p>
+      </div>
+
+      <form id="form-mg" class="mt-4 space-y-4" novalidate onsubmit="return false;">
+        
+        <!-- ROW 1: PRIMARY LOAN INPUTS -->
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-4">
+          <!-- Home Price -->
+          <div>
+            <label for="inp-mg-price" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Home Purchase Price (₹)</label>
+            <input type="number" id="inp-mg-price" value="5000000" step="50000" min="1" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="50,00,000" />
+          </div>
+
+          <!-- Down Payment (Amount & Sync %) -->
+          <div>
+            <div class="flex items-center justify-between">
+              <label for="inp-mg-down" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Down Payment (₹)</label>
+              <span id="lbl-mg-down-pct" class="text-[11px] font-bold text-blue-600 dark:text-blue-400">20%</span>
+            </div>
+            <div class="mt-1.5 flex rounded-xl border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-800">
+              <input type="number" id="inp-mg-down" value="1000000" step="25000" min="0" class="w-full rounded-l-xl border-0 p-2.5 text-sm font-bold text-slate-900 focus:ring-0 dark:bg-slate-800 dark:text-white" placeholder="10,00,000" />
+              <input type="number" id="inp-mg-down-pct-input" value="20" min="0" max="100" step="1" class="w-16 rounded-r-xl border-l border-slate-300 bg-slate-50 p-2 text-center text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300" title="Down payment percentage" />
+            </div>
+          </div>
+
+          <!-- Annual Interest Rate -->
+          <div>
+            <label for="inp-mg-rate" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Interest Rate (% p.a.)</label>
+            <input type="number" id="inp-mg-rate" value="8.5" step="0.1" min="0" max="30" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="8.5" />
+          </div>
+
+          <!-- Loan Term & Unit -->
+          <div>
+            <label for="inp-mg-term" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Loan Term</label>
+            <div class="mt-1.5 flex rounded-xl border border-slate-300 bg-white dark:border-slate-700 dark:bg-slate-800">
+              <input type="number" id="inp-mg-term" value="20" step="1" min="1" max="40" class="w-full rounded-l-xl border-0 p-2.5 text-sm font-bold text-slate-900 focus:ring-0 dark:bg-slate-800 dark:text-white" placeholder="20" />
+              <select id="sel-mg-term-unit" class="rounded-r-xl border-l border-slate-300 bg-slate-50 px-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 cursor-pointer">
+                <option value="years" selected>Years</option>
+                <option value="months">Months</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- DERIVED LOAN AMOUNT BANNER & QUICK TERM BUTTONS -->
+        <div class="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-blue-200 bg-blue-50/40 p-3 dark:border-blue-900/60 dark:bg-blue-950/20 text-xs">
+          <div class="flex items-center gap-1.5 font-bold text-blue-800 dark:text-blue-300">
+            <span>💳</span> Calculated Loan Principal: <span id="txt-mg-loan-amt" class="font-black text-slate-900 dark:text-white ml-1">₹ 40,00,000 (80% Financed)</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="text-slate-500 dark:text-slate-400 font-semibold mr-1">Quick Terms:</span>
+            <button type="button" class="btn-mg-quick-term rounded-md border border-slate-300 bg-white px-2 py-0.5 font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-years="10">10Y</button>
+            <button type="button" class="btn-mg-quick-term rounded-md border border-slate-300 bg-white px-2 py-0.5 font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-years="15">15Y</button>
+            <button type="button" class="btn-mg-quick-term active rounded-md bg-blue-600 px-2 py-0.5 font-bold text-white shadow-2xs cursor-pointer" data-years="20">20Y</button>
+            <button type="button" class="btn-mg-quick-term rounded-md border border-slate-300 bg-white px-2 py-0.5 font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-years="25">25Y</button>
+            <button type="button" class="btn-mg-quick-term rounded-md border border-slate-300 bg-white px-2 py-0.5 font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-years="30">30Y</button>
+          </div>
+        </div>
+
+        <!-- ROW 2: OPTIONAL HOUSING COSTS (EXPANDABLE ACCORDION) -->
+        <details class="group rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <summary class="cursor-pointer list-none flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            <span class="flex items-center gap-1.5">
+              <span>🏛️</span> Optional Additional Costs (Taxes, Insurance, HOA)
+            </span>
+            <span class="text-blue-600 dark:text-blue-400 font-semibold text-[11px] group-open:rotate-180 transition-transform">▼ Expand</span>
+          </summary>
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-4 mt-3 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
+            <div>
+              <label for="inp-mg-tax" class="block font-bold text-slate-700 dark:text-slate-300">Annual Property Tax (₹)</label>
+              <input type="number" id="inp-mg-tax" value="0" step="1000" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="0" />
+            </div>
+            <div>
+              <label for="inp-mg-ins" class="block font-bold text-slate-700 dark:text-slate-300">Annual Home Insurance (₹)</label>
+              <input type="number" id="inp-mg-ins" value="0" step="500" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="0" />
+            </div>
+            <div>
+              <label for="inp-mg-pmi" class="block font-bold text-slate-700 dark:text-slate-300">Monthly PMI (₹)</label>
+              <input type="number" id="inp-mg-pmi" value="0" step="200" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="0" />
+            </div>
+            <div>
+              <label for="inp-mg-hoa" class="block font-bold text-slate-700 dark:text-slate-300">Monthly HOA / Maintenance (₹)</label>
+              <input type="number" id="inp-mg-hoa" value="0" step="500" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="0" />
+            </div>
+          </div>
+        </details>
+
+        <!-- ROW 3: EXTRA MORTGAGE PAYMENTS (EXPANDABLE ACCORDION) -->
+        <details class="group rounded-2xl border border-emerald-200 bg-emerald-50/20 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/10">
+          <summary class="cursor-pointer list-none flex items-center justify-between text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+            <span class="flex items-center gap-1.5">
+              <span>🚀</span> Extra Mortgage Payments (Prepayment & Savings)
+            </span>
+            <span class="text-emerald-600 dark:text-emerald-400 font-semibold text-[11px] group-open:rotate-180 transition-transform">▼ Expand</span>
+          </summary>
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 mt-3 pt-3 border-t border-emerald-100 dark:border-emerald-900/40 text-xs">
+            <div>
+              <label for="inp-mg-extra-mo" class="block font-bold text-slate-700 dark:text-slate-300">Extra Monthly Payment (₹)</label>
+              <input type="number" id="inp-mg-extra-mo" value="0" step="1000" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="0" />
+            </div>
+            <div>
+              <label for="inp-mg-extra-yr" class="block font-bold text-slate-700 dark:text-slate-300">Extra Annual Payment (₹)</label>
+              <input type="number" id="inp-mg-extra-yr" value="0" step="5000" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="0" />
+            </div>
+            <div>
+              <label for="inp-mg-extra-once" class="block font-bold text-slate-700 dark:text-slate-300">One-Time Extra Payment (₹)</label>
+              <input type="number" id="inp-mg-extra-once" value="0" step="10000" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="0" />
+            </div>
+          </div>
+        </details>
+
+        <div class="flex items-center gap-2 pt-2">
+          <button type="submit" id="btn-calc-mg" class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer">
+            Calculate Mortgage →
+          </button>
+          <button type="button" id="btn-clear-mg" class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer">
+            Clear All (✕)
+          </button>
+        </div>
+
+        <p id="err-mg" class="hidden rounded-xl border border-red-200 bg-red-50 p-2.5 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300" role="alert" aria-live="polite"></p>
+
+      </form>
+
+      <!-- RESULTS PRESENTATION SECTION (Hidden Initially) -->
+      <div id="mg-results-section" class="hidden mt-6 space-y-5">
+        
+        <!-- 1. Main Highlight Result Card -->
+        <div class="overflow-hidden rounded-3xl border border-blue-200 bg-linear-to-br from-white via-blue-50/40 to-blue-100/50 p-5 shadow-lg shadow-blue-500/5 dark:border-blue-900/60 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/30 sm:p-7">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-blue-200/80 pb-4 dark:border-slate-800">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">Estimated Total Monthly Payment</span>
+              <div id="res-mg-total-mo" class="mt-1 text-4xl sm:text-5xl font-black text-blue-600 dark:text-blue-400">₹ 34,713.06</div>
+            </div>
+            <div class="sm:text-right">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Monthly Principal & Interest:</span>
+              <div id="res-mg-pi-mo" class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">₹ 34,713.06</div>
+            </div>
+          </div>
+
+          <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Loan Amount</div>
+              <div id="res-mg-loan" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">₹ 40,00,000</div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Total Interest Paid</div>
+              <div id="res-mg-total-int" class="mt-1 text-sm sm:text-base font-bold text-red-600 dark:text-red-400">₹ 43,31,135</div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Total Amount Repaid</div>
+              <div id="res-mg-total-repaid" class="mt-1 text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">₹ 83,31,135</div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Estimated Payoff Date</div>
+              <div id="res-mg-payoff-date" class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">Sep 2046</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. PRINCIPAL VS INTEREST RATIO CHART -->
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 space-y-4">
+          <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+            <span>📊</span> Loan Principal vs Total Interest Breakdown
+          </h3>
+
+          <div class="space-y-2">
+            <div class="h-4 w-full overflow-hidden rounded-full bg-slate-100 flex dark:bg-slate-800">
+              <div id="bar-mg-principal" class="bg-blue-600 transition-all duration-500" style="width: 48%;" title="Principal Borrowed"></div>
+              <div id="bar-mg-interest" class="bg-red-500 transition-all duration-500" style="width: 52%;" title="Total Interest Charged"></div>
+            </div>
+            <div class="flex flex-wrap items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400">
+              <span class="flex items-center gap-1.5">
+                <span class="inline-block h-3 w-3 rounded-full bg-blue-600"></span>
+                <span id="lbl-chart-principal">Principal Borrowed: ₹40,00,000 (48.0%)</span>
+              </span>
+              <span class="flex items-center gap-1.5">
+                <span class="inline-block h-3 w-3 rounded-full bg-red-500"></span>
+                <span id="lbl-chart-interest">Total Interest: ₹43,31,135 (52.0%)</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. EXTRA PAYMENT SAVINGS COMPARISON (When Active) -->
+        <div id="card-mg-extra-comparison" class="hidden overflow-hidden rounded-3xl border border-emerald-200 bg-white p-5 dark:border-emerald-900/60 dark:bg-slate-900 shadow-md">
+          <h3 class="text-sm font-black text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5 border-b border-slate-200 pb-2.5 dark:border-slate-800">
+            <span>🚀</span> Prepayment Impact & Interest Savings
+          </h3>
+          <div class="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+              <div class="text-slate-500 dark:text-slate-400">Estimated Interest Saved</div>
+              <div id="res-mg-int-saved" class="mt-1 text-base font-black text-emerald-600 dark:text-emerald-400">₹ 8,42,150</div>
+            </div>
+            <div class="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+              <div class="text-slate-500 dark:text-slate-400">Repayment Time Saved</div>
+              <div id="res-mg-time-saved" class="mt-1 text-base font-black text-blue-600 dark:text-blue-400">4 Years 2 Months</div>
+            </div>
+            <div class="rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+              <div class="text-slate-500 dark:text-slate-400">New Loan Duration</div>
+              <div id="res-mg-new-duration" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">15.8 Years (190 Mos)</div>
+            </div>
+            <div class="rounded-xl border border-slate-200 p-3 dark:border-slate-800">
+              <div class="text-slate-500 dark:text-slate-400">New Total Interest</div>
+              <div id="res-mg-new-int" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">₹ 34,88,985</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. AMORTIZATION SCHEDULE (YEARLY SUMMARY & MONTHLY SCHEDULE TABS) -->
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <div>
+              <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <span>📅</span> Mortgage Amortization Schedule
+              </h3>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                View yearly summary or complete monthly principal and interest schedule.
+              </p>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+              <!-- View Switcher Tabs -->
+              <div class="inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800 text-xs font-bold">
+                <button type="button" id="tab-mg-yearly" class="active rounded-lg bg-white px-3 py-1 text-slate-900 shadow-xs dark:bg-slate-900 dark:text-white cursor-pointer">
+                  Yearly Summary
+                </button>
+                <button type="button" id="tab-mg-monthly" class="rounded-lg px-3 py-1 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer">
+                  Monthly Schedule
+                </button>
+              </div>
+
+              <!-- Download PDF Button -->
+              <button type="button" id="btn-mg-download-pdf" class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-[0.98] cursor-pointer" title="Download active amortization schedule as PDF">
+                <span>📄</span> <span id="txt-btn-mg-pdf">Download PDF</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Schedule Table Container -->
+          <div class="overflow-x-auto max-h-96 scrollbar-thin">
+            <table class="w-full text-left text-xs">
+              <thead id="mg-sched-thead" class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold sticky top-0">
+                <!-- Injected dynamically -->
+              </thead>
+              <tbody id="mg-sched-tbody" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                <!-- Injected dynamically -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- EDUCATIONAL SEO ARTICLE SLOT (Styled matching age.astro) -->
+  <Fragment slot="content">
+    <section class="mortgage-content">
+      <h2>How to Use This Mortgage Loan Calculator</h2>
+      <p>
+        Planning your home financing is easy with this comprehensive mortgage and amortization engine:
+      </p>
+      <ol>
+        <li><strong>Enter the home price:</strong> Input the total purchase price of the property in Indian Rupees (₹).</li>
+        <li><strong>Enter your down payment:</strong> Input your down payment amount or adjust the percentage (e.g. 20%).</li>
+        <li><strong>Review the loan principal:</strong> The financed loan amount is automatically calculated (Home Price − Down Payment).</li>
+        <li><strong>Enter the interest rate:</strong> Input your annual mortgage rate (e.g. 8.5% per annum).</li>
+        <li><strong>Select the loan tenure:</strong> Choose your loan duration in <em>Years</em> or <em>Months</em>, or use the quick term buttons (10Y, 15Y, 20Y, 25Y, 30Y).</li>
+        <li><strong>Add optional housing costs:</strong> Expand the additional costs section to include Property Tax, Home Insurance, PMI, or HOA/maintenance fees.</li>
+        <li><strong>Add extra mortgage payments:</strong> Test prepayment strategies by entering extra monthly, annual, or one-time lump-sum payments.</li>
+        <li><strong>Click Calculate Mortgage:</strong> View your estimated monthly payment (P&I and total escrow), total interest, and exact payoff date.</li>
+        <li><strong>Explore amortization schedules:</strong> Toggle between the <em>Yearly Summary</em> and <em>Monthly Schedule</em>.</li>
+        <li><strong>Download PDF:</strong> Export your active schedule as a professional PDF report with website branding.</li>
+      </ol>
+
+      <h2>Mortgage Payment Example</h2>
+      <p>
+        Consider a home purchase of <strong>₹50,00,000</strong> with a <strong>₹10,00,000 down payment (20%)</strong> and a <strong>₹40,00,000 loan</strong> at an interest rate of <strong>8.5%</strong> over <strong>20 years</strong>:
+      </p>
+      <div class="my-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900 text-xs sm:text-sm space-y-1.5 font-mono">
+        <div>Home Purchase Price = ₹50,00,000</div>
+        <div>Down Payment (20%) = ₹10,00,000 | Financed Loan Amount = ₹40,00,000</div>
+        <div>Annual Interest Rate = 8.5% | Loan Term = 20 Years (240 Months)</div>
+        <div>Monthly Interest Rate (r) = 8.5 / 12 / 100 = 0.0070833</div>
+        <div>Monthly Principal & Interest Payment = <strong>₹34,713.06 / month</strong></div>
+        <div class="text-red-600 dark:text-red-400 font-bold">Total Interest Paid over 20 Years = ₹43,31,134.84</div>
+        <div class="text-blue-600 dark:text-blue-400 font-bold">Total Amount Repaid (Principal + Interest) = ₹83,31,134.84</div>
+      </div>
+      <p class="text-xs text-slate-500 italic">
+        * This example is for illustration. Actual mortgage or home loan payments may vary based on lender terms, fees, taxes, insurance, and other factors.
+      </p>
+
+      <h2>Principal vs Interest in a Mortgage</h2>
+      <p>
+        In a standard fixed-rate amortizing loan, each monthly payment is split between reducing the principal balance and paying accrued interest:
+      </p>
+      <ul>
+        <li><strong>Early Years (Interest-Heavy):</strong> In the initial years, the outstanding loan principal is at its maximum, meaning a large fraction of your monthly payment goes toward interest charges.</li>
+        <li><strong>Later Years (Principal-Heavy):</strong> As the principal balance steadily drops, monthly interest charges decrease, and a larger portion of each payment directly reduces the remaining loan balance.</li>
+      </ul>
+
+      <h2>How Extra Mortgage Payments Can Affect Your Loan</h2>
+      <p>
+        Making extra payments directly reduces your loan principal before interest is calculated for subsequent months:
+      </p>
+      <ul>
+        <li><strong>Accelerated Payoff:</strong> Additional payments bypass interest charges and immediately lower the remaining loan balance.</li>
+        <li><strong>Substantial Interest Savings:</strong> By reducing the principal early, you permanently eliminate interest compounding on that portion over the remaining loan term.</li>
+        <li><strong>Shortened Loan Duration:</strong> Extra payments can shave years off your mortgage tenure without requiring a formal loan refinance.</li>
+      </ul>
+
+      <h2>Fixed vs Variable Mortgage Interest Rates</h2>
+      <p>
+        Understanding how rate structures impact long-term borrowing stability:
+      </p>
+
+      <div class="overflow-x-auto my-4">
+        <table class="w-full text-left text-xs sm:text-sm border-collapse border border-slate-200 dark:border-slate-800">
+          <thead class="bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold">
+            <tr>
+              <th class="p-3 border border-slate-200 dark:border-slate-800">Factor</th>
+              <th class="p-3 border border-slate-200 dark:border-slate-800">Fixed-Rate Mortgage</th>
+              <th class="p-3 border border-slate-200 dark:border-slate-800">Variable / Floating-Rate Mortgage</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+            <tr>
+              <td class="p-3 font-semibold border border-slate-200 dark:border-slate-800">Interest Rate Stability</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Remains constant across the entire tenure</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Fluctuates with benchmark repo rates (e.g. RBI repo rate)</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold border border-slate-200 dark:border-slate-800">Payment Predictability</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Monthly P&I payment never changes</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Monthly payment or loan tenure adjusts when benchmark changes</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold border border-slate-200 dark:border-slate-800">Initial Pricing</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Often slightly higher initial interest rate</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Usually offers lower initial interest rates</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold border border-slate-200 dark:border-slate-800">Prepayment Penalties</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">May have foreclosure or prepayment fees</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Zero prepayment penalties on floating home loans for individuals in India</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Mortgage Calculator vs EMI Calculator</h2>
+      <p>
+        While both tools calculate loan repayments using standard amortization mathematics, a <strong>Mortgage Calculator</strong> provides home-specific escrow modeling including down payments, property taxes, home insurance, private mortgage insurance (PMI), HOA fees, and multi-tier prepayment schedules. A generic <strong>EMI Calculator</strong> focuses strictly on calculating the installment for personal, auto, or business loans.
+      </p>
+
+      <h2>Common Mistakes When Using a Mortgage Calculator</h2>
+      <ul>
+        <li><strong>Looking Only at Monthly Payment:</strong> Choosing a 30-year term over a 20-year term lowers your monthly payment but can nearly double your total interest paid.</li>
+        <li><strong>Ignoring Escrow & Property Taxes:</strong> Forgetting property taxes, insurance, and maintenance fees that add 15% to 25% to your actual monthly housing bill.</li>
+        <li><strong>Underestimating Down Payment Impact:</strong> A smaller down payment increases your loan amount and may trigger mandatory PMI charges.</li>
+        <li><strong>Assuming Fixed Interest Rates on Floating Loans:</strong> In India, most retail home loans are floating rate; future rate hikes will extend tenure or increase monthly EMIs.</li>
+        <li><strong>Overlooking Loan Processing Fees:</strong> Lenders charge processing fees, legal valuation costs, and stamp duty upfront.</li>
+        <li><strong>Treating the Estimate as a Final Offer:</strong> Actual terms depend on your credit score (CIBIL/FICO), loan-to-value ratio, and lender underwriting criteria.</li>
+      </ul>
+
+      <h2>Important Assumptions and Information</h2>
+      <p>
+        Please review these key calculation principles:
+      </p>
+      <ul>
+        <li><strong>Amortization Method:</strong> Standard monthly compounding amortization with interest applied on the opening balance of each monthly cycle.</li>
+        <li><strong>Prepayment Processing:</strong> Extra payments are credited toward reducing outstanding principal immediately on the designated payment month.</li>
+        <li><strong>Educational Estimates:</strong> This tool provides mathematical simulations and does not constitute certified mortgage lending, legal, or tax advice.</li>
+      </ul>
+    </section>
+  </Fragment>
+
+  <!-- FAQ SECTION SLOT (EXACTLY 7 FAQs AS REQUIRED) -->
+  <Fragment slot="faq">
+    <div class="space-y-4 text-xs sm:text-sm">
+      
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open>
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            1. How does a mortgage loan calculator work?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          A mortgage loan calculator uses your home purchase price, down payment, interest rate, and tenure to calculate your monthly principal & interest payment, total borrowing cost, and full amortization schedule.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            2. How is the monthly mortgage payment calculated?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Monthly principal and interest is calculated using the standard amortizing formula: <code>M = P × [r(1+r)^n] / [(1+r)^n − 1]</code>, where <em>P</em> is loan principal, <em>r</em> is monthly interest rate, and <em>n</em> is total number of monthly payments.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            3. Does the mortgage payment include property tax and insurance?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          You can optionally expand the additional costs section to include property taxes, homeowners insurance, PMI, and HOA fees to estimate your complete monthly housing payment (PITI).
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            4. How does a down payment affect my mortgage?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          A larger down payment directly reduces your borrowed loan principal, lowering your required monthly payment, total interest charges, and potentially eliminating PMI requirements.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            5. Can extra payments reduce mortgage interest?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Yes. Any extra monthly, annual, or lump-sum payment directly reduces your outstanding loan principal, permanently eliminating future interest charges and shortening your total repayment term.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            6. What is a mortgage amortization schedule?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          An amortization schedule is a complete table showing each payment over the life of your mortgage, breaking down how much goes toward principal versus interest, and tracking the remaining loan balance.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            7. Can I download my mortgage payment schedule as a PDF?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Yes. Clicking "Download PDF" generates a branded PDF report containing your mortgage summary and exporting ONLY your currently selected schedule (Yearly Summary or Monthly Schedule).
+        </p>
+      </details>
+
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<style>
+  .mortgage-content h2 {
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.3;
+    color: #0f172a;
+  }
+
+  .mortgage-content h2:first-child {
+    margin-top: 0;
+  }
+
+  .mortgage-content h3 {
+    margin-top: 1.75rem;
+    margin-bottom: 0.625rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .mortgage-content p {
+    margin: 0 0 1rem;
+    line-height: 1.75;
+    color: #475569;
+  }
+
+  .mortgage-content ul {
+    margin: 0.75rem 0 1.5rem;
+    padding-left: 1.5rem;
+    list-style: disc;
+  }
+
+  .mortgage-content ol {
+    margin: 0.75rem 0 1.5rem;
+    padding-left: 1.5rem;
+    list-style: decimal;
+  }
+
+  .mortgage-content li + li {
+    margin-top: 0.5rem;
+  }
+
+  :global(.dark) .mortgage-content h2,
+  :global(.dark) .mortgage-content h3 {
+    color: #f8fafc;
+  }
+
+  :global(.dark) .mortgage-content p {
+    color: #cbd5e1;
+  }
+</style>
+
+<!-- FAQ Schema JSON-LD (Strictly matching the 7 FAQs) -->
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How does a mortgage loan calculator work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A mortgage loan calculator uses your home purchase price, down payment, interest rate, and tenure to calculate your monthly principal & interest payment, total borrowing cost, and full amortization schedule."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How is the monthly mortgage payment calculated?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Monthly principal and interest is calculated using the standard amortizing formula: M = P × [r(1+r)^n] / [(1+r)^n − 1], where P is loan principal, r is monthly interest rate, and n is total number of monthly payments."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does the mortgage payment include property tax and insurance?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "You can optionally expand the additional costs section to include property taxes, homeowners insurance, PMI, and HOA fees to estimate your complete monthly housing payment (PITI)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does a down payment affect my mortgage?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A larger down payment directly reduces your borrowed loan principal, lowering your required monthly payment, total interest charges, and potentially eliminating PMI requirements."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can extra payments reduce mortgage interest?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Any extra monthly, annual, or lump-sum payment directly reduces your outstanding loan principal, permanently eliminating future interest charges and shortening your total repayment term."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is a mortgage amortization schedule?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "An amortization schedule is a complete table showing each payment over the life of your mortgage, breaking down how much goes toward principal versus interest, and tracking the remaining loan balance."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I download my mortgage payment schedule as a PDF?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Clicking 'Download PDF' generates a branded PDF report containing your mortgage summary and exporting ONLY your currently selected schedule (Yearly Summary or Monthly Schedule)."
+      }
+    }
+  ]
+})} />
+
+<!-- CLIENT-SIDE SCRIPT LOGIC -->
+<script is:inline>
+  // State
+  let lastCalculatedMortgage = null;
+  let activeScheduleView = 'yearly'; // 'yearly' | 'monthly'
+
+  // DOM Elements
+  const inpMgPrice = document.getElementById('inp-mg-price');
+  const inpMgDown = document.getElementById('inp-mg-down');
+  const inpMgDownPct = document.getElementById('inp-mg-down-pct-input');
+  const lblMgDownPct = document.getElementById('lbl-mg-down-pct');
+  const txtMgLoanAmt = document.getElementById('txt-mg-loan-amt');
+
+  const inpMgRate = document.getElementById('inp-mg-rate');
+  const inpMgTerm = document.getElementById('inp-mg-term');
+  const selMgTermUnit = document.getElementById('sel-mg-term-unit');
+
+  const inpMgTax = document.getElementById('inp-mg-tax');
+  const inpMgIns = document.getElementById('inp-mg-ins');
+  const inpMgPmi = document.getElementById('inp-mg-pmi');
+  const inpMgHoa = document.getElementById('inp-mg-hoa');
+
+  const inpMgExtraMo = document.getElementById('inp-mg-extra-mo');
+  const inpMgExtraYr = document.getElementById('inp-mg-extra-yr');
+  const inpMgExtraOnce = document.getElementById('inp-mg-extra-once');
+
+  const btnCalcMg = document.getElementById('btn-calc-mg');
+  const btnClearMg = document.getElementById('btn-clear-mg');
+  const errMg = document.getElementById('err-mg');
+
+  // Results Elements
+  const mgResultsSection = document.getElementById('mg-results-section');
+  const resMgTotalMo = document.getElementById('res-mg-total-mo');
+  const resMgPiMo = document.getElementById('res-mg-pi-mo');
+  const resMgLoan = document.getElementById('res-mg-loan');
+  const resMgTotalInt = document.getElementById('res-mg-total-int');
+  const resMgTotalRepaid = document.getElementById('res-mg-total-repaid');
+  const resMgPayoffDate = document.getElementById('res-mg-payoff-date');
+
+  const barMgPrincipal = document.getElementById('bar-mg-principal');
+  const barMgInterest = document.getElementById('bar-mg-interest');
+  const lblChartPrincipal = document.getElementById('lbl-chart-principal');
+  const lblChartInterest = document.getElementById('lbl-chart-interest');
+
+  const cardMgExtraComparison = document.getElementById('card-mg-extra-comparison');
+  const resMgIntSaved = document.getElementById('res-mg-int-saved');
+  const resMgTimeSaved = document.getElementById('res-mg-time-saved');
+  const resMgNewDuration = document.getElementById('res-mg-new-duration');
+  const resMgNewInt = document.getElementById('res-mg-new-int');
+
+  const tabMgYearly = document.getElementById('tab-mg-yearly');
+  const tabMgMonthly = document.getElementById('tab-mg-monthly');
+  const btnMgDownloadPdf = document.getElementById('btn-mg-download-pdf');
+  const txtBtnMgPdf = document.getElementById('txt-btn-mg-pdf');
+
+  const mgSchedThead = document.getElementById('mg-sched-thead');
+  const mgSchedTbody = document.getElementById('mg-sched-tbody');
+
+  // Currency Formatter
+  function formatINR(val) {
+    return `₹ ${Number(val).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+
+  // Down Payment Sync
+  function syncDownPaymentFromAmount() {
+    const price = parseFloat(inpMgPrice.value) || 0;
+    const downAmt = parseFloat(inpMgDown.value) || 0;
+    if (price > 0) {
+      const pct = Math.min(100, (downAmt / price) * 100);
+      inpMgDownPct.value = pct.toFixed(1);
+      lblMgDownPct.textContent = `${pct.toFixed(1)}%`;
+      const loan = Math.max(0, price - downAmt);
+      txtMgLoanAmt.textContent = `₹ ${loan.toLocaleString('en-IN')} (${(100 - pct).toFixed(1)}% Financed)`;
+    }
+  }
+
+  function syncDownPaymentFromPct() {
+    const price = parseFloat(inpMgPrice.value) || 0;
+    const pct = parseFloat(inpMgDownPct.value) || 0;
+    if (price > 0) {
+      const downAmt = Math.round((price * pct) / 100);
+      inpMgDown.value = downAmt;
+      lblMgDownPct.textContent = `${pct.toFixed(1)}%`;
+      const loan = Math.max(0, price - downAmt);
+      txtMgLoanAmt.textContent = `₹ ${loan.toLocaleString('en-IN')} (${(100 - pct).toFixed(1)}% Financed)`;
+    }
+  }
+
+  inpMgPrice.addEventListener('input', syncDownPaymentFromAmount);
+  inpMgDown.addEventListener('input', syncDownPaymentFromAmount);
+  inpMgDownPct.addEventListener('input', syncDownPaymentFromPct);
+
+  // Quick Term Buttons
+  document.querySelectorAll('.btn-mg-quick-term').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.btn-mg-quick-term').forEach((b) => {
+        b.className = 'btn-mg-quick-term rounded-md border border-slate-300 bg-white px-2 py-0.5 font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer';
+      });
+      btn.className = 'btn-mg-quick-term active rounded-md bg-blue-600 px-2 py-0.5 font-bold text-white shadow-2xs cursor-pointer';
+      inpMgTerm.value = btn.getAttribute('data-years');
+      selMgTermUnit.value = 'years';
+    });
+  });
+
+  // Calculate Mortgage Logic
+  function executeMortgageCalculation() {
+    errMg.classList.add('hidden');
+
+    const price = parseFloat(inpMgPrice.value) || 0;
+    const downAmt = parseFloat(inpMgDown.value) || 0;
+    const rateAnnual = parseFloat(inpMgRate.value) || 0;
+    const termVal = parseFloat(inpMgTerm.value) || 0;
+    const termUnit = selMgTermUnit.value; // 'years' | 'months'
+
+    const taxAnnual = parseFloat(inpMgTax.value) || 0;
+    const insAnnual = parseFloat(inpMgIns.value) || 0;
+    const pmiMonthly = parseFloat(inpMgPmi.value) || 0;
+    const hoaMonthly = parseFloat(inpMgHoa.value) || 0;
+
+    const extraMo = parseFloat(inpMgExtraMo.value) || 0;
+    const extraYr = parseFloat(inpMgExtraYr.value) || 0;
+    const extraOnce = parseFloat(inpMgExtraOnce.value) || 0;
+
+    if (price <= 0) {
+      errMg.textContent = 'Please enter a valid home price greater than 0.';
+      errMg.classList.remove('hidden');
+      mgResultsSection.classList.add('hidden');
+      return;
+    }
+
+    if (downAmt >= price) {
+      errMg.textContent = 'Down payment cannot equal or exceed the home purchase price.';
+      errMg.classList.remove('hidden');
+      mgResultsSection.classList.add('hidden');
+      return;
+    }
+
+    if (rateAnnual < 0) {
+      errMg.textContent = 'Interest rate cannot be negative.';
+      errMg.classList.remove('hidden');
+      mgResultsSection.classList.add('hidden');
+      return;
+    }
+
+    if (termVal <= 0) {
+      errMg.textContent = 'Loan term must be greater than 0.';
+      errMg.classList.remove('hidden');
+      mgResultsSection.classList.add('hidden');
+      return;
+    }
+
+    const loanAmount = price - downAmt;
+    const totalMonths = termUnit === 'years' ? Math.round(termVal * 12) : Math.round(termVal);
+    const r = rateAnnual / 12 / 100;
+
+    // Monthly P&I
+    let monthlyPI = 0;
+    if (r === 0) {
+      monthlyPI = loanAmount / totalMonths;
+    } else {
+      const factor = Math.pow(1 + r, totalMonths);
+      monthlyPI = (loanAmount * r * factor) / (factor - 1);
+    }
+
+    const monthlyTax = taxAnnual / 12;
+    const monthlyIns = insAnnual / 12;
+    const totalMonthlyPayment = monthlyPI + monthlyTax + monthlyIns + pmiMonthly + hoaMonthly;
+
+    // Original baseline total interest without extra payments
+    const originalTotalInterest = r > 0 ? (monthlyPI * totalMonths - loanAmount) : 0;
+
+    // Amortization Simulation
+    const yearlySchedule = [];
+    const monthlySchedule = [];
+
+    let balance = loanAmount;
+    let totalInterestPaid = 0;
+    let totalPrincipalPaid = 0;
+    let totalExtraPaid = 0;
+
+    let currentYear = 1;
+    let yearOpeningBalance = balance;
+    let yearPrincipal = 0;
+    let yearInterest = 0;
+    let yearExtra = 0;
+    let yearTotalPaid = 0;
+
+    let month = 1;
+    const maxSafety = totalMonths * 2;
+
+    while (balance > 0.001 && month <= maxSafety) {
+      const monthOpening = balance;
+      const monthInterest = r > 0 ? balance * r : 0;
+
+      let regularPrincipal = Math.min(balance, monthlyPI - monthInterest);
+      if (regularPrincipal < 0) regularPrincipal = 0;
+
+      let schedPayment = regularPrincipal + monthInterest;
+
+      let extraThisMonth = extraMo;
+      if (extraYr > 0 && month % 12 === 1) extraThisMonth += extraYr;
+      if (extraOnce > 0 && month === 1) extraThisMonth += extraOnce;
+
+      const remAfterRegular = Math.max(0, balance - regularPrincipal);
+      extraThisMonth = Math.min(remAfterRegular, extraThisMonth);
+
+      const totalPrincipalThisMonth = regularPrincipal + extraThisMonth;
+      const totalPaymentThisMonth = schedPayment + extraThisMonth;
+
+      balance = Math.max(0, balance - totalPrincipalThisMonth);
+
+      totalInterestPaid += monthInterest;
+      totalPrincipalPaid += regularPrincipal;
+      totalExtraPaid += extraThisMonth;
+
+      yearPrincipal += regularPrincipal;
+      yearInterest += monthInterest;
+      yearExtra += extraThisMonth;
+      yearTotalPaid += totalPaymentThisMonth;
+
+      monthlySchedule.push({
+        paymentNumber: month,
+        monthIndex: month,
+        openingBalance: monthOpening,
+        scheduledPayment: schedPayment,
+        principalPaid: regularPrincipal,
+        interestPaid: monthInterest,
+        extraPayment: extraThisMonth,
+        totalPayment: totalPaymentThisMonth,
+        closingBalance: balance,
+      });
+
+      if (month % 12 === 0 || balance <= 0.001) {
+        yearlySchedule.push({
+          year: currentYear,
+          openingBalance: yearOpeningBalance,
+          principalPaid: yearPrincipal,
+          interestPaid: yearInterest,
+          extraPaid: yearExtra,
+          totalPaid: yearTotalPaid,
+          closingBalance: balance,
+        });
+
+        currentYear++;
+        yearOpeningBalance = balance;
+        yearPrincipal = 0;
+        yearInterest = 0;
+        yearExtra = 0;
+        yearTotalPaid = 0;
+      }
+
+      if (balance <= 0.001) break;
+      month++;
+    }
+
+    const actualPaymentsCount = monthlySchedule.length;
+    const interestSaved = Math.max(0, originalTotalInterest - totalInterestPaid);
+    const monthsSaved = Math.max(0, totalMonths - actualPaymentsCount);
+    const yearsSaved = Math.floor(monthsSaved / 12);
+    const remMonthsSaved = monthsSaved % 12;
+
+    const today = new Date();
+    const payoffDate = new Date(today.getFullYear(), today.getMonth() + actualPaymentsCount, 1);
+    const payoffMonthStr = payoffDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' });
+
+    // Save calculation state
+    lastCalculatedMortgage = {
+      price,
+      downAmt,
+      downPct: ((downAmt / price) * 100).toFixed(1),
+      loanAmount,
+      rateAnnual,
+      termVal,
+      termUnit,
+      totalMonths,
+      monthlyPI,
+      monthlyTax,
+      monthlyIns,
+      pmiMonthly,
+      hoaMonthly,
+      totalMonthlyPayment,
+      totalInterestPaid,
+      totalPrincipalPaid: totalPrincipalPaid + totalExtraPaid,
+      totalAmountRepaid: loanAmount + totalInterestPaid,
+      payoffDateStr: payoffMonthStr,
+      hasExtraPayments: (extraMo > 0 || extraYr > 0 || extraOnce > 0),
+      interestSaved,
+      monthsSaved,
+      timeSavedStr: `${yearsSaved} Yrs ${remMonthsSaved} Mos`,
+      actualPaymentsCount,
+      yearlySchedule,
+      monthlySchedule,
+    };
+
+    // Update Result Card
+    resMgTotalMo.textContent = formatINR(totalMonthlyPayment);
+    resMgPiMo.textContent = formatINR(monthlyPI);
+    resMgLoan.textContent = formatINR(loanAmount);
+    resMgTotalInt.textContent = formatINR(totalInterestPaid);
+    resMgTotalRepaid.textContent = formatINR(lastCalculatedMortgage.totalAmountRepaid);
+    resMgPayoffDate.textContent = payoffMonthStr;
+
+    // Update Chart
+    const totalPie = lastCalculatedMortgage.totalAmountRepaid > 0 ? lastCalculatedMortgage.totalAmountRepaid : 1;
+    const principalPct = ((loanAmount / totalPie) * 100).toFixed(1);
+    const interestPct = ((totalInterestPaid / totalPie) * 100).toFixed(1);
+
+    barMgPrincipal.style.width = `${principalPct}%`;
+    barMgInterest.style.width = `${interestPct}%`;
+
+    lblChartPrincipal.textContent = `Principal: ${formatINR(loanAmount)} (${principalPct}%)`;
+    lblChartInterest.textContent = `Total Interest: ${formatINR(totalInterestPaid)} (${interestPct}%)`;
+
+    // Extra Payments Drawer
+    if (lastCalculatedMortgage.hasExtraPayments && monthsSaved > 0) {
+      cardMgExtraComparison.classList.remove('hidden');
+      resMgIntSaved.textContent = formatINR(interestSaved);
+      resMgTimeSaved.textContent = lastCalculatedMortgage.timeSavedStr;
+      resMgNewDuration.textContent = `${(actualPaymentsCount / 12).toFixed(1)} Years (${actualPaymentsCount} Mos)`;
+      resMgNewInt.textContent = formatINR(totalInterestPaid);
+    } else {
+      cardMgExtraComparison.classList.add('hidden');
+    }
+
+    // Render Table
+    renderScheduleTable();
+
+    mgResultsSection.classList.remove('hidden');
+  }
+
+  // Render Active Schedule Table
+  function renderScheduleTable() {
+    if (!lastCalculatedMortgage) return;
+
+    if (activeScheduleView === 'yearly') {
+      mgSchedThead.innerHTML = `
+        <tr>
+          <th class="p-2.5 rounded-l-lg">Year</th>
+          <th class="p-2.5 text-right">Opening Balance</th>
+          <th class="p-2.5 text-right">Principal Paid</th>
+          <th class="p-2.5 text-right">Interest Paid</th>
+          <th class="p-2.5 text-right">Extra Paid</th>
+          <th class="p-2.5 text-right">Total Payment</th>
+          <th class="p-2.5 text-right rounded-r-lg font-bold text-slate-900 dark:text-white">Closing Balance</th>
+        </tr>
+      `;
+
+      mgSchedTbody.innerHTML = lastCalculatedMortgage.yearlySchedule.map((row) => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+          <td class="p-2.5 font-bold text-slate-900 dark:text-white">Year ${row.year}</td>
+          <td class="p-2.5 text-right text-slate-600 dark:text-slate-400">${formatINR(row.openingBalance)}</td>
+          <td class="p-2.5 text-right text-blue-600 dark:text-blue-400 font-semibold">${formatINR(row.principalPaid)}</td>
+          <td class="p-2.5 text-right text-red-600 dark:text-red-400 font-semibold">${formatINR(row.interestPaid)}</td>
+          <td class="p-2.5 text-right text-emerald-600 dark:text-emerald-400 font-semibold">${formatINR(row.extraPaid)}</td>
+          <td class="p-2.5 text-right text-slate-900 dark:text-white font-bold">${formatINR(row.totalPaid)}</td>
+          <td class="p-2.5 text-right font-black text-slate-900 dark:text-white">${formatINR(row.closingBalance)}</td>
+        </tr>
+      `).join('');
+    } else {
+      mgSchedThead.innerHTML = `
+        <tr>
+          <th class="p-2.5 rounded-l-lg">Payment #</th>
+          <th class="p-2.5 text-right">Opening Balance</th>
+          <th class="p-2.5 text-right">Scheduled P&I</th>
+          <th class="p-2.5 text-right">Principal</th>
+          <th class="p-2.5 text-right">Interest</th>
+          <th class="p-2.5 text-right">Extra Payment</th>
+          <th class="p-2.5 text-right rounded-r-lg font-bold text-slate-900 dark:text-white">Closing Balance</th>
+        </tr>
+      `;
+
+      mgSchedTbody.innerHTML = lastCalculatedMortgage.monthlySchedule.map((row) => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+          <td class="p-2.5 font-bold text-slate-900 dark:text-white">Month ${row.paymentNumber}</td>
+          <td class="p-2.5 text-right text-slate-600 dark:text-slate-400">${formatINR(row.openingBalance)}</td>
+          <td class="p-2.5 text-right text-slate-900 dark:text-white font-semibold">${formatINR(row.scheduledPayment)}</td>
+          <td class="p-2.5 text-right text-blue-600 dark:text-blue-400 font-semibold">${formatINR(row.principalPaid)}</td>
+          <td class="p-2.5 text-right text-red-600 dark:text-red-400 font-semibold">${formatINR(row.interestPaid)}</td>
+          <td class="p-2.5 text-right text-emerald-600 dark:text-emerald-400 font-semibold">${formatINR(row.extraPayment)}</td>
+          <td class="p-2.5 text-right font-black text-slate-900 dark:text-white">${formatINR(row.closingBalance)}</td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  // Switch Schedule Tabs
+  tabMgYearly.addEventListener('click', () => {
+    activeScheduleView = 'yearly';
+    tabMgYearly.className = 'active rounded-lg bg-white px-3 py-1 text-slate-900 shadow-xs dark:bg-slate-900 dark:text-white cursor-pointer';
+    tabMgMonthly.className = 'rounded-lg px-3 py-1 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer';
+    renderScheduleTable();
+  });
+
+  tabMgMonthly.addEventListener('click', () => {
+    activeScheduleView = 'monthly';
+    tabMgMonthly.className = 'active rounded-lg bg-white px-3 py-1 text-slate-900 shadow-xs dark:bg-slate-900 dark:text-white cursor-pointer';
+    tabMgYearly.className = 'rounded-lg px-3 py-1 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer';
+    renderScheduleTable();
+  });
+
+  btnCalcMg.addEventListener('click', executeMortgageCalculation);
+
+  btnClearMg.addEventListener('click', () => {
+    inpMgPrice.value = '5000000';
+    inpMgDown.value = '1000000';
+    inpMgDownPct.value = '20';
+    inpMgRate.value = '8.5';
+    inpMgTerm.value = '20';
+    selMgTermUnit.value = 'years';
+    inpMgTax.value = '0';
+    inpMgIns.value = '0';
+    inpMgPmi.value = '0';
+    inpMgHoa.value = '0';
+    inpMgExtraMo.value = '0';
+    inpMgExtraYr.value = '0';
+    inpMgExtraOnce.value = '0';
+    errMg.classList.add('hidden');
+    mgResultsSection.classList.add('hidden');
+    lastCalculatedMortgage = null;
+    activeScheduleView = 'yearly';
+    tabMgYearly.click();
+    syncDownPaymentFromAmount();
+  });
+
+  // Preset Buttons Listener
+  document.querySelectorAll('.btn-mg-preset').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const price = btn.getAttribute('data-price');
+      const down = btn.getAttribute('data-down');
+      const rate = btn.getAttribute('data-rate');
+      const term = btn.getAttribute('data-term');
+      const extra = btn.getAttribute('data-extra');
+
+      if (price) inpMgPrice.value = price;
+      if (down) inpMgDown.value = down;
+      if (rate) inpMgRate.value = rate;
+      if (term) inpMgTerm.value = term;
+      if (extra) inpMgExtraMo.value = extra;
+
+      syncDownPaymentFromAmount();
+    });
+  });
+
+  // Enter Key Listener
+  document.querySelectorAll('form').forEach((form) => {
+    form.querySelectorAll('input, select').forEach((el) => {
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          executeMortgageCalculation();
+        }
+      });
+    });
+  });
+
+  // Tab-Selective PDF Download
+  async function generateMgPdf() {
+    if (!lastCalculatedMortgage) {
+      alert('Please calculate your mortgage first.');
+      return;
+    }
+
+    btnMgDownloadPdf.disabled = true;
+    const originalText = txtBtnMgPdf.textContent;
+    txtBtnMgPdf.textContent = 'Generating PDF...';
+
+    try {
+      if (!window.jspdf) {
+        await new Promise((resolve, reject) => {
+          const s1 = document.createElement('script');
+          s1.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+          s1.onload = () => {
+            const s2 = document.createElement('script');
+            s2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+            s2.onload = resolve;
+            s2.onerror = reject;
+            document.head.appendChild(s2);
+          };
+          s1.onerror = reject;
+          document.head.appendChild(s1);
+        });
+      }
+
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+      // 1. Header Branding
+      doc.setFillColor(37, 99, 235); // Blue #2563eb
+      doc.rect(0, 0, 210, 20, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(15);
+      doc.setFont('helvetica', 'bold');
+      doc.text('AIFreecalculator.com', 14, 13);
+
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text('Free Online Calculator Tools', 210 - 14, 13, { align: 'right' });
+
+      // 2. Document Title
+      const pdfTitle = activeScheduleView === 'yearly'
+        ? 'Mortgage Loan Amortization – Yearly Summary'
+        : 'Mortgage Loan Amortization – Monthly Schedule';
+
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text(pdfTitle, 14, 29);
+
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 116, 139);
+      doc.text(`Generated on: ${dateStr}`, 210 - 14, 29, { align: 'right' });
+
+      // 3. Calculation Summary Box
+      doc.setDrawColor(226, 232, 240);
+      doc.setFillColor(248, 250, 252);
+      doc.roundedRect(14, 33, 182, 28, 2, 2, 'FD');
+
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(51, 65, 85);
+      doc.text('MORTGAGE LOAN SUMMARY', 18, 38);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(71, 85, 105);
+      doc.text(`Home Price: Rs. ${lastCalculatedMortgage.price.toLocaleString('en-IN')}`, 18, 44);
+      doc.text(`Down Payment: Rs. ${lastCalculatedMortgage.downAmt.toLocaleString('en-IN')} (${lastCalculatedMortgage.downPct}%)`, 18, 49);
+      doc.text(`Loan Principal: Rs. ${lastCalculatedMortgage.loanAmount.toLocaleString('en-IN')}`, 18, 54);
+      doc.text(`Interest Rate: ${lastCalculatedMortgage.rateAnnual}% p.a.`, 18, 59);
+
+      doc.text(`Tenure: ${lastCalculatedMortgage.termVal} ${lastCalculatedMortgage.termUnit}`, 85, 44);
+      doc.text(`Monthly P&I: Rs. ${lastCalculatedMortgage.monthlyPI.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`, 85, 49);
+      doc.text(`Total Monthly Payment: Rs. ${lastCalculatedMortgage.totalMonthlyPayment.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`, 85, 54);
+      doc.text(`Payoff Date: ${lastCalculatedMortgage.payoffDateStr}`, 85, 59);
+
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(220, 38, 38);
+      doc.text(`Total Interest: Rs. ${lastCalculatedMortgage.totalInterestPaid.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`, 140, 46);
+      doc.setTextColor(37, 99, 235);
+      doc.text(`Total Repaid: Rs. ${lastCalculatedMortgage.totalAmountRepaid.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`, 140, 52);
+
+      // 4. Tab-Selective Table Data Generation
+      let tableHead = [];
+      let tableData = [];
+
+      if (activeScheduleView === 'yearly') {
+        tableHead = [['Year', 'Opening Bal', 'Principal Paid', 'Interest Paid', 'Extra Paid', 'Total Payment', 'Closing Balance']];
+        tableData = lastCalculatedMortgage.yearlySchedule.map((r) => [
+          `Year ${r.year}`,
+          'Rs. ' + r.openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          'Rs. ' + r.principalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          'Rs. ' + r.interestPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          'Rs. ' + r.extraPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          'Rs. ' + r.totalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          'Rs. ' + r.closingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        ]);
+      } else {
+        tableHead = [['Month', 'Opening Balance', 'Scheduled P&I', 'Principal', 'Interest', 'Extra Paid', 'Closing Balance']];
+        tableData = lastCalculatedMortgage.monthlySchedule.map((r) => [
+          `Month ${r.paymentNumber}`,
+          'Rs. ' + r.openingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          'Rs. ' + r.scheduledPayment.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          'Rs. ' + r.principalPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          'Rs. ' + r.interestPaid.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          'Rs. ' + r.extraPayment.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+          'Rs. ' + r.closingBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        ]);
+      }
+
+      doc.autoTable({
+        startY: 65,
+        head: tableHead,
+        body: tableData,
+        theme: 'grid',
+        headStyles: {
+          fillColor: [37, 99, 235],
+          textColor: [255, 255, 255],
+          fontSize: 8,
+          fontStyle: 'bold',
+          halign: 'center'
+        },
+        columnStyles: {
+          0: { cellWidth: 22, halign: 'left', fontStyle: 'bold' },
+          1: { halign: 'right' },
+          2: { halign: 'right' },
+          3: { halign: 'right', textColor: [220, 38, 38] },
+          4: { halign: 'right', textColor: [16, 185, 129] },
+          5: { halign: 'right' },
+          6: { halign: 'right', fontStyle: 'bold', textColor: [37, 99, 235] }
+        },
+        styles: {
+          fontSize: 7.5,
+          cellPadding: 2,
+          font: 'helvetica'
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252]
+        },
+        margin: { top: 22, bottom: 18, left: 14, right: 14 },
+        didDrawPage: function (data) {
+          const pageCount = doc.internal.getNumberOfPages();
+          const currentPage = data.pageNumber;
+
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(148, 163, 184);
+
+          doc.text('Generated using AIFreecalculator.com', 14, 290);
+          doc.text(`Page ${currentPage} of ${pageCount}`, 210 - 14, 290, { align: 'right' });
+        }
+      });
+
+      const today = new Date().toISOString().split('T')[0];
+      const filename = activeScheduleView === 'yearly'
+        ? `mortgage-yearly-summary-${today}.pdf`
+        : `mortgage-monthly-schedule-${today}.pdf`;
+
+      doc.save(filename);
+    } catch (err) {
+      console.error('PDF Generation Error:', err);
+      alert('An error occurred while generating the PDF. Please try again.');
+    } finally {
+      btnMgDownloadPdf.disabled = false;
+      txtBtnMgPdf.textContent = originalText;
+    }
+  }
+
+  btnMgDownloadPdf.addEventListener('click', generateMgPdf);
+</script>

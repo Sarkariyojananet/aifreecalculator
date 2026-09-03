@@ -1,0 +1,2702 @@
+---
+import CalculatorLayout from "../../layouts/CalculatorLayout.astro";
+
+const faqs = [
+  {
+    q: "What is a concrete material breakup calculator?",
+    a: "A concrete material breakup calculator estimates the approximate quantity of cement, sand, coarse aggregate, and other materials required for a given volume of concrete. The calculation is based on the entered concrete volume or dimensions, selected mix ratio, dry volume assumption, cement bag size, and wastage allowance.",
+  },
+  {
+    q: "How is the quantity of cement calculated for concrete?",
+    a: "The calculator estimates the dry volume of concrete and divides it according to the selected cement, sand, and aggregate mix ratio. The cement portion is then converted into weight and an estimated number of bags based on the selected cement bag size and any assumptions used by the calculator.",
+  },
+  {
+    q: "How do I calculate sand and aggregate required for concrete?",
+    a: "After estimating the dry volume, the sand and aggregate quantities are calculated according to their proportion in the selected mix ratio. For example, in a 1:2:4 ratio, the dry volume is divided into seven total parts, with two parts allocated to sand and four parts to coarse aggregate.",
+  },
+  {
+    q: "What is the dry volume factor in concrete calculation?",
+    a: "The dry volume factor is an estimation adjustment used to account for the difference between the final compacted concrete volume and the combined volume of dry materials. The appropriate factor can vary depending on the calculation method and project assumptions, so this calculator displays the factor being used.",
+  },
+  {
+    q: "Can I calculate cement bags with this calculator?",
+    a: "Yes. After estimating the required cement quantity, the calculator divides the cement weight by the selected bag size to estimate the number of cement bags required. You can choose a preset bag size or enter a custom size where supported.",
+  },
+  {
+    q: "Can I calculate concrete materials for a slab, beam, column, or footing?",
+    a: "Yes. You can enter the dimensions of common structural elements such as slabs, beams, columns, and footings. The calculator first estimates the total concrete volume and then provides an approximate material breakup based on the selected mix ratio and calculation assumptions.",
+  },
+  {
+    q: "Are the concrete material calculations exact?",
+    a: "No. The results are estimates based on the dimensions, mix ratio, dry volume factor, wastage, material assumptions, and other values entered. Actual quantities can vary because of moisture content, compaction, material properties, workmanship, mix design, and project specifications.",
+  },
+];
+---
+
+<CalculatorLayout
+  title="Concrete Material Breakup Calculator – Cement, Sand & Aggregate Quantity | AI Free Calculator"
+  description="Calculate the approximate quantity of cement, sand, aggregate, water, and cement bags required for a given volume of concrete."
+  category="Construction"
+  calculatorName="Concrete Material Breakup Calculator"
+  slug="concrete-material-breakup-calculator"
+  keywords={[
+    "concrete material breakup",
+    "concrete material breakup calculator",
+    "cement sand aggregate calculator",
+    "concrete calculator",
+    "concrete mix ratio",
+    "how many cement bags in 1m3",
+    "concrete volume calculator",
+    "slab concrete calculator",
+    "beam concrete calculator",
+    "column concrete calculator",
+    "footing concrete calculator",
+    "dry volume factor concrete",
+    "m20 concrete mix ratio",
+    "m15 concrete mix ratio",
+    "concrete quantity estimator",
+  ]}
+>
+  <div class="space-y-6">
+    <!-- Mode Selector Tabs -->
+    <div
+      class="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-1.5 dark:border-slate-800 dark:bg-slate-900/50"
+    >
+      <div
+        class="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-6"
+        id="mode-tabs"
+      >
+        <button
+          type="button"
+          data-mode="concrete_volume"
+          class="mode-btn active flex items-center justify-center gap-1.5 rounded-xl border border-blue-600 bg-blue-50 px-2.5 py-2 text-xs font-bold text-blue-700 shadow-xs transition dark:border-blue-500 dark:bg-blue-950/60 dark:text-blue-300 cursor-pointer"
+        >
+          <span>📦</span> Concrete Volume
+        </button>
+        <button
+          type="button"
+          data-mode="slab"
+          class="mode-btn flex items-center justify-center gap-1.5 rounded-xl border border-transparent bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700/60 transition cursor-pointer"
+        >
+          <span>🏗️</span> Slab
+        </button>
+        <button
+          type="button"
+          data-mode="beam"
+          class="mode-btn flex items-center justify-center gap-1.5 rounded-xl border border-transparent bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700/60 transition cursor-pointer"
+        >
+          <span>📏</span> Beam
+        </button>
+        <button
+          type="button"
+          data-mode="column"
+          class="mode-btn flex items-center justify-center gap-1.5 rounded-xl border border-transparent bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700/60 transition cursor-pointer"
+        >
+          <span>🏛️</span> Column
+        </button>
+        <button
+          type="button"
+          data-mode="footing"
+          class="mode-btn flex items-center justify-center gap-1.5 rounded-xl border border-transparent bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700/60 transition cursor-pointer"
+        >
+          <span>⛏️</span> Footing
+        </button>
+        <button
+          type="button"
+          data-mode="custom_dimensions"
+          class="mode-btn flex items-center justify-center gap-1.5 rounded-xl border border-transparent bg-white px-2.5 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700/60 transition cursor-pointer"
+        >
+          <span>⚙️</span> Custom
+        </button>
+      </div>
+    </div>
+
+    <!-- Error Banner -->
+    <div
+      id="error-box"
+      class="hidden rounded-xl border border-red-200 bg-red-50/90 p-4 text-xs sm:text-sm font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/50 dark:text-red-300"
+    >
+    </div>
+
+    <!-- Calculator Input Form Container -->
+    <div
+      class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6 dark:border-slate-800 dark:bg-slate-900 space-y-5"
+    >
+      <!-- ========================================================= -->
+      <!-- 1. CONCRETE VOLUME INPUT -->
+      <!-- ========================================================= -->
+      <div id="section-input-concrete-volume" class="space-y-4">
+        <div class="border-b border-slate-200/80 pb-2 dark:border-slate-800">
+          <h2
+            class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2"
+          >
+            <span>📦</span> Total Wet Concrete Volume
+          </h2>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div>
+            <label
+              for="inp-vol-val"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Concrete Volume
+            </label>
+            <input
+              type="number"
+              id="inp-vol-val"
+              value="10"
+              min="0.01"
+              step="any"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="10"
+            />
+          </div>
+
+          <div>
+            <label
+              for="inp-vol-unit"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Volume Unit
+            </label>
+            <select
+              id="inp-vol-unit"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+            >
+              <option value="cum" selected>Cubic Meter (m³ / CUM)</option>
+              <option value="cft">Cubic Feet (ft³ / CFT)</option>
+              <option value="cyd">Cubic Yard (yd³ / CYD)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- 2. SLAB INPUTS -->
+      <!-- ========================================================= -->
+      <div id="section-input-slab" class="hidden space-y-4">
+        <div class="border-b border-slate-200/80 pb-2 dark:border-slate-800">
+          <h2
+            class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2"
+          >
+            <span>🏗️</span> Slab Dimensions & Count
+          </h2>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-4">
+          <div>
+            <label
+              for="inp-slab-len"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Slab Length</label
+            >
+            <div class="mt-1 flex gap-1.5">
+              <input
+                type="number"
+                id="inp-slab-len"
+                value="10"
+                min="0.1"
+                step="any"
+                class="w-2/3 rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="10"
+              />
+              <select
+                id="inp-slab-len-u"
+                class="w-1/3 rounded-xl border border-slate-300 bg-white p-2 text-[11px] font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              >
+                <option value="meter" selected>m</option>
+                <option value="feet">ft</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label
+              for="inp-slab-wid"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Slab Width</label
+            >
+            <div class="mt-1 flex gap-1.5">
+              <input
+                type="number"
+                id="inp-slab-wid"
+                value="5"
+                min="0.1"
+                step="any"
+                class="w-2/3 rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="5"
+              />
+              <select
+                id="inp-slab-wid-u"
+                class="w-1/3 rounded-xl border border-slate-300 bg-white p-2 text-[11px] font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              >
+                <option value="meter" selected>m</option>
+                <option value="feet">ft</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label
+              for="inp-slab-thick"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Thickness</label
+            >
+            <div class="mt-1 flex gap-1.5">
+              <input
+                type="number"
+                id="inp-slab-thick"
+                value="150"
+                min="1"
+                step="any"
+                class="w-2/3 rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="150"
+              />
+              <select
+                id="inp-slab-thick-u"
+                class="w-1/3 rounded-xl border border-slate-300 bg-white p-2 text-[11px] font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              >
+                <option value="mm" selected>mm</option>
+                <option value="cm">cm</option>
+                <option value="inches">in</option>
+                <option value="meter">m</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label
+              for="inp-slab-qty"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Number of Slabs</label
+            >
+            <input
+              type="number"
+              id="inp-slab-qty"
+              value="1"
+              min="1"
+              step="1"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="1"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- 3. BEAM INPUTS -->
+      <!-- ========================================================= -->
+      <div id="section-input-beam" class="hidden space-y-4">
+        <div class="border-b border-slate-200/80 pb-2 dark:border-slate-800">
+          <h2
+            class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2"
+          >
+            <span>📏</span> Beam Dimensions & Count
+          </h2>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-4">
+          <div>
+            <label
+              for="inp-beam-len"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Beam Length</label
+            >
+            <div class="mt-1 flex gap-1.5">
+              <input
+                type="number"
+                id="inp-beam-len"
+                value="6"
+                min="0.1"
+                step="any"
+                class="w-2/3 rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="6"
+              />
+              <select
+                id="inp-beam-len-u"
+                class="w-1/3 rounded-xl border border-slate-300 bg-white p-2 text-[11px] font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              >
+                <option value="meter" selected>m</option>
+                <option value="feet">ft</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label
+              for="inp-beam-wid"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Beam Width</label
+            >
+            <div class="mt-1 flex gap-1.5">
+              <input
+                type="number"
+                id="inp-beam-wid"
+                value="300"
+                min="1"
+                step="any"
+                class="w-2/3 rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="300"
+              />
+              <select
+                id="inp-beam-wid-u"
+                class="w-1/3 rounded-xl border border-slate-300 bg-white p-2 text-[11px] font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              >
+                <option value="mm" selected>mm</option>
+                <option value="cm">cm</option>
+                <option value="inches">in</option>
+                <option value="meter">m</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label
+              for="inp-beam-depth"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Beam Depth</label
+            >
+            <div class="mt-1 flex gap-1.5">
+              <input
+                type="number"
+                id="inp-beam-depth"
+                value="450"
+                min="1"
+                step="any"
+                class="w-2/3 rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="450"
+              />
+              <select
+                id="inp-beam-depth-u"
+                class="w-1/3 rounded-xl border border-slate-300 bg-white p-2 text-[11px] font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              >
+                <option value="mm" selected>mm</option>
+                <option value="cm">cm</option>
+                <option value="inches">in</option>
+                <option value="meter">m</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label
+              for="inp-beam-qty"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Number of Beams</label
+            >
+            <input
+              type="number"
+              id="inp-beam-qty"
+              value="4"
+              min="1"
+              step="1"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="4"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- 4. COLUMN INPUTS -->
+      <!-- ========================================================= -->
+      <div id="section-input-column" class="hidden space-y-4">
+        <div class="border-b border-slate-200/80 pb-2 dark:border-slate-800">
+          <h2
+            class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2"
+          >
+            <span>🏛️</span> Column Dimensions & Count
+          </h2>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-4">
+          <div>
+            <label
+              for="inp-col-len"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Column Width (X)</label
+            >
+            <div class="mt-1 flex gap-1.5">
+              <input
+                type="number"
+                id="inp-col-len"
+                value="300"
+                min="1"
+                step="any"
+                class="w-2/3 rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="300"
+              />
+              <select
+                id="inp-col-len-u"
+                class="w-1/3 rounded-xl border border-slate-300 bg-white p-2 text-[11px] font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              >
+                <option value="mm" selected>mm</option>
+                <option value="cm">cm</option>
+                <option value="inches">in</option>
+                <option value="meter">m</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label
+              for="inp-col-wid"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Column Breadth (Y)</label
+            >
+            <div class="mt-1 flex gap-1.5">
+              <input
+                type="number"
+                id="inp-col-wid"
+                value="300"
+                min="1"
+                step="any"
+                class="w-2/3 rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="300"
+              />
+              <select
+                id="inp-col-wid-u"
+                class="w-1/3 rounded-xl border border-slate-300 bg-white p-2 text-[11px] font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              >
+                <option value="mm" selected>mm</option>
+                <option value="cm">cm</option>
+                <option value="inches">in</option>
+                <option value="meter">m</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label
+              for="inp-col-ht"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Height</label
+            >
+            <div class="mt-1 flex gap-1.5">
+              <input
+                type="number"
+                id="inp-col-ht"
+                value="3.0"
+                min="0.1"
+                step="any"
+                class="w-2/3 rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="3.0"
+              />
+              <select
+                id="inp-col-ht-u"
+                class="w-1/3 rounded-xl border border-slate-300 bg-white p-2 text-[11px] font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              >
+                <option value="meter" selected>m</option>
+                <option value="feet">ft</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label
+              for="inp-col-qty"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Number of Columns</label
+            >
+            <input
+              type="number"
+              id="inp-col-qty"
+              value="6"
+              min="1"
+              step="1"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="6"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- 5. FOOTING INPUTS -->
+      <!-- ========================================================= -->
+      <div id="section-input-footing" class="hidden space-y-4">
+        <div class="border-b border-slate-200/80 pb-2 dark:border-slate-800">
+          <h2
+            class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2"
+          >
+            <span>⛏️</span> Footing Dimensions & Count
+          </h2>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-4">
+          <div>
+            <label
+              for="inp-ft-len"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Footing Length</label
+            >
+            <div class="mt-1 flex gap-1.5">
+              <input
+                type="number"
+                id="inp-ft-len"
+                value="1.5"
+                min="0.1"
+                step="any"
+                class="w-2/3 rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="1.5"
+              />
+              <select
+                id="inp-ft-len-u"
+                class="w-1/3 rounded-xl border border-slate-300 bg-white p-2 text-[11px] font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              >
+                <option value="meter" selected>m</option>
+                <option value="feet">ft</option>
+                <option value="mm">mm</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label
+              for="inp-ft-wid"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Footing Width</label
+            >
+            <div class="mt-1 flex gap-1.5">
+              <input
+                type="number"
+                id="inp-ft-wid"
+                value="1.5"
+                min="0.1"
+                step="any"
+                class="w-2/3 rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="1.5"
+              />
+              <select
+                id="inp-ft-wid-u"
+                class="w-1/3 rounded-xl border border-slate-300 bg-white p-2 text-[11px] font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              >
+                <option value="meter" selected>m</option>
+                <option value="feet">ft</option>
+                <option value="mm">mm</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label
+              for="inp-ft-depth"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Footing Depth</label
+            >
+            <div class="mt-1 flex gap-1.5">
+              <input
+                type="number"
+                id="inp-ft-depth"
+                value="500"
+                min="1"
+                step="any"
+                class="w-2/3 rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="500"
+              />
+              <select
+                id="inp-ft-depth-u"
+                class="w-1/3 rounded-xl border border-slate-300 bg-white p-2 text-[11px] font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              >
+                <option value="mm" selected>mm</option>
+                <option value="cm">cm</option>
+                <option value="inches">in</option>
+                <option value="meter">m</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label
+              for="inp-ft-qty"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Number of Footings</label
+            >
+            <input
+              type="number"
+              id="inp-ft-qty"
+              value="6"
+              min="1"
+              step="1"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="6"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- 6. CUSTOM DIMENSIONS INPUTS -->
+      <!-- ========================================================= -->
+      <div id="section-input-custom" class="hidden space-y-4">
+        <div class="border-b border-slate-200/80 pb-2 dark:border-slate-800">
+          <h2
+            class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2"
+          >
+            <span>⚙️</span> Custom Dimensions & Quantity
+          </h2>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-4">
+          <div>
+            <label
+              for="inp-cd-len"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Length</label
+            >
+            <div class="mt-1 flex gap-1.5">
+              <input
+                type="number"
+                id="inp-cd-len"
+                value="5"
+                min="0.01"
+                step="any"
+                class="w-2/3 rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="5"
+              />
+              <select
+                id="inp-cd-len-u"
+                class="w-1/3 rounded-xl border border-slate-300 bg-white p-2 text-[11px] font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              >
+                <option value="meter" selected>m</option>
+                <option value="feet">ft</option>
+                <option value="inches">in</option>
+                <option value="mm">mm</option>
+                <option value="cm">cm</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label
+              for="inp-cd-wid"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Width</label
+            >
+            <div class="mt-1 flex gap-1.5">
+              <input
+                type="number"
+                id="inp-cd-wid"
+                value="2"
+                min="0.01"
+                step="any"
+                class="w-2/3 rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="2"
+              />
+              <select
+                id="inp-cd-wid-u"
+                class="w-1/3 rounded-xl border border-slate-300 bg-white p-2 text-[11px] font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              >
+                <option value="meter" selected>m</option>
+                <option value="feet">ft</option>
+                <option value="inches">in</option>
+                <option value="mm">mm</option>
+                <option value="cm">cm</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label
+              for="inp-cd-ht"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Height / Depth</label
+            >
+            <div class="mt-1 flex gap-1.5">
+              <input
+                type="number"
+                id="inp-cd-ht"
+                value="0.5"
+                min="0.01"
+                step="any"
+                class="w-2/3 rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="0.5"
+              />
+              <select
+                id="inp-cd-ht-u"
+                class="w-1/3 rounded-xl border border-slate-300 bg-white p-2 text-[11px] font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              >
+                <option value="meter" selected>m</option>
+                <option value="feet">ft</option>
+                <option value="inches">in</option>
+                <option value="mm">mm</option>
+                <option value="cm">cm</option>
+              </select>
+            </div>
+          </div>
+
+          <div>
+            <label
+              for="inp-cd-qty"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+              >Quantity of Units</label
+            >
+            <input
+              type="number"
+              id="inp-cd-qty"
+              value="2"
+              min="1"
+              step="1"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="2"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- ========================================================= -->
+      <!-- 7. MIX RATIO & MATERIAL PARAMETERS -->
+      <!-- ========================================================= -->
+      <div
+        class="border-t border-slate-200/80 pt-4 dark:border-slate-800 space-y-4"
+      >
+        <div class="flex items-center justify-between">
+          <h3
+            class="text-xs sm:text-sm font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5"
+          >
+            <span>🧪</span> Concrete Mix Ratio & Specifications
+          </h3>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div>
+            <label
+              for="inp-mix-preset"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Concrete Mix Ratio (Cement : Sand : Agg)
+            </label>
+            <select
+              id="inp-mix-preset"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+            >
+              <option value="1:2:4" selected
+                >1 : 2 : 4 (M15 – Flooring, Pavements & Light RCC)</option
+              >
+              <option value="1:1.5:3"
+                >1 : 1.5 : 3 (M20 – Standard Slabs, Beams & Columns)</option
+              >
+              <option value="1:1:2"
+                >1 : 1 : 2 (M25 – Heavy RCC & Water Retaining)</option
+              >
+              <option value="1:3:6"
+                >1 : 3 : 6 (M10 – PCC Levelling Course & Sub-base)</option
+              >
+              <option value="1:4:8"
+                >1 : 4 : 8 (M7.5 – Foundation Bedding)</option
+              >
+              <option value="1:5:10"
+                >1 : 5 : 10 (M5 – Mass Non-structural Concrete)</option
+              >
+              <option value="custom">Custom Mix Ratio</option>
+            </select>
+          </div>
+
+          <div
+            id="div-custom-mix-ratio"
+            class="hidden sm:col-span-2 grid grid-cols-3 gap-2"
+          >
+            <div>
+              <label
+                for="inp-custom-c"
+                class="block text-[10px] font-bold text-slate-500 dark:text-slate-400"
+                >Cement Part</label
+              >
+              <input
+                type="number"
+                id="inp-custom-c"
+                value="1"
+                min="0.1"
+                step="any"
+                class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="1"
+              />
+            </div>
+            <div>
+              <label
+                for="inp-custom-s"
+                class="block text-[10px] font-bold text-slate-500 dark:text-slate-400"
+                >Sand Part</label
+              >
+              <input
+                type="number"
+                id="inp-custom-s"
+                value="2"
+                min="0.1"
+                step="any"
+                class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="2"
+              />
+            </div>
+            <div>
+              <label
+                for="inp-custom-a"
+                class="block text-[10px] font-bold text-slate-500 dark:text-slate-400"
+                >Aggregate Part</label
+              >
+              <input
+                type="number"
+                id="inp-custom-a"
+                value="4"
+                min="0.1"
+                step="any"
+                class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="4"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div>
+            <label
+              for="inp-dry-factor"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Dry Volume Factor (IS/ACI)
+            </label>
+            <input
+              type="number"
+              id="inp-dry-factor"
+              value="1.54"
+              min="1.1"
+              max="2.0"
+              step="0.01"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="1.54"
+            />
+            <p class="mt-0.5 text-[10px] text-slate-500 dark:text-slate-400">
+              Standard multiplier 1.54 covers voids in sand/aggregates.
+            </p>
+          </div>
+
+          <div>
+            <label
+              for="inp-bag-size"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Cement Bag Size
+            </label>
+            <select
+              id="inp-bag-size"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+            >
+              <option value="50" selected
+                >50 kg (Standard Indian / ISO Bag)</option
+              >
+              <option value="40">40 kg Bag</option>
+              <option value="25">25 kg Bag</option>
+              <option value="custom">Custom Bag Weight</option>
+            </select>
+            <div id="div-custom-bag-weight" class="hidden mt-1.5">
+              <input
+                type="number"
+                id="inp-custom-bag-weight"
+                value="50"
+                min="1"
+                step="any"
+                class="w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="Bag size (kg)"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label
+              for="inp-wastage"
+              class="block text-xs font-semibold text-slate-700 dark:text-slate-300"
+            >
+              Material Wastage Allowance (%)
+            </label>
+            <select
+              id="inp-wastage"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+            >
+              <option value="0">0% (Exact Theoretical)</option>
+              <option value="3">3% (Minimal Spillage)</option>
+              <option value="5" selected>5% (Standard Construction)</option>
+              <option value="7">7% (Complex Site Shuttering)</option>
+              <option value="10">10% (High Wastage Margin)</option>
+              <option value="custom">Custom Wastage (%)</option>
+            </select>
+            <div id="div-custom-wastage" class="hidden mt-1.5">
+              <input
+                type="number"
+                id="inp-custom-wastage-val"
+                value="5"
+                min="0"
+                max="40"
+                step="any"
+                class="w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="Wastage %"
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- Water Estimation Options -->
+        <div
+          class="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-950/40"
+        >
+          <div
+            class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
+          >
+            <label class="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                id="chk-enable-water"
+                checked
+                class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-700"
+              />
+              <span class="text-xs font-bold text-slate-800 dark:text-slate-200"
+                >Include Water Quantity Estimation</span
+              >
+            </label>
+            <div id="div-water-ctrl" class="flex items-center gap-2 text-xs">
+              <label
+                for="inp-wc-ratio"
+                class="font-semibold text-slate-600 dark:text-slate-400"
+                >Water-Cement Ratio:</label
+              >
+              <select
+                id="inp-wc-ratio"
+                class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+              >
+                <option value="0.40">0.40 (High Strength RCC)</option>
+                <option value="0.45">0.45 (Dense Structural RCC)</option>
+                <option value="0.50" selected
+                  >0.50 (Standard Medium Workability)</option
+                >
+                <option value="0.55">0.55 (Moderate Workability)</option>
+                <option value="0.60">0.60 (Lean / Mass Concrete)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col sm:flex-row gap-3 pt-2">
+        <button
+          type="button"
+          id="btn-calculate"
+          class="flex-1 rounded-xl bg-blue-600 px-5 py-3 text-xs sm:text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 active:scale-[0.99] cursor-pointer flex items-center justify-center gap-2"
+        >
+          <span>🚀</span> Calculate Concrete Materials
+        </button>
+        <button
+          type="button"
+          id="btn-clear-all"
+          class="rounded-xl border border-slate-300 bg-slate-100 px-5 py-3 text-xs sm:text-sm font-bold text-slate-700 transition hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+        >
+          Clear All
+        </button>
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- RESULTS SECTION -->
+    <!-- ========================================================= -->
+    <div id="results-section" class="hidden space-y-6">
+      <!-- Result Card Hero -->
+      <div
+        class="rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-50/90 via-indigo-50/50 to-slate-50/90 p-5 sm:p-6 dark:border-blue-900/60 dark:from-blue-950/40 dark:via-indigo-950/20 dark:to-slate-900/40 shadow-xs"
+      >
+        <div
+          class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-blue-200/60 pb-3 dark:border-blue-900/50"
+        >
+          <span
+            id="lbl-hero-tag"
+            class="text-xs font-black uppercase tracking-wider text-blue-600 dark:text-blue-400"
+          >
+            ESTIMATED CONCRETE MATERIAL REQUIREMENT
+          </span>
+          <span
+            id="badge-calc-mode"
+            class="self-start sm:self-auto rounded-md bg-blue-100 px-2 py-0.5 text-[11px] font-bold text-blue-800 dark:bg-blue-900/80 dark:text-blue-200"
+          >
+            Concrete Volume
+          </span>
+        </div>
+
+        <div class="mt-4">
+          <div
+            id="res-hero-main"
+            class="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white"
+          >
+            -- Bags Cement
+          </div>
+          <div
+            id="res-hero-sub"
+            class="mt-1 text-xs sm:text-sm font-semibold text-slate-600 dark:text-slate-300"
+          >
+            --
+          </div>
+        </div>
+
+        <!-- Metric Grid -->
+        <div
+          id="grid-result-metrics"
+          class="mt-5 grid grid-cols-2 gap-3 text-xs sm:grid-cols-4 sm:text-sm"
+        >
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Material Breakdown Table -->
+      <div
+        class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900"
+      >
+        <h3
+          class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2"
+        >
+          <span>📋</span> Material Breakdown Table
+        </h3>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Material quantities before and after wastage allowance based on dry
+          volume apportionment.
+        </p>
+        <div class="mt-3 overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm border-collapse">
+            <thead>
+              <tr
+                class="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800"
+              >
+                <th
+                  class="py-2.5 px-3 font-bold text-slate-700 dark:text-slate-200"
+                  >Material</th
+                >
+                <th
+                  class="py-2.5 px-3 font-bold text-slate-700 dark:text-slate-200"
+                  >Base Volume</th
+                >
+                <th
+                  class="py-2.5 px-3 font-bold text-slate-700 dark:text-slate-200"
+                  >Wastage</th
+                >
+                <th
+                  class="py-2.5 px-3 font-bold text-slate-700 dark:text-slate-200"
+                  >Final Volume</th
+                >
+                <th
+                  class="py-2.5 px-3 font-bold text-blue-600 dark:text-blue-400"
+                  >Practical Procurement Quantity</th
+                >
+              </tr>
+            </thead>
+            <tbody
+              id="tbody-material-breakdown"
+              class="divide-y divide-slate-100 dark:divide-slate-800"
+            >
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Step-by-Step Calculation Breakdown -->
+      <div
+        class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900"
+      >
+        <h3
+          class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2"
+        >
+          <span>📐</span> Step-by-Step Mathematical Calculation Details
+        </h3>
+        <div
+          id="txt-calc-details"
+          class="mt-3 rounded-xl bg-slate-50 p-4 font-mono text-xs leading-relaxed text-slate-700 dark:bg-slate-950/80 dark:text-slate-300 space-y-1.5 border border-slate-200/70 dark:border-slate-800"
+        >
+          <!-- Populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Concrete Mix Comparison Table -->
+      <div
+        id="section-mix-comparison"
+        class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900"
+      >
+        <h3
+          class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white flex items-center gap-2"
+        >
+          <span>📊</span> Concrete Mix Ratio Comparison Matrix
+        </h3>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Compare material requirements for the same volume across standard
+          nominal concrete grades.
+        </p>
+        <div class="mt-3 overflow-x-auto">
+          <table class="w-full text-left text-xs sm:text-sm border-collapse">
+            <thead>
+              <tr
+                class="border-b border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800"
+              >
+                <th
+                  class="py-2.5 px-3 font-bold text-slate-700 dark:text-slate-200"
+                  >Mix Grade</th
+                >
+                <th
+                  class="py-2.5 px-3 font-bold text-slate-700 dark:text-slate-200"
+                  >Ratio (C:S:A)</th
+                >
+                <th
+                  class="py-2.5 px-3 font-bold text-slate-700 dark:text-slate-200"
+                  >Total Parts</th
+                >
+                <th
+                  class="py-2.5 px-3 font-bold text-blue-600 dark:text-blue-400"
+                  >Cement (Bags & kg)</th
+                >
+                <th
+                  class="py-2.5 px-3 font-bold text-emerald-600 dark:text-emerald-400"
+                  >Sand (CFT / m³)</th
+                >
+                <th
+                  class="py-2.5 px-3 font-bold text-slate-700 dark:text-slate-200"
+                  >Aggregate (CFT / m³)</th
+                >
+              </tr>
+            </thead>
+            <tbody
+              id="tbody-mix-comparison"
+              class="divide-y divide-slate-100 dark:divide-slate-800"
+            >
+              <!-- Populated dynamically -->
+            </tbody>
+          </table>
+        </div>
+        <p class="mt-2.5 text-[11px] text-slate-500 dark:text-slate-400 italic">
+          * Comparison is for material estimation only. Actual concrete mix
+          design should follow project specifications.
+        </p>
+      </div>
+
+      <!-- Download PDF Action Box -->
+      <div
+        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-2xl border border-slate-200/80 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900/60"
+      >
+        <div>
+          <h4
+            class="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-white"
+          >
+            Save Concrete Material Estimate
+          </h4>
+          <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
+            Download a branded PDF summary with all dimensions, mix ratios,
+            bags, volumes, and weights.
+          </p>
+        </div>
+        <button
+          type="button"
+          id="btn-download-pdf"
+          class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-xs sm:text-sm font-bold text-white shadow transition hover:bg-slate-800 dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 cursor-pointer"
+        >
+          <span>📄</span>
+          <span id="txt-btn-pdf">Download PDF</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- SEO EDUCATIONAL CONTENT (SLOT="CONTENT") -->
+  <!-- ========================================================= -->
+  <Fragment slot="content">
+    <div class="space-y-10">
+      <!-- 1. How to Use -->
+      <section class="space-y-3">
+        <h2
+          class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white"
+        >
+          How to Use the Concrete Material Breakup Calculator
+        </h2>
+        <p class="text-sm leading-relaxed">
+          Follow these practical steps to calculate exact material quantities
+          for any concrete casting project:
+        </p>
+        <ol
+          class="list-decimal space-y-2 pl-5 text-xs sm:text-sm leading-relaxed"
+        >
+          <li>
+            <strong>Select the Calculation Method:</strong> Choose between <em
+              >Concrete Volume</em
+            > (direct m³, ft³, or yd³), <em>Slab</em>, <em>Beam</em>, <em
+              >Column</em
+            >, <em>Footing</em>, or <em>Custom Dimensions</em>.
+          </li>
+          <li>
+            <strong>Enter Structural Dimensions or Volume:</strong> Input length,
+            width, depth/thickness, and the quantity of identical structural elements.
+          </li>
+          <li>
+            <strong>Select Measurement Units:</strong> Toggle between metric units
+            (mm, cm, meters) or imperial units (feet, inches, cubic feet).
+          </li>
+          <li>
+            <strong>Choose a Concrete Mix Ratio:</strong> Select a standard nominal
+            mix preset (e.g. 1:2:4, 1:1.5:3, 1:1:2, 1:3:6) or enter a custom cement:sand:aggregate
+            proportion.
+          </li>
+          <li>
+            <strong>Select Cement Bag Size:</strong> Choose 50 kg (standard ISO),
+            40 kg, 25 kg, or specify custom packaging.
+          </li>
+          <li>
+            <strong>Configure Dry Volume Factor & Wastage:</strong> Use the standard
+            1.54 dry volume factor and adjust the wastage percentage (typically 5%).
+          </li>
+          <li>
+            <strong>Enable Water Estimation if Needed:</strong> Set your target Water-Cement
+            ratio (e.g. 0.50) to forecast batching water requirements.
+          </li>
+          <li>
+            <strong>Click Calculate:</strong> Instantly generate material summaries,
+            cement bags, sand volume, aggregate tonnage, and mix comparisons.
+          </li>
+          <li>
+            <strong>Review the Material Breakdown:</strong> Inspect base vs final
+            quantities in the breakdown table and step-by-step formula log.
+          </li>
+          <li>
+            <strong>Download PDF Report:</strong> Save a clean, branded PDF calculation
+            sheet for site supervisors, procurement managers, or client billing.
+          </li>
+        </ol>
+      </section>
+
+      <!-- 2. How Is Concrete Material Quantity Calculated -->
+      <section class="space-y-3">
+        <h2
+          class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white"
+        >
+          How Is Concrete Material Quantity Calculated?
+        </h2>
+        <p class="text-sm leading-relaxed">
+          Concrete material estimation begins by determining the wet compacted
+          volume of the element and converting it to dry loose volume:
+        </p>
+        <div
+          class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs sm:text-sm dark:border-slate-800 dark:bg-slate-900 space-y-2"
+        >
+          <p class="font-bold text-slate-900 dark:text-white">
+            Volumetric Estimation Procedure:
+          </p>
+          <ul class="list-disc space-y-1.5 pl-5">
+            <li>
+              <strong>Wet Volume of Concrete (V<sub>wet</sub>):</strong> Length ×
+              Width × Depth × Quantity
+            </li>
+            <li>
+              <strong>Dry Volume Conversion:</strong> When dry ingredients are mixed
+              with water, fine cement and sand particles fill the microscopic voids
+              between stone aggregates. A standard <strong
+                >Dry Volume Multiplier Factor of 1.54</strong
+              > (a 54% volume increase) is applied:
+              <br /><code
+                >Dry Volume = Wet Volume × 1.54 × (1 + Wastage % / 100)</code
+              >
+            </li>
+            <li>
+              <strong>Proportional Ratio Division:</strong> For a mix ratio of C :
+              S : A (Total Parts T = C + S + A):
+              <ul class="list-circle pl-5 mt-1 space-y-1">
+                <li>
+                  <code>Cement Volume = Dry Volume × (C / T)</code> ➔ Weight = Volume
+                  × 1,440 kg/m³
+                </li>
+                <li>
+                  <code>Sand Volume = Dry Volume × (S / T)</code> ➔ Weight = Volume
+                  × 1,600 kg/m³
+                </li>
+                <li>
+                  <code>Coarse Aggregate Volume = Dry Volume × (A / T)</code> ➔ Weight
+                  = Volume × 1,500 kg/m³
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 3. Understanding Concrete Mix Ratios -->
+      <section class="space-y-3">
+        <h2
+          class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white"
+        >
+          Understanding Concrete Mix Ratios
+        </h2>
+        <p class="text-sm leading-relaxed">
+          A concrete mix ratio represents the proportional volume of dry binder,
+          fine aggregate, and coarse aggregate. Standard nominal mix ratios
+          recognized in civil engineering include:
+        </p>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 text-xs sm:text-sm">
+          <div
+            class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800"
+          >
+            <h3 class="font-bold text-blue-600 dark:text-blue-400">
+              1 : 1.5 : 3 (M20 Grade)
+            </h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Standard mix for reinforced cement concrete (RCC) slabs, roof
+              decks, beams, and columns with a target 28-day compressive
+              strength of 20 MPa (N/mm²).
+            </p>
+          </div>
+          <div
+            class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800"
+          >
+            <h3 class="font-bold text-blue-600 dark:text-blue-400">
+              1 : 2 : 4 (M15 Grade)
+            </h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              General purpose concrete for driveways, footpaths, flooring
+              sub-bases, non-structural walls, and light RCC structures (15 MPa
+              strength).
+            </p>
+          </div>
+          <div
+            class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800"
+          >
+            <h3 class="font-bold text-blue-600 dark:text-blue-400">
+              1 : 1 : 2 (M25 Grade)
+            </h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              High-strength structural concrete for heavy foundations,
+              industrial floors, cantilever beams, water tanks, and load-bearing
+              columns (25 MPa strength).
+            </p>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          <em
+            >Important Note: The appropriate concrete mix should always be
+            selected according to architectural drawings, structural engineering
+            designs, and local building codes. Nominal ratios serve as
+            estimation guides; commercial infrastructure projects use lab-tested
+            design mixes.</em
+          >
+        </p>
+      </section>
+
+      <!-- 4. How Many Cement Bags Are Required -->
+      <section class="space-y-3">
+        <h2
+          class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white"
+        >
+          How Many Cement Bags Are Required for Concrete?
+        </h2>
+        <p class="text-sm leading-relaxed">
+          Calculating the exact number of cement bags involves dividing the
+          total required cement weight by the packaging size:
+        </p>
+        <div
+          class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs sm:text-sm dark:border-slate-800 dark:bg-slate-900 space-y-2"
+        >
+          <p>
+            <code
+              >Estimated Number of Bags = Total Cement Weight (kg) ÷ Cement Bag
+              Size (kg)</code>
+          </p>
+          <p>
+            For example, in a standard 1 m³ pour of M20 (1:1.5:3) concrete with
+            5% wastage:
+          </p>
+          <ul class="list-disc pl-5 space-y-1">
+            <li>Dry Volume = 1.0 m³ × 1.54 × 1.05 = 1.617 m³</li>
+            <li>Total Mix Parts = 1 + 1.5 + 3 = 5.5</li>
+            <li>Cement Volume = 1.617 × (1 / 5.5) = 0.294 m³</li>
+            <li>Cement Weight = 0.294 m³ × 1,440 kg/m³ = 423.36 kg</li>
+            <li>
+              <strong>50kg Bags Required:</strong> 423.36 ÷ 50 ≈ <strong
+                >8.5 Bags</strong>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- 5. Concrete Material Calculation Example -->
+      <section class="space-y-3">
+        <h2
+          class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white"
+        >
+          Concrete Material Calculation Example
+        </h2>
+        <p class="text-sm leading-relaxed">
+          Consider casting an RCC floor slab with dimensions of <strong
+            >10.0m Length × 5.0m Width × 0.15m Thickness (150 mm)</strong
+          > using an <strong>M20 (1:1.5:3)</strong> mix, a <strong
+            >1.54 dry factor</strong
+          >, and <strong>5% wastage</strong>:
+        </p>
+        <div
+          class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs sm:text-sm dark:border-slate-800 dark:bg-slate-900 space-y-1.5 font-mono"
+        >
+          <div>
+            • Wet Concrete Volume = 10.0m × 5.0m × 0.15m = <strong
+              >7.500 m³ (264.86 CFT)</strong>
+          </div>
+          <div>
+            • Base Dry Volume = 7.500 m³ × 1.54 = <strong>11.550 m³</strong>
+          </div>
+          <div>
+            • Dry Volume with 5% Wastage = 11.550 × 1.05 = <strong
+              >12.128 m³ (428.28 CFT)</strong>
+          </div>
+          <div>
+            • Total Ratio Parts (1 + 1.5 + 3) = <strong>5.5 Parts</strong>
+          </div>
+          <div class="text-blue-600 dark:text-blue-400 font-bold">
+            • Cement Required: 12.128 × (1 / 5.5) = 2.205 m³ ➔ 3,175.2 kg ➔ <strong
+              >63.5 Bags (50kg)</strong>
+          </div>
+          <div class="text-emerald-600 dark:text-emerald-400 font-bold">
+            • Sand (Fine Aggregate): 12.128 × (1.5 / 5.5) = 3.308 m³ ➔ <strong
+              >116.8 CFT (5.29 Tonnes)</strong>
+          </div>
+          <div class="text-slate-800 dark:text-slate-200 font-bold">
+            • Coarse Aggregate: 12.128 × (3 / 5.5) = 6.615 m³ ➔ <strong
+              >233.6 CFT (9.92 Tonnes)</strong>
+          </div>
+          <div>
+            • Estimated Water (0.50 W/C): 3,175.2 kg × 0.50 = <strong
+              >1,588 Liters</strong>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400 italic">
+          * This example is for material estimation only. Actual quantities may
+          vary based on mix design, site compaction, and aggregate moisture.
+        </p>
+      </section>
+
+      <!-- 6. Common Mistakes -->
+      <section class="space-y-3">
+        <h2
+          class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white"
+        >
+          Common Mistakes When Estimating Concrete Materials
+        </h2>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 text-xs sm:text-sm">
+          <div
+            class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800"
+          >
+            <h3 class="font-bold text-slate-900 dark:text-white">
+              Using Wet Volume Directly
+            </h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Dividing wet concrete volume directly among mix ratios without
+              applying the 1.54 dry volume multiplier leads to a 35%
+              underestimation of cement, sand, and aggregate.
+            </p>
+          </div>
+          <div
+            class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800"
+          >
+            <h3 class="font-bold text-slate-900 dark:text-white">
+              Ignoring Wastage
+            </h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Handling losses, shuttering bulge, transit spillage, and uneven
+              foundation excavation require a 5% to 10% allowance to avoid site
+              shortages.
+            </p>
+          </div>
+          <div
+            class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800"
+          >
+            <h3 class="font-bold text-slate-900 dark:text-white">
+              Using the Wrong Mix Ratio
+            </h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Applying a lean 1:3:6 PCC mix for structural RCC columns or slabs
+              compromises load-bearing capacity and structural safety.
+            </p>
+          </div>
+          <div
+            class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800"
+          >
+            <h3 class="font-bold text-slate-900 dark:text-white">
+              Ignoring Moisture Content (Bulking of Sand)
+            </h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Damp sand increases in volume by up to 25% due to moisture
+              bulking, requiring on-site batching volume corrections.
+            </p>
+          </div>
+          <div
+            class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800"
+          >
+            <h3 class="font-bold text-slate-900 dark:text-white">
+              Assuming Cement Bag Sizes Are Constant
+            </h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Packaging sizes vary globally (50 kg in India/UK, 94 lbs in the
+              US, 40 kg or 25 kg in specialized retail). Always verify the bag
+              weight.
+            </p>
+          </div>
+          <div
+            class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800"
+          >
+            <h3 class="font-bold text-slate-900 dark:text-white">
+              Treating an Estimate as a Final Mix Design
+            </h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Structural concrete for commercial and multi-story construction
+              must be verified with formal laboratory concrete mix designs (IS
+              10262 / ACI 211).
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 7. Important Information & Disclaimer -->
+      <section class="space-y-3">
+        <h2
+          class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white"
+        >
+          Important Information and Disclaimer
+        </h2>
+        <div
+          class="rounded-xl border border-amber-200 bg-amber-50/60 p-4 text-xs sm:text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300 space-y-2"
+        >
+          <p>
+            • All numerical outputs provided by this calculator are engineering
+            estimates based on entered dimensions, standardized density
+            assumptions, and nominal ratios.
+          </p>
+          <p>
+            • Dry volume factors (typically 1.54) account for interstitial void
+            displacement but may vary slightly depending on coarse aggregate
+            gradation and sand fineness modulus.
+          </p>
+          <p>
+            • Water requirements depend on aggregate surface moisture, ambient
+            temperature, desired slump/workability, and plasticizer admixtures.
+          </p>
+          <p>
+            • Concrete for critical load-bearing structural work (columns,
+            foundations, transfer girders) must follow approved engineering
+            drawings and certified mix designs.
+          </p>
+        </div>
+      </section>
+    </div>
+  </Fragment>
+
+  <!-- ========================================================= -->
+  <!-- FAQ SECTION (SLOT="FAQ") (EXACTLY 7 FAQS) -->
+  <!-- ========================================================= -->
+  <Fragment slot="faq">
+    <div class="space-y-4 text-xs sm:text-sm">
+      {
+        faqs.map((faq, index) => (
+          <details
+            class="group rounded-2xl border border-slate-200 p-4 dark:border-slate-800 transition-colors"
+            open={index === 0}
+          >
+            <summary class="cursor-pointer list-none">
+              <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+                <span class="text-sm sm:text-base">
+                  {index + 1}. {faq.q}
+                </span>
+                <span class="ml-2 text-slate-400 transition-transform duration-200 group-open:rotate-180">
+                  ▼
+                </span>
+              </h3>
+            </summary>
+            <p class="mt-2.5 text-slate-600 dark:text-slate-300 leading-relaxed">
+              {faq.a}
+            </p>
+          </details>
+        ))
+      }
+    </div>
+  </Fragment>
+
+  <!-- FAQPage & WebApplication JSON-LD Schema -->
+  <script
+    type="application/ld+json"
+    is:inline
+    set:html={JSON.stringify({
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          name: "Concrete Material Breakup Calculator",
+          url: "https://aifreecalculator.com/construction/concrete-material-breakup-calculator/",
+          applicationCategory: "ConstructionApplication",
+          operatingSystem: "All",
+          description:
+            "Calculate the approximate quantity of cement, sand, aggregate, water, and cement bags required for a given volume of concrete.",
+        },
+        {
+          "@type": "FAQPage",
+          mainEntity: faqs.map((faq) => ({
+            "@type": "Question",
+            name: faq.q,
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: faq.a,
+            },
+          })),
+        },
+      ],
+    })}
+  />
+
+  <!-- Client-Side Engine Integration Script -->
+  <script>
+    import {
+      calculateConcreteMaterial,
+      CONCRETE_MIX_PRESETS,
+      type ConcreteMode,
+      type DimensionUnit,
+      type VolumeUnit,
+    } from "../../lib/calculators/concrete-material-breakup";
+
+    let currentMode: ConcreteMode = "concrete_volume";
+    let lastResultData: any = null;
+
+    // UI DOM Elements
+    const modeButtons =
+      document.querySelectorAll<HTMLButtonElement>(".mode-btn");
+    const errorBox = document.getElementById("error-box")!;
+    const resultsSection = document.getElementById("results-section")!;
+    const btnCalculate = document.getElementById(
+      "btn-calculate",
+    ) as HTMLButtonElement;
+    const btnClearAll = document.getElementById(
+      "btn-clear-all",
+    ) as HTMLButtonElement;
+    const btnDownloadPdf = document.getElementById(
+      "btn-download-pdf",
+    ) as HTMLButtonElement;
+
+    // Mode Sections
+    const sectionConcreteVolume = document.getElementById(
+      "section-input-concrete-volume",
+    )!;
+    const sectionSlab = document.getElementById("section-input-slab")!;
+    const sectionBeam = document.getElementById("section-input-beam")!;
+    const sectionColumn = document.getElementById("section-input-column")!;
+    const sectionFooting = document.getElementById("section-input-footing")!;
+    const sectionCustom = document.getElementById("section-input-custom")!;
+
+    // Hero Result Elements
+    const lblHeroTag = document.getElementById("lbl-hero-tag")!;
+    const badgeCalcMode = document.getElementById("badge-calc-mode")!;
+    const resHeroMain = document.getElementById("res-hero-main")!;
+    const resHeroSub = document.getElementById("res-hero-sub")!;
+    const gridResultMetrics = document.getElementById("grid-result-metrics")!;
+    const tbodyMaterialBreakdown = document.getElementById(
+      "tbody-material-breakdown",
+    )!;
+    const txtCalcDetails = document.getElementById("txt-calc-details")!;
+    const tbodyMixComparison = document.getElementById("tbody-mix-comparison")!;
+
+    // Common Mix Settings Inputs
+    const inpMixPreset = document.getElementById(
+      "inp-mix-preset",
+    ) as HTMLSelectElement;
+    const divCustomMixRatio = document.getElementById("div-custom-mix-ratio")!;
+    const inpCustomC = document.getElementById(
+      "inp-custom-c",
+    ) as HTMLInputElement;
+    const inpCustomS = document.getElementById(
+      "inp-custom-s",
+    ) as HTMLInputElement;
+    const inpCustomA = document.getElementById(
+      "inp-custom-a",
+    ) as HTMLInputElement;
+
+    const inpDryFactor = document.getElementById(
+      "inp-dry-factor",
+    ) as HTMLInputElement;
+    const inpBagSize = document.getElementById(
+      "inp-bag-size",
+    ) as HTMLSelectElement;
+    const divCustomBagWeight = document.getElementById(
+      "div-custom-bag-weight",
+    )!;
+    const inpCustomBagWeight = document.getElementById(
+      "inp-custom-bag-weight",
+    ) as HTMLInputElement;
+
+    const inpWastage = document.getElementById(
+      "inp-wastage",
+    ) as HTMLSelectElement;
+    const divCustomWastage = document.getElementById("div-custom-wastage")!;
+    const inpCustomWastageVal = document.getElementById(
+      "inp-custom-wastage-val",
+    ) as HTMLInputElement;
+
+    const chkEnableWater = document.getElementById(
+      "chk-enable-water",
+    ) as HTMLInputElement;
+    const divWaterCtrl = document.getElementById("div-water-ctrl")!;
+    const inpWcRatio = document.getElementById(
+      "inp-wc-ratio",
+    ) as HTMLSelectElement;
+
+    // Mode 1: Volume Inputs
+    const inpVolVal = document.getElementById(
+      "inp-vol-val",
+    ) as HTMLInputElement;
+    const inpVolUnit = document.getElementById(
+      "inp-vol-unit",
+    ) as HTMLSelectElement;
+
+    // Mode 2: Slab Inputs
+    const inpSlabLen = document.getElementById(
+      "inp-slab-len",
+    ) as HTMLInputElement;
+    const inpSlabLenU = document.getElementById(
+      "inp-slab-len-u",
+    ) as HTMLSelectElement;
+    const inpSlabWid = document.getElementById(
+      "inp-slab-wid",
+    ) as HTMLInputElement;
+    const inpSlabWidU = document.getElementById(
+      "inp-slab-wid-u",
+    ) as HTMLSelectElement;
+    const inpSlabThick = document.getElementById(
+      "inp-slab-thick",
+    ) as HTMLInputElement;
+    const inpSlabThickU = document.getElementById(
+      "inp-slab-thick-u",
+    ) as HTMLSelectElement;
+    const inpSlabQty = document.getElementById(
+      "inp-slab-qty",
+    ) as HTMLInputElement;
+
+    // Mode 3: Beam Inputs
+    const inpBeamLen = document.getElementById(
+      "inp-beam-len",
+    ) as HTMLInputElement;
+    const inpBeamLenU = document.getElementById(
+      "inp-beam-len-u",
+    ) as HTMLSelectElement;
+    const inpBeamWid = document.getElementById(
+      "inp-beam-wid",
+    ) as HTMLInputElement;
+    const inpBeamWidU = document.getElementById(
+      "inp-beam-wid-u",
+    ) as HTMLSelectElement;
+    const inpBeamDepth = document.getElementById(
+      "inp-beam-depth",
+    ) as HTMLInputElement;
+    const inpBeamDepthU = document.getElementById(
+      "inp-beam-depth-u",
+    ) as HTMLSelectElement;
+    const inpBeamQty = document.getElementById(
+      "inp-beam-qty",
+    ) as HTMLInputElement;
+
+    // Mode 4: Column Inputs
+    const inpColLen = document.getElementById(
+      "inp-col-len",
+    ) as HTMLInputElement;
+    const inpColLenU = document.getElementById(
+      "inp-col-len-u",
+    ) as HTMLSelectElement;
+    const inpColWid = document.getElementById(
+      "inp-col-wid",
+    ) as HTMLInputElement;
+    const inpColWidU = document.getElementById(
+      "inp-col-wid-u",
+    ) as HTMLSelectElement;
+    const inpColHt = document.getElementById("inp-col-ht") as HTMLInputElement;
+    const inpColHtU = document.getElementById(
+      "inp-col-ht-u",
+    ) as HTMLSelectElement;
+    const inpColQty = document.getElementById(
+      "inp-col-qty",
+    ) as HTMLInputElement;
+
+    // Mode 5: Footing Inputs
+    const inpFtLen = document.getElementById("inp-ft-len") as HTMLInputElement;
+    const inpFtLenU = document.getElementById(
+      "inp-ft-len-u",
+    ) as HTMLSelectElement;
+    const inpFtWid = document.getElementById("inp-ft-wid") as HTMLInputElement;
+    const inpFtWidU = document.getElementById(
+      "inp-ft-wid-u",
+    ) as HTMLSelectElement;
+    const inpFtDepth = document.getElementById(
+      "inp-ft-depth",
+    ) as HTMLInputElement;
+    const inpFtDepthU = document.getElementById(
+      "inp-ft-depth-u",
+    ) as HTMLSelectElement;
+    const inpFtQty = document.getElementById("inp-ft-qty") as HTMLInputElement;
+
+    // Mode 6: Custom Inputs
+    const inpCdLen = document.getElementById("inp-cd-len") as HTMLInputElement;
+    const inpCdLenU = document.getElementById(
+      "inp-cd-len-u",
+    ) as HTMLSelectElement;
+    const inpCdWid = document.getElementById("inp-cd-wid") as HTMLInputElement;
+    const inpCdWidU = document.getElementById(
+      "inp-cd-wid-u",
+    ) as HTMLSelectElement;
+    const inpCdHt = document.getElementById("inp-cd-ht") as HTMLInputElement;
+    const inpCdHtU = document.getElementById(
+      "inp-cd-ht-u",
+    ) as HTMLSelectElement;
+    const inpCdQty = document.getElementById("inp-cd-qty") as HTMLInputElement;
+
+    function showError(msg: string) {
+      if (errorBox) {
+        errorBox.textContent = msg;
+        errorBox.classList.remove("hidden");
+        errorBox.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+      if (resultsSection) resultsSection.classList.add("hidden");
+    }
+
+    function clearError() {
+      if (errorBox) {
+        errorBox.textContent = "";
+        errorBox.classList.add("hidden");
+      }
+    }
+
+    function invalidateResults() {
+      clearError();
+      if (resultsSection) resultsSection.classList.add("hidden");
+      lastResultData = null;
+    }
+
+    // Toggle custom mix inputs
+    inpMixPreset.addEventListener("change", () => {
+      if (inpMixPreset.value === "custom") {
+        divCustomMixRatio.classList.remove("hidden");
+      } else {
+        divCustomMixRatio.classList.add("hidden");
+      }
+      invalidateResults();
+    });
+
+    // Toggle custom bag size
+    inpBagSize.addEventListener("change", () => {
+      if (inpBagSize.value === "custom") {
+        divCustomBagWeight.classList.remove("hidden");
+      } else {
+        divCustomBagWeight.classList.add("hidden");
+      }
+      invalidateResults();
+    });
+
+    // Toggle custom wastage
+    inpWastage.addEventListener("change", () => {
+      if (inpWastage.value === "custom") {
+        divCustomWastage.classList.remove("hidden");
+      } else {
+        divCustomWastage.classList.add("hidden");
+      }
+      invalidateResults();
+    });
+
+    // Water toggle
+    chkEnableWater.addEventListener("change", () => {
+      if (chkEnableWater.checked) {
+        divWaterCtrl.classList.remove("opacity-40", "pointer-events-none");
+      } else {
+        divWaterCtrl.classList.add("opacity-40", "pointer-events-none");
+      }
+      invalidateResults();
+    });
+
+    // Mode Tab Switching
+    modeButtons.forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const targetMode = btn.getAttribute("data-mode") as ConcreteMode;
+        if (!targetMode) return;
+
+        currentMode = targetMode;
+
+        modeButtons.forEach((b) => {
+          b.classList.remove(
+            "active",
+            "border-blue-600",
+            "bg-blue-50",
+            "text-blue-700",
+            "dark:border-blue-500",
+            "dark:bg-blue-950/60",
+            "dark:text-blue-300",
+          );
+          b.classList.add(
+            "border-transparent",
+            "bg-white",
+            "text-slate-700",
+            "dark:bg-slate-800",
+            "dark:text-slate-300",
+          );
+        });
+
+        btn.classList.add(
+          "active",
+          "border-blue-600",
+          "bg-blue-50",
+          "text-blue-700",
+          "dark:border-blue-500",
+          "dark:bg-blue-950/60",
+          "dark:text-blue-300",
+        );
+        btn.classList.remove(
+          "border-transparent",
+          "bg-white",
+          "text-slate-700",
+          "dark:bg-slate-800",
+          "dark:text-slate-300",
+        );
+
+        // Hide all mode input sections
+        sectionConcreteVolume.classList.add("hidden");
+        sectionSlab.classList.add("hidden");
+        sectionBeam.classList.add("hidden");
+        sectionColumn.classList.add("hidden");
+        sectionFooting.classList.add("hidden");
+        sectionCustom.classList.add("hidden");
+
+        // Show selected mode section
+        if (targetMode === "concrete_volume") {
+          sectionConcreteVolume.classList.remove("hidden");
+          btnCalculate.innerHTML = "<span>🚀</span> Calculate Concrete Materials →";
+        } else if (targetMode === "slab") {
+          sectionSlab.classList.remove("hidden");
+          btnCalculate.innerHTML = "<span>🚀</span> Calculate Slab Concrete →";
+        } else if (targetMode === "beam") {
+          sectionBeam.classList.remove("hidden");
+          btnCalculate.innerHTML = "<span>🚀</span> Calculate Beam Concrete →";
+        } else if (targetMode === "column") {
+          sectionColumn.classList.remove("hidden");
+          btnCalculate.innerHTML = "<span>🚀</span> Calculate Column Concrete →";
+        } else if (targetMode === "footing") {
+          sectionFooting.classList.remove("hidden");
+          btnCalculate.innerHTML = "<span>🚀</span> Calculate Footing Concrete →";
+        } else if (targetMode === "custom_dimensions") {
+          sectionCustom.classList.remove("hidden");
+          btnCalculate.innerHTML = "<span>🚀</span> Calculate Custom Concrete →";
+        }
+
+        invalidateResults();
+      });
+    });
+
+    // Invalidate results when user edits any input field
+    const allInputs = document.querySelectorAll("input, select");
+    allInputs.forEach((el) => {
+      el.addEventListener("input", () => {
+        if (!resultsSection?.classList.contains("hidden")) {
+          invalidateResults();
+        }
+      });
+      el.addEventListener("change", () => {
+        if (!resultsSection?.classList.contains("hidden")) {
+          invalidateResults();
+        }
+      });
+    });
+
+    // Enter Key Handler for instant calculation
+    document.querySelectorAll("input").forEach((inp) => {
+      inp.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          performCalculation();
+        }
+      });
+    });
+
+    function performCalculation() {
+      clearError();
+
+      try {
+        // 1. Determine Mix Ratio
+        let cPart = 1;
+        let sPart = 2;
+        let aPart = 4;
+        let mixName = "1 : 2 : 4";
+
+        if (inpMixPreset.value === "custom") {
+          cPart = parseFloat(inpCustomC.value);
+          sPart = parseFloat(inpCustomS.value);
+          aPart = parseFloat(inpCustomA.value);
+          if (
+            isNaN(cPart) ||
+            cPart <= 0 ||
+            isNaN(sPart) ||
+            sPart <= 0 ||
+            isNaN(aPart) ||
+            aPart <= 0
+          ) {
+            return showError(
+              "Please enter valid positive numbers for all parts of the custom mix ratio.",
+            );
+          }
+          mixName = `${cPart} : ${sPart} : ${aPart}`;
+        } else {
+          const found = CONCRETE_MIX_PRESETS.find(
+            (p) => p.id === inpMixPreset.value,
+          );
+          if (found) {
+            cPart = found.cement;
+            sPart = found.sand;
+            aPart = found.aggregate;
+            mixName = `${found.name} (${found.gradeLabel})`;
+          }
+        }
+
+        // 2. Dry Factor, Bag Size, Wastage, Water
+        const dryFactor = parseFloat(inpDryFactor.value);
+        if (isNaN(dryFactor) || dryFactor <= 0) {
+          return showError(
+            "Please enter a valid positive Dry Volume Factor (default is 1.54).",
+          );
+        }
+
+        let bagSize = 50;
+        if (inpBagSize.value === "custom") {
+          bagSize = parseFloat(inpCustomBagWeight.value);
+          if (isNaN(bagSize) || bagSize <= 0) {
+            return showError("Please enter a valid custom cement bag weight.");
+          }
+        } else {
+          bagSize = parseFloat(inpBagSize.value) || 50;
+        }
+
+        let wastage = 5;
+        if (inpWastage.value === "custom") {
+          wastage = parseFloat(inpCustomWastageVal.value);
+          if (isNaN(wastage) || wastage < 0) {
+            return showError(
+              "Please enter a valid non-negative wastage percentage.",
+            );
+          }
+        } else {
+          wastage = parseFloat(inpWastage.value) || 0;
+        }
+
+        const enableWater = chkEnableWater.checked;
+        const wcRatio = parseFloat(inpWcRatio.value) || 0.5;
+
+        let res: any = null;
+
+        if (currentMode === "concrete_volume") {
+          const v = parseFloat(inpVolVal.value);
+          const u = inpVolUnit.value as VolumeUnit;
+          if (isNaN(v) || v <= 0) {
+            return showError("Please enter a valid positive Concrete Volume.");
+          }
+
+          res = calculateConcreteMaterial({
+            mode: "concrete_volume",
+            volumeValue: v,
+            volumeUnit: u,
+            cementPart: cPart,
+            sandPart: sPart,
+            aggregatePart: aPart,
+            dryVolumeFactor: dryFactor,
+            cementBagSizeKg: bagSize,
+            wastagePercent: wastage,
+            enableWater,
+            waterCementRatio: wcRatio,
+          });
+        } else if (currentMode === "slab") {
+          const l = parseFloat(inpSlabLen.value);
+          const w = parseFloat(inpSlabWid.value);
+          const t = parseFloat(inpSlabThick.value);
+          const qty = parseInt(inpSlabQty.value, 10);
+
+          if (
+            isNaN(l) ||
+            l <= 0 ||
+            isNaN(w) ||
+            w <= 0 ||
+            isNaN(t) ||
+            t <= 0 ||
+            isNaN(qty) ||
+            qty < 1
+          ) {
+            return showError(
+              "Please enter valid positive dimensions and quantity for the slab.",
+            );
+          }
+
+          res = calculateConcreteMaterial({
+            mode: "slab",
+            length: l,
+            lengthUnit: inpSlabLenU.value as DimensionUnit,
+            width: w,
+            widthUnit: inpSlabWidU.value as DimensionUnit,
+            heightOrDepth: t,
+            heightOrDepthUnit: inpSlabThickU.value as DimensionUnit,
+            quantity: qty,
+            cementPart: cPart,
+            sandPart: sPart,
+            aggregatePart: aPart,
+            dryVolumeFactor: dryFactor,
+            cementBagSizeKg: bagSize,
+            wastagePercent: wastage,
+            enableWater,
+            waterCementRatio: wcRatio,
+          });
+        } else if (currentMode === "beam") {
+          const l = parseFloat(inpBeamLen.value);
+          const w = parseFloat(inpBeamWid.value);
+          const d = parseFloat(inpBeamDepth.value);
+          const qty = parseInt(inpBeamQty.value, 10);
+
+          if (
+            isNaN(l) ||
+            l <= 0 ||
+            isNaN(w) ||
+            w <= 0 ||
+            isNaN(d) ||
+            d <= 0 ||
+            isNaN(qty) ||
+            qty < 1
+          ) {
+            return showError(
+              "Please enter valid positive dimensions and quantity for the beam.",
+            );
+          }
+
+          res = calculateConcreteMaterial({
+            mode: "beam",
+            length: l,
+            lengthUnit: inpBeamLenU.value as DimensionUnit,
+            width: w,
+            widthUnit: inpBeamWidU.value as DimensionUnit,
+            heightOrDepth: d,
+            heightOrDepthUnit: inpBeamDepthU.value as DimensionUnit,
+            quantity: qty,
+            cementPart: cPart,
+            sandPart: sPart,
+            aggregatePart: aPart,
+            dryVolumeFactor: dryFactor,
+            cementBagSizeKg: bagSize,
+            wastagePercent: wastage,
+            enableWater,
+            waterCementRatio: wcRatio,
+          });
+        } else if (currentMode === "column") {
+          const l = parseFloat(inpColLen.value);
+          const w = parseFloat(inpColWid.value);
+          const h = parseFloat(inpColHt.value);
+          const qty = parseInt(inpColQty.value, 10);
+
+          if (
+            isNaN(l) ||
+            l <= 0 ||
+            isNaN(w) ||
+            w <= 0 ||
+            isNaN(h) ||
+            h <= 0 ||
+            isNaN(qty) ||
+            qty < 1
+          ) {
+            return showError(
+              "Please enter valid positive dimensions and quantity for the column.",
+            );
+          }
+
+          res = calculateConcreteMaterial({
+            mode: "column",
+            length: l,
+            lengthUnit: inpColLenU.value as DimensionUnit,
+            width: w,
+            widthUnit: inpColWidU.value as DimensionUnit,
+            heightOrDepth: h,
+            heightOrDepthUnit: inpColHtU.value as DimensionUnit,
+            quantity: qty,
+            cementPart: cPart,
+            sandPart: sPart,
+            aggregatePart: aPart,
+            dryVolumeFactor: dryFactor,
+            cementBagSizeKg: bagSize,
+            wastagePercent: wastage,
+            enableWater,
+            waterCementRatio: wcRatio,
+          });
+        } else if (currentMode === "footing") {
+          const l = parseFloat(inpFtLen.value);
+          const w = parseFloat(inpFtWid.value);
+          const d = parseFloat(inpFtDepth.value);
+          const qty = parseInt(inpFtQty.value, 10);
+
+          if (
+            isNaN(l) ||
+            l <= 0 ||
+            isNaN(w) ||
+            w <= 0 ||
+            isNaN(d) ||
+            d <= 0 ||
+            isNaN(qty) ||
+            qty < 1
+          ) {
+            return showError(
+              "Please enter valid positive dimensions and quantity for the footing.",
+            );
+          }
+
+          res = calculateConcreteMaterial({
+            mode: "footing",
+            length: l,
+            lengthUnit: inpFtLenU.value as DimensionUnit,
+            width: w,
+            widthUnit: inpFtWidU.value as DimensionUnit,
+            heightOrDepth: d,
+            heightOrDepthUnit: inpFtDepthU.value as DimensionUnit,
+            quantity: qty,
+            cementPart: cPart,
+            sandPart: sPart,
+            aggregatePart: aPart,
+            dryVolumeFactor: dryFactor,
+            cementBagSizeKg: bagSize,
+            wastagePercent: wastage,
+            enableWater,
+            waterCementRatio: wcRatio,
+          });
+        } else if (currentMode === "custom_dimensions") {
+          const l = parseFloat(inpCdLen.value);
+          const w = parseFloat(inpCdWid.value);
+          const h = parseFloat(inpCdHt.value);
+          const qty = parseInt(inpCdQty.value, 10);
+
+          if (
+            isNaN(l) ||
+            l <= 0 ||
+            isNaN(w) ||
+            w <= 0 ||
+            isNaN(h) ||
+            h <= 0 ||
+            isNaN(qty) ||
+            qty < 1
+          ) {
+            return showError(
+              "Please enter valid positive custom dimensions and quantity.",
+            );
+          }
+
+          res = calculateConcreteMaterial({
+            mode: "custom_dimensions",
+            length: l,
+            lengthUnit: inpCdLenU.value as DimensionUnit,
+            width: w,
+            widthUnit: inpCdWidU.value as DimensionUnit,
+            heightOrDepth: h,
+            heightOrDepthUnit: inpCdHtU.value as DimensionUnit,
+            quantity: qty,
+            cementPart: cPart,
+            sandPart: sPart,
+            aggregatePart: aPart,
+            dryVolumeFactor: dryFactor,
+            cementBagSizeKg: bagSize,
+            wastagePercent: wastage,
+            enableWater,
+            waterCementRatio: wcRatio,
+          });
+        }
+
+        if (!res) return;
+
+        lastResultData = {
+          modeTitle: getModeTitle(currentMode),
+          mixName,
+          ...res,
+        };
+
+        // Render Hero Card
+        lblHeroTag.textContent = "ESTIMATED CONCRETE MATERIAL REQUIREMENT";
+        badgeCalcMode.textContent = getModeTitle(currentMode);
+        resHeroMain.textContent = `${res.cementBags.toLocaleString()} Bags (${res.cementBagSizeKg}kg)`;
+        resHeroSub.textContent = `Total Wet Volume: ${res.totalWetVolumeCum.toLocaleString()} m³ (${res.totalWetVolumeCft.toLocaleString()} CFT) | Dry Volume: ${res.finalDryVolumeCum.toLocaleString()} m³ (${res.wastagePercent}% Wastage) | Mix Ratio: ${res.mixRatioLabel}`;
+
+        // Render Metric Grid
+        gridResultMetrics.innerHTML = `
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Cement Required</div>
+            <div class="mt-1 text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">${Math.round(res.cementWeightKg).toLocaleString()} kg <span class="text-xs font-normal text-slate-500">(${res.cementWeightTons} MT)</span></div>
+          </div>
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Sand (Fine Agg)</div>
+            <div class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">${res.sandVolumeCft.toLocaleString()} CFT <span class="text-xs font-normal text-slate-500">(${res.sandVolumeCum} m³)</span></div>
+          </div>
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Coarse Aggregate</div>
+            <div class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">${res.aggVolumeCft.toLocaleString()} CFT <span class="text-xs font-normal text-slate-500">(${res.aggVolumeCum} m³)</span></div>
+          </div>
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">${res.waterEnabled ? "Water Estimated" : "Dry Volume (1.54)"}</div>
+            <div class="mt-1 text-sm sm:text-base font-bold ${res.waterEnabled ? "text-cyan-600 dark:text-cyan-400" : "text-slate-900 dark:text-white"}">${res.waterEnabled ? `${res.waterLiters.toLocaleString()} Liters` : `${res.finalDryVolumeCum} m³`} <span class="text-xs font-normal text-slate-500">${res.waterEnabled ? `(${res.waterGallons} Gal)` : `(${res.finalDryVolumeCft} CFT)`}</span></div>
+          </div>
+        `;
+
+        // Render Material Breakdown Table
+        tbodyMaterialBreakdown.innerHTML = res.tableBreakdown
+          .map(
+            (row: any) => `
+            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
+              <td class="py-2.5 px-3 font-bold text-slate-900 dark:text-white">${row.material}</td>
+              <td class="py-2.5 px-3 text-slate-600 dark:text-slate-300">${row.baseVolumeCum} m³ <span class="text-xs text-slate-400">(${row.baseVolumeCft} CFT)</span></td>
+              <td class="py-2.5 px-3 text-slate-600 dark:text-slate-300">${row.wastageVolumeCum} m³ <span class="text-xs text-slate-400">(${row.wastageVolumeCft} CFT)</span></td>
+              <td class="py-2.5 px-3 font-semibold text-slate-900 dark:text-white">${row.finalVolumeCum} m³ <span class="text-xs text-slate-400">(${row.finalVolumeCft} CFT)</span></td>
+              <td class="py-2.5 px-3 font-bold text-blue-600 dark:text-blue-400">${row.practicalDisplay}</td>
+            </tr>
+          `,
+          )
+          .join("");
+
+        // Render Step-by-Step Mathematical Details
+        txtCalcDetails.innerHTML = res.stepDetails
+          .map((line: string) => `<div>${line}</div>`)
+          .join("");
+
+        // Render Concrete Mix Comparison Table
+        tbodyMixComparison.innerHTML = res.comparisonTable
+          .map(
+            (cRow: any) => `
+            <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition ${cRow.presetId === inpMixPreset.value ? "bg-blue-50/40 dark:bg-blue-950/20 font-semibold" : ""}">
+              <td class="py-2.5 px-3 font-bold text-slate-900 dark:text-white">${cRow.name} <span class="text-xs font-normal text-blue-600 dark:text-blue-400">(${cRow.gradeLabel})</span></td>
+              <td class="py-2.5 px-3 text-slate-600 dark:text-slate-300">${cRow.name}</td>
+              <td class="py-2.5 px-3 text-slate-600 dark:text-slate-300">${cRow.totalParts}</td>
+              <td class="py-2.5 px-3 font-bold text-blue-600 dark:text-blue-400">${cRow.cementBags} Bags <span class="text-xs font-normal text-slate-500">(${cRow.cementKg.toLocaleString()} kg)</span></td>
+              <td class="py-2.5 px-3 font-semibold text-emerald-600 dark:text-emerald-400">${cRow.sandCft} CFT <span class="text-xs font-normal text-slate-500">(${cRow.sandCum} m³)</span></td>
+              <td class="py-2.5 px-3 text-slate-800 dark:text-slate-200">${cRow.aggCft} CFT <span class="text-xs font-normal text-slate-500">(${cRow.aggCum} m³)</span></td>
+            </tr>
+          `,
+          )
+          .join("");
+
+        resultsSection.classList.remove("hidden");
+        resultsSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      } catch (err: any) {
+        showError(
+          err.message ||
+            "An unexpected error occurred during calculation. Please check your inputs.",
+        );
+      }
+    }
+
+    function getModeTitle(m: ConcreteMode): string {
+      switch (m) {
+        case "concrete_volume":
+          return "Concrete Volume";
+        case "slab":
+          return "Slab Element";
+        case "beam":
+          return "Beam Element";
+        case "column":
+          return "Column Element";
+        case "footing":
+          return "Footing Element";
+        case "custom_dimensions":
+          return "Custom Dimensions";
+        default:
+          return "Concrete Material";
+      }
+    }
+
+    function performClearAll() {
+      // 1. Reset Volume
+      inpVolVal.value = "10";
+      inpVolUnit.value = "cum";
+
+      // 2. Reset Slab
+      inpSlabLen.value = "10";
+      inpSlabLenU.value = "meter";
+      inpSlabWid.value = "5";
+      inpSlabWidU.value = "meter";
+      inpSlabThick.value = "150";
+      inpSlabThickU.value = "mm";
+      inpSlabQty.value = "1";
+
+      // 3. Reset Beam
+      inpBeamLen.value = "6";
+      inpBeamLenU.value = "meter";
+      inpBeamWid.value = "300";
+      inpBeamWidU.value = "mm";
+      inpBeamDepth.value = "450";
+      inpBeamDepthU.value = "mm";
+      inpBeamQty.value = "4";
+
+      // 4. Reset Column
+      inpColLen.value = "300";
+      inpColLenU.value = "mm";
+      inpColWid.value = "300";
+      inpColWidU.value = "mm";
+      inpColHt.value = "3.0";
+      inpColHtU.value = "meter";
+      inpColQty.value = "6";
+
+      // 5. Reset Footing
+      inpFtLen.value = "1.5";
+      inpFtLenU.value = "meter";
+      inpFtWid.value = "1.5";
+      inpFtWidU.value = "meter";
+      inpFtDepth.value = "500";
+      inpFtDepthU.value = "mm";
+      inpFtQty.value = "6";
+
+      // 6. Reset Custom
+      inpCdLen.value = "5";
+      inpCdLenU.value = "meter";
+      inpCdWid.value = "2";
+      inpCdWidU.value = "meter";
+      inpCdHt.value = "0.5";
+      inpCdHtU.value = "meter";
+      inpCdQty.value = "2";
+
+      // 7. Reset Mix Settings
+      inpMixPreset.value = "1:2:4";
+      divCustomMixRatio.classList.add("hidden");
+      inpCustomC.value = "1";
+      inpCustomS.value = "2";
+      inpCustomA.value = "4";
+
+      inpDryFactor.value = "1.54";
+      inpBagSize.value = "50";
+      divCustomBagWeight.classList.add("hidden");
+      inpCustomBagWeight.value = "50";
+
+      inpWastage.value = "5";
+      divCustomWastage.classList.add("hidden");
+      inpCustomWastageVal.value = "5";
+
+      chkEnableWater.checked = true;
+      divWaterCtrl.classList.remove("opacity-40", "pointer-events-none");
+      inpWcRatio.value = "0.50";
+
+      // Reset Tab to Concrete Volume
+      modeButtons[0].click();
+      invalidateResults();
+    }
+
+    btnCalculate.addEventListener("click", performCalculation);
+    btnClearAll.addEventListener("click", performClearAll);
+
+    // PDF Export Generation
+    if (btnDownloadPdf) {
+      btnDownloadPdf.addEventListener("click", async () => {
+        if (!lastResultData) return;
+
+        const txtBtn = document.getElementById("txt-btn-pdf");
+        if (txtBtn) txtBtn.textContent = "Generating PDF...";
+
+        try {
+          let jsPDFModule = (window as any).jspdf;
+          if (!jsPDFModule) {
+            const script = document.createElement("script");
+            script.src =
+              "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+            await new Promise((resolve, reject) => {
+              script.onload = resolve;
+              script.onerror = reject;
+              document.head.appendChild(script);
+            });
+            jsPDFModule = (window as any).jspdf;
+          }
+
+          const { jsPDF } = jsPDFModule;
+          const doc = new jsPDF({ unit: "pt", format: "a4" });
+
+          const primaryColor = [37, 99, 235]; // #2563eb
+          const darkColor = [15, 23, 42]; // #0f172a
+          const slateColor = [100, 116, 139]; // #64748b
+          const lightBg = [248, 250, 252]; // #f8fafc
+
+          const pageWidth = doc.internal.pageSize.getWidth();
+          const pageHeight = doc.internal.pageSize.getHeight();
+          const margin = 40;
+          let y = 45;
+
+          // Top Header Branding
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(18);
+          doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+          doc.text("AIFreecalculator.com", margin, y);
+
+          doc.setFont("helvetica", "normal");
+          doc.setFontSize(9);
+          doc.setTextColor(slateColor[0], slateColor[1], slateColor[2]);
+          doc.text("Free Online Calculator Tools", margin, y + 13);
+
+          const now = new Date();
+          const dateStr = now.toISOString().split("T")[0];
+          doc.text(`Generated: ${dateStr}`, pageWidth - margin, y + 5, {
+            align: "right",
+          });
+
+          y += 28;
+          doc.setDrawColor(226, 232, 240);
+          doc.line(margin, y, pageWidth - margin, y);
+          y += 24;
+
+          // Mode Title
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(15);
+          doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+          doc.text(
+            `Concrete Material Breakup Calculation (${lastResultData.modeTitle})`,
+            margin,
+            y,
+          );
+          y += 18;
+
+          // Summary Box
+          doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
+          doc.roundedRect(margin, y, pageWidth - margin * 2, 54, 8, 8, "F");
+          doc.setDrawColor(203, 213, 225);
+          doc.roundedRect(margin, y, pageWidth - margin * 2, 54, 8, 8, "D");
+
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(10);
+          doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+          doc.text(
+            lblHeroTag.textContent || "ESTIMATED MATERIAL REQUIREMENT",
+            margin + 14,
+            y + 18,
+          );
+
+          doc.setFontSize(14);
+          doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+          doc.text(resHeroMain.textContent || "", margin + 14, y + 36);
+
+          y += 72;
+
+          // Parameters Table
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(11);
+          doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+          doc.text("Calculation Breakdown & Parameters", margin, y);
+          y += 14;
+
+          const paramRows: Array<[string, string]> = [
+            ["Calculation Mode", lastResultData.modeTitle],
+            [
+              "Total Wet Concrete Volume",
+              `${lastResultData.totalWetVolumeCum} m³ (${lastResultData.totalWetVolumeCft} CFT / ${lastResultData.totalWetVolumeCyd} yd³)`,
+            ],
+            [
+              "Dry Volume Multiplier Factor",
+              `${lastResultData.dryVolumeFactor}`,
+            ],
+            [
+              "Base Dry Volume",
+              `${lastResultData.baseDryVolumeCum} m³ (${lastResultData.baseDryVolumeCft} CFT)`,
+            ],
+            ["Wastage Allowance", `${lastResultData.wastagePercent}%`],
+            [
+              "Final Dry Mix Volume",
+              `${lastResultData.finalDryVolumeCum} m³ (${lastResultData.finalDryVolumeCft} CFT)`,
+            ],
+            [
+              "Concrete Mix Ratio",
+              `${lastResultData.mixRatioLabel} (Total Parts: ${lastResultData.totalRatioParts})`,
+            ],
+            [
+              "Cement Required",
+              `${lastResultData.cementBags} Bags (${lastResultData.cementBagSizeKg}kg) / ${Math.round(lastResultData.cementWeightKg).toLocaleString()} kg (${lastResultData.cementWeightTons} MT)`,
+            ],
+            [
+              "Sand Required (Fine Aggregate)",
+              `${lastResultData.sandVolumeCft} CFT / ${lastResultData.sandVolumeCum} m³ (${lastResultData.sandWeightTons} MT)`,
+            ],
+            [
+              "Coarse Aggregate Required",
+              `${lastResultData.aggVolumeCft} CFT / ${lastResultData.aggVolumeCum} m³ (${lastResultData.aggWeightTons} MT)`,
+            ],
+          ];
+
+          if (lastResultData.waterEnabled && lastResultData.waterLiters > 0) {
+            paramRows.push([
+              "Estimated Water Quantity",
+              `${lastResultData.waterLiters.toLocaleString()} Liters (${lastResultData.waterGallons.toLocaleString()} Gallons, W/C: ${lastResultData.waterCementRatio})`,
+            ]);
+          }
+
+          paramRows.forEach(([label, val], idx) => {
+            const rowY = y + idx * 20;
+            doc.setFillColor(
+              idx % 2 === 0 ? 255 : 248,
+              idx % 2 === 0 ? 255 : 250,
+              idx % 2 === 0 ? 255 : 252,
+            );
+            doc.rect(margin, rowY - 11, pageWidth - margin * 2, 20, "F");
+            doc.setDrawColor(241, 245, 249);
+            doc.line(margin, rowY + 9, pageWidth - margin * 2, rowY + 9);
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(8.5);
+            doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+            doc.text(label, margin + 8, rowY + 2);
+
+            doc.setFont("helvetica", "normal");
+            doc.text(val, pageWidth - margin - 8, rowY + 2, { align: "right" });
+          });
+
+          y += paramRows.length * 20 + 20;
+
+          // Material Table Section
+          doc.setFont("helvetica", "bold");
+          doc.setFontSize(11);
+          doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+          doc.text("Itemized Material Procurement Summary", margin, y);
+          y += 14;
+
+          lastResultData.tableBreakdown.forEach((item: any, idx: number) => {
+            const rowY = y + idx * 20;
+            doc.setFillColor(
+              idx % 2 === 0 ? 255 : 248,
+              idx % 2 === 0 ? 255 : 250,
+              idx % 2 === 0 ? 255 : 252,
+            );
+            doc.rect(margin, rowY - 11, pageWidth - margin * 2, 20, "F");
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(8.5);
+            doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+            doc.text(item.material, margin + 8, rowY + 2);
+
+            doc.setFont("helvetica", "normal");
+            doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+            doc.text(item.practicalDisplay, pageWidth - margin - 8, rowY + 2, {
+              align: "right",
+            });
+          });
+
+          // Footer on every page
+          const totalPages = (doc.internal as any).getNumberOfPages();
+          for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(8);
+            doc.setTextColor(slateColor[0], slateColor[1], slateColor[2]);
+            doc.text(
+              "Generated using AIFreecalculator.com",
+              margin,
+              pageHeight - 20,
+            );
+            doc.text(
+              `Page ${i} of ${totalPages}`,
+              pageWidth - margin,
+              pageHeight - 20,
+              { align: "right" },
+            );
+          }
+
+          const fileName = `concrete-material-breakup-${dateStr}.pdf`;
+          doc.save(fileName);
+        } catch (e) {
+          console.error("PDF generation error:", e);
+        } finally {
+          if (txtBtn) txtBtn.textContent = "Download PDF";
+        }
+      });
+    }
+  </script>
+</CalculatorLayout>

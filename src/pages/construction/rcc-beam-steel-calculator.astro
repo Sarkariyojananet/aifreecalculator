@@ -1,0 +1,178 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="RCC Beam Steel Calculator - BBS Stirrups & Main Bars"
+  description="Calculate RCC beam top & bottom main reinforcement rebar weight, stirrups ring cutting length, concrete volume, and shuttering formwork."
+  category="Construction"
+  calculatorName="RCC Beam Steel Calculator"
+  slug="rcc-beam-steel-calculator"
+  keywords={['rcc beam steel', 'beam bbs', 'stirrups cutting length', 'beam rebar weight', 'beam concrete volume']}
+>
+  <div class="space-y-6">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div>
+        <label for="bm-len" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Beam Length (m)</label>
+        <input type="number" id="bm-len" value="5.0" step="0.1" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
+      </div>
+      <div>
+        <label for="bm-width" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Beam Width B (mm)</label>
+        <input type="number" id="bm-width" value="230" step="10" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
+      </div>
+      <div>
+        <label for="bm-depth" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Beam Depth D (mm)</label>
+        <input type="number" id="bm-depth" value="450" step="10" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
+      </div>
+
+      <div>
+        <label for="bm-top-bars" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Top Bars (Count × Dia)</label>
+        <div class="mt-1.5 flex gap-2">
+          <input type="number" id="bm-top-count" value="2" min="2" class="w-1/2 rounded-xl border border-slate-300 p-2.5 text-sm font-bold text-center dark:border-slate-700 dark:bg-slate-950" />
+          <select id="bm-top-dia" class="w-1/2 rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950">
+            <option value="10">10 mm</option>
+            <option value="12" selected>12 mm</option>
+            <option value="16">16 mm</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label for="bm-bot-bars" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Bottom Bars (Count × Dia)</label>
+        <div class="mt-1.5 flex gap-2">
+          <input type="number" id="bm-bot-count" value="3" min="2" class="w-1/2 rounded-xl border border-slate-300 p-2.5 text-sm font-bold text-center dark:border-slate-700 dark:bg-slate-950" />
+          <select id="bm-bot-dia" class="w-1/2 rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950">
+            <option value="12">12 mm</option>
+            <option value="16" selected>16 mm</option>
+            <option value="20">20 mm</option>
+          </select>
+        </div>
+      </div>
+
+      <div>
+        <label for="bm-stirrup-spacing" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Stirrups 8mm Spacing (mm)</label>
+        <input type="number" id="bm-stirrup-spacing" value="150" step="10" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
+      </div>
+    </div>
+
+    <!-- Output Box -->
+    <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-950">
+      <div class="border-b border-slate-200/80 pb-4 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Beam Steel Weight</span>
+          <div id="res-beam-total-steel" class="mt-1 text-3xl font-black text-blue-600 dark:text-blue-400">-- kg</div>
+        </div>
+        <div class="text-right">
+          <span class="text-xs text-slate-500">Concrete Volume:</span>
+          <span id="res-beam-concrete" class="font-bold text-slate-900 dark:text-white ml-1">-- m³</span>
+        </div>
+      </div>
+
+      <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 text-xs">
+        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="text-slate-500 dark:text-slate-400">Top Rebar Weight</div>
+          <div id="res-beam-top-wt" class="mt-1 text-base font-bold text-slate-900 dark:text-white">--</div>
+        </div>
+        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="text-slate-500 dark:text-slate-400">Bottom Rebar Weight</div>
+          <div id="res-beam-bot-wt" class="mt-1 text-base font-bold text-slate-900 dark:text-white">--</div>
+        </div>
+        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="text-slate-500 dark:text-slate-400">Stirrup Ring Cut Length</div>
+          <div id="res-beam-stirrup-len" class="mt-1 text-base font-bold text-emerald-600 dark:text-emerald-400">--</div>
+        </div>
+        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="text-slate-500 dark:text-slate-400">Total Stirrups Count</div>
+          <div id="res-beam-stirrup-count" class="mt-1 text-base font-bold text-slate-900 dark:text-white">-- Rings</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Fragment slot="content">
+    <h2>RCC Beam Bar Bending Schedule (BBS)</h2>
+    <p>
+      Beams experience shear stress near supports and bending moments at mid-span. Stirrups (shear reinforcement) resist diagonal shear tension, while bottom bars resist positive sagging moments.
+    </p>
+  </Fragment>
+
+  <Fragment slot="faq">
+    <div class="space-y-4 text-xs sm:text-sm">
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open>
+        <summary class="font-bold text-slate-900 dark:text-white cursor-pointer flex justify-between items-center">
+          How do you calculate the cutting length of a rectangular stirrup ring?
+          <span class="group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Cutting Length = 2 × (Core Width + Core Depth) + 2 × (10 × Bar Dia Hook) - 3 × (2 × Bar Dia 90° Bend Deduction).
+        </p>
+      </details>
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<script is:inline>
+  const bmL = document.getElementById('bm-len');
+  const bmW = document.getElementById('bm-width');
+  const bmD = document.getElementById('bm-depth');
+  const topC = document.getElementById('bm-top-count');
+  const topD = document.getElementById('bm-top-dia');
+  const botC = document.getElementById('bm-bot-count');
+  const botD = document.getElementById('bm-bot-dia');
+  const stirrupS = document.getElementById('bm-stirrup-spacing');
+
+  const resTotal = document.getElementById('res-beam-total-steel');
+  const resConc = document.getElementById('res-beam-concrete');
+  const resTop = document.getElementById('res-beam-top-wt');
+  const resBot = document.getElementById('res-beam-bot-wt');
+  const resStirrupLen = document.getElementById('res-beam-stirrup-len');
+  const resStirrupCount = document.getElementById('res-beam-stirrup-count');
+
+  function calculate() {
+    const L = Math.max(0, parseFloat(bmL.value) || 0);
+    const Bmm = Math.max(0.05, parseFloat(bmW.value) || 230);
+    const Dmm = Math.max(0.05, parseFloat(bmD.value) || 450);
+    const nTop = Math.max(2, parseInt(topC.value) || 2);
+    const dTop = parseFloat(topD.value) || 12;
+    const nBot = Math.max(2, parseInt(botC.value) || 3);
+    const dBot = parseFloat(botD.value) || 16;
+    const sStirrup = Math.max(10, parseFloat(stirrupS.value) || 150);
+    const dStirrup = 8;
+    const cover = 25; // 25mm clear cover
+
+    const concVol = L * (Bmm / 1000) * (Dmm / 1000);
+
+    const lenTop = L + 2 * (12 * dTop / 1000);
+    const lenBot = L + 2 * (12 * dBot / 1000);
+
+    const wtTop = nTop * lenTop * ((dTop * dTop) / 162);
+    const wtBot = nBot * lenBot * ((dBot * dBot) / 162);
+
+    const coreW = Math.max(0, Bmm - 2 * cover);
+    const coreD = Math.max(0, Dmm - 2 * cover);
+    const stirrupLen = Math.max(0, (2 * (coreW + coreD) + 2 * (10 * dStirrup) - 6 * dStirrup) / 1000);
+    const nStirrup = sStirrup > 0 && L > 0 ? Math.floor((L * 1000) / sStirrup) + 1 : 0;
+    const wtStirrup = nStirrup * stirrupLen * ((dStirrup * dStirrup) / 162);
+
+    const totalSteel = wtTop + wtBot + wtStirrup;
+
+    resTotal.textContent = `${totalSteel.toFixed(1)} kg`;
+    resConc.textContent = `${concVol.toFixed(2)} m³`;
+    resTop.textContent = `${wtTop.toFixed(1)} kg (${nTop} Nos)`;
+    resBot.textContent = `${wtBot.toFixed(1)} kg (${nBot} Nos)`;
+    resStirrupLen.textContent = `${stirrupLen.toFixed(2)} m`;
+    resStirrupCount.textContent = `${nStirrup} Rings (${wtStirrup.toFixed(1)} kg)`;
+  }
+
+  [bmL, bmW, bmD, topC, topD, botC, botD, stirrupS].forEach((el) => {
+    el.addEventListener('input', calculate);
+    el.addEventListener('change', calculate);
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        calculate();
+      }
+    });
+  });
+  calculate();
+</script>

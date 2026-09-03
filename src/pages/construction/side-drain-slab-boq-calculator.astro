@@ -1,0 +1,154 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="Side Drain & Slab BOQ Calculator - Bill of Quantities"
+  description="Calculate Bill of Quantities (BOQ) for open and covered drains: excavation, bed PCC, RCC walls, cover slab, steel rebar, and formwork shuttering."
+  category="Construction"
+  calculatorName="Side Drain & Slab BOQ Calculator"
+  slug="side-drain-slab-boq-calculator"
+  keywords={['side drain boq', 'drain calculation', 'drain concrete volume', 'drain bbs steel', 'civil boq estimate']}
+>
+  <div class="space-y-6">
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div>
+        <label for="d-len" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Drain Length (m)</label>
+        <input type="number" id="d-len" value="50" step="any" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
+      </div>
+      <div>
+        <label for="d-width" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Internal Width (m)</label>
+        <input type="number" id="d-width" value="0.6" step="any" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
+      </div>
+      <div>
+        <label for="d-depth" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Internal Depth (m)</label>
+        <input type="number" id="d-depth" value="0.75" step="any" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
+      </div>
+
+      <div>
+        <label for="d-wall-th" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Wall Thickness (m)</label>
+        <input type="number" id="d-wall-th" value="0.15" step="any" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
+      </div>
+      <div>
+        <label for="d-bed-pcc" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Bed PCC Thickness (m)</label>
+        <input type="number" id="d-bed-pcc" value="0.10" step="any" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
+      </div>
+      <div>
+        <label for="d-slab-th" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Cover Slab Thickness (m)</label>
+        <input type="number" id="d-slab-th" value="0.10" step="any" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
+      </div>
+    </div>
+
+    <!-- BOQ Output Summary -->
+    <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-950">
+      <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+        Drain Bill of Quantities (BOQ) Breakup
+      </h3>
+
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 text-xs">
+        <div class="rounded-xl border border-slate-200/60 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="text-slate-500 dark:text-slate-400">Earthwork Excavation</div>
+          <div id="res-excavation" class="mt-1 text-base font-bold text-slate-900 dark:text-white">--</div>
+        </div>
+        <div class="rounded-xl border border-slate-200/60 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="text-slate-500 dark:text-slate-400">Bed PCC (1:4:8) Volume</div>
+          <div id="res-bed-pcc" class="mt-1 text-base font-bold text-slate-900 dark:text-white">--</div>
+        </div>
+        <div class="rounded-xl border border-slate-200/60 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="text-slate-500 dark:text-slate-400">RCC Walls & Slab Concrete</div>
+          <div id="res-rcc-vol" class="mt-1 text-base font-bold text-blue-600 dark:text-blue-400">--</div>
+        </div>
+        <div class="rounded-xl border border-slate-200/60 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="text-slate-500 dark:text-slate-400">Steel Reinforcement Rebar</div>
+          <div id="res-steel-wt" class="mt-1 text-base font-bold text-emerald-600 dark:text-emerald-400">--</div>
+        </div>
+        <div class="rounded-xl border border-slate-200/60 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="text-slate-500 dark:text-slate-400">Formwork / Shuttering Area</div>
+          <div id="res-shuttering" class="mt-1 text-base font-bold text-slate-900 dark:text-white">--</div>
+        </div>
+        <div class="rounded-xl border border-slate-200/60 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
+          <div class="text-slate-500 dark:text-slate-400">Internal Plaster Area</div>
+          <div id="res-plaster" class="mt-1 text-base font-bold text-slate-900 dark:text-white">--</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <Fragment slot="content">
+    <h2>Side Drain BOQ Engineering Standards</h2>
+    <p>
+      Side drains for roadways and building boundaries require systematic estimation of cross-sectional components: bed excavation, leveling PCC, reinforced concrete retaining walls, and precast/cast-in-situ cover slabs.
+    </p>
+  </Fragment>
+
+  <Fragment slot="faq">
+    <div class="space-y-4 text-xs sm:text-sm">
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open>
+        <summary class="font-bold text-slate-900 dark:text-white cursor-pointer flex justify-between items-center">
+          What concrete grade is recommended for storm water drains?
+          <span class="group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Bed leveling PCC commonly uses M7.5 (1:4:8) or M10 (1:3:6), while drain RCC walls and cover slabs use M20 or M25 for water impermeability and structural durability.
+        </p>
+      </details>
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<script is:inline>
+  const dLen = document.getElementById('d-len');
+  const dWidth = document.getElementById('d-width');
+  const dDepth = document.getElementById('d-depth');
+  const dWallTh = document.getElementById('d-wall-th');
+  const dBedPcc = document.getElementById('d-bed-pcc');
+  const dSlabTh = document.getElementById('d-slab-th');
+
+  const resExcavation = document.getElementById('res-excavation');
+  const resBedPcc = document.getElementById('res-bed-pcc');
+  const resRccVol = document.getElementById('res-rcc-vol');
+  const resSteelWt = document.getElementById('res-steel-wt');
+  const resShuttering = document.getElementById('res-shuttering');
+  const resPlaster = document.getElementById('res-plaster');
+
+  function calculate() {
+    const L = Math.max(0, parseFloat(dLen.value) || 0);
+    const W = Math.max(0, parseFloat(dWidth.value) || 0);
+    const D = Math.max(0, parseFloat(dDepth.value) || 0);
+    const Tw = Math.max(0, parseFloat(dWallTh.value) || 0);
+    const Tb = Math.max(0, parseFloat(dBedPcc.value) || 0);
+    const Ts = Math.max(0, parseFloat(dSlabTh.value) || 0);
+
+    const totalWidth = W + 2 * Tw;
+    const totalDepth = D + Tb + Ts;
+
+    const excavation = L * totalWidth * totalDepth;
+    const bedPcc = L * totalWidth * Tb;
+    const wallsRcc = 2 * L * Tw * D;
+    const coverSlabRcc = L * totalWidth * Ts;
+    const totalRcc = wallsRcc + coverSlabRcc;
+
+    const steelKg = totalRcc * 85; // ~85 kg/cum
+    const shuttering = 2 * (2 * D) * L + L * totalWidth;
+    const plaster = L * (W + 2 * D);
+
+    resExcavation.textContent = `${excavation.toFixed(2)} m³ (CUM)`;
+    resBedPcc.textContent = `${bedPcc.toFixed(2)} m³ (CUM)`;
+    resRccVol.textContent = `${totalRcc.toFixed(2)} m³ (CUM)`;
+    resSteelWt.textContent = `${steelKg.toFixed(1)} kg (${(steelKg / 100).toFixed(2)} q)`;
+    resShuttering.textContent = `${shuttering.toFixed(2)} m² (${(shuttering * 10.7639).toFixed(1)} sqft)`;
+    resPlaster.textContent = `${plaster.toFixed(2)} m²`;
+  }
+
+  [dLen, dWidth, dDepth, dWallTh, dBedPcc, dSlabTh].forEach((el) => {
+    el.addEventListener('input', calculate);
+    el.addEventListener('change', calculate);
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        calculate();
+      }
+    });
+  });
+  calculate();
+</script>

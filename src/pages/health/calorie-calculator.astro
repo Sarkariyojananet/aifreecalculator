@@ -1,0 +1,1322 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+
+const faqs = [
+  {
+    q: 'What is a calorie calculator?',
+    a: 'A calorie calculator estimates the number of calories you may need each day based on information such as age, biological sex, height, weight, activity level, and your chosen weight management goal. The result is an estimate, and individual metabolic rates can vary.',
+  },
+  {
+    q: 'What are maintenance calories (TDEE)?',
+    a: 'Maintenance calories—also called Total Daily Energy Expenditure (TDEE)—represent the estimated total number of calories your body burns in a 24-hour period. Consuming this amount helps maintain your current body weight under consistent physical activity conditions.',
+  },
+  {
+    q: 'How many calories should I eat to lose weight?',
+    a: 'A weight-loss calorie target is typically calculated by applying a moderate calorie deficit (commonly 250 to 500 kcal/day below maintenance). A 500 kcal daily deficit translates to an estimated ~0.5 kg (1.1 lbs) of gradual fat loss per week.',
+  },
+  {
+    q: 'What is the difference between the Mifflin-St Jeor and Harris-Benedict formulas?',
+    a: 'The Mifflin-St Jeor equation (1990) is widely considered the clinical standard for modern populations and tends to provide higher statistical precision. The Revised Harris-Benedict equation (1984 Roza & Shizgal) is an updated version of the historic 1919 metabolic formula.',
+  },
+  {
+    q: 'How does daily physical activity affect calorie needs?',
+    a: 'Your basal metabolic rate (BMR) represents only 60% to 70% of daily calorie expenditure. Physical movement, spontaneous activity (NEAT), and structured exercise multiply your baseline BMR by 1.2 (sedentary) up to 1.9 (extra active) to determine maintenance calories.',
+  },
+  {
+    q: 'What is a safe and sustainable rate for weight change?',
+    a: 'Health organizations generally recommend a gradual pace of 0.25 kg to 0.75 kg (0.5 to 1.5 lbs) per week for weight loss, and 0.25 kg to 0.5 kg per week for muscle gain. Caloric intake should rarely drop below 1,200 kcal/day for women or 1,500 kcal/day for men without direct medical supervision.',
+  },
+  {
+    q: 'Are calorie calculator results 100% accurate?',
+    a: 'Calorie calculators provide statistical estimates based on validated population formulas. Real-world energy expenditure can vary based on genetics, body composition, thyroid hormones, adaptive thermogenesis, and sleep.',
+  },
+];
+---
+
+<CalculatorLayout
+  title="Calorie Calculator – Calculate Daily Calories, Maintenance TDEE & Weight Goals"
+  description="Estimate your daily calorie needs, maintenance calories (TDEE), and target calories for weight loss or muscle gain based on age, sex, height, weight, and activity level."
+  category="Health"
+  calculatorName="Calorie Calculator"
+  slug="calorie-calculator"
+  keywords={[
+    'calorie calculator',
+    'maintenance calorie calculator',
+    'calorie calculator to lose weight',
+    'daily calorie calculator',
+    'calorie needs calculator',
+    'maintenance calories',
+    'tdee calculator',
+    'bmr calculator',
+    'calorie deficit calculator',
+    'daily calorie intake',
+    'weight loss calorie calculator',
+  ]}
+>
+  <div class="space-y-6">
+    <!-- Calculator Mode Selector Tabs -->
+    <div class="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-1.5 dark:border-slate-800 dark:bg-slate-900/50">
+      <div class="grid grid-cols-3 gap-1.5" id="mode-tabs" role="tablist">
+        <button
+          type="button"
+          data-mode="daily_needs"
+          class="mode-btn active flex items-center justify-center gap-1.5 rounded-xl border border-blue-600 bg-blue-50 px-3 py-2.5 text-xs sm:text-sm font-bold text-blue-700 shadow-sm transition dark:border-blue-500 dark:bg-blue-950/60 dark:text-blue-300 cursor-pointer text-center"
+          role="tab"
+          aria-selected="true"
+        >
+          <span>🔥</span> Daily Calorie Needs
+        </button>
+        <button
+          type="button"
+          data-mode="maintenance"
+          class="mode-btn flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs sm:text-sm font-bold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer text-center"
+          role="tab"
+          aria-selected="false"
+        >
+          <span>⚖️</span> Maintenance TDEE
+        </button>
+        <button
+          type="button"
+          data-mode="weight_goal"
+          class="mode-btn flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs sm:text-sm font-bold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer text-center"
+          role="tab"
+          aria-selected="false"
+        >
+          <span>🎯</span> Weight Loss / Gain
+        </button>
+      </div>
+    </div>
+
+    <!-- Error Banner -->
+    <div
+      id="error-box"
+      class="hidden rounded-xl border border-red-200 bg-red-50/90 p-4 text-xs sm:text-sm font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/50 dark:text-red-300"
+      role="alert"
+      aria-live="polite"
+    >
+    </div>
+
+    <!-- Main Calorie Inputs Container -->
+    <div id="section-profile-inputs" class="rounded-2xl border border-slate-200/80 bg-white p-5 shadow-sm sm:p-6 dark:border-slate-800 dark:bg-slate-900">
+      <div class="space-y-5">
+        
+        <!-- Row 1: Demographics (Sex, Age, Units) -->
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 pb-4 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <label for="inp-gender" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Biological Sex <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="inp-gender"
+              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+            >
+              <option value="male" selected>Male</option>
+              <option value="female">Female</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="inp-age" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Age (Years) <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              id="inp-age"
+              value="30"
+              min="12"
+              max="120"
+              step="1"
+              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="e.g., 30"
+            />
+          </div>
+
+          <div>
+            <label for="inp-height-unit" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Height Unit
+            </label>
+            <select
+              id="inp-height-unit"
+              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+            >
+              <option value="cm" selected>Centimeters (cm)</option>
+              <option value="ft_in">Feet & Inches (ft/in)</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="inp-weight-unit" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Weight Unit
+            </label>
+            <select
+              id="inp-weight-unit"
+              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+            >
+              <option value="kg" selected>Kilograms (kg)</option>
+              <option value="lbs">Pounds (lbs)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 2: Height & Weight Values -->
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <!-- Height Metric -->
+          <div id="wrapper-height-cm">
+            <label for="inp-height-cm" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Height (cm) <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              id="inp-height-cm"
+              value="170"
+              min="60"
+              max="260"
+              step="any"
+              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="e.g., 170"
+            />
+          </div>
+
+          <!-- Height Imperial -->
+          <div id="wrapper-height-ftin" class="hidden">
+            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Height (Feet & Inches) <span class="text-red-500">*</span>
+            </label>
+            <div class="mt-1.5 grid grid-cols-2 gap-2">
+              <div class="relative">
+                <input
+                  type="number"
+                  id="inp-height-ft"
+                  value="5"
+                  min="2"
+                  max="8"
+                  step="1"
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-8 text-xs sm:text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  placeholder="5"
+                />
+                <span class="pointer-events-none absolute right-2.5 top-2.5 text-xs font-bold text-slate-400">ft</span>
+              </div>
+              <div class="relative">
+                <input
+                  type="number"
+                  id="inp-height-in"
+                  value="7"
+                  min="0"
+                  max="11.9"
+                  step="0.1"
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-8 text-xs sm:text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  placeholder="7"
+                />
+                <span class="pointer-events-none absolute right-2.5 top-2.5 text-xs font-bold text-slate-400">in</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Weight -->
+          <div>
+            <label for="inp-weight" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Body Weight (<span id="lbl-weight-unit">kg</span>) <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              id="inp-weight"
+              value="70"
+              min="20"
+              max="400"
+              step="any"
+              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="e.g., 70"
+            />
+          </div>
+        </div>
+
+        <!-- Row 3: Activity Level & Formula -->
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label for="inp-activity" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Daily Physical Activity Level <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="inp-activity"
+              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+            >
+              <option value="sedentary">Sedentary (Little or no planned exercise, desk job)</option>
+              <option value="light">Lightly Active (Light exercise/sports 1–3 days/week)</option>
+              <option value="moderate" selected>Moderately Active (Moderate exercise/sports 3–5 days/week)</option>
+              <option value="active">Very Active (Hard exercise/sports 6–7 days/week)</option>
+              <option value="very_active">Extra Active (Hard daily training or physical manual labor)</option>
+            </select>
+            <p id="hint-activity-desc" class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+              Moderate exercise 3–5 days/week; active daily routine.
+            </p>
+          </div>
+
+          <div>
+            <label for="inp-formula" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+              BMR Calculation Formula
+            </label>
+            <select
+              id="inp-formula"
+              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+            >
+              <option value="mifflin" selected>Mifflin-St Jeor (Standard / Recommended)</option>
+              <option value="harris">Revised Harris-Benedict (1984 Roza & Shizgal)</option>
+            </select>
+            <p class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+              Mifflin-St Jeor provides high statistical precision for modern adults.
+            </p>
+          </div>
+        </div>
+
+        <!-- Row 4: Primary Goal (Visible for Daily Needs & Weight Goal modes) -->
+        <div id="wrapper-goal-section" class="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-3">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label for="inp-goal" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Weight Management Goal
+              </label>
+              <select
+                id="inp-goal"
+                class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+              >
+                <option value="maintain" selected>Maintain Weight (0 kcal adjustment)</option>
+                <option value="lose_gradual">Lose Weight – Gradual (-250 kcal/day, ~0.25 kg/wk)</option>
+                <option value="lose_moderate">Lose Weight – Moderate (-500 kcal/day, ~0.50 kg/wk)</option>
+                <option value="lose_faster">Lose Weight – Faster (-750 kcal/day, ~0.75 kg/wk)</option>
+                <option value="gain_gradual">Gain Weight – Gradual (+250 kcal/day, ~0.25 kg/wk)</option>
+                <option value="gain_moderate">Gain Weight – Moderate (+500 kcal/day, ~0.50 kg/wk)</option>
+              </select>
+            </div>
+            <div class="flex items-center">
+              <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 w-full">
+                <strong>Pace Guidance:</strong> Gradual adjustments (250–500 kcal/day) are easier to maintain over time without excessive metabolic fatigue.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="mt-6 flex flex-col sm:flex-row items-center gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+          <button
+            type="button"
+            id="btn-calculate-calories"
+            class="w-full sm:flex-1 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3.5 text-center text-sm font-black text-white shadow-lg shadow-blue-500/25 transition hover:from-blue-700 hover:to-indigo-700 active:scale-[0.98] cursor-pointer"
+          >
+            Calculate Calories →
+          </button>
+          <button
+            type="button"
+            id="btn-clear-all"
+            class="w-full sm:w-auto rounded-xl border border-slate-300 bg-white px-5 py-3.5 text-center text-sm font-bold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+          >
+            Clear All
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- RESULTS SECTION -->
+    <!-- ========================================================= -->
+    <div id="results-section" class="hidden space-y-6">
+      
+      <!-- Result Card Hero -->
+      <div class="rounded-2xl border border-blue-500/30 bg-gradient-to-br from-blue-50/90 via-indigo-50/50 to-slate-50/90 p-5 sm:p-6 dark:border-blue-900/60 dark:from-blue-950/40 dark:via-indigo-950/20 dark:to-slate-900/40 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-blue-200/60 pb-3 dark:border-blue-900/50">
+          <span class="text-xs font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">
+            YOUR ESTIMATED DAILY CALORIES
+          </span>
+          <span id="badge-goal-label" class="self-start sm:self-auto rounded-md bg-blue-100 px-2 py-0.5 text-[11px] font-bold text-blue-800 dark:bg-blue-900/80 dark:text-blue-200">
+            Maintain Weight
+          </span>
+        </div>
+
+        <div class="mt-4 flex flex-col sm:flex-row sm:items-baseline sm:justify-between gap-2">
+          <div class="flex items-baseline gap-2">
+            <span id="res-hero-target-cal" class="text-4xl sm:text-5xl font-black tracking-tight text-blue-600 dark:text-blue-400">
+              2,527
+            </span>
+            <span class="text-sm sm:text-base font-bold text-slate-700 dark:text-slate-300">kcal / day</span>
+          </div>
+          <div class="text-xs sm:text-sm font-semibold text-slate-500 dark:text-slate-400">
+            Weekly Equivalent: <span id="res-hero-weekly-cal" class="font-bold text-slate-900 dark:text-white">17,689</span> kcal/week
+          </div>
+        </div>
+
+        <div id="banner-calorie-warning" class="hidden mt-3 rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs font-semibold text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-300">
+        </div>
+      </div>
+
+      <!-- Result Cards Grid -->
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 text-xs">
+        <div class="rounded-xl border border-slate-200/80 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/70 shadow-xs">
+          <div class="text-slate-500 dark:text-slate-400 font-semibold">Basal Metabolic Rate (BMR)</div>
+          <div id="res-card-bmr" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">1,630 kcal</div>
+          <div class="mt-0.5 text-[10px] text-slate-400">Calories burned at complete rest</div>
+        </div>
+
+        <div class="rounded-xl border border-slate-200/80 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/70 shadow-xs">
+          <div class="text-slate-500 dark:text-slate-400 font-semibold">Maintenance (TDEE)</div>
+          <div id="res-card-tdee" class="mt-1 text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">2,527 kcal</div>
+          <div class="mt-0.5 text-[10px] text-slate-400">Calories to stay same weight</div>
+        </div>
+
+        <div class="rounded-xl border border-slate-200/80 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/70 shadow-xs">
+          <div class="text-slate-500 dark:text-slate-400 font-semibold">Goal Adjustment</div>
+          <div id="res-card-adj" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">0 kcal/day</div>
+          <div id="res-card-pace-hint" class="mt-0.5 text-[10px] text-slate-400">Maintain balance</div>
+        </div>
+
+        <div class="rounded-xl border border-slate-200/80 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/70 shadow-xs">
+          <div class="text-slate-500 dark:text-slate-400 font-semibold">Daily Calorie Target</div>
+          <div id="res-card-target" class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">2,527 kcal</div>
+          <div class="mt-0.5 text-[10px] text-slate-400">Recommended daily intake</div>
+        </div>
+
+        <div class="col-span-2 sm:col-span-1 rounded-xl border border-slate-200/80 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/70 shadow-xs">
+          <div class="text-slate-500 dark:text-slate-400 font-semibold">Formula Used</div>
+          <div id="res-card-formula" class="mt-1 text-sm sm:text-base font-bold text-indigo-600 dark:text-indigo-400">Mifflin-St Jeor</div>
+          <div class="mt-0.5 text-[10px] text-slate-400">Clinical standard model</div>
+        </div>
+      </div>
+
+      <!-- Daily Calorie Breakdown Table -->
+      <div class="rounded-2xl border border-slate-200/80 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-2 dark:border-slate-800">
+          <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+            <span>📊</span> Daily Calorie Target by Weight Goal
+          </h3>
+          <span class="text-[11px] text-slate-500">Based on your calculated TDEE</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950 font-bold text-slate-700 dark:text-slate-300">
+              <tr>
+                <th class="py-2.5 px-3">Goal Objective</th>
+                <th class="py-2.5 px-3">Weekly Pace Estimate</th>
+                <th class="py-2.5 px-3">Daily Calories</th>
+                <th class="py-2.5 px-3 text-right">Weekly Total</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-goal-comparison" class="divide-y divide-slate-100 dark:divide-slate-800/80">
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Macronutrient Breakdown Module -->
+      <div class="rounded-2xl border border-slate-200/80 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
+          <div>
+            <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span>🥑</span> Estimated Macronutrient Breakdown
+            </h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+              Daily protein, carbohydrate, and fat targets based on your calculated calorie target.
+            </p>
+          </div>
+          <div class="flex items-center gap-1.5 text-xs font-semibold">
+            <label for="sel-macro-split" class="text-slate-500">Split Preset:</label>
+            <select
+              id="sel-macro-split"
+              class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+            >
+              <option value="balanced" selected>Balanced (30P / 40C / 30F)</option>
+              <option value="high_protein">Higher Protein (40P / 35C / 25F)</option>
+              <option value="low_carb">Lower Carb (35P / 20C / 45F)</option>
+              <option value="custom">Custom Percentage Split</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Custom Macro Inputs (Hidden unless custom is chosen) -->
+        <div id="wrapper-custom-macro" class="hidden grid grid-cols-3 gap-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-xs">
+          <div>
+            <label for="inp-custom-p" class="font-bold text-blue-600 dark:text-blue-400">Protein (%)</label>
+            <input type="number" id="inp-custom-p" value="30" min="5" max="80" class="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800" />
+          </div>
+          <div>
+            <label for="inp-custom-c" class="font-bold text-amber-600 dark:text-amber-400">Carbs (%)</label>
+            <input type="number" id="inp-custom-c" value="40" min="5" max="80" class="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800" />
+          </div>
+          <div>
+            <label for="inp-custom-f" class="font-bold text-emerald-600 dark:text-emerald-400">Fat (%)</label>
+            <input type="number" id="inp-custom-f" value="30" min="5" max="80" class="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800" />
+          </div>
+        </div>
+
+        <!-- Macro Summary Cards Grid -->
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 text-xs">
+          <div class="rounded-xl border border-blue-100 bg-blue-50/50 p-3.5 dark:border-blue-900/40 dark:bg-blue-950/20">
+            <div class="flex items-center justify-between font-semibold text-blue-800 dark:text-blue-300">
+              <span>🥩 Protein (4 kcal/g)</span>
+              <span id="txt-macro-p-pct">30%</span>
+            </div>
+            <div id="txt-macro-p-grams" class="mt-1.5 text-xl font-black text-blue-700 dark:text-blue-400">190 g / day</div>
+            <div id="txt-macro-p-cal" class="text-[11px] text-slate-500">758 kcal/day</div>
+          </div>
+
+          <div class="rounded-xl border border-amber-100 bg-amber-50/50 p-3.5 dark:border-amber-900/40 dark:bg-amber-950/20">
+            <div class="flex items-center justify-between font-semibold text-amber-800 dark:text-amber-300">
+              <span>🌾 Carbohydrates (4 kcal/g)</span>
+              <span id="txt-macro-c-pct">40%</span>
+            </div>
+            <div id="txt-macro-c-grams" class="mt-1.5 text-xl font-black text-amber-700 dark:text-amber-400">253 g / day</div>
+            <div id="txt-macro-c-cal" class="text-[11px] text-slate-500">1,011 kcal/day</div>
+          </div>
+
+          <div class="rounded-xl border border-emerald-100 bg-emerald-50/50 p-3.5 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+            <div class="flex items-center justify-between font-semibold text-emerald-800 dark:text-emerald-300">
+              <span>🥑 Healthy Fats (9 kcal/g)</span>
+              <span id="txt-macro-f-pct">30%</span>
+            </div>
+            <div id="txt-macro-f-grams" class="mt-1.5 text-xl font-black text-emerald-700 dark:text-emerald-400">84 g / day</div>
+            <div id="txt-macro-f-cal" class="text-[11px] text-slate-500">758 kcal/day</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step-by-Step Calculation Details Box -->
+      <div class="rounded-2xl border border-slate-200/80 bg-slate-50/70 p-5 dark:border-slate-800 dark:bg-slate-900/60 shadow-xs space-y-3">
+        <h3 class="text-xs sm:text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+          <span>📐</span> How Your Calorie Estimate Is Calculated
+        </h3>
+        <div
+          id="txt-calc-details"
+          class="rounded-xl border border-slate-200 bg-white p-4 font-mono text-xs text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 space-y-1.5 leading-relaxed"
+        >
+        </div>
+      </div>
+
+      <!-- Download PDF Action Bar -->
+      <div class="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div class="text-xs text-slate-600 dark:text-slate-300">
+          <strong>Export Calorie & Nutrition Report:</strong> Download a comprehensive, printable PDF calculation document.
+        </div>
+        <button
+          type="button"
+          id="btn-download-pdf"
+          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-xs sm:text-sm font-bold text-white transition hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700 cursor-pointer shadow-xs"
+        >
+          <span>📄</span> <span id="txt-btn-pdf">Download PDF</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Educational SEO Content Slot -->
+  <Fragment slot="content">
+    <div class="space-y-10 text-slate-700 dark:text-slate-300 leading-relaxed text-sm">
+      
+      <!-- 1. How to Use -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          How to Use the Calorie Calculator
+        </h2>
+        <p>
+          Follow these simple steps to estimate your daily energy needs, maintenance calories, and target nutrition intake:
+        </p>
+        <ol class="list-decimal space-y-2 pl-5 text-xs sm:text-sm">
+          <li><strong>Enter your age:</strong> Input your chronological age in years.</li>
+          <li><strong>Select biological sex:</strong> Choose Male or Female to apply the corresponding metabolic baseline formula.</li>
+          <li><strong>Enter your height and weight:</strong> Provide your height in centimeters or feet/inches, and body weight in kilograms or pounds.</li>
+          <li><strong>Choose your activity level:</strong> Select the option that closest describes your weekly exercise routine and daily physical movement.</li>
+          <li><strong>Select the calculation formula:</strong> Choose between the standard <em>Mifflin-St Jeor</em> equation or the <em>Revised Harris-Benedict</em> equation.</li>
+          <li><strong>Choose your goal:</strong> Select whether you want to maintain your current body weight, enter a calorie deficit to lose weight, or enter a surplus to gain mass.</li>
+          <li><strong>Click Calculate Calories:</strong> Review your estimated BMR, maintenance TDEE, goal target, and macro distribution.</li>
+          <li><strong>Review your estimated maintenance calories and daily calorie target:</strong> Compare your daily goals against weekly totals.</li>
+          <li><strong>Adjust your inputs over time:</strong> As your body weight, body composition, or physical routine shifts, recalculate to maintain accurate targets.</li>
+        </ol>
+      </section>
+
+      <!-- 2. What Are Maintenance Calories? -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          What Are Maintenance Calories?
+        </h2>
+        <p>
+          Maintenance calories—frequently referred to as Total Daily Energy Expenditure (TDEE)—represent an estimate of the total number of calories your body burns in a 24-hour period. Consuming approximately this energy amount helps maintain your current body weight under consistent physical conditions.
+        </p>
+        <p>
+          Using a dedicated <strong>maintenance calorie calculator</strong> takes into account the four primary components of human energy expenditure:
+        </p>
+        <ul class="list-disc space-y-1.5 pl-5 text-xs sm:text-sm">
+          <li><strong>Basal Metabolic Rate (BMR):</strong> The energy expended at rest to maintain vital involuntary cellular, respiratory, and organ functions (~60–70% of total burn).</li>
+          <li><strong>Thermic Effect of Food (TEF):</strong> The calories burned digesting, absorbing, and metabolizing nutrients (~8–10% of intake).</li>
+          <li><strong>Non-Exercise Activity Thermogenesis (NEAT):</strong> Energy used for spontaneous everyday movement such as walking, fidgeting, posture maintenance, and household tasks (~15–20%).</li>
+          <li><strong>Exercise Activity Thermogenesis (EAT):</strong> Calories burned during planned structured physical exercise and sports training.</li>
+        </ul>
+      </section>
+
+      <!-- 3. How Many Calories Should I Eat to Lose Weight? -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          How Many Calories Should I Eat to Lose Weight?
+        </h2>
+        <p>
+          When using a <strong>calorie calculator to lose weight</strong>, a target calorie deficit is calculated by subtracting a structured energy amount from your baseline maintenance calories.
+        </p>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs sm:text-sm dark:border-slate-800 dark:bg-slate-900 space-y-2">
+          <p class="font-bold text-slate-900 dark:text-white">Standard Calorie Deficit Guidelines:</p>
+          <ul class="list-disc space-y-1.5 pl-5 text-slate-600 dark:text-slate-300">
+            <li><strong>Gradual Deficit (-250 kcal/day):</strong> Results in an estimated ~0.25 kg (0.55 lb) fat loss per week. Recommended for leaner individuals or those prioritizing muscle retention and high athletic performance.</li>
+            <li><strong>Moderate Deficit (-500 kcal/day):</strong> Results in an estimated ~0.50 kg (1.10 lb) fat loss per week (~3,500 kcal deficit per week). Widely recognized as a balanced, sustainable pace for most adults.</li>
+            <li><strong>Faster Deficit (-750 kcal/day):</strong> Results in an estimated ~0.75 kg (1.65 lb) fat loss per week. Should be monitored carefully to ensure adequate micronutrient and protein intake.</li>
+          </ul>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          <em>Note: Caloric targets should rarely fall below 1,200 kcal/day for women or 1,500 kcal/day for men without direct medical supervision, to prevent nutrient deficiencies and excessive loss of lean muscle tissue.</em>
+        </p>
+      </section>
+
+      <!-- 4. Daily Calorie Calculation Example -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          Daily Calorie Calculation Example
+        </h2>
+        <p>
+          Consider a 30-year-old male with a height of 170 cm, body weight of 70 kg, and a moderately active routine (exercise 3–5 days per week):
+        </p>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs sm:text-sm dark:border-slate-800 dark:bg-slate-900 space-y-1.5 font-mono">
+          <div>• <strong>Mifflin-St Jeor BMR:</strong> (10 × 70) + (6.25 × 170) − (5 × 30) + 5 = 700 + 1062.5 − 150 + 5 = <strong>1,630 kcal/day</strong></div>
+          <div>• <strong>Activity Multiplier (Moderate):</strong> 1.55×</div>
+          <div>• <strong>Estimated Maintenance TDEE:</strong> 1,630 × 1.55 = <strong class="text-blue-600 dark:text-blue-400">2,527 kcal/day</strong> (17,689 kcal/week)</div>
+          <div>• <strong>Maintain Weight Target:</strong> <strong>2,527 kcal/day</strong></div>
+          <div>• <strong>Gradual Weight Loss (-250 kcal):</strong> 2,527 − 250 = <strong>2,277 kcal/day</strong></div>
+          <div>• <strong>Moderate Weight Loss (-500 kcal):</strong> 2,527 − 500 = <strong>2,027 kcal/day</strong></div>
+          <div>• <strong>Gradual Weight Gain (+250 kcal):</strong> 2,527 + 250 = <strong>2,777 kcal/day</strong></div>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400 italic">
+          This example is for illustration only. Individual metabolic efficiency, genetics, and thermogenesis vary.
+        </p>
+      </section>
+
+      <!-- 5. Common Mistakes -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          Common Mistakes When Tracking Calories
+        </h2>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 text-xs sm:text-sm">
+          <div class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800">
+            <h3 class="font-bold text-slate-900 dark:text-white">Choosing the Wrong Activity Level</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">Selecting 'Very Active' for a desk job with 45 minutes of lifting overestimates daily TDEE by 300 to 500 kcal.</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800">
+            <h3 class="font-bold text-slate-900 dark:text-white">Forgetting Drinks and Cooking Oils</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">Cooking oils, salad dressings, coffee creamers, and casual bites can inadvertently add 300+ unaccounted calories daily.</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800">
+            <h3 class="font-bold text-slate-900 dark:text-white">Ignoring Portion Sizes</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">Eyeballing volumetric tablespoons or cups often results in 20% to 40% underreporting compared to weighing in grams.</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3.5 dark:border-slate-800">
+            <h3 class="font-bold text-slate-900 dark:text-white">Expecting Instant Results</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">Calorie counts are mathematical models. Weekly scale weight trends over 3 to 4 weeks are the ultimate arbiter of energy balance.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- 6. Important Information and Disclaimer -->
+      <section class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+          Important Information and Disclaimer
+        </h2>
+        <div class="rounded-xl border border-amber-200 bg-amber-50/60 p-4 text-xs sm:text-sm text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300 space-y-2">
+          <p>• <strong>General Information Only:</strong> All calorie targets, BMR calculations, and nutritional recommendations generated by this calculator are statistical mathematical estimates designed for general health educational purposes.</p>
+          <p>• <strong>Not Medical Advice:</strong> This tool does not provide medical or individualized dietetic advice, diagnosis, or clinical treatment plans.</p>
+          <p>• <strong>Individual Variability:</strong> Actual human energy expenditure is influenced by hormonal balance, thyroid function, lean body mass, adaptive thermogenesis, ambient temperature, and gut microbiota.</p>
+          <p>• <strong>Professional Guidance:</strong> For clinical weight management, eating disorder recovery, or athletic sports nutrition, always consult a licensed medical physician, Registered Dietitian (RD), or certified sports nutritionist.</p>
+        </div>
+      </section>
+
+    </div>
+  </Fragment>
+
+  <!-- FAQ Slot (EXACTLY 7 FAQs) -->
+  <Fragment slot="faq">
+    <div class="space-y-4 text-xs sm:text-sm">
+      {faqs.map((faq, index) => (
+        <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open={index === 0}>
+          <summary class="font-bold text-slate-900 dark:text-white cursor-pointer flex justify-between items-center">
+            <span>{index + 1}. {faq.q}</span>
+            <span class="group-open:rotate-180 transition-transform text-slate-400">▼</span>
+          </summary>
+          <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed">
+            {faq.a}
+          </p>
+        </details>
+      ))}
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<!-- FAQPage & WebApplication JSON-LD Schema -->
+<script
+  type="application/ld+json"
+  is:inline
+  set:html={JSON.stringify({
+    '@context': 'https://schema.org',
+    '@graph': [
+      {
+        '@type': 'WebApplication',
+        name: 'Calorie Calculator',
+        url: 'https://aifreecalculator.com/health/calorie-calculator/',
+        applicationCategory: 'HealthApplication',
+        operatingSystem: 'All',
+        description: 'Estimate daily calorie needs, maintenance calories (TDEE), and calorie targets for weight loss or gain with macronutrient breakdowns.',
+      },
+      {
+        '@type': 'FAQPage',
+        mainEntity: faqs.map((faq) => ({
+          '@type': 'Question',
+          name: faq.q,
+          acceptedAnswer: {
+            '@type': 'Answer',
+            text: faq.a,
+          },
+        })),
+      },
+    ],
+  })}
+/>
+
+<!-- Client-Side Calculation Engine & PDF Export Script -->
+<script>
+  import {
+    calculateDailyCalories,
+    calculateMacros,
+    cmToFtInches,
+    ftInchesToCm,
+    kgToPounds,
+    poundsToKg,
+    ACTIVITY_LEVEL_MAP,
+    GOAL_MAP,
+    MACRO_PRESETS,
+    type Gender,
+    type BmrFormula,
+    type ActivityLevel,
+    type CalorieGoal,
+    type CalorieCalculationResult,
+  } from '../../lib/calculators/calorie';
+
+  let currentMode = 'daily_needs';
+  let lastResultData: {
+    result: CalorieCalculationResult;
+    inputs: {
+      genderDisplay: string;
+      age: number;
+      heightDisplay: string;
+      weightDisplay: string;
+      activityDisplay: string;
+      formulaDisplay: string;
+      goalDisplay: string;
+    };
+  } | null = null;
+
+  // DOM Elements
+  const modeButtons = document.querySelectorAll<HTMLButtonElement>('.mode-btn');
+  const errorBox = document.getElementById('error-box')!;
+  const resultsSection = document.getElementById('results-section')!;
+  const btnCalculate = document.getElementById('btn-calculate-calories') as HTMLButtonElement;
+  const btnClearAll = document.getElementById('btn-clear-all') as HTMLButtonElement;
+  const btnDownloadPdf = document.getElementById('btn-download-pdf') as HTMLButtonElement;
+
+  // Profile Form Elements
+  const inpGender = document.getElementById('inp-gender') as HTMLSelectElement;
+  const inpAge = document.getElementById('inp-age') as HTMLInputElement;
+  const inpHeightUnit = document.getElementById('inp-height-unit') as HTMLSelectElement;
+  const inpWeightUnit = document.getElementById('inp-weight-unit') as HTMLSelectElement;
+  const inpHeightCm = document.getElementById('inp-height-cm') as HTMLInputElement;
+  const inpHeightFt = document.getElementById('inp-height-ft') as HTMLInputElement;
+  const inpHeightIn = document.getElementById('inp-height-in') as HTMLInputElement;
+  const inpWeight = document.getElementById('inp-weight') as HTMLInputElement;
+  const inpActivity = document.getElementById('inp-activity') as HTMLSelectElement;
+  const inpFormula = document.getElementById('inp-formula') as HTMLSelectElement;
+  const inpGoal = document.getElementById('inp-goal') as HTMLSelectElement;
+  const hintActivityDesc = document.getElementById('hint-activity-desc')!;
+  const lblWeightUnit = document.getElementById('lbl-weight-unit')!;
+
+  const wrapperHeightCm = document.getElementById('wrapper-height-cm')!;
+  const wrapperHeightFtin = document.getElementById('wrapper-height-ftin')!;
+  const wrapperGoalSection = document.getElementById('wrapper-goal-section')!;
+
+  // Result Output Elements
+  const badgeGoalLabel = document.getElementById('badge-goal-label')!;
+  const resHeroTargetCal = document.getElementById('res-hero-target-cal')!;
+  const resHeroWeeklyCal = document.getElementById('res-hero-weekly-cal')!;
+  const bannerCalorieWarning = document.getElementById('banner-calorie-warning')!;
+  const resCardBmr = document.getElementById('res-card-bmr')!;
+  const resCardTdee = document.getElementById('res-card-tdee')!;
+  const resCardAdj = document.getElementById('res-card-adj')!;
+  const resCardPaceHint = document.getElementById('res-card-pace-hint')!;
+  const resCardTarget = document.getElementById('res-card-target')!;
+  const resCardFormula = document.getElementById('res-card-formula')!;
+  const tbodyGoalComparison = document.getElementById('tbody-goal-comparison')!;
+  const txtCalcDetails = document.getElementById('txt-calc-details')!;
+
+  // Macronutrient Elements
+  const selMacroSplit = document.getElementById('sel-macro-split') as HTMLSelectElement;
+  const wrapperCustomMacro = document.getElementById('wrapper-custom-macro')!;
+  const inpCustomP = document.getElementById('inp-custom-p') as HTMLInputElement;
+  const inpCustomC = document.getElementById('inp-custom-c') as HTMLInputElement;
+  const inpCustomF = document.getElementById('inp-custom-f') as HTMLInputElement;
+  const txtMacroPPct = document.getElementById('txt-macro-p-pct')!;
+  const txtMacroPGrams = document.getElementById('txt-macro-p-grams')!;
+  const txtMacroPCal = document.getElementById('txt-macro-p-cal')!;
+  const txtMacroCPct = document.getElementById('txt-macro-c-pct')!;
+  const txtMacroCGrams = document.getElementById('txt-macro-c-grams')!;
+  const txtMacroCCal = document.getElementById('txt-macro-c-cal')!;
+  const txtMacroFPct = document.getElementById('txt-macro-f-pct')!;
+  const txtMacroFGrams = document.getElementById('txt-macro-f-grams')!;
+  const txtMacroFCal = document.getElementById('txt-macro-f-cal')!;
+
+  function invalidateResults() {
+    resultsSection.classList.add('hidden');
+    if (errorBox) {
+      errorBox.classList.add('hidden');
+      errorBox.textContent = '';
+    }
+    lastResultData = null;
+  }
+
+  function showError(msg: string) {
+    if (!errorBox) return;
+    errorBox.textContent = msg;
+    errorBox.classList.remove('hidden');
+    errorBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // Mode Switcher
+  modeButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const mode = btn.getAttribute('data-mode') || 'daily_needs';
+      if (mode === currentMode) return;
+      currentMode = mode;
+
+      modeButtons.forEach((b) => {
+        b.classList.remove(
+          'active',
+          'border-blue-600',
+          'bg-blue-50',
+          'text-blue-700',
+          'dark:border-blue-500',
+          'dark:bg-blue-950/60',
+          'dark:text-blue-300'
+        );
+        b.classList.add(
+          'border-slate-300',
+          'bg-white',
+          'text-slate-700',
+          'dark:border-slate-700',
+          'dark:bg-slate-800',
+          'dark:text-slate-200'
+        );
+        b.setAttribute('aria-selected', 'false');
+      });
+
+      btn.classList.add(
+        'active',
+        'border-blue-600',
+        'bg-blue-50',
+        'text-blue-700',
+        'dark:border-blue-500',
+        'dark:bg-blue-950/60',
+        'dark:text-blue-300'
+      );
+      btn.classList.remove(
+        'border-slate-300',
+        'bg-white',
+        'text-slate-700',
+        'dark:border-slate-700',
+        'dark:bg-slate-800',
+        'dark:text-slate-200'
+      );
+      btn.setAttribute('aria-selected', 'true');
+
+      if (currentMode === 'maintenance') {
+        wrapperGoalSection.classList.add('hidden');
+        inpGoal.value = 'maintain';
+      } else {
+        wrapperGoalSection.classList.remove('hidden');
+      }
+
+      invalidateResults();
+    });
+  });
+
+  // Height Unit Switcher
+  inpHeightUnit.addEventListener('change', () => {
+    const isFtIn = inpHeightUnit.value === 'ft_in';
+    if (isFtIn) {
+      const cm = parseFloat(inpHeightCm.value) || 170;
+      const { feet, inches } = cmToFtInches(cm);
+      inpHeightFt.value = String(feet);
+      inpHeightIn.value = String(inches);
+      wrapperHeightCm.classList.add('hidden');
+      wrapperHeightFtin.classList.remove('hidden');
+    } else {
+      const ft = parseFloat(inpHeightFt.value) || 5;
+      const inVal = parseFloat(inpHeightIn.value) || 7;
+      const cm = Math.round(ftInchesToCm(ft, inVal));
+      inpHeightCm.value = String(cm);
+      wrapperHeightCm.classList.remove('hidden');
+      wrapperHeightFtin.classList.add('hidden');
+    }
+    invalidateResults();
+  });
+
+  // Weight Unit Switcher
+  inpWeightUnit.addEventListener('change', () => {
+    const isLbs = inpWeightUnit.value === 'lbs';
+    lblWeightUnit.textContent = isLbs ? 'lbs' : 'kg';
+    const currentW = parseFloat(inpWeight.value);
+    if (!isNaN(currentW) && currentW > 0) {
+      if (isLbs) {
+        inpWeight.value = Math.round(kgToPounds(currentW)).toString();
+      } else {
+        inpWeight.value = Math.round(poundsToKg(currentW)).toString();
+      }
+    }
+    invalidateResults();
+  });
+
+  inpActivity.addEventListener('change', () => {
+    const actKey = inpActivity.value as ActivityLevel;
+    const actData = ACTIVITY_LEVEL_MAP[actKey];
+    if (actData) {
+      hintActivityDesc.textContent = actData.description;
+    }
+    invalidateResults();
+  });
+
+  // Attach invalidation to all inputs (No live calculation while typing)
+  document.querySelectorAll('input, select').forEach((el) => {
+    if (!el.id.startsWith('inp-custom-') && el.id !== 'sel-macro-split') {
+      el.addEventListener('input', invalidateResults);
+    }
+  });
+
+  // Main Calculation Routine
+  function performCalculation() {
+    invalidateResults();
+
+    try {
+      const gender = inpGender.value as Gender;
+      const age = parseInt(inpAge.value, 10);
+      const activityLevel = inpActivity.value as ActivityLevel;
+      const formula = inpFormula.value as BmrFormula;
+      const goal = (currentMode === 'maintenance' ? 'maintain' : inpGoal.value) as CalorieGoal;
+
+      let heightCm = 0;
+      let heightDisplay = '';
+      if (inpHeightUnit.value === 'ft_in') {
+        const ft = parseFloat(inpHeightFt.value);
+        const inVal = parseFloat(inpHeightIn.value) || 0;
+        if (isNaN(ft) || ft <= 0) return showError('Please enter a valid height in feet and inches.');
+        heightCm = ftInchesToCm(ft, inVal);
+        heightDisplay = `${ft} ft ${inVal} in (${heightCm.toFixed(1)} cm)`;
+      } else {
+        heightCm = parseFloat(inpHeightCm.value);
+        if (isNaN(heightCm) || heightCm <= 0) return showError('Please enter a valid positive height.');
+        const { feet, inches } = cmToFtInches(heightCm);
+        heightDisplay = `${heightCm} cm (${feet}' ${inches}")`;
+      }
+
+      let weightKg = 0;
+      let weightDisplay = '';
+      const weightVal = parseFloat(inpWeight.value);
+      if (isNaN(weightVal) || weightVal <= 0) return showError('Please enter a valid body weight.');
+
+      if (inpWeightUnit.value === 'lbs') {
+        weightKg = poundsToKg(weightVal);
+        weightDisplay = `${weightVal} lbs (${weightKg.toFixed(1)} kg)`;
+      } else {
+        weightKg = weightVal;
+        weightDisplay = `${weightKg} kg (${kgToPounds(weightKg).toFixed(1)} lbs)`;
+      }
+
+      const result = calculateDailyCalories({
+        gender,
+        age,
+        heightCm,
+        weightKg,
+        activityLevel,
+        formula,
+        goal,
+      });
+
+      lastResultData = {
+        result,
+        inputs: {
+          genderDisplay: gender === 'male' ? 'Male' : 'Female',
+          age,
+          heightDisplay,
+          weightDisplay,
+          activityDisplay: result.activityLabel,
+          formulaDisplay: result.formulaLabel,
+          goalDisplay: result.goalLabel,
+        },
+      };
+
+      // Render Hero Card
+      badgeGoalLabel.textContent = result.goalLabel;
+      resHeroTargetCal.textContent = result.dailyCalorieTarget.toLocaleString();
+      resHeroWeeklyCal.textContent = result.weeklyCalorieTarget.toLocaleString();
+
+      if (result.isLowCalorieWarning && result.warningMessage) {
+        bannerCalorieWarning.textContent = result.warningMessage;
+        bannerCalorieWarning.classList.remove('hidden');
+      } else {
+        bannerCalorieWarning.classList.add('hidden');
+      }
+
+      // Render Metrics Grid
+      resCardBmr.textContent = `${result.bmr.toLocaleString()} kcal`;
+      resCardTdee.textContent = `${result.maintenanceCalories.toLocaleString()} kcal`;
+      resCardAdj.textContent = `${result.goalAdjustmentKcal >= 0 ? '+' : ''}${result.goalAdjustmentKcal} kcal/day`;
+      resCardPaceHint.textContent = GOAL_MAP[result.selectedGoal].paceDescription;
+      resCardTarget.textContent = `${result.dailyCalorieTarget.toLocaleString()} kcal`;
+      resCardFormula.textContent = result.formulaLabel;
+
+      // Render Goal Comparison Table safely without innerHTML
+      tbodyGoalComparison.replaceChildren(
+        ...result.goalComparison.map((tier) => {
+          const isSelected = tier.goalKey === result.selectedGoal;
+          const tr = document.createElement('tr');
+          tr.className = isSelected
+            ? 'bg-blue-50/80 font-bold dark:bg-blue-950/40 text-blue-900 dark:text-blue-200'
+            : 'hover:bg-slate-50/50 dark:hover:bg-slate-800/40';
+
+          const tdGoal = document.createElement('td');
+          tdGoal.className = 'py-2.5 px-3 flex items-center gap-1.5';
+          tdGoal.textContent = (isSelected ? '👉 ' : '') + tier.label;
+
+          const tdPace = document.createElement('td');
+          tdPace.className = 'py-2.5 px-3 text-slate-500 dark:text-slate-400';
+          tdPace.textContent = tier.paceDescription;
+
+          const tdDaily = document.createElement('td');
+          tdDaily.className = `py-2.5 px-3 ${isSelected ? 'text-blue-600 dark:text-blue-400 font-extrabold text-sm' : 'font-semibold'}`;
+          tdDaily.textContent = `${tier.dailyCalories.toLocaleString()} kcal`;
+
+          const tdWeekly = document.createElement('td');
+          tdWeekly.className = 'py-2.5 px-3 text-right font-mono text-slate-600 dark:text-slate-400';
+          tdWeekly.textContent = `${tier.weeklyCalories.toLocaleString()} kcal`;
+
+          tr.append(tdGoal, tdPace, tdDaily, tdWeekly);
+          return tr;
+        })
+      );
+
+      // Render Macros
+      updateMacroDisplay(result.dailyCalorieTarget);
+
+      // Render Calculation Steps safely without innerHTML
+      txtCalcDetails.replaceChildren(
+        ...result.calculationSteps.map((s) => {
+          const div = document.createElement('div');
+          div.textContent = s;
+          return div;
+        })
+      );
+
+      // Reveal Results Section
+      resultsSection.classList.remove('hidden');
+      resultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (err: any) {
+      showError(err.message || 'An unexpected calculation error occurred. Please verify your inputs.');
+    }
+  }
+
+  function updateMacroDisplay(dailyCalories?: number) {
+    const target = dailyCalories || (lastResultData ? lastResultData.result.dailyCalorieTarget : 2500);
+    const splitKey = selMacroSplit.value;
+
+    let pPct = 30;
+    let cPct = 40;
+    let fPct = 30;
+
+    if (splitKey === 'custom') {
+      wrapperCustomMacro.classList.remove('hidden');
+      pPct = parseFloat(inpCustomP.value) || 30;
+      cPct = parseFloat(inpCustomC.value) || 40;
+      fPct = parseFloat(inpCustomF.value) || 30;
+      const total = pPct + cPct + fPct;
+      if (Math.abs(total - 100) > 0.5) {
+        showError(`Custom macronutrient percentages must total 100% (currently ${total}%).`);
+      }
+    } else {
+      wrapperCustomMacro.classList.add('hidden');
+      const preset = MACRO_PRESETS[splitKey as keyof typeof MACRO_PRESETS] || MACRO_PRESETS.balanced;
+      pPct = preset.proteinPct;
+      cPct = preset.carbsPct;
+      fPct = preset.fatPct;
+    }
+
+    const macroObj = calculateMacros(target, pPct, cPct, fPct);
+
+    txtMacroPPct.textContent = `${macroObj.proteinPercent}%`;
+    txtMacroPGrams.textContent = `${macroObj.proteinGrams} g / day`;
+    txtMacroPCal.textContent = `${macroObj.proteinCalories.toLocaleString()} kcal/day`;
+
+    txtMacroCPct.textContent = `${macroObj.carbsPercent}%`;
+    txtMacroCGrams.textContent = `${macroObj.carbsGrams} g / day`;
+    txtMacroCCal.textContent = `${macroObj.carbsCalories.toLocaleString()} kcal/day`;
+
+    txtMacroFPct.textContent = `${macroObj.fatPercent}%`;
+    txtMacroFGrams.textContent = `${macroObj.fatGrams} g / day`;
+    txtMacroFCal.textContent = `${macroObj.fatCalories.toLocaleString()} kcal/day`;
+  }
+
+  selMacroSplit.addEventListener('change', () => updateMacroDisplay());
+  [inpCustomP, inpCustomC, inpCustomF].forEach((el) => el.addEventListener('input', () => updateMacroDisplay()));
+
+  // Clear All Functionality
+  function performClearAll() {
+    currentMode = 'daily_needs';
+    modeButtons[0].click();
+
+    inpGender.value = 'male';
+    inpAge.value = '30';
+    inpHeightUnit.value = 'cm';
+    inpWeightUnit.value = 'kg';
+    lblWeightUnit.textContent = 'kg';
+    inpHeightCm.value = '170';
+    inpHeightFt.value = '5';
+    inpHeightIn.value = '7';
+    wrapperHeightCm.classList.remove('hidden');
+    wrapperHeightFtin.classList.add('hidden');
+    inpWeight.value = '70';
+    inpActivity.value = 'moderate';
+    hintActivityDesc.textContent = ACTIVITY_LEVEL_MAP.moderate.description;
+    inpFormula.value = 'mifflin';
+    inpGoal.value = 'maintain';
+    selMacroSplit.value = 'balanced';
+    wrapperCustomMacro.classList.add('hidden');
+    inpCustomP.value = '30';
+    inpCustomC.value = '40';
+    inpCustomF.value = '30';
+
+    invalidateResults();
+  }
+
+  btnCalculate.addEventListener('click', performCalculation);
+  btnClearAll.addEventListener('click', performClearAll);
+
+  // PDF Export Generation
+  if (btnDownloadPdf) {
+    btnDownloadPdf.addEventListener('click', async () => {
+      if (!lastResultData) {
+        performCalculation();
+        if (!lastResultData) return;
+      }
+
+      const txtBtn = document.getElementById('txt-btn-pdf');
+      if (txtBtn) txtBtn.textContent = 'Generating PDF...';
+
+      try {
+        let jsPDFModule = (window as any).jspdf;
+        if (!jsPDFModule) {
+          const script1 = document.createElement('script');
+          script1.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+          await new Promise((resolve, reject) => {
+            script1.onload = resolve;
+            script1.onerror = reject;
+            document.head.appendChild(script1);
+          });
+          const script2 = document.createElement('script');
+          script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+          await new Promise((resolve, reject) => {
+            script2.onload = resolve;
+            script2.onerror = reject;
+            document.head.appendChild(script2);
+          });
+          jsPDFModule = (window as any).jspdf;
+        }
+
+        const { jsPDF } = jsPDFModule;
+        const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+
+        const primaryColor = [37, 99, 235]; // #2563eb
+        const darkColor = [15, 23, 42]; // #0f172a
+        const slateColor = [100, 116, 139]; // #64748b
+        const lightBg = [248, 250, 252]; // #f8fafc
+
+        const pageWidth = doc.internal.pageSize.getWidth();
+        const pageHeight = doc.internal.pageSize.getHeight();
+        const margin = 40;
+        let y = 45;
+
+        // Header Branding
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(18);
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        doc.text('AIFreecalculator.com', margin, y);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(slateColor[0], slateColor[1], slateColor[2]);
+        doc.text('Free Online Calculator Tools', margin, y + 13);
+
+        const now = new Date();
+        const dateStr = now.toISOString().split('T')[0];
+        doc.text(`Generated: ${dateStr}`, pageWidth - margin, y + 5, { align: 'right' });
+
+        y += 28;
+        doc.setDrawColor(226, 232, 240);
+        doc.setLineWidth(1);
+        doc.line(margin, y, pageWidth - margin, y);
+        y += 24;
+
+        // Title
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(15);
+        doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+        doc.text('Daily Calorie & Nutrition Calculation', margin, y);
+        y += 18;
+
+        // Summary Hero Box
+        doc.setFillColor(lightBg[0], lightBg[1], lightBg[2]);
+        doc.roundedRect(margin, y, pageWidth - margin * 2, 54, 8, 8, 'F');
+        doc.setDrawColor(203, 213, 225);
+        doc.roundedRect(margin, y, pageWidth - margin * 2, 54, 8, 8, 'D');
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
+        doc.text(`GOAL: ${lastResultData.inputs.goalDisplay.toUpperCase()}`, margin + 14, y + 18);
+
+        doc.setFontSize(16);
+        doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+        doc.text(`Target: ${lastResultData.result.dailyCalorieTarget.toLocaleString()} kcal / day`, margin + 14, y + 38);
+
+        doc.setFontSize(10);
+        doc.setTextColor(slateColor[0], slateColor[1], slateColor[2]);
+        doc.text(`Maintenance: ${lastResultData.result.maintenanceCalories.toLocaleString()} kcal (BMR: ${lastResultData.result.bmr.toLocaleString()} kcal)`, pageWidth - margin - 14, y + 36, { align: 'right' });
+
+        y += 70;
+
+        // Input Parameters Table
+        const inputRows = [
+          ['Biological Sex', lastResultData.inputs.genderDisplay],
+          ['Age', `${lastResultData.inputs.age} Years`],
+          ['Height', lastResultData.inputs.heightDisplay],
+          ['Body Weight', lastResultData.inputs.weightDisplay],
+          ['Activity Level', lastResultData.inputs.activityDisplay],
+          ['BMR Formula', lastResultData.inputs.formulaDisplay],
+          ['Management Goal', lastResultData.inputs.goalDisplay],
+        ];
+
+        (doc as any).autoTable({
+          startY: y,
+          head: [['Parameter', 'User Entered Value']],
+          body: inputRows,
+          theme: 'striped',
+          headStyles: { fillColor: primaryColor, textColor: 255, fontStyle: 'bold' },
+          margin: { left: margin, right: margin },
+          styles: { fontSize: 9, cellPadding: 4 },
+        });
+
+        y = (doc as any).lastAutoTable.finalY + 16;
+
+        // Calorie & Goal Breakdown Table
+        const goalRows = lastResultData.result.goalComparison.map((t) => [
+          t.label,
+          t.paceDescription,
+          `${t.dailyCalories.toLocaleString()} kcal`,
+          `${t.weeklyCalories.toLocaleString()} kcal`,
+        ]);
+
+        (doc as any).autoTable({
+          startY: y,
+          head: [['Objective', 'Weekly Pace', 'Daily Target', 'Weekly Total']],
+          body: goalRows,
+          theme: 'striped',
+          headStyles: { fillColor: darkColor, textColor: 255, fontStyle: 'bold' },
+          margin: { left: margin, right: margin },
+          styles: { fontSize: 8.5, cellPadding: 4 },
+        });
+
+        y = (doc as any).lastAutoTable.finalY + 16;
+
+        // Macro Breakdown Table
+        const macroRows = [
+          ['Protein (4 kcal/g)', `${lastResultData.result.macros.proteinPercent}%`, `${lastResultData.result.macros.proteinGrams} g`, `${lastResultData.result.macros.proteinCalories} kcal`],
+          ['Carbohydrates (4 kcal/g)', `${lastResultData.result.macros.carbsPercent}%`, `${lastResultData.result.macros.carbsGrams} g`, `${lastResultData.result.macros.carbsCalories} kcal`],
+          ['Fat (9 kcal/g)', `${lastResultData.result.macros.fatPercent}%`, `${lastResultData.result.macros.fatGrams} g`, `${lastResultData.result.macros.fatCalories} kcal`],
+        ];
+
+        (doc as any).autoTable({
+          startY: y,
+          head: [['Macronutrient', 'Distribution %', 'Daily Grams', 'Energy Total']],
+          body: macroRows,
+          theme: 'striped',
+          headStyles: { fillColor: [59, 130, 246], textColor: 255, fontStyle: 'bold' },
+          margin: { left: margin, right: margin },
+          styles: { fontSize: 8.5, cellPadding: 4 },
+        });
+
+        y = (doc as any).lastAutoTable.finalY + 16;
+
+        // Calculation Details Section
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
+        doc.text('Calculation Details & Step-by-Step Breakdown', margin, y);
+        y += 14;
+
+        doc.setFont('courier', 'normal');
+        doc.setFontSize(8.5);
+        doc.setTextColor(slateColor[0], slateColor[1], slateColor[2]);
+
+        for (const step of lastResultData.result.calculationSteps) {
+          const splitText = doc.splitTextToSize(step, pageWidth - margin * 2);
+          if (y + splitText.length * 11 > pageHeight - 60) {
+            doc.addPage();
+            y = margin;
+          }
+          doc.text(splitText, margin, y);
+          y += splitText.length * 11 + 2;
+        }
+
+        y += 10;
+
+        // Disclaimer
+        const disclaimer =
+          'Disclaimer: This calculation provides estimated calorie targets for general educational purposes based on mathematical formulas. It is not a medical diagnostic tool or personalized dietary prescription. For individualized nutrition planning or medical guidance, consult a registered dietitian or physician.';
+        const splitDisc = doc.splitTextToSize(disclaimer, pageWidth - margin * 2);
+
+        if (y + splitDisc.length * 10 > pageHeight - 50) {
+          doc.addPage();
+          y = margin;
+        }
+
+        doc.setFont('helvetica', 'italic');
+        doc.setFontSize(7.5);
+        doc.setTextColor(150, 150, 150);
+        doc.text(splitDisc, margin, y);
+
+        // Add page numbers and footers across all pages
+        const totalPages = doc.internal.pages.length - 1;
+        for (let i = 1; i <= totalPages; i++) {
+          doc.setPage(i);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+          doc.setTextColor(slateColor[0], slateColor[1], slateColor[2]);
+          doc.text('Generated using AIFreecalculator.com', margin, pageHeight - 20);
+          doc.text(`Page ${i} of ${totalPages}`, pageWidth - margin, pageHeight - 20, { align: 'right' });
+        }
+
+        doc.save(`calorie-calculation-${dateStr}.pdf`);
+      } catch (err) {
+        console.error(err);
+        alert('Failed to generate PDF. Please try again.');
+      } finally {
+        if (txtBtn) txtBtn.textContent = 'Download PDF';
+      }
+    });
+  }
+</script>
