@@ -111,7 +111,7 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
   const admin = await verifyAdminToken(token);
   if (!admin) {
     return Response.json({
-      error: 'Unauthorized. Please login again at /admin/login/',
+      error: 'Unauthorized. Please login again at /admin/barwalaoffice/',
       authenticated: false,
     }, { status: 401 });
   }
