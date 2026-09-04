@@ -375,112 +375,136 @@ const totalCount = messages.length;
 
   // Save Notification Email Action
   const btnSaveEmail = document.getElementById('btn-save-email');
-  const inputEmail = document.getElementById('input-notification-email') as HTMLInputElement | null;
+  const inputEmail = document.getElementById('input-notification-email');
   const labelEmail = document.getElementById('label-target-email');
 
-  btnSaveEmail?.addEventListener('click', async () => {
-    const email = inputEmail?.value?.trim();
-    if (!email || !email.includes('@')) {
-      alert('Please enter a valid email address.');
-      return;
-    }
+  if (btnSaveEmail) {
+    btnSaveEmail.addEventListener('click', async function () {
+      const email = inputEmail && inputEmail.value ? inputEmail.value.trim() : '';
+      if (!email || !email.includes('@')) {
+        alert('Please enter a valid email address.');
+        return;
+      }
 
-    btnSaveEmail.disabled = true;
-    const origText = btnSaveEmail.textContent;
-    btnSaveEmail.textContent = 'Saving...';
+      btnSaveEmail.disabled = true;
+      const origText = btnSaveEmail.textContent;
+      btnSaveEmail.textContent = 'Saving...';
 
-    try {
-      const res = await fetch('/api/admin/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
+      try {
+        const res = await fetch('/api/admin/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email }),
+        });
 
-      if (res.ok) {
-        if (labelEmail) labelEmail.textContent = email;
-        btnSaveEmail.textContent = '✓ Saved!';
-        setTimeout(() => {
+        if (res.ok) {
+          if (labelEmail) labelEmail.textContent = email;
+          btnSaveEmail.textContent = '✓ Saved!';
+          setTimeout(function () {
+            btnSaveEmail.disabled = false;
+            btnSaveEmail.textContent = origText;
+          }, 1500);
+        } else {
+          alert('Failed to save notification email.');
           btnSaveEmail.disabled = false;
           btnSaveEmail.textContent = origText;
-        }, 1500);
-      } else {
-        alert('Failed to save notification email.');
+        }
+      } catch (err) {
+        alert('Network error saving email.');
         btnSaveEmail.disabled = false;
         btnSaveEmail.textContent = origText;
       }
-    } catch {
-      alert('Network error saving email.');
-      btnSaveEmail.disabled = false;
-      btnSaveEmail.textContent = origText;
-    }
-  });
+    });
+  }
 
-  // Update Status Action
-  document.querySelectorAll('.btn-set-status').forEach((btn) => {
-    btn.addEventListener('click', async (e) => {
-      const target = e.currentTarget;
-      const id = target.dataset.id;
-      const status = target.dataset.status;
+  // Delegated Actions for Mark Read, Mark Replied, Archive, and Delete
+  document.addEventListener('click', async function (e) {
+    const target = e.target;
+    if (!target) return;
+
+    // 1. Update Status: Mark Read / Replied / Archive
+    const statusBtn = target.closest ? target.closest('.btn-set-status') : null;
+    if (statusBtn) {
+      e.preventDefault();
+      const id = statusBtn.getAttribute('data-id');
+      const status = statusBtn.getAttribute('data-status');
       if (!id || !status) return;
 
-      target.disabled = true;
+      statusBtn.disabled = true;
+      const originalText = statusBtn.textContent;
+      statusBtn.textContent = 'Updating...';
+
       try {
         const res = await fetch('/api/admin/messages', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, status }),
+          body: JSON.stringify({ id: id, status: status }),
         });
+
         if (res.ok) {
+          statusBtn.textContent = '✓ Done';
+          // Instant reload to reflect updated badges, counters, and tabs
           window.location.reload();
         } else {
-          alert('Failed to update message status.');
+          const errData = await res.json().catch(function () { return {}; });
+          alert(errData.error || 'Failed to update message status.');
+          statusBtn.disabled = false;
+          statusBtn.textContent = originalText;
         }
-      } catch {
-        alert('Network error.');
-      } finally {
-        target.disabled = false;
+      } catch (err) {
+        alert('Network error while updating status.');
+        statusBtn.disabled = false;
+        statusBtn.textContent = originalText;
       }
-    });
-  });
+      return;
+    }
 
-  // Delete Action
-  document.querySelectorAll('.btn-delete-msg').forEach((btn) => {
-    btn.addEventListener('click', async (e) => {
-      const target = e.currentTarget;
-      const id = target.dataset.id;
+    // 2. Delete Message
+    const deleteBtn = target.closest ? target.closest('.btn-delete-msg') : null;
+    if (deleteBtn) {
+      e.preventDefault();
+      const id = deleteBtn.getAttribute('data-id');
       if (!id) return;
       if (!confirm('Are you sure you want to permanently delete this message?')) return;
 
-      target.disabled = true;
+      deleteBtn.disabled = true;
+      const card = deleteBtn.closest('.message-card');
+
       try {
-        const res = await fetch(`/api/admin/messages?id=${encodeURIComponent(id)}`, {
+        const res = await fetch('/api/admin/messages?id=' + encodeURIComponent(id), {
           method: 'DELETE',
         });
-        if (res.ok) {
-          const card = target.closest('.message-card');
-          card?.remove();
-        } else {
-          alert('Failed to delete message.');
-        }
-      } catch {
-        alert('Network error.');
-      } finally {
-        target.disabled = false;
-      }
-    });
-  });
 
-  // Automatically mark as replied when clicking reply button
-  document.querySelectorAll('.btn-reply-email').forEach((btn) => {
-    btn.addEventListener('click', async (e) => {
-      const id = e.currentTarget.dataset.id;
+        if (res.ok) {
+          if (card) {
+            card.style.opacity = '0.3';
+            card.style.pointerEvents = 'none';
+          }
+          // Reload to recalculate counts and update filters
+          window.location.reload();
+        } else {
+          const errData = await res.json().catch(function () { return {}; });
+          alert(errData.error || 'Failed to delete message.');
+          deleteBtn.disabled = false;
+        }
+      } catch (err) {
+        alert('Network error while deleting message.');
+        deleteBtn.disabled = false;
+      }
+      return;
+    }
+
+    // 3. Auto mark as replied on clicking reply email
+    const replyLink = target.closest ? target.closest('.btn-reply-email') : null;
+    if (replyLink) {
+      const id = replyLink.getAttribute('data-id');
       if (id) {
         fetch('/api/admin/messages', {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id, status: 'replied' }),
-        }).catch(() => {});
+          body: JSON.stringify({ id: id, status: 'replied' }),
+        }).catch(function () {});
       }
-    });
+    }
   });
 </script>
