@@ -14,10 +14,21 @@ import {
   getFeaturedCalculators,
 } from '../data/calculators';
 
+import { getCalculatorOverrides } from '../lib/admin/content-store';
+import { getLivePageMeta } from '../lib/seo/page-metadata';
+
 const popularCalculators = getPopularCalculators(6);
 const featuredCalculators = getFeaturedCalculators().filter(
   (c) => !popularCalculators.some((p) => p.slug === c.slug)
 ).slice(0, 6);
+
+const overrides = await getCalculatorOverrides(Astro.locals);
+const override = overrides['core:home'] || {};
+const liveMeta = getLivePageMeta('core:home');
+
+const effectiveTitle = override.metaTitle || liveMeta.title;
+const effectiveDescription = override.metaDescription || liveMeta.description;
+const effectiveCanonical = override.canonicalUrl;
 
 // Client-side search dataset with aliases
 const searchDataJson = JSON.stringify(
@@ -35,8 +46,9 @@ const searchDataJson = JSON.stringify(
 ---
 
 <BaseLayout
-  title="Free Online Calculators for Finance, Health, Construction & Math | AIFreeCalculator"
-  description="Calculate loans, investments, civil engineering quantities, health biometrics, percentages, and scientific math with 42+ verified free online calculators."
+  title={effectiveTitle}
+  description={effectiveDescription}
+  canonicalUrl={effectiveCanonical}
   ogImage="/og/default.png"
 >
   <Fragment slot="head">

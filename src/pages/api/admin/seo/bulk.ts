@@ -125,28 +125,46 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
         ...prevOverride,
       };
 
-      if (metaTitle !== undefined && metaTitle !== oldTitle) {
-        newOverride.metaTitle = metaTitle.trim();
-        historyChanges.push({
-          pagePath: calc?.path || `/${slug}/`,
-          pageName: calc?.name || slug,
-          field: 'metaTitle',
-          oldValue: oldTitle,
-          newValue: metaTitle.trim(),
-          adminUser: user.username,
-        });
+      const pagePath = slug.startsWith('category:')
+        ? `/${slug.replace('category:', '')}/`
+        : slug.startsWith('core:')
+        ? (slug.replace('core:', '') === 'home' ? '/' : `/${slug.replace('core:', '')}/`)
+        : (calc?.path || `/${slug}/`);
+
+      const pageDisplayName = slug.startsWith('category:')
+        ? `${slug.replace('category:', '').toUpperCase()} Suite`
+        : slug.startsWith('core:')
+        ? `${slug.replace('core:', '').toUpperCase()} Page`
+        : (calc?.name || slug);
+
+      if (metaTitle !== undefined) {
+        const trimmedTitle = metaTitle.trim();
+        newOverride.metaTitle = trimmedTitle;
+        if (trimmedTitle !== oldTitle) {
+          historyChanges.push({
+            pagePath,
+            pageName: pageDisplayName,
+            field: 'metaTitle',
+            oldValue: oldTitle,
+            newValue: trimmedTitle,
+            adminUser: user.username,
+          });
+        }
       }
 
-      if (metaDescription !== undefined && metaDescription !== oldDesc) {
-        newOverride.metaDescription = metaDescription.trim();
-        historyChanges.push({
-          pagePath: calc?.path || `/${slug}/`,
-          pageName: calc?.name || slug,
-          field: 'metaDescription',
-          oldValue: oldDesc,
-          newValue: metaDescription.trim(),
-          adminUser: user.username,
-        });
+      if (metaDescription !== undefined) {
+        const trimmedDesc = metaDescription.trim();
+        newOverride.metaDescription = trimmedDesc;
+        if (trimmedDesc !== oldDesc) {
+          historyChanges.push({
+            pagePath,
+            pageName: pageDisplayName,
+            field: 'metaDescription',
+            oldValue: oldDesc,
+            newValue: trimmedDesc,
+            adminUser: user.username,
+          });
+        }
       }
 
       if (canonicalUrl !== undefined) {

@@ -55,8 +55,10 @@ async function getLocalFileStorage(): Promise<Record<string, string>> {
     if (p?.cwd) {
       const fsMod = 'node:fs';
       const pathMod = 'node:path';
-      const fs = await import(/* @vite-ignore */ fsMod);
-      const path = await import(/* @vite-ignore */ pathMod);
+      const fsImport = await import(/* @vite-ignore */ fsMod);
+      const pathImport = await import(/* @vite-ignore */ pathMod);
+      const fs = fsImport.default || fsImport;
+      const path = pathImport.default || pathImport;
       const filePath = path.join(p.cwd(), '.site-settings.json');
       if (fs.existsSync(filePath)) {
         const raw = fs.readFileSync(filePath, 'utf-8');
@@ -64,27 +66,32 @@ async function getLocalFileStorage(): Promise<Record<string, string>> {
         localFileCache = { ...localFileCache, ...parsed };
       }
     }
-  } catch {}
+  } catch (err) {
+    console.error('Failed to read .site-settings.json:', err);
+  }
   return localFileCache;
 }
 
 async function writeLocalFileStorage(key: string, value: string): Promise<void> {
-  if (localFileCache === null) {
-    localFileCache = {};
-  }
-  localFileCache[key] = value;
+  const current = await getLocalFileStorage();
+  current[key] = value;
+  localFileCache = current;
   inMemorySettings[key] = value;
   try {
     const p = typeof globalThis !== 'undefined' ? (globalThis as any).process : null;
     if (p?.cwd) {
       const fsMod = 'node:fs';
       const pathMod = 'node:path';
-      const fs = await import(/* @vite-ignore */ fsMod);
-      const path = await import(/* @vite-ignore */ pathMod);
+      const fsImport = await import(/* @vite-ignore */ fsMod);
+      const pathImport = await import(/* @vite-ignore */ pathMod);
+      const fs = fsImport.default || fsImport;
+      const path = pathImport.default || pathImport;
       const filePath = path.join(p.cwd(), '.site-settings.json');
-      fs.writeFileSync(filePath, JSON.stringify(localFileCache, null, 2), 'utf-8');
+      fs.writeFileSync(filePath, JSON.stringify(current, null, 2), 'utf-8');
     }
-  } catch {}
+  } catch (err) {
+    console.error('Failed to write .site-settings.json:', err);
+  }
 }
 
 

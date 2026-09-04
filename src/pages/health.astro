@@ -5,13 +5,23 @@ import CategoryTabs from '../components/CategoryTabs.astro';
 import AdSlotTop from '../components/ads/AdSlotTop.astro';
 import AdSlotFooter from '../components/ads/AdSlotFooter.astro';
 import { getCalculatorsByCategory } from '../data/calculators';
+import { getCalculatorOverrides } from '../lib/admin/content-store';
+import { getLivePageMeta } from '../lib/seo/page-metadata';
 
 const healthCalculators = getCalculatorsByCategory('Health');
+const overrides = await getCalculatorOverrides(Astro.locals);
+const override = overrides['category:health'] || {};
+const liveMeta = getLivePageMeta('category:health');
+
+const effectiveTitle = override.metaTitle || liveMeta.title;
+const effectiveDescription = override.metaDescription || liveMeta.description;
+const effectiveCanonical = override.canonicalUrl;
 ---
 
 <BaseLayout
-  title="Health, Fitness & Nutrition Calculators - AI Free Calculator"
-  description="Free scientifically backed fitness & health calculators: Daily Calorie TDEE, BMR metabolic rate, and Body Fat Percentage calculator."
+  title={effectiveTitle}
+  description={effectiveDescription}
+  canonicalUrl={effectiveCanonical}
   ogImage="/og/health.png"
 >
   <section class="border-b border-slate-200 bg-white px-4 py-12 dark:border-slate-800 dark:bg-slate-900/60 sm:py-16">

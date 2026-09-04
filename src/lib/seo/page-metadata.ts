@@ -74,7 +74,7 @@ export const LIVE_PAGE_METADATA: Record<string, PageMetaItem> = {
     "description": "Calculate the number of bricks, mortar volume, cement bags, sand quantities, and paving bricks required for walls and masonry projects with opening deductions and wastage analysis."
   },
   "plaster-calculator": {
-    "title": "${tilePresetLabel}",
+    "title": "Plastering & Mortar Calculator – Cement & Sand Quantity | AI Free Calculator",
     "description": "Calculate plaster and mortar quantities, estimate cement and sand requirements, and use dedicated mortar tools for tile work and supported games."
   },
   "emi-calculator": {
