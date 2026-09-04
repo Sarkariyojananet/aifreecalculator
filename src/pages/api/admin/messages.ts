@@ -1,6 +1,13 @@
 import type { APIRoute } from 'astro';
 import { authenticateAdminRequest } from '../../../lib/auth';
-import { getDb, getContactMessages, updateContactMessageStatus, deleteContactMessage } from '../../../lib/db';
+import {
+  getDb,
+  getContactMessages,
+  updateContactMessageStatus,
+  deleteContactMessage,
+  getContactNotificationEmail,
+  setContactNotificationEmail,
+} from '../../../lib/db';
 
 export const prerender = false;
 
@@ -15,11 +22,46 @@ export const GET: APIRoute = async ({ request, cookies, locals }) => {
 
   const db = getDb(locals);
   const messages = await getContactMessages(db);
+  const targetEmail = await getContactNotificationEmail(db, locals);
 
-  return new Response(JSON.stringify({ success: true, messages, count: messages.length }), {
+  return new Response(JSON.stringify({ success: true, messages, count: messages.length, targetEmail }), {
     status: 200,
     headers: { 'Content-Type': 'application/json' },
   });
+};
+
+export const POST: APIRoute = async ({ request, cookies, locals }) => {
+  const user = await authenticateAdminRequest(request, cookies);
+  if (!user) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  try {
+    const body = await request.json();
+    const { email } = body;
+    if (!email || !String(email).includes('@')) {
+      return new Response(JSON.stringify({ error: 'Valid email address is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const db = getDb(locals);
+    await setContactNotificationEmail(db, String(email).trim());
+
+    return new Response(JSON.stringify({ success: true, email: String(email).trim() }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (err: any) {
+    return new Response(JSON.stringify({ error: err.message || 'Failed to update email setting' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 };
 
 export const PATCH: APIRoute = async ({ request, cookies, locals }) => {

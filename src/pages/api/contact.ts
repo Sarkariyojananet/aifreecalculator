@@ -1,9 +1,7 @@
 import type { APIRoute } from 'astro';
-import { getDb, saveContactMessage, type ContactMessage } from '../../lib/db';
+import { getDb, saveContactMessage, getContactNotificationEmail, type ContactMessage } from '../../lib/db';
 
 export const prerender = false;
-
-const TARGET_EMAIL = 'support@aifreecalculator.com';
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
@@ -70,12 +68,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
       console.error('[Contact DB Error]:', dbErr);
     }
 
-    // 4. Send email to support@aifreecalculator.com via multi-relay
+    // 4. Determine destination email from site_settings / env
+    const targetEmail = await getContactNotificationEmail(db, locals);
     let emailDelivered = false;
 
-    // A. FormSubmit.co Relay directly to support@aifreecalculator.com
+    // A. FormSubmit.co Relay directly to destination email (e.g. Gmail / support email)
     try {
-      const formSubmitRes = await fetch(`https://formsubmit.co/ajax/${TARGET_EMAIL}`, {
+      const formSubmitRes = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(targetEmail)}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -99,7 +98,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
       if (formSubmitRes.ok) {
         const fsData = await formSubmitRes.json().catch(() => null);
-        if (fsData && (fsData.success === 'true' || fsData.success === true || fsData.message?.includes('Activation'))) {
+        if (fsData && (fsData.success === 'true' || fsData.success === true || fsData.message?.includes('Activation') || fsData.message?.includes('activation'))) {
           emailDelivered = true;
         }
       }
@@ -120,7 +119,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
           },
           body: JSON.stringify({
             from: 'AI Free Calculator <contact@aifreecalculator.com>',
-            to: [TARGET_EMAIL],
+            to: [targetEmail],
             reply_to: email,
             subject: `[Contact Inquiry] ${subject} - from ${name}`,
             html: `
@@ -154,7 +153,7 @@ ${message}
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            personalizations: [{ to: [{ email: TARGET_EMAIL, name: 'AI Free Calculator Support' }] }],
+            personalizations: [{ to: [{ email: targetEmail, name: 'AI Free Calculator Admin' }] }],
             from: { email: 'no-reply@aifreecalculator.com', name: `AIFreeCalculator (${name})` },
             reply_to: { email, name },
             subject: `[Contact Form] ${subject} (${category})`,
@@ -172,9 +171,9 @@ ${message}
     return new Response(
       JSON.stringify({
         success: true,
-        message: `Thank you, ${name}! Your message has been sent to ${TARGET_EMAIL}. Our support team will review and reply within 24-48 hours.`,
+        message: `Thank you, ${name}! Your message has been sent to our desk (${targetEmail}). Our team will review and reply to ${email} within 24-48 hours.`,
         messageId,
-        targetEmail: TARGET_EMAIL,
+        targetEmail,
       }),
       {
         status: 200,

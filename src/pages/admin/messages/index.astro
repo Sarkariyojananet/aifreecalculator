@@ -1,9 +1,12 @@
 ---
 import AdminLayout from '../../../layouts/AdminLayout.astro';
-import { getContactMessages, getDb } from '../../../lib/db';
+import { getContactMessages, getContactNotificationEmail, getDb } from '../../../lib/db';
+
+export const prerender = false;
 
 const db = getDb(Astro.locals);
 const messages = await getContactMessages(db);
+const targetEmail = await getContactNotificationEmail(db, Astro.locals);
 
 const unreadCount = messages.filter((m) => m.status === 'new').length;
 const repliedCount = messages.filter((m) => m.status === 'replied').length;
@@ -26,17 +29,53 @@ const totalCount = messages.length;
 
       <div class="flex items-center gap-3">
         <a
-          href="mailto:support@aifreecalculator.com"
+          href={`mailto:${targetEmail}`}
           class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition shadow-2xs"
         >
-          <span>✉️</span> Open Support Mail
+          <span>✉️</span> Open Mailbox
         </a>
         <button
           type="button"
           id="btn-refresh-messages"
           class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition cursor-pointer"
         >
-          <span>🔄</span> Refresh
+          <span id="refresh-spinner">🔄</span> Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Notification Email Forwarding Configuration Banner -->
+    <div class="rounded-2xl border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-900/60 dark:bg-blue-950/40 text-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2 text-slate-800 dark:text-slate-100 font-bold">
+          <span>📬</span>
+          <span>Contact Form Forwarding Destination:</span>
+          <span id="label-target-email" class="rounded-lg bg-white px-2 py-0.5 font-mono text-blue-700 dark:bg-slate-900 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+            {targetEmail}
+          </span>
+        </div>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400">
+          Inquiries submitted on the website contact form are saved in D1 and forwarded to this email address.
+          <span class="block mt-0.5 text-blue-600 dark:text-blue-400">
+            💡 When setting a new Gmail address, check your Gmail inbox (or Spam) for the one-time FormSubmit confirmation email to activate forwarding.
+          </span>
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <input
+          type="email"
+          id="input-notification-email"
+          placeholder="Enter your Gmail address..."
+          value={targetEmail}
+          class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white w-52 sm:w-60"
+        />
+        <button
+          type="button"
+          id="btn-save-email"
+          class="rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white hover:bg-blue-700 transition cursor-pointer"
+        >
+          Save Email
         </button>
       </div>
     </div>
@@ -319,9 +358,61 @@ const totalCount = messages.length;
     applyFilters();
   });
 
-  // Refresh
-  document.getElementById('btn-refresh-messages')?.addEventListener('click', () => {
-    window.location.reload();
+  // Refresh Action
+  const btnRefresh = document.getElementById('btn-refresh-messages');
+  const refreshSpinner = document.getElementById('refresh-spinner');
+  btnRefresh?.addEventListener('click', async () => {
+    if (refreshSpinner) refreshSpinner.classList.add('animate-spin');
+    try {
+      const res = await fetch('/api/admin/messages');
+      if (res.ok) {
+        window.location.reload();
+      }
+    } catch {
+      window.location.reload();
+    }
+  });
+
+  // Save Notification Email Action
+  const btnSaveEmail = document.getElementById('btn-save-email');
+  const inputEmail = document.getElementById('input-notification-email') as HTMLInputElement | null;
+  const labelEmail = document.getElementById('label-target-email');
+
+  btnSaveEmail?.addEventListener('click', async () => {
+    const email = inputEmail?.value?.trim();
+    if (!email || !email.includes('@')) {
+      alert('Please enter a valid email address.');
+      return;
+    }
+
+    btnSaveEmail.disabled = true;
+    const origText = btnSaveEmail.textContent;
+    btnSaveEmail.textContent = 'Saving...';
+
+    try {
+      const res = await fetch('/api/admin/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      if (res.ok) {
+        if (labelEmail) labelEmail.textContent = email;
+        btnSaveEmail.textContent = '✓ Saved!';
+        setTimeout(() => {
+          btnSaveEmail.disabled = false;
+          btnSaveEmail.textContent = origText;
+        }, 1500);
+      } else {
+        alert('Failed to save notification email.');
+        btnSaveEmail.disabled = false;
+        btnSaveEmail.textContent = origText;
+      }
+    } catch {
+      alert('Network error saving email.');
+      btnSaveEmail.disabled = false;
+      btnSaveEmail.textContent = origText;
+    }
   });
 
   // Update Status Action

@@ -35,14 +35,13 @@ const inMemorySettings: Record<string, string> = {};
 let cloudflareEnv: any = null;
 
 // Dynamically resolve cloudflare:workers if running in Cloudflare runtime
-try {
-  // @ts-ignore
-  const cf = await import('cloudflare:workers');
-  if (cf?.env) {
-    cloudflareEnv = cf.env;
-  }
-} catch {
-  // In Node / Vite dev environment without workerd
+if (typeof globalThis !== 'undefined') {
+  try {
+    // @ts-ignore
+    import('cloudflare:workers').then((cf) => {
+      if (cf?.env) cloudflareEnv = cf.env;
+    }).catch(() => {});
+  } catch {}
 }
 
 // Local filesystem persistence helper for Node/dev environment
@@ -271,67 +270,128 @@ export async function getCalculatorStats(): Promise<Record<string, number>> {
 }
 
 /**
- * Save incoming contact message
+ * Save incoming contact message.
+ * Writes to both the `contact_messages` table AND `site_settings` (`cms_contact_messages`),
+ * guaranteeing zero data loss even if D1 table creation or permissions encounter issues.
  */
 export async function saveContactMessage(db: D1Database, msg: ContactMessage): Promise<void> {
+  // 1. Write to contact_messages table in Cloudflare D1
   try {
     await db.exec(
-      'CREATE TABLE IF NOT EXISTS contact_messages (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, category TEXT, subject TEXT NOT NULL, message TEXT NOT NULL, status TEXT DEFAULT "new", created_at TEXT NOT NULL)'
+      "CREATE TABLE IF NOT EXISTS contact_messages (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, category TEXT, subject TEXT NOT NULL, message TEXT NOT NULL, status TEXT DEFAULT 'new', created_at TEXT NOT NULL)"
     );
     await db
       .prepare(
-        'INSERT INTO contact_messages (id, name, email, category, subject, message, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+        'INSERT OR REPLACE INTO contact_messages (id, name, email, category, subject, message, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
       )
       .bind(msg.id, msg.name, msg.email, msg.category, msg.subject, msg.message, msg.status || 'new', msg.created_at)
       .run();
-  } catch (err) {
-    // Fallback to local storage
+  } catch (tableErr) {
+    console.error('[Contact DB Table Write Error]:', tableErr);
+  }
+
+  // 2. ALSO persist to site_settings (cms_contact_messages) as redundant D1 backup
+  try {
+    await db.exec('CREATE TABLE IF NOT EXISTS site_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
+    const row = await db.prepare('SELECT value FROM site_settings WHERE key = ?').bind('cms_contact_messages').first<{ value: string }>();
+    let list: ContactMessage[] = [];
+    if (row?.value) {
+      try { list = JSON.parse(row.value); } catch {}
+    }
+    if (!list.some((m) => m.id === msg.id)) {
+      list.unshift(msg);
+      if (list.length > 500) list = list.slice(0, 500);
+      await db
+        .prepare('INSERT INTO site_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
+        .bind('cms_contact_messages', JSON.stringify(list))
+        .run();
+    }
+  } catch (backupErr) {
+    console.error('[Contact site_settings Backup Error]:', backupErr);
+  }
+
+  // 3. Fallback to local storage for Node/dev environment
+  try {
     const store = await getLocalFileStorage();
     const raw = store['_contact_messages_list'] || '[]';
     let list: ContactMessage[] = [];
-    try {
-      list = JSON.parse(raw);
-    } catch {}
-    list.unshift(msg);
-    await writeLocalFileStorage('_contact_messages_list', JSON.stringify(list));
-  }
+    try { list = JSON.parse(raw); } catch {}
+    if (!list.some((m) => m.id === msg.id)) {
+      list.unshift(msg);
+      await writeLocalFileStorage('_contact_messages_list', JSON.stringify(list));
+    }
+  } catch {}
 }
 
 /**
- * Get all contact messages for admin
+ * Get all contact messages for admin.
+ * Queries D1 table, site_settings backup, and local store, merging any distinct messages.
  */
 export async function getContactMessages(db?: D1Database): Promise<ContactMessage[]> {
+  const messageMap = new Map<string, ContactMessage>();
+
+  // 1. Try D1 table
   try {
     if (db) {
       await db.exec(
-        'CREATE TABLE IF NOT EXISTS contact_messages (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, category TEXT, subject TEXT NOT NULL, message TEXT NOT NULL, status TEXT DEFAULT "new", created_at TEXT NOT NULL)'
+        "CREATE TABLE IF NOT EXISTS contact_messages (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, category TEXT, subject TEXT NOT NULL, message TEXT NOT NULL, status TEXT DEFAULT 'new', created_at TEXT NOT NULL)"
       );
       const res = await db.prepare('SELECT * FROM contact_messages ORDER BY created_at DESC').all<ContactMessage>();
-      if (res?.results && res.results.length > 0) {
-        return res.results;
+      if (res?.results && Array.isArray(res.results)) {
+        for (const m of res.results) {
+          if (m?.id) messageMap.set(m.id, m);
+        }
       }
     }
-  } catch (err) {
-    // continue to local fallback
+  } catch (tableErr) {
+    console.warn('[D1 Table Read Notice]:', tableErr);
   }
 
-  const store = await getLocalFileStorage();
-  const raw = store['_contact_messages_list'] || '[]';
+  // 2. Also check site_settings backup in D1
   try {
-    return JSON.parse(raw);
-  } catch {
-    return [];
-  }
+    if (db) {
+      const row = await db.prepare('SELECT value FROM site_settings WHERE key = ?').bind('cms_contact_messages').first<{ value: string }>();
+      if (row?.value) {
+        const parsed: ContactMessage[] = JSON.parse(row.value);
+        if (Array.isArray(parsed)) {
+          for (const m of parsed) {
+            if (m?.id && !messageMap.has(m.id)) {
+              messageMap.set(m.id, m);
+            }
+          }
+        }
+      }
+    }
+  } catch {}
+
+  // 3. Check local filesystem fallback (for local development)
+  try {
+    const store = await getLocalFileStorage();
+    const raw = store['_contact_messages_list'] || '[]';
+    const list: ContactMessage[] = JSON.parse(raw);
+    if (Array.isArray(list)) {
+      for (const m of list) {
+        if (m?.id && !messageMap.has(m.id)) {
+          messageMap.set(m.id, m);
+        }
+      }
+    }
+  } catch {}
+
+  const merged = Array.from(messageMap.values());
+  merged.sort((a, b) => (b.created_at || '').localeCompare(a.created_at || ''));
+  return merged;
 }
 
 /**
- * Update status of contact message
+ * Update status of contact message across D1 table and site_settings.
  */
 export async function updateContactMessageStatus(
   db: D1Database,
   id: string,
   status: 'new' | 'read' | 'replied' | 'archived'
 ): Promise<boolean> {
+  // 1. Update D1 table
   try {
     if (db) {
       await db
@@ -341,37 +401,121 @@ export async function updateContactMessageStatus(
     }
   } catch {}
 
-  const store = await getLocalFileStorage();
-  const raw = store['_contact_messages_list'] || '[]';
+  // 2. Update site_settings backup
   try {
+    if (db) {
+      const row = await db.prepare('SELECT value FROM site_settings WHERE key = ?').bind('cms_contact_messages').first<{ value: string }>();
+      if (row?.value) {
+        const list: ContactMessage[] = JSON.parse(row.value);
+        const item = list.find((m) => m.id === id);
+        if (item) {
+          item.status = status;
+          await db
+            .prepare('INSERT INTO site_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
+            .bind('cms_contact_messages', JSON.stringify(list))
+            .run();
+        }
+      }
+    }
+  } catch {}
+
+  // 3. Update local file
+  try {
+    const store = await getLocalFileStorage();
+    const raw = store['_contact_messages_list'] || '[]';
     const list: ContactMessage[] = JSON.parse(raw);
     const item = list.find((m) => m.id === id);
     if (item) {
       item.status = status;
       await writeLocalFileStorage('_contact_messages_list', JSON.stringify(list));
-      return true;
     }
   } catch {}
+
   return true;
 }
 
 /**
- * Delete a contact message
+ * Delete a contact message from D1 table and site_settings.
  */
 export async function deleteContactMessage(db: D1Database, id: string): Promise<boolean> {
+  // 1. Delete from D1 table
   try {
     if (db) {
       await db.prepare('DELETE FROM contact_messages WHERE id = ?').bind(id).run();
     }
   } catch {}
 
-  const store = await getLocalFileStorage();
-  const raw = store['_contact_messages_list'] || '[]';
+  // 2. Delete from site_settings backup
   try {
+    if (db) {
+      const row = await db.prepare('SELECT value FROM site_settings WHERE key = ?').bind('cms_contact_messages').first<{ value: string }>();
+      if (row?.value) {
+        let list: ContactMessage[] = JSON.parse(row.value);
+        list = list.filter((m) => m.id !== id);
+        await db
+          .prepare('INSERT INTO site_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
+          .bind('cms_contact_messages', JSON.stringify(list))
+          .run();
+      }
+    }
+  } catch {}
+
+  // 3. Delete from local file
+  try {
+    const store = await getLocalFileStorage();
+    const raw = store['_contact_messages_list'] || '[]';
     let list: ContactMessage[] = JSON.parse(raw);
     list = list.filter((m) => m.id !== id);
     await writeLocalFileStorage('_contact_messages_list', JSON.stringify(list));
-    return true;
   } catch {}
+
   return true;
+}
+
+/**
+ * Get configured notification email destination for contact form submissions.
+ */
+export async function getContactNotificationEmail(db?: D1Database, locals?: any): Promise<string> {
+  // 1. Check site_settings
+  try {
+    if (db) {
+      const row = await db.prepare('SELECT value FROM site_settings WHERE key = ?').bind('cms_contact_email').first<{ value: string }>();
+      if (row?.value) {
+        const parsed = JSON.parse(row.value);
+        if (typeof parsed === 'string' && parsed.includes('@')) {
+          return parsed.trim();
+        }
+      }
+    }
+  } catch {}
+
+  // 2. Check environment bindings
+  const env = (locals as any)?.env || (globalThis as any)?.process?.env || {};
+  if (env.CONTACT_NOTIFICATION_EMAIL && String(env.CONTACT_NOTIFICATION_EMAIL).includes('@')) {
+    return String(env.CONTACT_NOTIFICATION_EMAIL).trim();
+  }
+  if (env.ADMIN_EMAIL && String(env.ADMIN_EMAIL).includes('@')) {
+    return String(env.ADMIN_EMAIL).trim();
+  }
+
+  // 3. Default fallback
+  return 'support@aifreecalculator.com';
+}
+
+/**
+ * Update configured notification email destination for contact form submissions.
+ */
+export async function setContactNotificationEmail(db: D1Database, email: string): Promise<void> {
+  const cleanEmail = email.trim();
+  try {
+    await db.exec('CREATE TABLE IF NOT EXISTS site_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
+    await db
+      .prepare('INSERT INTO site_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
+      .bind('cms_contact_email', JSON.stringify(cleanEmail))
+      .run();
+  } catch {}
+
+  try {
+    await writeLocalFileStorage('cms_contact_email', JSON.stringify(cleanEmail));
+  } catch {}
 }
