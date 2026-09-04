@@ -238,4 +238,60 @@ const categoryPath = `/${category.toLowerCase()}/`;
   <div class="mx-auto max-w-7xl px-4">
     <AdSlotFooter />
   </div>
+
+  <!-- Client-side Calculator Error & Anomaly Telemetry -->
+  <script is:inline define:vars={{ slug }}>
+    (function() {
+      if (typeof window === 'undefined') return;
+
+      // Listen for uncaught calculation errors on the calculator page
+      window.addEventListener('error', function(event) {
+        if (!event || !event.message) return;
+        var msg = String(event.message || '');
+        // Filter out harmless browser noise, ad blockers, and third-party widgets
+        if (
+          msg.includes('ResizeObserver') ||
+          msg.includes('Script error') ||
+          msg.includes('adsbygoogle') ||
+          msg.includes('extension')
+        ) {
+          return;
+        }
+
+        try {
+          var payload = JSON.stringify({
+            calculatorSlug: slug,
+            errorType: event.error && event.error.name ? event.error.name : 'UncaughtException',
+            errorMessage: msg.slice(0, 300),
+            url: window.location.pathname
+          });
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon('/api/calculator-error-log', payload);
+          } else {
+            fetch('/api/calculator-error-log', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: payload,
+              keepalive: true
+            }).catch(function() {});
+          }
+        } catch (e) {}
+      });
+
+      // Global hook for calculator script handlers to report NaN / Infinite results
+      window.__reportCalculatorAnomaly = function(type, details) {
+        try {
+          var payload = JSON.stringify({
+            calculatorSlug: slug,
+            errorType: type || 'CalculationAnomaly',
+            errorMessage: typeof details === 'string' ? details.slice(0, 300) : JSON.stringify(details).slice(0, 300),
+            url: window.location.pathname
+          });
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon('/api/calculator-error-log', payload);
+          }
+        } catch (e) {}
+      };
+    })();
+  </script>
 </BaseLayout>

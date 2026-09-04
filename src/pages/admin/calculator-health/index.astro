@@ -1,0 +1,480 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { getCalculatorHealthSummaries, getTestRunHistory } from '../../../lib/calculator-tests/health-store';
+import { getTestedSlugs } from '../../../lib/calculator-tests/test-cases';
+
+const healthSummaries = await getCalculatorHealthSummaries(Astro.locals);
+const runHistory = await getTestRunHistory(Astro.locals);
+const latestRun = runHistory[0] || null;
+const testedSlugs = getTestedSlugs();
+
+const total = healthSummaries.length;
+const healthyCount = healthSummaries.filter((s) => s.healthStatus === 'Healthy').length;
+const reviewCount = healthSummaries.filter((s) => s.healthStatus === 'Needs Review').length;
+const criticalCount = healthSummaries.filter((s) => s.healthStatus === 'Critical').length;
+const unknownCount = healthSummaries.filter((s) => s.healthStatus === 'Unknown').length;
+const totalErrors = healthSummaries.reduce((sum, s) => sum + s.unreviewedErrors, 0);
+
+const passRate = total > 0 ? Math.round((healthyCount / total) * 100) : 0;
+---
+
+<AdminLayout title="Calculator Reliability & Health Monitor | Calculator CMS" sectionTitle="Calculator Health" activeSection="calculator-health">
+  <div class="space-y-8 max-w-7xl mx-auto pb-12">
+
+    <!-- Top Action Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
+      <div>
+        <div class="flex items-center gap-2">
+          <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            Calculator Reliability &amp; Health Monitor
+          </h2>
+          <span class="rounded-full bg-blue-100 dark:bg-blue-950 px-2.5 py-0.5 text-xs font-bold text-blue-700 dark:text-blue-300">
+            {total} Calculators
+          </span>
+        </div>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Automated regression testing, edge case verification, NaN/Infinity detection, and runtime exception monitoring.
+        </p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <button
+          id="run-all-tests-btn"
+          type="button"
+          class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <span id="btn-icon">⚡</span>
+          <span id="btn-text">Run All Health Tests</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Freshness Notification Banner -->
+    <div class="rounded-2xl border border-slate-200/90 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-900/60 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+      <div class="flex items-center gap-2.5 text-slate-600 dark:text-slate-300">
+        <span class="text-base">🕒</span>
+        <div>
+          <span class="font-bold text-slate-800 dark:text-slate-100">Audit Freshness:</span>{' '}
+          {latestRun ? (
+            <span>
+              Last comprehensive test run executed{' '}
+              <strong class="font-mono">{new Date(latestRun.completed_at || latestRun.started_at).toLocaleString()}</strong>
+              {' '}({latestRun.total_tests} test cases executed, {latestRun.passed} passed).
+            </span>
+          ) : (
+            <span class="text-amber-700 dark:text-amber-400 font-medium">
+              No full test suite execution recorded yet. Click <strong>"Run All Health Tests"</strong> above to establish initial baseline data.
+            </span>
+          )}
+        </div>
+      </div>
+      <div class="text-[11px] text-slate-400 shrink-0">
+        Data stored in Cloudflare D1
+      </div>
+    </div>
+
+    <!-- Sub-Navigation Bar -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 dark:border-slate-800">
+      <a href="/admin/calculator-health/" class="rounded-xl bg-blue-50 px-3.5 py-1.5 text-xs font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300 shrink-0">
+        🛡️ Health Overview
+      </a>
+      <a href="/admin/calculator-health/tests/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        🧪 Test Suite ({testedSlugs.length} Covered)
+      </a>
+      <a href="/admin/calculator-health/errors/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition flex items-center gap-1.5">
+        <span>⚠️ Runtime Errors</span>
+        {totalErrors > 0 && (
+          <span class="rounded-full bg-red-100 dark:bg-red-950 px-1.5 py-0.2 text-[10px] font-extrabold text-red-600 dark:text-red-300">
+            {totalErrors}
+          </span>
+        )}
+      </a>
+    </div>
+
+    <!-- Summary Metrics Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Health Rate</div>
+        <div class="mt-2 text-3xl font-black text-slate-900 dark:text-white">{passRate}%</div>
+        <div class="mt-1 text-[11px] text-emerald-600 font-bold">{healthyCount} / {total} Healthy</div>
+      </div>
+
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Optimal / Healthy</div>
+        <div class="mt-2 text-3xl font-black text-emerald-600 dark:text-emerald-400">{healthyCount}</div>
+        <div class="mt-1 text-[11px] text-slate-400">All tests passing</div>
+      </div>
+
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Needs Review</div>
+        <div class="mt-2 text-3xl font-black text-amber-600 dark:text-amber-400">{reviewCount}</div>
+        <div class="mt-1 text-[11px] text-slate-400">Failed tests or errors</div>
+      </div>
+
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Critical / Broken</div>
+        <div class="mt-2 text-3xl font-black text-red-600 dark:text-red-400">{criticalCount}</div>
+        <div class="mt-1 text-[11px] text-slate-400">Throws exception</div>
+      </div>
+
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Untested</div>
+        <div class="mt-2 text-3xl font-black text-slate-500 dark:text-slate-400">{unknownCount}</div>
+        <div class="mt-1 text-[11px] text-slate-400">Awaiting test suite</div>
+      </div>
+    </div>
+
+    <!-- Filters & Search Toolbar -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mr-1">Status:</span>
+        <button type="button" class="filter-status-btn active px-3 py-1 rounded-xl text-xs font-bold transition bg-blue-600 text-white" data-status="all">
+          All ({total})
+        </button>
+        <button type="button" class="filter-status-btn px-3 py-1 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200" data-status="Healthy">
+          Healthy ({healthyCount})
+        </button>
+        <button type="button" class="filter-status-btn px-3 py-1 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200" data-status="Needs Review">
+          Needs Review ({reviewCount})
+        </button>
+        <button type="button" class="filter-status-btn px-3 py-1 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200" data-status="Critical">
+          Critical ({criticalCount})
+        </button>
+        <button type="button" class="filter-status-btn px-3 py-1 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200" data-status="Unknown">
+          Untested ({unknownCount})
+        </button>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <select id="category-filter" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+          <option value="all">All Categories</option>
+          <option value="Finance">Finance</option>
+          <option value="Health">Health</option>
+          <option value="Construction">Construction</option>
+          <option value="Math">Math</option>
+          <option value="General">General</option>
+        </select>
+
+        <input
+          type="search"
+          id="search-input"
+          placeholder="Filter calculators..."
+          class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 w-44 sm:w-56"
+        />
+      </div>
+    </div>
+
+    <!-- Health Diagnostics Table (Desktop) -->
+    <div class="hidden md:block rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-slate-50/80 dark:bg-slate-950/60 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider border-b border-slate-100 dark:border-slate-800">
+          <tr>
+            <th class="py-3.5 px-4">Calculator</th>
+            <th class="py-3.5 px-4">Category</th>
+            <th class="py-3.5 px-4">Health Status</th>
+            <th class="py-3.5 px-4">Test Cases</th>
+            <th class="py-3.5 px-4">Runtime Errors</th>
+            <th class="py-3.5 px-4">Last Verified</th>
+            <th class="py-3.5 px-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="calc-table-body" class="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+          {healthSummaries.map((item) => (
+            <tr
+              class="calc-row hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition"
+              data-slug={item.slug}
+              data-name={item.name.toLowerCase()}
+              data-category={item.category}
+              data-status={item.healthStatus}
+            >
+              <td class="py-3.5 px-4">
+                <div class="flex items-center gap-2.5">
+                  <span class="text-lg shrink-0">{item.icon || '🧮'}</span>
+                  <div>
+                    <a href={`/admin/calculator-health/${item.slug}/`} class="font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition">
+                      {item.name}
+                    </a>
+                    <div class="text-[10px] font-mono text-slate-400">/{item.slug}/</div>
+                  </div>
+                </div>
+              </td>
+
+              <td class="py-3.5 px-4">
+                <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                  {item.category}
+                </span>
+              </td>
+
+              <td class="py-3.5 px-4">
+                {item.healthStatus === 'Healthy' && (
+                  <span class="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-black text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Healthy
+                  </span>
+                )}
+                {item.healthStatus === 'Needs Review' && (
+                  <span class="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-black text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                    <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span> Needs Review
+                  </span>
+                )}
+                {item.healthStatus === 'Critical' && (
+                  <span class="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-2.5 py-0.5 text-[11px] font-black text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
+                    <span class="h-1.5 w-1.5 rounded-full bg-red-500"></span> Critical
+                  </span>
+                )}
+                {item.healthStatus === 'Unknown' && (
+                  <span class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[11px] font-black text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                    <span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span> Untested
+                  </span>
+                )}
+              </td>
+
+              <td class="py-3.5 px-4">
+                {item.testTotal !== undefined ? (
+                  <div class="font-mono text-xs">
+                    <span class={item.testPassed === item.testTotal ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-amber-600 dark:text-amber-400 font-bold'}>
+                      {item.testPassed}/{item.testTotal}
+                    </span>
+                    <span class="text-slate-400 text-[10px] ml-1">passed</span>
+                  </div>
+                ) : (
+                  <span class="text-slate-400 italic text-[11px]">No tests</span>
+                )}
+              </td>
+
+              <td class="py-3.5 px-4">
+                {item.unreviewedErrors > 0 ? (
+                  <span class="inline-flex items-center gap-1 font-bold text-red-600 dark:text-red-400 font-mono">
+                    <span>⚠️</span> {item.unreviewedErrors}
+                  </span>
+                ) : (
+                  <span class="text-slate-400 font-mono text-[11px]">0</span>
+                )}
+              </td>
+
+              <td class="py-3.5 px-4 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
+                {item.lastTestedAt ? new Date(item.lastTestedAt).toLocaleDateString() : 'Never'}
+              </td>
+
+              <td class="py-3.5 px-4 text-right">
+                <div class="inline-flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    class="run-single-test-btn rounded-lg bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-600 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300 transition cursor-pointer"
+                    data-slug={item.slug}
+                  >
+                    Test ⚡
+                  </button>
+                  <a
+                    href={`/admin/calculator-health/${item.slug}/`}
+                    class="rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition"
+                  >
+                    Details →
+                  </a>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Mobile Stacked Card View -->
+    <div id="calc-mobile-list" class="md:hidden space-y-3">
+      {healthSummaries.map((item) => (
+        <div
+          class="calc-card rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-3"
+          data-slug={item.slug}
+          data-name={item.name.toLowerCase()}
+          data-category={item.category}
+          data-status={item.healthStatus}
+        >
+          <div class="flex items-start justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">{item.icon || '🧮'}</span>
+              <div>
+                <a href={`/admin/calculator-health/${item.slug}/`} class="font-bold text-xs text-slate-900 dark:text-white">
+                  {item.name}
+                </a>
+                <div class="text-[10px] text-slate-400 font-mono">/{item.slug}/</div>
+              </div>
+            </div>
+            <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              {item.category}
+            </span>
+          </div>
+
+          <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-100 dark:border-slate-800">
+            <div>
+              Status:{' '}
+              <strong class={
+                item.healthStatus === 'Healthy' ? 'text-emerald-600 dark:text-emerald-400' :
+                item.healthStatus === 'Needs Review' ? 'text-amber-600 dark:text-amber-400' :
+                item.healthStatus === 'Critical' ? 'text-red-600 dark:text-red-400' : 'text-slate-400'
+              }>
+                {item.healthStatus}
+              </strong>
+            </div>
+            <div class="font-mono text-[11px]">
+              {item.testTotal !== undefined ? `${item.testPassed}/${item.testTotal} passed` : 'Untested'}
+            </div>
+          </div>
+
+          <div class="flex items-center justify-end gap-2 pt-1">
+            <button
+              type="button"
+              class="run-single-test-btn rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-600 dark:bg-blue-950 dark:text-blue-300"
+              data-slug={item.slug}
+            >
+              Test ⚡
+            </button>
+            <a
+              href={`/admin/calculator-health/${item.slug}/`}
+              class="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            >
+              Details →
+            </a>
+          </div>
+        </div>
+      ))}
+    </div>
+
+  </div>
+</AdminLayout>
+
+<script>
+  // 1. Run All Tests
+  const runAllBtn = document.getElementById('run-all-tests-btn') as HTMLButtonElement | null;
+  const btnIcon = document.getElementById('btn-icon');
+  const btnText = document.getElementById('btn-text');
+
+  if (runAllBtn) {
+    runAllBtn.addEventListener('click', async () => {
+      if (runAllBtn.disabled) return;
+      runAllBtn.disabled = true;
+      if (btnIcon) btnIcon.textContent = '⏳';
+      if (btnText) btnText.textContent = 'Running All Tests...';
+
+      try {
+        const res = await fetch('/api/admin/calculator-health/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (btnIcon) btnIcon.textContent = '✓';
+          if (btnText) btnText.textContent = `Completed (${data.passed}/${data.totalTests} passed)`;
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        } else {
+          alert('Failed to execute test run. Please verify admin session.');
+          runAllBtn.disabled = false;
+          if (btnIcon) btnIcon.textContent = '⚡';
+          if (btnText) btnText.textContent = 'Run All Health Tests';
+        }
+      } catch (err) {
+        alert('Error connecting to test runner API.');
+        runAllBtn.disabled = false;
+        if (btnIcon) btnIcon.textContent = '⚡';
+        if (btnText) btnText.textContent = 'Run All Health Tests';
+      }
+    });
+  }
+
+  // 2. Run Single Calculator Test
+  document.querySelectorAll<HTMLButtonElement>('.run-single-test-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const slug = btn.getAttribute('data-slug');
+      if (!slug || btn.disabled) return;
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = '⏳...';
+
+      try {
+        const res = await fetch(`/api/admin/calculator-health/run/${slug}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          btn.textContent = data.state === 'PASS' ? '✓ Passed' : '⚠️ Checked';
+          setTimeout(() => {
+            window.location.reload();
+          }, 800);
+        } else {
+          btn.textContent = 'Failed';
+          setTimeout(() => {
+            btn.textContent = originalText;
+            btn.disabled = false;
+          }, 1500);
+        }
+      } catch {
+        btn.textContent = 'Error';
+        setTimeout(() => {
+          btn.textContent = originalText;
+          btn.disabled = false;
+        }, 1500);
+      }
+    });
+  });
+
+  // 3. Client-side Filters
+  let activeStatus = 'all';
+  let activeCategory = 'all';
+  let searchQuery = '';
+
+  const statusBtns = document.querySelectorAll<HTMLButtonElement>('.filter-status-btn');
+  const categorySelect = document.getElementById('category-filter') as HTMLSelectElement | null;
+  const searchInput = document.getElementById('search-input') as HTMLInputElement | null;
+
+  function applyFilters() {
+    const rows = document.querySelectorAll<HTMLElement>('.calc-row, .calc-card');
+    rows.forEach((row) => {
+      const status = row.getAttribute('data-status') || '';
+      const category = row.getAttribute('data-category') || '';
+      const name = row.getAttribute('data-name') || '';
+      const slug = row.getAttribute('data-slug') || '';
+
+      const matchStatus = activeStatus === 'all' || status === activeStatus;
+      const matchCategory = activeCategory === 'all' || category === activeCategory;
+      const matchSearch =
+        !searchQuery ||
+        name.includes(searchQuery) ||
+        slug.includes(searchQuery);
+
+      if (matchStatus && matchCategory && matchSearch) {
+        row.style.display = '';
+      } else {
+        row.style.display = 'none';
+      }
+    });
+  }
+
+  statusBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      statusBtns.forEach((b) => {
+        b.classList.remove('bg-blue-600', 'text-white');
+        b.classList.add('bg-slate-100', 'text-slate-700', 'dark:bg-slate-800', 'dark:text-slate-300');
+      });
+      btn.classList.remove('bg-slate-100', 'text-slate-700', 'dark:bg-slate-800', 'dark:text-slate-300');
+      btn.classList.add('bg-blue-600', 'text-white');
+      activeStatus = btn.getAttribute('data-status') || 'all';
+      applyFilters();
+    });
+  });
+
+  if (categorySelect) {
+    categorySelect.addEventListener('change', () => {
+      activeCategory = categorySelect.value;
+      applyFilters();
+    });
+  }
+
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      searchQuery = searchInput.value.trim().toLowerCase();
+      applyFilters();
+    });
+  }
+</script>

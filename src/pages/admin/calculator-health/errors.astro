@@ -1,0 +1,283 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { getErrorLog } from '../../../lib/calculator-tests/health-store';
+import { calculators } from '../../../data/calculators';
+
+const errors = await getErrorLog(Astro.locals, { limit: 200 });
+
+const totalErrors = errors.length;
+const unreviewedErrors = errors.filter((e) => !e.reviewed);
+const reviewedErrors = errors.filter((e) => e.reviewed);
+
+const enrichedErrors = errors.map((err) => {
+  const calc = calculators.find((c) => c.slug === err.calculator_slug);
+  return {
+    ...err,
+    calcName: calc ? calc.name : err.calculator_slug,
+    calcCategory: calc ? calc.category : 'General',
+    calcIcon: calc ? calc.icon : '🧮',
+  };
+});
+---
+
+<AdminLayout title="Calculator Runtime Errors | Calculator CMS" sectionTitle="Runtime Errors" activeSection="calculator-health">
+  <div class="space-y-8 max-w-7xl mx-auto pb-12">
+
+    <!-- Top Action Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
+      <div>
+        <div class="flex items-center gap-2">
+          <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            Runtime Error Monitoring
+          </h2>
+          {unreviewedErrors.length > 0 ? (
+            <span class="rounded-full bg-red-100 dark:bg-red-950 px-2.5 py-0.5 text-xs font-bold text-red-700 dark:text-red-300">
+              {unreviewedErrors.length} Unreviewed
+            </span>
+          ) : (
+            <span class="rounded-full bg-emerald-100 dark:bg-emerald-950 px-2.5 py-0.5 text-xs font-bold text-emerald-700 dark:text-emerald-300">
+              0 Active Errors
+            </span>
+          )}
+        </div>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Real client calculation exceptions, unhandled crashes, and NaN/Infinity output incidents reported from live visits.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a
+          href="/admin/calculator-health/"
+          class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition"
+        >
+          <span>🛡️</span> Health Dashboard
+        </a>
+      </div>
+    </div>
+
+    <!-- Sub-Navigation Bar -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 dark:border-slate-800">
+      <a href="/admin/calculator-health/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        🛡️ Health Overview
+      </a>
+      <a href="/admin/calculator-health/tests/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        🧪 Test Suite
+      </a>
+      <a href="/admin/calculator-health/errors/" class="rounded-xl bg-blue-50 px-3.5 py-1.5 text-xs font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300 shrink-0">
+        ⚠️ Runtime Errors ({unreviewedErrors.length})
+      </a>
+    </div>
+
+    <!-- Error KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Total Recorded Errors</div>
+        <div class="mt-2 text-3xl font-black text-slate-900 dark:text-white">{totalErrors}</div>
+        <div class="mt-1 text-[11px] text-slate-400">Aggregated incidents in D1</div>
+      </div>
+
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Unreviewed / Actionable</div>
+        <div class="mt-2 text-3xl font-black text-red-600 dark:text-red-400">{unreviewedErrors.length}</div>
+        <div class="mt-1 text-[11px] text-slate-400">Needs developer review</div>
+      </div>
+
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Reviewed &amp; Archived</div>
+        <div class="mt-2 text-3xl font-black text-emerald-600 dark:text-emerald-400">{reviewedErrors.length}</div>
+        <div class="mt-1 text-[11px] text-slate-400">Marked as resolved / inspected</div>
+      </div>
+    </div>
+
+    <!-- Error Filters Toolbar -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div class="flex items-center gap-2">
+        <button type="button" class="err-filter-btn active px-3 py-1 rounded-xl text-xs font-bold transition bg-blue-600 text-white" data-filter="all">
+          All ({totalErrors})
+        </button>
+        <button type="button" class="err-filter-btn px-3 py-1 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200" data-filter="unreviewed">
+          Unreviewed ({unreviewedErrors.length})
+        </button>
+        <button type="button" class="err-filter-btn px-3 py-1 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200" data-filter="reviewed">
+          Reviewed ({reviewedErrors.length})
+        </button>
+      </div>
+
+      <input
+        type="search"
+        id="search-error-input"
+        placeholder="Filter by calculator or error..."
+        class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 w-full sm:w-64"
+      />
+    </div>
+
+    <!-- Error Log Table -->
+    <div class="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      {enrichedErrors.length === 0 ? (
+        <div class="py-16 text-center text-slate-400 dark:text-slate-500 text-xs">
+          <span class="text-4xl block mb-2">🎉</span>
+          <div class="font-bold text-sm text-slate-800 dark:text-slate-200">No Runtime Errors Logged</div>
+          <p class="mt-1 max-w-sm mx-auto text-slate-400">
+            Calculators are running smoothly in user browsers with zero exceptions reported.
+          </p>
+        </div>
+      ) : (
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50/80 dark:bg-slate-950/60 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider border-b border-slate-100 dark:border-slate-800">
+            <tr>
+              <th class="py-3.5 px-4">Calculator</th>
+              <th class="py-3.5 px-4">Error Type</th>
+              <th class="py-3.5 px-4">Message / Detail</th>
+              <th class="py-3.5 px-4 text-center">Occurrences</th>
+              <th class="py-3.5 px-4">Last Seen</th>
+              <th class="py-3.5 px-4">Status</th>
+              <th class="py-3.5 px-4 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody id="error-table-body" class="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+            {enrichedErrors.map((err) => (
+              <tr
+                class="error-row hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition"
+                data-reviewed={err.reviewed ? 'true' : 'false'}
+                data-slug={err.calculator_slug}
+                data-message={(err.error_message || '').toLowerCase()}
+              >
+                <td class="py-3.5 px-4">
+                  <div class="flex items-center gap-2">
+                    <span>{err.calcIcon}</span>
+                    <div>
+                      <a href={`/admin/calculator-health/${err.calculator_slug}/`} class="font-bold text-slate-900 dark:text-white hover:text-blue-600 transition">
+                        {err.calcName}
+                      </a>
+                      <div class="text-[10px] text-slate-400 font-mono">/{err.calculator_slug}/</div>
+                    </div>
+                  </div>
+                </td>
+
+                <td class="py-3.5 px-4">
+                  <span class="rounded-md bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-700 dark:bg-red-950 dark:text-red-300 font-mono">
+                    {err.error_type}
+                  </span>
+                </td>
+
+                <td class="py-3.5 px-4">
+                  <div class="font-mono text-xs text-slate-700 dark:text-slate-200 line-clamp-2 max-w-md">
+                    {err.error_message || 'No additional message details provided'}
+                  </div>
+                </td>
+
+                <td class="py-3.5 px-4 text-center font-mono font-bold text-slate-800 dark:text-slate-200">
+                  {err.occurrences}
+                </td>
+
+                <td class="py-3.5 px-4 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
+                  {new Date(err.last_seen).toLocaleString()}
+                </td>
+
+                <td class="py-3.5 px-4">
+                  {err.reviewed ? (
+                    <span class="rounded-full bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
+                      Reviewed
+                    </span>
+                  ) : (
+                    <span class="rounded-full bg-amber-100 dark:bg-amber-950 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
+                      Unreviewed
+                    </span>
+                  )}
+                </td>
+
+                <td class="py-3.5 px-4 text-right">
+                  {!err.reviewed && (
+                    <button
+                      type="button"
+                      class="mark-reviewed-btn rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 px-2.5 py-1 text-[11px] font-bold text-slate-700 dark:text-slate-200 transition cursor-pointer"
+                      data-id={err.id}
+                    >
+                      Mark Reviewed
+                    </button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+
+  </div>
+</AdminLayout>
+
+<script>
+  // Mark error reviewed
+  document.querySelectorAll<HTMLButtonElement>('.mark-reviewed-btn').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const id = btn.getAttribute('data-id');
+      if (!id || btn.disabled) return;
+      btn.disabled = true;
+      btn.textContent = '...';
+
+      try {
+        const res = await fetch(`/api/admin/calculator-health/errors/${id}/review`, {
+          method: 'POST',
+        });
+        if (res.ok) {
+          btn.textContent = '✓ Done';
+          setTimeout(() => {
+            window.location.reload();
+          }, 500);
+        } else {
+          alert('Failed to update error status.');
+          btn.disabled = false;
+          btn.textContent = 'Mark Reviewed';
+        }
+      } catch {
+        alert('Network error.');
+        btn.disabled = false;
+        btn.textContent = 'Mark Reviewed';
+      }
+    });
+  });
+
+  // Filter
+  let activeFilter = 'all';
+  let searchQ = '';
+  const filterBtns = document.querySelectorAll<HTMLButtonElement>('.err-filter-btn');
+  const searchInput = document.getElementById('search-error-input') as HTMLInputElement | null;
+
+  function applyFilters() {
+    const rows = document.querySelectorAll<HTMLElement>('.error-row');
+    rows.forEach((row) => {
+      const isReviewed = row.getAttribute('data-reviewed') === 'true';
+      const slug = row.getAttribute('data-slug') || '';
+      const msg = row.getAttribute('data-message') || '';
+
+      let matchFilter = true;
+      if (activeFilter === 'unreviewed') matchFilter = !isReviewed;
+      if (activeFilter === 'reviewed') matchFilter = isReviewed;
+
+      const matchSearch = !searchQ || slug.includes(searchQ) || msg.includes(searchQ);
+
+      row.style.display = matchFilter && matchSearch ? '' : 'none';
+    });
+  }
+
+  filterBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach((b) => {
+        b.classList.remove('bg-blue-600', 'text-white');
+        b.classList.add('bg-slate-100', 'text-slate-700', 'dark:bg-slate-800', 'dark:text-slate-300');
+      });
+      btn.classList.remove('bg-slate-100', 'text-slate-700', 'dark:bg-slate-800', 'dark:text-slate-300');
+      btn.classList.add('bg-blue-600', 'text-white');
+      activeFilter = btn.getAttribute('data-filter') || 'all';
+      applyFilters();
+    });
+  });
+
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      searchQ = searchInput.value.trim().toLowerCase();
+      applyFilters();
+    });
+  }
+</script>

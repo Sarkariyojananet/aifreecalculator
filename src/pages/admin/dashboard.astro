@@ -6,6 +6,7 @@ import { calculators, categories } from '../../data/calculators';
 import { getCalculatorStats } from '../../lib/db';
 import { getFullSEOHealthSummary } from '../../lib/admin/seo-health';
 import { getSearchAnalytics } from '../../lib/admin/content-store';
+import { getCalculatorHealthSummaries, getTestRunHistory } from '../../lib/calculator-tests/health-store';
 
 const stats = await getCalculatorStats();
 const totalCalculators = calculators.length;
@@ -14,6 +15,13 @@ const featuredCount = calculators.filter((c) => c.featured).length;
 
 const seoSummary = getFullSEOHealthSummary();
 const searchLogs = await getSearchAnalytics(Astro.locals);
+const healthSummaries = await getCalculatorHealthSummaries(Astro.locals);
+const runHistory = await getTestRunHistory(Astro.locals);
+const latestTestRun = runHistory[0] || null;
+
+const healthyCalcsCount = healthSummaries.filter((s) => s.healthStatus === 'Healthy').length;
+const reviewCalcs = healthSummaries.filter((s) => s.healthStatus === 'Needs Review' || s.healthStatus === 'Critical');
+const unreviewedErrorsTotal = healthSummaries.reduce((acc, s) => acc + s.unreviewedErrors, 0);
 
 // Top Calculators
 const topCalculators = Object.entries(stats)
@@ -66,6 +74,12 @@ const attentionItems = seoSummary.audits
           class="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer"
         >
           <span>🩺</span> SEO Intelligence
+        </a>
+        <a
+          href="/admin/calculator-health/"
+          class="inline-flex items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50 px-3.5 py-2 text-xs font-bold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-900/60 dark:bg-indigo-950/60 dark:text-indigo-300 transition cursor-pointer"
+        >
+          <span>🛡️</span> Calculator Health
         </a>
       </div>
     </div>
@@ -257,6 +271,77 @@ const attentionItems = seoSummary.audits
             ))
           )}
         </div>
+
+        <!-- Calculator Reliability & Health Overview Widget -->
+        <div class="space-y-4 pt-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span>🛡️</span> Calculator Reliability
+              </h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Formula test passes &amp; unhandled exception monitoring
+              </p>
+            </div>
+            <a
+              href="/admin/calculator-health/"
+              class="text-xs font-bold text-indigo-600 hover:underline dark:text-indigo-400"
+            >
+              Monitor All →
+            </a>
+          </div>
+
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-3">
+            <div class="flex items-center justify-between text-xs pb-2 border-b border-slate-100 dark:border-slate-800">
+              <span class="text-slate-500 dark:text-slate-400">Pass Baseline:</span>
+              <span class="font-bold text-slate-900 dark:text-white">
+                {healthyCalcsCount} / {totalCalculators} Verified
+              </span>
+            </div>
+
+            {unreviewedErrorsTotal > 0 && (
+              <div class="rounded-2xl border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-950/40 flex items-center justify-between text-xs">
+                <span class="font-bold text-red-700 dark:text-red-300">
+                  ⚠️ {unreviewedErrorsTotal} Unreviewed Runtime Error{unreviewedErrorsTotal > 1 ? 's' : ''}
+                </span>
+                <a href="/admin/calculator-health/errors/" class="font-bold text-red-600 dark:text-red-400 underline">
+                  Review →
+                </a>
+              </div>
+            )}
+
+            {reviewCalcs.length > 0 ? (
+              <div class="space-y-2 pt-1">
+                {reviewCalcs.slice(0, 3).map((calc) => (
+                  <div class="flex items-center justify-between rounded-xl bg-slate-50/80 p-2.5 dark:bg-slate-950/40 text-xs">
+                    <span class="font-bold text-slate-800 dark:text-slate-200 truncate pr-2">
+                      {calc.name}
+                    </span>
+                    <a
+                      href={`/admin/calculator-health/${calc.slug}/`}
+                      class="text-[11px] font-bold text-blue-600 dark:text-blue-400 shrink-0"
+                    >
+                      Inspect →
+                    </a>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div class="py-2 text-center text-xs text-slate-500 dark:text-slate-400">
+                <span class="text-emerald-600 dark:text-emerald-400 font-bold">✓ Zero critical formula regressions</span>
+              </div>
+            )}
+
+            <div class="pt-2 text-[11px] text-slate-400 text-right">
+              {latestTestRun ? (
+                <span>Last run: {new Date(latestTestRun.completed_at || latestTestRun.started_at).toLocaleDateString()}</span>
+              ) : (
+                <span>No full test suite run recorded</span>
+              )}
+            </div>
+          </div>
+        </div>
+
       </div>
 
     </div>

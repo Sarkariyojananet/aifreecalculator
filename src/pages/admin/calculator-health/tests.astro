@@ -1,0 +1,323 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { ALL_TEST_CASES, getTestedSlugs } from '../../../lib/calculator-tests/test-cases';
+import { getLatestTestResults, getTestRunHistory } from '../../../lib/calculator-tests/health-store';
+import { calculators } from '../../../data/calculators';
+
+const testedSlugs = getTestedSlugs();
+const latestResults = await getLatestTestResults(Astro.locals);
+const runHistory = await getTestRunHistory(Astro.locals);
+const latestRun = runHistory[0] || null;
+
+const totalTests = ALL_TEST_CASES.length;
+const normalTests = ALL_TEST_CASES.filter((t) => t.category === 'Normal').length;
+const edgeTests = ALL_TEST_CASES.filter((t) => t.category === 'Edge Case').length;
+const boundaryTests = ALL_TEST_CASES.filter((t) => t.category === 'Boundary').length;
+const invalidTests = ALL_TEST_CASES.filter((t) => t.category === 'Invalid Input').length;
+
+// Map test cases with their latest execution results if available
+const enrichedTests = ALL_TEST_CASES.map((tc) => {
+  const calc = calculators.find((c) => c.slug === tc.slug);
+  const calcResults = latestResults?.[tc.slug]?.results;
+  const matchResult = calcResults?.find((r) => r.testName === tc.name);
+
+  return {
+    ...tc,
+    calcName: calc ? calc.name : tc.slug,
+    calcCategory: calc ? calc.category : 'General',
+    calcIcon: calc ? calc.icon : '🧮',
+    latestState: matchResult?.state || 'NOT_RUN',
+    durationMs: matchResult?.durationMs,
+    errorMessage: matchResult?.errorMessage,
+    actualValue: matchResult?.actualValue,
+    expectedValue: matchResult?.expectedValue,
+  };
+});
+---
+
+<AdminLayout title="Calculator Test Suite | Calculator CMS" sectionTitle="Test Suite" activeSection="calculator-health">
+  <div class="space-y-8 max-w-7xl mx-auto pb-12">
+
+    <!-- Top Action Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
+      <div>
+        <div class="flex items-center gap-2">
+          <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            Automated Test Suite
+          </h2>
+          <span class="rounded-full bg-blue-100 dark:bg-blue-950 px-2.5 py-0.5 text-xs font-bold text-blue-700 dark:text-blue-300">
+            {totalTests} Tests Across {testedSlugs.length} Calculators
+          </span>
+        </div>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Covers normal baseline calculations, extreme boundaries, zero/negative edge conditions, and invalid input protection.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button
+          id="run-tests-btn"
+          type="button"
+          class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition cursor-pointer disabled:opacity-50"
+        >
+          <span id="btn-icon">⚡</span>
+          <span id="btn-text">Execute All {totalTests} Tests</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Sub-Navigation Bar -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 dark:border-slate-800">
+      <a href="/admin/calculator-health/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        🛡️ Health Overview
+      </a>
+      <a href="/admin/calculator-health/tests/" class="rounded-xl bg-blue-50 px-3.5 py-1.5 text-xs font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300 shrink-0">
+        🧪 Test Suite ({testedSlugs.length} Covered)
+      </a>
+      <a href="/admin/calculator-health/errors/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        ⚠️ Runtime Errors
+      </a>
+    </div>
+
+    <!-- Test Category Breakdown Cards -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Normal Cases</div>
+        <div class="mt-2 text-3xl font-black text-slate-900 dark:text-white">{normalTests}</div>
+        <div class="mt-1 text-[11px] text-slate-400">Baseline accuracy benchmarks</div>
+      </div>
+
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Edge Cases</div>
+        <div class="mt-2 text-3xl font-black text-blue-600 dark:text-blue-400">{edgeTests}</div>
+        <div class="mt-1 text-[11px] text-slate-400">Zero, 100%, negative, decimals</div>
+      </div>
+
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Boundaries</div>
+        <div class="mt-2 text-3xl font-black text-purple-600 dark:text-purple-400">{boundaryTests}</div>
+        <div class="mt-1 text-[11px] text-slate-400">Maximum allowed values &amp; limits</div>
+      </div>
+
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Invalid Inputs</div>
+        <div class="mt-2 text-3xl font-black text-amber-600 dark:text-amber-400">{invalidTests}</div>
+        <div class="mt-1 text-[11px] text-slate-400">NaN / Division-by-zero defense</div>
+      </div>
+    </div>
+
+    <!-- Filters & Search Toolbar -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mr-1">Filter Type:</span>
+        <button type="button" class="test-filter-btn active px-3 py-1 rounded-xl text-xs font-bold transition bg-blue-600 text-white" data-type="all">
+          All ({totalTests})
+        </button>
+        <button type="button" class="test-filter-btn px-3 py-1 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200" data-type="Normal">
+          Normal
+        </button>
+        <button type="button" class="test-filter-btn px-3 py-1 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200" data-type="Edge Case">
+          Edge Case
+        </button>
+        <button type="button" class="test-filter-btn px-3 py-1 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200" data-type="Boundary">
+          Boundary
+        </button>
+        <button type="button" class="test-filter-btn px-3 py-1 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200" data-type="Invalid Input">
+          Invalid
+        </button>
+      </div>
+
+      <input
+        type="search"
+        id="search-test-input"
+        placeholder="Search test case or calculator..."
+        class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 w-full sm:w-64"
+      />
+    </div>
+
+    <!-- Test Cases Table -->
+    <div class="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <table class="w-full text-left text-xs">
+        <thead class="bg-slate-50/80 dark:bg-slate-950/60 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider border-b border-slate-100 dark:border-slate-800">
+          <tr>
+            <th class="py-3.5 px-4">Calculator</th>
+            <th class="py-3.5 px-4">Test Case</th>
+            <th class="py-3.5 px-4">Category</th>
+            <th class="py-3.5 px-4">Expected Behavior</th>
+            <th class="py-3.5 px-4">Status</th>
+            <th class="py-3.5 px-4 text-right">Duration</th>
+          </tr>
+        </thead>
+        <tbody id="test-table-body" class="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+          {enrichedTests.map((t) => (
+            <tr
+              class="test-row hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition"
+              data-type={t.category}
+              data-calc={t.calcName.toLowerCase()}
+              data-slug={t.slug}
+              data-name={t.name.toLowerCase()}
+            >
+              <td class="py-3 px-4">
+                <div class="flex items-center gap-2">
+                  <span>{t.calcIcon}</span>
+                  <div>
+                    <a href={`/admin/calculator-health/${t.slug}/`} class="font-bold text-slate-900 dark:text-white hover:text-blue-600 transition">
+                      {t.calcName}
+                    </a>
+                    <div class="text-[10px] text-slate-400 font-mono">/{t.slug}/</div>
+                  </div>
+                </div>
+              </td>
+
+              <td class="py-3 px-4">
+                <div class="font-semibold text-slate-800 dark:text-slate-200">{t.name}</div>
+                {t.errorMessage && (
+                  <div class="text-[11px] text-red-600 dark:text-red-400 font-mono mt-0.5">
+                    {t.errorMessage}
+                  </div>
+                )}
+              </td>
+
+              <td class="py-3 px-4">
+                <span class={
+                  t.category === 'Normal' ? 'rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300' :
+                  t.category === 'Edge Case' ? 'rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300' :
+                  t.category === 'Boundary' ? 'rounded-md bg-purple-50 px-2 py-0.5 text-[10px] font-bold text-purple-700 dark:bg-purple-950 dark:text-purple-300' :
+                  'rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-950 dark:text-amber-300'
+                }>
+                  {t.category}
+                </span>
+              </td>
+
+              <td class="py-3 px-4">
+                <div class="font-mono text-[11px] text-slate-600 dark:text-slate-300">
+                  {t.expectedBehavior === 'result' ? (
+                    <span>
+                      {t.expectedResultKey}:{' '}
+                      <strong>{t.expectedValue !== undefined ? String(t.expectedValue) : 'validated'}</strong>
+                      {t.tolerance ? ` (±${t.tolerance})` : ''}
+                    </span>
+                  ) : (
+                    <span class="text-amber-600 dark:text-amber-400">
+                      Expects Handled Error
+                    </span>
+                  )}
+                </div>
+              </td>
+
+              <td class="py-3 px-4">
+                {t.latestState === 'PASS' && (
+                  <span class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
+                    <span>✓</span> PASS
+                  </span>
+                )}
+                {t.latestState === 'FAIL' && (
+                  <span class="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold">
+                    <span>⚠️</span> FAIL
+                  </span>
+                )}
+                {t.latestState === 'ERROR' && (
+                  <span class="inline-flex items-center gap-1 text-red-600 dark:text-red-400 font-bold">
+                    <span>❌</span> ERROR
+                  </span>
+                )}
+                {t.latestState === 'NOT_RUN' && (
+                  <span class="text-slate-400 font-medium">Ready</span>
+                )}
+              </td>
+
+              <td class="py-3 px-4 text-right font-mono text-slate-400">
+                {t.durationMs !== undefined ? `${t.durationMs.toFixed(1)}ms` : '-'}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</AdminLayout>
+
+<script>
+  // Run tests button
+  const runBtn = document.getElementById('run-tests-btn') as HTMLButtonElement | null;
+  const btnIcon = document.getElementById('btn-icon');
+  const btnText = document.getElementById('btn-text');
+
+  if (runBtn) {
+    runBtn.addEventListener('click', async () => {
+      if (runBtn.disabled) return;
+      runBtn.disabled = true;
+      if (btnIcon) btnIcon.textContent = '⏳';
+      if (btnText) btnText.textContent = 'Running All Tests...';
+
+      try {
+        const res = await fetch('/api/admin/calculator-health/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (btnIcon) btnIcon.textContent = '✓';
+          if (btnText) btnText.textContent = `Completed (${data.passed}/${data.totalTests} passed)`;
+          setTimeout(() => {
+            window.location.reload();
+          }, 800);
+        } else {
+          alert('Failed to run test suite.');
+          runBtn.disabled = false;
+        }
+      } catch {
+        alert('Network error connecting to test runner.');
+        runBtn.disabled = false;
+      }
+    });
+  }
+
+  // Filtering
+  let activeType = 'all';
+  let searchQuery = '';
+
+  const filterBtns = document.querySelectorAll<HTMLButtonElement>('.test-filter-btn');
+  const searchInput = document.getElementById('search-test-input') as HTMLInputElement | null;
+
+  function applyFilters() {
+    const rows = document.querySelectorAll<HTMLElement>('.test-row');
+    rows.forEach((row) => {
+      const type = row.getAttribute('data-type') || '';
+      const calc = row.getAttribute('data-calc') || '';
+      const slug = row.getAttribute('data-slug') || '';
+      const name = row.getAttribute('data-name') || '';
+
+      const matchType = activeType === 'all' || type === activeType;
+      const matchSearch =
+        !searchQuery ||
+        name.includes(searchQuery) ||
+        calc.includes(searchQuery) ||
+        slug.includes(searchQuery);
+
+      row.style.display = matchType && matchSearch ? '' : 'none';
+    });
+  }
+
+  filterBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach((b) => {
+        b.classList.remove('bg-blue-600', 'text-white');
+        b.classList.add('bg-slate-100', 'text-slate-700', 'dark:bg-slate-800', 'dark:text-slate-300');
+      });
+      btn.classList.remove('bg-slate-100', 'text-slate-700', 'dark:bg-slate-800', 'dark:text-slate-300');
+      btn.classList.add('bg-blue-600', 'text-white');
+      activeType = btn.getAttribute('data-type') || 'all';
+      applyFilters();
+    });
+  });
+
+  if (searchInput) {
+    searchInput.addEventListener('input', () => {
+      searchQuery = searchInput.value.trim().toLowerCase();
+      applyFilters();
+    });
+  }
+</script>
