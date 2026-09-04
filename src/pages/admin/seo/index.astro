@@ -1,12 +1,27 @@
 ---
+export const prerender = false;
+
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { runFullSEOAudit } from '../../../lib/seo/audit-engine';
+import { authenticateAdminRequest } from '../../../lib/auth';
+
+const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
+if (!user) {
+  return Astro.redirect('/admin/barwalaoffice/');
+}
 
 const report = await runFullSEOAudit(Astro.locals);
 const auditGeneratedAt = new Date(report.timestamp).toLocaleString('en-IN', {
   dateStyle: 'medium',
   timeStyle: 'short',
 });
+
+// Category counts
+const titleCount = report.issues.filter((i) => i.category === 'title').length;
+const descCount = report.issues.filter((i) => i.category === 'description').length;
+const dupCount = report.issues.filter((i) => i.category === 'duplicate').length;
+const linkCount = report.issues.filter((i) => i.category === 'links').length;
+const canonicalCount = report.issues.filter((i) => i.category === 'canonical').length;
 ---
 
 <AdminLayout title="SEO Intelligence & Health Dashboard | Calculator CMS" sectionTitle="SEO Intelligence" activeSection="seo-health" badge={`${report.criticalCount + report.highCount} Action Items`}>
@@ -130,20 +145,40 @@ const auditGeneratedAt = new Date(report.timestamp).toLocaleString('en-IN', {
         </div>
 
         <!-- Severity Filter Buttons -->
-        <div class="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0" id="severity-filter-group">
-          <button type="button" data-severity="all" class="sev-btn active rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-bold text-white cursor-pointer transition">
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0" id="severity-filter-group">
+          <button
+            type="button"
+            data-severity="all"
+            class="sev-btn active rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition-colors cursor-pointer"
+          >
             All ({report.issues.length})
           </button>
-          <button type="button" data-severity="critical" class="sev-btn rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer transition">
+          <button
+            type="button"
+            data-severity="critical"
+            class="sev-btn rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
+          >
             Critical ({report.criticalCount})
           </button>
-          <button type="button" data-severity="high" class="sev-btn rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer transition">
+          <button
+            type="button"
+            data-severity="high"
+            class="sev-btn rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
+          >
             High ({report.highCount})
           </button>
-          <button type="button" data-severity="medium" class="sev-btn rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer transition">
+          <button
+            type="button"
+            data-severity="medium"
+            class="sev-btn rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
+          >
             Medium ({report.mediumCount})
           </button>
-          <button type="button" data-severity="low" class="sev-btn rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer transition">
+          <button
+            type="button"
+            data-severity="low"
+            class="sev-btn rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
+          >
             Low ({report.lowCount})
           </button>
         </div>
@@ -152,23 +187,47 @@ const auditGeneratedAt = new Date(report.timestamp).toLocaleString('en-IN', {
       <!-- Category Filter Pills -->
       <div class="flex flex-wrap items-center gap-1.5 text-xs" id="cat-filter-group">
         <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">Category:</span>
-        <button type="button" data-cat="all" class="cat-btn active rounded-lg bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-2.5 py-1 text-[11px] font-bold cursor-pointer">
-          All Issues
+        <button
+          type="button"
+          data-cat="all"
+          class="cat-btn active rounded-lg bg-blue-600 px-3 py-1 text-[11px] font-bold text-white shadow-xs transition-colors cursor-pointer"
+        >
+          All Issues ({report.issues.length})
         </button>
-        <button type="button" data-cat="title" class="cat-btn rounded-lg bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 px-2.5 py-1 text-[11px] font-semibold hover:bg-slate-200 cursor-pointer">
-          Titles
+        <button
+          type="button"
+          data-cat="title"
+          class="cat-btn rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1 text-[11px] font-semibold transition-colors cursor-pointer"
+        >
+          Titles ({titleCount})
         </button>
-        <button type="button" data-cat="description" class="cat-btn rounded-lg bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 px-2.5 py-1 text-[11px] font-semibold hover:bg-slate-200 cursor-pointer">
-          Descriptions
+        <button
+          type="button"
+          data-cat="description"
+          class="cat-btn rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1 text-[11px] font-semibold transition-colors cursor-pointer"
+        >
+          Descriptions ({descCount})
         </button>
-        <button type="button" data-cat="duplicate" class="cat-btn rounded-lg bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 px-2.5 py-1 text-[11px] font-semibold hover:bg-slate-200 cursor-pointer">
-          Duplicates
+        <button
+          type="button"
+          data-cat="duplicate"
+          class="cat-btn rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1 text-[11px] font-semibold transition-colors cursor-pointer"
+        >
+          Duplicates ({dupCount})
         </button>
-        <button type="button" data-cat="links" class="cat-btn rounded-lg bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 px-2.5 py-1 text-[11px] font-semibold hover:bg-slate-200 cursor-pointer">
-          Internal Links &amp; Orphans
+        <button
+          type="button"
+          data-cat="links"
+          class="cat-btn rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1 text-[11px] font-semibold transition-colors cursor-pointer"
+        >
+          Internal Links &amp; Orphans ({linkCount})
         </button>
-        <button type="button" data-cat="canonical" class="cat-btn rounded-lg bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 px-2.5 py-1 text-[11px] font-semibold hover:bg-slate-200 cursor-pointer">
-          Canonical URLs
+        <button
+          type="button"
+          data-cat="canonical"
+          class="cat-btn rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1 text-[11px] font-semibold transition-colors cursor-pointer"
+        >
+          Canonical URLs ({canonicalCount})
         </button>
       </div>
     </div>
@@ -254,6 +313,25 @@ const auditGeneratedAt = new Date(report.timestamp).toLocaleString('en-IN', {
       )}
     </div>
 
+    <!-- Empty State When Filters Yield 0 Matches -->
+    <div
+      id="no-filter-matches"
+      class="hidden rounded-3xl border border-dashed border-slate-300 bg-white/50 p-10 text-center dark:border-slate-800 dark:bg-slate-900/50"
+    >
+      <div class="text-3xl mb-2">🎯</div>
+      <h4 class="text-sm font-bold text-slate-900 dark:text-white">No Issues Match Active Filter</h4>
+      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
+        There are zero issues under this specific category or severity filter.
+      </p>
+      <button
+        type="button"
+        id="btn-reset-filters"
+        class="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition cursor-pointer"
+      >
+        <span>↺</span> Reset All Filters
+      </button>
+    </div>
+
   </div>
 </AdminLayout>
 
@@ -262,12 +340,29 @@ const auditGeneratedAt = new Date(report.timestamp).toLocaleString('en-IN', {
   const sevButtons  = document.querySelectorAll('.sev-btn');
   const catButtons  = document.querySelectorAll('.cat-btn');
   const issueCards  = document.querySelectorAll('.issue-card');
+  const emptyFilterBox = document.getElementById('no-filter-matches');
+  const btnTriggerAudit = document.getElementById('btn-trigger-audit');
+  const btnResetFilters = document.getElementById('btn-reset-filters');
 
   let activeSeverity = 'all';
   let activeCategory = 'all';
   let searchQuery    = '';
 
+  const ACTIVE_CLASSES = ['bg-blue-600', 'text-white', 'shadow-xs', 'font-bold', 'active'];
+  const INACTIVE_CLASSES = ['bg-slate-100', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-300', 'hover:bg-slate-200', 'dark:hover:bg-slate-700', 'font-semibold'];
+
+  function setButtonState(btn, isActive) {
+    if (isActive) {
+      btn.classList.remove(...INACTIVE_CLASSES);
+      btn.classList.add(...ACTIVE_CLASSES);
+    } else {
+      btn.classList.remove(...ACTIVE_CLASSES);
+      btn.classList.add(...INACTIVE_CLASSES);
+    }
+  }
+
   function filterCards() {
+    let visibleCount = 0;
     issueCards.forEach((card) => {
       const sev = card.dataset.severity;
       const cat = card.dataset.category;
@@ -279,34 +374,33 @@ const auditGeneratedAt = new Date(report.timestamp).toLocaleString('en-IN', {
 
       if (matchSev && matchCat && matchSearch) {
         card.classList.remove('hidden');
+        visibleCount++;
       } else {
         card.classList.add('hidden');
       }
     });
+
+    if (emptyFilterBox) {
+      if (visibleCount === 0 && issueCards.length > 0) {
+        emptyFilterBox.classList.remove('hidden');
+      } else {
+        emptyFilterBox.classList.add('hidden');
+      }
+    }
   }
 
   sevButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
-      sevButtons.forEach((b) => {
-        b.classList.remove('bg-blue-600', 'text-white', 'active');
-        b.classList.add('text-slate-600', 'dark:text-slate-300');
-      });
-      btn.classList.add('bg-blue-600', 'text-white', 'active');
-      btn.classList.remove('text-slate-600', 'dark:text-slate-300');
       activeSeverity = btn.dataset.severity || 'all';
+      sevButtons.forEach((b) => setButtonState(b, b.dataset.severity === activeSeverity));
       filterCards();
     });
   });
 
   catButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
-      catButtons.forEach((b) => {
-        b.classList.remove('bg-slate-900', 'text-white', 'dark:bg-white', 'dark:text-slate-900', 'active');
-        b.classList.add('bg-slate-100', 'text-slate-700', 'dark:bg-slate-800', 'dark:text-slate-300');
-      });
-      btn.classList.add('bg-slate-900', 'text-white', 'dark:bg-white', 'dark:text-slate-900', 'active');
-      btn.classList.remove('bg-slate-100', 'text-slate-700', 'dark:bg-slate-800', 'dark:text-slate-300');
       activeCategory = btn.dataset.cat || 'all';
+      catButtons.forEach((b) => setButtonState(b, b.dataset.cat === activeCategory));
       filterCards();
     });
   });
@@ -316,7 +410,46 @@ const auditGeneratedAt = new Date(report.timestamp).toLocaleString('en-IN', {
     filterCards();
   });
 
-  document.getElementById('btn-trigger-audit')?.addEventListener('click', () => {
-    window.location.reload();
+  btnResetFilters?.addEventListener('click', () => {
+    activeSeverity = 'all';
+    activeCategory = 'all';
+    searchQuery = '';
+    if (searchInput) searchInput.value = '';
+
+    sevButtons.forEach((b) => setButtonState(b, b.dataset.severity === 'all'));
+    catButtons.forEach((b) => setButtonState(b, b.dataset.cat === 'all'));
+    filterCards();
+  });
+
+  btnTriggerAudit?.addEventListener('click', async () => {
+    const originalHtml = btnTriggerAudit.innerHTML;
+    btnTriggerAudit.disabled = true;
+    btnTriggerAudit.classList.add('opacity-75', 'cursor-wait');
+    btnTriggerAudit.innerHTML = '<span class="inline-block animate-spin">⚡</span> Running Audit...';
+
+    try {
+      const token = localStorage.getItem('admin_token') || '';
+      const res = await fetch('/api/admin/seo/audit?t=' + Date.now(), {
+        method: 'GET',
+        headers: {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+      });
+
+      if (res.ok) {
+        window.location.href = '/admin/seo/?t=' + Date.now();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || 'Failed to re-run audit. Please check admin login.');
+        btnTriggerAudit.disabled = false;
+        btnTriggerAudit.classList.remove('opacity-75', 'cursor-wait');
+        btnTriggerAudit.innerHTML = originalHtml;
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error while re-running audit. Refreshing page...');
+      window.location.reload();
+    }
   });
 </script>
+

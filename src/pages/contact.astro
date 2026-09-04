@@ -122,6 +122,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                 id="contact-name"
                 name="name"
                 required
+                minlength="2"
+                maxlength="100"
                 placeholder="e.g. Alex Sharma"
                 class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
               />
@@ -136,6 +138,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                 id="contact-email"
                 name="email"
                 required
+                maxlength="254"
                 placeholder="e.g. alex@example.com"
                 class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
               />
@@ -169,6 +172,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
                 id="contact-subject"
                 name="subject"
                 required
+                minlength="3"
+                maxlength="200"
                 placeholder="e.g. Question about RCC Slab Calculator"
                 class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
               />
@@ -195,6 +200,8 @@ import BaseLayout from '../layouts/BaseLayout.astro';
               name="message"
               rows="5"
               required
+              minlength="10"
+              maxlength="5000"
               placeholder="Describe your suggestion, formula details, or question with as much detail as possible..."
               class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-3 text-xs text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
             ></textarea>
@@ -278,6 +285,13 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     }
   });
 
+  // Helper to escape HTML entities for DOM insertion
+  function escapeText(str) {
+    const div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
   // Form Submission
   const contactForm = document.getElementById('contact-form');
   const statusMsg   = document.getElementById('contact-status-msg');
@@ -293,17 +307,17 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     const message = document.getElementById('contact-message')?.value.trim();
     const honeypot = document.getElementById('website_url_check')?.value.trim();
 
-    if (!name || !email || !subject || !message) {
+    if (!name || name.length < 2) {
       if (statusMsg) {
         statusMsg.className = 'rounded-xl p-3.5 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300';
-        statusMsg.textContent = 'Please fill out all required fields before submitting.';
+        statusMsg.textContent = 'Please enter your name (at least 2 characters).';
         statusMsg.classList.remove('hidden');
       }
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!email || !emailRegex.test(email)) {
       if (statusMsg) {
         statusMsg.className = 'rounded-xl p-3.5 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300';
         statusMsg.textContent = 'Please enter a valid email address.';
@@ -312,18 +326,32 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       return;
     }
 
+    if (!subject || subject.length < 3) {
+      if (statusMsg) {
+        statusMsg.className = 'rounded-xl p-3.5 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300';
+        statusMsg.textContent = 'Please enter a subject (at least 3 characters).';
+        statusMsg.classList.remove('hidden');
+      }
+      return;
+    }
+
+    if (!message || message.length < 10) {
+      if (statusMsg) {
+        statusMsg.className = 'rounded-xl p-3.5 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300';
+        statusMsg.textContent = 'Please enter your message (at least 10 characters).';
+        statusMsg.classList.remove('hidden');
+      }
+      return;
+    }
+
     if (btnSubmit) btnSubmit.disabled = true;
-    if (btnText) btnText.textContent = 'Sending to support@aifreecalculator.com...';
+    if (btnText) btnText.textContent = 'Sending message...';
     if (statusMsg) {
       statusMsg.className = 'rounded-xl p-3.5 text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300';
-      statusMsg.textContent = 'Delivering your message to our support desk...';
+      statusMsg.textContent = 'Sending your message to our support desk...';
       statusMsg.classList.remove('hidden');
     }
 
-    let isSuccess = false;
-    let refId = `msg_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-
-    // 1. Primary Attempt: Internal Contact API
     try {
       const res = await fetch('/api/contact', {
         method: 'POST',
@@ -338,81 +366,53 @@ import BaseLayout from '../layouts/BaseLayout.astro';
         }),
       });
 
-      if (res.ok) {
-        const data = await res.json().catch(() => ({}));
-        if (data && data.success) {
-          isSuccess = true;
-          if (data.messageId) refId = data.messageId;
+      const data = await res.json().catch(() => ({}));
+
+      if (res.ok && data.success) {
+        const refId = data.messageId || `msg_${Date.now()}`;
+        if (statusMsg) {
+          statusMsg.className = 'rounded-xl p-4 text-xs font-semibold bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 space-y-1.5';
+          statusMsg.innerHTML = `
+            <div class="font-bold text-sm flex items-center gap-1.5">
+              <span>✅</span> Your message was sent successfully.
+            </div>
+            <div>Thank you, <strong>${escapeText(name)}</strong>. Our engineering and support team will review your inquiry regarding "<em>${escapeText(subject)}</em>" and reply to <strong>${escapeText(email)}</strong> within 24–48 hours.</div>
+            <div class="text-[11px] opacity-80 mt-1 font-mono">Reference ID: ${escapeText(refId)}</div>
+          `;
+          statusMsg.classList.remove('hidden');
         }
-      }
-    } catch (apiErr) {
-      console.warn('API route fallback:', apiErr);
-    }
-
-    // 2. Secondary Direct Fallback: Client-Side FormSubmit Relay to support@aifreecalculator.com
-    if (!isSuccess) {
-      try {
-        const fsRes = await fetch('https://formsubmit.co/ajax/support@aifreecalculator.com', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json',
-          },
-          body: JSON.stringify({
-            name,
-            email,
-            _subject: `[AIFreeCalculator] ${subject} (${category})`,
-            _replyto: email,
-            category,
-            subject,
-            message,
-            ref_id: refId,
-            _template: 'table',
-          }),
-        });
-
-        if (fsRes.ok) {
-          const fsData = await fsRes.json().catch(() => null);
-          if (fsData && (fsData.success === 'true' || fsData.success === true || fsData.message)) {
-            isSuccess = true;
-          }
+        contactForm.reset();
+        if (btnText) btnText.textContent = 'Message Sent ✓';
+        setTimeout(() => {
+          if (btnSubmit) btnSubmit.disabled = false;
+          if (btnText) btnText.textContent = 'Send Another Message';
+        }, 2500);
+      } else {
+        const errMsg = data.error || 'Unable to send email at this time. Please try again or use direct email.';
+        if (statusMsg) {
+          statusMsg.className = 'rounded-xl p-4 text-xs font-semibold bg-amber-50 text-amber-900 dark:bg-amber-950/50 dark:text-amber-300 space-y-2';
+          statusMsg.innerHTML = `
+            <div><strong>Notice:</strong> ${escapeText(errMsg)}</div>
+            <div>You can click below to email our support desk directly from your mail app:</div>
+            <a
+              href="mailto:support@aifreecalculator.com?subject=${encodeURIComponent(subject || 'Inquiry')}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\nCategory: ${category}\n\nMessage:\n${message}`)}"
+              class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700 transition"
+            >
+              <span>✉️</span> Compose Email Directly (support@aifreecalculator.com)
+            </a>
+          `;
+          statusMsg.classList.remove('hidden');
         }
-      } catch (fsErr) {
-        console.warn('FormSubmit client fallback failed:', fsErr);
-      }
-    }
-
-    // Render Result
-    if (isSuccess) {
-      if (statusMsg) {
-        statusMsg.className = 'rounded-xl p-4 text-xs font-semibold bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 space-y-1.5';
-        statusMsg.innerHTML = `
-          <div class="font-bold text-sm flex items-center gap-1.5">
-            <span>✅</span> Message Delivered Successfully!
-          </div>
-          <div>Thank you, <strong>${name}</strong>. Your inquiry regarding "<em>${subject}</em>" has been submitted directly to <strong>support@aifreecalculator.com</strong>. Our team will review and reply to <strong>${email}</strong> within 24-48 hours.</div>
-          <div class="text-[11px] opacity-80 mt-1 font-mono">Reference ID: ${refId}</div>
-        `;
-        statusMsg.classList.remove('hidden');
-      }
-      contactForm.reset();
-      if (btnText) btnText.textContent = 'Message Sent ✓';
-      setTimeout(() => {
         if (btnSubmit) btnSubmit.disabled = false;
-        if (btnText) btnText.textContent = 'Send Another Message';
-      }, 2000);
-    } else {
+        if (btnText) btnText.textContent = 'Try Again';
+      }
+    } catch (networkErr) {
+      console.error('[Contact Submit Network Error]:', networkErr);
       if (statusMsg) {
-        statusMsg.className = 'rounded-xl p-4 text-xs font-semibold bg-amber-50 text-amber-900 dark:bg-amber-950/50 dark:text-amber-300 space-y-2';
+        statusMsg.className = 'rounded-xl p-4 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300 space-y-2';
         statusMsg.innerHTML = `
-          <div><strong>Notice:</strong> Network delivery could not be verified automatically.</div>
-          <div>Please click below to send your email directly:</div>
-          <a
-            href="mailto:support@aifreecalculator.com?subject=${encodeURIComponent(subject || 'Inquiry')}&body=${encodeURIComponent(`Name: ${name}\nEmail: ${email}\nCategory: ${category}\n\nMessage:\n${message}`)}"
-            class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-2 text-xs font-bold text-white hover:bg-blue-700 transition"
-          >
-            <span>✉️</span> Click to Send via Email App (support@aifreecalculator.com)
-          </a>
+          <div><strong>Connection Error:</strong> Could not reach the server. Please check your internet connection or email us directly at:</div>
+          <a href="mailto:support@aifreecalculator.com" class="font-bold underline text-blue-600 dark:text-blue-400">support@aifreecalculator.com</a>
         `;
         statusMsg.classList.remove('hidden');
       }

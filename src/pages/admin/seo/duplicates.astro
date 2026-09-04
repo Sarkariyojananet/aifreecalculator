@@ -1,6 +1,14 @@
 ---
+export const prerender = false;
+
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { runFullSEOAudit } from '../../../lib/seo/audit-engine';
+import { authenticateAdminRequest } from '../../../lib/auth';
+
+const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
+if (!user) {
+  return Astro.redirect('/admin/barwalaoffice/');
+}
 
 const report = await runFullSEOAudit(Astro.locals);
 const titleDuplicates = report.duplicates.filter((d) => d.type === 'title');

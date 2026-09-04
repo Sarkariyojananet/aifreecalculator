@@ -499,7 +499,7 @@ export async function getContactNotificationEmail(db?: D1Database, locals?: any)
   }
 
   // 3. Default fallback
-  return 'support@aifreecalculator.com';
+  return 'indiarojgaarcom@gmail.com';
 }
 
 /**
