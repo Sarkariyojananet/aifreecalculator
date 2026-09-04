@@ -124,10 +124,24 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
       }
 
       if (canonicalUrl !== undefined) {
-        newOverride.canonicalUrl = canonicalUrl.trim();
+        const trimmedCanonical = canonicalUrl.trim();
+        if (trimmedCanonical && !trimmedCanonical.startsWith('https://')) {
+          return new Response(
+            JSON.stringify({ error: `Invalid canonical URL for slug "${slug}": must start with https://` }),
+            { status: 400, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
+        newOverride.canonicalUrl = trimmedCanonical;
       }
 
       if (robots !== undefined) {
+        const allowedRobots = ['index, follow', 'noindex, nofollow', 'noindex, follow', 'index, nofollow'];
+        if (!allowedRobots.includes(robots)) {
+          return new Response(
+            JSON.stringify({ error: `Invalid robots value for slug "${slug}": must be one of: ${allowedRobots.join(' | ')}` }),
+            { status: 400, headers: { 'Content-Type': 'application/json' } }
+          );
+        }
         newOverride.robots = robots;
       }
 

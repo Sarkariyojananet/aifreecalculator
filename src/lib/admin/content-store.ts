@@ -381,6 +381,12 @@ export function validateInternalLinks(
 
   const cleanSource = sourceSlug.trim().toLowerCase();
 
+  // Validate source calculator exists
+  const sourceExists = calculators.some((c) => c.slug.toLowerCase() === cleanSource);
+  if (!sourceExists) {
+    return { valid: false, error: `Invalid source calculator: "${sourceSlug}" does not exist in calculator registry.`, cleanSlugs: [] };
+  }
+
   // 1. Filter out self-linking
   let cleanSlugs = relatedSlugs
     .map((s) => s.trim().toLowerCase())
@@ -388,6 +394,9 @@ export function validateInternalLinks(
 
   // 2. Filter out duplicates
   cleanSlugs = Array.from(new Set(cleanSlugs));
+
+  // 3. Filter only registered calculator target slugs
+  cleanSlugs = cleanSlugs.filter((s) => calculators.some((c) => c.slug.toLowerCase() === s));
 
   return { valid: true, cleanSlugs };
 }

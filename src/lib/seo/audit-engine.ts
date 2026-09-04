@@ -186,6 +186,16 @@ export async function runFullSEOAudit(locals?: any): Promise<SEOAuditReport> {
   // -------------------------------------------------------------
   // A. AUDIT CALCULATOR PAGES (42+ Tools)
   // -------------------------------------------------------------
+  /**
+   * H1 Analysis Note:
+   * CalculatorLayout.astro unconditionally renders exactly one <h1> element
+   * with the calculator's name (`calculatorName` prop). This means:
+   *   - Missing H1: Cannot occur — hardcoded in layout.
+   *   - Multiple H1: Cannot occur — only one h1 exists per page.
+   *   - H1 content = calculator name (from override.name || calc.name).
+   * This is a structural guarantee, not a runtime HTML analysis.
+   * If calculator pages ever use custom layouts, this assumption must be revisited.
+   */
   calculators.forEach((calc) => {
     const override = overrides[calc.slug] || {};
     const path = calc.path.endsWith('/') ? calc.path : `${calc.path}/`;

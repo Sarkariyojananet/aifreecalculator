@@ -19,6 +19,15 @@ export interface SEOChangeRecord {
 const HISTORY_KEY = 'cms_seo_change_history';
 
 /**
+ * SCALABILITY LIMITATION:
+ * Change history is stored as a single JSON blob in the site_settings D1 table.
+ * It is capped at 250 records (oldest are dropped when the cap is reached).
+ * This is sufficient for typical admin workflows but is not suitable for
+ * high-volume or compliance-grade audit trails.
+ * If scalability is required, migrate to a dedicated D1 table with indexed rows.
+ */
+
+/**
  * Retrieve recent SEO modification history
  */
 export async function getSEOChangeHistory(locals?: any): Promise<SEOChangeRecord[]> {
@@ -31,29 +40,9 @@ export async function getSEOChangeHistory(locals?: any): Promise<SEOChangeRecord
     }
   } catch {}
 
-  // Local fallback
-  return [
-    {
-      id: 'hist_init_1',
-      pagePath: '/finance/emi-calculator/',
-      pageName: 'EMI Calculator',
-      field: 'metaTitle',
-      oldValue: 'EMI Calculator',
-      newValue: 'EMI Calculator - Loan EMI & Interest Calculation',
-      changedAt: new Date(Date.now() - 3600000 * 24).toISOString(),
-      adminUser: 'Manisha',
-    },
-    {
-      id: 'hist_init_2',
-      pagePath: '/construction/rcc-slab-steel-calculator/',
-      pageName: 'RCC Slab Steel Calculator',
-      field: 'metaDescription',
-      oldValue: 'Calculate slab rebar',
-      newValue: 'Calculate total steel rebar weight in kg, quintal, and tons for RCC slabs with spacing & BBS breakdown.',
-      changedAt: new Date(Date.now() - 3600000 * 12).toISOString(),
-      adminUser: 'Manisha',
-    },
-  ];
+  // No history stored yet — return empty array.
+  // History will populate as admins make changes via Bulk Editor or SEO tools.
+  return [];
 }
 
 /**
