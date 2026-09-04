@@ -1259,39 +1259,49 @@ const faqs = [
           styles: { fontSize: 8.5, cellPadding: 4 },
         });
 
-        y = (doc as any).lastAutoTable.finalY + 16;
+        y = (doc as any).lastAutoTable ? (doc as any).lastAutoTable.finalY + 16 : y + 16;
 
-        // Calculation Details Section
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
-        doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-        doc.text('Calculation Details & Step-by-Step Breakdown', margin, y);
-        y += 14;
+        // Calculation Details & Step-by-Step Breakdown Table (Auto-wrapping, No overflow)
+        const cleanSteps = (lastResultData.result.calculationSteps || []).map((step: string, idx: number) => {
+          const cleanedText = step
+            .replace(/[•●]/g, '-')
+            .replace(/×/g, 'x')
+            .replace(/÷/g, '/')
+            .replace(/²/g, '^2')
+            .replace(/³/g, '^3')
+            .replace(/₹/g, 'Rs. ')
+            .replace(/[^\x00-\x7F]/g, ' ')
+            .trim();
+          return [`#${idx + 1}`, cleanedText];
+        });
 
-        doc.setFont('courier', 'normal');
-        doc.setFontSize(8.5);
-        doc.setTextColor(slateColor[0], slateColor[1], slateColor[2]);
+        if (cleanSteps.length > 0) {
+          (doc as any).autoTable({
+            startY: y,
+            head: [['Step', 'Calculation Details & Step-by-Step Breakdown']],
+            body: cleanSteps,
+            theme: 'striped',
+            headStyles: { fillColor: [30, 41, 59], textColor: 255, fontStyle: 'bold', fontSize: 9 },
+            columnStyles: {
+              0: { cellWidth: 40, fontStyle: 'bold', halign: 'center' },
+              1: { cellWidth: 'auto' },
+            },
+            margin: { left: margin, right: margin, top: 40, bottom: 40 },
+            styles: { fontSize: 8, cellPadding: 4.5, overflow: 'linebreak' },
+            pageBreak: 'auto',
+          });
 
-        for (const step of lastResultData.result.calculationSteps) {
-          const splitText = doc.splitTextToSize(step, pageWidth - margin * 2);
-          if (y + splitText.length * 11 > pageHeight - 60) {
-            doc.addPage();
-            y = margin;
-          }
-          doc.text(splitText, margin, y);
-          y += splitText.length * 11 + 2;
+          y = (doc as any).lastAutoTable.finalY + 16;
         }
 
-        y += 10;
-
-        // Disclaimer
+        // Disclaimer (with page boundary check)
         const disclaimer =
           'Disclaimer: This calculation provides estimated calorie targets for general educational purposes based on mathematical formulas. It is not a medical diagnostic tool or personalized dietary prescription. For individualized nutrition planning or medical guidance, consult a registered dietitian or physician.';
         const splitDisc = doc.splitTextToSize(disclaimer, pageWidth - margin * 2);
 
         if (y + splitDisc.length * 10 > pageHeight - 50) {
           doc.addPage();
-          y = margin;
+          y = 45;
         }
 
         doc.setFont('helvetica', 'italic');
@@ -1300,7 +1310,7 @@ const faqs = [
         doc.text(splitDisc, margin, y);
 
         // Add page numbers and footers across all pages
-        const totalPages = doc.internal.pages.length - 1;
+        const totalPages = (doc.internal as any).getNumberOfPages();
         for (let i = 1; i <= totalPages; i++) {
           doc.setPage(i);
           doc.setFont('helvetica', 'normal');

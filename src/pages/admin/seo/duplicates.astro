@@ -1,0 +1,160 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { runFullSEOAudit } from '../../../lib/seo/audit-engine';
+
+const report = await runFullSEOAudit(Astro.locals);
+const titleDuplicates = report.duplicates.filter((d) => d.type === 'title');
+const descDuplicates = report.duplicates.filter((d) => d.type === 'description');
+---
+
+<AdminLayout title="Duplicate Content Inspector | Calculator CMS" sectionTitle="Duplicate Content" activeSection="seo-health">
+  <div class="space-y-8 max-w-7xl mx-auto pb-16">
+    
+    <!-- Top Action Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
+      <div>
+        <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
+          <span>👯</span> Duplicate Content Inspector
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Detect and eliminate duplicate Meta Titles and Meta Descriptions that cannibalize keyword search rankings.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a
+          href="/admin/seo/bulk/"
+          class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition"
+        >
+          <span>✏️</span> Fix in Bulk Editor
+        </a>
+      </div>
+    </div>
+
+    <!-- SEO Sub-Navigation Bar -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 dark:border-slate-800">
+      <a href="/admin/seo/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        📊 Audit Overview
+      </a>
+      <a href="/admin/seo/bulk/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        📝 Bulk Meta Editor
+      </a>
+      <a href="/admin/seo/duplicates/" class="rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs shrink-0">
+        👯 Duplicate Content ({report.duplicates.length})
+      </a>
+      <a href="/admin/seo/links/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        🔗 Internal Link Audit ({report.orphanPages.length} Orphans)
+      </a>
+      <a href="/admin/seo/sitemap-schema/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        🗺️ Sitemap &amp; Schema
+      </a>
+      <a href="/admin/seo/history/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        📜 Change History
+      </a>
+    </div>
+
+    <!-- Duplicate Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Duplicate Title Clusters</div>
+        <div class="mt-1 text-3xl font-black text-amber-600 dark:text-amber-400 font-mono">{titleDuplicates.length}</div>
+        <div class="mt-1 text-xs text-slate-500">Clusters of pages with identical titles</div>
+      </div>
+
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Duplicate Description Clusters</div>
+        <div class="mt-1 text-3xl font-black text-blue-600 dark:text-blue-400 font-mono">{descDuplicates.length}</div>
+        <div class="mt-1 text-xs text-slate-500">Clusters of pages with identical meta snippets</div>
+      </div>
+    </div>
+
+    <!-- 1. Duplicate Meta Titles Section -->
+    <div class="space-y-4">
+      <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <span>🏷️</span> Duplicate Meta Titles ({titleDuplicates.length})
+      </h3>
+
+      {titleDuplicates.length === 0 ? (
+        <div class="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-6 text-xs text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/20 dark:text-emerald-300">
+          ✅ Zero duplicate meta titles found! Every page has a unique title.
+        </div>
+      ) : (
+        titleDuplicates.map((group) => (
+          <div class="rounded-2xl border border-amber-200 bg-white p-5 shadow-2xs dark:border-amber-900/50 dark:bg-slate-900 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2.5 dark:border-slate-800">
+              <div>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400">Shared Title:</span>
+                <h4 class="font-bold text-sm text-slate-900 dark:text-white font-mono">"{group.value}"</h4>
+              </div>
+              <span class="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                {group.pages.length} Pages Conflict
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 pt-1">
+              {group.pages.map((p) => (
+                <div class="flex items-center justify-between rounded-xl bg-slate-50 p-2.5 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 text-xs">
+                  <div class="truncate pr-2">
+                    <div class="font-bold text-slate-900 dark:text-white truncate">{p.name}</div>
+                    <div class="font-mono text-[10px] text-slate-400 truncate">{p.path}</div>
+                  </div>
+                  <a
+                    href={`/admin/seo/bulk/`}
+                    class="rounded bg-blue-600 px-2 py-1 text-[10px] font-bold text-white shadow-2xs hover:bg-blue-700 shrink-0"
+                  >
+                    Edit
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+
+    <!-- 2. Duplicate Meta Descriptions Section -->
+    <div class="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+      <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <span>📄</span> Duplicate Meta Descriptions ({descDuplicates.length})
+      </h3>
+
+      {descDuplicates.length === 0 ? (
+        <div class="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-6 text-xs text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/20 dark:text-emerald-300">
+          ✅ Zero duplicate meta descriptions found! Every page has a unique snippet.
+        </div>
+      ) : (
+        descDuplicates.map((group) => (
+          <div class="rounded-2xl border border-blue-200 bg-white p-5 shadow-2xs dark:border-blue-900/50 dark:bg-slate-900 space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2.5 dark:border-slate-800">
+              <div class="max-w-3xl">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Shared Description:</span>
+                <p class="text-xs text-slate-800 dark:text-slate-200 italic mt-0.5 line-clamp-2">"{group.value}"</p>
+              </div>
+              <span class="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-800 dark:bg-blue-950 dark:text-blue-300 shrink-0">
+                {group.pages.length} Pages
+              </span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 pt-1">
+              {group.pages.map((p) => (
+                <div class="flex items-center justify-between rounded-xl bg-slate-50 p-2.5 dark:bg-slate-950 border border-slate-100 dark:border-slate-800 text-xs">
+                  <div class="truncate pr-2">
+                    <div class="font-bold text-slate-900 dark:text-white truncate">{p.name}</div>
+                    <div class="font-mono text-[10px] text-slate-400 truncate">{p.path}</div>
+                  </div>
+                  <a
+                    href={`/admin/seo/bulk/`}
+                    class="rounded bg-blue-600 px-2 py-1 text-[10px] font-bold text-white shadow-2xs hover:bg-blue-700 shrink-0"
+                  >
+                    Edit
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))
+      )}
+    </div>
+
+  </div>
+</AdminLayout>

@@ -1,10 +1,19 @@
 import type { APIRoute } from 'astro';
 import { getCalculatorStats } from '../../../lib/db';
 import { calculators } from '../../../data/calculators';
+import { authenticateAdminRequest } from '../../../lib/auth';
 
 export const prerender = false;
 
-export const GET: APIRoute = async () => {
+export const GET: APIRoute = async ({ request, cookies }) => {
+  const user = await authenticateAdminRequest(request, cookies);
+  if (!user) {
+    return new Response(JSON.stringify({ error: 'Unauthorized: Admin authentication required' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   const stats = await getCalculatorStats();
 
   const totalCalculators = calculators.length;

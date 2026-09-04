@@ -1,0 +1,204 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { getHomepageSections } from '../../../lib/admin/content-store';
+import { calculators } from '../../../data/calculators';
+
+const sections = await getHomepageSections(Astro.locals);
+---
+
+<AdminLayout title="Homepage Section Manager | Calculator CMS" sectionTitle="Homepage Sections" activeSection="homepage">
+  <div class="space-y-6 max-w-5xl mx-auto pb-12">
+    
+    <!-- Top Action Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
+      <div>
+        <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+          Homepage Layout &amp; Sections ({sections.length})
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Customize homepage headline, featured calculator modules, categories order, and directory blocks.
+        </p>
+      </div>
+
+      <a
+        href="/"
+        target="_blank"
+        class="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 shadow-2xs self-start sm:self-auto"
+      >
+        <span>🌐</span> Preview Live Homepage ↗
+      </a>
+    </div>
+
+    <!-- Section Form Container -->
+    <form id="homepage-sections-form" class="space-y-6">
+      <div class="space-y-5">
+        {sections.map((sec, idx) => (
+          <div class="sec-card rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4" data-id={sec.id}>
+            <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+              <div class="flex items-center gap-3">
+                <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-xs text-blue-600 dark:bg-blue-950 dark:text-blue-400 font-bold">
+                  {idx + 1}
+                </span>
+                <div>
+                  <h3 class="text-sm font-bold text-slate-900 dark:text-white capitalize">
+                    {sec.id} Module
+                  </h3>
+                  <span class="text-[10px] text-slate-400 font-mono">id: {sec.id}</span>
+                </div>
+              </div>
+
+              <label class="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  class="sec-enable-toggle sr-only peer"
+                  checked={sec.enabled}
+                  data-sec-id={sec.id}
+                />
+                <div
+                  class="w-9 h-5 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600 dark:bg-slate-700"
+                ></div>
+              </label>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Section Heading
+                </label>
+                <input
+                  type="text"
+                  class="sec-title-input mt-1.5 w-full rounded-2xl border border-slate-300 bg-white py-2.5 px-3.5 text-xs font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white focus:border-blue-600 focus:outline-hidden"
+                  value={sec.title}
+                  data-sec-id={sec.id}
+                />
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Subtitle Description
+                </label>
+                <input
+                  type="text"
+                  class="sec-desc-input mt-1.5 w-full rounded-2xl border border-slate-300 bg-white py-2.5 px-3.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white focus:border-blue-600 focus:outline-hidden"
+                  value={sec.description}
+                  data-sec-id={sec.id}
+                />
+              </div>
+            </div>
+
+            {sec.id === 'featured' && (
+              <div class="pt-2 border-t border-slate-100 dark:border-slate-800 space-y-2">
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Featured Calculators on Homepage
+                </label>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5 max-h-52 overflow-y-auto p-1">
+                  {calculators.map((c) => {
+                    const isChecked = (sec.featuredSlugs || ['bmi-calculator', 'age-calculator', 'rcc-slab-steel', 'emi-calculator', 'sip-calculator', 'percentage-calculator']).includes(c.slug);
+                    return (
+                      <label class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/60 p-2.5 dark:border-slate-800 dark:bg-slate-950/40 text-xs cursor-pointer">
+                        <input
+                          type="checkbox"
+                          class="featured-slug-checkbox rounded h-3.5 w-3.5 text-blue-600"
+                          value={c.slug}
+                          checked={isChecked}
+                        />
+                        <span class="truncate font-medium text-slate-800 dark:text-slate-200">{c.icon} {c.name}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <!-- Status Alert -->
+      <div id="homepage-status-alert" class="hidden rounded-xl p-3 text-xs font-semibold"></div>
+
+      <!-- Save Bar -->
+      <div class="flex items-center justify-end border-t border-slate-200/80 pt-4 dark:border-slate-800/80">
+        <button
+          type="submit"
+          id="btn-save-homepage-submit"
+          class="rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 transition cursor-pointer"
+        >
+          💾 Save Homepage Layout
+        </button>
+      </div>
+    </form>
+
+  </div>
+</AdminLayout>
+
+<script is:inline>
+  const form = document.getElementById('homepage-sections-form');
+  const statusAlert = document.getElementById('homepage-status-alert');
+
+  function getAuthToken() {
+    return localStorage.getItem('admin_token') || '';
+  }
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const cards = document.querySelectorAll('.sec-card');
+    const sections = [];
+
+    cards.forEach((card, idx) => {
+      const id = card.getAttribute('data-id') || `sec-${idx + 1}`;
+      const titleInp = card.querySelector('.sec-title-input');
+      const descInp = card.querySelector('.sec-desc-input');
+      const toggle = card.querySelector('.sec-enable-toggle');
+
+      let featuredSlugs = undefined;
+      if (id === 'featured') {
+        const checkedSlugs = [];
+        card.querySelectorAll('.featured-slug-checkbox:checked').forEach((chk) => {
+          checkedSlugs.push(chk.value);
+        });
+        featuredSlugs = checkedSlugs;
+      }
+
+      sections.push({
+        id,
+        title: titleInp?.value.trim() || 'Calculation Tools',
+        description: descInp?.value.trim() || '',
+        enabled: toggle ? toggle.checked : true,
+        sortOrder: idx + 1,
+        featuredSlugs,
+      });
+    });
+
+    if (statusAlert) {
+      statusAlert.className = 'rounded-xl p-3 text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300';
+      statusAlert.textContent = 'Saving homepage layout settings...';
+      statusAlert.classList.remove('hidden');
+    }
+
+    try {
+      const token = getAuthToken();
+      const res = await fetch('/api/admin/homepage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ sections }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        statusAlert.className = 'rounded-xl p-3 text-xs font-semibold bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+        statusAlert.textContent = '✓ Homepage section layout settings saved successfully!';
+        setTimeout(() => window.location.reload(), 700);
+      } else {
+        statusAlert.className = 'rounded-xl p-3 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300';
+        statusAlert.textContent = data.error || 'Failed to save homepage settings';
+      }
+    } catch {
+      statusAlert.className = 'rounded-xl p-3 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300';
+      statusAlert.textContent = 'Connection error while saving homepage settings';
+    }
+  });
+</script>

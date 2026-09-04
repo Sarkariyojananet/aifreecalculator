@@ -5,6 +5,7 @@ import AdSlotInline from '../components/ads/AdSlotInline.astro';
 import AdSlotSidebar from '../components/ads/AdSlotSidebar.astro';
 import AdSlotFooter from '../components/ads/AdSlotFooter.astro';
 import { calculators, type CalculatorCategory } from '../data/calculators';
+import { getInternalLinks } from '../lib/admin/content-store';
 
 interface Props {
   title: string;
@@ -24,10 +25,20 @@ const {
   keywords = [],
 } = Astro.props;
 
-// Related calculators from the same category
-const relatedCalculators = calculators
-  .filter((c) => c.category === category && c.slug !== slug)
-  .slice(0, 6);
+// 1. Fetch custom curated internal links (if configured in Admin CMS)
+const allInternalLinks = await getInternalLinks(Astro.locals);
+const customRelatedSlugs = allInternalLinks[slug] || [];
+
+let relatedCalculators = customRelatedSlugs
+  .map((s) => calculators.find((c) => c.slug === s))
+  .filter(Boolean) as typeof calculators;
+
+// 2. Fallback to same-category calculators if no custom links defined
+if (relatedCalculators.length === 0) {
+  relatedCalculators = calculators
+    .filter((c) => c.category === category && c.slug !== slug)
+    .slice(0, 6);
+}
 
 // Top popular tools across site for quick reference
 const popularCrossCategory = calculators

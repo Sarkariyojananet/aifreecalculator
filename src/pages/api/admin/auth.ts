@@ -33,13 +33,13 @@ export const POST: APIRoute = async ({ request }) => {
       });
     }
 
-    const token = await createAdminToken(username);
+    const token = await createAdminToken(username, 4);
 
-    return new Response(JSON.stringify({ success: true, token }), {
+    return new Response(JSON.stringify({ success: true, token, expiresIn: 14400 }), {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Set-Cookie': `admin_session=${token}; Path=/; Max-Age=86400; HttpOnly; SameSite=Lax`,
+        'Set-Cookie': `admin_session=${token}; Path=/; Max-Age=14400; HttpOnly; SameSite=Lax`,
       },
     });
   } catch (err: unknown) {

@@ -2490,15 +2490,29 @@ const faqs = [
         try {
           let jsPDFModule = (window as any).jspdf;
           if (!jsPDFModule) {
-            const script = document.createElement("script");
-            script.src =
-              "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+            const script1 = document.createElement("script");
+            script1.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
             await new Promise((resolve, reject) => {
-              script.onload = resolve;
-              script.onerror = reject;
-              document.head.appendChild(script);
+              script1.onload = resolve;
+              script1.onerror = reject;
+              document.head.appendChild(script1);
+            });
+            const script2 = document.createElement("script");
+            script2.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js";
+            await new Promise((resolve, reject) => {
+              script2.onload = resolve;
+              script2.onerror = reject;
+              document.head.appendChild(script2);
             });
             jsPDFModule = (window as any).jspdf;
+          } else if (!(window as any).jspdf?.plugin?.autotable && !(window as any).autoTable) {
+            const script2 = document.createElement("script");
+            script2.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js";
+            await new Promise((resolve, reject) => {
+              script2.onload = resolve;
+              script2.onerror = reject;
+              document.head.appendChild(script2);
+            });
           }
 
           const { jsPDF } = jsPDFModule;
@@ -2538,7 +2552,7 @@ const faqs = [
 
           // Mode Title
           doc.setFont("helvetica", "bold");
-          doc.setFontSize(15);
+          doc.setFontSize(14);
           doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
           doc.text(
             `Concrete Material Breakup Calculation (${lastResultData.modeTitle})`,
@@ -2566,20 +2580,13 @@ const faqs = [
           doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
           doc.text(resHeroMain.textContent || "", margin + 14, y + 36);
 
-          y += 72;
-
-          // Parameters Table
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(11);
-          doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-          doc.text("Calculation Breakdown & Parameters", margin, y);
-          y += 14;
+          y += 68;
 
           const paramRows: Array<[string, string]> = [
             ["Calculation Mode", lastResultData.modeTitle],
             [
               "Total Wet Concrete Volume",
-              `${lastResultData.totalWetVolumeCum} m³ (${lastResultData.totalWetVolumeCft} CFT / ${lastResultData.totalWetVolumeCyd} yd³)`,
+              `${lastResultData.totalWetVolumeCum} m3 (${lastResultData.totalWetVolumeCft} CFT / ${lastResultData.totalWetVolumeCyd} yd3)`,
             ],
             [
               "Dry Volume Multiplier Factor",
@@ -2587,12 +2594,12 @@ const faqs = [
             ],
             [
               "Base Dry Volume",
-              `${lastResultData.baseDryVolumeCum} m³ (${lastResultData.baseDryVolumeCft} CFT)`,
+              `${lastResultData.baseDryVolumeCum} m3 (${lastResultData.baseDryVolumeCft} CFT)`,
             ],
             ["Wastage Allowance", `${lastResultData.wastagePercent}%`],
             [
               "Final Dry Mix Volume",
-              `${lastResultData.finalDryVolumeCum} m³ (${lastResultData.finalDryVolumeCft} CFT)`,
+              `${lastResultData.finalDryVolumeCum} m3 (${lastResultData.finalDryVolumeCft} CFT)`,
             ],
             [
               "Concrete Mix Ratio",
@@ -2604,11 +2611,11 @@ const faqs = [
             ],
             [
               "Sand Required (Fine Aggregate)",
-              `${lastResultData.sandVolumeCft} CFT / ${lastResultData.sandVolumeCum} m³ (${lastResultData.sandWeightTons} MT)`,
+              `${lastResultData.sandVolumeCft} CFT / ${lastResultData.sandVolumeCum} m3 (${lastResultData.sandWeightTons} MT)`,
             ],
             [
               "Coarse Aggregate Required",
-              `${lastResultData.aggVolumeCft} CFT / ${lastResultData.aggVolumeCum} m³ (${lastResultData.aggWeightTons} MT)`,
+              `${lastResultData.aggVolumeCft} CFT / ${lastResultData.aggVolumeCum} m3 (${lastResultData.aggWeightTons} MT)`,
             ],
           ];
 
@@ -2619,54 +2626,41 @@ const faqs = [
             ]);
           }
 
-          paramRows.forEach(([label, val], idx) => {
-            const rowY = y + idx * 20;
-            doc.setFillColor(
-              idx % 2 === 0 ? 255 : 248,
-              idx % 2 === 0 ? 255 : 250,
-              idx % 2 === 0 ? 255 : 252,
-            );
-            doc.rect(margin, rowY - 11, pageWidth - margin * 2, 20, "F");
-            doc.setDrawColor(241, 245, 249);
-            doc.line(margin, rowY + 9, pageWidth - margin * 2, rowY + 9);
-
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(8.5);
-            doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-            doc.text(label, margin + 8, rowY + 2);
-
-            doc.setFont("helvetica", "normal");
-            doc.text(val, pageWidth - margin - 8, rowY + 2, { align: "right" });
+          // Render Parameter Table with autoTable (clean line wrapping & no overflow)
+          (doc as any).autoTable({
+            startY: y,
+            head: [["Calculation Parameter / Metric", "Value & Specification"]],
+            body: paramRows,
+            theme: "striped",
+            headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: "bold", fontSize: 9 },
+            columnStyles: {
+              0: { cellWidth: 200, fontStyle: "bold" },
+              1: { cellWidth: "auto" },
+            },
+            margin: { left: margin, right: margin, top: 40, bottom: 40 },
+            styles: { fontSize: 8.5, cellPadding: 4, overflow: "linebreak" },
+            pageBreak: "auto",
           });
 
-          y += paramRows.length * 20 + 20;
+          y = (doc as any).lastAutoTable.finalY + 16;
 
           // Material Table Section
-          doc.setFont("helvetica", "bold");
-          doc.setFontSize(11);
-          doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-          doc.text("Itemized Material Procurement Summary", margin, y);
-          y += 14;
-
-          lastResultData.tableBreakdown.forEach((item: any, idx: number) => {
-            const rowY = y + idx * 20;
-            doc.setFillColor(
-              idx % 2 === 0 ? 255 : 248,
-              idx % 2 === 0 ? 255 : 250,
-              idx % 2 === 0 ? 255 : 252,
-            );
-            doc.rect(margin, rowY - 11, pageWidth - margin * 2, 20, "F");
-
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(8.5);
-            doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-            doc.text(item.material, margin + 8, rowY + 2);
-
-            doc.setFont("helvetica", "normal");
-            doc.setTextColor(primaryColor[0], primaryColor[1], primaryColor[2]);
-            doc.text(item.practicalDisplay, pageWidth - margin - 8, rowY + 2, {
-              align: "right",
-            });
+          (doc as any).autoTable({
+            startY: y,
+            head: [["Material Component", "Procurement Requirement"]],
+            body: lastResultData.tableBreakdown.map((item: any) => [
+              item.material.replace(/[³²×÷₹]/g, ' '),
+              item.practicalDisplay.replace(/[³²×÷₹]/g, ' ')
+            ]),
+            theme: "striped",
+            headStyles: { fillColor: [15, 23, 42], textColor: 255, fontStyle: "bold", fontSize: 9 },
+            columnStyles: {
+              0: { cellWidth: 180, fontStyle: "bold" },
+              1: { cellWidth: "auto" },
+            },
+            margin: { left: margin, right: margin, top: 40, bottom: 40 },
+            styles: { fontSize: 8.5, cellPadding: 4, overflow: "linebreak" },
+            pageBreak: "auto",
           });
 
           // Footer on every page

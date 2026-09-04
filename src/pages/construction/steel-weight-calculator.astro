@@ -1326,14 +1326,29 @@ const faqs = [
         try {
           let jsPDFModule = (window as any).jspdf;
           if (!jsPDFModule) {
-            const script = document.createElement('script');
-            script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+            const script1 = document.createElement('script');
+            script1.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
             await new Promise((resolve, reject) => {
-              script.onload = resolve;
-              script.onerror = reject;
-              document.head.appendChild(script);
+              script1.onload = resolve;
+              script1.onerror = reject;
+              document.head.appendChild(script1);
+            });
+            const script2 = document.createElement('script');
+            script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+            await new Promise((resolve, reject) => {
+              script2.onload = resolve;
+              script2.onerror = reject;
+              document.head.appendChild(script2);
             });
             jsPDFModule = (window as any).jspdf;
+          } else if (!(window as any).jspdf?.plugin?.autotable && !(window as any).autoTable) {
+            const script2 = document.createElement('script');
+            script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+            await new Promise((resolve, reject) => {
+              script2.onload = resolve;
+              script2.onerror = reject;
+              document.head.appendChild(script2);
+            });
           }
 
           const { jsPDF } = jsPDFModule;
@@ -1371,7 +1386,7 @@ const faqs = [
 
           // Document Title
           doc.setFont('helvetica', 'bold');
-          doc.setFontSize(15);
+          doc.setFontSize(14);
           doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
           doc.text(`Steel Weight Calculation Report`, margin, y);
           y += 18;
@@ -1391,46 +1406,46 @@ const faqs = [
           doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
           doc.text(`${lastResultData.totalWtKg.toFixed(2)} kg  (${lastResultData.totalWtMT.toFixed(3)} Metric Tonnes)`, margin + 14, y + 37);
 
-          y += 72;
+          y += 68;
 
-          // Parameters Table
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(11);
-          doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-          doc.text('Profile Specifications & Parameters', margin, y);
-          y += 14;
-
-          lastResultData.paramRows.forEach(([label, val]: [string, string], idx: number) => {
-            const rowY = y + idx * 20;
-            doc.setFillColor(idx % 2 === 0 ? 255 : 248, idx % 2 === 0 ? 255 : 250, idx % 2 === 0 ? 255 : 252);
-            doc.rect(margin, rowY - 11, pageWidth - margin * 2, 20, 'F');
-            doc.setDrawColor(241, 245, 249);
-            doc.line(margin, rowY + 9, pageWidth - margin * 2, rowY + 9);
-
-            doc.setFont('helvetica', 'bold');
-            doc.setFontSize(8.5);
-            doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-            doc.text(label, margin + 8, rowY + 2);
-
-            doc.setFont('helvetica', 'normal');
-            doc.text(val, pageWidth - margin - 8, rowY + 2, { align: 'right' });
+          // Specifications Table with autoTable
+          (doc as any).autoTable({
+            startY: y,
+            head: [['Profile Specification / Parameter', 'Value']],
+            body: lastResultData.paramRows.map(([label, val]: [string, string]) => [
+              String(label).replace(/[³²×÷₹]/g, (m) => m === '³' ? '^3' : m === '²' ? '^2' : m === '×' ? 'x' : m === '₹' ? 'Rs.' : '/'),
+              String(val).replace(/[³²×÷₹]/g, (m) => m === '³' ? ' m3' : m === '²' ? ' m2' : m === '×' ? ' x ' : m === '₹' ? 'Rs.' : '/')
+            ]),
+            theme: 'striped',
+            headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold', fontSize: 9 },
+            columnStyles: {
+              0: { cellWidth: 220, fontStyle: 'bold' },
+              1: { cellWidth: 'auto' },
+            },
+            margin: { left: margin, right: margin, top: 40, bottom: 40 },
+            styles: { fontSize: 8.5, cellPadding: 4.5, overflow: 'linebreak' },
+            pageBreak: 'auto',
           });
 
-          y += lastResultData.paramRows.length * 20 + 20;
+          y = (doc as any).lastAutoTable.finalY + 16;
 
-          // Worked Equations Section
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(11);
-          doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-          doc.text('Worked Calculation Steps', margin, y);
-          y += 14;
-
-          lastResultData.stepDetails.forEach((step: string, idx: number) => {
-            const rowY = y + idx * 18;
-            doc.setFont('helvetica', 'normal');
-            doc.setFontSize(8.5);
-            doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-            doc.text(step, margin + 8, rowY + 2);
+          // Worked Steps Table with autoTable
+          (doc as any).autoTable({
+            startY: y,
+            head: [['Step', 'Worked Calculation Formula & Method']],
+            body: lastResultData.stepDetails.map((step: string, idx: number) => [
+              `#${idx + 1}`,
+              String(step).replace(/[³²×÷₹]/g, (m) => m === '³' ? '^3' : m === '²' ? '^2' : m === '×' ? ' x ' : m === '₹' ? 'Rs.' : '/')
+            ]),
+            theme: 'striped',
+            headStyles: { fillColor: [15, 23, 42], textColor: 255, fontStyle: 'bold', fontSize: 9 },
+            columnStyles: {
+              0: { cellWidth: 40, fontStyle: 'bold', halign: 'center' },
+              1: { cellWidth: 'auto' },
+            },
+            margin: { left: margin, right: margin, top: 40, bottom: 40 },
+            styles: { fontSize: 8.5, cellPadding: 4.5, overflow: 'linebreak' },
+            pageBreak: 'auto',
           });
 
           // Footers on every page

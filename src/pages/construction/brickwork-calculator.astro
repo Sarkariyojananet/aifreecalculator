@@ -2536,15 +2536,29 @@ const faqs = [
         try {
           let jsPDFModule = (window as any).jspdf;
           if (!jsPDFModule) {
-            const script = document.createElement("script");
-            script.src =
-              "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
+            const script1 = document.createElement("script");
+            script1.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js";
             await new Promise((resolve, reject) => {
-              script.onload = resolve;
-              script.onerror = reject;
-              document.head.appendChild(script);
+              script1.onload = resolve;
+              script1.onerror = reject;
+              document.head.appendChild(script1);
+            });
+            const script2 = document.createElement("script");
+            script2.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js";
+            await new Promise((resolve, reject) => {
+              script2.onload = resolve;
+              script2.onerror = reject;
+              document.head.appendChild(script2);
             });
             jsPDFModule = (window as any).jspdf;
+          } else if (!(window as any).jspdf?.plugin?.autotable && !(window as any).autoTable) {
+            const script2 = document.createElement("script");
+            script2.src = "https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js";
+            await new Promise((resolve, reject) => {
+              script2.onload = resolve;
+              script2.onerror = reject;
+              document.head.appendChild(script2);
+            });
           }
 
           const { jsPDF } = jsPDFModule;
@@ -2751,31 +2765,27 @@ const faqs = [
             ];
           }
 
-          // Draw Table Rows
-          tableRows.forEach(([label, val], idx) => {
-            const rowY = y + idx * 22;
-            doc.setFillColor(
-              idx % 2 === 0 ? 255 : 248,
-              idx % 2 === 0 ? 255 : 250,
-              idx % 2 === 0 ? 255 : 252,
-            );
-            doc.rect(margin, rowY - 12, pageWidth - margin * 2, 22, "F");
-            doc.setDrawColor(241, 245, 249);
-            doc.line(margin, rowY + 10, pageWidth - margin * 2, rowY + 10);
-
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(9);
-            doc.setTextColor(darkColor[0], darkColor[1], darkColor[2]);
-            doc.text(label, margin + 10, rowY + 2);
-
-            doc.setFont("helvetica", "normal");
-            doc.text(val, pageWidth - margin - 10, rowY + 2, {
-              align: "right",
-            });
+          // Draw Table Rows via autoTable for clean line-wrapping and multi-page support
+          (doc as any).autoTable({
+            startY: y,
+            head: [["Calculation Parameter / Metric", "Value & Quantity"]],
+            body: tableRows.map(([lbl, val]) => [
+              lbl.replace(/[³²×÷₹]/g, (m) => m === '³' ? '^3' : m === '²' ? '^2' : m === '×' ? 'x' : m === '₹' ? 'Rs.' : '/'),
+              val.replace(/[³²×÷₹]/g, (m) => m === '³' ? ' m3' : m === '²' ? ' m2' : m === '×' ? ' x ' : m === '₹' ? 'Rs.' : '/')
+            ]),
+            theme: "striped",
+            headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: "bold", fontSize: 9 },
+            columnStyles: {
+              0: { cellWidth: 200, fontStyle: "bold" },
+              1: { cellWidth: "auto" },
+            },
+            margin: { left: margin, right: margin, top: 40, bottom: 40 },
+            styles: { fontSize: 8.5, cellPadding: 4.5, overflow: "linebreak" },
+            pageBreak: "auto",
           });
 
           // Footer Branding on every page
-          const totalPages = doc.internal.getNumberOfPages();
+          const totalPages = (doc.internal as any).getNumberOfPages();
           for (let i = 1; i <= totalPages; i++) {
             doc.setPage(i);
             doc.setFont("helvetica", "normal");

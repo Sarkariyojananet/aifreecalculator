@@ -1513,16 +1513,31 @@ const faqSchema = {
       if (txtBtn) txtBtn.textContent = 'Generating...';
 
       try {
-        let jsPDFModule = window.jspdf;
+        let jsPDFModule = (window as any).jspdf;
         if (!jsPDFModule) {
-          const script = document.createElement('script');
-          script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+          const script1 = document.createElement('script');
+          script1.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
           await new Promise((resolve, reject) => {
-            script.onload = resolve;
-            script.onerror = reject;
-            document.head.appendChild(script);
+            script1.onload = resolve;
+            script1.onerror = reject;
+            document.head.appendChild(script1);
           });
-          jsPDFModule = window.jspdf;
+          const script2 = document.createElement('script');
+          script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+          await new Promise((resolve, reject) => {
+            script2.onload = resolve;
+            script2.onerror = reject;
+            document.head.appendChild(script2);
+          });
+          jsPDFModule = (window as any).jspdf;
+        } else if (!(window as any).jspdf?.plugin?.autotable && !(window as any).autoTable) {
+          const script2 = document.createElement('script');
+          script2.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js';
+          await new Promise((resolve, reject) => {
+            script2.onload = resolve;
+            script2.onerror = reject;
+            document.head.appendChild(script2);
+          });
         }
 
         const { jsPDF } = jsPDFModule;
@@ -1561,7 +1576,7 @@ const faqSchema = {
 
         // Title
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(15);
+        doc.setFontSize(14);
         doc.setTextColor(...darkColor);
         doc.text(lastResultData.title, margin, y);
         y += 18;
@@ -1581,31 +1596,24 @@ const faqSchema = {
         doc.setTextColor(...darkColor);
         doc.text(resHeroMain.textContent, margin + 14, y + 36);
 
-        y += 72;
-
-        // Summary Table Rows based on Mode
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(11);
-        doc.setTextColor(...darkColor);
-        doc.text('Calculation Breakdown & Parameters', margin, y);
-        y += 14;
+        y += 68;
 
         let tableRows = [];
         if (lastResultData.mode === 'wall_plaster') {
           tableRows = [
-            ['Net Plaster Area', `${lastResultData.netAreaSqm} m² (${lastResultData.netAreaSqft} sq.ft)`],
+            ['Net Plaster Area', `${lastResultData.netAreaSqm} m2 (${lastResultData.netAreaSqft} sq.ft)`],
             ['Plaster Thickness', `${lastResultData.thickMm} mm`],
             ['Mortar Mix Ratio', `1:${lastResultData.ratioLabel.split(':')[1] || '4'} (Cement : Sand)`],
-            ['Wet Mortar Volume', `${lastResultData.wetVolCum} m³ (${lastResultData.wetVolCft} CFT)`],
-            ['Dry Mortar Volume', `${lastResultData.dryVolCum} m³ (${lastResultData.dryVolCft} CFT)`],
+            ['Wet Mortar Volume', `${lastResultData.wetVolCum} m3 (${lastResultData.wetVolCft} CFT)`],
+            ['Dry Mortar Volume', `${lastResultData.dryVolCum} m3 (${lastResultData.dryVolCft} CFT)`],
             ['Dry Factor & Wastage', `Multiplier: ${lastResultData.dryFactor} | Wastage: ${lastResultData.wastage}%`],
             ['Cement Required', `${lastResultData.cementBagsRound} Bags of 50kg (${lastResultData.cementKg} kg)`],
             ['Sand Required', `${lastResultData.sandCft} CFT (${lastResultData.sandTons} Tonnes)`],
           ];
         } else if (lastResultData.mode === 'general_mortar') {
           tableRows = [
-            ['Total Wet Volume', `${lastResultData.wetVolCum} m³ (${lastResultData.wetVolCft} CFT)`],
-            ['Total Dry Volume', `${lastResultData.dryVolCum} m³ (${lastResultData.dryVolCft} CFT)`],
+            ['Total Wet Volume', `${lastResultData.wetVolCum} m3 (${lastResultData.wetVolCft} CFT)`],
+            ['Total Dry Volume', `${lastResultData.dryVolCum} m3 (${lastResultData.dryVolCft} CFT)`],
             ['Mix Ratio', lastResultData.ratioLabel],
             ['Wastage Allowance', `${lastResultData.wastage}%`],
             ['Cement Required', `${lastResultData.cementBagsRound} Bags of 50kg (${lastResultData.cementKg} kg)`],
@@ -1613,9 +1621,9 @@ const faqSchema = {
           ];
         } else if (lastResultData.mode === 'tile_mortar') {
           tableRows = [
-            ['Tiling Area', `${lastResultData.areaSqm} m² (${lastResultData.areaSqft} sq.ft)`],
+            ['Tiling Area', `${lastResultData.areaSqm} m2 (${lastResultData.areaSqft} sq.ft)`],
             ['Tile Application & Format', `${lastResultData.tileType} | ${lastResultData.tilePresetLabel}`],
-            ['Bed Thickness & Coverage', `${lastResultData.thicknessMm}mm bed @ ${lastResultData.coverage} kg/m²`],
+            ['Bed Thickness & Coverage', `${lastResultData.thicknessMm}mm bed @ ${lastResultData.coverage} kg/m2`],
             ['Base Adhesive Weight', `${lastResultData.baseKg} kg`],
             ['Wastage Allowance', `${lastResultData.wastage}% (${lastResultData.wasteKg} kg)`],
             ['Total Required Weight', `${lastResultData.totalKg} kg`],
@@ -1626,45 +1634,47 @@ const faqSchema = {
             ['Game Mode', lastResultData.gameName],
             ['Mortar Coordinates', lastResultData.mortarCoords],
             ['Target Coordinates', lastResultData.targetCoords],
-            ['Coordinate Differences', `ΔX = ${lastResultData.dx}m, ΔY = ${lastResultData.dy}m`],
+            ['Coordinate Differences', `dX = ${lastResultData.dx}m, dY = ${lastResultData.dy}m`],
             ['Direct Distance', `${lastResultData.distM} meters (${lastResultData.distKm} km)`],
-            ['Azimuth / Bearing', `${lastResultData.bearingDeg}° (${lastResultData.compass}) | ${lastResultData.natoMils} NATO Mils`],
+            ['Azimuth / Bearing', `${lastResultData.bearingDeg} deg (${lastResultData.compass}) | ${lastResultData.natoMils} NATO Mils`],
             ['Elevation Differential', `${lastResultData.elevDiff} meters`],
             ['Aiming Reference', lastResultData.aimingRef],
           ];
         }
 
-        // Draw Table
-        tableRows.forEach(([label, val], idx) => {
-          const rowY = y + idx * 22;
-          doc.setFillColor(idx % 2 === 0 ? 255 : 248, idx % 2 === 0 ? 255 : 250, idx % 2 === 0 ? 255 : 252);
-          doc.rect(margin, rowY - 12, pageWidth - margin * 2, 22, 'F');
-          doc.setDrawColor(241, 245, 249);
-          doc.line(margin, rowY + 10, pageWidth - margin * 2, rowY + 10);
-
-          doc.setFont('helvetica', 'bold');
-          doc.setFontSize(9);
-          doc.setTextColor(...darkColor);
-          doc.text(label, margin + 10, rowY + 2);
-
-          doc.setFont('helvetica', 'normal');
-          doc.setTextColor(...primaryColor);
-          doc.text(val, pageWidth - margin - 10, rowY + 2, { align: 'right' });
+        // Draw Table using autoTable for clean line-wrapping and page-boundary protection
+        (doc as any).autoTable({
+          startY: y,
+          head: [['Specification / Parameter', 'Calculated Requirement']],
+          body: tableRows.map(([lbl, val]) => [
+            String(lbl).replace(/[³²×÷₹Δ°]/g, (m) => m === '³' ? '^3' : m === '²' ? '^2' : m === '×' ? 'x' : m === 'Δ' ? 'd' : m === '°' ? ' deg' : '/'),
+            String(val).replace(/[³²×÷₹Δ°]/g, (m) => m === '³' ? ' m3' : m === '²' ? ' m2' : m === '×' ? ' x ' : m === 'Δ' ? 'd' : m === '°' ? ' deg' : '/')
+          ]),
+          theme: 'striped',
+          headStyles: { fillColor: [37, 99, 235], textColor: 255, fontStyle: 'bold', fontSize: 9 },
+          columnStyles: {
+            0: { cellWidth: 200, fontStyle: 'bold' },
+            1: { cellWidth: 'auto' },
+          },
+          margin: { left: margin, right: margin, top: 40, bottom: 40 },
+          styles: { fontSize: 8.5, cellPadding: 4.5, overflow: 'linebreak' },
+          pageBreak: 'auto',
         });
 
-        y += tableRows.length * 22 + 30;
+        // Footer Branding on every page
+        const totalPages = (doc.internal as any).getNumberOfPages();
+        for (let i = 1; i <= totalPages; i++) {
+          doc.setPage(i);
+          doc.setFont('helvetica', 'normal');
+          doc.setFontSize(8);
+          doc.setTextColor(...slateColor);
+          doc.text('Generated using AIFreecalculator.com', margin, pageHeight - 20);
+          doc.text(`Page ${i} of ${totalPages}`, pageWidth - margin, pageHeight - 20, { align: 'right' });
+        }
 
-        // Footer on page
-        doc.setDrawColor(226, 232, 240);
-        doc.line(margin, pageHeight - 35, pageWidth - margin, pageHeight - 35);
-        doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8);
-        doc.setTextColor(...slateColor);
-        doc.text('Generated using AIFreecalculator.com', margin, pageHeight - 20);
-        doc.text('Page 1 of 1', pageWidth - margin, pageHeight - 20, { align: 'right' });
-
-        const filename = `plaster-mortar-calculation-${dateStr}.pdf`;
-        doc.save(filename);
+        const fileDate = dateStr;
+        const fileName = `plaster-calculation-${fileDate}.pdf`;
+        doc.save(fileName);
       } catch (err) {
         console.error('PDF export error:', err);
       } finally {

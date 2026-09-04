@@ -1,0 +1,766 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { calculators, categories } from '../../../data/calculators';
+---
+
+<AdminLayout title="Calculator Editor | Calculator CMS" sectionTitle="Calculator Editor" activeSection="calculators">
+  <div class="space-y-6 max-w-5xl mx-auto pb-24 md:pb-8">
+    
+    <!-- Top Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
+      <div class="space-y-1">
+        <div class="flex items-center gap-2">
+          <a href="/admin/calculators/" class="text-xs font-bold text-slate-400 hover:text-blue-600 dark:hover:text-blue-400">
+            ← Back to Calculators
+          </a>
+          <span class="text-slate-300">/</span>
+          <span id="editor-mode-badge" class="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+            New Tool
+          </span>
+        </div>
+        <h2 id="editor-heading" class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+          Create New Calculator
+        </h2>
+      </div>
+
+      <!-- Quick Selector for Existing Calculators -->
+      <div class="flex items-center gap-2">
+        <label for="quick-load-calc" class="text-xs font-bold text-slate-500 dark:text-slate-400 shrink-0">
+          Load Existing:
+        </label>
+        <select
+          id="quick-load-calc"
+          class="rounded-2xl border border-slate-200 bg-white py-2 px-3 text-xs font-semibold text-slate-700 focus:border-blue-600 focus:outline-hidden dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300"
+        >
+          <option value="">-- Select Calculator to Edit --</option>
+          {calculators.map((c) => (
+            <option value={c.slug}>{c.name} ({c.category})</option>
+          ))}
+        </select>
+      </div>
+    </div>
+
+    <!-- Main Editor Form -->
+    <form id="calculator-editor-form" class="space-y-6" novalidate>
+      
+      <!-- Mobile Section Selector Dropdown (Screens < 768px) -->
+      <div class="md:hidden rounded-2xl border border-slate-200 bg-white p-3 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <label for="mobile-tab-select" class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+          Active Section
+        </label>
+        <select
+          id="mobile-tab-select"
+          class="w-full rounded-xl border border-blue-200 bg-blue-50/50 py-2.5 px-3 text-xs font-bold text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/60 dark:text-blue-300 focus:outline-hidden"
+        >
+          <option value="tab-basic">⚙️ 1. Basic Information</option>
+          <option value="tab-content">📝 2. Content &amp; Formulas</option>
+          <option value="tab-seo">🔍 3. SEO &amp; Meta Tags</option>
+          <option value="tab-faq">❓ 4. Calculator FAQs</option>
+          <option value="tab-schema">⚡ 5. Schema &amp; Rich Snippets</option>
+          <option value="tab-related">🔗 6. Related Tools</option>
+        </select>
+      </div>
+
+      <!-- Desktop Tab Bar (Screens >= 768px) -->
+      <div class="hidden md:flex items-center gap-1.5 border-b border-slate-200 dark:border-slate-800 pb-3" role="tablist">
+        <button type="button" class="editor-tab active rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-xs" data-target="tab-basic">
+          ⚙️ Basic Info
+        </button>
+        <button type="button" class="editor-tab rounded-xl bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition" data-target="tab-content">
+          📝 Content &amp; Formulas
+        </button>
+        <button type="button" class="editor-tab rounded-xl bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition" data-target="tab-seo">
+          🔍 SEO &amp; Meta Tags
+        </button>
+        <button type="button" class="editor-tab rounded-xl bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition" data-target="tab-faq">
+          ❓ FAQs
+        </button>
+        <button type="button" class="editor-tab rounded-xl bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition" data-target="tab-schema">
+          ⚡ Schema &amp; JSON-LD
+        </button>
+        <button type="button" class="editor-tab rounded-xl bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition" data-target="tab-related">
+          🔗 Related Tools
+        </button>
+      </div>
+
+      <!-- TAB 1: BASIC INFO -->
+      <div id="tab-basic" class="tab-panel space-y-6">
+        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900/90 space-y-5">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>⚙️</span> Basic Calculator Details
+          </h3>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label for="field-name" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Calculator Name <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="field-name"
+                required
+                placeholder="e.g. RCC Slab Steel Calculator"
+                class="mt-1.5 w-full rounded-2xl border border-slate-300 bg-white py-2.5 px-3.5 text-xs font-semibold text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label for="field-slug" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                URL Slug <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="field-slug"
+                required
+                placeholder="e.g. rcc-slab-steel-calculator"
+                class="mt-1.5 w-full rounded-2xl border border-slate-300 bg-white py-2.5 px-3.5 text-xs font-mono font-semibold text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+              />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+            <div>
+              <label for="field-category" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Category <span class="text-red-500">*</span>
+              </label>
+              <select
+                id="field-category"
+                class="mt-1.5 w-full rounded-2xl border border-slate-300 bg-white py-2.5 px-3 text-xs font-bold text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+              >
+                {categories.map((cat) => (
+                  <option value={cat.name}>{cat.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label for="field-icon" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Icon (Emoji or Symbol)
+              </label>
+              <input
+                type="text"
+                id="field-icon"
+                value="🧮"
+                placeholder="e.g. 🏗️, 💰, ⚖️"
+                class="mt-1.5 w-full rounded-2xl border border-slate-300 bg-white py-2.5 px-3.5 text-xs text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label for="field-tags" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Tags (Comma separated)
+              </label>
+              <input
+                type="text"
+                id="field-tags"
+                placeholder="e.g. Popular, Civil Engineering, Steel"
+                class="mt-1.5 w-full rounded-2xl border border-slate-300 bg-white py-2.5 px-3.5 text-xs text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label for="field-short-desc" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+              Short Description (Card Summary) <span class="text-red-500">*</span>
+            </label>
+            <textarea
+              id="field-short-desc"
+              rows="2"
+              placeholder="Brief summary shown on homepage and directory cards..."
+              class="mt-1.5 w-full rounded-2xl border border-slate-300 bg-white p-3 text-xs text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+            ></textarea>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-6 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <label class="flex items-center gap-2.5 cursor-pointer">
+              <input type="checkbox" id="field-featured" class="rounded h-4 w-4 text-blue-600 focus:ring-blue-500" />
+              <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Feature on Homepage</span>
+            </label>
+
+            <label class="flex items-center gap-2.5 cursor-pointer">
+              <input type="checkbox" id="field-popular" checked class="rounded h-4 w-4 text-blue-600 focus:ring-blue-500" />
+              <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Show in Popular Tools list</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: CONTENT & METHODOLOGY -->
+      <div id="tab-content" class="tab-panel hidden space-y-6">
+        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900/90 space-y-5">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📝</span> Formula, Methodology &amp; Instructions
+          </h3>
+
+          <div>
+            <label for="field-methodology" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+              Formula &amp; Mathematical Method
+            </label>
+            <textarea
+              id="field-methodology"
+              rows="4"
+              placeholder="e.g. Formula: Steel Weight = (D² / 162) × Length in meters. Cutting length includes hook bends (2 × 9d)..."
+              class="mt-1.5 w-full rounded-2xl border border-slate-300 bg-white p-3 font-mono text-xs text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+            ></textarea>
+          </div>
+
+          <div>
+            <label for="field-how-to-use" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+              How To Use Step-by-Step Guide
+            </label>
+            <textarea
+              id="field-how-to-use"
+              rows="4"
+              placeholder="1. Enter the length and width in meters or feet.&#10;2. Select rebar diameter and spacing.&#10;3. Click Calculate to generate complete BOQ."
+              class="mt-1.5 w-full rounded-2xl border border-slate-300 bg-white p-3 text-xs text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+            ></textarea>
+          </div>
+
+          <div>
+            <label for="field-worked-example" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+              Worked Numerical Example
+            </label>
+            <textarea
+              id="field-worked-example"
+              rows="3"
+              placeholder="Example: For a 4m x 3m slab with 10mm bar at 150mm c/c spacing, total steel required is ~84.2 kg."
+              class="mt-1.5 w-full rounded-2xl border border-slate-300 bg-white p-3 text-xs text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+            ></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: SEO METADATA -->
+      <div id="tab-seo" class="tab-panel hidden space-y-6">
+        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900/90 space-y-5">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🔍</span> SEO &amp; Search Engine Optimization
+          </h3>
+
+          <div>
+            <div class="flex items-center justify-between">
+              <label for="field-meta-title" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                SEO Meta Title (<span id="title-char-count">0</span> / 60 chars)
+              </label>
+              <span class="text-[10px] text-slate-400">Target 50-60 characters</span>
+            </div>
+            <input
+              type="text"
+              id="field-meta-title"
+              placeholder="e.g. RCC Slab Steel Calculator - Accurate Bar Bending Schedule"
+              class="mt-1.5 w-full rounded-2xl border border-slate-300 bg-white py-2.5 px-3.5 text-xs font-semibold text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+            />
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between">
+              <label for="field-meta-desc" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                SEO Meta Description (<span id="desc-char-count">0</span> / 160 chars)
+              </label>
+              <span class="text-[10px] text-slate-400">Target 120-160 characters</span>
+            </div>
+            <textarea
+              id="field-meta-desc"
+              rows="3"
+              placeholder="Comprehensive summary for Google search snippet with focus keywords..."
+              class="mt-1.5 w-full rounded-2xl border border-slate-300 bg-white p-3 text-xs text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+            ></textarea>
+          </div>
+
+          <div>
+            <label for="field-keywords" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+              Search Keywords (Comma separated)
+            </label>
+            <input
+              type="text"
+              id="field-keywords"
+              placeholder="e.g. rcc slab steel, bar bending schedule, slab rebar weight kg, civil boq"
+              class="mt-1.5 w-full rounded-2xl border border-slate-300 bg-white py-2.5 px-3.5 text-xs text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+            />
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div>
+              <label for="field-canonical" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Canonical URL Override (Optional)
+              </label>
+              <input
+                type="url"
+                id="field-canonical"
+                placeholder="https://aifreecalculator.com/..."
+                class="mt-1.5 w-full rounded-2xl border border-slate-300 bg-white py-2.5 px-3.5 text-xs font-mono text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label for="field-robots" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Robots Meta Tag
+              </label>
+              <select
+                id="field-robots"
+                class="mt-1.5 w-full rounded-2xl border border-slate-300 bg-white py-2.5 px-3 text-xs font-bold text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+              >
+                <option value="index, follow">index, follow (Default - Recommended)</option>
+                <option value="noindex, follow">noindex, follow</option>
+                <option value="noindex, nofollow">noindex, nofollow</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: CALCULATOR FAQS -->
+      <div id="tab-faq" class="tab-panel hidden space-y-6">
+        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900/90 space-y-5">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span>❓</span> Calculator FAQs &amp; Step-by-Step Questions
+              </h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                These FAQs are embedded on the calculator page and automatically generate FAQPage JSON-LD rich snippets.
+              </p>
+            </div>
+            <button
+              type="button"
+              id="btn-add-faq"
+              class="inline-flex items-center gap-1.5 rounded-xl bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-600 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-400 cursor-pointer"
+            >
+              <span>➕</span> Add Question
+            </button>
+          </div>
+
+          <div id="faq-items-container" class="space-y-4">
+            <!-- Dynamic FAQ Items Rendered by JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 5: SCHEMA & JSON-LD -->
+      <div id="tab-schema" class="tab-panel hidden space-y-6">
+        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900/90 space-y-5">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span>⚡</span> Structured Schema JSON-LD Preview
+              </h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Automatically generated Google Rich Result Schema (WebApplication + BreadcrumbList + FAQPage).
+              </p>
+            </div>
+            <button
+              type="button"
+              id="btn-copy-schema"
+              class="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+            >
+              <span>📋</span> <span id="schema-copy-text">Copy Schema JSON</span>
+            </button>
+          </div>
+
+          <pre id="schema-json-preview" class="max-h-96 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-4 font-mono text-xs text-slate-800 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 select-all leading-relaxed"></pre>
+        </div>
+      </div>
+
+      <!-- TAB 6: RELATED TOOLS -->
+      <div id="tab-related" class="tab-panel hidden space-y-6">
+        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900/90 space-y-5">
+          <div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <span>🔗</span> Related Calculators &amp; Internal Links
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Select related tools to strengthen internal SEO link equity across category clusters.
+            </p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 max-h-80 overflow-y-auto p-1">
+            {calculators.map((c) => (
+              <label class="flex items-center gap-2.5 rounded-2xl border border-slate-200 bg-slate-50/50 p-3 hover:bg-blue-50/50 dark:border-slate-800 dark:bg-slate-950/40 cursor-pointer">
+                <input type="checkbox" name="related-calcs" value={c.slug} class="rounded h-4 w-4 text-blue-600" />
+                <div class="min-w-0">
+                  <div class="text-xs font-bold text-slate-900 dark:text-white truncate">{c.name}</div>
+                  <div class="text-[10px] text-slate-400">{c.category}</div>
+                </div>
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Message Alert -->
+      <div id="editor-status-msg" class="hidden rounded-2xl p-4 text-xs font-semibold" role="alert"></div>
+
+      <!-- Desktop Bottom Actions -->
+      <div class="hidden md:flex items-center justify-between border-t border-slate-200/80 pt-6 dark:border-slate-800/80">
+        <a href="/admin/calculators/" class="text-xs font-bold text-slate-500 hover:underline">
+          Cancel &amp; Return
+        </a>
+        <div class="flex items-center gap-3">
+          <button
+            type="submit"
+            id="btn-save-desktop"
+            class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-8 py-3 text-xs font-bold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 active:scale-[0.98] transition cursor-pointer"
+          >
+            <span>💾</span> Save Calculator
+          </button>
+        </div>
+      </div>
+
+      <!-- Mobile Sticky Bottom Action Bar (Fixed, Touch-friendly) -->
+      <div class="fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-slate-900/95 border-t border-slate-200 dark:border-slate-800 p-3 sm:p-4 backdrop-blur-md md:hidden flex items-center justify-between gap-3 shadow-2xl">
+        <a
+          href="/admin/calculators/"
+          class="rounded-xl border border-slate-300 px-3.5 py-2.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:text-slate-300"
+        >
+          Cancel
+        </a>
+        <button
+          type="submit"
+          id="btn-save-mobile"
+          class="flex-1 rounded-xl bg-blue-600 py-2.5 px-4 text-xs font-bold text-white shadow-md shadow-blue-500/20 active:scale-[0.98]"
+        >
+          💾 Save Calculator
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</AdminLayout>
+
+<script is:inline>
+  const params = new URLSearchParams(window.location.search);
+  const editSlug = params.get('edit');
+
+  const tabs = document.querySelectorAll('.editor-tab');
+  const panels = document.querySelectorAll('.tab-panel');
+  const mobileSelect = document.getElementById('mobile-tab-select');
+  const quickLoad = document.getElementById('quick-load-calc');
+
+  const form = document.getElementById('calculator-editor-form');
+  const statusMsg = document.getElementById('editor-status-msg');
+  const heading = document.getElementById('editor-heading');
+  const badge = document.getElementById('editor-mode-badge');
+
+  const fieldName = document.getElementById('field-name');
+  const fieldSlug = document.getElementById('field-slug');
+  const fieldCategory = document.getElementById('field-category');
+  const fieldIcon = document.getElementById('field-icon');
+  const fieldTags = document.getElementById('field-tags');
+  const fieldShortDesc = document.getElementById('field-short-desc');
+  const fieldFeatured = document.getElementById('field-featured');
+  const fieldPopular = document.getElementById('field-popular');
+
+  const fieldMetaTitle = document.getElementById('field-meta-title');
+  const fieldMetaDesc = document.getElementById('field-meta-desc');
+  const fieldKeywords = document.getElementById('field-keywords');
+  const titleCount = document.getElementById('title-char-count');
+  const descCount = document.getElementById('desc-char-count');
+
+  const faqContainer = document.getElementById('faq-items-container');
+  const btnAddFaq = document.getElementById('btn-add-faq');
+  const schemaPreview = document.getElementById('schema-json-preview');
+  const btnCopySchema = document.getElementById('btn-copy-schema');
+  const schemaCopyText = document.getElementById('schema-copy-text');
+
+  let faqs = [];
+
+  // Tab Switching
+  function switchTab(targetId) {
+    panels.forEach((p) => {
+      p.classList.toggle('hidden', p.id !== targetId);
+    });
+    tabs.forEach((t) => {
+      const isMatch = t.getAttribute('data-target') === targetId;
+      if (isMatch) {
+        t.className = 'editor-tab active rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-xs';
+      } else {
+        t.className = 'editor-tab rounded-xl bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition';
+      }
+    });
+    if (mobileSelect) mobileSelect.value = targetId;
+    if (targetId === 'tab-schema') updateSchemaPreview();
+  }
+
+  tabs.forEach((t) => {
+    t.addEventListener('click', () => switchTab(t.getAttribute('data-target')));
+  });
+
+  mobileSelect?.addEventListener('change', (e) => switchTab(e.target.value));
+
+  // Auto-slug generator from name
+  fieldName?.addEventListener('input', () => {
+    if (!editSlug && fieldSlug) {
+      fieldSlug.value = fieldName.value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    }
+    updateSchemaPreview();
+  });
+
+  // Character Counters
+  fieldMetaTitle?.addEventListener('input', () => {
+    if (titleCount) titleCount.textContent = fieldMetaTitle.value.length;
+    updateSchemaPreview();
+  });
+
+  fieldMetaDesc?.addEventListener('input', () => {
+    if (descCount) descCount.textContent = fieldMetaDesc.value.length;
+    updateSchemaPreview();
+  });
+
+  // FAQ Manager
+  function renderFaqs() {
+    if (!faqContainer) return;
+    if (faqs.length === 0) {
+      faqContainer.innerHTML = `
+        <div class="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-xs text-slate-400 dark:border-slate-800">
+          No FAQs added yet. Click "+ Add Question" to create structured answers.
+        </div>
+      `;
+      return;
+    }
+
+    faqContainer.innerHTML = faqs.map((faq, idx) => `
+      <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-950/40 space-y-2">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Question #${idx + 1}</span>
+          <button type="button" class="btn-del-faq text-xs font-bold text-red-600 hover:underline" data-idx="${idx}">
+            Delete
+          </button>
+        </div>
+        <input
+          type="text"
+          class="faq-q-input w-full rounded-xl border border-slate-300 bg-white py-2 px-3 text-xs font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+          value="${faq.question}"
+          placeholder="e.g. How is steel cutting length calculated?"
+          data-idx="${idx}"
+        />
+        <textarea
+          rows="2"
+          class="faq-a-input w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+          placeholder="Detailed mathematical or practical answer..."
+          data-idx="${idx}"
+        >${faq.answer}</textarea>
+      </div>
+    `).join('');
+
+    faqContainer.querySelectorAll('.btn-del-faq').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const idx = parseInt(btn.getAttribute('data-idx') || '0', 10);
+        faqs.splice(idx, 1);
+        renderFaqs();
+        updateSchemaPreview();
+      });
+    });
+
+    faqContainer.querySelectorAll('.faq-q-input').forEach((inp) => {
+      inp.addEventListener('input', () => {
+        const idx = parseInt(inp.getAttribute('data-idx') || '0', 10);
+        faqs[idx].question = inp.value;
+        updateSchemaPreview();
+      });
+    });
+
+    faqContainer.querySelectorAll('.faq-a-input').forEach((inp) => {
+      inp.addEventListener('input', () => {
+        const idx = parseInt(inp.getAttribute('data-idx') || '0', 10);
+        faqs[idx].answer = inp.value;
+        updateSchemaPreview();
+      });
+    });
+  }
+
+  btnAddFaq?.addEventListener('click', () => {
+    faqs.push({ question: '', answer: '' });
+    renderFaqs();
+  });
+
+  // Schema Generator Preview
+  function updateSchemaPreview() {
+    const name = fieldName?.value.trim() || 'Calculator';
+    const slug = fieldSlug?.value.trim() || 'tool';
+    const desc = fieldMetaDesc?.value.trim() || fieldShortDesc?.value.trim() || 'Online calculation tool';
+    const cat = fieldCategory?.value || 'General';
+
+    const schemaObj = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "@id": `https://aifreecalculator.com/${cat.toLowerCase()}/${slug}/#app`,
+          "name": name,
+          "url": `https://aifreecalculator.com/${cat.toLowerCase()}/${slug}/`,
+          "description": desc,
+          "applicationCategory": `${cat}Application`,
+          "operatingSystem": "All",
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          }
+        },
+        {
+          "@type": "BreadcrumbList",
+          "itemListElement": [
+            { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://aifreecalculator.com" },
+            { "@type": "ListItem", "position": 2, "name": cat, "item": `https://aifreecalculator.com/${cat.toLowerCase()}/` },
+            { "@type": "ListItem", "position": 3, "name": name, "item": `https://aifreecalculator.com/${cat.toLowerCase()}/${slug}/` }
+          ]
+        }
+      ]
+    };
+
+    if (faqs.length > 0 && faqs.some((f) => f.question && f.answer)) {
+      schemaObj["@graph"].push({
+        "@type": "FAQPage",
+        "mainEntity": faqs.filter((f) => f.question && f.answer).map((f) => ({
+          "@type": "Question",
+          "name": f.question,
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": f.answer
+          }
+        }))
+      });
+    }
+
+    if (schemaPreview) {
+      schemaPreview.textContent = JSON.stringify(schemaObj, null, 2);
+    }
+  }
+
+  // Copy Schema Button
+  btnCopySchema?.addEventListener('click', async () => {
+    if (!schemaPreview) return;
+    try {
+      await navigator.clipboard.writeText(schemaPreview.textContent);
+      if (schemaCopyText) {
+        schemaCopyText.textContent = 'Copied! ✅';
+        setTimeout(() => { schemaCopyText.textContent = 'Copy Schema JSON'; }, 2000);
+      }
+    } catch {}
+  });
+
+  // Load Existing Calculator Data
+  function loadCalculatorData(slug) {
+    const token = localStorage.getItem('admin_token') || '';
+    fetch('/api/admin/calculators', {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        const item = (data.calculators || []).find((c) => c.slug === slug);
+        if (!item) return;
+
+        if (heading) heading.textContent = `Edit ${item.name}`;
+        if (badge) {
+          badge.textContent = 'Editing Tool';
+          badge.className = 'rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300';
+        }
+
+        if (fieldName) fieldName.value = item.name;
+        if (fieldSlug) { fieldSlug.value = item.slug; fieldSlug.readOnly = true; }
+        if (fieldCategory) fieldCategory.value = item.category;
+        if (fieldIcon) fieldIcon.value = item.icon || '🧮';
+        if (fieldTags) fieldTags.value = (item.tags || []).join(', ');
+        if (fieldShortDesc) fieldShortDesc.value = item.description || '';
+        if (fieldFeatured) fieldFeatured.checked = Boolean(item.featured);
+
+        if (fieldMetaTitle) {
+          fieldMetaTitle.value = item.metaTitle || `${item.name} - Free Online Calculator`;
+          if (titleCount) titleCount.textContent = fieldMetaTitle.value.length;
+        }
+        if (fieldMetaDesc) {
+          fieldMetaDesc.value = item.metaDescription || item.description || '';
+          if (descCount) descCount.textContent = fieldMetaDesc.value.length;
+        }
+        if (fieldKeywords) fieldKeywords.value = (item.keywords || []).join(', ');
+
+        if (Array.isArray(item.faqs) && item.faqs.length > 0) {
+          faqs = item.faqs;
+        } else {
+          faqs = [
+            { question: `What is the formula used in ${item.name}?`, answer: `Standard verified formulas compliant with ${item.category} best practices.` },
+            { question: `Is this ${item.name} 100% free?`, answer: 'Yes, fully free with instant client-side calculation.' }
+          ];
+        }
+
+        renderFaqs();
+        updateSchemaPreview();
+      })
+      .catch(() => {});
+  }
+
+  quickLoad?.addEventListener('change', (e) => {
+    if (e.target.value) {
+      window.location.href = `/admin/calculators/new/?edit=${e.target.value}`;
+    }
+  });
+
+  if (editSlug) {
+    if (quickLoad) quickLoad.value = editSlug;
+    loadCalculatorData(editSlug);
+  } else {
+    renderFaqs();
+    updateSchemaPreview();
+  }
+
+  // Form Submit / Save
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = fieldName?.value.trim();
+    const slug = fieldSlug?.value.trim();
+
+    if (!name || !slug) {
+      if (statusMsg) {
+        statusMsg.className = 'rounded-2xl p-4 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300';
+        statusMsg.textContent = 'Please enter Calculator Name and Slug.';
+        statusMsg.classList.remove('hidden');
+      }
+      return;
+    }
+
+    const payload = {
+      slug,
+      name,
+      category: fieldCategory?.value,
+      icon: fieldIcon?.value,
+      description: fieldShortDesc?.value,
+      featured: fieldFeatured?.checked,
+      tags: (fieldTags?.value || '').split(',').map((t) => t.trim()).filter(Boolean),
+      keywords: (fieldKeywords?.value || '').split(',').map((k) => k.trim()).filter(Boolean),
+      metaTitle: fieldMetaTitle?.value,
+      metaDescription: fieldMetaDesc?.value,
+      faqs,
+    };
+
+    if (statusMsg) {
+      statusMsg.className = 'rounded-2xl p-4 text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300';
+      statusMsg.textContent = 'Saving calculator metadata to CMS...';
+      statusMsg.classList.remove('hidden');
+    }
+
+    try {
+      const token = localStorage.getItem('admin_token') || '';
+      const res = await fetch('/api/admin/calculators', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        statusMsg.className = 'rounded-2xl p-4 text-xs font-semibold bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+        statusMsg.textContent = `✓ Calculator "${name}" saved and published successfully!`;
+      } else {
+        statusMsg.className = 'rounded-2xl p-4 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300';
+        statusMsg.textContent = data.error || 'Failed to save calculator settings';
+      }
+    } catch {
+      statusMsg.className = 'rounded-2xl p-4 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300';
+      statusMsg.textContent = 'Connection error while saving calculator settings';
+    }
+  });
+</script>

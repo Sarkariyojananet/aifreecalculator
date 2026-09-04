@@ -1,95 +1,253 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
+import AdminStatCard from '../../components/admin/AdminStatCard.astro';
 import { getCalculatorStats } from '../../lib/db';
-import { calculators } from '../../data/calculators';
+import { calculators, categories } from '../../data/calculators';
+import { getSearchAnalytics } from '../../lib/admin/content-store';
 
 const stats = await getCalculatorStats();
 const totalCalculations = Object.values(stats).reduce((a, b) => a + b, 0);
+const searchLogs = await getSearchAnalytics(Astro.locals);
 
 const sortedTools = Object.entries(stats)
   .sort(([, a], [, b]) => b - a)
-  .map(([slug, views]) => {
-    const calc = calculators.find((c) => c.slug === slug);
+  .map(([slug, views], idx) => {
+    const calc = calculators.find((c) => c.slug === slug || c.slug === `${slug}-calculator`);
+    const share = totalCalculations > 0 ? Math.round((views / totalCalculations) * 100) : 0;
     return {
+      rank: idx + 1,
       slug,
       name: calc ? calc.name : slug,
       category: calc ? calc.category : 'General',
       icon: calc ? calc.icon : '🧮',
       views,
+      share,
+      path: calc ? calc.path : `/${slug}/`,
     };
   });
+
+// Category Distribution
+const categoryStats = categories.map((cat) => {
+  const catCalcs = calculators.filter((c) => c.category.toLowerCase() === cat.name.toLowerCase());
+  const catViews = catCalcs.reduce((sum, c) => sum + (stats[c.slug] || stats[`${c.slug}-calculator`] || 0), 0);
+  const share = totalCalculations > 0 ? Math.round((catViews / totalCalculations) * 100) : 0;
+  return {
+    name: cat.name,
+    icon: cat.icon,
+    count: catCalcs.length,
+    views: catViews,
+    share,
+  };
+}).sort((a, b) => b.views - a.views);
 ---
 
-<AdminLayout title="Analytics & Usage Stats | AI Free Calculator" activeTab="analytics">
-  <div class="space-y-6">
+<AdminLayout title="Usage & Analytics | Calculator CMS" sectionTitle="Analytics" activeSection="analytics">
+  <div class="space-y-8 max-w-7xl mx-auto pb-12">
     
-    <!-- Top KPI Cards -->
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-        <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Calculations Computed</div>
-        <div class="mt-2 text-3xl font-black text-blue-600 dark:text-blue-400">{totalCalculations.toLocaleString()}</div>
-        <div class="mt-1 text-[11px] text-slate-400">Across all 42+ active tools</div>
+    <!-- Top Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
+      <div>
+        <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+          Calculation Usage &amp; Analytics
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Real calculation throughput, category distribution shares, and search keyword intelligence.
+        </p>
       </div>
 
-      <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-        <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Top Visited Category</div>
-        <div class="mt-2 text-3xl font-black text-emerald-600 dark:text-emerald-400">Finance & Taxes</div>
-        <div class="mt-1 text-[11px] text-slate-400">Income Tax & EMI driving highest RPM</div>
-      </div>
-
-      <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-        <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Civil BOQ Computations</div>
-        <div class="mt-2 text-3xl font-black text-slate-900 dark:text-white">3,035+</div>
-        <div class="mt-1 text-[11px] text-slate-400">RCC Slab & Brickwork estimators</div>
+      <div class="flex items-center gap-2">
+        <span class="rounded-2xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+          Total Computations: <strong class="text-blue-600 dark:text-blue-400 font-mono">{totalCalculations.toLocaleString()}</strong>
+        </span>
       </div>
     </div>
 
-    <!-- Leaderboard Table -->
-    <div class="rounded-2xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900 p-6">
-      <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-4">
-        Top Performing Calculators Leaderboard
-      </h3>
+    <!-- 1. KPI Cards Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+      <AdminStatCard
+        title="Total Calculations Computed"
+        value={totalCalculations.toLocaleString()}
+        icon="⚡"
+        badge="Live Metrics"
+        badgeType="success"
+        subtitle="All-time user computation runs"
+        iconBg="bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400"
+      />
 
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-xs">
-          <thead class="bg-slate-50 dark:bg-slate-950 text-slate-600 dark:text-slate-400 font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-800">
-            <tr>
-              <th class="p-3">Rank</th>
-              <th class="p-3">Calculator</th>
-              <th class="p-3">Category</th>
-              <th class="p-3 text-right">Calculations Run</th>
-              <th class="p-3 text-right">Share</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
-            {sortedTools.map((t, idx) => {
-              const share = Math.round((t.views / totalCalculations) * 100);
-              return (
-                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
-                  <td class="p-3 font-bold text-slate-400">#{idx + 1}</td>
-                  <td class="p-3">
-                    <div class="flex items-center gap-2">
-                      <span>{t.icon}</span>
-                      <span class="font-bold text-slate-900 dark:text-white">{t.name}</span>
-                    </div>
+      <AdminStatCard
+        title="Top Category By Volume"
+        value={categoryStats[0]?.name || 'Finance'}
+        icon="💰"
+        badge={`${categoryStats[0]?.share || 0}% Total Share`}
+        badgeType="info"
+        subtitle={`${categoryStats[0]?.views.toLocaleString() || 0} calculation runs`}
+        iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400"
+      />
+
+      <AdminStatCard
+        title="Active Engine Suite"
+        value={calculators.length}
+        icon="🧮"
+        badge="100% Operational"
+        badgeType="success"
+        subtitle="Zero server latency client-side execution"
+        iconBg="bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400"
+      />
+    </div>
+
+    <!-- 2. Category Usage Distribution Breakdown -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900/90 space-y-5">
+      <div>
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>📊</span> Category Volume &amp; Calculation Share
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          Proportion of computations executed across each specialized calculation suite
+        </p>
+      </div>
+
+      <div class="space-y-4">
+        {categoryStats.map((cat) => (
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-xs font-bold">
+              <span class="text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                <span>{cat.icon}</span> <span>{cat.name} ({cat.count} tools)</span>
+              </span>
+              <span class="text-slate-500 font-mono">
+                {cat.views.toLocaleString()} runs ({cat.share}%)
+              </span>
+            </div>
+            <div class="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+              <div class="h-full bg-blue-600 rounded-full transition-all duration-500" style={`width: ${cat.share}%`}></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- 3. Full Leaderboard (Desktop Table + Mobile Cards) -->
+    <div class="space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🏆</span> Complete Calculator Usage Leaderboard
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Ranked by total executions generated by visitors
+          </p>
+        </div>
+      </div>
+
+      <!-- Desktop Table -->
+      <div class="hidden md:block rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        {sortedTools.length === 0 ? (
+          <div class="p-8 text-center text-xs text-slate-400">
+            No calculator execution data recorded yet.
+          </div>
+        ) : (
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50/80 dark:bg-slate-950/60 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider border-b border-slate-100 dark:border-slate-800">
+              <tr>
+                <th class="py-3.5 px-5 w-16">Rank</th>
+                <th class="py-3.5 px-4">Calculator</th>
+                <th class="py-3.5 px-4">Category</th>
+                <th class="py-3.5 px-4 text-right">Calculations Run</th>
+                <th class="py-3.5 px-4 text-right">Traffic Share</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+              {sortedTools.map((t) => (
+                <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
+                  <td class="py-3.5 px-5 font-mono font-bold text-slate-400">
+                    #{t.rank}
                   </td>
-                  <td class="p-3">
-                    <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                  <td class="py-3.5 px-4">
+                    <a href={t.path} target="_blank" class="flex items-center gap-2.5 font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition">
+                      <span class="text-base">{t.icon}</span>
+                      <span>{t.name}</span>
+                    </a>
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                       {t.category}
                     </span>
                   </td>
-                  <td class="p-3 text-right font-mono font-bold text-blue-600 dark:text-blue-400">
+                  <td class="py-3.5 px-4 text-right font-mono font-bold text-slate-900 dark:text-white">
                     {t.views.toLocaleString()}
                   </td>
-                  <td class="p-3 text-right font-semibold text-slate-500">
-                    {share}%
+                  <td class="py-3.5 px-4 text-right font-mono font-semibold text-slate-500">
+                    {t.share}%
                   </td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
+
+      <!-- Mobile Stacked Cards (Screens < 768px) -->
+      <div class="md:hidden space-y-3">
+        {sortedTools.length === 0 ? (
+          <div class="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-xs text-slate-400 dark:border-slate-800">
+            No calculator execution data recorded yet.
+          </div>
+        ) : (
+          sortedTools.map((t) => (
+            <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="text-lg">{t.icon}</span>
+                  <span class="font-bold text-xs text-slate-900 dark:text-white">{t.name}</span>
+                </div>
+                <span class="rounded bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                  #{t.rank}
+                </span>
+              </div>
+              <div class="flex items-center justify-between text-[11px] text-slate-500 pt-1 border-t border-slate-100 dark:border-slate-800">
+                <span>{t.category}</span>
+                <span class="font-mono"><strong>{t.views.toLocaleString()}</strong> runs ({t.share}%)</span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+
+    <!-- 4. Search Demand & Keyword Trends -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900/90 space-y-4">
+      <div>
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>🔍</span> Top Search Demand &amp; Opportunities
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          Keywords searched by visitors to identify future calculator development opportunities
+        </p>
+      </div>
+
+      {searchLogs.length === 0 ? (
+        <div class="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-xs text-slate-400 dark:border-slate-800">
+          No search queries recorded yet.
+        </div>
+      ) : (
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          {searchLogs.map((log) => (
+            <div class="rounded-2xl border border-slate-100 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-950/40 flex items-center justify-between gap-3">
+              <div class="min-w-0">
+                <div class="text-xs font-bold text-slate-900 dark:text-white truncate">
+                  "{log.query}"
+                </div>
+                <span class={`inline-block mt-1 rounded px-1.5 py-0.2 text-[9px] font-bold ${log.hasResults ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300'}`}>
+                  {log.hasResults ? 'Has Tool' : 'Missing (Opportunity)'}
+                </span>
+              </div>
+              <div class="text-right shrink-0">
+                <div class="font-mono text-sm font-black text-slate-900 dark:text-white">{log.count}</div>
+                <div class="text-[9px] text-slate-400">searches</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
 
   </div>

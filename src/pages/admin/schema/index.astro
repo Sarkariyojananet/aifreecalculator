@@ -1,0 +1,199 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { calculators } from '../../../data/calculators';
+---
+
+<AdminLayout title="Schema & Rich Results Manager | Calculator CMS" sectionTitle="Schema Manager" activeSection="schema">
+  <div class="space-y-6 max-w-5xl mx-auto pb-12">
+    
+    <!-- Top Action Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
+      <div>
+        <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+          Schema &amp; Rich Results Manager
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Inspect, validate, and generate structured JSON-LD schemas (WebApplication, FAQPage, BreadcrumbList).
+        </p>
+      </div>
+
+      <a
+        href="https://search.google.com/test/rich-results"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-blue-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-blue-400 shadow-2xs self-start sm:self-auto"
+      >
+        <span>🔍</span> Test on Google Rich Results ↗
+      </a>
+    </div>
+
+    <!-- Calculator Selector -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <label for="schema-calc-select" class="block text-xs font-bold text-slate-800 dark:text-slate-200">
+            Select Calculator to Inspect Schema:
+          </label>
+          <p class="text-[11px] text-slate-400 mt-0.5">
+            Generates standardized JSON-LD graph according to Schema.org standards
+          </p>
+        </div>
+
+        <select
+          id="schema-calc-select"
+          class="w-full sm:w-80 rounded-2xl border border-slate-300 bg-white py-2.5 px-3 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white focus:border-blue-600 focus:outline-hidden"
+        >
+          {calculators.map((c) => (
+            <option value={c.slug} data-name={c.name} data-category={c.category} data-desc={c.description}>
+              {c.icon} {c.name} ({c.category})
+            </option>
+          ))}
+        </select>
+      </div>
+
+      <!-- Schema Type Toggles -->
+      <div class="flex flex-wrap items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs font-bold">
+        <span class="text-slate-400">Include in Graph:</span>
+        <label class="flex items-center gap-1.5 cursor-pointer">
+          <input type="checkbox" id="chk-webapp" checked class="rounded h-4 w-4 text-blue-600" />
+          <span>WebApplication</span>
+        </label>
+        <label class="flex items-center gap-1.5 cursor-pointer">
+          <input type="checkbox" id="chk-breadcrumb" checked class="rounded h-4 w-4 text-blue-600" />
+          <span>BreadcrumbList</span>
+        </label>
+        <label class="flex items-center gap-1.5 cursor-pointer">
+          <input type="checkbox" id="chk-faq" checked class="rounded h-4 w-4 text-blue-600" />
+          <span>FAQPage</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Generated Schema Output Box -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">⚡</span>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">
+            Generated JSON-LD Structured Data
+          </h3>
+          <span class="rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+            Valid JSON-LD
+          </span>
+        </div>
+
+        <button
+          type="button"
+          id="btn-copy-schema-json"
+          class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition cursor-pointer"
+        >
+          <span>📋</span> <span id="copy-schema-label">Copy JSON-LD</span>
+        </button>
+      </div>
+
+      <pre id="schema-display-box" class="max-h-[500px] overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-4 font-mono text-xs text-slate-800 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 select-all leading-relaxed"></pre>
+    </div>
+
+  </div>
+</AdminLayout>
+
+<script is:inline>
+  const select = document.getElementById('schema-calc-select');
+  const chkWebApp = document.getElementById('chk-webapp');
+  const chkBreadcrumb = document.getElementById('chk-breadcrumb');
+  const chkFaq = document.getElementById('chk-faq');
+  const displayBox = document.getElementById('schema-display-box');
+  const btnCopy = document.getElementById('btn-copy-schema-json');
+  const copyLabel = document.getElementById('copy-schema-label');
+
+  function generateSchema() {
+    if (!select || !displayBox) return;
+    const opt = select.options[select.selectedIndex];
+    if (!opt) return;
+
+    const slug = opt.value;
+    const name = opt.getAttribute('data-name') || 'Calculator';
+    const cat = opt.getAttribute('data-category') || 'General';
+    const desc = opt.getAttribute('data-desc') || 'Accurate calculation tool';
+
+    const graph = [];
+
+    if (chkWebApp?.checked) {
+      graph.push({
+        "@type": "WebApplication",
+        "@id": `https://aifreecalculator.com/${cat.toLowerCase()}/${slug}/#app`,
+        "name": name,
+        "url": `https://aifreecalculator.com/${cat.toLowerCase()}/${slug}/`,
+        "description": desc,
+        "applicationCategory": `${cat}Application`,
+        "operatingSystem": "All",
+        "browserRequirements": "Requires JavaScript. Requires HTML5.",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      });
+    }
+
+    if (chkBreadcrumb?.checked) {
+      graph.push({
+        "@type": "BreadcrumbList",
+        "itemListElement": [
+          { "@type": "ListItem", "position": 1, "name": "Home", "item": "https://aifreecalculator.com" },
+          { "@type": "ListItem", "position": 2, "name": cat, "item": `https://aifreecalculator.com/${cat.toLowerCase()}/` },
+          { "@type": "ListItem", "position": 3, "name": name, "item": `https://aifreecalculator.com/${cat.toLowerCase()}/${slug}/` }
+        ]
+      });
+    }
+
+    if (chkFaq?.checked) {
+      graph.push({
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": `How accurate is the ${name}?`,
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": `Our ${name} uses verified formulas and empirical standards to compute reliable mathematical estimates instantly.`
+            }
+          },
+          {
+            "@type": "Question",
+            "name": `Is this ${name} free to use?`,
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": `Yes, 100% free with no registration or subscriptions required.`
+            }
+          }
+        ]
+      });
+    }
+
+    const fullSchema = {
+      "@context": "https://schema.org",
+      "@graph": graph
+    };
+
+    displayBox.textContent = JSON.stringify(fullSchema, null, 2);
+  }
+
+  select?.addEventListener('change', generateSchema);
+  chkWebApp?.addEventListener('change', generateSchema);
+  chkBreadcrumb?.addEventListener('change', generateSchema);
+  chkFaq?.addEventListener('change', generateSchema);
+
+  btnCopy?.addEventListener('click', async () => {
+    if (!displayBox) return;
+    try {
+      await navigator.clipboard.writeText(displayBox.textContent);
+      if (copyLabel) {
+        copyLabel.textContent = 'Copied! ✅';
+        setTimeout(() => { copyLabel.textContent = 'Copy JSON-LD'; }, 2000);
+      }
+    } catch {}
+  });
+
+  generateSchema();
+</script>

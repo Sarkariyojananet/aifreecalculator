@@ -1,0 +1,397 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { calculators, categories } from '../../../data/calculators';
+import { getInternalLinks } from '../../../lib/admin/content-store';
+
+const internalLinks = await getInternalLinks(Astro.locals);
+const totalCustomLinks = Object.values(internalLinks).reduce((acc, list) => acc + (list?.length || 0), 0);
+---
+
+<AdminLayout title="Internal Link & Cluster Manager | Calculator CMS" sectionTitle="Internal Links" activeSection="internal-links">
+  <div class="space-y-8 max-w-6xl mx-auto pb-16">
+    
+    <!-- Top Action Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
+      <div>
+        <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <span>🔗</span> Internal Linking &amp; Topic Clusters
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Manage contextual relationships and related calculators to strengthen internal PageRank and topic authority.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <span class="rounded-2xl border border-blue-200 bg-blue-50 px-3.5 py-1.5 text-xs font-bold text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300 shadow-2xs">
+          {totalCustomLinks} Custom Internal Links
+        </span>
+        <span class="rounded-2xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 shadow-2xs">
+          {categories.length} Topic Silos
+        </span>
+      </div>
+    </div>
+
+    <!-- Active Link Relationship Editor Box -->
+    <div class="rounded-3xl border border-blue-200 bg-white p-6 sm:p-8 shadow-sm dark:border-blue-900/60 dark:bg-slate-900 space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>⚙️</span> Manage Related Calculators
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Select a source calculator to view and customize its sidebar related tools.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <label for="select-source-calc" class="text-xs font-bold text-slate-700 dark:text-slate-300 shrink-0">
+            Source Tool:
+          </label>
+          <select
+            id="select-source-calc"
+            class="rounded-xl border border-slate-300 bg-slate-50 px-3 py-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white focus:border-blue-600 focus:outline-hidden"
+          >
+            {calculators.map((c) => (
+              <option value={c.slug}>
+                {c.icon} {c.name} ({c.category})
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <!-- Current Selected Source Tool Info -->
+      <div id="source-info-banner" class="flex items-center justify-between rounded-2xl bg-blue-50/70 p-4 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900/40">
+        <div class="flex items-center gap-3">
+          <span id="source-icon" class="text-3xl">🧮</span>
+          <div>
+            <h4 id="source-name" class="font-bold text-sm text-blue-950 dark:text-blue-200">
+              Select a Calculator
+            </h4>
+            <span id="source-meta" class="text-[11px] text-blue-700/80 dark:text-blue-400">
+              Slug: /...
+            </span>
+          </div>
+        </div>
+        <a
+          id="source-live-link"
+          href="#"
+          target="_blank"
+          class="text-xs font-bold text-blue-600 hover:underline dark:text-blue-400"
+        >
+          View Live Page ↗
+        </a>
+      </div>
+
+      <!-- Currently Active Related Calculators (Tags) -->
+      <div class="space-y-2">
+        <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+          Currently Linked Calculators (<span id="count-linked">0</span>)
+        </label>
+        <div
+          id="linked-tags-container"
+          class="flex flex-wrap gap-2 min-h-[48px] rounded-2xl border border-slate-200 bg-slate-50/50 p-3 dark:border-slate-800 dark:bg-slate-950/40 items-center"
+        >
+          <!-- Dynamic Pills will be injected here -->
+        </div>
+        <p class="text-[11px] text-slate-400">
+          Click the "✕" button on any tag to remove the relationship.
+        </p>
+      </div>
+
+      <!-- Add New Links Selector -->
+      <div class="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <label class="text-xs font-bold text-slate-700 dark:text-slate-300">
+            Add Related Tools to this Calculator
+          </label>
+          <input
+            type="text"
+            id="filter-available-calcs"
+            placeholder="Search tools to add..."
+            class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white placeholder:text-slate-400 w-full sm:w-64"
+          />
+        </div>
+
+        <div
+          id="available-calcs-grid"
+          class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-64 overflow-y-auto p-1 scrollbar-thin border border-slate-200 dark:border-slate-800 rounded-2xl bg-white dark:bg-slate-950 p-3"
+        >
+          <!-- Available tools checkboxes -->
+          {calculators.map((c) => (
+            <label
+              class="available-calc-item flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/60 p-2.5 hover:bg-blue-50/60 dark:border-slate-800 dark:bg-slate-900/60 cursor-pointer text-xs transition"
+              data-slug={c.slug}
+              data-search={`${c.name} ${c.category} ${c.slug}`.toLowerCase()}
+            >
+              <div class="flex items-center gap-2 min-w-0 pr-2">
+                <span>{c.icon}</span>
+                <span class="font-bold text-slate-800 dark:text-slate-200 truncate">{c.name}</span>
+              </div>
+              <input
+                type="checkbox"
+                class="calc-checkbox rounded h-4 w-4 text-blue-600 cursor-pointer shrink-0"
+                value={c.slug}
+              />
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <!-- Action Footer -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-4 border-t border-slate-100 dark:border-slate-800">
+        <div id="save-status-msg" class="text-xs font-bold hidden"></div>
+        <button
+          type="button"
+          id="btn-save-links"
+          class="ml-auto inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 active:scale-[0.98] transition cursor-pointer"
+        >
+          <span>💾</span> Save Internal Links
+        </button>
+      </div>
+    </div>
+
+    <!-- Category Clusters Overview -->
+    <div class="space-y-4">
+      <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <span>📂</span> Category Topic Clusters Overview
+      </h3>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {categories.map((cat) => {
+          const catCalcs = calculators.filter((c) => c.category.toLowerCase() === cat.name.toLowerCase());
+          return (
+            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs dark:border-slate-800 dark:bg-slate-900 space-y-3">
+              <div class="flex items-center justify-between border-b border-slate-100 pb-2.5 dark:border-slate-800">
+                <div class="flex items-center gap-2.5">
+                  <span class="text-xl">{cat.icon}</span>
+                  <div>
+                    <h4 class="font-bold text-sm text-slate-900 dark:text-white">{cat.name} Suite</h4>
+                    <span class="text-[10px] text-slate-400">{catCalcs.length} total tools</span>
+                  </div>
+                </div>
+                <a
+                  href={cat.path}
+                  target="_blank"
+                  class="text-xs font-bold text-blue-600 hover:underline dark:text-blue-400"
+                >
+                  Hub Page ↗
+                </a>
+              </div>
+
+              <div class="flex flex-wrap gap-1.5">
+                {catCalcs.map((calc) => {
+                  const linksCount = (internalLinks[calc.slug] || []).length;
+                  return (
+                    <button
+                      type="button"
+                      class="btn-select-calc inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-slate-50/80 px-2 py-1 text-[11px] font-semibold text-slate-700 hover:bg-blue-50 hover:border-blue-300 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300 cursor-pointer transition"
+                      data-slug={calc.slug}
+                    >
+                      <span>{calc.icon}</span>
+                      <span>{calc.name}</span>
+                      {linksCount > 0 && (
+                        <span class="rounded bg-blue-100 px-1 text-[9px] font-bold text-blue-700 dark:bg-blue-900 dark:text-blue-200">
+                          {linksCount}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+
+  </div>
+</AdminLayout>
+
+<script is:inline define:vars={{ calculatorsData: calculators, initialLinks: internalLinks }}>
+  let linksMap = { ...initialLinks };
+  let currentSourceSlug = calculatorsData[0]?.slug || '';
+
+  const selectSource = document.getElementById('select-source-calc');
+  const sourceIcon = document.getElementById('source-icon');
+  const sourceName = document.getElementById('source-name');
+  const sourceMeta = document.getElementById('source-meta');
+  const sourceLiveLink = document.getElementById('source-live-link');
+  const linkedContainer = document.getElementById('linked-tags-container');
+  const countLinked = document.getElementById('count-linked');
+  const availableGrid = document.getElementById('available-calcs-grid');
+  const searchInput = document.getElementById('filter-available-calcs');
+  const btnSave = document.getElementById('btn-save-links');
+  const statusMsg = document.getElementById('save-status-msg');
+
+  function renderSource(slug) {
+    currentSourceSlug = slug;
+    const calc = calculatorsData.find((c) => c.slug === slug);
+    if (!calc) return;
+
+    if (sourceIcon) sourceIcon.textContent = calc.icon;
+    if (sourceName) sourceName.textContent = calc.name;
+    if (sourceMeta) sourceMeta.textContent = `Category: ${calc.category} | Path: ${calc.path}`;
+    if (sourceLiveLink) sourceLiveLink.href = calc.path;
+    if (selectSource) selectSource.value = slug;
+
+    // Get current links for this source
+    const currentList = linksMap[slug] || [];
+    renderLinkedTags(currentList);
+    updateCheckboxes(currentList);
+  }
+
+  function renderLinkedTags(slugs) {
+    if (!linkedContainer) return;
+    if (countLinked) countLinked.textContent = slugs.length;
+
+    if (slugs.length === 0) {
+      linkedContainer.innerHTML = `
+        <span class="text-xs text-slate-400 italic">No custom related links assigned yet. (Public page will fall back to same-category calculators).</span>
+      `;
+      return;
+    }
+
+    linkedContainer.innerHTML = '';
+    slugs.forEach((slug) => {
+      const item = calculatorsData.find((c) => c.slug === slug);
+      const name = item ? `${item.icon} ${item.name}` : slug;
+
+      const pill = document.createElement('span');
+      pill.className = 'inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/60 dark:text-blue-300';
+      pill.innerHTML = `
+        <span>${name}</span>
+        <button type="button" class="btn-remove-link ml-1 text-blue-500 hover:text-red-600 dark:hover:text-red-400 cursor-pointer font-black" data-slug="${slug}">✕</button>
+      `;
+      linkedContainer.appendChild(pill);
+    });
+
+    // Attach remove listeners
+    linkedContainer.querySelectorAll('.btn-remove-link').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const removeSlug = btn.dataset.slug;
+        const updated = (linksMap[currentSourceSlug] || []).filter((s) => s !== removeSlug);
+        linksMap[currentSourceSlug] = updated;
+        renderLinkedTags(updated);
+        updateCheckboxes(updated);
+      });
+    });
+  }
+
+  function updateCheckboxes(selectedSlugs) {
+    document.querySelectorAll('.available-calc-item').forEach((item) => {
+      const slug = item.dataset.slug;
+      const checkbox = item.querySelector('.calc-checkbox');
+      // Hide self-link
+      if (slug === currentSourceSlug) {
+        item.classList.add('hidden');
+      } else {
+        item.classList.remove('hidden');
+        if (checkbox) {
+          checkbox.checked = selectedSlugs.includes(slug);
+        }
+      }
+    });
+  }
+
+  // Checkbox change listener
+  document.querySelectorAll('.calc-checkbox').forEach((cb) => {
+    cb.addEventListener('change', () => {
+      const slug = cb.value;
+      let current = linksMap[currentSourceSlug] || [];
+      if (cb.checked) {
+        if (!current.includes(slug) && slug !== currentSourceSlug) {
+          current.push(slug);
+        }
+      } else {
+        current = current.filter((s) => s !== slug);
+      }
+      linksMap[currentSourceSlug] = current;
+      renderLinkedTags(current);
+    });
+  });
+
+  // Source selection dropdown
+  selectSource?.addEventListener('change', (e) => {
+    renderSource(e.target.value);
+  });
+
+  // Quick button selector in category cards
+  document.querySelectorAll('.btn-select-calc').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const slug = btn.dataset.slug;
+      if (slug) {
+        renderSource(slug);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+  });
+
+  // Search in available tools
+  searchInput?.addEventListener('input', (e) => {
+    const q = (e.target.value || '').trim().toLowerCase();
+    document.querySelectorAll('.available-calc-item').forEach((item) => {
+      const searchData = item.dataset.search || '';
+      const slug = item.dataset.slug;
+      if (slug === currentSourceSlug) {
+        item.classList.add('hidden');
+        return;
+      }
+      if (!q || searchData.includes(q)) {
+        item.classList.remove('hidden');
+      } else {
+        item.classList.add('hidden');
+      }
+    });
+  });
+
+  // Save Links Action
+  btnSave?.addEventListener('click', async () => {
+    if (!currentSourceSlug) return;
+    btnSave.disabled = true;
+    btnSave.innerHTML = '<span>⏳</span> Saving Relationships...';
+
+    if (statusMsg) {
+      statusMsg.className = 'text-xs font-bold text-blue-600 block';
+      statusMsg.textContent = 'Saving to database...';
+    }
+
+    try {
+      const currentList = linksMap[currentSourceSlug] || [];
+      const res = await fetch('/api/admin/internal-links', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sourceSlug: currentSourceSlug,
+          relatedSlugs: currentList,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (statusMsg) {
+          statusMsg.className = 'text-xs font-bold text-emerald-600 block';
+          statusMsg.textContent = `✅ Internal links saved successfully for ${currentSourceSlug}!`;
+        }
+        setTimeout(() => {
+          if (statusMsg) statusMsg.classList.add('hidden');
+        }, 3000);
+      } else {
+        throw new Error(data.error || 'Failed to save');
+      }
+    } catch (err) {
+      if (statusMsg) {
+        statusMsg.className = 'text-xs font-bold text-red-600 block';
+        statusMsg.textContent = `❌ Error: ${err.message || 'Network error'}`;
+      }
+    } finally {
+      btnSave.disabled = false;
+      btnSave.innerHTML = '<span>💾</span> Save Internal Links';
+    }
+  });
+
+  // Initialize first tool
+  if (calculatorsData.length > 0) {
+    renderSource(calculatorsData[0].slug);
+  }
+</script>

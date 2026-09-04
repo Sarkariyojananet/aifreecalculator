@@ -1,0 +1,191 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { runFullSEOAudit } from '../../../lib/seo/audit-engine';
+
+const report = await runFullSEOAudit(Astro.locals);
+const orphanList = report.orphanPages;
+const allPages = report.pages.sort((a, b) => a.inboundLinksCount - b.inboundLinksCount);
+---
+
+<AdminLayout title="Internal Link & Orphan Page Audit | Calculator CMS" sectionTitle="Internal Link Audit" activeSection="seo-health">
+  <div class="space-y-8 max-w-7xl mx-auto pb-16">
+    
+    <!-- Top Action Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
+      <div>
+        <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
+          <span>🔗</span> Internal Link &amp; Orphan Page Audit
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Detect orphan pages, analyze internal PageRank distribution, and eliminate link dead-ends across all calculation tools.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a
+          href="/admin/internal-links/"
+          class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition"
+        >
+          <span>⚙️</span> Manage Internal Links
+        </a>
+      </div>
+    </div>
+
+    <!-- SEO Sub-Navigation Bar -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 dark:border-slate-800">
+      <a href="/admin/seo/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        📊 Audit Overview
+      </a>
+      <a href="/admin/seo/bulk/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        📝 Bulk Meta Editor
+      </a>
+      <a href="/admin/seo/duplicates/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        👯 Duplicate Content
+      </a>
+      <a href="/admin/seo/links/" class="rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs shrink-0">
+        🔗 Internal Link Audit ({orphanList.length} Orphans)
+      </a>
+      <a href="/admin/seo/sitemap-schema/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        🗺️ Sitemap &amp; Schema
+      </a>
+      <a href="/admin/seo/history/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        📜 Change History
+      </a>
+    </div>
+
+    <!-- 1. Orphan Pages Alert Section -->
+    <div class="space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>🏝️</span> Orphan Pages Analysis ({orphanList.length})
+        </h3>
+        <span class="text-xs text-slate-400">Public indexable pages with zero internal inbound links</span>
+      </div>
+
+      {orphanList.length === 0 ? (
+        <div class="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-6 text-xs text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/20 dark:text-emerald-300">
+          ✅ Zero orphan pages detected! Every public calculator and category hub is discoverable via internal links.
+        </div>
+      ) : (
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          {orphanList.map((p) => (
+            <div class="rounded-2xl border border-red-200 bg-red-50/40 p-4 dark:border-red-900/50 dark:bg-red-950/20 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="rounded bg-red-100 px-2 py-0.5 text-[10px] font-black uppercase text-red-700 dark:bg-red-900 dark:text-red-300">
+                  Orphan Page
+                </span>
+                <span class="font-mono text-xs font-bold text-red-600">0 Links</span>
+              </div>
+              <h4 class="font-bold text-sm text-slate-900 dark:text-white">{p.name}</h4>
+              <p class="text-[11px] text-slate-500 font-mono">{p.path}</p>
+              <div class="pt-2">
+                <a
+                  href="/admin/internal-links/"
+                  class="inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1 text-xs font-bold text-white hover:bg-blue-700 transition"
+                >
+                  <span>🔗</span> Add Inbound Links
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+
+    <!-- 2. Site-wide Link Equity Distribution Table -->
+    <div class="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>📊</span> Internal Link Distribution Across Inventory ({allPages.length} Pages)
+        </h3>
+        <input
+          type="text"
+          id="search-link-table"
+          placeholder="Filter page name..."
+          class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+        />
+      </div>
+
+      <div class="rounded-2xl border border-slate-200 bg-white shadow-2xs dark:border-slate-800 dark:bg-slate-900 overflow-x-auto">
+        <table class="w-full text-left text-xs" id="link-equity-table">
+          <thead class="border-b border-slate-100 bg-slate-50/70 text-[11px] font-black uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-400">
+            <tr>
+              <th class="p-3.5">Page Name</th>
+              <th class="p-3.5">Category</th>
+              <th class="p-3.5 text-center">Inbound Links</th>
+              <th class="p-3.5 text-center">Outbound Links</th>
+              <th class="p-3.5 text-center">Status</th>
+              <th class="p-3.5 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+            {allPages.map((p) => {
+              const isInboundLow = p.inboundLinksCount < 2;
+              return (
+                <tr class="link-row hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition" data-search={p.name.toLowerCase()}>
+                  <td class="p-3.5 font-bold text-slate-900 dark:text-white">
+                    <div>{p.name}</div>
+                    <div class="font-mono text-[10px] text-slate-400">{p.path}</div>
+                  </td>
+                  <td class="p-3.5">
+                    <span class="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                      {p.category || p.type}
+                    </span>
+                  </td>
+                  <td class="p-3.5 text-center font-mono font-bold">
+                    <span class:list={[
+                      'rounded-full px-2 py-0.5 text-xs',
+                      p.inboundLinksCount === 0 ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300' :
+                      isInboundLow ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300' :
+                      'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                    ]}>
+                      {p.inboundLinksCount}
+                    </span>
+                  </td>
+                  <td class="p-3.5 text-center font-mono font-bold text-slate-600 dark:text-slate-400">
+                    {p.outboundLinksCount}
+                  </td>
+                  <td class="p-3.5 text-center">
+                    {p.inboundLinksCount === 0 ? (
+                      <span class="text-[10px] font-bold text-red-600">Orphan</span>
+                    ) : isInboundLow ? (
+                      <span class="text-[10px] font-bold text-amber-600">Low Flow</span>
+                    ) : (
+                      <span class="text-[10px] font-bold text-emerald-600">Optimal</span>
+                    )}
+                  </td>
+                  <td class="p-3.5 text-right">
+                    <a
+                      href={`/admin/internal-links/`}
+                      class="rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-blue-600 hover:bg-blue-600 hover:text-white dark:bg-slate-800 dark:text-blue-400 dark:hover:bg-blue-600 dark:hover:text-white transition"
+                    >
+                      Configure Links →
+                    </a>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</AdminLayout>
+
+<script is:inline>
+  const searchInput = document.getElementById('search-link-table');
+  const rows = document.querySelectorAll('.link-row');
+
+  searchInput?.addEventListener('input', (e) => {
+    const q = (e.target.value || '').trim().toLowerCase();
+    rows.forEach((row) => {
+      const text = row.dataset.search || '';
+      if (!q || text.includes(q)) {
+        row.classList.remove('hidden');
+      } else {
+        row.classList.add('hidden');
+      }
+    });
+  });
+</script>

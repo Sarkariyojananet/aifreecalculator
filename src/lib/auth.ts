@@ -50,9 +50,9 @@ async function getCryptoKey(): Promise<CryptoKey> {
 }
 
 /**
- * Creates a signed JWT token for the admin session
+ * Creates a signed JWT token for the admin session (defaults to 4 hours session duration)
  */
-export async function createAdminToken(username: string, expiresInHours = 24): Promise<string> {
+export async function createAdminToken(username: string, expiresInHours = 4): Promise<string> {
   const header = { alg: 'HS256', typ: 'JWT' };
   const payload: AdminUser = {
     username,
@@ -105,4 +105,23 @@ export async function verifyAdminToken(token: string | null | undefined): Promis
  */
 export function validateCredentials(user: string, pass: string): boolean {
   return user.trim() === ADMIN_USER && pass === ADMIN_PASS;
+}
+
+/**
+ * Helper to authenticate incoming Astro API requests
+ * Extracts token from Cookies, Bearer Authorization Header, or Raw Cookie Header
+ */
+export async function authenticateAdminRequest(request: Request, cookies?: any): Promise<AdminUser | null> {
+  let token = cookies?.get?.('admin_session')?.value;
+  if (!token) {
+    const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
+    if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
+      token = authHeader.substring(7).trim();
+    }
+  }
+  if (!token) {
+    const cookieHeader = request.headers.get('cookie') || request.headers.get('Cookie');
+    token = cookieHeader?.match(/admin_session=([^;]+)/)?.[1]?.trim();
+  }
+  return await verifyAdminToken(token);
 }

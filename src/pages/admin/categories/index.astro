@@ -1,0 +1,348 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { getCMSCategories } from '../../../lib/admin/content-store';
+import { calculators } from '../../../data/calculators';
+
+const categoriesList = await getCMSCategories(Astro.locals);
+
+const enrichedCategories = categoriesList.map((cat) => {
+  const count = calculators.filter((c) => c.category.toLowerCase() === cat.name.toLowerCase()).length;
+  return {
+    ...cat,
+    count,
+  };
+});
+---
+
+<AdminLayout title="Categories Manager | Calculator CMS" sectionTitle="Categories" activeSection="categories">
+  <div class="space-y-6 max-w-7xl mx-auto pb-12">
+    
+    <!-- Top Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
+      <div>
+        <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+          Calculator Categories ({enrichedCategories.length})
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Manage specialized silos, descriptions, icons, and taxonomy for public navigation.
+        </p>
+      </div>
+
+      <button
+        type="button"
+        id="btn-add-category"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition cursor-pointer self-start sm:self-auto"
+      >
+        <span>➕</span> Add New Category
+      </button>
+    </div>
+
+    <!-- Add / Edit Category Form Drawer / Card -->
+    <div id="category-editor-card" class="hidden rounded-3xl border border-blue-200 bg-blue-50/50 p-6 dark:border-blue-900/60 dark:bg-blue-950/30 space-y-4">
+      <div class="flex items-center justify-between border-b border-blue-100 pb-3 dark:border-blue-900/40">
+        <h3 id="category-modal-title" class="text-sm font-bold text-blue-900 dark:text-blue-200 flex items-center gap-2">
+          <span>➕</span> Add New Category
+        </h3>
+        <button type="button" id="btn-close-category-form" class="text-xs font-bold text-slate-400 hover:text-slate-600">
+          ✕ Cancel
+        </button>
+      </div>
+
+      <form id="category-editor-form" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label for="cat-name-input" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+              Category Name <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="cat-name-input"
+              required
+              placeholder="e.g. Electrical"
+              class="mt-1.5 w-full rounded-2xl border border-slate-300 bg-white py-2.5 px-3.5 text-xs font-semibold text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+            />
+          </div>
+
+          <div>
+            <label for="cat-icon-input" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+              Icon (Emoji)
+            </label>
+            <input
+              type="text"
+              id="cat-icon-input"
+              value="📁"
+              placeholder="e.g. ⚡, 🚗, 🧪"
+              class="mt-1.5 w-full rounded-2xl border border-slate-300 bg-white py-2.5 px-3.5 text-xs font-semibold text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+            />
+          </div>
+
+          <div>
+            <label for="cat-slug-input" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+              URL Slug <span class="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              id="cat-slug-input"
+              required
+              placeholder="e.g. electrical"
+              class="mt-1.5 w-full rounded-2xl border border-slate-300 bg-white py-2.5 px-3.5 text-xs font-mono font-semibold text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+            />
+          </div>
+        </div>
+
+        <div>
+          <label for="cat-desc-input" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+            Category Description (Shown on hub pages and SEO meta)
+          </label>
+          <textarea
+            id="cat-desc-input"
+            rows="2"
+            placeholder="Specialized calculation tools and formulas for..."
+            class="mt-1.5 w-full rounded-2xl border border-slate-300 bg-white p-3 text-xs text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+          ></textarea>
+        </div>
+
+        <div id="cat-status-msg" class="hidden rounded-xl p-3 text-xs font-semibold"></div>
+
+        <div class="flex items-center justify-end gap-3 pt-2">
+          <button
+            type="submit"
+            id="btn-save-category-submit"
+            class="rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition cursor-pointer"
+          >
+            💾 Save Category
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Category Safety Warning Banner (Shown on unsafe deletion attempt) -->
+    <div id="category-safety-alert" class="hidden rounded-2xl border border-amber-300 bg-amber-50 p-4 text-xs font-semibold text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200 space-y-1">
+      <div class="font-bold flex items-center gap-2 text-sm">
+        <span>⚠️</span> Category Deletion Blocked
+      </div>
+      <p id="safety-alert-text">
+        Cannot delete a category with active calculators. Please reassign the calculators first.
+      </p>
+    </div>
+
+    <!-- Category Cards Grid -->
+    <div id="categories-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+      {enrichedCategories.map((cat) => (
+        <div class="category-card rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900/90 flex flex-col justify-between space-y-4 hover:border-blue-300 dark:hover:border-blue-700 transition">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-2xl dark:bg-slate-800 shadow-2xs">
+                {cat.icon}
+              </span>
+              <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-black text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                {cat.count} Tools
+              </span>
+            </div>
+
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">
+                {cat.name}
+              </h3>
+              <div class="text-[11px] font-mono text-slate-400 mt-0.5">
+                {cat.path}
+              </div>
+            </div>
+
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed line-clamp-3">
+              {cat.description}
+            </p>
+          </div>
+
+          <div class="border-t border-slate-100 pt-3 dark:border-slate-800 space-y-2">
+            <div class="flex items-center justify-between text-xs font-bold">
+              <a
+                href={`/admin/calculators/?category=${encodeURIComponent(cat.name)}`}
+                class="text-blue-600 hover:underline dark:text-blue-400 inline-flex items-center gap-1"
+              >
+                <span>View Tools ({cat.count})</span> →
+              </a>
+              <a
+                href={cat.path}
+                target="_blank"
+                class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+              >
+                Public Page ↗
+              </a>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-1">
+              <button
+                type="button"
+                class="btn-edit-category rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+                data-name={cat.name}
+                data-icon={cat.icon}
+                data-slug={cat.slug || cat.name.toLowerCase()}
+                data-desc={cat.description}
+                data-path={cat.path}
+              >
+                Edit
+              </button>
+              <button
+                type="button"
+                class="btn-delete-category rounded-lg bg-red-50 px-2.5 py-1 text-[11px] font-bold text-red-600 hover:bg-red-100 dark:bg-red-950 dark:text-red-400 cursor-pointer"
+                data-name={cat.name}
+                data-count={cat.count}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+
+  </div>
+</AdminLayout>
+
+<script is:inline>
+  const formCard = document.getElementById('category-editor-card');
+  const btnAdd = document.getElementById('btn-add-category');
+  const btnClose = document.getElementById('btn-close-category-form');
+  const form = document.getElementById('category-editor-form');
+  const modalTitle = document.getElementById('category-modal-title');
+  const statusMsg = document.getElementById('cat-status-msg');
+  const safetyAlert = document.getElementById('category-safety-alert');
+  const safetyAlertText = document.getElementById('safety-alert-text');
+
+  const inputName = document.getElementById('cat-name-input');
+  const inputIcon = document.getElementById('cat-icon-input');
+  const inputSlug = document.getElementById('cat-slug-input');
+  const inputDesc = document.getElementById('cat-desc-input');
+
+  function getAuthToken() {
+    return localStorage.getItem('admin_token') || '';
+  }
+
+  btnAdd?.addEventListener('click', () => {
+    if (modalTitle) modalTitle.innerHTML = '<span>➕</span> Add New Category';
+    if (inputName) inputName.value = '';
+    if (inputIcon) inputIcon.value = '📁';
+    if (inputSlug) inputSlug.value = '';
+    if (inputDesc) inputDesc.value = '';
+    statusMsg?.classList.add('hidden');
+    safetyAlert?.classList.add('hidden');
+    formCard?.classList.remove('hidden');
+    inputName?.focus();
+  });
+
+  btnClose?.addEventListener('click', () => {
+    formCard?.classList.add('hidden');
+  });
+
+  inputName?.addEventListener('input', () => {
+    if (inputSlug) {
+      inputSlug.value = inputName.value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+    }
+  });
+
+  document.querySelectorAll('.btn-edit-category').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const name = btn.getAttribute('data-name') || '';
+      const icon = btn.getAttribute('data-icon') || '📁';
+      const slug = btn.getAttribute('data-slug') || '';
+      const desc = btn.getAttribute('data-desc') || '';
+
+      if (modalTitle) modalTitle.innerHTML = `<span>✏️</span> Edit Category "${name}"`;
+      if (inputName) inputName.value = name;
+      if (inputIcon) inputIcon.value = icon;
+      if (inputSlug) inputSlug.value = slug;
+      if (inputDesc) inputDesc.value = desc;
+
+      statusMsg?.classList.add('hidden');
+      safetyAlert?.classList.add('hidden');
+      formCard?.classList.remove('hidden');
+      inputName?.focus();
+    });
+  });
+
+  document.querySelectorAll('.btn-delete-category').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const name = btn.getAttribute('data-name') || '';
+      const count = parseInt(btn.getAttribute('data-count') || '0', 10);
+
+      if (count > 0) {
+        if (safetyAlert && safetyAlertText) {
+          safetyAlertText.textContent = `Safety Block: Category "${name}" currently has ${count} published calculators assigned. To prevent breaking public URLs, please reassign or delete those calculators first before deleting this category.`;
+          safetyAlert.classList.remove('hidden');
+          window.scrollTo({ top: safetyAlert.offsetTop - 100, behavior: 'smooth' });
+        }
+        return;
+      }
+
+      if (!confirm(`Are you sure you want to delete category "${name}"?`)) {
+        return;
+      }
+
+      try {
+        const token = getAuthToken();
+        const res = await fetch(`/api/admin/categories?name=${encodeURIComponent(name)}`, {
+          method: 'DELETE',
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          window.location.reload();
+        } else {
+          alert(data.error || 'Failed to delete category');
+        }
+      } catch {
+        alert('Network error while deleting category');
+      }
+    });
+  });
+
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = inputName?.value.trim();
+    const icon = inputIcon?.value.trim() || '📁';
+    const slug = inputSlug?.value.trim();
+    const description = inputDesc?.value.trim();
+
+    if (!name || !slug) {
+      if (statusMsg) {
+        statusMsg.className = 'rounded-xl p-3 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300';
+        statusMsg.textContent = 'Category Name and Slug are required.';
+        statusMsg.classList.remove('hidden');
+      }
+      return;
+    }
+
+    if (statusMsg) {
+      statusMsg.className = 'rounded-xl p-3 text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300';
+      statusMsg.textContent = 'Saving category...';
+      statusMsg.classList.remove('hidden');
+    }
+
+    try {
+      const token = getAuthToken();
+      const res = await fetch('/api/admin/categories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ name, icon, slug, description, path: `/${slug}/` }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        statusMsg.className = 'rounded-xl p-3 text-xs font-semibold bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+        statusMsg.textContent = '✓ Category saved successfully!';
+        setTimeout(() => window.location.reload(), 800);
+      } else {
+        statusMsg.className = 'rounded-xl p-3 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300';
+        statusMsg.textContent = data.error || 'Failed to save category';
+      }
+    } catch {
+      statusMsg.className = 'rounded-xl p-3 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300';
+      statusMsg.textContent = 'Connection error while saving category';
+    }
+  });
+</script>

@@ -1,0 +1,395 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { getContactMessages, getDb } from '../../../lib/db';
+
+const db = getDb(Astro.locals);
+const messages = await getContactMessages(db);
+
+const unreadCount = messages.filter((m) => m.status === 'new').length;
+const repliedCount = messages.filter((m) => m.status === 'replied').length;
+const totalCount = messages.length;
+---
+
+<AdminLayout title="Inbox & Messages | Calculator CMS" sectionTitle="Inbox & Messages" activeSection="messages" badge={`${unreadCount} New`}>
+  <div class="space-y-6 max-w-6xl mx-auto pb-12">
+    
+    <!-- Top Action Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
+      <div>
+        <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <span>📬</span> Contact Inquiries &amp; Messages ({totalCount})
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Messages received from visitors via the Contact Us form and sent to <code class="font-mono text-blue-600 dark:text-blue-400 font-bold">support@aifreecalculator.com</code>.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <a
+          href="mailto:support@aifreecalculator.com"
+          class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition shadow-2xs"
+        >
+          <span>✉️</span> Open Support Mail
+        </a>
+        <button
+          type="button"
+          id="btn-refresh-messages"
+          class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition cursor-pointer"
+        >
+          <span>🔄</span> Refresh
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Stats Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="rounded-2xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900/60 dark:bg-blue-950/30 flex items-center justify-between">
+        <div>
+          <p class="text-[11px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">New / Unread</p>
+          <p class="text-2xl font-black text-blue-900 dark:text-blue-100 mt-1" id="stat-unread-count">{unreadCount}</p>
+        </div>
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 text-lg">
+          🔔
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/30 flex items-center justify-between">
+        <div>
+          <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Replied / Handled</p>
+          <p class="text-2xl font-black text-emerald-900 dark:text-emerald-100 mt-1" id="stat-replied-count">{repliedCount}</p>
+        </div>
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-200 text-lg">
+          ✅
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
+        <div>
+          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Inquiries</p>
+          <p class="text-2xl font-black text-slate-900 dark:text-white mt-1" id="stat-total-count">{totalCount}</p>
+        </div>
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 text-lg">
+          📥
+        </div>
+      </div>
+    </div>
+
+    <!-- Controls & Filters -->
+    <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0" id="filter-tabs">
+        <button
+          type="button"
+          data-filter="all"
+          class="filter-btn active rounded-xl px-3.5 py-1.5 text-xs font-bold bg-blue-600 text-white cursor-pointer transition"
+        >
+          All ({totalCount})
+        </button>
+        <button
+          type="button"
+          data-filter="new"
+          class="filter-btn rounded-xl px-3.5 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer transition"
+        >
+          Unread ({unreadCount})
+        </button>
+        <button
+          type="button"
+          data-filter="replied"
+          class="filter-btn rounded-xl px-3.5 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer transition"
+        >
+          Replied ({repliedCount})
+        </button>
+        <button
+          type="button"
+          data-filter="archived"
+          class="filter-btn rounded-xl px-3.5 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer transition"
+        >
+          Archived
+        </button>
+      </div>
+
+      <div class="relative min-w-[240px]">
+        <input
+          type="text"
+          id="search-messages"
+          placeholder="Search by name, email, subject..."
+          class="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+        />
+        <span class="absolute left-3 top-2.5 text-xs text-slate-400">🔍</span>
+      </div>
+    </div>
+
+    <!-- Messages Container -->
+    <div id="messages-list" class="space-y-4">
+      {messages.length === 0 ? (
+        <div class="rounded-3xl border border-dashed border-slate-300 dark:border-slate-800 p-12 text-center bg-slate-50/50 dark:bg-slate-900/30">
+          <span class="text-4xl">📭</span>
+          <h3 class="mt-3 text-sm font-bold text-slate-900 dark:text-white">No Contact Messages Yet</h3>
+          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+            When users submit questions, bug reports, or calculator requests on the Contact page, they will appear right here and be forwarded to support@aifreecalculator.com.
+          </p>
+        </div>
+      ) : (
+        messages.map((msg) => {
+          const isNew = msg.status === 'new';
+          const isReplied = msg.status === 'replied';
+          const isArchived = msg.status === 'archived';
+
+          return (
+            <div
+              class="message-card group rounded-2xl border transition-all duration-200 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:shadow-md"
+              data-id={msg.id}
+              data-status={msg.status}
+              data-search={`${msg.name} ${msg.email} ${msg.subject} ${msg.category} ${msg.message}`.toLowerCase()}
+              class:list={[
+                isNew ? 'border-blue-200 dark:border-blue-900/60 bg-blue-50/10' : 'border-slate-200 dark:border-slate-800'
+              ]}
+            >
+              <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                <div class="space-y-1.5 flex-1 min-w-0">
+                  <div class="flex flex-wrap items-center gap-2">
+                    <span class="font-black text-slate-900 dark:text-white text-sm">
+                      {msg.name}
+                    </span>
+                    <a
+                      href={`mailto:${msg.email}`}
+                      class="font-mono text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                    >
+                      &lt;{msg.email}&gt;
+                    </a>
+                    
+                    <!-- Category Badge -->
+                    <span class="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                      {msg.category || 'General'}
+                    </span>
+
+                    <!-- Status Badge -->
+                    {isNew && (
+                      <span class="rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300 animate-pulse">
+                        ● New
+                      </span>
+                    )}
+                    {isReplied && (
+                      <span class="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                        ✓ Replied
+                      </span>
+                    )}
+                    {isArchived && (
+                      <span class="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                        📦 Archived
+                      </span>
+                    )}
+                  </div>
+
+                  <h4 class="font-bold text-xs text-slate-800 dark:text-slate-200">
+                    Subject: <span class="font-normal text-slate-900 dark:text-white">{msg.subject}</span>
+                  </h4>
+                </div>
+
+                <div class="text-right shrink-0">
+                  <span class="text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+                    {new Date(msg.created_at).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Message Body -->
+              <div class="mt-3.5 rounded-xl bg-slate-50 p-3.5 text-xs text-slate-700 leading-relaxed dark:bg-slate-950/60 dark:text-slate-300 border border-slate-100 dark:border-slate-800/80 whitespace-pre-wrap">
+                {msg.message}
+              </div>
+
+              <!-- Card Action Bar -->
+              <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
+                <div class="flex items-center gap-1.5 text-[10px] font-mono text-slate-400">
+                  <span>ID: {msg.id}</span>
+                </div>
+
+                <div class="flex items-center gap-2">
+                  <a
+                    href={`mailto:${msg.email}?subject=Re: [AI Free Calculator] ${encodeURIComponent(msg.subject)}&body=Hi ${encodeURIComponent(msg.name)},%0D%0A%0D%0AThank you for reaching out to AI Free Calculator regarding "${encodeURIComponent(msg.subject)}".%0D%0A%0D%0A`}
+                    target="_blank"
+                    class="btn-reply-email inline-flex items-center gap-1 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700 transition"
+                    data-id={msg.id}
+                  >
+                    <span>↩️</span> Reply via Email
+                  </a>
+
+                  {isNew ? (
+                    <button
+                      type="button"
+                      class="btn-set-status rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer transition"
+                      data-id={msg.id}
+                      data-status="read"
+                    >
+                      Mark as Read
+                    </button>
+                  ) : null}
+
+                  {!isReplied && (
+                    <button
+                      type="button"
+                      class="btn-set-status rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 cursor-pointer transition"
+                      data-id={msg.id}
+                      data-status="replied"
+                    >
+                      Mark Replied
+                    </button>
+                  )}
+
+                  {!isArchived ? (
+                    <button
+                      type="button"
+                      class="btn-set-status rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 cursor-pointer transition"
+                      data-id={msg.id}
+                      data-status="archived"
+                      title="Archive message"
+                    >
+                      📦
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      class="btn-set-status rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 cursor-pointer transition"
+                      data-id={msg.id}
+                      data-status="read"
+                      title="Unarchive message"
+                    >
+                      Unarchive
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    class="btn-delete-msg rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-bold text-red-600 hover:bg-red-100 dark:border-red-900/40 dark:bg-red-950/40 dark:text-red-400 cursor-pointer transition"
+                    data-id={msg.id}
+                    title="Delete message"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })
+      )}
+    </div>
+
+  </div>
+</AdminLayout>
+
+<script is:inline>
+  // Filter Tabs
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const searchInput = document.getElementById('search-messages');
+  const messageCards = document.querySelectorAll('.message-card');
+
+  let currentFilter = 'all';
+  let searchQuery = '';
+
+  function applyFilters() {
+    messageCards.forEach((card) => {
+      const status = card.dataset.status;
+      const searchData = card.dataset.search || '';
+
+      const matchesStatus = currentFilter === 'all' || status === currentFilter;
+      const matchesSearch = !searchQuery || searchData.includes(searchQuery);
+
+      if (matchesStatus && matchesSearch) {
+        card.classList.remove('hidden');
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+  }
+
+  filterBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach((b) => {
+        b.classList.remove('bg-blue-600', 'text-white', 'active');
+        b.classList.add('text-slate-600', 'dark:text-slate-300');
+      });
+      btn.classList.add('bg-blue-600', 'text-white', 'active');
+      btn.classList.remove('text-slate-600', 'dark:text-slate-300');
+      currentFilter = btn.dataset.filter || 'all';
+      applyFilters();
+    });
+  });
+
+  searchInput?.addEventListener('input', (e) => {
+    searchQuery = (e.target.value || '').trim().toLowerCase();
+    applyFilters();
+  });
+
+  // Refresh
+  document.getElementById('btn-refresh-messages')?.addEventListener('click', () => {
+    window.location.reload();
+  });
+
+  // Update Status Action
+  document.querySelectorAll('.btn-set-status').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      const target = e.currentTarget;
+      const id = target.dataset.id;
+      const status = target.dataset.status;
+      if (!id || !status) return;
+
+      target.disabled = true;
+      try {
+        const res = await fetch('/api/admin/messages', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, status }),
+        });
+        if (res.ok) {
+          window.location.reload();
+        } else {
+          alert('Failed to update message status.');
+        }
+      } catch {
+        alert('Network error.');
+      } finally {
+        target.disabled = false;
+      }
+    });
+  });
+
+  // Delete Action
+  document.querySelectorAll('.btn-delete-msg').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      const target = e.currentTarget;
+      const id = target.dataset.id;
+      if (!id) return;
+      if (!confirm('Are you sure you want to permanently delete this message?')) return;
+
+      target.disabled = true;
+      try {
+        const res = await fetch(`/api/admin/messages?id=${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+        });
+        if (res.ok) {
+          const card = target.closest('.message-card');
+          card?.remove();
+        } else {
+          alert('Failed to delete message.');
+        }
+      } catch {
+        alert('Network error.');
+      } finally {
+        target.disabled = false;
+      }
+    });
+  });
+
+  // Automatically mark as replied when clicking reply button
+  document.querySelectorAll('.btn-reply-email').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      const id = e.currentTarget.dataset.id;
+      if (id) {
+        fetch('/api/admin/messages', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id, status: 'replied' }),
+        }).catch(() => {});
+      }
+    });
+  });
+</script>

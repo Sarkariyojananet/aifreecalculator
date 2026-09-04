@@ -1,0 +1,455 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { calculators, categories } from '../../../data/calculators';
+import { getCalculatorOverrides } from '../../../lib/admin/content-store';
+import { CORE_PAGES } from '../../../lib/seo/audit-engine';
+
+const overrides = await getCalculatorOverrides(Astro.locals);
+
+const allPages = [
+  ...calculators.map((c) => {
+    const o = overrides[c.slug] || {};
+    return {
+      slug: c.slug,
+      name: o.name || c.name,
+      path: c.path,
+      category: c.category,
+      type: 'calculator',
+      metaTitle: o.metaTitle || `${c.name} - AI Free Calculator`,
+      metaDescription: o.metaDescription || o.description || c.description || '',
+      canonicalUrl: o.canonicalUrl || `https://aifreecalculator.com${c.path}`,
+      robots: o.robots || 'index, follow',
+    };
+  }),
+  ...categories.map((cat) => ({
+    slug: cat.name.toLowerCase(),
+    name: `${cat.name} Suite`,
+    path: cat.path,
+    category: cat.name,
+    type: 'category',
+    metaTitle: `${cat.name} Calculators - Free Online Suite | AI Free Calculator`,
+    metaDescription: cat.description,
+    canonicalUrl: `https://aifreecalculator.com${cat.path}`,
+    robots: 'index, follow',
+  })),
+  ...CORE_PAGES.map((p) => ({
+    slug: p.path.replace(/\//g, '') || 'home',
+    name: p.name,
+    path: p.path,
+    category: 'Core Page',
+    type: 'core',
+    metaTitle: p.title,
+    metaDescription: p.description,
+    canonicalUrl: `https://aifreecalculator.com${p.path === '/' ? '' : p.path}`,
+    robots: 'index, follow',
+  })),
+];
+---
+
+<AdminLayout title="Bulk SEO Meta Editor | Calculator CMS" sectionTitle="Bulk SEO Editor" activeSection="seo-health">
+  <div class="space-y-8 max-w-7xl mx-auto pb-24">
+    
+    <!-- Top Action Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
+      <div>
+        <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
+          <span>📝</span> Bulk SEO Meta Editor ({allPages.length} Pages)
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Edit Meta Titles, Descriptions, Canonical URLs, and Robots directives at scale with live character counters.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2 shrink-0">
+        <button
+          type="button"
+          id="btn-save-selected"
+          disabled
+          class="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-2xs"
+        >
+          <span>💾</span> Save Selected (<span id="selected-count-badge">0</span>)
+        </button>
+        <button
+          type="button"
+          id="btn-save-all-dirty"
+          class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 active:scale-[0.98] transition cursor-pointer"
+        >
+          <span>🚀</span> Save All Changed
+        </button>
+      </div>
+    </div>
+
+    <!-- SEO Sub-Navigation Bar -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 dark:border-slate-800">
+      <a href="/admin/seo/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        📊 Audit Overview
+      </a>
+      <a href="/admin/seo/bulk/" class="rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs shrink-0">
+        📝 Bulk Meta Editor
+      </a>
+      <a href="/admin/seo/duplicates/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        👯 Duplicate Content
+      </a>
+      <a href="/admin/seo/links/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        🔗 Internal Link Audit
+      </a>
+      <a href="/admin/seo/sitemap-schema/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        🗺️ Sitemap &amp; Schema
+      </a>
+      <a href="/admin/seo/history/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        📜 Change History
+      </a>
+    </div>
+
+    <!-- Controls / Filters -->
+    <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
+      <div class="flex items-center gap-2">
+        <label class="inline-flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+          <input type="checkbox" id="select-all-checkbox" class="rounded h-4 w-4 text-blue-600" />
+          <span>Select All Filtered</span>
+        </label>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2">
+        <select
+          id="filter-category"
+          class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+        >
+          <option value="all">All Categories &amp; Pages</option>
+          <option value="Finance">Finance Suite</option>
+          <option value="Construction">Construction Suite</option>
+          <option value="Health">Health Suite</option>
+          <option value="Math">Math Suite</option>
+          <option value="General">General Suite</option>
+          <option value="Core Page">Core Static Pages</option>
+        </select>
+
+        <div class="relative min-w-[240px]">
+          <input
+            type="text"
+            id="filter-search"
+            placeholder="Search by page name or slug..."
+            class="w-full rounded-xl border border-slate-300 bg-white py-1.5 pl-8 pr-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+          />
+          <span class="absolute left-2.5 top-2 text-xs text-slate-400">🔍</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Notification Banner -->
+    <div id="bulk-status-msg" class="hidden rounded-2xl p-4 text-xs font-semibold" role="alert"></div>
+
+    <!-- Bulk Table Grid Container -->
+    <div class="space-y-4" id="bulk-pages-list">
+      {allPages.map((p) => {
+        const titleLen = p.metaTitle.length;
+        const descLen = p.metaDescription.length;
+
+        return (
+          <div
+            class="bulk-row-card rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs dark:border-slate-800 dark:bg-slate-900 space-y-4 transition-all"
+            data-slug={p.slug}
+            data-category={p.category}
+            data-type={p.type}
+            data-search={`${p.name} ${p.path} ${p.category}`.toLowerCase()}
+          >
+            <!-- Card Header -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
+              <div class="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  class="row-select-checkbox rounded h-4 w-4 text-blue-600 cursor-pointer shrink-0"
+                  value={p.slug}
+                />
+                <div>
+                  <div class="flex items-center gap-2">
+                    <h3 class="font-bold text-sm text-slate-900 dark:text-white">{p.name}</h3>
+                    <span class="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                      {p.category}
+                    </span>
+                  </div>
+                  <a href={p.path} target="_blank" class="font-mono text-[11px] text-blue-600 hover:underline dark:text-blue-400">
+                    https://aifreecalculator.com{p.path} ↗
+                  </a>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <span class="row-dirty-badge hidden rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black uppercase text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                  ● Modified
+                </span>
+              </div>
+            </div>
+
+            <!-- Fields Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-4">
+              
+              <!-- Meta Title (5 Cols) -->
+              <div class="lg:col-span-5 space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <label class="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Meta Title
+                  </label>
+                  <span class="title-char-counter text-[11px] font-mono font-bold text-slate-400">
+                    <span class="count-val">{titleLen}</span>/60 chars
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  class="input-meta-title w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white focus:border-blue-600 focus:outline-hidden"
+                  value={p.metaTitle}
+                  data-original={p.metaTitle}
+                />
+              </div>
+
+              <!-- Meta Description (7 Cols) -->
+              <div class="lg:col-span-7 space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <label class="text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Meta Description
+                  </label>
+                  <span class="desc-char-counter text-[11px] font-mono font-bold text-slate-400">
+                    <span class="count-val">{descLen}</span>/160 chars
+                  </span>
+                </div>
+                <textarea
+                  rows="2"
+                  class="input-meta-desc w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white focus:border-blue-600 focus:outline-hidden resize-y"
+                  data-original={p.metaDescription}
+                >{p.metaDescription}</textarea>
+              </div>
+
+            </div>
+          </div>
+        );
+      })}
+    </div>
+
+    <!-- Sticky Bottom Bar on Mobile/Desktop when modified items exist -->
+    <div id="sticky-save-bar" class="fixed bottom-0 inset-x-0 z-40 bg-white/95 dark:bg-slate-900/95 border-t border-slate-200 dark:border-slate-800 p-4 shadow-2xl backdrop-blur-md hidden flex items-center justify-between max-w-7xl mx-auto">
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-bold text-amber-600 dark:text-amber-400">
+          ⚠️ You have unsaved SEO changes (<span id="dirty-count-badge">0</span> modified).
+        </span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          id="btn-sticky-save"
+          class="rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 transition cursor-pointer"
+        >
+          Save All Changes
+        </button>
+      </div>
+    </div>
+
+  </div>
+</AdminLayout>
+
+<script is:inline>
+  const rows = document.querySelectorAll('.bulk-row-card');
+  const searchInp = document.getElementById('filter-search');
+  const catFilter = document.getElementById('filter-category');
+  const selectAllCb = document.getElementById('select-all-checkbox');
+  const btnSaveSelected = document.getElementById('btn-save-selected');
+  const btnSaveAllDirty = document.getElementById('btn-save-all-dirty');
+  const btnStickySave = document.getElementById('btn-sticky-save');
+  const stickyBar = document.getElementById('sticky-save-bar');
+  const selectedCountBadge = document.getElementById('selected-count-badge');
+  const dirtyCountBadge = document.getElementById('dirty-count-badge');
+  const statusMsg = document.getElementById('bulk-status-msg');
+
+  let searchQuery = '';
+  let selectedCategory = 'all';
+
+  function applyFilters() {
+    rows.forEach((row) => {
+      const cat = row.dataset.category;
+      const searchData = row.dataset.search || '';
+
+      const matchCat = selectedCategory === 'all' || cat === selectedCategory;
+      const matchSearch = !searchQuery || searchData.includes(searchQuery);
+
+      if (matchCat && matchSearch) {
+        row.classList.remove('hidden');
+      } else {
+        row.classList.add('hidden');
+      }
+    });
+    updateSelectedCount();
+  }
+
+  searchInp?.addEventListener('input', (e) => {
+    searchQuery = (e.target.value || '').trim().toLowerCase();
+    applyFilters();
+  });
+
+  catFilter?.addEventListener('change', (e) => {
+    selectedCategory = e.target.value;
+    applyFilters();
+  });
+
+  // Checkbox tracking
+  function updateSelectedCount() {
+    const checked = document.querySelectorAll('.row-select-checkbox:checked');
+    if (selectedCountBadge) selectedCountBadge.textContent = checked.length;
+    if (btnSaveSelected) btnSaveSelected.disabled = checked.length === 0;
+  }
+
+  selectAllCb?.addEventListener('change', (e) => {
+    const isChecked = e.target.checked;
+    rows.forEach((row) => {
+      if (!row.classList.contains('hidden')) {
+        const cb = row.querySelector('.row-select-checkbox');
+        if (cb) cb.checked = isChecked;
+      }
+    });
+    updateSelectedCount();
+  });
+
+  document.querySelectorAll('.row-select-checkbox').forEach((cb) => {
+    cb.addEventListener('change', updateSelectedCount);
+  });
+
+  // Character Counter & Dirty Tracking
+  function checkDirty(row) {
+    const titleInp = row.querySelector('.input-meta-title');
+    const descInp = row.querySelector('.input-meta-desc');
+    const badge = row.querySelector('.row-dirty-badge');
+
+    const titleChanged = titleInp && titleInp.value.trim() !== titleInp.dataset.original.trim();
+    const descChanged = descInp && descInp.value.trim() !== descInp.dataset.original.trim();
+
+    const isDirty = titleChanged || descChanged;
+    if (badge) {
+      if (isDirty) badge.classList.remove('hidden');
+      else badge.classList.add('hidden');
+    }
+
+    // Update global dirty count & sticky bar
+    const totalDirty = document.querySelectorAll('.row-dirty-badge:not(.hidden)').length;
+    if (dirtyCountBadge) dirtyCountBadge.textContent = totalDirty;
+    if (stickyBar) {
+      if (totalDirty > 0) stickyBar.classList.remove('hidden');
+      else stickyBar.classList.add('hidden');
+    }
+  }
+
+  rows.forEach((row) => {
+    const titleInp = row.querySelector('.input-meta-title');
+    const descInp = row.querySelector('.input-meta-desc');
+    const titleCounter = row.querySelector('.title-char-counter .count-val');
+    const descCounter = row.querySelector('.desc-char-counter .count-val');
+
+    titleInp?.addEventListener('input', (e) => {
+      const len = e.target.value.length;
+      if (titleCounter) titleCounter.textContent = len;
+      if (len >= 50 && len <= 65) {
+        titleInp.classList.remove('border-amber-400', 'border-red-400');
+        titleInp.classList.add('border-emerald-500');
+      } else {
+        titleInp.classList.remove('border-emerald-500');
+      }
+      checkDirty(row);
+    });
+
+    descInp?.addEventListener('input', (e) => {
+      const len = e.target.value.length;
+      if (descCounter) descCounter.textContent = len;
+      if (len >= 130 && len <= 165) {
+        descInp.classList.remove('border-amber-400', 'border-red-400');
+        descInp.classList.add('border-emerald-500');
+      } else {
+        descInp.classList.remove('border-emerald-500');
+      }
+      checkDirty(row);
+    });
+  });
+
+  // Save Routine
+  async function performBulkSave(targetRows) {
+    if (targetRows.length === 0) {
+      alert('No modified or selected pages to save.');
+      return;
+    }
+
+    const confirmed = confirm(`Are you sure you want to save metadata updates for ${targetRows.length} page(s)?`);
+    if (!confirmed) return;
+
+    if (statusMsg) {
+      statusMsg.className = 'rounded-2xl p-4 text-xs font-semibold bg-blue-50 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 block';
+      statusMsg.textContent = `Saving updates for ${targetRows.length} pages to database...`;
+    }
+
+    const updates = [];
+    targetRows.forEach((row) => {
+      const slug = row.dataset.slug;
+      const metaTitle = row.querySelector('.input-meta-title')?.value;
+      const metaDescription = row.querySelector('.input-meta-desc')?.value;
+      updates.push({ slug, metaTitle, metaDescription });
+    });
+
+    try {
+      const res = await fetch('/api/admin/seo/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updates }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        if (statusMsg) {
+          statusMsg.className = 'rounded-2xl p-4 text-xs font-semibold bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 block';
+          statusMsg.innerHTML = `✅ Successfully saved ${data.updatedCount} pages and logged ${data.changesLogged} entries into SEO Change History.`;
+        }
+
+        // Update original datasets
+        targetRows.forEach((row) => {
+          const titleInp = row.querySelector('.input-meta-title');
+          const descInp = row.querySelector('.input-meta-desc');
+          if (titleInp) titleInp.dataset.original = titleInp.value;
+          if (descInp) descInp.dataset.original = descInp.value;
+          checkDirty(row);
+        });
+
+        setTimeout(() => {
+          if (statusMsg) statusMsg.classList.add('hidden');
+        }, 4000);
+      } else {
+        throw new Error(data.error || 'Bulk save failed');
+      }
+    } catch (err) {
+      if (statusMsg) {
+        statusMsg.className = 'rounded-2xl p-4 text-xs font-semibold bg-red-50 text-red-800 dark:bg-red-950/60 dark:text-red-300 block';
+        statusMsg.textContent = `❌ Error saving: ${err.message || 'Network error'}`;
+      }
+    }
+  }
+
+  // Save Selected
+  btnSaveSelected?.addEventListener('click', () => {
+    const selectedRows = [];
+    document.querySelectorAll('.row-select-checkbox:checked').forEach((cb) => {
+      const row = cb.closest('.bulk-row-card');
+      if (row) selectedRows.push(row);
+    });
+    performBulkSave(selectedRows);
+  });
+
+  // Save All Changed
+  function saveDirtyRows() {
+    const dirtyRows = [];
+    rows.forEach((row) => {
+      const titleInp = row.querySelector('.input-meta-title');
+      const descInp = row.querySelector('.input-meta-desc');
+      if ((titleInp && titleInp.value !== titleInp.dataset.original) || (descInp && descInp.value !== descInp.dataset.original)) {
+        dirtyRows.push(row);
+      }
+    });
+    performBulkSave(dirtyRows);
+  }
+
+  btnSaveAllDirty?.addEventListener('click', saveDirtyRows);
+  btnStickySave?.addEventListener('click', saveDirtyRows);
+</script>

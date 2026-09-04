@@ -124,6 +124,15 @@ export function getDb(locals?: any): D1Database {
           return this;
         },
         async all<T = Record<string, unknown>>() {
+          if (query.includes('contact_messages')) {
+            const store = await getLocalFileStorage();
+            const raw = store['_contact_messages_list'] || '[]';
+            try {
+              return { results: JSON.parse(raw) as T[], success: true };
+            } catch {
+              return { results: [] as T[], success: true };
+            }
+          }
           if (query.includes('SELECT * FROM calculator_stats') || query.includes('stats')) {
             const results = Object.entries(inMemoryStats).map(([slug, views]) => ({
               slug,
@@ -149,6 +158,55 @@ export function getDb(locals?: any): D1Database {
           return null;
         },
         async run() {
+          if (query.includes('contact_messages')) {
+            if (query.includes('INSERT')) {
+              const msg: ContactMessage = {
+                id: String(boundValues[0] || ''),
+                name: String(boundValues[1] || ''),
+                email: String(boundValues[2] || ''),
+                category: String(boundValues[3] || 'General'),
+                subject: String(boundValues[4] || ''),
+                message: String(boundValues[5] || ''),
+                status: (boundValues[6] as any) || 'new',
+                created_at: String(boundValues[7] || new Date().toISOString()),
+              };
+              const store = await getLocalFileStorage();
+              const raw = store['_contact_messages_list'] || '[]';
+              let list: ContactMessage[] = [];
+              try {
+                list = JSON.parse(raw);
+              } catch {}
+              list.unshift(msg);
+              await writeLocalFileStorage('_contact_messages_list', JSON.stringify(list));
+              return { success: true, meta: { changes: 1, duration: 2 } };
+            }
+            if (query.includes('UPDATE')) {
+              const status = String(boundValues[0] || '');
+              const id = String(boundValues[1] || '');
+              const store = await getLocalFileStorage();
+              const raw = store['_contact_messages_list'] || '[]';
+              try {
+                const list: ContactMessage[] = JSON.parse(raw);
+                const item = list.find((m) => m.id === id);
+                if (item) {
+                  item.status = status as any;
+                  await writeLocalFileStorage('_contact_messages_list', JSON.stringify(list));
+                }
+              } catch {}
+              return { success: true, meta: { changes: 1, duration: 2 } };
+            }
+            if (query.includes('DELETE')) {
+              const id = String(boundValues[0] || '');
+              const store = await getLocalFileStorage();
+              const raw = store['_contact_messages_list'] || '[]';
+              try {
+                let list: ContactMessage[] = JSON.parse(raw);
+                list = list.filter((m) => m.id !== id);
+                await writeLocalFileStorage('_contact_messages_list', JSON.stringify(list));
+              } catch {}
+              return { success: true, meta: { changes: 1, duration: 2 } };
+            }
+          }
           if (query.includes('site_settings')) {
             const key = boundValues[0] as string;
             const value = boundValues[1] as string;
@@ -177,6 +235,17 @@ export function getDb(locals?: any): D1Database {
 }
 
 
+export interface ContactMessage {
+  id: string;
+  name: string;
+  email: string;
+  category: string;
+  subject: string;
+  message: string;
+  status: 'new' | 'read' | 'replied' | 'archived';
+  created_at: string;
+}
+
 /**
  * Record a page visit or calculator calculation
  */
@@ -199,4 +268,110 @@ export async function trackCalculatorView(slug: string, db?: D1Database): Promis
  */
 export async function getCalculatorStats(): Promise<Record<string, number>> {
   return { ...inMemoryStats };
+}
+
+/**
+ * Save incoming contact message
+ */
+export async function saveContactMessage(db: D1Database, msg: ContactMessage): Promise<void> {
+  try {
+    await db.exec(
+      'CREATE TABLE IF NOT EXISTS contact_messages (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, category TEXT, subject TEXT NOT NULL, message TEXT NOT NULL, status TEXT DEFAULT "new", created_at TEXT NOT NULL)'
+    );
+    await db
+      .prepare(
+        'INSERT INTO contact_messages (id, name, email, category, subject, message, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+      )
+      .bind(msg.id, msg.name, msg.email, msg.category, msg.subject, msg.message, msg.status || 'new', msg.created_at)
+      .run();
+  } catch (err) {
+    // Fallback to local storage
+    const store = await getLocalFileStorage();
+    const raw = store['_contact_messages_list'] || '[]';
+    let list: ContactMessage[] = [];
+    try {
+      list = JSON.parse(raw);
+    } catch {}
+    list.unshift(msg);
+    await writeLocalFileStorage('_contact_messages_list', JSON.stringify(list));
+  }
+}
+
+/**
+ * Get all contact messages for admin
+ */
+export async function getContactMessages(db?: D1Database): Promise<ContactMessage[]> {
+  try {
+    if (db) {
+      await db.exec(
+        'CREATE TABLE IF NOT EXISTS contact_messages (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, category TEXT, subject TEXT NOT NULL, message TEXT NOT NULL, status TEXT DEFAULT "new", created_at TEXT NOT NULL)'
+      );
+      const res = await db.prepare('SELECT * FROM contact_messages ORDER BY created_at DESC').all<ContactMessage>();
+      if (res?.results && res.results.length > 0) {
+        return res.results;
+      }
+    }
+  } catch (err) {
+    // continue to local fallback
+  }
+
+  const store = await getLocalFileStorage();
+  const raw = store['_contact_messages_list'] || '[]';
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Update status of contact message
+ */
+export async function updateContactMessageStatus(
+  db: D1Database,
+  id: string,
+  status: 'new' | 'read' | 'replied' | 'archived'
+): Promise<boolean> {
+  try {
+    if (db) {
+      await db
+        .prepare('UPDATE contact_messages SET status = ? WHERE id = ?')
+        .bind(status, id)
+        .run();
+    }
+  } catch {}
+
+  const store = await getLocalFileStorage();
+  const raw = store['_contact_messages_list'] || '[]';
+  try {
+    const list: ContactMessage[] = JSON.parse(raw);
+    const item = list.find((m) => m.id === id);
+    if (item) {
+      item.status = status;
+      await writeLocalFileStorage('_contact_messages_list', JSON.stringify(list));
+      return true;
+    }
+  } catch {}
+  return true;
+}
+
+/**
+ * Delete a contact message
+ */
+export async function deleteContactMessage(db: D1Database, id: string): Promise<boolean> {
+  try {
+    if (db) {
+      await db.prepare('DELETE FROM contact_messages WHERE id = ?').bind(id).run();
+    }
+  } catch {}
+
+  const store = await getLocalFileStorage();
+  const raw = store['_contact_messages_list'] || '[]';
+  try {
+    let list: ContactMessage[] = JSON.parse(raw);
+    list = list.filter((m) => m.id !== id);
+    await writeLocalFileStorage('_contact_messages_list', JSON.stringify(list));
+    return true;
+  } catch {}
+  return true;
 }
