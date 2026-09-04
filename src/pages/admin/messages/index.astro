@@ -322,7 +322,7 @@ const totalCount = messages.length;
 </AdminLayout>
 
 <script is:inline>
-  // Filter Tabs
+  // Filter Tabs & Search Filtering
   const filterBtns = document.querySelectorAll('.filter-btn');
   const searchInput = document.getElementById('search-messages');
   const messageCards = document.querySelectorAll('.message-card');
@@ -332,8 +332,8 @@ const totalCount = messages.length;
 
   function applyFilters() {
     messageCards.forEach((card) => {
-      const status = card.dataset.status;
-      const searchData = card.dataset.search || '';
+      const status = card.getAttribute('data-status') || '';
+      const searchData = card.getAttribute('data-search') || '';
 
       const matchesStatus = currentFilter === 'all' || status === currentFilter;
       const matchesSearch = !searchQuery || searchData.includes(searchQuery);
@@ -354,7 +354,7 @@ const totalCount = messages.length;
       });
       btn.classList.add('bg-blue-600', 'text-white', 'active');
       btn.classList.remove('text-slate-600', 'dark:text-slate-300');
-      currentFilter = btn.dataset.filter || 'all';
+      currentFilter = btn.getAttribute('data-filter') || 'all';
       applyFilters();
     });
   });
@@ -371,19 +371,9 @@ const totalCount = messages.length;
   // Refresh Action
   const btnRefresh = document.getElementById('btn-refresh-messages');
   const refreshSpinner = document.getElementById('refresh-spinner');
-  btnRefresh?.addEventListener('click', async () => {
+  btnRefresh?.addEventListener('click', () => {
     if (refreshSpinner) refreshSpinner.classList.add('animate-spin');
-    try {
-      const token = getAuthToken();
-      const res = await fetch('/api/admin/messages', {
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-      });
-      if (res.ok) {
-        window.location.reload();
-      }
-    } catch {
-      window.location.reload();
-    }
+    window.location.reload();
   });
 
   // Save Notification Email Action
@@ -434,22 +424,17 @@ const totalCount = messages.length;
     });
   }
 
-  // Delegated Actions for Mark Read, Mark Replied, Archive, and Delete
-  document.addEventListener('click', async function (e) {
-    const target = e.target;
-    if (!target) return;
-
-    // 1. Update Status: Mark Read / Replied / Archive
-    const statusBtn = target.closest ? target.closest('.btn-set-status') : null;
-    if (statusBtn) {
+  // Direct Button Listeners for Mark Read / Replied / Archive
+  document.querySelectorAll('.btn-set-status').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
       e.preventDefault();
-      const id = statusBtn.getAttribute('data-id');
-      const status = statusBtn.getAttribute('data-status');
+      const id = btn.getAttribute('data-id');
+      const status = btn.getAttribute('data-status');
       if (!id || !status) return;
 
-      statusBtn.disabled = true;
-      const originalText = statusBtn.textContent;
-      statusBtn.textContent = 'Updating...';
+      btn.disabled = true;
+      const originalText = btn.textContent;
+      btn.textContent = 'Updating...';
 
       try {
         const token = getAuthToken();
@@ -463,33 +448,31 @@ const totalCount = messages.length;
         });
 
         if (res.ok) {
-          statusBtn.textContent = '✓ Done';
-          // Instant reload to reflect updated badges, counters, and tabs
           window.location.reload();
         } else {
-          const errData = await res.json().catch(function () { return {}; });
+          const errData = await res.json().catch(() => ({}));
           alert(errData.error || 'Failed to update message status.');
-          statusBtn.disabled = false;
-          statusBtn.textContent = originalText;
+          btn.disabled = false;
+          btn.textContent = originalText;
         }
       } catch (err) {
         alert('Network error while updating status.');
-        statusBtn.disabled = false;
-        statusBtn.textContent = originalText;
+        btn.disabled = false;
+        btn.textContent = originalText;
       }
-      return;
-    }
+    });
+  });
 
-    // 2. Delete Message
-    const deleteBtn = target.closest ? target.closest('.btn-delete-msg') : null;
-    if (deleteBtn) {
+  // Direct Button Listeners for Delete Message
+  document.querySelectorAll('.btn-delete-msg').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
       e.preventDefault();
-      const id = deleteBtn.getAttribute('data-id');
+      const id = btn.getAttribute('data-id');
       if (!id) return;
       if (!confirm('Are you sure you want to permanently delete this message?')) return;
 
-      deleteBtn.disabled = true;
-      const card = deleteBtn.closest('.message-card');
+      btn.disabled = true;
+      const card = btn.closest('.message-card');
 
       try {
         const token = getAuthToken();
@@ -503,24 +486,23 @@ const totalCount = messages.length;
             card.style.opacity = '0.3';
             card.style.pointerEvents = 'none';
           }
-          // Reload to recalculate counts and update filters
           window.location.reload();
         } else {
-          const errData = await res.json().catch(function () { return {}; });
+          const errData = await res.json().catch(() => ({}));
           alert(errData.error || 'Failed to delete message.');
-          deleteBtn.disabled = false;
+          btn.disabled = false;
         }
       } catch (err) {
         alert('Network error while deleting message.');
-        deleteBtn.disabled = false;
+        btn.disabled = false;
       }
-      return;
-    }
+    });
+  });
 
-    // 3. Auto mark as replied on clicking reply email
-    const replyLink = target.closest ? target.closest('.btn-reply-email') : null;
-    if (replyLink) {
-      const id = replyLink.getAttribute('data-id');
+  // Direct Button Listeners for Reply via Email
+  document.querySelectorAll('.btn-reply-email').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-id');
       if (id) {
         const token = getAuthToken();
         fetch('/api/admin/messages', {
@@ -530,8 +512,8 @@ const totalCount = messages.length;
             ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
           },
           body: JSON.stringify({ id: id, status: 'replied' }),
-        }).catch(function () {});
+        }).catch(() => {});
       }
-    }
+    });
   });
 </script>

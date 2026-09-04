@@ -334,7 +334,7 @@ export async function getSearchAnalytics(locals?: any): Promise<SearchQueryLog[]
 }
 
 export async function recordSearchQuery(query: string, hasResults: boolean, locals?: any): Promise<void> {
-  const normalized = query.trim().toLowerCase();
+  const normalized = query.trim().toLowerCase().slice(0, 80);
   if (!normalized || normalized.length < 2) return;
   const current = await getSearchAnalytics(locals);
   const existing = current.find((s) => s.query.toLowerCase() === normalized);
@@ -350,7 +350,19 @@ export async function recordSearchQuery(query: string, hasResults: boolean, loca
       lastSearched: new Date().toISOString(),
     });
   }
-  await writeSetting('cms_search_analytics', current.slice(0, 100), locals);
+  await writeSetting('cms_search_analytics', current.slice(0, 150), locals);
+}
+
+export async function deleteSearchQuery(query: string, locals?: any): Promise<SearchQueryLog[]> {
+  const current = await getSearchAnalytics(locals);
+  const normalized = query.trim().toLowerCase();
+  const filtered = current.filter((s) => s.query.toLowerCase() !== normalized);
+  await writeSetting('cms_search_analytics', filtered, locals);
+  return filtered;
+}
+
+export async function clearAllSearchQueries(locals?: any): Promise<void> {
+  await writeSetting('cms_search_analytics', [], locals);
 }
 
 export async function getCalculatorOverrides(locals?: any): Promise<Record<string, any>> {

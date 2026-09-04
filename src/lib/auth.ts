@@ -116,7 +116,10 @@ export async function authenticateAdminRequest(request: Request, cookies?: any):
   if (!token) {
     const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
     if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
-      token = authHeader.substring(7).trim();
+      const extracted = authHeader.substring(7).trim();
+      if (extracted) {
+        token = extracted;
+      }
     }
   }
   if (!token) {

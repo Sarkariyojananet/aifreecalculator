@@ -322,8 +322,27 @@ const searchDataJson = JSON.stringify(
       return nameMatch || descMatch || kwMatch || catMatch;
     });
 
+    let searchLogTimeout = null;
+    function logSearchQuery(query, hasResults) {
+      if (!query || query.length < 2) return;
+      clearTimeout(searchLogTimeout);
+      searchLogTimeout = setTimeout(() => {
+        try {
+          fetch('/api/search-log', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: query, hasResults: Boolean(hasResults) }),
+          }).catch(() => {});
+        } catch {}
+      }, 700);
+    }
+
     if (countLabel) {
       countLabel.textContent = `${filtered.length} calculators found`;
+    }
+
+    if (q) {
+      logSearchQuery(q, filtered.length > 0);
     }
 
     if (filtered.length === 0) {

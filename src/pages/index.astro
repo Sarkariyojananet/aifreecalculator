@@ -263,6 +263,21 @@ const searchDataJson = JSON.stringify(
 
       const data = window.__CALCULATORS_SEARCH_DATA__ || [];
 
+      let homeSearchLogTimer = null;
+      function logHomeSearch(query, hasResults) {
+        if (!query || query.length < 2) return;
+        clearTimeout(homeSearchLogTimer);
+        homeSearchLogTimer = setTimeout(() => {
+          try {
+            fetch('/api/search-log', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ query: query, hasResults: Boolean(hasResults) }),
+            }).catch(() => {});
+          } catch {}
+        }, 700);
+      }
+
       // 1. Smart Search Filter Function
       function filterSearch(query) {
         const q = (query || '').toLowerCase().trim();
@@ -282,6 +297,10 @@ const searchDataJson = JSON.stringify(
           const aliasMatch = (item.aliases || []).some((a) => a.toLowerCase().includes(q));
           return nameMatch || catMatch || descMatch || kwMatch || aliasMatch;
         });
+
+        if (q) {
+          logHomeSearch(q, matches.length > 0);
+        }
 
         if (matchCountLabel) {
           matchCountLabel.textContent = `${matches.length} ${matches.length === 1 ? 'calculator' : 'calculators'} match`;
