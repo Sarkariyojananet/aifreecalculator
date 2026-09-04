@@ -5,6 +5,7 @@ import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { calculators, categories } from '../../../data/calculators';
 import { getCalculatorOverrides } from '../../../lib/admin/content-store';
 import { CORE_PAGES } from '../../../lib/seo/audit-engine';
+import { getLivePageMeta } from '../../../lib/seo/page-metadata';
 import { authenticateAdminRequest } from '../../../lib/auth';
 
 const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
@@ -17,40 +18,52 @@ const overrides = await getCalculatorOverrides(Astro.locals);
 const allPages = [
   ...calculators.map((c) => {
     const o = overrides[c.slug] || {};
+    const liveMeta = getLivePageMeta(c.slug, c.name, c.description);
     return {
       slug: c.slug,
       name: o.name || c.name,
       path: c.path,
       category: c.category,
       type: 'calculator',
-      metaTitle: o.metaTitle || `${c.name} - AI Free Calculator`,
-      metaDescription: o.metaDescription || o.description || c.description || '',
+      metaTitle: o.metaTitle || liveMeta.title,
+      metaDescription: o.metaDescription || o.description || liveMeta.description,
       canonicalUrl: o.canonicalUrl || `https://aifreecalculator.com${c.path}`,
       robots: o.robots || 'index, follow',
     };
   }),
-  ...categories.map((cat) => ({
-    slug: cat.name.toLowerCase(),
-    name: `${cat.name} Suite`,
-    path: cat.path,
-    category: cat.name,
-    type: 'category',
-    metaTitle: `${cat.name} Calculators - Free Online Suite | AI Free Calculator`,
-    metaDescription: cat.description,
-    canonicalUrl: `https://aifreecalculator.com${cat.path}`,
-    robots: 'index, follow',
-  })),
-  ...CORE_PAGES.map((p) => ({
-    slug: p.path.replace(/\//g, '') || 'home',
-    name: p.name,
-    path: p.path,
-    category: 'Core Page',
-    type: 'core',
-    metaTitle: p.title,
-    metaDescription: p.description,
-    canonicalUrl: `https://aifreecalculator.com${p.path === '/' ? '' : p.path}`,
-    robots: 'index, follow',
-  })),
+  ...categories.map((cat) => {
+    const key = `category:${cat.name.toLowerCase()}`;
+    const liveMeta = getLivePageMeta(key, `${cat.name} Calculators`, cat.description);
+    const o = overrides[key] || {};
+    return {
+      slug: cat.name.toLowerCase(),
+      name: `${cat.name} Suite`,
+      path: cat.path,
+      category: cat.name,
+      type: 'category',
+      metaTitle: o.metaTitle || liveMeta.title,
+      metaDescription: o.metaDescription || liveMeta.description,
+      canonicalUrl: o.canonicalUrl || `https://aifreecalculator.com${cat.path}`,
+      robots: o.robots || 'index, follow',
+    };
+  }),
+  ...CORE_PAGES.map((p) => {
+    const slugKey = p.path.replace(/\//g, '') || 'home';
+    const key = `core:${slugKey}`;
+    const liveMeta = getLivePageMeta(key, p.name, p.description);
+    const o = overrides[key] || {};
+    return {
+      slug: slugKey,
+      name: p.name,
+      path: p.path,
+      category: 'Core Page',
+      type: 'core',
+      metaTitle: o.metaTitle || liveMeta.title,
+      metaDescription: o.metaDescription || liveMeta.description,
+      canonicalUrl: o.canonicalUrl || `https://aifreecalculator.com${p.path === '/' ? '' : p.path}`,
+      robots: o.robots || 'index, follow',
+    };
+  }),
 ];
 ---
 

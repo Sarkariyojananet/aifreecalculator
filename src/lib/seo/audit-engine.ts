@@ -5,6 +5,7 @@
 
 import { calculators, categories, type Calculator } from '../../data/calculators';
 import { getCalculatorOverrides, getInternalLinks, getRedirectRules } from '../admin/content-store';
+import { getLivePageMeta } from './page-metadata';
 
 export type PageType = 'calculator' | 'category' | 'core';
 export type IssueSeverity = 'critical' | 'high' | 'medium' | 'low' | 'info';
@@ -200,8 +201,9 @@ export async function runFullSEOAudit(locals?: any): Promise<SEOAuditReport> {
     const override = overrides[calc.slug] || {};
     const path = calc.path.endsWith('/') ? calc.path : `${calc.path}/`;
     const name = override.name || calc.name;
-    const metaTitle = override.metaTitle || `${name} - AI Free Calculator`;
-    const metaDescription = override.metaDescription || override.description || calc.description || '';
+    const liveMeta = getLivePageMeta(calc.slug, name, calc.description);
+    const metaTitle = override.metaTitle || liveMeta.title;
+    const metaDescription = override.metaDescription || override.description || liveMeta.description;
     const canonicalUrl = `https://aifreecalculator.com${path}`;
     const h1 = name;
     const isFeatured = override.featured !== undefined ? override.featured : calc.featured;

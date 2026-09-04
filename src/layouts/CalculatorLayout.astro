@@ -5,7 +5,7 @@ import AdSlotInline from '../components/ads/AdSlotInline.astro';
 import AdSlotSidebar from '../components/ads/AdSlotSidebar.astro';
 import AdSlotFooter from '../components/ads/AdSlotFooter.astro';
 import { calculators, type CalculatorCategory } from '../data/calculators';
-import { getInternalLinks } from '../lib/admin/content-store';
+import { getInternalLinks, getCalculatorOverrides } from '../lib/admin/content-store';
 
 interface Props {
   title: string;
@@ -14,6 +14,7 @@ interface Props {
   calculatorName: string;
   slug: string;
   keywords?: string[];
+  ogImage?: string;
 }
 
 const {
@@ -23,7 +24,22 @@ const {
   calculatorName,
   slug,
   keywords = [],
+  ogImage,
 } = Astro.props;
+
+// Fetch live CMS override (if admin configured custom SEO in /admin/seo/bulk/ or CMS)
+const allOverrides = await getCalculatorOverrides(Astro.locals);
+const override = allOverrides[slug] || {};
+
+const effectiveTitle = override.metaTitle || title;
+const effectiveDescription = override.metaDescription || override.description || description;
+const effectiveCanonical = override.canonicalUrl;
+const effectiveRobots = override.robots;
+const effectiveKeywords = Array.isArray(override.keywords) && override.keywords.length > 0 ? override.keywords : keywords;
+
+// Default to category-specific 1200x630 OG banner if custom one is not provided
+const categorySlug = (category || 'general').toLowerCase();
+const resolvedOgImage = override.ogImage || ogImage || `/og/${categorySlug}.png`;
 
 // 1. Fetch custom curated internal links (if configured in Admin CMS)
 const allInternalLinks = await getInternalLinks(Astro.locals);
@@ -49,9 +65,12 @@ const categoryPath = `/${category.toLowerCase()}/`;
 ---
 
 <BaseLayout
-  title={title}
-  description={description}
-  keywords={[...keywords, calculatorName.toLowerCase(), `${calculatorName.toLowerCase()} online`, `${category.toLowerCase()} calculator`]}
+  title={effectiveTitle}
+  description={effectiveDescription}
+  canonicalUrl={effectiveCanonical}
+  noindex={effectiveRobots?.includes('noindex')}
+  keywords={[...effectiveKeywords, calculatorName.toLowerCase(), `${calculatorName.toLowerCase()} online`, `${category.toLowerCase()} calculator`]}
+  ogImage={resolvedOgImage}
 >
   <Fragment slot="head">
     <!-- JSON-LD WebApplication / SoftwareApplication Schema -->
