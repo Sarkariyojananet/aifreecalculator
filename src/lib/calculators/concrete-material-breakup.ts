@@ -90,28 +90,29 @@ export interface ConcreteMixComparisonRow {
 export interface ConcreteMaterialCalculationInput {
   mode: ConcreteMode;
   // Volume mode
-  volumeValue?: number;
+  volumeValue?: number | string;
   volumeUnit?: VolumeUnit;
   // Structural Element / Custom Dimensions
-  length?: number;
+  length?: number | string;
   lengthUnit?: DimensionUnit;
-  width?: number;
+  width?: number | string;
   widthUnit?: DimensionUnit;
-  heightOrDepth?: number;
+  heightOrDepth?: number | string;
   heightOrDepthUnit?: DimensionUnit;
-  quantity?: number; // e.g. number of slabs, beams, columns, footings, units
+  quantity?: number | string; // e.g. number of slabs, beams, columns, footings, units
   // Mix Ratio
   mixPreset?: string;
-  cementPart: number;
-  sandPart: number;
-  aggregatePart: number;
+  mixRatio?: string;
+  cementPart?: number | string;
+  sandPart?: number | string;
+  aggregatePart?: number | string;
   // Factors & settings
-  dryVolumeFactor?: number; // default 1.54
-  wastagePercent?: number;  // default 5%
-  cementBagSizeKg?: number; // default 50kg
+  dryVolumeFactor?: number | string; // default 1.54
+  wastagePercent?: number | string;  // default 5%
+  cementBagSizeKg?: number | string; // default 50kg
   // Water Estimation
   enableWater?: boolean;
-  waterCementRatio?: number; // default 0.50
+  waterCementRatio?: number | string; // default 0.50
 }
 
 export interface ConcreteMaterialCalculationResult {
@@ -162,54 +163,174 @@ export interface ConcreteMaterialCalculationResult {
   stepDetails: string[];
 }
 
+/**
+ * Parse a concrete mix ratio string (e.g. "1:1.5:3", "1:2:4", "1-2-4", "1 / 2 / 4") or preset identifier (e.g. "M20", "M15").
+ */
+export function parseRatioString(ratioStr: string): { cement: number; sand: number; aggregate: number; label?: string } | null {
+  if (!ratioStr || typeof ratioStr !== 'string') return null;
+  const clean = ratioStr.trim();
+  if (!clean) return null;
+
+  // Check preset IDs or grade labels (M15, M20, etc.)
+  const preset = CONCRETE_MIX_PRESETS.find(
+    (p) =>
+      p.id.toLowerCase() === clean.toLowerCase() ||
+      p.gradeLabel.toLowerCase() === clean.toLowerCase() ||
+      p.name.replace(/\s+/g, '') === clean.replace(/\s+/g, '')
+  );
+  if (preset) {
+    return {
+      cement: preset.cement,
+      sand: preset.sand,
+      aggregate: preset.aggregate,
+      label: `${preset.name} (${preset.gradeLabel})`,
+    };
+  }
+
+  // Split by delimiter (colon, slash, hyphen, comma, or space)
+  const tokens = clean.split(/[:/\-\s,]+/).filter(Boolean);
+  if (tokens.length === 3) {
+    const c = Number(tokens[0]);
+    const s = Number(tokens[1]);
+    const a = Number(tokens[2]);
+    if (Number.isFinite(c) && c > 0 && Number.isFinite(s) && s > 0 && Number.isFinite(a) && a > 0) {
+      return {
+        cement: c,
+        sand: s,
+        aggregate: a,
+        label: `${c} : ${s} : ${a}`,
+      };
+    }
+  }
+
+  return null;
+}
+
 export function calculateConcreteMaterial(input: ConcreteMaterialCalculationInput): ConcreteMaterialCalculationResult {
-  const {
-    mode,
-    dryVolumeFactor = 1.54,
-    wastagePercent = 5,
-    cementBagSizeKg = 50,
-    cementPart,
-    sandPart,
-    aggregatePart,
-    enableWater = true,
-    waterCementRatio = 0.50,
-  } = input;
-
-  if (cementPart <= 0 || sandPart <= 0 || aggregatePart <= 0) {
-    throw new Error('Mix ratio parts must be positive numbers greater than zero.');
-  }
-  if (dryVolumeFactor <= 0) {
-    throw new Error('Dry volume factor must be greater than zero.');
-  }
-  if (cementBagSizeKg <= 0) {
-    throw new Error('Cement bag size must be greater than zero.');
+  if (!input || typeof input !== 'object') {
+    throw new Error('Invalid calculation input.');
   }
 
+  const { mode } = input;
+  if (!mode) {
+    throw new Error('Calculation mode must be specified.');
+  }
+
+  // 1. Resolve and validate mix ratio parts
+  let cementPart: number;
+  let sandPart: number;
+  let aggregatePart: number;
+  let mixRatioLabel: string;
+
+  const rawC = input.cementPart !== undefined && input.cementPart !== null && input.cementPart !== '' ? Number(input.cementPart) : NaN;
+  const rawS = input.sandPart !== undefined && input.sandPart !== null && input.sandPart !== '' ? Number(input.sandPart) : NaN;
+  const rawA = input.aggregatePart !== undefined && input.aggregatePart !== null && input.aggregatePart !== '' ? Number(input.aggregatePart) : NaN;
+
+  if (Number.isFinite(rawC) && rawC > 0 && Number.isFinite(rawS) && rawS > 0 && Number.isFinite(rawA) && rawA > 0) {
+    cementPart = rawC;
+    sandPart = rawS;
+    aggregatePart = rawA;
+    mixRatioLabel = `${cementPart} : ${sandPart} : ${aggregatePart}`;
+  } else {
+    // Attempt to parse mixRatio or mixPreset string
+    const ratioInput = input.mixRatio || input.mixPreset;
+    if (ratioInput) {
+      const parsed = parseRatioString(ratioInput);
+      if (parsed) {
+        cementPart = parsed.cement;
+        sandPart = parsed.sand;
+        aggregatePart = parsed.aggregate;
+        mixRatioLabel = parsed.label || `${cementPart} : ${sandPart} : ${aggregatePart}`;
+      } else {
+        throw new Error(`Invalid concrete mix ratio: "${ratioInput}". Expected format like "1:2:4", "1:1.5:3" or a standard preset like "M20".`);
+      }
+    } else {
+      // If partial or invalid parts were explicitly provided (e.g. 0, negative, NaN)
+      if (input.cementPart !== undefined || input.sandPart !== undefined || input.aggregatePart !== undefined) {
+        throw new Error('Mix ratio parts must be valid positive numbers greater than zero.');
+      }
+      // Default fallback: Standard M20 (1 : 1.5 : 3)
+      cementPart = 1;
+      sandPart = 1.5;
+      aggregatePart = 3;
+      mixRatioLabel = '1 : 1.5 : 3 (M20)';
+    }
+  }
+
+  const totalRatioParts = cementPart + sandPart + aggregatePart;
+  if (!Number.isFinite(totalRatioParts) || totalRatioParts <= 0) {
+    throw new Error('Total mix ratio parts must be a valid positive number.');
+  }
+
+  // 2. Validate and parse factors
+  const rawDryFactor = input.dryVolumeFactor !== undefined && input.dryVolumeFactor !== null && input.dryVolumeFactor !== ''
+    ? Number(input.dryVolumeFactor)
+    : 1.54;
+  if (!Number.isFinite(rawDryFactor) || rawDryFactor <= 0) {
+    throw new Error('Dry volume factor must be a valid number greater than zero.');
+  }
+  const dryVolumeFactor = rawDryFactor;
+
+  const rawWastage = input.wastagePercent !== undefined && input.wastagePercent !== null && input.wastagePercent !== ''
+    ? Number(input.wastagePercent)
+    : 5;
+  if (!Number.isFinite(rawWastage) || rawWastage < 0) {
+    throw new Error('Wastage percentage must be a valid non-negative number.');
+  }
+  const wastagePercent = rawWastage;
+
+  const rawBagSize = input.cementBagSizeKg !== undefined && input.cementBagSizeKg !== null && input.cementBagSizeKg !== ''
+    ? Number(input.cementBagSizeKg)
+    : 50;
+  if (!Number.isFinite(rawBagSize) || rawBagSize <= 0) {
+    throw new Error('Cement bag size must be a valid number greater than zero.');
+  }
+  const cementBagSizeKg = rawBagSize;
+
+  const enableWater = input.enableWater !== false;
+  const rawWcRatio = input.waterCementRatio !== undefined && input.waterCementRatio !== null && input.waterCementRatio !== ''
+    ? Number(input.waterCementRatio)
+    : 0.50;
+  if (!Number.isFinite(rawWcRatio) || rawWcRatio < 0) {
+    throw new Error('Water-cement ratio must be a valid non-negative number.');
+  }
+  const waterCementRatio = rawWcRatio;
+
+  // 3. Volumetric calculations
   let singleUnitVolumeCum = 0;
   let totalWetVolumeCum = 0;
-  const count = Math.max(1, Math.round(input.quantity || 1));
+  const rawQty = input.quantity !== undefined && input.quantity !== null && input.quantity !== '' ? Number(input.quantity) : 1;
+  const count = Number.isFinite(rawQty) && rawQty >= 1 ? Math.round(rawQty) : 1;
 
   if (mode === 'concrete_volume') {
-    const rawVol = input.volumeValue || 0;
-    if (rawVol <= 0) throw new Error('Concrete volume must be greater than zero.');
+    const rawVol = input.volumeValue !== undefined && input.volumeValue !== null && input.volumeValue !== ''
+      ? Number(input.volumeValue)
+      : 0;
+    if (!Number.isFinite(rawVol) || rawVol <= 0) {
+      throw new Error('Concrete volume must be a valid number greater than zero.');
+    }
     totalWetVolumeCum = convertVolumeToCum(rawVol, input.volumeUnit || 'cum');
     singleUnitVolumeCum = totalWetVolumeCum;
   } else {
     // Structural elements & custom dimensions
-    const l = convertToMeters(input.length || 0, input.lengthUnit || 'meter');
-    const w = convertToMeters(input.width || 0, input.widthUnit || 'meter');
-    const h = convertToMeters(input.heightOrDepth || 0, input.heightOrDepthUnit || 'meter');
+    const rawL = input.length !== undefined && input.length !== null && input.length !== '' ? Number(input.length) : 0;
+    const rawW = input.width !== undefined && input.width !== null && input.width !== '' ? Number(input.width) : 0;
+    const rawH = input.heightOrDepth !== undefined && input.heightOrDepth !== null && input.heightOrDepth !== '' ? Number(input.heightOrDepth) : 0;
 
-    if (l <= 0 || w <= 0 || h <= 0) {
-      throw new Error('Length, width, and height/depth dimensions must be greater than zero.');
+    if (!Number.isFinite(rawL) || rawL <= 0 || !Number.isFinite(rawW) || rawW <= 0 || !Number.isFinite(rawH) || rawH <= 0) {
+      throw new Error('Length, width, and height/depth dimensions must be valid numbers greater than zero.');
     }
+
+    const l = convertToMeters(rawL, input.lengthUnit || 'meter');
+    const w = convertToMeters(rawW, input.widthUnit || 'meter');
+    const h = convertToMeters(rawH, input.heightOrDepthUnit || 'meter');
 
     singleUnitVolumeCum = l * w * h;
     totalWetVolumeCum = singleUnitVolumeCum * count;
   }
 
-  if (totalWetVolumeCum <= 0) {
-    throw new Error('Total concrete volume must be greater than zero.');
+  if (!Number.isFinite(totalWetVolumeCum) || totalWetVolumeCum <= 0) {
+    throw new Error('Total concrete volume must be a valid number greater than zero.');
   }
 
   const totalWetVolumeCft = totalWetVolumeCum * CFT_PER_M3;
@@ -223,9 +344,6 @@ export function calculateConcreteMaterial(input: ConcreteMaterialCalculationInpu
   const wastageMultiplier = 1 + wastagePercent / 100;
   const finalDryVolumeCum = baseDryVolumeCum * wastageMultiplier;
   const finalDryVolumeCft = finalDryVolumeCum * CFT_PER_M3;
-
-  const totalRatioParts = cementPart + sandPart + aggregatePart;
-  const mixRatioLabel = `${cementPart} : ${sandPart} : ${aggregatePart}`;
 
   // 1. Cement Calculations
   const baseCementVolCum = (baseDryVolumeCum * cementPart) / totalRatioParts;

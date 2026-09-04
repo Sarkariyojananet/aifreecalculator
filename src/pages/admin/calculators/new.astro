@@ -1,4 +1,6 @@
 ---
+export const prerender = false;
+
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { calculators, categories } from '../../../data/calculators';
 ---
@@ -431,6 +433,7 @@ import { calculators, categories } from '../../../data/calculators';
 <script is:inline>
   const params = new URLSearchParams(window.location.search);
   const editSlug = params.get('edit');
+  const initialTab = params.get('tab');
 
   const tabs = document.querySelectorAll('.editor-tab');
   const panels = document.querySelectorAll('.tab-panel');
@@ -644,6 +647,7 @@ import { calculators, categories } from '../../../data/calculators';
   function loadCalculatorData(slug) {
     const token = localStorage.getItem('admin_token') || '';
     fetch('/api/admin/calculators', {
+      credentials: 'include',
       headers: token ? { 'Authorization': `Bearer ${token}` } : {},
     })
       .then((res) => res.json())
@@ -704,6 +708,10 @@ import { calculators, categories } from '../../../data/calculators';
     updateSchemaPreview();
   }
 
+  if (initialTab) {
+    switchTab(initialTab);
+  }
+
   // Form Submit / Save
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -743,6 +751,7 @@ import { calculators, categories } from '../../../data/calculators';
       const token = localStorage.getItem('admin_token') || '';
       const res = await fetch('/api/admin/calculators', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {}),

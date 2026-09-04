@@ -109,6 +109,9 @@ const allPages = [
       </a>
     </div>
 
+    <!-- Bulk Status Banner -->
+    <div id="bulk-status-msg" class="hidden rounded-2xl p-4 text-xs font-semibold shadow-xs transition-all"></div>
+
     <!-- Controls / Filters -->
     <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
       <div class="flex items-center gap-2">
@@ -186,6 +189,12 @@ const allPages = [
                 <span class="row-dirty-badge hidden rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-black uppercase text-amber-700 dark:bg-amber-950 dark:text-amber-300">
                   ● Modified
                 </span>
+                <button
+                  type="button"
+                  class="btn-save-single-row rounded-lg bg-blue-600 px-3 py-1 text-xs font-bold text-white hover:bg-blue-700 shadow-2xs transition cursor-pointer"
+                >
+                  Save
+                </button>
               </div>
             </div>
 
@@ -253,50 +262,50 @@ const allPages = [
     </div>
 
   </div>
-</AdminLayout>
 
-<script is:inline>
-  const rows = document.querySelectorAll('.bulk-row-card');
-  const searchInp = document.getElementById('filter-search');
-  const catFilter = document.getElementById('filter-category');
-  const selectAllCb = document.getElementById('select-all-checkbox');
-  const btnSaveSelected = document.getElementById('btn-save-selected');
-  const btnSaveAllDirty = document.getElementById('btn-save-all-dirty');
-  const btnStickySave = document.getElementById('btn-sticky-save');
-  const stickyBar = document.getElementById('sticky-save-bar');
-  const selectedCountBadge = document.getElementById('selected-count-badge');
-  const dirtyCountBadge = document.getElementById('dirty-count-badge');
-  const statusMsg = document.getElementById('bulk-status-msg');
+  <script is:inline>
+    function initBulkEditor() {
+      const rows = document.querySelectorAll('.bulk-row-card');
+      const searchInp = document.getElementById('filter-search');
+      const catFilter = document.getElementById('filter-category');
+      const selectAllCb = document.getElementById('select-all-checkbox');
+      const btnSaveSelected = document.getElementById('btn-save-selected');
+      const btnSaveAllDirty = document.getElementById('btn-save-all-dirty');
+      const btnStickySave = document.getElementById('btn-sticky-save');
+      const stickyBar = document.getElementById('sticky-save-bar');
+      const selectedCountBadge = document.getElementById('selected-count-badge');
+      const dirtyCountBadge = document.getElementById('dirty-count-badge');
+      const statusMsg = document.getElementById('bulk-status-msg');
 
-  let searchQuery = '';
-  let selectedCategory = 'all';
+      let searchQuery = '';
+      let selectedCategory = 'all';
 
-  function applyFilters() {
-    rows.forEach((row) => {
-      const cat = row.dataset.category;
-      const searchData = row.dataset.search || '';
+      function applyFilters() {
+        rows.forEach((row) => {
+          const cat = row.dataset.category;
+          const searchData = row.dataset.search || '';
 
-      const matchCat = selectedCategory === 'all' || cat === selectedCategory;
-      const matchSearch = !searchQuery || searchData.includes(searchQuery);
+          const matchCat = selectedCategory === 'all' || cat === selectedCategory;
+          const matchSearch = !searchQuery || searchData.includes(searchQuery);
 
-      if (matchCat && matchSearch) {
-        row.classList.remove('hidden');
-      } else {
-        row.classList.add('hidden');
+          if (matchCat && matchSearch) {
+            row.style.display = '';
+          } else {
+            row.style.display = 'none';
+          }
+        });
+        updateSelectedCount();
       }
-    });
-    updateSelectedCount();
-  }
 
-  searchInp?.addEventListener('input', (e) => {
-    searchQuery = (e.target.value || '').trim().toLowerCase();
-    applyFilters();
-  });
+      searchInp?.addEventListener('input', (e) => {
+        searchQuery = (e.target.value || '').trim().toLowerCase();
+        applyFilters();
+      });
 
-  catFilter?.addEventListener('change', (e) => {
-    selectedCategory = e.target.value;
-    applyFilters();
-  });
+      catFilter?.addEventListener('change', (e) => {
+        selectedCategory = e.target.value;
+        applyFilters();
+      });
 
   // Checkbox tracking
   function updateSelectedCount() {
@@ -308,7 +317,7 @@ const allPages = [
   selectAllCb?.addEventListener('change', (e) => {
     const isChecked = e.target.checked;
     rows.forEach((row) => {
-      if (!row.classList.contains('hidden')) {
+      if (row.style.display !== 'none') {
         const cb = row.querySelector('.row-select-checkbox');
         if (cb) cb.checked = isChecked;
       }
@@ -405,6 +414,7 @@ const allPages = [
       const token = localStorage.getItem('admin_token') || '';
       const res = await fetch('/api/admin/seo/bulk', {
         method: 'POST',
+        credentials: 'include',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
@@ -442,6 +452,16 @@ const allPages = [
     }
   }
 
+  // Save Single Row
+  document.querySelectorAll('.btn-save-single-row').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const row = btn.closest('.bulk-row-card');
+      if (row) {
+        performBulkSave([row]);
+      }
+    });
+  });
+
   // Save Selected
   btnSaveSelected?.addEventListener('click', () => {
     const selectedRows = [];
@@ -470,4 +490,25 @@ const allPages = [
 
   btnSaveAllDirty?.addEventListener('click', saveDirtyRows);
   btnStickySave?.addEventListener('click', saveDirtyRows);
+
+  // Initialize from URL query parameters (e.g. ?search=concrete or ?slug=concrete-mix)
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialQuery = urlParams.get('search') || urlParams.get('slug');
+    if (initialQuery && searchInp) {
+      searchInp.value = initialQuery;
+      searchQuery = initialQuery.trim().toLowerCase();
+      applyFilters();
+    }
+  } catch (e) {
+    // Ignore URL parsing errors
+  }
+}
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBulkEditor);
+  } else {
+    initBulkEditor();
+  }
 </script>
+</AdminLayout>

@@ -276,7 +276,7 @@ export function calculateMortgageComprehensive(
     monthlyHomeInsurance,
     monthlyPmi,
     monthlyHoaFee,
-    monthlyOtherCosts,
+    monthlyOtherCosts: otherMonthlyCosts,
     totalMonthlyPayment,
     totalInterestPaid: Number(totalInterestPaid.toFixed(2)),
     totalPrincipalPaid: Number((totalPrincipalPaid + totalExtraPaid).toFixed(2)),

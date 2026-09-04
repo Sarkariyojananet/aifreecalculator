@@ -92,12 +92,26 @@ async function writeLocalFileStorage(key: string, value: string): Promise<void> 
  * Get Cloudflare D1 Database binding or simulated DB
  */
 export function getDb(locals?: any): D1Database {
-  // 1. Check cloudflare:workers resolved env
+  // 1. Direct or env DB binding on locals (without touching deprecated throwing runtime proxy)
+  if (locals && typeof locals === 'object' && !Array.isArray(locals)) {
+    try {
+      if (locals.DB) {
+        return locals.DB;
+      }
+    } catch {}
+    try {
+      if (locals.env?.DB) {
+        return locals.env.DB;
+      }
+    } catch {}
+  }
+
+  // 2. Check cloudflare:workers resolved env
   if (cloudflareEnv?.DB) {
     return cloudflareEnv.DB;
   }
 
-  // 2. Check globalThis env bindings
+  // 3. Check globalThis env bindings
   const g = typeof globalThis !== 'undefined' ? (globalThis as any) : null;
   if (g?.env?.DB) {
     return g.env.DB;
@@ -105,12 +119,8 @@ export function getDb(locals?: any): D1Database {
   if (g?.__env?.DB) {
     return g.__env.DB;
   }
-
-  // 3. Direct DB binding on locals without touching deprecated runtime proxy
-  if (locals && typeof locals === 'object' && !Array.isArray(locals)) {
-    if (locals.DB) {
-      return locals.DB;
-    }
+  if (g?.DB) {
+    return g.DB;
   }
 
   // Fallback simulator for development/Node

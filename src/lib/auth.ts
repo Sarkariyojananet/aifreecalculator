@@ -3,9 +3,10 @@
  * Built with standard Web Crypto API for zero-dependency Cloudflare Workers & Node.js compatibility.
  */
 
-const SECRET_KEY = import.meta.env.ADMIN_JWT_SECRET || 'aifreecalculator-super-secret-jwt-key-2026';
-const ADMIN_USER = import.meta.env.ADMIN_USERNAME || 'admin';
-const ADMIN_PASS = import.meta.env.ADMIN_PASSWORD_HASH || 'admin123';
+const envObj = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : (typeof process !== 'undefined' ? process.env : {});
+const SECRET_KEY = (envObj as any)?.ADMIN_JWT_SECRET || 'aifreecalculator-super-secret-jwt-key-2026';
+const ADMIN_USER = (envObj as any)?.ADMIN_USERNAME || 'admin';
+const ADMIN_PASS = (envObj as any)?.ADMIN_PASSWORD_HASH || 'admin123';
 
 export interface AdminUser {
   username: string;

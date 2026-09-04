@@ -19,6 +19,9 @@ export interface Calculator {
   isPopular?: boolean;
   aliases?: string[];
   path: string;
+  metaTitle?: string;
+  metaDescription?: string;
+  ogImage?: string;
 }
 
 // Built-in aliases for smart search matching (e.g. Hindi/Common terminology & alternative names)

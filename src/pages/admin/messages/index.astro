@@ -86,34 +86,49 @@ const totalCount = messages.length;
       </div>
     </div>
 
+    <!-- Live Status Banner for Email Saving & Operations -->
+    <div id="email-status-banner" class="hidden rounded-xl px-4 py-2.5 text-xs font-semibold transition shadow-xs"></div>
+
     <!-- Quick Stats Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <div class="rounded-2xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900/60 dark:bg-blue-950/30 flex items-center justify-between">
+      <div
+        data-stat-filter="new"
+        title="Click to view Unread messages"
+        class="stat-card cursor-pointer group rounded-2xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-900/60 dark:bg-blue-950/30 flex items-center justify-between hover:border-blue-400 dark:hover:border-blue-700 hover:shadow-md transition"
+      >
         <div>
-          <p class="text-[11px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">New / Unread</p>
+          <p class="text-[11px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300 group-hover:underline">New / Unread</p>
           <p class="text-2xl font-black text-blue-900 dark:text-blue-100 mt-1" id="stat-unread-count">{unreadCount}</p>
         </div>
-        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 text-lg">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 text-lg group-hover:scale-110 transition-transform">
           🔔
         </div>
       </div>
 
-      <div class="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/30 flex items-center justify-between">
+      <div
+        data-stat-filter="replied"
+        title="Click to view Replied messages"
+        class="stat-card cursor-pointer group rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/30 flex items-center justify-between hover:border-emerald-400 dark:hover:border-emerald-700 hover:shadow-md transition"
+      >
         <div>
-          <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Replied / Handled</p>
+          <p class="text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300 group-hover:underline">Replied / Handled</p>
           <p class="text-2xl font-black text-emerald-900 dark:text-emerald-100 mt-1" id="stat-replied-count">{repliedCount}</p>
         </div>
-        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-200 text-lg">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-200 text-lg group-hover:scale-110 transition-transform">
           ✅
         </div>
       </div>
 
-      <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between">
+      <div
+        data-stat-filter="all"
+        title="Click to view All messages"
+        class="stat-card cursor-pointer group rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 flex items-center justify-between hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-md transition"
+      >
         <div>
-          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Inquiries</p>
+          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 group-hover:underline">Total Inquiries</p>
           <p class="text-2xl font-black text-slate-900 dark:text-white mt-1" id="stat-total-count">{totalCount}</p>
         </div>
-        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 text-lg">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 text-lg group-hover:scale-110 transition-transform">
           📥
         </div>
       </div>
@@ -318,202 +333,265 @@ const totalCount = messages.length;
       )}
     </div>
 
+    <!-- No Match Alert when filtering/searching -->
+    <div id="no-filter-matches" class="hidden rounded-2xl border border-dashed border-slate-300 dark:border-slate-800 p-8 text-center bg-slate-50/50 dark:bg-slate-900/30 text-slate-500">
+      <p class="text-sm font-bold text-slate-800 dark:text-slate-200">No matching messages found</p>
+      <p class="text-xs text-slate-400 mt-1">Try switching to the "All" tab or clearing the search box.</p>
+    </div>
+
   </div>
-</AdminLayout>
 
-<script is:inline>
-  // Filter Tabs & Search Filtering
-  const filterBtns = document.querySelectorAll('.filter-btn');
-  const searchInput = document.getElementById('search-messages');
-  const messageCards = document.querySelectorAll('.message-card');
+  <script is:inline>
+    function initMessagesDashboard() {
+      // Filter Tabs & Search Filtering
+      const filterBtns = document.querySelectorAll('.filter-btn');
+      const searchInput = document.getElementById('search-messages');
+      const messageCards = document.querySelectorAll('.message-card');
+      const noFilterMatches = document.getElementById('no-filter-matches');
+      const statCards = document.querySelectorAll('.stat-card');
 
-  let currentFilter = 'all';
-  let searchQuery = '';
+      let currentFilter = 'all';
+      let searchQuery = '';
 
-  function applyFilters() {
-    messageCards.forEach((card) => {
-      const status = card.getAttribute('data-status') || '';
-      const searchData = card.getAttribute('data-search') || '';
+      function applyFilters() {
+        let visibleCount = 0;
+        messageCards.forEach((card) => {
+          const status = card.getAttribute('data-status') || '';
+          const searchData = card.getAttribute('data-search') || '';
 
-      const matchesStatus = currentFilter === 'all' || status === currentFilter;
-      const matchesSearch = !searchQuery || searchData.includes(searchQuery);
+          const matchesStatus = currentFilter === 'all' || status === currentFilter;
+          const matchesSearch = !searchQuery || searchData.includes(searchQuery);
 
-      if (matchesStatus && matchesSearch) {
-        card.classList.remove('hidden');
-      } else {
-        card.classList.add('hidden');
-      }
-    });
-  }
-
-  filterBtns.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      filterBtns.forEach((b) => {
-        b.classList.remove('bg-blue-600', 'text-white', 'active');
-        b.classList.add('text-slate-600', 'dark:text-slate-300');
-      });
-      btn.classList.add('bg-blue-600', 'text-white', 'active');
-      btn.classList.remove('text-slate-600', 'dark:text-slate-300');
-      currentFilter = btn.getAttribute('data-filter') || 'all';
-      applyFilters();
-    });
-  });
-
-  searchInput?.addEventListener('input', (e) => {
-    searchQuery = (e.target.value || '').trim().toLowerCase();
-    applyFilters();
-  });
-
-  function getAuthToken() {
-    return localStorage.getItem('admin_token') || '';
-  }
-
-  // Refresh Action
-  const btnRefresh = document.getElementById('btn-refresh-messages');
-  const refreshSpinner = document.getElementById('refresh-spinner');
-  btnRefresh?.addEventListener('click', () => {
-    if (refreshSpinner) refreshSpinner.classList.add('animate-spin');
-    window.location.reload();
-  });
-
-  // Save Notification Email Action
-  const btnSaveEmail = document.getElementById('btn-save-email');
-  const inputEmail = document.getElementById('input-notification-email');
-  const labelEmail = document.getElementById('label-target-email');
-
-  if (btnSaveEmail) {
-    btnSaveEmail.addEventListener('click', async function () {
-      const email = inputEmail && inputEmail.value ? inputEmail.value.trim() : '';
-      if (!email || !email.includes('@')) {
-        alert('Please enter a valid email address.');
-        return;
-      }
-
-      btnSaveEmail.disabled = true;
-      const origText = btnSaveEmail.textContent;
-      btnSaveEmail.textContent = 'Saving...';
-
-      try {
-        const token = getAuthToken();
-        const res = await fetch('/api/admin/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({ email: email }),
+          if (matchesStatus && matchesSearch) {
+            card.style.display = '';
+            visibleCount++;
+          } else {
+            card.style.display = 'none';
+          }
         });
 
-        if (res.ok) {
-          if (labelEmail) labelEmail.textContent = email;
-          btnSaveEmail.textContent = '✓ Saved!';
-          setTimeout(function () {
+        if (noFilterMatches) {
+          if (messageCards.length > 0 && visibleCount === 0) {
+            noFilterMatches.classList.remove('hidden');
+          } else {
+            noFilterMatches.classList.add('hidden');
+          }
+        }
+      }
+
+      // Filter tabs event listeners
+      filterBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          filterBtns.forEach((b) => {
+            b.classList.remove('bg-blue-600', 'text-white', 'active');
+            b.classList.add('text-slate-600', 'dark:text-slate-300');
+          });
+          btn.classList.add('bg-blue-600', 'text-white', 'active');
+          btn.classList.remove('text-slate-600', 'dark:text-slate-300');
+          currentFilter = btn.getAttribute('data-filter') || 'all';
+          applyFilters();
+        });
+      });
+
+      // Quick Stats Cards click event listeners
+      statCards.forEach((card) => {
+        card.addEventListener('click', () => {
+          const targetFilter = card.getAttribute('data-stat-filter');
+          if (!targetFilter) return;
+          const targetTab = document.querySelector(`.filter-btn[data-filter="${targetFilter}"]`);
+          if (targetTab) {
+            targetTab.click();
+            targetTab.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        });
+      });
+
+      searchInput?.addEventListener('input', (e) => {
+        searchQuery = (e.target.value || '').trim().toLowerCase();
+        applyFilters();
+      });
+
+      function getAuthToken() {
+        return localStorage.getItem('admin_token') || '';
+      }
+
+      function showStatusBanner(message, isSuccess = true) {
+        const banner = document.getElementById('email-status-banner');
+        if (!banner) return;
+        banner.className = `rounded-xl px-4 py-2.5 text-xs font-semibold transition shadow-xs ${
+          isSuccess
+            ? 'bg-emerald-50 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800'
+            : 'bg-red-50 text-red-800 border border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800'
+        }`;
+        banner.textContent = message;
+        banner.classList.remove('hidden');
+        setTimeout(() => {
+          banner.classList.add('hidden');
+        }, 5000);
+      }
+
+      // Refresh Action
+      const btnRefresh = document.getElementById('btn-refresh-messages');
+      const refreshSpinner = document.getElementById('refresh-spinner');
+      btnRefresh?.addEventListener('click', () => {
+        if (refreshSpinner) refreshSpinner.classList.add('animate-spin');
+        btnRefresh.disabled = true;
+        btnRefresh.style.opacity = '0.7';
+        window.location.reload();
+      });
+
+      // Save Notification Email Action
+      const btnSaveEmail = document.getElementById('btn-save-email');
+      const inputEmail = document.getElementById('input-notification-email');
+      const labelEmail = document.getElementById('label-target-email');
+
+      if (btnSaveEmail) {
+        btnSaveEmail.addEventListener('click', async function () {
+          const email = inputEmail && inputEmail.value ? inputEmail.value.trim() : '';
+          if (!email || !email.includes('@')) {
+            showStatusBanner('Please enter a valid email address (e.g. name@domain.com).', false);
+            return;
+          }
+
+          btnSaveEmail.disabled = true;
+          const origText = btnSaveEmail.textContent;
+          btnSaveEmail.textContent = 'Saving...';
+
+          try {
+            const token = getAuthToken();
+            const res = await fetch('/api/admin/messages', {
+              method: 'POST',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+              },
+              body: JSON.stringify({ email: email }),
+            });
+
+            if (res.ok) {
+              if (labelEmail) labelEmail.textContent = email;
+              showStatusBanner(`✓ Forwarding email successfully updated to: ${email}`, true);
+              btnSaveEmail.textContent = '✓ Saved!';
+              setTimeout(function () {
+                btnSaveEmail.disabled = false;
+                btnSaveEmail.textContent = origText;
+              }, 1500);
+            } else {
+              const errData = await res.json().catch(() => ({}));
+              showStatusBanner(errData.error || 'Failed to save notification email.', false);
+              btnSaveEmail.disabled = false;
+              btnSaveEmail.textContent = origText;
+            }
+          } catch (err) {
+            showStatusBanner('Network error saving email.', false);
             btnSaveEmail.disabled = false;
             btnSaveEmail.textContent = origText;
-          }, 1500);
-        } else {
-          alert('Failed to save notification email.');
-          btnSaveEmail.disabled = false;
-          btnSaveEmail.textContent = origText;
-        }
-      } catch (err) {
-        alert('Network error saving email.');
-        btnSaveEmail.disabled = false;
-        btnSaveEmail.textContent = origText;
-      }
-    });
-  }
-
-  // Direct Button Listeners for Mark Read / Replied / Archive
-  document.querySelectorAll('.btn-set-status').forEach((btn) => {
-    btn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      const id = btn.getAttribute('data-id');
-      const status = btn.getAttribute('data-status');
-      if (!id || !status) return;
-
-      btn.disabled = true;
-      const originalText = btn.textContent;
-      btn.textContent = 'Updating...';
-
-      try {
-        const token = getAuthToken();
-        const res = await fetch('/api/admin/messages', {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({ id: id, status: status }),
-        });
-
-        if (res.ok) {
-          window.location.reload();
-        } else {
-          const errData = await res.json().catch(() => ({}));
-          alert(errData.error || 'Failed to update message status.');
-          btn.disabled = false;
-          btn.textContent = originalText;
-        }
-      } catch (err) {
-        alert('Network error while updating status.');
-        btn.disabled = false;
-        btn.textContent = originalText;
-      }
-    });
-  });
-
-  // Direct Button Listeners for Delete Message
-  document.querySelectorAll('.btn-delete-msg').forEach((btn) => {
-    btn.addEventListener('click', async (e) => {
-      e.preventDefault();
-      const id = btn.getAttribute('data-id');
-      if (!id) return;
-      if (!confirm('Are you sure you want to permanently delete this message?')) return;
-
-      btn.disabled = true;
-      const card = btn.closest('.message-card');
-
-      try {
-        const token = getAuthToken();
-        const res = await fetch('/api/admin/messages?id=' + encodeURIComponent(id), {
-          method: 'DELETE',
-          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-        });
-
-        if (res.ok) {
-          if (card) {
-            card.style.opacity = '0.3';
-            card.style.pointerEvents = 'none';
           }
-          window.location.reload();
-        } else {
-          const errData = await res.json().catch(() => ({}));
-          alert(errData.error || 'Failed to delete message.');
-          btn.disabled = false;
-        }
-      } catch (err) {
-        alert('Network error while deleting message.');
-        btn.disabled = false;
+        });
       }
-    });
-  });
 
-  // Direct Button Listeners for Reply via Email
-  document.querySelectorAll('.btn-reply-email').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const id = btn.getAttribute('data-id');
-      if (id) {
-        const token = getAuthToken();
-        fetch('/api/admin/messages', {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify({ id: id, status: 'replied' }),
-        }).catch(() => {});
-      }
-    });
-  });
-</script>
+      // Direct Button Listeners for Mark Read / Replied / Archive
+      document.querySelectorAll('.btn-set-status').forEach((btn) => {
+        btn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const id = btn.getAttribute('data-id');
+          const status = btn.getAttribute('data-status');
+          if (!id || !status) return;
+
+          btn.disabled = true;
+          const originalText = btn.textContent;
+          btn.textContent = 'Updating...';
+
+          try {
+            const token = getAuthToken();
+            const res = await fetch('/api/admin/messages', {
+              method: 'PATCH',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+              },
+              body: JSON.stringify({ id: id, status: status }),
+            });
+
+            if (res.ok) {
+              window.location.reload();
+            } else {
+              const errData = await res.json().catch(() => ({}));
+              alert(errData.error || 'Failed to update message status.');
+              btn.disabled = false;
+              btn.textContent = originalText;
+            }
+          } catch (err) {
+            alert('Network error while updating status.');
+            btn.disabled = false;
+            btn.textContent = originalText;
+          }
+        });
+      });
+
+      // Direct Button Listeners for Delete Message
+      document.querySelectorAll('.btn-delete-msg').forEach((btn) => {
+        btn.addEventListener('click', async (e) => {
+          e.preventDefault();
+          const id = btn.getAttribute('data-id');
+          if (!id) return;
+          if (!confirm('Are you sure you want to permanently delete this message?')) return;
+
+          btn.disabled = true;
+          const card = btn.closest('.message-card');
+
+          try {
+            const token = getAuthToken();
+            const res = await fetch('/api/admin/messages?id=' + encodeURIComponent(id), {
+              method: 'DELETE',
+              credentials: 'include',
+              headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+            });
+
+            if (res.ok) {
+              if (card) {
+                card.style.opacity = '0.3';
+                card.style.pointerEvents = 'none';
+              }
+              window.location.reload();
+            } else {
+              const errData = await res.json().catch(() => ({}));
+              alert(errData.error || 'Failed to delete message.');
+              btn.disabled = false;
+            }
+          } catch (err) {
+            alert('Network error while deleting message.');
+            btn.disabled = false;
+          }
+        });
+      });
+
+      // Direct Button Listeners for Reply via Email
+      document.querySelectorAll('.btn-reply-email').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-id');
+          if (id) {
+            const token = getAuthToken();
+            fetch('/api/admin/messages', {
+              method: 'PATCH',
+              credentials: 'include',
+              headers: {
+                'Content-Type': 'application/json',
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+              },
+              body: JSON.stringify({ id: id, status: 'replied' }),
+            }).catch(() => {});
+          }
+        });
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initMessagesDashboard);
+    } else {
+      initMessagesDashboard();
+    }
+  </script>
+</AdminLayout>

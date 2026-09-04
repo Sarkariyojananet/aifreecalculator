@@ -1,4 +1,6 @@
 ---
+export const prerender = false;
+
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import SEOHealthCard from '../../../components/admin/SEOHealthCard.astro';
 import { getFullSEOHealthSummary } from '../../../lib/admin/seo-health';
@@ -52,28 +54,28 @@ const summary = getFullSEOHealthSummary();
       </a>
     </div>
 
-    <!-- 1. SEO Summary Metrics Cards -->
+    <!-- 1. SEO Summary Metrics Cards (Clickable) -->
     <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <div data-metric-filter="all" class="cursor-pointer rounded-3xl border border-slate-200 bg-white p-5 shadow-xs hover:shadow-md hover:border-blue-400 transition-all dark:border-slate-800 dark:bg-slate-900" title="Show all calculators">
         <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Average Score</div>
         <div class="mt-2 text-3xl font-black text-slate-900 dark:text-white">{summary.overallScore}%</div>
         <div class="mt-1 text-[11px] text-emerald-600 font-bold">Passing Core Web Signals</div>
       </div>
 
-      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Excellent (90%+)</div>
+      <div data-metric-filter="excellent" class="cursor-pointer rounded-3xl border border-emerald-200 bg-emerald-50/40 p-5 shadow-xs hover:shadow-md hover:border-emerald-400 transition-all dark:border-emerald-900/40 dark:bg-slate-900" title="Filter Excellent tools (90%+)">
+        <div class="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Excellent (90%+)</div>
         <div class="mt-2 text-3xl font-black text-emerald-600 dark:text-emerald-400">{summary.excellentCount}</div>
         <div class="mt-1 text-[11px] text-slate-400">Fully optimized tools</div>
       </div>
 
-      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Good (75-89%)</div>
+      <div data-metric-filter="good" class="cursor-pointer rounded-3xl border border-blue-200 bg-blue-50/40 p-5 shadow-xs hover:shadow-md hover:border-blue-400 transition-all dark:border-blue-900/40 dark:bg-slate-900" title="Filter Good tools (75-89%)">
+        <div class="text-[10px] font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">Good (75-89%)</div>
         <div class="mt-2 text-3xl font-black text-blue-600 dark:text-blue-400">{summary.goodCount}</div>
         <div class="mt-1 text-[11px] text-slate-400">Minor tweaks needed</div>
       </div>
 
-      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Needs Work (&lt;75%)</div>
+      <div data-metric-filter="needs_work" class="cursor-pointer rounded-3xl border border-amber-200 bg-amber-50/40 p-5 shadow-xs hover:shadow-md hover:border-amber-400 transition-all dark:border-amber-900/40 dark:bg-slate-900" title="Filter Needs Work tools (<75%)">
+        <div class="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Needs Work (&lt;75%)</div>
         <div class="mt-2 text-3xl font-black text-amber-600 dark:text-amber-400">{summary.fairCount + summary.poorCount}</div>
         <div class="mt-1 text-[11px] text-slate-400">Expand descriptions</div>
       </div>
@@ -113,13 +115,16 @@ const summary = getFullSEOHealthSummary();
 
       <!-- Filter Buttons -->
       <div class="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0">
-        <button type="button" class="seo-filter active rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs" data-filter="all">
+        <button type="button" class="seo-filter active rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs cursor-pointer" data-filter="all">
           All ({summary.totalCalculators})
         </button>
-        <button type="button" class="seo-filter rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition" data-filter="needs_work">
+        <button type="button" class="seo-filter rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition cursor-pointer" data-filter="needs_work">
           Needs Attention ({summary.fairCount + summary.poorCount})
         </button>
-        <button type="button" class="seo-filter rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition" data-filter="excellent">
+        <button type="button" class="seo-filter rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition cursor-pointer" data-filter="good">
+          Good ({summary.goodCount})
+        </button>
+        <button type="button" class="seo-filter rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition cursor-pointer" data-filter="excellent">
           Excellent ({summary.excellentCount})
         </button>
       </div>
@@ -141,6 +146,7 @@ const summary = getFullSEOHealthSummary();
   const searchInput = document.getElementById('seo-search-input');
   const filters = document.querySelectorAll('.seo-filter');
   const cards = document.querySelectorAll('.seo-item-card');
+  const metricCards = document.querySelectorAll('[data-metric-filter]');
 
   let activeFilter = 'all';
 
@@ -157,6 +163,8 @@ const summary = getFullSEOHealthSummary();
 
       if (activeFilter === 'needs_work') {
         matchFilter = grade === 'fair' || grade === 'poor';
+      } else if (activeFilter === 'good') {
+        matchFilter = grade === 'good';
       } else if (activeFilter === 'excellent') {
         matchFilter = grade === 'excellent';
       }
@@ -165,16 +173,31 @@ const summary = getFullSEOHealthSummary();
     });
   }
 
+  function setActiveFilter(filterName) {
+    activeFilter = filterName;
+    filters.forEach((b) => {
+      const isMatch = b.getAttribute('data-filter') === filterName;
+      if (isMatch) {
+        b.className = 'seo-filter active rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs cursor-pointer';
+      } else {
+        b.className = 'seo-filter rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition cursor-pointer';
+      }
+    });
+    applySeoFilters();
+  }
+
   searchInput?.addEventListener('input', applySeoFilters);
 
   filters.forEach((btn) => {
     btn.addEventListener('click', () => {
-      filters.forEach((b) => {
-        b.className = 'seo-filter rounded-xl bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition';
-      });
-      btn.className = 'seo-filter active rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs';
-      activeFilter = btn.getAttribute('data-filter') || 'all';
-      applySeoFilters();
+      setActiveFilter(btn.getAttribute('data-filter') || 'all');
+    });
+  });
+
+  metricCards.forEach((card) => {
+    card.addEventListener('click', () => {
+      const filter = card.getAttribute('data-metric-filter');
+      if (filter) setActiveFilter(filter);
     });
   });
 </script>

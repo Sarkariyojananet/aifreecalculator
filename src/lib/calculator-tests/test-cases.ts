@@ -27,6 +27,32 @@ import {
   calculatePercentageDifference,
   calculateValueAfterPercent,
 } from '../calculators/percentage';
+import { convertWeight } from '../calculators/weight';
+import { calculateTimeOperation } from '../calculators/time';
+import { calculateDateDifference } from '../calculators/date-difference';
+import { calculateSideDrainBOQ } from '../calculators/side-drain-slab-boq';
+import { calculateDetailedRccSlabSteel } from '../calculators/rcc-slab-steel';
+import { calculateSlabSteelShuttering } from '../calculators/slab-steel-shuttering';
+import { calculateRebarWeight } from '../calculators/steel-weight-calculator';
+import { calculateConcreteMaterial } from '../calculators/concrete-material-breakup';
+import { calculateWallBrickwork } from '../calculators/brickwork';
+import { calculateWallPlaster } from '../calculators/plaster';
+import { calculateIndiaTax } from '../calculators/income-tax';
+import { calculateSalaryComprehensive } from '../calculators/salary';
+import { calculateMortgageComprehensive } from '../calculators/mortgage';
+import { calculatePersonalLoanComprehensive } from '../calculators/loan';
+import { calculateAutoLoan } from '../calculators/auto-loan';
+import { calculateRetirementCorpus } from '../calculators/retirement';
+import { calculateAmortizationSchedule } from '../calculators/amortization';
+import { calculateSalesTaxExtended } from '../calculators/sales-tax';
+import { calculateDiscountExtended } from '../calculators/discount';
+import { calculateNavyBodyFat } from '../calculators/body-fat';
+import { calculateDailyCalories } from '../calculators/calorie';
+import { calculateBmr } from '../calculators/bmr';
+import { calculateCourseGpa } from '../calculators/gpa';
+import { factorial, nCr } from '../calculators/scientific';
+import { calculateFractionOperation } from '../calculators/fraction';
+import { generateMultipleRandomNumbers } from '../calculators/random-number-generator';
 
 // ─── EMI Calculator Tests ──────────────────────────────────────────────────────
 // Formula: EMI = P * r * (1+r)^n / ((1+r)^n - 1)
@@ -950,6 +976,580 @@ function _safeRunCompoundInterest(): unknown {
 // Suppress unused warning — this exists only to confirm the import works
 void _safeRunCompoundInterest;
 
+// ─── Weight Calculator Tests ───────────────────────────────────────────────────
+const weightTests: CalculatorTestCase[] = [
+  {
+    slug: 'weight-calculator',
+    name: 'Standard Metric 100 kg conversion',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'baseKg',
+    expectedValue: 100,
+    tolerance: 0.001,
+    description: 'Converts 100 kg to other mass units.',
+    run: () => convertWeight(100, 'kg', 'g'),
+  },
+  {
+    slug: 'weight-calculator',
+    name: 'Imperial 1 lb to kg conversion',
+    category: 'Boundary',
+    expectedBehavior: 'result',
+    expectedResultKey: 'baseKg',
+    expectedValue: 0.45359237,
+    tolerance: 0.001,
+    description: '1 lb equals 0.45359237 kg.',
+    run: () => convertWeight(1, 'lb', 'kg'),
+  },
+];
+
+// ─── Time Calculator Tests ─────────────────────────────────────────────────────
+const timeTests: CalculatorTestCase[] = [
+  {
+    slug: 'time-calculator',
+    name: 'Standard Time Addition (2h30m + 1h45m)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'totalHoursDecimal',
+    expectedValue: 4.25,
+    tolerance: 0.01,
+    description: '2h 30m + 1h 45m = 4 hours 15 mins (4.25h).',
+    run: () => calculateTimeOperation({ h1: 2, m1: 30, s1: 0, operation: 'add', h2: 1, m2: 45, s2: 0 }),
+  },
+  {
+    slug: 'time-calculator',
+    name: 'Standard Time Subtraction (5h - 2h30m)',
+    category: 'Boundary',
+    expectedBehavior: 'result',
+    expectedResultKey: 'totalHoursDecimal',
+    expectedValue: 2.5,
+    tolerance: 0.01,
+    description: '5h - 2h 30m = 2 hours 30 mins (2.5h).',
+    run: () => calculateTimeOperation({ h1: 5, m1: 0, s1: 0, operation: 'subtract', h2: 2, m2: 30, s2: 0 }),
+  },
+];
+
+// ─── Date Difference Calculator Tests ──────────────────────────────────────────
+const dateDiffTests: CalculatorTestCase[] = [
+  {
+    slug: 'date-difference-calculator',
+    name: 'Standard 10-Day Difference',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'totalDays',
+    expectedValue: 10,
+    tolerance: 0,
+    description: 'Calculates 10 full calendar days difference.',
+    run: () => calculateDateDifference({ startDate: '2026-01-01', endDate: '2026-01-11' }),
+  },
+  {
+    slug: 'date-difference-calculator',
+    name: 'Leap Year February Span (29 Days)',
+    category: 'Boundary',
+    expectedBehavior: 'result',
+    expectedResultKey: 'totalDays',
+    expectedValue: 29,
+    tolerance: 0,
+    description: 'Calculates 29 days in Feb 2024 leap year.',
+    run: () => calculateDateDifference({ startDate: '2024-02-01', endDate: '2024-03-01' }),
+  },
+];
+
+// ─── Side Drain & Slab BOQ Tests ───────────────────────────────────────────────
+const sideDrainTests: CalculatorTestCase[] = [
+  {
+    slug: 'side-drain-slab-boq-calculator',
+    name: 'Standard 10m Drain Excavation',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'earthworkExcavationCum',
+    expectedValue: 7.65,
+    tolerance: 0.1,
+    description: 'Excavation for 10m drain: 10 * 0.9 * 0.85 = 7.65 m³.',
+    run: () => calculateSideDrainBOQ({
+      lengthMeters: 10,
+      internalWidthMeters: 0.6,
+      internalDepthMeters: 0.6,
+      wallThicknessMeters: 0.15,
+      bedConcreteThicknessMeters: 0.15,
+      coverSlabThicknessMeters: 0.1,
+      rebarDiameterMm: 10,
+      rebarSpacingMm: 150,
+    }),
+  },
+];
+
+// ─── RCC Slab Steel Tests ──────────────────────────────────────────────────────
+const rccSlabSteelTests: CalculatorTestCase[] = [
+  {
+    slug: 'rcc-slab-steel-calculator',
+    name: 'Standard 5m x 4m RCC Slab Area',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'slabAreaSqm',
+    expectedValue: 20,
+    tolerance: 0.1,
+    description: '5m x 4m slab area is 20 sqm.',
+    run: () => calculateDetailedRccSlabSteel({
+      length: 5,
+      width: 4,
+      dimensionUnit: 'm',
+      thickness: 125,
+      thicknessUnit: 'mm',
+      clearCover: 20,
+      coverUnit: 'mm',
+      mainBarDiaMm: 10,
+      mainBarSpacing: 150,
+      mainSpacingUnit: 'mm',
+      mainDirection: 'short_span',
+      distBarDiaMm: 8,
+      distBarSpacing: 150,
+      distSpacingUnit: 'mm',
+    }),
+  },
+];
+
+// ─── Slab Steel Shuttering Tests ───────────────────────────────────────────────
+const slabShutteringTests: CalculatorTestCase[] = [
+  {
+    slug: 'slab-steel-shuttering-calculator',
+    name: 'Standard 6m x 4m Slab Formwork Area',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'slabGrossAreaSqm',
+    expectedValue: 24,
+    tolerance: 0.1,
+    description: '6m x 4m slab formwork gross area is 24 sqm.',
+    run: () => calculateSlabSteelShuttering({
+      lengthMeters: 6,
+      widthMeters: 4,
+      thicknessMm: 125,
+      steelMode: 'simple',
+      simpleSteelRateKgPerSqm: 10,
+    }),
+  },
+];
+
+// ─── Steel Weight Calculator Tests ─────────────────────────────────────────────
+const steelWeightTests: CalculatorTestCase[] = [
+  {
+    slug: 'steel-weight-calculator',
+    name: '10mm Rebar 12m Single Bar Weight',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'totalWeightKg',
+    expectedValue: 7.4,
+    tolerance: 0.2,
+    description: '10mm rebar (0.617 kg/m) * 12m ≈ 7.4 kg.',
+    run: () => calculateRebarWeight(10, 'bars', 1),
+  },
+];
+
+// ─── Concrete Material Breakup Tests ───────────────────────────────────────────
+const concreteMaterialTests: CalculatorTestCase[] = [
+  {
+    slug: 'concrete-material-breakup-calculator',
+    name: 'Standard 1 m³ Concrete Wet Volume',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'totalWetVolumeCum',
+    expectedValue: 1,
+    tolerance: 0.01,
+    description: 'Verifies 1 cum wet concrete mix calculation.',
+    run: () => calculateConcreteMaterial({
+      mode: 'concrete_volume',
+      volumeValue: 1,
+      volumeUnit: 'cum',
+      mixRatio: '1:1.5:3',
+    }),
+  },
+];
+
+// ─── Brickwork Calculator Tests ────────────────────────────────────────────────
+const brickworkTests: CalculatorTestCase[] = [
+  {
+    slug: 'brickwork-calculator',
+    name: 'Standard 5m x 3m Brick Wall Volume',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'wallVolumeCum',
+    expectedValue: 3.45,
+    tolerance: 0.5,
+    description: '5m x 3m x 0.23m wall volume is ~3.45 cum.',
+    run: () => calculateWallBrickwork({
+      unitSystem: 'metric',
+      wallLength: 5,
+      wallHeight: 3,
+      wallThicknessType: 'one_brick',
+      numberOfWalls: 1,
+      openingsDeductionArea: 0,
+      brickLengthMm: 190,
+      brickWidthMm: 90,
+      brickHeightMm: 90,
+      mortarJointMm: 10,
+      wastagePercent: 5,
+    }),
+  },
+];
+
+// ─── Plaster Calculator Tests ──────────────────────────────────────────────────
+const plasterTests: CalculatorTestCase[] = [
+  {
+    slug: 'plaster-calculator',
+    name: 'Standard 10m x 3m Wall Plaster Area',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'netPlasterAreaSqm',
+    expectedValue: 30,
+    tolerance: 0.1,
+    description: '10m x 3m wall net plaster area is 30 sqm.',
+    run: () => calculateWallPlaster({
+      unitSystem: 'metric',
+      wallLength: 10,
+      wallHeight: 3,
+      numberOfWalls: 1,
+      openingsDeduction: 0,
+      thickness: 12,
+      thicknessUnit: 'mm',
+      mortarRatio: '1:4',
+    }),
+  },
+];
+
+// ─── Income Tax Calculator Tests ───────────────────────────────────────────────
+const incomeTaxTests: CalculatorTestCase[] = [
+  {
+    slug: 'income-tax-calculator',
+    name: 'India New Regime ₹7L Income (Rebate Zero Tax)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'totalEstimatedTax',
+    expectedValue: 0,
+    tolerance: 1,
+    description: 'Taxable income below ₹7 Lakh receives Section 87A full rebate (₹0 tax).',
+    run: () => calculateIndiaTax({
+      assessmentYear: 'AY 2026-27',
+      taxRegime: 'new',
+      grossIncome: 700000,
+      standardDeduction: 75000,
+    }),
+  },
+];
+
+// ─── Salary Calculator Tests ───────────────────────────────────────────────────
+const salaryTests: CalculatorTestCase[] = [
+  {
+    slug: 'salary-calculator',
+    name: 'Annual CTC ₹12 Lakh Take-Home Calculation',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'annualGross',
+    expectedValue: 1135200,
+    tolerance: 50,
+    description: 'Calculates take-home pay for ₹12L annual CTC.',
+    run: () => calculateSalaryComprehensive({
+      inputType: 'ctc',
+      amount: 1200000,
+      taxRegime: 'new',
+    }),
+  },
+];
+
+// ─── Mortgage Calculator Tests ─────────────────────────────────────────────────
+const mortgageTests: CalculatorTestCase[] = [
+  {
+    slug: 'mortgage-calculator',
+    name: 'Standard $300k Home 20% Down ($240k Loan)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'loanAmount',
+    expectedValue: 240000,
+    tolerance: 1,
+    description: '$300k home price with 20% down equals $240,000 loan.',
+    run: () => calculateMortgageComprehensive({
+      homePrice: 300000,
+      downPaymentPercent: 20,
+      annualInterestRate: 6.5,
+      loanTermValue: 30,
+      loanTermUnit: 'years',
+    }),
+  },
+];
+
+// ─── Personal Loan Calculator Tests ────────────────────────────────────────────
+const loanTests: CalculatorTestCase[] = [
+  {
+    slug: 'loan-calculator',
+    name: 'Personal Loan ($10k, 10%, 3yr)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'monthlyPayment',
+    expectedValue: 323,
+    tolerance: 2,
+    description: '$10,000 at 10% over 36 months gives ~$323/month.',
+    run: () => calculatePersonalLoanComprehensive({
+      loanAmount: 10000,
+      annualInterestRate: 10,
+      loanTermValue: 3,
+      loanTermUnit: 'years',
+    }),
+  },
+];
+
+// ─── Auto Loan Calculator Tests ────────────────────────────────────────────────
+const autoLoanTests: CalculatorTestCase[] = [
+  {
+    slug: 'auto-loan-calculator',
+    name: 'Auto Loan ($25k car, $5k down -> $20k net)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'netLoanAmount',
+    expectedValue: 20000,
+    tolerance: 1,
+    description: '$25,000 vehicle minus $5,000 down = $20,000 net principal.',
+    run: () => calculateAutoLoan({
+      type: 'new',
+      vehiclePrice: 25000,
+      downPayment: 5000,
+      interestRateAnnual: 5,
+      loanTermMonths: 48,
+    }),
+  },
+];
+
+// ─── Retirement Calculator Tests ───────────────────────────────────────────────
+const retirementTests: CalculatorTestCase[] = [
+  {
+    slug: 'retirement-calculator',
+    name: 'Retirement Horizon (Age 30 to 60 = 30 Years)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'yearsToRetirement',
+    expectedValue: 30,
+    tolerance: 0,
+    description: 'Horizon from age 30 to retirement age 60 is 30 years.',
+    run: () => calculateRetirementCorpus({
+      currentAge: 30,
+      retirementAge: 60,
+      currentExpensesMonthly: 50000,
+      expectedInflationRateAnnual: 6,
+      preRetirementReturnRate: 10,
+      postRetirementReturnRate: 7,
+    }),
+  },
+];
+
+// ─── Amortization Calculator Tests ─────────────────────────────────────────────
+const amortizationTests: CalculatorTestCase[] = [
+  {
+    slug: 'amortization-calculator',
+    name: 'Amortization ($100k Loan Principal)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'loanAmount',
+    expectedValue: 100000,
+    tolerance: 1,
+    description: 'Verifies amortization schedule generation for $100k loan.',
+    run: () => calculateAmortizationSchedule({
+      loanAmount: 100000,
+      interestRateAnnual: 6,
+      loanTermMonths: 360,
+      paymentFrequency: 'monthly',
+    }),
+  },
+];
+
+// ─── Sales Tax Calculator Tests ────────────────────────────────────────────────
+const salesTaxTests: CalculatorTestCase[] = [
+  {
+    slug: 'sales-tax-calculator',
+    name: 'Standard 7% Sales Tax on $100',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'salesTaxAmount',
+    expectedValue: 7,
+    tolerance: 0.01,
+    description: '$100 at 7% sales tax equals $7.00 tax.',
+    run: () => calculateSalesTaxExtended({
+      mode: 'add',
+      amount: 100,
+      taxRatePercent: 7,
+    }),
+  },
+];
+
+// ─── Discount Calculator Tests ─────────────────────────────────────────────────
+const discountTests: CalculatorTestCase[] = [
+  {
+    slug: 'discount-calculator',
+    name: 'Standard 20% Discount on $100 item',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'salePrice',
+    expectedValue: 80,
+    tolerance: 0.01,
+    description: '$100 with 20% discount gives $80 sale price.',
+    run: () => calculateDiscountExtended({
+      mode: 'sale_price',
+      originalPrice: 100,
+      discountType: 'percentage',
+      discountPercentage: 20,
+    }),
+  },
+];
+
+// ─── Body Fat Calculator Tests ─────────────────────────────────────────────────
+const bodyFatTests: CalculatorTestCase[] = [
+  {
+    slug: 'body-fat-calculator',
+    name: 'U.S. Navy Method Body Fat (Male 178cm, 38cm neck, 86cm waist)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'bodyFatPercentage',
+    expectedValue: 17.2,
+    tolerance: 1.5,
+    description: 'U.S. Navy equation returns ~17.2% body fat.',
+    run: () => calculateNavyBodyFat({
+      gender: 'male',
+      heightCm: 178,
+      neckCm: 38,
+      waistCm: 86,
+      weightKg: 75,
+    }),
+  },
+];
+
+// ─── Calorie Calculator Tests ──────────────────────────────────────────────────
+const calorieTests: CalculatorTestCase[] = [
+  {
+    slug: 'calorie-calculator',
+    name: 'Mifflin BMR & TDEE (Male 25yr, 70kg, 175cm)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'bmr',
+    expectedValue: 1674,
+    tolerance: 5,
+    description: 'Mifflin formula: 10(70) + 6.25(175) - 5(25) + 5 = 1674 kcal BMR.',
+    run: () => calculateDailyCalories({
+      gender: 'male',
+      age: 25,
+      heightCm: 175,
+      weightKg: 70,
+      activityLevel: 'sedentary',
+      formula: 'mifflin',
+      goal: 'maintain',
+    }),
+  },
+];
+
+// ─── BMR Calculator Tests ──────────────────────────────────────────────────────
+const bmrTests: CalculatorTestCase[] = [
+  {
+    slug: 'bmr-calculator',
+    name: 'Mifflin BMR (Male 30yr, 80kg, 180cm = 1780 kcal)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'bmr',
+    expectedValue: 1780,
+    tolerance: 3,
+    description: '10*80 + 6.25*180 - 5*30 + 5 = 1780 kcal.',
+    run: () => calculateBmr({
+      gender: 'male',
+      age: 30,
+      heightCm: 180,
+      weightKg: 80,
+      formula: 'mifflin',
+      activityLevel: 'none',
+    }),
+  },
+];
+
+// ─── GPA Calculator Tests ──────────────────────────────────────────────────────
+const gpaTests: CalculatorTestCase[] = [
+  {
+    slug: 'gpa-calculator',
+    name: 'Standard 4.0 Scale GPA (Two A Grades)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'unweightedGpa',
+    expectedValue: 4.0,
+    tolerance: 0.01,
+    description: 'Two 3-credit courses with A grades produce 4.0 GPA.',
+    run: () => calculateCourseGpa([
+      { credits: 3, grade: 'A', level: 'Regular' },
+      { credits: 3, grade: 'A', level: 'Regular' },
+    ]),
+  },
+];
+
+// ─── Scientific Calculator Tests ───────────────────────────────────────────────
+const scientificTests: CalculatorTestCase[] = [
+  {
+    slug: 'scientific-calculator',
+    name: 'Factorial Calculation (5! = 120)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'result',
+    expectedValue: 120,
+    tolerance: 0,
+    description: 'Factorial of 5: 5*4*3*2*1 = 120.',
+    run: () => ({ result: factorial(5) }),
+  },
+  {
+    slug: 'scientific-calculator',
+    name: 'Combinations Calculation (5C2 = 10)',
+    category: 'Boundary',
+    expectedBehavior: 'result',
+    expectedResultKey: 'result',
+    expectedValue: 10,
+    tolerance: 0,
+    description: '5 choose 2 = 10.',
+    run: () => ({ result: nCr(5, 2) }),
+  },
+];
+
+// ─── Fraction Calculator Tests ─────────────────────────────────────────────────
+const fractionTests: CalculatorTestCase[] = [
+  {
+    slug: 'fraction-calculator',
+    name: 'Fraction Addition (1/2 + 1/4 = 0.75)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'decimalValue',
+    expectedValue: 0.75,
+    tolerance: 0.001,
+    description: '1/2 + 1/4 = 3/4 (0.75).',
+    run: () => calculateFractionOperation(
+      { numerator: 1, denominator: 2 },
+      '+',
+      { numerator: 1, denominator: 4 }
+    ),
+  },
+];
+
+// ─── Random Number Generator Tests ─────────────────────────────────────────────
+const rngTests: CalculatorTestCase[] = [
+  {
+    slug: 'random-number-generator-calculator',
+    name: 'Generate 5 Random Integers',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'count',
+    expectedValue: 5,
+    tolerance: 0,
+    description: 'Generates an array of 5 random numbers.',
+    run: () => {
+      const nums = generateMultipleRandomNumbers({
+        min: 1,
+        max: 100,
+        count: 5,
+        allowDuplicates: true,
+        type: 'integer',
+      });
+      return { count: nums.length };
+    },
+  },
+];
+
 // ─── Consolidated Test Suite ──────────────────────────────────────────────────
 
 export const ALL_TEST_CASES: CalculatorTestCase[] = [
@@ -966,6 +1566,32 @@ export const ALL_TEST_CASES: CalculatorTestCase[] = [
   ...rccBeamTests,
   ...rccColumnTests,
   ...rccFootingTests,
+  ...weightTests,
+  ...timeTests,
+  ...dateDiffTests,
+  ...sideDrainTests,
+  ...rccSlabSteelTests,
+  ...slabShutteringTests,
+  ...steelWeightTests,
+  ...concreteMaterialTests,
+  ...brickworkTests,
+  ...plasterTests,
+  ...incomeTaxTests,
+  ...salaryTests,
+  ...mortgageTests,
+  ...loanTests,
+  ...autoLoanTests,
+  ...retirementTests,
+  ...amortizationTests,
+  ...salesTaxTests,
+  ...discountTests,
+  ...bodyFatTests,
+  ...calorieTests,
+  ...bmrTests,
+  ...gpaTests,
+  ...scientificTests,
+  ...fractionTests,
+  ...rngTests,
 ];
 
 /**

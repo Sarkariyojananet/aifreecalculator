@@ -223,7 +223,7 @@ export async function runFullSEOAudit(locals?: any): Promise<SEOAuditReport> {
         issue: 'Missing Meta Title',
         reason: 'Calculator page does not have a meta title defined, preventing search engines from displaying an accurate snippet.',
         suggestedAction: `Add a descriptive meta title (e.g. "${name} – Free Online Calculation Tool").`,
-        editUrl: `/admin/calculators/new/?edit=${calc.slug}`,
+        editUrl: `/admin/calculators/new/?edit=${calc.slug}&tab=tab-seo`,
         field: 'metaTitle',
       });
     } else if (metaTitle.length < 30) {
@@ -238,7 +238,7 @@ export async function runFullSEOAudit(locals?: any): Promise<SEOAuditReport> {
         issue: `Meta Title Too Short (${metaTitle.length} chars)`,
         reason: 'Titles under 30 characters underutilize Google SERP real estate and rank lower for long-tail keywords.',
         suggestedAction: `Expand title to 50–60 characters (current: "${metaTitle}").`,
-        editUrl: `/admin/calculators/new/?edit=${calc.slug}`,
+        editUrl: `/admin/calculators/new/?edit=${calc.slug}&tab=tab-seo`,
         field: 'metaTitle',
         value: metaTitle,
       });
@@ -254,7 +254,7 @@ export async function runFullSEOAudit(locals?: any): Promise<SEOAuditReport> {
         issue: `Meta Title Truncation Warning (${metaTitle.length} chars)`,
         reason: 'Titles over 68 characters are typically truncated with ellipses (...) in Google search results.',
         suggestedAction: 'Shorten primary title to under 65 characters.',
-        editUrl: `/admin/calculators/new/?edit=${calc.slug}`,
+        editUrl: `/admin/calculators/new/?edit=${calc.slug}&tab=tab-seo`,
         field: 'metaTitle',
         value: metaTitle,
       });
@@ -280,7 +280,7 @@ export async function runFullSEOAudit(locals?: any): Promise<SEOAuditReport> {
         issue: 'Missing Meta Description',
         reason: 'Search engines will automatically extract arbitrary page snippets without a curated meta description.',
         suggestedAction: 'Write an actionable 140–160 character description summarizing the formula and output.',
-        editUrl: `/admin/calculators/new/?edit=${calc.slug}`,
+        editUrl: `/admin/calculators/new/?edit=${calc.slug}&tab=tab-seo`,
         field: 'metaDescription',
       });
     } else if (metaDescription.length < 90) {
@@ -295,7 +295,7 @@ export async function runFullSEOAudit(locals?: any): Promise<SEOAuditReport> {
         issue: `Meta Description Too Short (${metaDescription.length} chars)`,
         reason: 'Descriptions under 90 characters fail to provide enough context and CTR incentive for users in search results.',
         suggestedAction: 'Expand description to 140–160 characters with key formula benefits.',
-        editUrl: `/admin/calculators/new/?edit=${calc.slug}`,
+        editUrl: `/admin/calculators/new/?edit=${calc.slug}&tab=tab-seo`,
         field: 'metaDescription',
         value: metaDescription,
       });
@@ -311,7 +311,7 @@ export async function runFullSEOAudit(locals?: any): Promise<SEOAuditReport> {
         issue: `Meta Description May Truncate (${metaDescription.length} chars)`,
         reason: 'Descriptions over 165–170 characters may be truncated on mobile and desktop search viewports.',
         suggestedAction: 'Trim description to roughly 155 characters for optimal display.',
-        editUrl: `/admin/calculators/new/?edit=${calc.slug}`,
+        editUrl: `/admin/calculators/new/?edit=${calc.slug}&tab=tab-seo`,
         field: 'metaDescription',
         value: metaDescription,
       });
@@ -557,7 +557,7 @@ export async function runFullSEOAudit(locals?: any): Promise<SEOAuditReport> {
           issue: `Duplicate Meta Title ("${title.substring(0, 45)}...")`,
           reason: `Shared with ${pages.length - 1} other page(s): ${pages.filter((x) => x.path !== p.path).map((x) => x.name).join(', ')}. Duplicate titles cannibalize keyword rankings.`,
           suggestedAction: 'Differentiate each page title with unique modifiers or audience intents in Bulk Meta Editor.',
-          editUrl: '/admin/seo/bulk/',
+          editUrl: `/admin/seo/bulk/?search=${encodeURIComponent(p.name)}`,
         };
         pageAudit?.issues.push(issueObj);
         allIssues.push(issueObj);
@@ -582,7 +582,7 @@ export async function runFullSEOAudit(locals?: any): Promise<SEOAuditReport> {
           issue: `Duplicate Meta Description`,
           reason: `Exact same description shared across ${pages.length} pages. Google prefers unique snippet descriptions per URL.`,
           suggestedAction: 'Customize description for this specific tool in Bulk Meta Editor.',
-          editUrl: '/admin/seo/bulk/',
+          editUrl: `/admin/seo/bulk/?search=${encodeURIComponent(p.name)}`,
         };
         pageAudit?.issues.push(issueObj);
         allIssues.push(issueObj);

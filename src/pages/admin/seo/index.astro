@@ -22,6 +22,8 @@ const descCount = report.issues.filter((i) => i.category === 'description').leng
 const dupCount = report.issues.filter((i) => i.category === 'duplicate').length;
 const linkCount = report.issues.filter((i) => i.category === 'links').length;
 const canonicalCount = report.issues.filter((i) => i.category === 'canonical').length;
+
+const auditSuccess = Astro.url.searchParams.get('audited');
 ---
 
 <AdminLayout title="SEO Intelligence & Health Dashboard | Calculator CMS" sectionTitle="SEO Intelligence" activeSection="seo-health" badge={`${report.criticalCount + report.highCount} Action Items`}>
@@ -37,7 +39,7 @@ const canonicalCount = report.issues.filter((i) => i.category === 'canonical').l
           Rule-based metadata audit across all public pages. Results generated fresh on this page load — not stored or cached.
         </p>
         <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
-          Last Audit Run: <span class="font-mono font-semibold text-slate-600 dark:text-slate-400">{auditGeneratedAt}</span>
+          Last Audit Run: <span id="audit-timestamp-label" class="font-mono font-semibold text-slate-600 dark:text-slate-400">{auditGeneratedAt}</span>
         </p>
       </div>
 
@@ -47,7 +49,8 @@ const canonicalCount = report.issues.filter((i) => i.category === 'canonical').l
           id="btn-trigger-audit"
           class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition cursor-pointer"
         >
-          <span>⚡</span> Re-run Audit
+          <span id="btn-trigger-icon">⚡</span>
+          <span id="btn-trigger-text">Re-run Audit</span>
         </button>
         <a
           href="/admin/seo/bulk/"
@@ -57,6 +60,20 @@ const canonicalCount = report.issues.filter((i) => i.category === 'canonical').l
         </a>
       </div>
     </div>
+
+    <!-- Live Audit In-Progress / Success Notification Container -->
+    <div id="live-audit-status" class="hidden rounded-2xl p-4 text-xs font-bold shadow-xs"></div>
+
+    <!-- Persistent Audit Success Notice (after reload) -->
+    {auditSuccess && (
+      <div id="audit-success-banner" class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-bold text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-300 flex items-center justify-between shadow-2xs">
+        <div class="flex items-center gap-2">
+          <span class="text-base">✅</span>
+          <span>Fresh SEO Audit completed successfully just now! Scanned all {report.totalPages} live routes ({report.issues.length} active issue items).</span>
+        </div>
+        <a href="/admin/seo/" class="text-emerald-700 dark:text-emerald-400 hover:underline text-[11px] shrink-0">Dismiss ✕</a>
+      </div>
+    )}
 
     <!-- SEO Sub-Navigation Bar -->
     <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 dark:border-slate-800">
@@ -82,7 +99,7 @@ const canonicalCount = report.issues.filter((i) => i.category === 'canonical').l
 
     <!-- 1. Executive Health Cards Grid -->
     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-      <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div data-kpi-filter="all" class="cursor-pointer rounded-3xl border border-slate-200 bg-white p-4 shadow-2xs hover:shadow-md hover:border-blue-400 transition-all dark:border-slate-800 dark:bg-slate-900" title="Click to show all issues">
         <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Pages Audited</div>
         <div class="mt-1 text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-mono">{report.totalPages}</div>
         <div class="mt-1 text-[11px] font-semibold text-slate-500">All live routes</div>
@@ -94,19 +111,19 @@ const canonicalCount = report.issues.filter((i) => i.category === 'canonical').l
         <div class="mt-1 text-[11px] font-semibold text-emerald-700/80 dark:text-emerald-400">Zero high issues</div>
       </div>
 
-      <div class="rounded-3xl border border-red-200 bg-red-50/60 p-4 shadow-2xs dark:border-red-900/50 dark:bg-red-950/30">
+      <div data-kpi-filter="critical" class="cursor-pointer rounded-3xl border border-red-200 bg-red-50/60 p-4 shadow-2xs hover:shadow-md hover:border-red-400 transition-all dark:border-red-900/50 dark:bg-red-950/30" title="Click to filter Critical issues">
         <div class="text-[10px] font-bold uppercase tracking-wider text-red-700 dark:text-red-300">Critical</div>
         <div class="mt-1 text-2xl sm:text-3xl font-black text-red-600 dark:text-red-400 font-mono">{report.criticalCount}</div>
         <div class="mt-1 text-[11px] font-semibold text-red-700/80 dark:text-red-400">Fix immediately</div>
       </div>
 
-      <div class="rounded-3xl border border-amber-200 bg-amber-50/60 p-4 shadow-2xs dark:border-amber-900/50 dark:bg-amber-950/30">
+      <div data-kpi-filter="high" class="cursor-pointer rounded-3xl border border-amber-200 bg-amber-50/60 p-4 shadow-2xs hover:shadow-md hover:border-amber-400 transition-all dark:border-amber-900/50 dark:bg-amber-950/30" title="Click to filter High Priority issues">
         <div class="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">High Priority</div>
         <div class="mt-1 text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 font-mono">{report.highCount}</div>
         <div class="mt-1 text-[11px] font-semibold text-amber-700/80 dark:text-amber-400">Impacting ranking</div>
       </div>
 
-      <div class="rounded-3xl border border-blue-200 bg-blue-50/50 p-4 shadow-2xs dark:border-blue-900/40 dark:bg-blue-950/20">
+      <div data-kpi-filter="medium" class="cursor-pointer rounded-3xl border border-blue-200 bg-blue-50/50 p-4 shadow-2xs hover:shadow-md hover:border-blue-400 transition-all dark:border-blue-900/40 dark:bg-blue-950/20" title="Click to filter Medium Priority issues">
         <div class="text-[10px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">Medium Priority</div>
         <div class="mt-1 text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400 font-mono">{report.mediumCount}</div>
         <div class="mt-1 text-[11px] font-semibold text-blue-700/80 dark:text-blue-400">Optimization ops</div>
@@ -316,7 +333,8 @@ const canonicalCount = report.issues.filter((i) => i.category === 'canonical').l
     <!-- Empty State When Filters Yield 0 Matches -->
     <div
       id="no-filter-matches"
-      class="hidden rounded-3xl border border-dashed border-slate-300 bg-white/50 p-10 text-center dark:border-slate-800 dark:bg-slate-900/50"
+      style="display: none;"
+      class="rounded-3xl border border-dashed border-slate-300 bg-white/50 p-10 text-center dark:border-slate-800 dark:bg-slate-900/50"
     >
       <div class="text-3xl mb-2">🎯</div>
       <h4 class="text-sm font-bold text-slate-900 dark:text-white">No Issues Match Active Filter</h4>
@@ -333,123 +351,192 @@ const canonicalCount = report.issues.filter((i) => i.category === 'canonical').l
     </div>
 
   </div>
-</AdminLayout>
 
-<script is:inline>
-  const searchInput = document.getElementById('search-issues-input');
-  const sevButtons  = document.querySelectorAll('.sev-btn');
-  const catButtons  = document.querySelectorAll('.cat-btn');
-  const issueCards  = document.querySelectorAll('.issue-card');
-  const emptyFilterBox = document.getElementById('no-filter-matches');
-  const btnTriggerAudit = document.getElementById('btn-trigger-audit');
-  const btnResetFilters = document.getElementById('btn-reset-filters');
+  <!-- Page Controller Script moved INSIDE AdminLayout -->
+  <script is:inline>
+    function initSeoDashboard() {
+      const searchInput = document.getElementById('search-issues-input');
+      const sevButtons  = document.querySelectorAll('.sev-btn');
+      const catButtons  = document.querySelectorAll('.cat-btn');
+      const emptyFilterBox = document.getElementById('no-filter-matches');
+      const btnTriggerAudit = document.getElementById('btn-trigger-audit');
+      const btnTriggerIcon = document.getElementById('btn-trigger-icon');
+      const btnTriggerText = document.getElementById('btn-trigger-text');
+      const btnResetFilters = document.getElementById('btn-reset-filters');
+      const liveStatus = document.getElementById('live-audit-status');
 
-  let activeSeverity = 'all';
-  let activeCategory = 'all';
-  let searchQuery    = '';
+      let activeSeverity = 'all';
+      let activeCategory = 'all';
+      let searchQuery    = '';
 
-  const ACTIVE_CLASSES = ['bg-blue-600', 'text-white', 'shadow-xs', 'font-bold', 'active'];
-  const INACTIVE_CLASSES = ['bg-slate-100', 'dark:bg-slate-800', 'text-slate-700', 'dark:text-slate-300', 'hover:bg-slate-200', 'dark:hover:bg-slate-700', 'font-semibold'];
+      function filterCards() {
+        let visibleCount = 0;
+        const cards = document.querySelectorAll('.issue-card');
+        
+        cards.forEach((card) => {
+          const sev = card.getAttribute('data-severity') || '';
+          const cat = card.getAttribute('data-category') || '';
+          const searchData = card.getAttribute('data-search') || '';
 
-  function setButtonState(btn, isActive) {
-    if (isActive) {
-      btn.classList.remove(...INACTIVE_CLASSES);
-      btn.classList.add(...ACTIVE_CLASSES);
-    } else {
-      btn.classList.remove(...ACTIVE_CLASSES);
-      btn.classList.add(...INACTIVE_CLASSES);
-    }
-  }
+          const matchSev = activeSeverity === 'all' || sev === activeSeverity;
+          const matchCat = activeCategory === 'all' || cat === activeCategory;
+          const matchSearch = !searchQuery || searchData.includes(searchQuery);
 
-  function filterCards() {
-    let visibleCount = 0;
-    issueCards.forEach((card) => {
-      const sev = card.dataset.severity;
-      const cat = card.dataset.category;
-      const searchData = card.dataset.search || '';
+          if (matchSev && matchCat && matchSearch) {
+            card.style.display = '';
+            visibleCount++;
+          } else {
+            card.style.display = 'none';
+          }
+        });
 
-      const matchSev = activeSeverity === 'all' || sev === activeSeverity;
-      const matchCat = activeCategory === 'all' || cat === activeCategory;
-      const matchSearch = !searchQuery || searchData.includes(searchQuery);
-
-      if (matchSev && matchCat && matchSearch) {
-        card.classList.remove('hidden');
-        visibleCount++;
-      } else {
-        card.classList.add('hidden');
+        if (emptyFilterBox) {
+          emptyFilterBox.style.display = (visibleCount === 0 && cards.length > 0) ? 'block' : 'none';
+        }
       }
-    });
 
-    if (emptyFilterBox) {
-      if (visibleCount === 0 && issueCards.length > 0) {
-        emptyFilterBox.classList.remove('hidden');
-      } else {
-        emptyFilterBox.classList.add('hidden');
+      function updateSevButtons(targetSev) {
+        activeSeverity = targetSev;
+        sevButtons.forEach((b) => {
+          const isMatch = (b.getAttribute('data-severity') || '') === targetSev;
+          if (isMatch) {
+            b.className = 'sev-btn active rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition-colors cursor-pointer';
+          } else {
+            b.className = 'sev-btn rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer';
+          }
+        });
       }
-    }
-  }
 
-  sevButtons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      activeSeverity = btn.dataset.severity || 'all';
-      sevButtons.forEach((b) => setButtonState(b, b.dataset.severity === activeSeverity));
-      filterCards();
-    });
-  });
+      function updateCatButtons(targetCat) {
+        activeCategory = targetCat;
+        catButtons.forEach((b) => {
+          const isMatch = (b.getAttribute('data-cat') || '') === targetCat;
+          if (isMatch) {
+            b.className = 'cat-btn active rounded-lg bg-blue-600 px-3 py-1 text-[11px] font-bold text-white shadow-xs transition-colors cursor-pointer';
+          } else {
+            b.className = 'cat-btn rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1 text-[11px] font-semibold transition-colors cursor-pointer';
+          }
+        });
+      }
 
-  catButtons.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      activeCategory = btn.dataset.cat || 'all';
-      catButtons.forEach((b) => setButtonState(b, b.dataset.cat === activeCategory));
-      filterCards();
-    });
-  });
-
-  searchInput?.addEventListener('input', (e) => {
-    searchQuery = (e.target.value || '').trim().toLowerCase();
-    filterCards();
-  });
-
-  btnResetFilters?.addEventListener('click', () => {
-    activeSeverity = 'all';
-    activeCategory = 'all';
-    searchQuery = '';
-    if (searchInput) searchInput.value = '';
-
-    sevButtons.forEach((b) => setButtonState(b, b.dataset.severity === 'all'));
-    catButtons.forEach((b) => setButtonState(b, b.dataset.cat === 'all'));
-    filterCards();
-  });
-
-  btnTriggerAudit?.addEventListener('click', async () => {
-    const originalHtml = btnTriggerAudit.innerHTML;
-    btnTriggerAudit.disabled = true;
-    btnTriggerAudit.classList.add('opacity-75', 'cursor-wait');
-    btnTriggerAudit.innerHTML = '<span class="inline-block animate-spin">⚡</span> Running Audit...';
-
-    try {
-      const token = localStorage.getItem('admin_token') || '';
-      const res = await fetch('/api/admin/seo/audit?t=' + Date.now(), {
-        method: 'GET',
-        headers: {
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        },
+      // Severity Buttons Click Listeners
+      sevButtons.forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const sev = btn.getAttribute('data-severity') || 'all';
+          updateSevButtons(sev);
+          updateCatButtons('all');
+          filterCards();
+        });
       });
 
-      if (res.ok) {
-        window.location.href = '/admin/seo/?t=' + Date.now();
-      } else {
-        const data = await res.json().catch(() => ({}));
-        alert(data.error || 'Failed to re-run audit. Please check admin login.');
-        btnTriggerAudit.disabled = false;
-        btnTriggerAudit.classList.remove('opacity-75', 'cursor-wait');
-        btnTriggerAudit.innerHTML = originalHtml;
+      // Category Buttons Click Listeners
+      catButtons.forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const cat = btn.getAttribute('data-cat') || 'all';
+          updateCatButtons(cat);
+          updateSevButtons('all');
+          filterCards();
+        });
+      });
+
+      // Executive Health Metric KPI Cards
+      document.querySelectorAll('[data-kpi-filter]').forEach((card) => {
+        card.addEventListener('click', () => {
+          const targetSev = card.getAttribute('data-kpi-filter');
+          if (!targetSev) return;
+          updateSevButtons(targetSev);
+          updateCatButtons('all');
+          filterCards();
+        });
+      });
+
+      // Search Input
+      searchInput?.addEventListener('input', (e) => {
+        searchQuery = (e.target.value || '').trim().toLowerCase();
+        filterCards();
+      });
+
+      // Reset All Filters
+      btnResetFilters?.addEventListener('click', () => {
+        updateSevButtons('all');
+        updateCatButtons('all');
+        searchQuery = '';
+        if (searchInput) searchInput.value = '';
+        filterCards();
+      });
+
+      // Re-run Audit Button with Live Visual Feedback
+      if (btnTriggerAudit) {
+        btnTriggerAudit.addEventListener('click', async () => {
+          if (btnTriggerAudit.disabled) return;
+          btnTriggerAudit.disabled = true;
+          btnTriggerAudit.classList.add('opacity-75', 'cursor-wait');
+          if (btnTriggerIcon) btnTriggerIcon.textContent = '⏳';
+          if (btnTriggerText) btnTriggerText.textContent = 'Running Fresh Audit...';
+
+          if (liveStatus) {
+            liveStatus.className = 'rounded-2xl border border-blue-200 bg-blue-50 text-blue-900 dark:border-blue-900/60 dark:bg-blue-950/60 dark:text-blue-200 p-4 text-xs font-bold block shadow-xs animate-pulse';
+            liveStatus.innerHTML = '<span>⚡ Executing comprehensive SEO rules audit across all 42+ calculators, canonicals, descriptions, titles, and orphan links...</span>';
+          }
+
+          try {
+            const token = localStorage.getItem('admin_token') || '';
+            const res = await fetch('/api/admin/seo/audit?t=' + Date.now(), {
+              method: 'GET',
+              credentials: 'include',
+              headers: {
+                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+              },
+            });
+
+            if (res.ok) {
+              const data = await res.json();
+              if (btnTriggerIcon) btnTriggerIcon.textContent = '✓';
+              if (btnTriggerText) btnTriggerText.textContent = 'Audit Complete!';
+
+              if (liveStatus) {
+                liveStatus.className = 'rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-200 p-4 text-xs font-bold block shadow-xs';
+                liveStatus.innerHTML = `<span>✅ SEO Audit Finished! Scanned ${data.report?.totalPages || 42} pages. Found ${data.report?.issues?.length || 0} issues. Reloading dashboard with updated analysis...</span>`;
+              }
+
+              setTimeout(() => {
+                window.location.href = '/admin/seo/?audited=1&t=' + Date.now();
+              }, 700);
+            } else {
+              const data = await res.json().catch(() => ({}));
+              alert(data.error || 'Failed to re-run audit. Please verify admin session.');
+              btnTriggerAudit.disabled = false;
+              btnTriggerAudit.classList.remove('opacity-75', 'cursor-wait');
+              if (btnTriggerIcon) btnTriggerIcon.textContent = '⚡';
+              if (btnTriggerText) btnTriggerText.textContent = 'Re-run Audit';
+              if (liveStatus) liveStatus.className = 'hidden';
+            }
+          } catch (err) {
+            alert('Network connection error while running audit. Refreshing page...');
+            window.location.reload();
+          }
+        });
       }
-    } catch (err) {
-      console.error(err);
-      alert('Network error while re-running audit. Refreshing page...');
-      window.location.reload();
+
+      // Read initial URL query parameters if present (e.g. ?severity=critical or ?category=title)
+      try {
+        const qParams = new URLSearchParams(window.location.search);
+        const qSev = qParams.get('severity');
+        const qCat = qParams.get('category');
+        if (qSev) updateSevButtons(qSev);
+        if (qCat) updateCatButtons(qCat);
+        if (qSev || qCat) filterCards();
+      } catch (e) {}
     }
-  });
-</script>
+
+    // Execute immediately and on DOMContentLoaded
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initSeoDashboard);
+    } else {
+      initSeoDashboard();
+    }
+  </script>
+</AdminLayout>
 

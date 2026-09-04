@@ -70,6 +70,12 @@ async function ensureTables(locals?: unknown): Promise<void> {
         `CREATE INDEX IF NOT EXISTS idx_calc_error_reviewed ON calc_error_log(reviewed)`
       )
       .run();
+
+    await db
+      .prepare(
+        `CREATE TABLE IF NOT EXISTS site_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)`
+      )
+      .run();
   } catch {
     // Tables may not be creatable in local fallback DB — silently continue
   }
@@ -111,7 +117,8 @@ export async function saveTestRun(
       .run();
 
     // 2. Store per-calculator results in site_settings (JSON blob)
-    // Build a compact map: slug → summary (without individual test details for storage efficiency)
+    // Merge with existing results if only running a subset of calculators
+    const existing = (await getLatestTestResults(locals)) ?? {};
     const compactResults: Record<string, {
       state: string;
       passed: number;
@@ -131,7 +138,7 @@ export async function saveTestRun(
         expectedValue?: number | string | boolean;
         durationMs: number;
       }>;
-    }> = {};
+    }> = result.byCalculator.length < 30 ? { ...existing } : {};
 
     for (const summary of result.byCalculator) {
       compactResults[summary.slug] = {
@@ -307,10 +314,10 @@ export async function getErrorLog(
     query += ` ORDER BY last_seen DESC LIMIT ?`;
     binds.push(opts.limit ?? 200);
 
-    const stmt = db.prepare(query);
-    const bound = binds.reduce((s, v) => s.bind(v), stmt as unknown as { bind: (...v: unknown[]) => typeof stmt });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { results } = await (bound as any).all<RuntimeErrorLogEntry>();
+    const { results } = await db
+      .prepare(query)
+      .bind(...binds)
+      .all<RuntimeErrorLogEntry>();
     return results ?? [];
   } catch {
     return [];

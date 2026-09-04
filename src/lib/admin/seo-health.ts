@@ -36,8 +36,15 @@ export interface SEOHealthSummary {
   audits: SEOAuditResult[];
 }
 
+export interface CalculatorSEOMeta extends Calculator {
+  metaTitle?: string;
+  metaDescription?: string;
+  ogImage?: string;
+  [key: string]: any;
+}
+
 export function auditCalculatorSEO(calc: Calculator, customMeta?: Record<string, any>): SEOAuditResult {
-  const meta = { ...calc, ...(customMeta || {}) };
+  const meta: CalculatorSEOMeta = { ...calc, ...(customMeta || {}) };
   const passedChecks: string[] = [];
   const warnings: string[] = [];
   const criticalIssues: string[] = [];
