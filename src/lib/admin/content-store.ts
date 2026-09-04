@@ -134,19 +134,11 @@ const DEFAULT_FAQS: FAQItem[] = [
   },
 ];
 
-const DEFAULT_NO_RESULT_SEARCHES: SearchQueryLog[] = [
-  { query: 'paint calculator', count: 142, hasResults: true, lastSearched: new Date().toISOString() },
-  { query: 'tile calculator', count: 98, hasResults: false, lastSearched: new Date().toISOString() },
-  { query: 'road bitumen estimator', count: 71, hasResults: false, lastSearched: new Date().toISOString() },
-  { query: 'gst reverse calculator', count: 65, hasResults: true, lastSearched: new Date().toISOString() },
-  { query: 'cryptocurrency roi', count: 48, hasResults: false, lastSearched: new Date().toISOString() },
-  { query: 'water tank capacity', count: 42, hasResults: false, lastSearched: new Date().toISOString() },
-];
+const DEFAULT_NO_RESULT_SEARCHES: SearchQueryLog[] = [];
 
 async function readSetting<T>(key: string, defaultValue: T, locals?: any): Promise<T> {
   const db = getDb(locals);
   try {
-    await db.exec('CREATE TABLE IF NOT EXISTS site_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
     const row = await db.prepare('SELECT value FROM site_settings WHERE key = ?').bind(key).first<{ value: string }>();
     if (row?.value) {
       return JSON.parse(row.value) as T;

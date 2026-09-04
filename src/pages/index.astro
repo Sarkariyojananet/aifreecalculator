@@ -2,25 +2,30 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import HomeHero from '../components/home/HomeHero.astro';
 import CategoryGrid from '../components/home/CategoryGrid.astro';
-import ConstructionSpotlight from '../components/home/ConstructionSpotlight.astro';
 import WhyChooseUs from '../components/home/WhyChooseUs.astro';
 import HomeFAQ, { homeFaqs } from '../components/home/HomeFAQ.astro';
 import CalculatorCard from '../components/CalculatorCard.astro';
 import AdSlotTop from '../components/ads/AdSlotTop.astro';
 import AdSlotFooter from '../components/ads/AdSlotFooter.astro';
-import {
-  calculators,
-  getPopularCalculators,
-  getFeaturedCalculators,
-} from '../data/calculators';
-
+import { calculators } from '../data/calculators';
 import { getCalculatorOverrides } from '../lib/admin/content-store';
 import { getLivePageMeta } from '../lib/seo/page-metadata';
 
-const popularCalculators = getPopularCalculators(6);
-const featuredCalculators = getFeaturedCalculators().filter(
-  (c) => !popularCalculators.some((p) => p.slug === c.slug)
-).slice(0, 6);
+// Focused 8 popular calculators across core categories
+const popularSlugs = [
+  'emi-calculator',
+  'sip-calculator',
+  'income-tax-calculator',
+  'rcc-slab-steel-calculator',
+  'bmi-calculator',
+  'age-calculator',
+  'percentage-calculator',
+  'calorie-calculator',
+];
+
+const popularCalculators = popularSlugs
+  .map((slug) => calculators.find((c) => c.slug === slug))
+  .filter(Boolean) as typeof calculators;
 
 const overrides = await getCalculatorOverrides(Astro.locals);
 const override = overrides['core:home'] || {};
@@ -29,14 +34,14 @@ const liveMeta = getLivePageMeta('core:home');
 const effectiveTitle = override.metaTitle || liveMeta.title;
 const effectiveDescription = override.metaDescription || liveMeta.description;
 const effectiveCanonical = override.canonicalUrl;
+const effectiveRobots = override.robots;
 
-// Client-side search dataset with aliases
+// Client-side search dataset
 const searchDataJson = JSON.stringify(
   calculators.map((c) => ({
     name: c.name,
     category: c.category,
     desc: c.description,
-    icon: c.icon,
     path: c.path,
     slug: c.slug,
     keywords: c.keywords || [],
@@ -49,6 +54,7 @@ const searchDataJson = JSON.stringify(
   title={effectiveTitle}
   description={effectiveDescription}
   canonicalUrl={effectiveCanonical}
+  noindex={effectiveRobots?.includes('noindex')}
   ogImage="/og/default.png"
 >
   <Fragment slot="head">
@@ -66,7 +72,7 @@ const searchDataJson = JSON.stringify(
             description: 'Free online calculators for finance, health, construction, education, percentages, conversions, time and everyday calculations.',
             potentialAction: {
               '@type': 'SearchAction',
-              target: 'https://aifreecalculator.com/?q={search_term_string}',
+              target: 'https://aifreecalculator.com/all-calculators/?q={search_term_string}',
               'query-input': 'required name=search_term_string',
             },
           },
@@ -92,170 +98,135 @@ const searchDataJson = JSON.stringify(
     />
   </Fragment>
 
-  <!-- 1. Hero Section + Smart Search -->
+  <!-- 1. Hero Section + Prominent Search -->
   <HomeHero />
 
-  <!-- 2. Recently Used Calculators (Client-Side LocalStorage, Non-blocking) -->
-  <section id="recently-used-section" class="hidden border-b border-slate-200/80 bg-blue-50/30 px-4 py-8 dark:border-slate-800 dark:bg-slate-900/30">
-    <div class="mx-auto max-w-7xl space-y-4">
+  <!-- 2. Recently Used Calculators (Localstorage, only shown if history exists) -->
+  <section id="recently-used-section" class="hidden border-b border-slate-200 bg-slate-50/60 px-4 py-6 dark:border-slate-800 dark:bg-slate-900/40">
+    <div class="mx-auto max-w-7xl space-y-3">
       <div class="flex items-center justify-between">
-        <div class="flex items-center gap-2">
-          <span class="text-sm">🕒</span>
-          <h3 class="text-xs sm:text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-            Recently Used Calculators
-          </h3>
-        </div>
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          Recently Used Calculators
+        </h3>
         <button
           type="button"
           id="btn-clear-recents"
-          class="text-[11px] font-bold text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition cursor-pointer"
+          class="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
         >
           Clear History ✕
         </button>
       </div>
 
       <div id="recently-used-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-        <!-- Injected via JavaScript from localStorage -->
+        <!-- Populated via JS -->
       </div>
     </div>
   </section>
 
-  <!-- Top Ad Slot (Safe Non-intrusive Placement) -->
-  <div class="mx-auto max-w-7xl px-4">
+  <!-- Top Ad Slot -->
+  <div class="mx-auto max-w-7xl px-4 py-4">
     <AdSlotTop />
   </div>
 
-  <!-- 3. Popular / Most Used Calculators -->
-  <section class="border-b border-slate-200/80 bg-white px-4 py-14 sm:py-18 dark:border-slate-800 dark:bg-slate-900/40" id="popular-calculators">
-    <div class="mx-auto max-w-7xl space-y-8">
+  <!-- 3. Browse by Category -->
+  <CategoryGrid />
+
+  <!-- 4. Popular Calculators -->
+  <section class="border-b border-slate-200 bg-white px-4 py-12 sm:py-16 dark:border-slate-800 dark:bg-slate-900/60" id="popular-calculators">
+    <div class="mx-auto max-w-7xl">
       
       <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-        <div>
-          <div class="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
-            <span>🔥</span> High Utility Tools
-          </div>
-          <h2 class="mt-2 text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+        <div class="max-w-2xl">
+          <h2 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">
             Popular Calculators
           </h2>
-          <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Most frequently used tools for loan planning, wealth accumulation, engineering estimates, and wellness.
+          <p class="mt-1.5 text-sm text-slate-600 dark:text-slate-400">
+            Frequently used tools for loan planning, investments, civil estimates, fitness, and daily calculations.
           </p>
         </div>
 
         <a
-          href="/general/"
-          class="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 hover:underline dark:text-blue-400 shrink-0 self-start sm:self-auto"
+          href="/all-calculators/"
+          class="text-xs font-semibold text-blue-600 hover:underline dark:text-blue-400 shrink-0 self-start sm:self-auto"
         >
-          <span>View All Categories</span>
+          View All {calculators.length}+ Tools →
+        </a>
+      </div>
+
+      <!-- 8 Focused Cards Grid -->
+      <div class="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {popularCalculators.map((calculator, idx) => (
+          <CalculatorCard calculator={calculator} featured={idx === 0} />
+        ))}
+      </div>
+
+    </div>
+  </section>
+
+  <!-- 5. Compact Discovery: Explore All Calculators -->
+  <section class="border-b border-slate-200 bg-slate-50/50 px-4 py-12 sm:py-16 dark:border-slate-800 dark:bg-slate-950/40" id="all-calculators">
+    <div class="mx-auto max-w-3xl text-center space-y-4">
+      <h2 class="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">
+        More Calculators for Everyday Tasks
+      </h2>
+      <p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
+        Explore 42+ calculators for finance, civil construction, health biometrics, mathematics, and everyday calculations.
+      </p>
+
+      <div class="pt-2">
+        <a
+          href="/all-calculators/"
+          class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-3 text-sm font-semibold text-white shadow-xs hover:bg-blue-700 transition"
+        >
+          <span>Browse All Calculators</span>
           <span>→</span>
         </a>
       </div>
 
-      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {popularCalculators.map((calculator) => (
-          <CalculatorCard calculator={calculator} />
-        ))}
+      <!-- Category Quick Filter Pills -->
+      <div class="pt-3 flex flex-wrap items-center justify-center gap-2 text-xs">
+        <a href="/finance/" class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-600 hover:text-blue-600 hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 transition">
+          Finance (12)
+        </a>
+        <a href="/construction/" class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-600 hover:text-blue-600 hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 transition">
+          Construction (9)
+        </a>
+        <a href="/health/" class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-600 hover:text-blue-600 hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 transition">
+          Health (4)
+        </a>
+        <a href="/math/" class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-600 hover:text-blue-600 hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 transition">
+          Math (5)
+        </a>
+        <a href="/general/" class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-600 hover:text-blue-600 hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 transition">
+          General (6)
+        </a>
       </div>
-
     </div>
   </section>
 
-  <!-- 4. Browse By Category -->
-  <CategoryGrid />
-
-  <!-- 5. Construction Calculator Spotlight -->
-  <ConstructionSpotlight />
-
-  <!-- 6. Featured & Daily Utilities Discovery -->
-  <section class="border-b border-slate-200/80 bg-slate-50/70 px-4 py-14 sm:py-18 dark:border-slate-800 dark:bg-slate-950/60" id="featured-calculators">
-    <div class="mx-auto max-w-7xl space-y-8">
-      
-      <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
-        <div>
-          <div class="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300">
-            <span>⭐</span> Everyday Calculations
-          </div>
-          <h2 class="mt-2 text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
-            Featured Calculation Engines
-          </h2>
-          <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-            Handy calculation engines for salary breakdowns, compound interest compounding, daily calories, and math.
-          </p>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {featuredCalculators.map((calculator) => (
-          <CalculatorCard calculator={calculator} />
-        ))}
-      </div>
-
-    </div>
-  </section>
-
-  <!-- 7. Why Use AI Free Calculator -->
+  <!-- 6. Why Use This Website -->
   <WhyChooseUs />
+
+  <!-- 7. Concise Informational Content -->
+  <section class="border-b border-slate-200 bg-white px-4 py-12 sm:py-16 dark:border-slate-800 dark:bg-slate-900/40">
+    <div class="mx-auto max-w-3xl space-y-4 text-slate-700 dark:text-slate-300 text-sm leading-relaxed">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        About Our Online Calculators
+      </h2>
+      <p>
+        AIFreeCalculator is an open collection of practical calculation tools created to solve common math, financial, engineering, and personal planning questions. Whether you are calculating monthly loan installments, checking structural reinforcement for civil construction, or planning a fitness goal, each tool is designed to provide quick, understandable answers without unnecessary steps.
+      </p>
+      <p>
+        Every calculator runs directly in your web browser. This means your numbers, financial figures, and measurements remain private on your own device and are never sent to external servers. Formulas are aligned with standard engineering codes (such as IS 456 for concrete and steel) and verified mathematical models to ensure dependable estimates.
+      </p>
+    </div>
+  </section>
 
   <!-- 8. FAQ Section with Accordion + JSON-LD Schema -->
   <HomeFAQ />
 
-  <!-- 9. Compact SEO Summary & Internal Linking -->
-  <section class="border-t border-slate-200/80 bg-white px-4 py-14 dark:border-slate-800 dark:bg-slate-900/30">
-    <div class="mx-auto max-w-4xl space-y-10 text-slate-700 dark:text-slate-300 leading-relaxed text-sm">
-      
-      <div class="space-y-3">
-        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
-          Free, Accurate Calculation Utilities for Work, Study &amp; Daily Planning
-        </h2>
-        <p>
-          AIFreeCalculator.com delivers a centralized directory of 42+ verified calculation tools. Whether calculating monthly EMI payments for personal loans, estimating mutual fund SIP compounding, checking body mass index (BMI) thresholds, or calculating structural bar bending schedules (BBS) for RCC slabs and beams, each tool operates instantly and privately in your browser.
-        </p>
-      </div>
-
-      <!-- Quick Category Directory Links -->
-      <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 text-xs sm:text-sm">
-        <div class="rounded-2xl border border-slate-200 p-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 space-y-1">
-          <h3 class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-            <span>💰</span> <a href="/finance/" class="hover:text-blue-600 dark:hover:text-blue-400 underline decoration-slate-300">Finance &amp; Banking Calculators</a>
-          </h3>
-          <p class="text-slate-500 dark:text-slate-400 text-xs">
-            Loan EMI schedules, SIP wealth forecasting, GST, Indian income tax comparisons, and salary estimators.
-          </p>
-        </div>
-
-        <div class="rounded-2xl border border-slate-200 p-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 space-y-1">
-          <h3 class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-            <span>🏗️</span> <a href="/construction/" class="hover:text-blue-600 dark:hover:text-blue-400 underline decoration-slate-300">Civil &amp; Construction Calculators</a>
-          </h3>
-          <p class="text-slate-500 dark:text-slate-400 text-xs">
-            RCC slab and beam steel weight, concrete mix dry volume (1.54), brickwork mortar counts, and plastering BOQ.
-          </p>
-        </div>
-
-        <div class="rounded-2xl border border-slate-200 p-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 space-y-1">
-          <h3 class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-            <span>❤️</span> <a href="/health/" class="hover:text-blue-600 dark:hover:text-blue-400 underline decoration-slate-300">Health &amp; Fitness Calculators</a>
-          </h3>
-          <p class="text-slate-500 dark:text-slate-400 text-xs">
-            Basal Metabolic Rate (BMR), daily calorie needs (TDEE), and US Navy body fat percentage tools.
-          </p>
-        </div>
-
-        <div class="rounded-2xl border border-slate-200 p-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 space-y-1">
-          <h3 class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-            <span>📐</span> <a href="/math/" class="hover:text-blue-600 dark:hover:text-blue-400 underline decoration-slate-300">Math &amp; General Utilities</a>
-          </h3>
-          <p class="text-slate-500 dark:text-slate-400 text-xs">
-            Academic GPA planning, percentage changes, date difference calculators, and scientific math tools.
-          </p>
-        </div>
-      </div>
-
-    </div>
-  </section>
-
   <!-- Bottom Ad Slot -->
-  <div class="mx-auto max-w-7xl px-4">
+  <div class="mx-auto max-w-7xl px-4 py-4">
     <AdSlotFooter />
   </div>
 
@@ -264,9 +235,9 @@ const searchDataJson = JSON.stringify(
     window.__CALCULATORS_SEARCH_DATA__ = JSON.parse(searchDataJson);
   </script>
 
-  <!-- Lightweight Client Engine (Smart Search & Recently Used) -->
+  <!-- Client-side Smart Search & Recent History Engine -->
   <script is:inline>
-    (function initHomeSmartEngine() {
+    (function initHomeSearch() {
       const searchInput = document.getElementById('home-main-search');
       const searchClear = document.getElementById('home-search-clear');
       const searchDropdown = document.getElementById('home-search-dropdown');
@@ -276,11 +247,11 @@ const searchDataJson = JSON.stringify(
 
       const data = window.__CALCULATORS_SEARCH_DATA__ || [];
 
-      let homeSearchLogTimer = null;
-      function logHomeSearch(query, hasResults) {
+      let searchLogTimer = null;
+      function logSearch(query, hasResults) {
         if (!query || query.length < 2) return;
-        clearTimeout(homeSearchLogTimer);
-        homeSearchLogTimer = setTimeout(() => {
+        clearTimeout(searchLogTimer);
+        searchLogTimer = setTimeout(() => {
           try {
             fetch('/api/search-log', {
               method: 'POST',
@@ -291,7 +262,6 @@ const searchDataJson = JSON.stringify(
         }, 700);
       }
 
-      // 1. Smart Search Filter Function
       function filterSearch(query) {
         const q = (query || '').toLowerCase().trim();
         if (!q) {
@@ -312,7 +282,7 @@ const searchDataJson = JSON.stringify(
         });
 
         if (q) {
-          logHomeSearch(q, matches.length > 0);
+          logSearch(q, matches.length > 0);
         }
 
         if (matchCountLabel) {
@@ -322,33 +292,30 @@ const searchDataJson = JSON.stringify(
         if (dropdownItems) {
           if (matches.length === 0) {
             dropdownItems.innerHTML = `
-              <div class="py-6 text-center text-xs text-slate-400">
-                <p class="font-bold text-slate-600 dark:text-slate-300 text-sm">No calculators matching "${q}"</p>
-                <p class="mt-1">Try keywords like 'EMI', 'Slab', 'Sariya', 'Tax', 'BMI', or 'Mortar'</p>
+              <div class="py-6 text-center text-xs text-slate-500 dark:text-slate-400">
+                <p class="font-bold text-slate-700 dark:text-slate-200 text-sm">No calculators matching "${q}"</p>
+                <p class="mt-1">Try keywords like 'EMI', 'Slab', 'Sariya', 'Tax', 'BMI', or 'Percentage'</p>
               </div>
             `;
           } else {
-            dropdownItems.innerHTML = matches.slice(0, 6).map((item) => `
+            dropdownItems.innerHTML = matches.slice(0, 7).map((item) => `
               <a
                 href="${item.path}"
-                class="flex items-center justify-between p-3 rounded-xl transition hover:bg-blue-50/80 dark:hover:bg-slate-800/80 group"
+                class="flex items-center justify-between p-2.5 rounded-lg transition hover:bg-slate-50 dark:hover:bg-slate-800/80 group"
               >
-                <div class="flex items-center gap-3 min-w-0 pr-3">
-                  <span class="text-2xl shrink-0 p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800">${item.icon}</span>
-                  <div class="min-w-0">
-                    <div class="font-bold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">
-                      ${item.name}
-                    </div>
-                    <div class="text-[11px] text-slate-400 line-clamp-1">
-                      ${item.desc}
-                    </div>
+                <div class="min-w-0 pr-3">
+                  <div class="font-bold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">
+                    ${item.name}
+                  </div>
+                  <div class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                    ${item.desc}
                   </div>
                 </div>
                 <div class="shrink-0 flex items-center gap-1.5">
-                  <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-[9px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                  <span class="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                     ${item.category}
                   </span>
-                  <span class="text-slate-400 text-xs group-hover:translate-x-1 transition-transform">→</span>
+                  <span class="text-slate-400 text-xs group-hover:translate-x-0.5 transition-transform">→</span>
                 </div>
               </a>
             `).join('');
@@ -386,14 +353,20 @@ const searchDataJson = JSON.stringify(
         });
       });
 
-      // Close dropdown on click outside
       document.addEventListener('click', (e) => {
         if (!searchInput?.contains(e.target) && !searchDropdown?.contains(e.target)) {
           if (searchDropdown) searchDropdown.classList.add('hidden');
         }
       });
 
-      // 2. Recently Used Calculators (Localstorage only, non-blocking)
+      // Escape key closes search dropdown
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && searchDropdown) {
+          searchDropdown.classList.add('hidden');
+        }
+      });
+
+      // 2. Recently Used Calculators (Localstorage)
       const recentsSection = document.getElementById('recently-used-section');
       const recentsGrid = document.getElementById('recently-used-grid');
       const btnClearRecents = document.getElementById('btn-clear-recents');
@@ -412,13 +385,13 @@ const searchDataJson = JSON.stringify(
               recentsGrid.innerHTML = matchedTools.map((t) => `
                 <a
                   href="${t.path}"
-                  class="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white p-3 shadow-xs hover:border-blue-400 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900 transition group"
+                  class="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-2.5 shadow-2xs hover:border-blue-400 dark:border-slate-800 dark:bg-slate-900 transition group"
                 >
-                  <span class="text-xl p-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 shrink-0">${t.icon}</span>
-                  <div class="min-w-0">
+                  <div class="min-w-0 pr-2">
                     <div class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">${t.name}</div>
                     <div class="text-[10px] text-slate-400">${t.category}</div>
                   </div>
+                  <span class="text-slate-400 text-xs shrink-0 group-hover:translate-x-0.5 transition-transform">→</span>
                 </a>
               `).join('');
 

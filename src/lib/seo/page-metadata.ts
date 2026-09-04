@@ -1,6 +1,7 @@
 /**
  * Centralized Live Page Metadata Catalog
  * Keeps /admin/seo/bulk/, audit-engine.ts, and real-time live Astro pages in 100% perfect sync.
+ * Clean, simple, professional titles (50-60 chars) and meta descriptions (130-155 chars).
  */
 
 export interface PageMetaItem {
@@ -10,204 +11,208 @@ export interface PageMetaItem {
 
 export const LIVE_PAGE_METADATA: Record<string, PageMetaItem> = {
   "bmi-calculator": {
-    "title": "Free BMI Calculator: Check Body Mass Index & Healthy Weight Range",
-    "description": "Calculate your BMI instantly with kg/cm, lbs/feet, or stones/meters. View WHO or Asian/Indian BMI categories, a healthy weight range, and practical body-composition estimates."
+    "title": "BMI Calculator - Check Body Mass Index & Weight Status",
+    "description": "Calculate your Body Mass Index (BMI), healthy weight range, and body classification using metric (kg/cm) or imperial (lbs/feet) measurements."
   },
   "age-calculator": {
-    "title": "Age Calculator - Calculate Your Exact Age Online",
-    "description": "Calculate your exact chronological age in years, months, and days for today or any selected date."
+    "title": "Age Calculator - Calculate Exact Age from Date of Birth",
+    "description": "Calculate your exact age in years, months, weeks, days, and hours from your birth date, with a live countdown to your next upcoming birthday."
   },
   "height-calculator": {
-    "title": "Height Converter - Feet, Inches, CM & Meters",
-    "description": "Convert height between centimeters, meters, feet, and inches with percentile chart comparisons."
+    "title": "Height Converter - Convert Feet, Inches, CM & Meters",
+    "description": "Convert height instantly between centimeters, meters, feet, and inches with standard percentile charts and quick unit conversion reference."
   },
   "weight-calculator": {
-    "title": "Weight Converter Calculator – Convert KG, LBS, Grams and More",
-    "description": "Free online weight converter calculator. Accurately convert weight and mass between kilograms (kg), pounds (lbs), grams (g), ounces (oz), stones, metric tonnes, gold Troy ounces, and calculate height-weight BMI."
+    "title": "Weight Converter - Convert KG, Lbs, Grams & Ounces",
+    "description": "Convert weight and mass between kilograms (kg), pounds (lbs), grams (g), ounces (oz), stones, metric tons, and Troy ounces for precious metals."
   },
   "time-calculator": {
-    "title": "Date & Time Calculator – Calculate Time, Work Hours and Date Differences",
-    "description": "Free online Date & Time calculator. Add and subtract time, calculate work hours with breaks, elapsed time between two times/dates, convert time to decimal hours, working days, and USPS delivery date estimates."
+    "title": "Time Calculator - Add, Subtract & Calculate Work Hours",
+    "description": "Add or subtract time, calculate elapsed work hours with break deductions, and convert hours, minutes, and seconds to decimal values online."
   },
   "percentage-calculator": {
-    "title": "Percentage Calculator – Calculate Percentages, Marks, CGPA, Attendance and More",
-    "description": "Free online percentage calculator. Solve what is X% of Y, marks percentage, CGPA to percentage, salary hike, attendance target, body fat %, win rate, average %, and percentage increase/decrease."
+    "title": "Percentage Calculator - Quick Percentage & Math Solver",
+    "description": "Calculate percentage increase, decrease, marks percentage, discounts, CGPA to percentage, and find what percent one number is of another."
   },
   "date-difference-calculator": {
-    "title": "Date Difference Calculator - AI Free Calculator",
-    "description": "Calculate exact duration between two dates in years, months, weeks, days, and total business days."
+    "title": "Date Difference Calculator - Days Between Two Dates",
+    "description": "Calculate the exact duration between two dates in total days, weeks, months, years, and working business days with weekend exclusion."
   },
   "side-drain-slab-boq-calculator": {
-    "title": "Side Drain & Slab BOQ Calculator - Bill of Quantities",
-    "description": "Calculate Bill of Quantities (BOQ) for open and covered drains: excavation, bed PCC, RCC walls, cover slab, steel rebar, and formwork shuttering."
+    "title": "Side Drain & Slab BOQ Calculator - Drain Quantity Estimator",
+    "description": "Calculate Bill of Quantities (BOQ) for open and covered drains, including excavation volume, PCC bed, RCC walls, slab cover, and steel rebar."
   },
   "rcc-slab-steel-calculator": {
-    "title": "RCC Slab Steel Calculator – Calculate Slab Reinforcement Steel Quantity",
-    "description": "Free RCC slab steel calculator. Estimate reinforcement bar count, cutting length, main & distribution rebar weight in kg, quintals, tonnes, and concrete volume with BBS steps."
+    "title": "RCC Slab Steel Calculator - Bar Bending Schedule & Rebar",
+    "description": "Calculate main and distribution steel rebar weight in kg and quintals, bar cutting lengths, and concrete volume for RCC roof and floor slabs."
   },
   "slab-steel-shuttering-calculator": {
-    "title": "Slab Steel & Shuttering Calculator - Formwork & Scaffolding Area",
-    "description": "Estimate slab bottom soffit shuttering, side edge formwork, opening deductions, Acrow staging props count, and reinforcement steel quantity."
+    "title": "Slab Shuttering & Formwork Calculator - Area & Props",
+    "description": "Estimate bottom soffit shuttering area, side edge formwork, Acrow staging props count, and reinforcement steel quantity for slab construction."
   },
   "rcc-beam-steel-calculator": {
-    "title": "RCC Beam Steel Calculator - BBS Stirrups & Main Bars",
-    "description": "Calculate RCC beam top & bottom main reinforcement rebar weight, stirrups ring cutting length, concrete volume, and shuttering formwork."
+    "title": "RCC Beam Steel Calculator - Main Rebar & Stirrups BBS",
+    "description": "Calculate top and bottom longitudinal rebar weight, stirrup ring cutting lengths, concrete volume, and shuttering area for RCC beams."
   },
   "rcc-column-steel-calculator": {
-    "title": "RCC Column Steel Calculator - Vertical Rebar & Lateral Ties BBS",
-    "description": "Calculate RCC column main vertical bars, lateral tie rings cutting length, total steel reinforcement weight, and concrete volume."
+    "title": "RCC Column Steel Calculator - Vertical Bars & Lateral Ties",
+    "description": "Calculate main vertical reinforcement rebar weight, lateral tie ring cutting lengths, and concrete volume for rectangular and circular columns."
   },
   "rcc-footing-steel-calculator": {
-    "title": "RCC Footing Steel Calculator - Foundation Mesh BBS & Excavation",
-    "description": "Calculate RCC isolated pad footing mesh reinforcement steel weight, bar cutting length, pit excavation volume, and concrete requirements."
+    "title": "RCC Footing Steel Calculator - Foundation Mesh & Rebar",
+    "description": "Calculate reinforcement steel mesh weight, rebar cutting length, pit excavation volume, and concrete requirements for isolated pad footings."
   },
   "steel-weight-calculator": {
-    "title": "Steel Weight Calculator – Calculate Steel Weight in KG | AI Free Calculator",
-    "description": "Free steel weight calculator in kg and tonnes. Calculate rebar weight (D²/162), round bars, steel plates, pipes, hollow sections, structural steel, and stainless steel."
+    "title": "Steel Weight Calculator - Calculate Rebar, Plate & Pipe KG",
+    "description": "Calculate unit weight of steel rebar using the D²/162 formula, round bars, square bars, flat plates, hollow pipes, and structural steel sections."
   },
   "concrete-material-breakup-calculator": {
-    "title": "Concrete Material Breakup Calculator – Cement, Sand & Aggregate Quantity | AI Free Calculator",
-    "description": "Calculate the approximate quantity of cement, sand, aggregate, water, and cement bags required for a given volume of concrete."
+    "title": "Concrete Mix Calculator - Cement, Sand & Aggregate Bags",
+    "description": "Calculate the required number of cement bags, sand volume in cubic feet or tons, aggregate quantity, and water ratio for M15, M20, M25 concrete."
   },
   "brickwork-calculator": {
-    "title": "Brickwork & Mortar Calculator – Calculate Bricks, Cement & Sand | AI Free Calculator",
-    "description": "Calculate the number of bricks, mortar volume, cement bags, sand quantities, and paving bricks required for walls and masonry projects with opening deductions and wastage analysis."
+    "title": "Brickwork Calculator - Calculate Bricks, Mortar & Cement",
+    "description": "Calculate the number of standard red bricks, fly ash bricks, mortar volume, and cement-sand bags needed for 4-inch and 9-inch wall masonry."
   },
   "plaster-calculator": {
-    "title": "Plastering & Mortar Calculator – Cement & Sand Quantity | AI Free Calculator",
-    "description": "Calculate plaster and mortar quantities, estimate cement and sand requirements, and use dedicated mortar tools for tile work and supported games."
+    "title": "Plastering Calculator - Cement & Sand Quantity Estimator",
+    "description": "Calculate the required cement bags and sand volume for internal and external wall plastering across 1:3, 1:4, 1:5, and 1:6 mix ratios."
   },
   "emi-calculator": {
-    "title": "EMI Calculator – Home, Car, Personal & Bike Loan EMI",
-    "description": "Calculate your monthly EMI, total interest, total repayment amount, and complete loan repayment schedule for home, car, personal, and bike loans."
+    "title": "EMI Calculator - Calculate Home, Car & Personal Loan EMI",
+    "description": "Calculate monthly loan EMI, total interest payable, and view the complete amortization repayment schedule for home, car, and personal loans."
   },
   "sip-calculator": {
-    "title": "SIP Calculator – Calculate Monthly Investment Returns & Step-Up SIP",
-    "description": "Estimate the potential future value of your monthly investments, compare regular and step-up contributions, and view your projected growth over time."
+    "title": "SIP Calculator - Mutual Fund Return & Growth Estimator",
+    "description": "Calculate expected returns on mutual fund SIP investments, total wealth created, and projected growth with regular and step-up monthly contributions."
   },
   "income-tax-calculator": {
-    "title": "Income Tax Calculator – Estimate Tax for India & US",
-    "description": "Estimate your income tax based on your selected country, tax year, income, deductions, and applicable tax regime or filing status."
+    "title": "Income Tax Calculator - Old vs New Tax Regime Slabs",
+    "description": "Calculate your income tax liability, compare Old vs New tax regimes, and estimate deductions under Section 80C, 80D, and standard deductions."
   },
   "gst-calculator": {
-    "title": "GST Calculator – Add or Remove GST Online",
-    "description": "Calculate GST on an amount, add GST to an exclusive price, or remove GST from an inclusive amount. View the GST amount and applicable tax breakdown instantly after calculation."
+    "title": "GST Calculator - Add or Remove GST with CGST & SGST Split",
+    "description": "Calculate GST amount online. Add GST to exclusive prices or remove GST from inclusive totals with 5%, 12%, 18%, and 28% CGST and SGST tax splits."
   },
   "simple-interest-calculator": {
-    "title": "Simple Interest Calculator – Calculate Interest Online",
-    "description": "Calculate simple interest, total interest, and the final amount based on your principal, interest rate, and investment or loan duration."
+    "title": "Simple Interest Calculator - Principal & Interest Return",
+    "description": "Calculate simple interest, total interest earned, and final maturity amount based on principal, annual interest rate, and time duration in years."
   },
   "compound-interest-calculator": {
-    "title": "Compound Interest Calculator – Calculate Investment Growth",
-    "description": "Calculate compound interest and estimate how your money may grow over time based on your initial investment, interest rate, duration, compounding frequency, and optional regular contributions."
+    "title": "Compound Interest Calculator - Investment Growth Online",
+    "description": "Calculate compound interest with annual, semi-annual, quarterly, or monthly compounding, regular deposits, and total maturity wealth growth."
   },
   "salary-calculator": {
-    "title": "Salary & Take-Home Pay Calculator – Estimate Your In-Hand Salary",
-    "description": "Estimate your monthly and annual take-home salary after accounting for salary components, taxes, and applicable deductions."
+    "title": "Salary Calculator - In-Hand Take Home Pay & Deductions",
+    "description": "Calculate your monthly in-hand take-home salary from annual CTC after EPF, professional tax, income tax, and standard salary component deductions."
   },
   "mortgage-calculator": {
-    "title": "Mortgage Loan Calculator – Estimate Your Monthly Payment",
-    "description": "Estimate your monthly mortgage payment, total interest, and loan repayment schedule based on your home price, down payment, interest rate, and loan term."
+    "title": "Mortgage Calculator - Monthly Payment & Amortization",
+    "description": "Calculate your monthly mortgage payment, total interest, property tax, and loan payoff schedule based on home purchase price and down payment."
   },
   "loan-calculator": {
-    "title": "Personal Loan Calculator – Calculate EMI & Total Interest",
-    "description": "Estimate your monthly loan payment, total interest, and repayment schedule based on your loan amount, interest rate, and repayment term."
+    "title": "Personal Loan Calculator - Monthly Payment & Interest",
+    "description": "Calculate monthly loan payments, total borrowing cost, and interest breakdown based on principal amount, interest rate, and repayment tenure."
   },
   "auto-loan-calculator": {
-    "title": "Auto & Car Loan Calculator – Calculate EMI, Interest & Repayment",
-    "description": "Estimate your monthly car loan payment, total interest, and repayment schedule based on your vehicle price, down payment, interest rate, and loan term."
+    "title": "Auto Loan Calculator - Monthly Car Payment & Interest",
+    "description": "Calculate monthly car loan payments, total interest cost, and amortization schedule based on vehicle price, trade-in, and interest rate."
   },
   "retirement-calculator": {
-    "title": "Retirement Corpus Calculator – Calculate Your Retirement Savings Goal",
-    "description": "Estimate how much money you may need for retirement based on your current expenses, retirement age, inflation, life expectancy, savings, and expected investment returns."
+    "title": "Retirement Calculator - Pension & Retirement Corpus Goal",
+    "description": "Estimate the retirement savings corpus needed based on your current age, monthly expenses, expected inflation, and post-retirement longevity."
   },
   "amortization-calculator": {
-    "title": "Loan Amortization Schedule Calculator – EMI, Interest & Repayment Table",
-    "description": "Calculate your monthly loan payment, principal and interest breakdown, remaining balance, and complete loan amortization schedule."
+    "title": "Loan Amortization Calculator - Full Schedule Breakdown",
+    "description": "Generate a full monthly and yearly loan amortization schedule showing principal reduction, interest breakdown, and remaining loan balance."
   },
   "sales-tax-calculator": {
-    "title": "Sales Tax Calculator – Calculate Tax, Total Price & Reverse Sales Tax",
-    "description": "Calculate sales tax, total purchase cost, or the original price before tax using a custom or selected tax rate."
+    "title": "Sales Tax Calculator - Calculate State & Local Tax Amount",
+    "description": "Calculate total purchase cost with sales tax, or reverse calculate the pre-tax price from gross total using state and local sales tax rates."
   },
   "discount-calculator": {
-    "title": "Discount & Sale Price Calculator – Calculate Discount and Final Price",
-    "description": "Calculate the discount amount, amount saved, and final sale price using a percentage or fixed discount."
+    "title": "Discount Calculator - Final Sale Price & Savings Amount",
+    "description": "Calculate final discounted price, total amount saved, and percentage discount on sale items with single or double stacked discount rates."
   },
   "body-fat-calculator": {
-    "title": "Body Fat Percentage Calculator – Accurate Navy & BMI Methods",
-    "description": "Calculate your estimated body fat percentage, fat mass, and lean body mass using the validated U.S. Navy circumference and BMI methods."
+    "title": "Body Fat Calculator - US Navy Body Fat Percentage Method",
+    "description": "Estimate body fat percentage, lean body mass, and fat mass using verified US Navy circumference measurements and body mass index formulas."
   },
   "calorie-calculator": {
-    "title": "Calorie Calculator – Calculate Daily Calories, Maintenance TDEE & Weight Goals",
-    "description": "Estimate your daily calorie needs, maintenance calories (TDEE), and target calories for weight loss or muscle gain based on age, sex, height, weight, and activity level."
+    "title": "Calorie Calculator - Daily Calorie Intake & TDEE Needs",
+    "description": "Calculate your daily maintenance calories (TDEE) and target calories for weight loss, maintenance, or muscle gain based on your activity level."
   },
   "bmr-calculator": {
-    "title": "BMR Calculator – Calculate Basal Metabolic Rate for Men and Women",
-    "description": "Estimate your basal metabolic rate (BMR) based on your age, sex, height, weight, and selected calculation formula."
+    "title": "BMR Calculator - Basal Metabolic Rate for Men & Women",
+    "description": "Calculate your Basal Metabolic Rate (BMR) using Mifflin-St Jeor and Harris-Benedict formulas to find resting daily calorie expenditure."
   },
   "gpa-calculator": {
-    "title": "GPA Calculator – College, High School & Cumulative GPA",
-    "description": "Calculate your GPA, cumulative GPA, weighted GPA, unweighted GPA, and percentage-to-GPA conversions with customizable grading scales."
+    "title": "GPA Calculator - High School & College Semester GPA",
+    "description": "Calculate your semester GPA, cumulative CGPA, weighted, and unweighted grade point average with customizable grade scales and credit hours."
   },
   "scientific-calculator": {
-    "title": "Scientific Calculator Online – Free Advanced Math & Engineering Tool",
-    "description": "Use this online scientific calculator to perform basic arithmetic, trigonometric functions, logarithms, powers, roots, fractions, statistics, and other advanced mathematical calculations."
+    "title": "Scientific Calculator - Advanced Math Functions Online",
+    "description": "Free online scientific calculator for trigonometry, logarithms, powers, square roots, parentheses expressions, and engineering calculations."
   },
   "fraction-calculator": {
-    "title": "Fraction Calculator – Solve, Simplify and Convert Fractions",
-    "description": "Free fraction calculator with step-by-step solutions. Add, subtract, multiply, and divide fractions, mixed numbers, decimal to fraction, fraction simplifier, and partial fraction decomposition."
+    "title": "Fraction Calculator - Add, Subtract & Simplify Fractions",
+    "description": "Add, subtract, multiply, and divide fractions, mixed numbers, and improper fractions with step-by-step solutions and decimal conversion."
   },
   "random-number-generator-calculator": {
-    "title": "Random Number Generator – Generate Random Numbers Instantly",
-    "description": "Free random number generator (RNG). Generate single or multiple random numbers, unique numbers with no repeats, spin an interactive random wheel, or pick from custom lists."
+    "title": "Random Number Generator - Pick Numbers & Custom Draws",
+    "description": "Generate single or multiple random numbers within a custom range, draw unique non-repeating numbers, and pick random items from custom lists."
   },
   "standard-deviation-calculator": {
-    "title": "Standard Deviation Calculator - AI Free Calculator",
-    "description": "Calculate population and sample standard deviation, variance, mean, and sum of squares."
-  },
-  "category:finance": {
-    "title": "Financial & Investment Calculators - AI Free Calculator",
-    "description": "Smart financial calculation tools: Loan EMI, SIP mutual fund returns, Indian Income Tax (New vs Old regime), GST, Take-Home Salary, Compound Interest, and Retirement planning."
-  },
-  "category:construction": {
-    "title": "Civil Construction & RCC BOQ Calculators - AI Free Calculator",
-    "description": "Professional civil engineering calculators: RCC slab BBS, beam rebar, column steel, concrete mix breakup (M15/M20/M25), brickwork, plaster, and master house estimate BOQ."
-  },
-  "category:health": {
-    "title": "Health, Fitness & Nutrition Calculators - AI Free Calculator",
-    "description": "Free scientifically backed fitness & health calculators: Daily Calorie TDEE, BMR metabolic rate, and Body Fat Percentage calculator."
-  },
-  "category:math": {
-    "title": "Mathematics & Statistics Calculators - AI Free Calculator",
-    "description": "Free online academic & scientific math tools: GPA calculator, Standard Deviation & Variance, Scientific Calculator, Fraction Arithmetic, and Secure Random Number Generator."
+    "title": "Standard Deviation Calculator - Variance & Sample Math",
+    "description": "Calculate sample standard deviation, population standard deviation, variance, mean, and sum of squares for any dataset with step solutions."
   },
   "category:general": {
-    "title": "General & Daily Calculators - AI Free Calculator",
-    "description": "Free essential everyday calculators: Age calculator, BMI, Height & Weight converters, Time calculator, Date difference, and Percentage solver."
+    "title": "General Calculators - Everyday Conversion & Math Tools",
+    "description": "Free daily calculation tools: Age calculator, BMI, Height and Weight converters, Time calculator, Date difference, and Percentage math."
+  },
+  "category:construction": {
+    "title": "Construction Calculators - Civil Engineering & BOQ Tools",
+    "description": "Civil engineering and construction tools: RCC slab steel, beam rebar BBS, column ties, concrete mix design, brickwork, and plastering."
+  },
+  "category:finance": {
+    "title": "Finance Calculators - Loans, Tax, SIP & Investment Tools",
+    "description": "Smart financial planning tools: Loan EMI, SIP mutual fund returns, Indian income tax slabs, GST, in-hand salary, and retirement corpus."
+  },
+  "category:health": {
+    "title": "Health Calculators - Body Fat, BMI, Calorie & BMR Tools",
+    "description": "Scientifically verified health and fitness tools: Daily calorie TDEE, BMR metabolic rate, Body Fat percentage, and BMI healthy weight range."
+  },
+  "category:math": {
+    "title": "Math Calculators - GPA, Fractions, Scientific & Statistics",
+    "description": "Academic and scientific math tools: GPA calculator, Scientific Calculator, Fraction math, Standard Deviation variance, and Random Numbers."
   },
   "core:home": {
-    "title": "Free Online Calculators for Finance, Health, Construction & Math | AIFreeCalculator",
-    "description": "Calculate loans, investments, civil engineering quantities, health biometrics, percentages, and scientific math with 42+ verified free online calculators."
+    "title": "Free Online Calculators - Finance, Health, Construction & Math",
+    "description": "Use 42+ free online calculators for loan EMI, SIP returns, Indian income tax, RCC construction steel, BMI, calorie TDEE, percentages, and scientific math."
   },
   "core:about": {
-    "title": "About Us - AI Free Calculator",
-    "description": "Learn about AI Free Calculator, our mission to provide precision calculation tools, verified engineering formulas, and private client-side computing."
+    "title": "About Us - AI Free Calculator Mission & Methodology",
+    "description": "Learn about AI Free Calculator, our mission to deliver fast, private, browser-based calculation engines and verified mathematical formulas."
   },
   "core:contact": {
-    "title": "Contact Us - AI Free Calculator",
-    "description": "Get in touch with the AI Free Calculator team. Submit feedback, report calculation bugs, request new custom calculators, or discuss partnerships directly with support@aifreecalculator.com."
+    "title": "Contact Us - AI Free Calculator Support & Feedback",
+    "description": "Contact the AI Free Calculator team for calculation questions, tool suggestions, feedback, bug reports, and technical support assistance."
   },
   "core:privacy-policy": {
-    "title": "Privacy Policy - AI Free Calculator",
-    "description": "Read our transparent Privacy Policy. Learn how AI Free Calculator protects your privacy, handles client-side computations, cookies, and advertising partners."
+    "title": "Privacy Policy - AI Free Calculator Data Protection",
+    "description": "Read our Privacy Policy to understand how we protect visitor privacy with client-side processing, zero server data storage, and cookie safety."
   },
   "core:terms": {
-    "title": "Terms of Service & Conditions - AI Free Calculator",
-    "description": "Terms of Service and Conditions of Use for AI Free Calculator. Learn your rights, permitted usage, disclaimers, and intellectual property terms."
+    "title": "Terms of Service - AI Free Calculator Conditions of Use",
+    "description": "Read the Terms of Service for AI Free Calculator covering usage guidelines, tool accuracy disclaimers, and intellectual property terms."
   },
   "core:disclaimer": {
-    "title": "Disclaimer - AI Free Calculator",
-    "description": "Mathematical and estimation disclaimers for civil construction, tax computation, financial forecasting, and health guidelines."
+    "title": "Disclaimer - AI Free Calculator Accuracy & Estimates",
+    "description": "Review estimation disclaimers for civil construction BOQs, financial projections, income tax computations, and health biometric indicators."
+  },
+  "core:all-calculators": {
+    "title": "All Calculators Directory (42+ Free Tools) - AI Free Calculator",
+    "description": "Browse the complete directory of free online calculators for loan EMI, SIP returns, construction BOQ, steel rebar, BMI, calories, math, and everyday tasks."
   }
 };
 

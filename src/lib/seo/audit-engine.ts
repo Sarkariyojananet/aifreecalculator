@@ -116,6 +116,12 @@ export const CORE_PAGES: { path: string; name: string; title: string; descriptio
     title: 'Disclaimer - AI Free Calculator',
     description: 'Mathematical and estimation disclaimers for civil construction, tax computation, financial forecasting, and health guidelines.',
   },
+  {
+    path: '/all-calculators/',
+    name: 'All Calculators Directory',
+    title: 'All Calculators Directory - AI Free Calculator',
+    description: 'Browse the complete catalog of free online calculators across finance, construction, health, math, and everyday tools.',
+  },
 ];
 
 /**

@@ -126,15 +126,43 @@ const allPages = [
     <div id="bulk-status-msg" class="hidden rounded-2xl p-4 text-xs font-semibold shadow-xs transition-all"></div>
 
     <!-- Controls / Filters -->
-    <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
-      <div class="flex items-center gap-2">
-        <label class="inline-flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+    <div class="flex flex-col md:flex-row gap-3 items-stretch md:items-center justify-between">
+      <div class="flex flex-wrap items-center gap-2">
+        <label class="inline-flex items-center gap-2 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer mr-2">
           <input type="checkbox" id="select-all-checkbox" class="rounded h-4 w-4 text-blue-600" />
           <span>Select All Filtered</span>
         </label>
+        
+        <!-- Bulk Index / Noindex Action Buttons -->
+        <button
+          type="button"
+          id="btn-bulk-set-index"
+          disabled
+          class="inline-flex items-center gap-1 rounded-xl border border-emerald-300 bg-emerald-50 px-2.5 py-1.5 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+        >
+          <span>🟢</span> Bulk Index
+        </button>
+        <button
+          type="button"
+          id="btn-bulk-set-noindex"
+          disabled
+          class="inline-flex items-center gap-1 rounded-xl border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-[11px] font-bold text-amber-700 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/60 dark:text-amber-300 disabled:opacity-40 disabled:cursor-not-allowed transition cursor-pointer"
+        >
+          <span>⛔</span> Bulk Noindex
+        </button>
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
+        <!-- Index Status Filter -->
+        <select
+          id="filter-robots"
+          class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+        >
+          <option value="all">All Index Status</option>
+          <option value="index">🟢 Index Only</option>
+          <option value="noindex">⛔ Noindex Only</option>
+        </select>
+
         <select
           id="filter-category"
           class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
@@ -148,11 +176,11 @@ const allPages = [
           <option value="Core Page">Core Static Pages</option>
         </select>
 
-        <div class="relative min-w-[240px]">
+        <div class="relative min-w-[220px]">
           <input
             type="text"
             id="filter-search"
-            placeholder="Search by page name or slug..."
+            placeholder="Search by page name, path..."
             class="w-full rounded-xl border border-slate-300 bg-white py-1.5 pl-8 pr-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
           />
           <span class="absolute left-2.5 top-2 text-xs text-slate-400">🔍</span>
@@ -168,6 +196,7 @@ const allPages = [
       {allPages.map((p) => {
         const titleLen = p.metaTitle.length;
         const descLen = p.metaDescription.length;
+        const isNoindex = p.robots?.includes('noindex');
 
         return (
           <div
@@ -175,6 +204,7 @@ const allPages = [
             data-slug={p.slug}
             data-category={p.category}
             data-type={p.type}
+            data-robots={isNoindex ? 'noindex' : 'index'}
             data-search={`${p.name} ${p.path} ${p.category}`.toLowerCase()}
           >
             <!-- Card Header -->
@@ -250,6 +280,29 @@ const allPages = [
               </div>
 
             </div>
+
+            <!-- Robots Index / Noindex Control Row -->
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800/80">
+              <div class="flex items-center gap-3">
+                <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Search Indexing:</span>
+                <label class="inline-flex items-center gap-2 cursor-pointer select-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800/80 dark:hover:bg-slate-800">
+                  <input
+                    type="checkbox"
+                    class="input-robots-index h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer shrink-0"
+                    checked={!isNoindex}
+                    data-original={p.robots || 'index, follow'}
+                  />
+                  <span class={`robots-status-badge inline-flex items-center gap-1.5 text-xs font-bold ${isNoindex ? 'text-amber-700 dark:text-amber-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
+                    <span class="robots-icon">{isNoindex ? '⛔' : '🟢'}</span>
+                    <span class="robots-text">{isNoindex ? 'Noindex (Excluded from Google Search)' : 'Index (Search Engines Crawl & Rank)'}</span>
+                  </span>
+                </label>
+              </div>
+
+              <div class="text-[11px] text-slate-400 dark:text-slate-500 font-mono">
+                Robots tag: <span class="robots-directive-tag font-semibold text-slate-700 dark:text-slate-300">{p.robots || 'index, follow'}</span>
+              </div>
+            </div>
           </div>
         );
       })}
@@ -281,9 +334,12 @@ const allPages = [
       const rows = document.querySelectorAll('.bulk-row-card');
       const searchInp = document.getElementById('filter-search');
       const catFilter = document.getElementById('filter-category');
+      const robotsFilter = document.getElementById('filter-robots');
       const selectAllCb = document.getElementById('select-all-checkbox');
       const btnSaveSelected = document.getElementById('btn-save-selected');
       const btnSaveAllDirty = document.getElementById('btn-save-all-dirty');
+      const btnBulkSetIndex = document.getElementById('btn-bulk-set-index');
+      const btnBulkSetNoindex = document.getElementById('btn-bulk-set-noindex');
       const btnStickySave = document.getElementById('btn-sticky-save');
       const stickyBar = document.getElementById('sticky-save-bar');
       const selectedCountBadge = document.getElementById('selected-count-badge');
@@ -292,16 +348,19 @@ const allPages = [
 
       let searchQuery = '';
       let selectedCategory = 'all';
+      let selectedRobots = 'all';
 
       function applyFilters() {
         rows.forEach((row) => {
           const cat = row.dataset.category;
+          const robots = row.dataset.robots || 'index';
           const searchData = row.dataset.search || '';
 
           const matchCat = selectedCategory === 'all' || cat === selectedCategory;
+          const matchRobots = selectedRobots === 'all' || robots === selectedRobots;
           const matchSearch = !searchQuery || searchData.includes(searchQuery);
 
-          if (matchCat && matchSearch) {
+          if (matchCat && matchRobots && matchSearch) {
             row.style.display = '';
           } else {
             row.style.display = 'none';
@@ -320,208 +379,289 @@ const allPages = [
         applyFilters();
       });
 
-  // Checkbox tracking
-  function updateSelectedCount() {
-    const checked = document.querySelectorAll('.row-select-checkbox:checked');
-    if (selectedCountBadge) selectedCountBadge.textContent = checked.length;
-    if (btnSaveSelected) btnSaveSelected.disabled = checked.length === 0;
-  }
-
-  selectAllCb?.addEventListener('change', (e) => {
-    const isChecked = e.target.checked;
-    rows.forEach((row) => {
-      if (row.style.display !== 'none') {
-        const cb = row.querySelector('.row-select-checkbox');
-        if (cb) cb.checked = isChecked;
-      }
-    });
-    updateSelectedCount();
-  });
-
-  document.querySelectorAll('.row-select-checkbox').forEach((cb) => {
-    cb.addEventListener('change', updateSelectedCount);
-  });
-
-  // Character Counter & Dirty Tracking
-  function checkDirty(row) {
-    const titleInp = row.querySelector('.input-meta-title');
-    const descInp = row.querySelector('.input-meta-desc');
-    const badge = row.querySelector('.row-dirty-badge');
-
-    const origTitle = (titleInp && titleInp.dataset && titleInp.dataset.original) ? titleInp.dataset.original : '';
-    const origDesc = (descInp && descInp.dataset && descInp.dataset.original) ? descInp.dataset.original : '';
-
-    const titleChanged = titleInp && titleInp.value.trim() !== origTitle.trim();
-    const descChanged = descInp && descInp.value.trim() !== origDesc.trim();
-
-    const isDirty = titleChanged || descChanged;
-    if (badge) {
-      if (isDirty) badge.classList.remove('hidden');
-      else badge.classList.add('hidden');
-    }
-
-    // Update global dirty count & sticky bar
-    const totalDirty = document.querySelectorAll('.row-dirty-badge:not(.hidden)').length;
-    if (dirtyCountBadge) dirtyCountBadge.textContent = totalDirty;
-    if (stickyBar) {
-      if (totalDirty > 0) stickyBar.classList.remove('hidden');
-      else stickyBar.classList.add('hidden');
-    }
-  }
-
-  rows.forEach((row) => {
-    const titleInp = row.querySelector('.input-meta-title');
-    const descInp = row.querySelector('.input-meta-desc');
-    const titleCounter = row.querySelector('.title-char-counter .count-val');
-    const descCounter = row.querySelector('.desc-char-counter .count-val');
-
-    titleInp?.addEventListener('input', (e) => {
-      const len = e.target.value.length;
-      if (titleCounter) titleCounter.textContent = len;
-      if (len >= 50 && len <= 65) {
-        titleInp.classList.remove('border-amber-400', 'border-red-400');
-        titleInp.classList.add('border-emerald-500');
-      } else {
-        titleInp.classList.remove('border-emerald-500');
-      }
-      checkDirty(row);
-    });
-
-    descInp?.addEventListener('input', (e) => {
-      const len = e.target.value.length;
-      if (descCounter) descCounter.textContent = len;
-      if (len >= 130 && len <= 165) {
-        descInp.classList.remove('border-amber-400', 'border-red-400');
-        descInp.classList.add('border-emerald-500');
-      } else {
-        descInp.classList.remove('border-emerald-500');
-      }
-      checkDirty(row);
-    });
-  });
-
-  // Save Routine
-  async function performBulkSave(targetRows) {
-    if (targetRows.length === 0) {
-      alert('No modified or selected pages to save.');
-      return;
-    }
-
-    const confirmed = confirm(`Are you sure you want to save metadata updates for ${targetRows.length} page(s)?`);
-    if (!confirmed) return;
-
-    if (statusMsg) {
-      statusMsg.className = 'rounded-2xl p-4 text-xs font-semibold bg-blue-50 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 block';
-      statusMsg.textContent = `Saving updates for ${targetRows.length} pages to database...`;
-    }
-
-    const updates = [];
-    targetRows.forEach((row) => {
-      const slug = row.dataset.slug;
-      const metaTitle = row.querySelector('.input-meta-title')?.value;
-      const metaDescription = row.querySelector('.input-meta-desc')?.value;
-      updates.push({ slug, metaTitle, metaDescription });
-    });
-
-    try {
-      const token = localStorage.getItem('admin_token') || '';
-      const res = await fetch('/api/admin/seo/bulk', {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        },
-        body: JSON.stringify({ updates }),
+      robotsFilter?.addEventListener('change', (e) => {
+        selectedRobots = e.target.value;
+        applyFilters();
       });
 
-      const data = await res.json();
-      if (res.ok && data.success) {
-        if (statusMsg) {
-          statusMsg.className = 'rounded-2xl p-4 text-xs font-semibold bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 block';
-          statusMsg.innerHTML = `✅ Successfully saved ${data.updatedCount} pages and logged ${data.changesLogged} entries into SEO Change History.`;
+      // Checkbox tracking & Bulk Buttons
+      function updateSelectedCount() {
+        const checked = document.querySelectorAll('.row-select-checkbox:checked');
+        const count = checked.length;
+        if (selectedCountBadge) selectedCountBadge.textContent = count;
+        if (btnSaveSelected) btnSaveSelected.disabled = count === 0;
+        if (btnBulkSetIndex) btnBulkSetIndex.disabled = count === 0;
+        if (btnBulkSetNoindex) btnBulkSetNoindex.disabled = count === 0;
+      }
+
+      selectAllCb?.addEventListener('change', (e) => {
+        const isChecked = e.target.checked;
+        rows.forEach((row) => {
+          if (row.style.display !== 'none') {
+            const cb = row.querySelector('.row-select-checkbox');
+            if (cb) cb.checked = isChecked;
+          }
+        });
+        updateSelectedCount();
+      });
+
+      document.querySelectorAll('.row-select-checkbox').forEach((cb) => {
+        cb.addEventListener('change', updateSelectedCount);
+      });
+
+      // Bulk Set Index / Noindex Actions
+      btnBulkSetIndex?.addEventListener('click', () => {
+        const checkedBoxes = document.querySelectorAll('.row-select-checkbox:checked');
+        if (checkedBoxes.length === 0) return;
+        checkedBoxes.forEach((cb) => {
+          const row = cb.closest('.bulk-row-card');
+          const robotsCb = row?.querySelector('.input-robots-index');
+          if (robotsCb && !robotsCb.checked) {
+            robotsCb.checked = true;
+            robotsCb.dispatchEvent(new Event('change'));
+          }
+        });
+      });
+
+      btnBulkSetNoindex?.addEventListener('click', () => {
+        const checkedBoxes = document.querySelectorAll('.row-select-checkbox:checked');
+        if (checkedBoxes.length === 0) return;
+        checkedBoxes.forEach((cb) => {
+          const row = cb.closest('.bulk-row-card');
+          const robotsCb = row?.querySelector('.input-robots-index');
+          if (robotsCb && robotsCb.checked) {
+            robotsCb.checked = false;
+            robotsCb.dispatchEvent(new Event('change'));
+          }
+        });
+      });
+
+      // Character Counter & Dirty Tracking
+      function checkDirty(row) {
+        const titleInp = row.querySelector('.input-meta-title');
+        const descInp = row.querySelector('.input-meta-desc');
+        const robotsCb = row.querySelector('.input-robots-index');
+        const badge = row.querySelector('.row-dirty-badge');
+
+        const origTitle = (titleInp && titleInp.dataset && titleInp.dataset.original) ? titleInp.dataset.original : '';
+        const origDesc = (descInp && descInp.dataset && descInp.dataset.original) ? descInp.dataset.original : '';
+        const origRobots = (robotsCb && robotsCb.dataset && robotsCb.dataset.original) ? robotsCb.dataset.original : 'index, follow';
+
+        const currentRobots = robotsCb && robotsCb.checked ? 'index, follow' : 'noindex, nofollow';
+
+        const titleChanged = titleInp && titleInp.value.trim() !== origTitle.trim();
+        const descChanged = descInp && descInp.value.trim() !== origDesc.trim();
+        const robotsChanged = currentRobots !== origRobots;
+
+        const isDirty = titleChanged || descChanged || robotsChanged;
+        if (badge) {
+          if (isDirty) badge.classList.remove('hidden');
+          else badge.classList.add('hidden');
         }
 
-        // Update original datasets
-        targetRows.forEach((row) => {
-          const titleInp = row.querySelector('.input-meta-title');
-          const descInp = row.querySelector('.input-meta-desc');
-          if (titleInp) titleInp.dataset.original = titleInp.value;
-          if (descInp) descInp.dataset.original = descInp.value;
+        // Update global dirty count & sticky bar
+        const totalDirty = document.querySelectorAll('.row-dirty-badge:not(.hidden)').length;
+        if (dirtyCountBadge) dirtyCountBadge.textContent = totalDirty;
+        if (stickyBar) {
+          if (totalDirty > 0) stickyBar.classList.remove('hidden');
+          else stickyBar.classList.add('hidden');
+        }
+      }
+
+      rows.forEach((row) => {
+        const titleInp = row.querySelector('.input-meta-title');
+        const descInp = row.querySelector('.input-meta-desc');
+        const robotsCb = row.querySelector('.input-robots-index');
+        const statusBadge = row.querySelector('.robots-status-badge');
+        const iconSpan = row.querySelector('.robots-icon');
+        const textSpan = row.querySelector('.robots-text');
+        const directiveTag = row.querySelector('.robots-directive-tag');
+        const titleCounter = row.querySelector('.title-char-counter .count-val');
+        const descCounter = row.querySelector('.desc-char-counter .count-val');
+
+        titleInp?.addEventListener('input', (e) => {
+          const len = e.target.value.length;
+          if (titleCounter) titleCounter.textContent = len;
+          if (len >= 50 && len <= 65) {
+            titleInp.classList.remove('border-amber-400', 'border-red-400');
+            titleInp.classList.add('border-emerald-500');
+          } else {
+            titleInp.classList.remove('border-emerald-500');
+          }
           checkDirty(row);
         });
 
-        setTimeout(() => {
-          if (statusMsg) statusMsg.classList.add('hidden');
-        }, 4000);
-      } else {
-        throw new Error(data.error || 'Bulk save failed');
+        descInp?.addEventListener('input', (e) => {
+          const len = e.target.value.length;
+          if (descCounter) descCounter.textContent = len;
+          if (len >= 130 && len <= 165) {
+            descInp.classList.remove('border-amber-400', 'border-red-400');
+            descInp.classList.add('border-emerald-500');
+          } else {
+            descInp.classList.remove('border-emerald-500');
+          }
+          checkDirty(row);
+        });
+
+        robotsCb?.addEventListener('change', (e) => {
+          const isIndex = e.target.checked;
+          const currentDirective = isIndex ? 'index, follow' : 'noindex, nofollow';
+
+          row.dataset.robots = isIndex ? 'index' : 'noindex';
+
+          if (iconSpan) iconSpan.textContent = isIndex ? '🟢' : '⛔';
+          if (textSpan) textSpan.textContent = isIndex ? 'Index (Search Engines Crawl & Rank)' : 'Noindex (Excluded from Google Search)';
+          if (directiveTag) directiveTag.textContent = currentDirective;
+
+          if (statusBadge) {
+            if (isIndex) {
+              statusBadge.className = 'robots-status-badge inline-flex items-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400';
+            } else {
+              statusBadge.className = 'robots-status-badge inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 dark:text-amber-400';
+            }
+          }
+
+          checkDirty(row);
+        });
+      });
+
+      // Save Routine
+      async function performBulkSave(targetRows) {
+        if (targetRows.length === 0) {
+          alert('No modified or selected pages to save.');
+          return;
+        }
+
+        const confirmed = confirm(`Are you sure you want to save metadata & robots updates for ${targetRows.length} page(s)?`);
+        if (!confirmed) return;
+
+        if (statusMsg) {
+          statusMsg.className = 'rounded-2xl p-4 text-xs font-semibold bg-blue-50 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 block';
+          statusMsg.textContent = `Saving updates for ${targetRows.length} pages to database...`;
+        }
+
+        const updates = [];
+        targetRows.forEach((row) => {
+          const slug = row.dataset.slug;
+          const metaTitle = row.querySelector('.input-meta-title')?.value;
+          const metaDescription = row.querySelector('.input-meta-desc')?.value;
+          const isIndex = row.querySelector('.input-robots-index')?.checked;
+          const robots = isIndex ? 'index, follow' : 'noindex, nofollow';
+          updates.push({ slug, metaTitle, metaDescription, robots });
+        });
+
+        try {
+          const token = localStorage.getItem('admin_token') || '';
+          const res = await fetch('/api/admin/seo/bulk', {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({ updates }),
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success) {
+            if (statusMsg) {
+              statusMsg.className = 'rounded-2xl p-4 text-xs font-semibold bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 block';
+              statusMsg.innerHTML = `✅ Successfully saved ${data.updatedCount} pages and logged ${data.changesLogged} entries into SEO Change History.`;
+            }
+
+            // Update original datasets
+            targetRows.forEach((row) => {
+              const titleInp = row.querySelector('.input-meta-title');
+              const descInp = row.querySelector('.input-meta-desc');
+              const robotsCb = row.querySelector('.input-robots-index');
+
+              if (titleInp) titleInp.dataset.original = titleInp.value;
+              if (descInp) descInp.dataset.original = descInp.value;
+              if (robotsCb) robotsCb.dataset.original = robotsCb.checked ? 'index, follow' : 'noindex, nofollow';
+
+              checkDirty(row);
+            });
+
+            setTimeout(() => {
+              if (statusMsg) statusMsg.classList.add('hidden');
+            }, 4000);
+          } else {
+            throw new Error(data.error || 'Bulk save failed');
+          }
+        } catch (err) {
+          if (statusMsg) {
+            statusMsg.className = 'rounded-2xl p-4 text-xs font-semibold bg-red-50 text-red-800 dark:bg-red-950/60 dark:text-red-300 block';
+            statusMsg.textContent = `❌ Error saving: ${err.message || 'Network error'}`;
+          }
+        }
       }
-    } catch (err) {
-      if (statusMsg) {
-        statusMsg.className = 'rounded-2xl p-4 text-xs font-semibold bg-red-50 text-red-800 dark:bg-red-950/60 dark:text-red-300 block';
-        statusMsg.textContent = `❌ Error saving: ${err.message || 'Network error'}`;
+
+      // Save Single Row
+      document.querySelectorAll('.btn-save-single-row').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const row = btn.closest('.bulk-row-card');
+          if (row) {
+            performBulkSave([row]);
+          }
+        });
+      });
+
+      // Save Selected
+      btnSaveSelected?.addEventListener('click', () => {
+        const selectedRows = [];
+        document.querySelectorAll('.row-select-checkbox:checked').forEach((cb) => {
+          const row = cb.closest('.bulk-row-card');
+          if (row) selectedRows.push(row);
+        });
+        performBulkSave(selectedRows);
+      });
+
+      // Save All Changed
+      function saveDirtyRows() {
+        const dirtyRows = [];
+        rows.forEach((row) => {
+          const titleInp = row.querySelector('.input-meta-title');
+          const descInp = row.querySelector('.input-meta-desc');
+          const robotsCb = row.querySelector('.input-robots-index');
+
+          const origTitle = (titleInp && titleInp.dataset && titleInp.dataset.original) ? titleInp.dataset.original : '';
+          const origDesc = (descInp && descInp.dataset && descInp.dataset.original) ? descInp.dataset.original : '';
+          const origRobots = (robotsCb && robotsCb.dataset && robotsCb.dataset.original) ? robotsCb.dataset.original : 'index, follow';
+
+          const currentRobots = robotsCb && robotsCb.checked ? 'index, follow' : 'noindex, nofollow';
+
+          if (
+            (titleInp && titleInp.value.trim() !== origTitle.trim()) ||
+            (descInp && descInp.value.trim() !== origDesc.trim()) ||
+            currentRobots !== origRobots
+          ) {
+            dirtyRows.push(row);
+          }
+        });
+        performBulkSave(dirtyRows);
+      }
+
+      btnSaveAllDirty?.addEventListener('click', saveDirtyRows);
+      btnStickySave?.addEventListener('click', saveDirtyRows);
+
+      // Initialize from URL query parameters (e.g. ?search=concrete or ?slug=concrete-mix)
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const initialQuery = urlParams.get('search') || urlParams.get('slug');
+        if (initialQuery && searchInp) {
+          searchInp.value = initialQuery;
+          searchQuery = initialQuery.trim().toLowerCase();
+          applyFilters();
+        }
+      } catch (e) {
+        // Ignore URL parsing errors
       }
     }
-  }
 
-  // Save Single Row
-  document.querySelectorAll('.btn-save-single-row').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const row = btn.closest('.bulk-row-card');
-      if (row) {
-        performBulkSave([row]);
-      }
-    });
-  });
-
-  // Save Selected
-  btnSaveSelected?.addEventListener('click', () => {
-    const selectedRows = [];
-    document.querySelectorAll('.row-select-checkbox:checked').forEach((cb) => {
-      const row = cb.closest('.bulk-row-card');
-      if (row) selectedRows.push(row);
-    });
-    performBulkSave(selectedRows);
-  });
-
-  // Save All Changed
-  function saveDirtyRows() {
-    const dirtyRows = [];
-    rows.forEach((row) => {
-      const titleInp = row.querySelector('.input-meta-title');
-      const descInp = row.querySelector('.input-meta-desc');
-      const origTitle = (titleInp && titleInp.dataset && titleInp.dataset.original) ? titleInp.dataset.original : '';
-      const origDesc = (descInp && descInp.dataset && descInp.dataset.original) ? descInp.dataset.original : '';
-
-      if ((titleInp && titleInp.value.trim() !== origTitle.trim()) || (descInp && descInp.value.trim() !== origDesc.trim())) {
-        dirtyRows.push(row);
-      }
-    });
-    performBulkSave(dirtyRows);
-  }
-
-  btnSaveAllDirty?.addEventListener('click', saveDirtyRows);
-  btnStickySave?.addEventListener('click', saveDirtyRows);
-
-  // Initialize from URL query parameters (e.g. ?search=concrete or ?slug=concrete-mix)
-  try {
-    const urlParams = new URLSearchParams(window.location.search);
-    const initialQuery = urlParams.get('search') || urlParams.get('slug');
-    if (initialQuery && searchInp) {
-      searchInp.value = initialQuery;
-      searchQuery = initialQuery.trim().toLowerCase();
-      applyFilters();
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initBulkEditor);
+    } else {
+      initBulkEditor();
     }
-  } catch (e) {
-    // Ignore URL parsing errors
-  }
-}
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initBulkEditor);
-  } else {
-    initBulkEditor();
-  }
-</script>
+  </script>
 </AdminLayout>

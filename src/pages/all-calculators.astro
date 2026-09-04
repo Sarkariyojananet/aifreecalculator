@@ -1,0 +1,179 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CalculatorCard from '../components/CalculatorCard.astro';
+import AdSlotTop from '../components/ads/AdSlotTop.astro';
+import AdSlotFooter from '../components/ads/AdSlotFooter.astro';
+import { calculators, categories } from '../data/calculators';
+import { getCalculatorOverrides } from '../lib/admin/content-store';
+import { getLivePageMeta } from '../lib/seo/page-metadata';
+
+const totalCount = calculators.length;
+const overrides = await getCalculatorOverrides(Astro.locals);
+const override = overrides['core:all-calculators'] || {};
+const liveMeta = getLivePageMeta('core:all-calculators');
+
+const effectiveTitle = override.metaTitle || liveMeta.title || `All Calculators Directory (${totalCount}+ Free Tools) - AI Free Calculator`;
+const effectiveDescription = override.metaDescription || liveMeta.description || "Explore the complete directory of free online calculators for loan EMI, SIP returns, construction BOQ, steel rebar, health BMI, calories, math, and everyday tasks.";
+const effectiveCanonical = override.canonicalUrl;
+const effectiveRobots = override.robots;
+---
+
+<BaseLayout
+  title={effectiveTitle}
+  description={effectiveDescription}
+  canonicalUrl={effectiveCanonical}
+  noindex={effectiveRobots?.includes('noindex')}
+  ogImage="/og/default.png"
+>
+  <!-- Page Header -->
+  <section class="border-b border-slate-200 bg-white px-4 py-10 sm:py-14 dark:border-slate-800 dark:bg-slate-900/60">
+    <div class="mx-auto max-w-7xl">
+      <nav class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-3" aria-label="Breadcrumb">
+        <a href="/" class="hover:text-blue-600 dark:hover:text-blue-400">Home</a>
+        <span>/</span>
+        <span class="text-slate-800 dark:text-slate-200 font-semibold">All Calculators</span>
+      </nav>
+
+      <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div>
+          <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
+            All Calculators Directory
+          </h1>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
+            Browse our complete catalog of {totalCount}+ verified, private, client-side calculation tools across 5 specialized categories.
+          </p>
+        </div>
+
+        <!-- Filter Search Bar -->
+        <div class="w-full sm:w-72">
+          <label for="dir-search" class="sr-only">Filter calculators</label>
+          <div class="relative">
+            <input
+              type="text"
+              id="dir-search"
+              placeholder="Filter by name or keyword…"
+              class="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-9 pr-3 text-xs text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+            />
+            <svg class="pointer-events-none absolute left-3 top-3 h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category Filter Tabs -->
+      <div class="mt-6 flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800" id="category-filter-bar">
+        <button
+          type="button"
+          data-filter="all"
+          class="filter-cat-btn rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition cursor-pointer"
+        >
+          All ({totalCount})
+        </button>
+        {categories.map((cat) => {
+          const count = calculators.filter((c) => c.category.toLowerCase() === cat.name.toLowerCase()).length;
+          return (
+            <button
+              type="button"
+              data-filter={cat.name.toLowerCase()}
+              class="filter-cat-btn rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition cursor-pointer"
+            >
+              {cat.name} ({count})
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  </section>
+
+  <!-- Top Ad Slot -->
+  <div class="mx-auto max-w-7xl px-4 py-4">
+    <AdSlotTop />
+  </div>
+
+  <!-- Calculator Directory Grid -->
+  <section class="mx-auto max-w-7xl px-4 py-6 sm:py-8">
+    <div id="dir-grid" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {calculators.map((calc) => (
+        <div
+          class="dir-calc-item"
+          data-name={calc.name.toLowerCase()}
+          data-category={calc.category.toLowerCase()}
+          data-keywords={(calc.keywords || []).join(' ').toLowerCase()}
+          data-desc={calc.description.toLowerCase()}
+        >
+          <CalculatorCard calculator={calc} />
+        </div>
+      ))}
+    </div>
+
+    <!-- No Match State -->
+    <div id="dir-no-results" class="hidden py-16 text-center">
+      <p class="text-sm font-bold text-slate-700 dark:text-slate-300">No calculators found</p>
+      <p class="text-xs text-slate-500 mt-1">Try a different search term or select "All" categories.</p>
+    </div>
+  </section>
+
+  <!-- Bottom Ad Slot -->
+  <div class="mx-auto max-w-7xl px-4 py-4">
+    <AdSlotFooter />
+  </div>
+
+  <script is:inline>
+    (function initDirectoryFilter() {
+      const searchInput = document.getElementById('dir-search');
+      const filterButtons = document.querySelectorAll('.filter-cat-btn');
+      const items = document.querySelectorAll('.dir-calc-item');
+      const noResults = document.getElementById('dir-no-results');
+
+      let activeCategory = 'all';
+      let searchQuery = '';
+
+      function applyFilter() {
+        let visibleCount = 0;
+        items.forEach((el) => {
+          const itemCat = el.getAttribute('data-category') || '';
+          const itemName = el.getAttribute('data-name') || '';
+          const itemKw = el.getAttribute('data-keywords') || '';
+          const itemDesc = el.getAttribute('data-desc') || '';
+
+          const matchCat = activeCategory === 'all' || itemCat === activeCategory;
+          const matchSearch =
+            !searchQuery ||
+            itemName.includes(searchQuery) ||
+            itemCat.includes(searchQuery) ||
+            itemKw.includes(searchQuery) ||
+            itemDesc.includes(searchQuery);
+
+          if (matchCat && matchSearch) {
+            el.style.display = '';
+            visibleCount++;
+          } else {
+            el.style.display = 'none';
+          }
+        });
+
+        if (noResults) {
+          if (visibleCount === 0) noResults.classList.remove('hidden');
+          else noResults.classList.add('hidden');
+        }
+      }
+
+      filterButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          filterButtons.forEach((b) => {
+            b.className = 'filter-cat-btn rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition cursor-pointer';
+          });
+          btn.className = 'filter-cat-btn rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition cursor-pointer';
+          activeCategory = btn.getAttribute('data-filter') || 'all';
+          applyFilter();
+        });
+      });
+
+      searchInput?.addEventListener('input', (e) => {
+        searchQuery = (e.target.value || '').trim().toLowerCase();
+        applyFilter();
+      });
+    })();
+  </script>
+</BaseLayout>

@@ -67,8 +67,8 @@ export const GET: APIRoute = async ({ request, cookies, locals }) => {
       type: 'core',
       metaTitle: o.metaTitle || liveMeta.title,
       metaDescription: o.metaDescription || liveMeta.description,
-      canonicalUrl: `https://aifreecalculator.com${p.path === '/' ? '' : p.path}`,
-      robots: 'index, follow',
+      canonicalUrl: o.canonicalUrl || `https://aifreecalculator.com${p.path === '/' ? '' : p.path}`,
+      robots: o.robots || 'index, follow',
       updatedAt: o.updatedAt,
     };
   });
@@ -187,6 +187,17 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
           );
         }
         newOverride.robots = robots;
+        const oldRobots = prevOverride.robots || 'index, follow';
+        if (robots !== oldRobots) {
+          historyChanges.push({
+            pagePath,
+            pageName: pageDisplayName,
+            field: 'robots' as any,
+            oldValue: oldRobots,
+            newValue: robots,
+            adminUser: user.username,
+          });
+        }
       }
 
       await saveCalculatorOverride(slug, newOverride, locals);
