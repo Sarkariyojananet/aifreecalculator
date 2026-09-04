@@ -1,8 +1,14 @@
 ---
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { getContactMessages, getContactNotificationEmail, getDb } from '../../../lib/db';
+import { authenticateAdminRequest } from '../../../lib/auth';
 
 export const prerender = false;
+
+const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
+if (!user) {
+  return Astro.redirect(`/admin/barwalaoffice/?redirect=${encodeURIComponent(Astro.url.pathname + Astro.url.search)}`);
+}
 
 const db = getDb(Astro.locals);
 const messages = await getContactMessages(db);
@@ -358,13 +364,20 @@ const totalCount = messages.length;
     applyFilters();
   });
 
+  function getAuthToken() {
+    return localStorage.getItem('admin_token') || '';
+  }
+
   // Refresh Action
   const btnRefresh = document.getElementById('btn-refresh-messages');
   const refreshSpinner = document.getElementById('refresh-spinner');
   btnRefresh?.addEventListener('click', async () => {
     if (refreshSpinner) refreshSpinner.classList.add('animate-spin');
     try {
-      const res = await fetch('/api/admin/messages');
+      const token = getAuthToken();
+      const res = await fetch('/api/admin/messages', {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+      });
       if (res.ok) {
         window.location.reload();
       }
@@ -391,9 +404,13 @@ const totalCount = messages.length;
       btnSaveEmail.textContent = 'Saving...';
 
       try {
+        const token = getAuthToken();
         const res = await fetch('/api/admin/messages', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({ email: email }),
         });
 
@@ -435,9 +452,13 @@ const totalCount = messages.length;
       statusBtn.textContent = 'Updating...';
 
       try {
+        const token = getAuthToken();
         const res = await fetch('/api/admin/messages', {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({ id: id, status: status }),
         });
 
@@ -471,8 +492,10 @@ const totalCount = messages.length;
       const card = deleteBtn.closest('.message-card');
 
       try {
+        const token = getAuthToken();
         const res = await fetch('/api/admin/messages?id=' + encodeURIComponent(id), {
           method: 'DELETE',
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         });
 
         if (res.ok) {
@@ -499,9 +522,13 @@ const totalCount = messages.length;
     if (replyLink) {
       const id = replyLink.getAttribute('data-id');
       if (id) {
+        const token = getAuthToken();
         fetch('/api/admin/messages', {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          },
           body: JSON.stringify({ id: id, status: 'replied' }),
         }).catch(function () {});
       }

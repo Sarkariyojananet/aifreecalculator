@@ -45,9 +45,16 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     const body = await request.json();
     const { sourceSlug, relatedSlugs } = body;
 
-    if (!sourceSlug || !Array.isArray(relatedSlugs)) {
+    if (!sourceSlug || typeof sourceSlug !== 'string') {
       return new Response(
-        JSON.stringify({ error: 'sourceSlug (string) and relatedSlugs (array) are required.' }),
+        JSON.stringify({ error: 'sourceSlug (string) is required.' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!Array.isArray(relatedSlugs)) {
+      return new Response(
+        JSON.stringify({ error: 'relatedSlugs (array) is required.' }),
         { status: 400, headers: { 'Content-Type': 'application/json' } }
       );
     }

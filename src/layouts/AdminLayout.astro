@@ -96,13 +96,13 @@ const currentPath = Astro.url.pathname;
             body: JSON.stringify({ action: 'logout' }),
           });
         } catch {}
-        const query = reason ? `?expired=true` : '';
+        const currentPath = encodeURIComponent(window.location.pathname + window.location.search);
+        const query = reason ? `?expired=true&redirect=${currentPath}` : '';
         window.location.href = `/admin/barwalaoffice/${query}`;
       }
 
       (async function checkAdminAuth() {
         const token = localStorage.getItem('admin_token');
-        const hasCookie = document.cookie.includes('admin_session=');
         const loginTimeStr = localStorage.getItem('admin_login_time');
         
         // If login time exists and exceeded 4 hours (14400000ms), log out immediately
@@ -114,21 +114,17 @@ const currentPath = Astro.url.pathname;
           }
         }
 
-        if (!token && !hasCookie) {
-          const currentPath = encodeURIComponent(window.location.pathname);
-          window.location.href = `/admin/barwalaoffice/?redirect=${currentPath}`;
-          return;
-        }
+        const currentPath = encodeURIComponent(window.location.pathname + window.location.search);
 
         try {
           const res = await fetch('/api/admin/auth', {
             headers: token ? { 'Authorization': `Bearer ${token}` } : {},
           });
           if (!res.ok) {
-            performLogout('invalid');
+            window.location.href = `/admin/barwalaoffice/?redirect=${currentPath}`;
           }
         } catch {
-          // Allow dev fallback
+          // Allow dev fallback if network/auth server temporarily unavailable
         }
       })();
 
@@ -195,11 +191,27 @@ const currentPath = Astro.url.pathname;
       const btnCloseSearch = document.getElementById('btn-close-admin-search');
       const searchInput = document.getElementById('admin-modal-search-input');
       const searchResults = document.getElementById('admin-search-results-container');
+      let searchSelectedIndex = -1;
+      let currentSearchResults = [];
+
+      function updateActiveSearchResult() {
+        const items = searchResults?.querySelectorAll('.admin-search-item');
+        if (!items || items.length === 0) return;
+        items.forEach((el, idx) => {
+          if (idx === searchSelectedIndex) {
+            el.classList.add('bg-blue-50', 'dark:bg-slate-800', 'ring-1', 'ring-blue-500/30');
+            el.scrollIntoView({ block: 'nearest' });
+          } else {
+            el.classList.remove('bg-blue-50', 'dark:bg-slate-800', 'ring-1', 'ring-blue-500/30');
+          }
+        });
+      }
 
       function openAdminSearch() {
         if (!searchModal) return;
         searchModal.classList.remove('hidden');
         document.body.style.overflow = 'hidden';
+        searchSelectedIndex = -1;
         setTimeout(() => {
           searchInput?.focus();
           searchInput?.select();
@@ -211,6 +223,7 @@ const currentPath = Astro.url.pathname;
         if (!searchModal) return;
         searchModal.classList.add('hidden');
         document.body.style.overflow = '';
+        searchSelectedIndex = -1;
       }
 
       btnSearchTrigger?.addEventListener('click', openAdminSearch);
@@ -227,7 +240,43 @@ const currentPath = Astro.url.pathname;
           } else {
             closeAdminSearch();
           }
+          return;
         }
+
+        if (searchModal && !searchModal.classList.contains('hidden')) {
+          const items = searchResults?.querySelectorAll('.admin-search-item');
+          const total = items ? items.length : 0;
+
+          if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (total > 0) {
+              searchSelectedIndex = (searchSelectedIndex + 1) % total;
+              updateActiveSearchResult();
+            }
+            return;
+          }
+
+          if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (total > 0) {
+              searchSelectedIndex = searchSelectedIndex <= 0 ? total - 1 : searchSelectedIndex - 1;
+              updateActiveSearchResult();
+            }
+            return;
+          }
+
+          if (e.key === 'Enter') {
+            if (total > 0 && searchSelectedIndex >= 0 && items && items[searchSelectedIndex]) {
+              e.preventDefault();
+              items[searchSelectedIndex].click();
+            } else if (total > 0 && items && items[0]) {
+              e.preventDefault();
+              items[0].click();
+            }
+            return;
+          }
+        }
+
         if (e.key === 'Escape') {
           closeAdminSearch();
           closeMobileDrawer();
@@ -242,6 +291,9 @@ const currentPath = Astro.url.pathname;
           return item.title.toLowerCase().includes(q) || item.category.toLowerCase().includes(q);
         });
 
+        currentSearchResults = filtered.slice(0, 10);
+        searchSelectedIndex = currentSearchResults.length > 0 ? 0 : -1;
+
         if (!searchResults) return;
 
         if (filtered.length === 0) {
@@ -253,10 +305,11 @@ const currentPath = Astro.url.pathname;
           return;
         }
 
-        searchResults.innerHTML = filtered.slice(0, 10).map((item) => `
+        searchResults.innerHTML = currentSearchResults.map((item, idx) => `
           <a
             href="${item.path}"
-            class="flex items-center justify-between p-3 rounded-2xl transition hover:bg-blue-50 dark:hover:bg-slate-800"
+            data-index="${idx}"
+            class="admin-search-item flex items-center justify-between p-3 rounded-2xl transition hover:bg-blue-50 dark:hover:bg-slate-800 ${idx === 0 ? 'bg-blue-50 dark:bg-slate-800 ring-1 ring-blue-500/30' : ''}"
           >
             <div class="flex items-center gap-3 min-w-0">
               <span class="text-xl shrink-0">${item.icon || '📌'}</span>
@@ -268,6 +321,13 @@ const currentPath = Astro.url.pathname;
             <span class="text-slate-400 text-xs shrink-0">→</span>
           </a>
         `).join('');
+
+        searchResults.querySelectorAll('.admin-search-item').forEach((el) => {
+          el.addEventListener('mouseenter', () => {
+            searchSelectedIndex = parseInt(el.getAttribute('data-index') || '0', 10);
+            updateActiveSearchResult();
+          });
+        });
       }
 
       searchInput?.addEventListener('input', renderAdminSearchResults);

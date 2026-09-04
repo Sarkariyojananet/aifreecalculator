@@ -214,6 +214,23 @@ import '../../styles/global.css';
         }
       }
 
+      // Sanitize redirect target to prevent open redirect vulnerabilities
+      function getSafeRedirectUrl() {
+        const raw = new URLSearchParams(window.location.search).get('redirect') || '/admin/dashboard/';
+        if (typeof raw === 'string' && raw.startsWith('/') && !raw.startsWith('//') && !raw.includes('\\')) {
+          return raw;
+        }
+        return '/admin/dashboard/';
+      }
+
+      // Check if session expired
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('expired') === 'true') {
+        errBox.className = 'rounded-xl bg-amber-50 p-3 text-xs font-semibold text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 border border-amber-200 dark:border-amber-800';
+        errBox.textContent = '⏱️ Your admin session has expired. Please sign in again to continue.';
+        errBox.classList.remove('hidden');
+      }
+
       // Check if already authenticated
       const existingToken = localStorage.getItem('admin_token');
       if (existingToken) {
@@ -221,8 +238,7 @@ import '../../styles/global.css';
           headers: { 'Authorization': `Bearer ${existingToken}` },
         }).then((res) => {
           if (res.ok) {
-            const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/admin/dashboard/';
-            window.location.href = redirectUrl;
+            window.location.href = getSafeRedirectUrl();
           }
         }).catch(() => {});
       }
@@ -288,8 +304,7 @@ import '../../styles/global.css';
             localStorage.setItem('admin_token', data.token);
             localStorage.setItem('admin_login_time', Date.now().toString());
             document.cookie = `admin_session=${data.token}; Path=/; Max-Age=14400; SameSite=Lax;`;
-            const redirectUrl = new URLSearchParams(window.location.search).get('redirect') || '/admin/dashboard/';
-            window.location.href = redirectUrl;
+            window.location.href = getSafeRedirectUrl();
           } else {
             drawCaptcha();
             failedAttempts++;

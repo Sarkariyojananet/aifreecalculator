@@ -66,6 +66,13 @@ const navGroups: NavGroup[] = [
     ],
   },
 ];
+
+const allNavItems = navGroups.flatMap((g) => g.items);
+const normalizedPath = currentPath.endsWith('/') ? currentPath : `${currentPath}/`;
+const activeItem = allNavItems
+  .filter((item) => normalizedPath === item.path || (item.path !== '/admin/dashboard/' && normalizedPath.startsWith(item.path)))
+  .sort((a, b) => b.path.length - a.path.length)[0];
+const activeItemId = activeItem?.id ?? (normalizedPath.startsWith('/admin/dashboard') ? 'dashboard' : '');
 ---
 
 <!-- Mobile Drawer Backdrop Overlay -->
@@ -117,7 +124,7 @@ const navGroups: NavGroup[] = [
           </div>
           <div class="space-y-0.5 pt-1">
             {group.items.map((item) => {
-              const isActive = currentPath === item.path || (item.path !== '/admin/dashboard/' && currentPath.startsWith(item.path));
+              const isActive = item.id === activeItemId;
               return (
                 <a
                   href={item.path}
