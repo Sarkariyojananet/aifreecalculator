@@ -32,17 +32,7 @@ const inMemoryStats: Record<string, number> = {
 
 const inMemorySettings: Record<string, string> = {};
 
-let cloudflareEnv: any = null;
-
-// Dynamically resolve cloudflare:workers if running in Cloudflare runtime
-if (typeof globalThis !== 'undefined') {
-  try {
-    // @ts-ignore
-    import('cloudflare:workers').then((cf) => {
-      if (cf?.env) cloudflareEnv = cf.env;
-    }).catch(() => {});
-  } catch {}
-}
+import { getRuntimeEnvSync } from './cloudflare-env';
 
 // Local filesystem persistence helper for Node/dev environment
 let localFileCache: Record<string, string> | null = null;
@@ -113,10 +103,13 @@ export function getDb(locals?: any): D1Database {
     } catch {}
   }
 
-  // 2. Check cloudflare:workers resolved env
-  if (cloudflareEnv?.DB) {
-    return cloudflareEnv.DB;
-  }
+  // 2. Resolve from Cloudflare Workers runtime environment via safe accessor
+  try {
+    const cfEnv = getRuntimeEnvSync(locals);
+    if (cfEnv?.DB) {
+      return cfEnv.DB;
+    }
+  } catch {}
 
   // 3. Check globalThis env bindings
   const g = typeof globalThis !== 'undefined' ? (globalThis as any) : null;
@@ -507,7 +500,7 @@ export async function getContactNotificationEmail(db?: D1Database, locals?: any)
   } catch {}
 
   // 2. Check environment bindings
-  const env = (locals as any)?.env || (globalThis as any)?.process?.env || {};
+  const env = getRuntimeEnvSync(locals);
   if (env.CONTACT_NOTIFICATION_EMAIL && String(env.CONTACT_NOTIFICATION_EMAIL).includes('@')) {
     return String(env.CONTACT_NOTIFICATION_EMAIL).trim();
   }

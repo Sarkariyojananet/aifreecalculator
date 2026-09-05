@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { getDb, saveContactMessage, type ContactMessage } from '../../lib/db';
+import { getRuntimeEnv } from '../../lib/cloudflare-env';
 
 export const prerender = false;
 
@@ -178,8 +179,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
       </div>
     `;
 
-    // 5. Resolve Cloudflare native send_email binding (CONTACT_EMAIL or EMAIL)
-    const env = (locals as any)?.runtime?.env || (locals as any)?.env || (globalThis as any)?.env || (locals as any) || {};
+    // 5. Safely resolve Cloudflare Workers runtime environment and bindings
+    const env = await getRuntimeEnv(locals);
+    const destinationEmail = String(env.CONTACT_NOTIFICATION_EMAIL || FIXED_DESTINATION_EMAIL || 'indiarojgaarcom@gmail.com').trim();
+    const siteName = String(env.PUBLIC_SITE_NAME || 'AI Free Calculator').trim();
+    const senderEmail = String(env.CONTACT_SENDER_EMAIL || SENDER_EMAIL).trim();
+    const senderName = `${siteName} Contact`;
+
     const emailBinding = env.CONTACT_EMAIL || env.EMAIL;
 
     let emailDelivered = false;
@@ -189,8 +195,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
       try {
         // Attempt 1: Standard structured send() API
         await emailBinding.send({
-          to: FIXED_DESTINATION_EMAIL,
-          from: { email: SENDER_EMAIL, name: SENDER_NAME },
+          to: destinationEmail,
+          from: { email: senderEmail, name: senderName },
           replyTo: { email, name },
           subject: emailSubject,
           text: textBody,
@@ -203,8 +209,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
         try {
           const boundary = '----=_Part_' + Date.now() + '_' + Math.random().toString(36).substring(2);
           const rawMime = [
-            `From: "${SENDER_NAME}" <${SENDER_EMAIL}>`,
-            `To: <${FIXED_DESTINATION_EMAIL}>`,
+            `From: "${senderName}" <${senderEmail}>`,
+            `To: <${destinationEmail}>`,
             `Reply-To: "${name.replace(/["\r\n]/g, '')}" <${email}>`,
             `Subject: =?UTF-8?B?${btoa(unescape(encodeURIComponent(emailSubject)))}?=`,
             `MIME-Version: 1.0`,
@@ -227,7 +233,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
           const { EmailMessage } = await import('cloudflare:email').catch(() => ({ EmailMessage: null as any }));
           if (EmailMessage) {
-            const msg = new EmailMessage(SENDER_EMAIL, FIXED_DESTINATION_EMAIL, rawMime);
+            const msg = new EmailMessage(senderEmail, destinationEmail, rawMime);
             await emailBinding.send(msg);
             emailDelivered = true;
           } else {
@@ -250,8 +256,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-              from: `${SENDER_NAME} <${SENDER_EMAIL}>`,
-              to: [FIXED_DESTINATION_EMAIL],
+              from: `${senderName} <${senderEmail}>`,
+              to: [destinationEmail],
               reply_to: email,
               subject: emailSubject,
               text: textBody,
@@ -262,17 +268,19 @@ export const POST: APIRoute = async ({ request, locals }) => {
             emailDelivered = true;
           } else {
             deliveryError = `Resend API returned ${resendRes.status}`;
+            console.error('[Contact Resend API Error]:', deliveryError);
           }
         } catch (resendErr: any) {
           deliveryError = resendErr.message || String(resendErr);
+          console.error('[Contact Resend Network Error]:', resendErr);
         }
       } else {
-        deliveryError = 'Cloudflare CONTACT_EMAIL binding is not active or domain onboarding is pending in Cloudflare Dashboard.';
-        console.warn(`[Contact API]: ${deliveryError}`);
+        deliveryError = 'Neither Cloudflare "CONTACT_EMAIL" binding nor "RESEND_API_KEY" secret is active/configured.';
+        console.warn(`[Contact API Configuration]: ${deliveryError}`);
       }
     }
 
-    // 6. Only return success if email was actually accepted and sent by email service
+    // 6. Return response based on delivery and persistence state
     if (emailDelivered) {
       return new Response(
         JSON.stringify({
@@ -283,18 +291,19 @@ export const POST: APIRoute = async ({ request, locals }) => {
         { status: 200, headers: { 'Content-Type': 'application/json' } }
       );
     } else {
-      // Safe error: do not expose internal tokens, but inform the user truthfully
+      // Message has already been saved to D1 database and site_settings audit trail!
+      // Return safe, informative response without exposing internal secrets or crashing with 500
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Email delivery service is currently unavailable. Please email support@aifreecalculator.com directly.',
+          error: 'Email delivery service is currently unavailable. Your inquiry has been safely saved in our system. You can also email support@aifreecalculator.com directly.',
           messageId,
         }),
         { status: 503, headers: { 'Content-Type': 'application/json' } }
       );
     }
   } catch (err: any) {
-    console.error('[Contact Form Error]:', err);
+    console.error('[Contact Form Error]:', err?.stack || err);
     return new Response(
       JSON.stringify({
         success: false,
