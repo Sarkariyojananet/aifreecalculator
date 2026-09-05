@@ -1,245 +1,1950 @@
 ---
 import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+import {
+  STANDARD_REBAR_WEIGHTS,
+  BARS_PER_BUNDLE,
+  CONCRETE_MIX_PROPORTIONS,
+} from '../../lib/calculators/rcc-beam-steel';
 ---
 
 <CalculatorLayout
-  title="RCC Beam Steel Calculator - BBS Stirrups & Main Bars"
-  description="Calculate RCC beam top & bottom main reinforcement rebar weight, stirrups ring cutting length, concrete volume, and shuttering formwork."
+  title="RCC Beam Steel Calculator – Normal & Advanced BBS Rebar Estimator"
+  description="Free RCC beam steel calculator with Normal (CPWD thumb rule) and Advanced BBS engineering modes. Calculates top & bottom main rebars, support extra bars, 2-zone shear stirrups (IS 13920), 12m commercial rebar bundles, shuttering, and concrete mix BOQ."
   category="Construction"
   calculatorName="RCC Beam Steel Calculator"
   slug="rcc-beam-steel-calculator"
-  keywords={['rcc beam steel', 'beam bbs', 'stirrups cutting length', 'beam rebar weight', 'beam concrete volume']}
+  keywords={[
+    'rcc beam steel',
+    'rcc beam steel calculator',
+    'beam bbs',
+    'beam bar bending schedule',
+    'stirrups cutting length',
+    'beam rebar weight',
+    'beam concrete volume',
+    'is 13920 beam detailing',
+    'beam thumb rule steel',
+    'beam shuttering area',
+    'beam rebar 12m rods'
+  ]}
 >
   <div class="space-y-6">
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <div>
-        <label for="bm-len" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Beam Length (m)</label>
-        <input type="number" id="bm-len" value="5.0" step="0.1" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
-      </div>
-      <div>
-        <label for="bm-width" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Beam Width B (mm)</label>
-        <input type="number" id="bm-width" value="230" step="10" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
-      </div>
-      <div>
-        <label for="bm-depth" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Beam Depth D (mm)</label>
-        <input type="number" id="bm-depth" value="450" step="10" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
-      </div>
 
-      <div>
-        <label for="bm-top-bars" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Top Bars (Count × Dia)</label>
-        <div class="mt-1.5 flex gap-2">
-          <input type="number" id="bm-top-count" value="2" min="2" class="w-1/2 rounded-xl border border-slate-300 p-2.5 text-sm font-bold text-center dark:border-slate-700 dark:bg-slate-950" />
-          <select id="bm-top-dia" class="w-1/2 rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950">
-            <option value="10">10 mm</option>
-            <option value="12" selected>12 mm</option>
-            <option value="16">16 mm</option>
-          </select>
+    <!-- SAFETY & ENGINEERING DISCLAIMER BANNER -->
+    <div class="rounded-2xl border border-amber-200/90 bg-amber-50/70 p-4 text-xs text-amber-900 shadow-2xs dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+      <div class="flex items-start gap-2.5">
+        <span class="text-base leading-none">⚠️</span>
+        <div class="leading-relaxed">
+          <strong class="font-bold text-amber-950 dark:text-amber-100">Civil Engineering Notice:</strong>
+          This calculator provides both <strong>Normal Site Thumb-Rule Estimation</strong> (CPWD / IS 456 preliminary rate: 1.0%–2.0% steel or 80–160 kg/m³) and <strong>Advanced Bar Bending Schedule (BBS) Detailing</strong> (IS 456 & IS 13920:2016 ductile earthquake detailing with 2-zone shear stirrups, top negative hogging support bars, bottom mid-span extra bars, and standard 12m stock commercial rebar takeoff). Always verify final structural drawings with a licensed structural engineer before bar fabrication.
         </div>
-      </div>
-
-      <div>
-        <label for="bm-bot-bars" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Bottom Bars (Count × Dia)</label>
-        <div class="mt-1.5 flex gap-2">
-          <input type="number" id="bm-bot-count" value="3" min="2" class="w-1/2 rounded-xl border border-slate-300 p-2.5 text-sm font-bold text-center dark:border-slate-700 dark:bg-slate-950" />
-          <select id="bm-bot-dia" class="w-1/2 rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950">
-            <option value="12">12 mm</option>
-            <option value="16" selected>16 mm</option>
-            <option value="20">20 mm</option>
-          </select>
-        </div>
-      </div>
-
-      <div>
-        <label for="bm-stirrup-spacing" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Stirrups 8mm Spacing (mm)</label>
-        <input type="number" id="bm-stirrup-spacing" value="150" step="10" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
       </div>
     </div>
 
-    <!-- ACTION BUTTONS: CALCULATE & CLEAR -->
-    <div class="flex flex-wrap items-center gap-3 pt-1">
-      <button
-        type="button"
-        id="btn-calc-beam"
-        class="flex-1 min-w-[200px] inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-blue-500/25 transition active:scale-[0.98] cursor-pointer"
-      >
-        <span>⚡ Calculate Beam Steel & Concrete</span>
-        <span>→</span>
-      </button>
-      <button
-        type="button"
-        id="btn-clear-beam"
-        class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3.5 text-sm font-bold text-slate-700 hover:bg-slate-100 hover:text-red-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-red-400 transition cursor-pointer"
-        title="Reset or Clear Inputs"
-      >
-        <span>🔄 Clear / Reset</span>
-      </button>
+    <!-- QUICK EXAMPLE PRESETS -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-center gap-1.5 text-xs">
+        <span class="font-bold text-slate-600 dark:text-slate-400 mr-1 flex items-center gap-1">
+          <span>⚡</span> Quick Presets:
+        </span>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-unit="m" data-span="4.0" data-support="230" data-w="230" data-d="230" data-top-c="2" data-top-d="12" data-top-ex-c="0" data-bot-c="2" data-bot-d="12" data-bot-ex-c="0" data-stirrup-d="8" data-stirrup-mode="uniform" data-stirrup-s="150">Plinth Beam (230×230 mm / 9"×9")</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-unit="m" data-span="4.5" data-support="230" data-w="230" data-d="380" data-top-c="2" data-top-d="12" data-top-ex-c="2" data-bot-c="3" data-bot-d="16" data-bot-ex-c="0" data-stirrup-d="8" data-stirrup-mode="two_zone" data-stirrup-sup="100" data-stirrup-mid="150">Floor Beam (230×380 mm / 9"×15")</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-unit="m" data-span="5.0" data-support="230" data-w="230" data-d="450" data-top-c="2" data-top-d="12" data-top-ex-c="2" data-bot-c="3" data-bot-d="16" data-bot-ex-c="1" data-stirrup-d="8" data-stirrup-mode="two_zone" data-stirrup-sup="100" data-stirrup-mid="150">Standard RCC Beam (230×450 mm / 9"×18")</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-unit="m" data-span="6.0" data-support="300" data-w="300" data-d="600" data-top-c="3" data-top-d="16" data-top-ex-c="2" data-bot-c="4" data-bot-d="20" data-bot-ex-c="2" data-stirrup-d="8" data-stirrup-mode="two_zone" data-stirrup-sup="100" data-stirrup-mid="150">Heavy Commercial (300×600 mm / 12"×24")</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-unit="m" data-span="7.0" data-support="300" data-w="300" data-d="800" data-top-c="3" data-top-d="20" data-top-ex-c="2" data-bot-c="4" data-bot-d="25" data-bot-ex-c="2" data-side="true" data-side-c="1" data-side-d="12" data-stirrup-d="10" data-stirrup-mode="two_zone" data-stirrup-sup="100" data-stirrup-mid="150">Deep Beam (300×800 mm with Side Bars)</button>
+      </div>
     </div>
 
-    <!-- Output Box -->
-    <div id="results-card" class="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-950">
-      <div class="border-b border-slate-200/80 pb-4 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    <!-- MAIN CALCULATOR FORM -->
+    <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-blue-50/30 p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/20 sm:p-7">
+      
+      <!-- HEADER & MODE TOGGLER -->
+      <div class="border-b border-slate-200/80 pb-4 dark:border-slate-800/80">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h2 class="text-lg sm:text-xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+              <span>🏗️</span> RCC Beam Steel & Material Takeoff
+            </h2>
+            <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+              Calculate rebar weight, BBS cutting length, stirrups, 12m stock bars, and concrete mix quantities.
+            </p>
+          </div>
+          
+          <!-- CALCULATION METHOD SWITCHER PILLS -->
+          <div class="inline-flex rounded-xl bg-slate-200/80 p-1 dark:bg-slate-800/80 self-start sm:self-center">
+            <button
+              type="button"
+              id="btn-mode-adv"
+              class="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-blue-700 shadow-xs dark:bg-blue-600 dark:text-white transition cursor-pointer"
+            >
+              📐 Advanced BBS Mode
+            </button>
+            <button
+              type="button"
+              id="btn-mode-norm"
+              class="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition cursor-pointer"
+            >
+              ⚡ Normal (Thumb Rule)
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <form id="form-rcc-beam" class="mt-5 space-y-5" novalidate onsubmit="return false;">
+        
+        <!-- SECTION 1: BEAM DIMENSIONS & GEOMETRY (COMMON) -->
         <div>
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Beam Steel Weight</span>
-          <div id="res-beam-total-steel" class="mt-1 text-3xl font-black text-blue-600 dark:text-blue-400">-- kg</div>
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <span>1.</span> Beam Dimensions & Support Geometry
+            </h3>
+            <div class="flex items-center gap-1 text-xs">
+              <span class="text-slate-500 dark:text-slate-400 font-semibold mr-1">Unit:</span>
+              <button type="button" id="btn-unit-m" class="btn-unit active rounded-lg bg-blue-600 px-2.5 py-1 font-bold text-white shadow-xs cursor-pointer" data-unit="m">Metric (m / mm)</button>
+              <button type="button" id="btn-unit-ft" class="btn-unit rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-unit="ft">Imperial (ft / in)</button>
+            </div>
+          </div>
+
+          <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            <div>
+              <label for="bm-len" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Clear Span L (<span class="lbl-dim-unit">m</span>)
+              </label>
+              <input
+                type="number"
+                id="bm-len"
+                value="5.0"
+                step="0.1"
+                min="0.1"
+                class="mt-1 w-full rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label for="bm-support-width" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Support Bearing (<span class="lbl-sec-unit">mm</span>)
+              </label>
+              <input
+                type="number"
+                id="bm-support-width"
+                value="230"
+                step="10"
+                min="50"
+                class="mt-1 w-full rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label for="bm-width" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Beam Width B (<span class="lbl-sec-unit">mm</span>)
+              </label>
+              <input
+                type="number"
+                id="bm-width"
+                value="230"
+                step="10"
+                min="50"
+                class="mt-1 w-full rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label for="bm-depth" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Beam Depth D (<span class="lbl-sec-unit">mm</span>)
+              </label>
+              <input
+                type="number"
+                id="bm-depth"
+                value="450"
+                step="10"
+                min="50"
+                class="mt-1 w-full rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label for="bm-cover" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Clear Cover (<span class="lbl-sec-unit">mm</span>)
+              </label>
+              <input
+                type="number"
+                id="bm-cover"
+                value="25"
+                step="5"
+                min="15"
+                class="mt-1 w-full rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label for="bm-count" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                No. of Beams
+              </label>
+              <input
+                type="number"
+                id="bm-count"
+                value="1"
+                step="1"
+                min="1"
+                class="mt-1 w-full rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              />
+            </div>
+          </div>
         </div>
-        <div class="text-right">
-          <span class="text-xs text-slate-500">Concrete Volume:</span>
-          <span id="res-beam-concrete" class="font-bold text-slate-900 dark:text-white ml-1">-- m³</span>
+
+        <!-- ========================================================= -->
+        <!-- ADVANCED MODE CONTAINER -->
+        <!-- ========================================================= -->
+        <div id="section-adv-inputs" class="space-y-4">
+          
+          <!-- CONFIG & REBAR DETAILING SPECIFICATIONS -->
+          <div class="rounded-2xl border border-slate-200 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-900/80">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-slate-100 dark:border-slate-800">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                2. Rebar Detailing Standard & Concrete Mix
+              </h3>
+              <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                IS 456:2000 & IS 13920:2016
+              </span>
+            </div>
+
+            <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div>
+                <label for="select-concrete-grade" class="block font-bold text-slate-700 dark:text-slate-300">
+                  Concrete Mix Grade
+                </label>
+                <select id="select-concrete-grade" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                  <option value="M20" selected>M20 (1 : 1.5 : 3) – Standard Floor Beam</option>
+                  <option value="M25">M25 (1 : 1 : 2) – Heavy Load / High-Rise Beam</option>
+                  <option value="M15">M15 (1 : 2 : 4) – Low Load / Plinth Tie Beam</option>
+                </select>
+              </div>
+
+              <div>
+                <label for="select-end-anchoring" class="block font-bold text-slate-700 dark:text-slate-300">
+                  End Anchorage & Bend
+                </label>
+                <select id="select-end-anchoring" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                  <option value="standard_90" selected>Standard 90° L-Bend (12d Hook)</option>
+                  <option value="deep_ld">Full Development Length Ld (48d)</option>
+                </select>
+              </div>
+
+              <div>
+                <label for="input-wastage" class="block font-bold text-slate-700 dark:text-slate-300">
+                  Cutting & Site Wastage (%)
+                </label>
+                <input
+                  type="number"
+                  id="input-wastage"
+                  value="3"
+                  min="0"
+                  max="15"
+                  step="0.5"
+                  class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- TOP & BOTTOM REINFORCEMENT SPECIFICATIONS -->
+          <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            
+            <!-- TOP REINFORCEMENT CARD -->
+            <div class="rounded-2xl border border-blue-200 bg-blue-50/40 p-4 dark:border-blue-950 dark:bg-slate-900/70">
+              <div class="flex items-center justify-between pb-2 border-b border-blue-200/60 dark:border-slate-800">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
+                  <span>A.</span> Top Reinforcement (Compression & Hogging)
+                </h4>
+                <span class="rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                  Top Face
+                </span>
+              </div>
+
+              <div class="mt-3 space-y-3 text-xs">
+                <div>
+                  <span class="font-bold text-slate-700 dark:text-slate-300">Continuous Through Bars:</span>
+                  <div class="mt-1 flex gap-2">
+                    <div class="w-1/2">
+                      <label for="bm-top-count" class="text-[11px] text-slate-500 dark:text-slate-400">Number of Bars</label>
+                      <input type="number" id="bm-top-count" value="2" min="2" class="mt-0.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-center dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                    </div>
+                    <div class="w-1/2">
+                      <label for="bm-top-dia" class="text-[11px] text-slate-500 dark:text-slate-400">Bar Diameter</label>
+                      <select id="bm-top-dia" class="mt-0.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                        <option value="10">10 mm</option>
+                        <option value="12" selected>12 mm</option>
+                        <option value="16">16 mm</option>
+                        <option value="20">20 mm</option>
+                        <option value="25">25 mm</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="pt-2 border-t border-blue-200/60 dark:border-slate-800">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-slate-700 dark:text-slate-300">Support Extra Bars (Hogging @ L/4):</span>
+                    <span class="text-[11px] text-blue-600 dark:text-blue-400 font-medium">Left & Right Supports</span>
+                  </div>
+                  <div class="mt-1 flex gap-2">
+                    <div class="w-1/2">
+                      <label for="bm-top-extra-count" class="text-[11px] text-slate-500 dark:text-slate-400">Extra Bars / Support</label>
+                      <input type="number" id="bm-top-extra-count" value="2" min="0" class="mt-0.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-center dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                    </div>
+                    <div class="w-1/2">
+                      <label for="bm-top-extra-dia" class="text-[11px] text-slate-500 dark:text-slate-400">Extra Bar Dia</label>
+                      <select id="bm-top-extra-dia" class="mt-0.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                        <option value="10">10 mm</option>
+                        <option value="12" selected>12 mm</option>
+                        <option value="16">16 mm</option>
+                        <option value="20">20 mm</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- BOTTOM REINFORCEMENT CARD -->
+            <div class="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-4 dark:border-emerald-950 dark:bg-slate-900/70">
+              <div class="flex items-center justify-between pb-2 border-b border-emerald-200/60 dark:border-slate-800">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
+                  <span>B.</span> Bottom Reinforcement (Main Tension & Sagging)
+                </h4>
+                <span class="rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                  Bottom Face
+                </span>
+              </div>
+
+              <div class="mt-3 space-y-3 text-xs">
+                <div>
+                  <span class="font-bold text-slate-700 dark:text-slate-300">Continuous Tension Bars:</span>
+                  <div class="mt-1 flex gap-2">
+                    <div class="w-1/2">
+                      <label for="bm-bot-count" class="text-[11px] text-slate-500 dark:text-slate-400">Number of Bars</label>
+                      <input type="number" id="bm-bot-count" value="3" min="2" class="mt-0.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-center dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                    </div>
+                    <div class="w-1/2">
+                      <label for="bm-bot-dia" class="text-[11px] text-slate-500 dark:text-slate-400">Bar Diameter</label>
+                      <select id="bm-bot-dia" class="mt-0.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                        <option value="12">12 mm</option>
+                        <option value="16" selected>16 mm</option>
+                        <option value="20">20 mm</option>
+                        <option value="25">25 mm</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="pt-2 border-t border-emerald-200/60 dark:border-slate-800">
+                  <div class="flex items-center justify-between">
+                    <span class="font-bold text-slate-700 dark:text-slate-300">Mid-Span Extra Bars (Sagging @ 0.75L):</span>
+                    <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">Curtailed Midspan</span>
+                  </div>
+                  <div class="mt-1 flex gap-2">
+                    <div class="w-1/2">
+                      <label for="bm-bot-extra-count" class="text-[11px] text-slate-500 dark:text-slate-400">Extra Mid Bars</label>
+                      <input type="number" id="bm-bot-extra-count" value="0" min="0" class="mt-0.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-center dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                    </div>
+                    <div class="w-1/2">
+                      <label for="bm-bot-extra-dia" class="text-[11px] text-slate-500 dark:text-slate-400">Extra Bar Dia</label>
+                      <select id="bm-bot-extra-dia" class="mt-0.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                        <option value="12">12 mm</option>
+                        <option value="16" selected>16 mm</option>
+                        <option value="20">20 mm</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SIDE FACE SKIN REINFORCEMENT (IS 456 CL. 26.5.1.6) -->
+          <div id="box-side-face" class="rounded-2xl border border-purple-200 bg-purple-50/40 p-4 dark:border-purple-950 dark:bg-slate-900/70">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 pb-2 border-b border-purple-200/60 dark:border-slate-800">
+              <div class="flex items-center gap-2">
+                <input type="checkbox" id="check-side-face" class="h-4 w-4 rounded-md border-purple-300 text-purple-600 focus:ring-purple-500 cursor-pointer" />
+                <label for="check-side-face" class="text-xs font-bold uppercase tracking-wider text-purple-900 dark:text-purple-300 cursor-pointer">
+                  Side Face Skin Reinforcement (Required when Beam Depth D &gt; 750 mm)
+                </label>
+              </div>
+              <span id="badge-side-face-alert" class="hidden rounded-md bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-800 dark:bg-purple-950 dark:text-purple-300">
+                ⚠️ IS 456 Cl. 26.5.1.6 Active
+              </span>
+            </div>
+
+            <div id="section-side-face-inputs" class="hidden mt-3 grid grid-cols-2 gap-3 text-xs">
+              <div>
+                <label for="bm-side-count" class="text-[11px] font-bold text-slate-700 dark:text-slate-300">Bars per Side Face</label>
+                <input type="number" id="bm-side-count" value="1" min="1" class="mt-0.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-center dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+              </div>
+              <div>
+                <label for="bm-side-dia" class="text-[11px] font-bold text-slate-700 dark:text-slate-300">Side Bar Dia</label>
+                <select id="bm-side-dia" class="mt-0.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                  <option value="10">10 mm</option>
+                  <option value="12" selected>12 mm</option>
+                  <option value="16">16 mm</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- STIRRUPS (SHEAR LINKS) DETAILING -->
+          <div class="rounded-2xl border border-amber-200 bg-amber-50/40 p-4 dark:border-amber-950 dark:bg-slate-900/70">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-amber-200/60 dark:border-slate-800">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
+                <span>C.</span> Stirrups (Shear Links) Detailing
+              </h4>
+              <span class="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                135° Seismic Hooks (IS 13920)
+              </span>
+            </div>
+
+            <div class="mt-3 grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+              <div>
+                <label for="bm-stirrup-dia" class="block font-bold text-slate-700 dark:text-slate-300">Ring Dia (mm)</label>
+                <select id="bm-stirrup-dia" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                  <option value="8" selected>8 mm (Standard)</option>
+                  <option value="10">10 mm (Heavy)</option>
+                  <option value="12">12 mm (Deep/High Shear)</option>
+                </select>
+              </div>
+
+              <div>
+                <label for="bm-stirrup-legs" class="block font-bold text-slate-700 dark:text-slate-300">Stirrup Legs</label>
+                <select id="bm-stirrup-legs" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                  <option value="2" selected>2-Legged Ring</option>
+                  <option value="4">4-Legged Ring (B ≥ 350mm)</option>
+                </select>
+              </div>
+
+              <div>
+                <label for="bm-stirrup-mode" class="block font-bold text-slate-700 dark:text-slate-300">Spacing Detailing Mode</label>
+                <select id="bm-stirrup-mode" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                  <option value="two_zone" selected>2-Zone Shear (IS 13920 Ductile)</option>
+                  <option value="uniform">Uniform Spacing Throughout</option>
+                </select>
+              </div>
+
+              <div id="box-stirrup-spacing-uniform" class="hidden">
+                <label for="bm-stirrup-spacing-uniform" class="block font-bold text-slate-700 dark:text-slate-300">Spacing (<span class="lbl-sec-unit">mm</span>)</label>
+                <input type="number" id="bm-stirrup-spacing-uniform" value="150" step="10" min="50" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+              </div>
+
+              <div id="box-stirrup-spacing-twozone" class="grid grid-cols-2 gap-2">
+                <div>
+                  <label for="bm-stirrup-spacing-sup" class="block font-bold text-slate-700 dark:text-slate-300">Support L/4</label>
+                  <input type="number" id="bm-stirrup-spacing-sup" value="100" step="10" min="50" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                </div>
+                <div>
+                  <label for="bm-stirrup-spacing-mid" class="block font-bold text-slate-700 dark:text-slate-300">Mid-Span</label>
+                  <input type="number" id="bm-stirrup-spacing-mid" value="150" step="10" min="50" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- NORMAL / THUMB RULE MODE CONTAINER -->
+        <!-- ========================================================= -->
+        <div id="section-norm-inputs" class="hidden space-y-4">
+          <div class="rounded-2xl border border-blue-200 bg-blue-50/50 p-4 text-xs text-blue-900 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-200">
+            <strong>⚡ CPWD / IS 456 Preliminary Thumb-Rule Mode:</strong>
+            Instant material estimation based on typical civil structural rates without needing bar bending schedules.
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-900/80 space-y-4">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div>
+                <label for="select-norm-type" class="block font-bold text-slate-700 dark:text-slate-300">
+                  Beam Construction Type & Rate
+                </label>
+                <select id="select-norm-type" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                  <option value="light">Light / Residential Tie Beam (1.0% = 80 kg/m³)</option>
+                  <option value="standard" selected>Standard RCC Floor Beam (1.5% = 120 kg/m³)</option>
+                  <option value="heavy">Heavy Commercial / Transfer Beam (2.0% = 160 kg/m³)</option>
+                  <option value="custom">Custom Rate (kg/m³)</option>
+                </select>
+              </div>
+
+              <div id="box-norm-custom-rate" class="hidden">
+                <label for="input-norm-custom-rate" class="block font-bold text-slate-700 dark:text-slate-300">
+                  Custom Steel Rate (kg/m³)
+                </label>
+                <input type="number" id="input-norm-custom-rate" value="120" step="5" min="10" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+              </div>
+
+              <div>
+                <label for="select-norm-dia" class="block font-bold text-slate-700 dark:text-slate-300">
+                  Primary Rebar Stock Dia
+                </label>
+                <select id="select-norm-dia" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                  <option value="12">12 mm</option>
+                  <option value="16" selected>16 mm</option>
+                  <option value="20">20 mm</option>
+                  <option value="25">25 mm</option>
+                </select>
+              </div>
+
+              <div>
+                <label for="select-norm-concrete" class="block font-bold text-slate-700 dark:text-slate-300">
+                  Concrete Mix Grade
+                </label>
+                <select id="select-norm-concrete" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                  <option value="M20" selected>M20 (1 : 1.5 : 3)</option>
+                  <option value="M25">M25 (1 : 1 : 2)</option>
+                  <option value="M15">M15 (1 : 2 : 4)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- MATERIAL UNIT COSTS (OPTIONAL ESTIMATION) -->
+        <div class="rounded-2xl border border-slate-200 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-900/80">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            <span>3. Unit Rates for Project Budget Estimation (Optional)</span>
+            <span class="text-[11px] text-slate-500 font-normal">Currency (₹ / $)</span>
+          </div>
+
+          <div class="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div>
+              <label for="cost-steel" class="text-slate-600 dark:text-slate-400 font-semibold">Steel Rebar (/kg)</label>
+              <input type="number" id="cost-steel" value="75" step="1" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+            <div>
+              <label for="cost-concrete" class="text-slate-600 dark:text-slate-400 font-semibold">Concrete (/m³)</label>
+              <input type="number" id="cost-concrete" value="4800" step="50" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+            <div>
+              <label for="cost-shuttering" class="text-slate-600 dark:text-slate-400 font-semibold">Shuttering (/m²)</label>
+              <input type="number" id="cost-shuttering" value="350" step="10" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+            <div>
+              <label for="cost-wire" class="text-slate-600 dark:text-slate-400 font-semibold">Binding Wire (/kg)</label>
+              <input type="number" id="cost-wire" value="100" step="5" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTION BUTTONS: CALCULATE & CLEAR -->
+        <div class="flex flex-wrap items-center gap-3 pt-1">
+          <button
+            type="button"
+            id="btn-calc-beam"
+            class="flex-1 min-w-[220px] inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-blue-500/25 transition active:scale-[0.98] cursor-pointer"
+          >
+            <span>⚡ Calculate Beam Steel & Concrete</span>
+            <span>→</span>
+          </button>
+          <button
+            type="button"
+            id="btn-clear-beam"
+            class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3.5 text-sm font-bold text-slate-700 hover:bg-slate-100 hover:text-red-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-red-400 transition cursor-pointer"
+            title="Reset or Clear Inputs"
+          >
+            <span>🔄 Clear / Reset</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- COMPREHENSIVE OUTPUT RESULTS CONTAINER -->
+    <!-- ========================================================= -->
+    <div id="results-card" class="rounded-3xl border border-slate-200 bg-white p-5 sm:p-7 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 space-y-6">
+      
+      <!-- HERO TAKEAWAY STATS -->
+      <div class="rounded-2xl border border-blue-200/80 bg-gradient-to-br from-blue-50/70 via-indigo-50/40 to-white p-5 dark:border-blue-900/60 dark:from-slate-950 dark:via-blue-950/20 dark:to-slate-900">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-blue-200/60 pb-4 dark:border-slate-800">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="rounded-md bg-blue-600 px-2 py-0.5 text-[10px] font-black uppercase tracking-wider text-white">
+                Total Material Takeoff
+              </span>
+              <span class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">
+                Total Beam Steel Weight
+              </span>
+            </div>
+            <div class="mt-1 flex flex-wrap items-baseline gap-2">
+              <span id="res-beam-total-steel" class="text-3xl sm:text-4xl font-black text-blue-600 dark:text-blue-400">-- kg</span>
+              <span id="res-beam-total-steel-other" class="text-sm sm:text-base font-bold text-slate-600 dark:text-slate-300">(-- Quintals | -- Tonnes)</span>
+            </div>
+          </div>
+          <div class="text-left sm:text-right">
+            <span class="text-xs text-slate-500 dark:text-slate-400">Wet Concrete Volume:</span>
+            <div id="res-beam-concrete" class="text-base sm:text-lg font-black text-slate-900 dark:text-white">-- m³ (-- cu ft)</div>
+            <div id="res-beam-shuttering" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">Formwork: -- m²</div>
+          </div>
+        </div>
+
+        <!-- GEOMETRY & STEEL INTENSITY STATS -->
+        <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 text-xs">
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Beam Cross Section</div>
+            <div id="res-geom-dim" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">--</div>
+          </div>
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Total Beam Length</div>
+            <div id="res-geom-length" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">--</div>
+          </div>
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Steel Intensity</div>
+            <div id="res-intensity-vol" class="mt-1 text-sm font-bold text-emerald-600 dark:text-emerald-400">-- kg/m³</div>
+          </div>
+          <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Estimated Cost</div>
+            <div id="res-cost-total" class="mt-1 text-sm font-bold text-blue-600 dark:text-blue-400">₹ --</div>
+          </div>
         </div>
       </div>
 
-      <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 text-xs">
-        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
-          <div class="text-slate-500 dark:text-slate-400">Top Rebar Weight</div>
-          <div id="res-beam-top-wt" class="mt-1 text-base font-bold text-slate-900 dark:text-white">--</div>
+      <!-- INTERACTIVE VISUAL BEAM DIAGRAMS (CROSS-SECTION & ELEVATION) -->
+      <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-800">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
+            <span>📐</span> Visual Beam Detailing Diagrams
+          </h3>
+          <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Dynamic Rebar Preview</span>
         </div>
-        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
-          <div class="text-slate-500 dark:text-slate-400">Bottom Rebar Weight</div>
-          <div id="res-beam-bot-wt" class="mt-1 text-base font-bold text-slate-900 dark:text-white">--</div>
-        </div>
-        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
-          <div class="text-slate-500 dark:text-slate-400">Stirrup Ring Cut Length</div>
-          <div id="res-beam-stirrup-len" class="mt-1 text-base font-bold text-emerald-600 dark:text-emerald-400">--</div>
-        </div>
-        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
-          <div class="text-slate-500 dark:text-slate-400">Total Stirrups Count</div>
-          <div id="res-beam-stirrup-count" class="mt-1 text-base font-bold text-slate-900 dark:text-white">-- Rings</div>
+
+        <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          
+          <!-- BEAM CROSS SECTION SVG -->
+          <div class="rounded-xl border border-slate-200 bg-white p-3 text-center dark:border-slate-800 dark:bg-slate-900">
+            <div class="text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-2">Cross-Section (B × D)</div>
+            <div class="flex justify-center items-center overflow-x-auto min-h-[220px]">
+              <svg id="svg-cross-section" viewBox="0 0 280 240" class="w-full max-w-[280px] h-auto"></svg>
+            </div>
+            <div id="lbl-cross-caption" class="mt-2 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+              --
+            </div>
+          </div>
+
+          <!-- BEAM LONGITUDINAL ELEVATION SVG -->
+          <div class="rounded-xl border border-slate-200 bg-white p-3 text-center dark:border-slate-800 dark:bg-slate-900">
+            <div class="text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-2">Longitudinal Elevation (Span & Shear Zones)</div>
+            <div class="flex justify-center items-center overflow-x-auto min-h-[220px]">
+              <svg id="svg-elevation" viewBox="0 0 420 220" class="w-full max-w-[420px] h-auto"></svg>
+            </div>
+            <div id="lbl-elevation-caption" class="mt-2 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+              --
+            </div>
+          </div>
         </div>
       </div>
+
+      <!-- ADVANCED BBS DETAILED TABLE -->
+      <div id="box-bbs-table" class="space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h3 class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📋</span> Bar Bending Schedule (BBS) Table
+          </h3>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              id="btn-copy-bbs"
+              class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+            >
+              📋 Copy Table
+            </button>
+            <button
+              type="button"
+              id="btn-download-csv"
+              class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+            >
+              📥 CSV
+            </button>
+            <button
+              type="button"
+              id="btn-print-bbs"
+              class="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700 shadow-xs cursor-pointer"
+            >
+              🖨️ Print / PDF
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
+          <table id="tbl-bbs" class="w-full text-left text-xs border-collapse">
+            <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
+              <tr>
+                <th class="p-2.5">Mark</th>
+                <th class="p-2.5">Description</th>
+                <th class="p-2.5 text-center">Dia (mm)</th>
+                <th class="p-2.5">Shape Code</th>
+                <th class="p-2.5 text-center">Nos</th>
+                <th class="p-2.5 text-right">Cut Len (m)</th>
+                <th class="p-2.5 text-right">Tot Len (m)</th>
+                <th class="p-2.5 text-right">Unit Wt (kg/m)</th>
+                <th class="p-2.5 text-right">Tot Wt (kg)</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-bbs" class="divide-y divide-slate-100 dark:divide-slate-800/80 bg-white dark:bg-slate-900 font-medium text-slate-800 dark:text-slate-200">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DIAMETER-WISE SUMMARY & COMMERCIAL 12M STOCK BARS -->
+      <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        
+        <!-- DIAMETER PROCUREMENT TABLE -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 border-b border-slate-100 pb-2 dark:border-slate-800 flex items-center gap-2">
+            <span>📦</span> Commercial 12-Meter Rebar Stock & Bundles
+          </h4>
+          <div class="mt-3 overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold">
+                <tr>
+                  <th class="p-2">Dia</th>
+                  <th class="p-2 text-right">Total (m)</th>
+                  <th class="p-2 text-right">Weight (kg)</th>
+                  <th class="p-2 text-center">12m Rods</th>
+                  <th class="p-2 text-center">Bundles</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-diameter-summary" class="divide-y divide-slate-100 dark:divide-slate-800">
+                <!-- Rendered dynamically -->
+              </tbody>
+            </table>
+          </div>
+          <div class="mt-3 text-[11px] text-slate-500 dark:text-slate-400">
+            * Commercial bundles calculated as per standard steel rolling mill factory packing counts (e.g. 8mm=10, 10mm=7, 12mm=5, 16mm=3 rods/bundle).
+          </div>
+        </div>
+
+        <!-- CONCRETE MIX BOQ & SHUTTERING TAKEOFF -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 border-b border-slate-100 pb-2 dark:border-slate-800 flex items-center gap-2">
+            <span>🧱</span> Concrete Mix BOQ & Shuttering Takeoff
+          </h4>
+
+          <div class="mt-3 grid grid-cols-2 gap-2 text-xs">
+            <div class="rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-slate-800 dark:bg-slate-800/50">
+              <span class="text-slate-500 dark:text-slate-400">Cement (50 kg Bags):</span>
+              <div id="res-boq-cement" class="text-base font-bold text-slate-900 dark:text-white mt-0.5">-- Bags</div>
+            </div>
+            <div class="rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-slate-800 dark:bg-slate-800/50">
+              <span class="text-slate-500 dark:text-slate-400">Sand (Fine Aggregate):</span>
+              <div id="res-boq-sand" class="text-base font-bold text-slate-900 dark:text-white mt-0.5">-- cft</div>
+            </div>
+            <div class="rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-slate-800 dark:bg-slate-800/50">
+              <span class="text-slate-500 dark:text-slate-400">20mm/10mm Aggregate:</span>
+              <div id="res-boq-aggregate" class="text-base font-bold text-slate-900 dark:text-white mt-0.5">-- cft</div>
+            </div>
+            <div class="rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-slate-800 dark:bg-slate-800/50">
+              <span class="text-slate-500 dark:text-slate-400">Formwork Shuttering:</span>
+              <div id="res-boq-shuttering" class="text-base font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">-- m²</div>
+            </div>
+            <div class="col-span-2 rounded-xl border border-slate-100 bg-slate-50/80 p-2.5 dark:border-slate-800 dark:bg-slate-800/50 flex justify-between items-center">
+              <span class="text-slate-500 dark:text-slate-400">Binding Wire (18 Gauge GI):</span>
+              <span id="res-boq-wire" class="text-sm font-bold text-slate-900 dark:text-white">-- kg</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COST BREAKDOWN TABLE -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 border-b border-slate-100 pb-2 dark:border-slate-800 flex items-center gap-2">
+          <span>💰</span> Estimated Project Cost Breakdown
+        </h4>
+
+        <div class="mt-3 overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-bold">
+              <tr>
+                <th class="p-2">Item</th>
+                <th class="p-2 text-right">Quantity</th>
+                <th class="p-2 text-right">Unit Rate</th>
+                <th class="p-2 text-right">Total Amount</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              <tr>
+                <td class="p-2 font-medium">Steel Rebars (Fe 500 / TMT)</td>
+                <td id="res-cost-steel-qty" class="p-2 text-right font-semibold">--</td>
+                <td id="res-cost-steel-rate" class="p-2 text-right font-mono">--</td>
+                <td id="res-cost-steel-amt" class="p-2 text-right font-bold text-blue-600 dark:text-blue-400">--</td>
+              </tr>
+              <tr>
+                <td class="p-2 font-medium">Concrete Mix (Ready/Site Mix)</td>
+                <td id="res-cost-conc-qty" class="p-2 text-right font-semibold">--</td>
+                <td id="res-cost-conc-rate" class="p-2 text-right font-mono">--</td>
+                <td id="res-cost-conc-amt" class="p-2 text-right font-bold">--</td>
+              </tr>
+              <tr>
+                <td class="p-2 font-medium">Shuttering & Centering Formwork</td>
+                <td id="res-cost-shut-qty" class="p-2 text-right font-semibold">--</td>
+                <td id="res-cost-shut-rate" class="p-2 text-right font-mono">--</td>
+                <td id="res-cost-shut-amt" class="p-2 text-right font-bold">--</td>
+              </tr>
+              <tr>
+                <td class="p-2 font-medium">Binding Wire (18 Gauge)</td>
+                <td id="res-cost-wire-qty" class="p-2 text-right font-semibold">--</td>
+                <td id="res-cost-wire-rate" class="p-2 text-right font-mono">--</td>
+                <td id="res-cost-wire-amt" class="p-2 text-right font-bold">--</td>
+              </tr>
+              <tr class="bg-blue-50/50 dark:bg-blue-950/20 font-extrabold text-slate-900 dark:text-white">
+                <td class="p-2.5">Grand Total Estimated Cost</td>
+                <td colspan="2"></td>
+                <td id="res-cost-grand-amt" class="p-2.5 text-right text-base text-blue-600 dark:text-blue-400 font-black">₹ --</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </div>
 
+  <!-- EDUCATIONAL CONTENT & TECHNICAL IS CODES (SLOT CONTENT) -->
   <Fragment slot="content">
-    <h2>RCC Beam Bar Bending Schedule (BBS)</h2>
-    <p>
-      Beams experience shear stress near supports and bending moments at mid-span. Stirrups (shear reinforcement) resist diagonal shear tension, while bottom bars resist positive sagging moments.
-    </p>
+    <div class="rcc-beam-steel-content prose dark:prose-invert max-w-none">
+      <h2>RCC Beam Steel Calculation Formulas & Detailing Rules (IS 456 & IS 13920)</h2>
+      <p>
+        Reinforced Cement Concrete (RCC) beams are primary horizontal structural members designed to withstand bending moments (sagging at mid-span, hogging at supports) and vertical shear forces (maximum near columns/supports). Accurate determination of the <strong>Bar Bending Schedule (BBS)</strong> and <strong>concrete takeoff</strong> prevents site shortages, eliminates rebar cutting scrap, and ensures strict conformity with building codes.
+      </p>
+
+      <h3>1. Standard Steel Unit Weight Formula (D² / 162)</h3>
+      <p>
+        The nominal weight per running meter of any cylindrical steel rebar is derived from the density of mild/TMT steel (<code>ρ = 7850 kg/m³</code>):
+      </p>
+      <div class="bg-slate-100 p-3 rounded-xl font-mono text-sm dark:bg-slate-800">
+        Weight (kg/m) = (Diameter in mm)² ÷ 162.28 ≈ D² ÷ 162
+      </div>
+      <ul>
+        <li><strong>8 mm:</strong> 0.395 kg/m</li>
+        <li><strong>10 mm:</strong> 0.617 kg/m</li>
+        <li><strong>12 mm:</strong> 0.889 kg/m</li>
+        <li><strong>16 mm:</strong> 1.580 kg/m</li>
+        <li><strong>20 mm:</strong> 2.469 kg/m</li>
+        <li><strong>25 mm:</strong> 3.858 kg/m</li>
+      </ul>
+
+      <h3>2. Main Reinforcement Cutting Length Formula</h3>
+      <p>
+        The cutting length of straight continuous through bars anchored into column or beam supports:
+      </p>
+      <div class="bg-slate-100 p-3 rounded-xl font-mono text-sm dark:bg-slate-800">
+        Cutting Length = Clear Span + 2 × (Support Bearing Width - End Cover) + 2 × (Hook Length) - Bend Deductions
+      </div>
+      <ul>
+        <li><strong>Standard 90° Hook:</strong> Typically <code>12d</code> to <code>16d</code> (minimum 150 mm).</li>
+        <li><strong>Development Length (Ld):</strong> For full tension anchorage as per IS 456 Cl. 26.2.1, <code>Ld ≈ 48d</code> for Fe500 in M20 concrete.</li>
+        <li><strong>Bend Deductions (IS 2502):</strong> Deduct <code>2d</code> for each 90° bend to account for elongation of steel rebar during cold bending.</li>
+      </ul>
+
+      <h3>3. Stirrups (Shear Links) Cutting Length & Hooks (IS 2502 & IS 13920)</h3>
+      <p>
+        A standard rectangular beam ring enclosing the top and bottom main rebar cage:
+      </p>
+      <div class="bg-slate-100 p-3 rounded-xl font-mono text-sm dark:bg-slate-800">
+        Core Width (a) = Beam Width - 2 × Clear Cover<br/>
+        Core Depth (b) = Beam Depth - 2 × Clear Cover<br/>
+        Cutting Length = 2 × (a + b) + 2 × (Hook Length) - Bend Deductions
+      </div>
+      <ul>
+        <li><strong>135° Seismic Hook Length:</strong> Must be <code>10 × bar diameter</code> (minimum 75 mm) as mandated by IS 13920:2016 for earthquake-resistant ductile detailing.</li>
+        <li><strong>Bend Deductions:</strong> 3 bends of 90° (<code>3 × 2d = 6d</code>) + 2 bends of 135° (<code>2 × 3d = 6d</code>) = <code>12d</code> total deduction.</li>
+      </ul>
+
+      <h3>4. Two-Zone Shear Detailing (IS 13920 Ductile Detailing)</h3>
+      <p>
+        Shear force is highest near support faces and diminishes towards mid-span. Ductile earthquake detailing (IS 13920) divides the beam into:
+      </p>
+      <ol>
+        <li><strong>Support Zones (L/4 or 2D at each end):</strong> Closely spaced stirrups (e.g. 100 mm c/c) to arrest diagonal tension cracks and provide core concrete confinement.</li>
+        <li><strong>Mid-Span Zone (remaining L/2):</strong> Wider spacing (e.g. 150 mm or 200 mm c/c) where bending moment dominates and shear stress is minimal.</li>
+      </ol>
+
+      <h3>5. Side Face Reinforcement (IS 456 Clause 26.5.1.6)</h3>
+      <p>
+        When the overall depth of a beam exceeds <strong>750 mm</strong>, side face (skin) reinforcement of not less than <strong>0.1% of the web area</strong> must be distributed equally on both vertical faces with spacing not exceeding 300 mm or web width. This prevents lateral web buckling and controls shrinkage/thermal cracking.
+      </p>
+
+      <h3>6. Site Thumb-Rule Rates (CPWD Preliminary Estimation)</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border border-slate-300 dark:border-slate-700">
+          <thead class="bg-slate-100 dark:bg-slate-800">
+            <tr>
+              <th class="p-2 border">Beam Classification</th>
+              <th class="p-2 border">Steel Ratio (% Concrete Vol)</th>
+              <th class="p-2 border">Steel Consumption Rate</th>
+              <th class="p-2 border">Typical Applications</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="p-2 border font-bold">Light / Tie Beam</td>
+              <td class="p-2 border">1.0%</td>
+              <td class="p-2 border">80 kg / m³</td>
+              <td class="p-2 border">Plinth beams, lintel tie beams, roof parapet</td>
+            </tr>
+            <tr>
+              <td class="p-2 border font-bold">Standard Floor Beam</td>
+              <td class="p-2 border">1.5%</td>
+              <td class="p-2 border">120 kg / m³</td>
+              <td class="p-2 border">Residential G+1, G+2 floor and roof beams</td>
+            </tr>
+            <tr>
+              <td class="p-2 border font-bold">Heavy Commercial Beam</td>
+              <td class="p-2 border">2.0%</td>
+              <td class="p-2 border">160 kg / m³</td>
+              <td class="p-2 border">Commercial complexes, basement transfer girders</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>7. Shuttering / Formwork Calculation Formula</h3>
+      <p>
+        The shuttering contact area for a cast-in-place beam supported by columns comprises the bottom soffit plus both exposed vertical sides:
+      </p>
+      <div class="bg-slate-100 p-3 rounded-xl font-mono text-sm dark:bg-slate-800">
+        Shuttering Area (m²) = Total Length × (Beam Width + 2 × Beam Depth)
+      </div>
+    </div>
   </Fragment>
 
+  <!-- FAQS WITH SCHEMA JSON-LD (SLOT FAQ) -->
   <Fragment slot="faq">
     <div class="space-y-4 text-xs sm:text-sm">
-      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open>
+      <details class="group rounded-2xl border border-slate-200 p-4 dark:border-slate-800" open>
+        <summary class="font-bold text-slate-900 dark:text-white cursor-pointer flex justify-between items-center">
+          What is the thumb rule for steel in an RCC beam?
+          <span class="group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          The standard structural engineering thumb rule (CPWD / IS 456) for RCC beams is <strong>1.0% to 2.0% steel reinforcement by volume of concrete</strong>. This translates to roughly <strong>80 kg to 160 kg of steel per cubic meter (m³) of concrete</strong>. For standard residential floor beams (230×450 mm), 120 kg/m³ is the most common preliminary estimation benchmark.
+        </p>
+      </details>
+
+      <details class="group rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
         <summary class="font-bold text-slate-900 dark:text-white cursor-pointer flex justify-between items-center">
           How do you calculate the cutting length of a rectangular stirrup ring?
           <span class="group-open:rotate-180 transition-transform">▼</span>
         </summary>
         <p class="mt-2 text-slate-600 dark:text-slate-300">
-          Cutting Length = 2 × (Core Width + Core Depth) + 2 × (10 × Bar Dia Hook) - 3 × (2 × Bar Dia 90° Bend Deduction).
+          <code>Cutting Length = 2 × (Core Width + Core Depth) + 2 × (Hook Length) - Bend Deductions</code>. Core width is <code>Width - 2 × Clear Cover</code>, and core depth is <code>Depth - 2 × Clear Cover</code>. For 135° seismic hooks, each hook is <code>10d</code> (min 75mm), and total bend deduction for three 90° bends plus two 135° bends is <code>12d</code> (IS 2502).
+        </p>
+      </details>
+
+      <details class="group rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="font-bold text-slate-900 dark:text-white cursor-pointer flex justify-between items-center">
+          Why are stirrups placed closer together near the column supports?
+          <span class="group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          According to IS 13920:2016 ductile detailing provisions, shear force in a loaded beam is maximum at the face of supports and near zero at mid-span. Placing stirrups closer (e.g. 100 mm c/c) over a distance of <code>L/4</code> or <code>2D</code> from the support face prevents catastrophic diagonal shear tension failure and confines the concrete during earthquakes.
+        </p>
+      </details>
+
+      <details class="group rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="font-bold text-slate-900 dark:text-white cursor-pointer flex justify-between items-center">
+          When is side face reinforcement required in an RCC beam?
+          <span class="group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Under IS 456:2000 Clause 26.5.1.6, side face reinforcement is mandatory when the total depth of the beam exceeds <strong>750 mm</strong> (or 450 mm when the beam is subjected to significant torsion). The minimum area required is 0.1% of the web area, divided equally on both faces at a spacing not exceeding 300 mm.
+        </p>
+      </details>
+
+      <details class="group rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="font-bold text-slate-900 dark:text-white cursor-pointer flex justify-between items-center">
+          How many commercial 12-meter rebar rods are in a bundle?
+          <span class="group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Standard factory mill packaging for commercial 12-meter (40-foot) rebars: <strong>8 mm = 10 rods/bundle</strong>, <strong>10 mm = 7 rods/bundle</strong>, <strong>12 mm = 5 rods/bundle</strong>, <strong>16 mm = 3 rods/bundle</strong>, <strong>20 mm = 2 rods/bundle</strong>, and <strong>25 mm = 1 rod</strong>.
+        </p>
+      </details>
+
+      <details class="group rounded-2xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="font-bold text-slate-900 dark:text-white cursor-pointer flex justify-between items-center">
+          How is binding wire quantity calculated for RCC beams?
+          <span class="group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Civil engineering site practice requires approximately <strong>10 kg to 12 kg of 18-gauge annealed GI binding wire per metric tonne of rebar</strong> (roughly 1% of total steel weight) to tie main reinforcement and stirrups securely.
         </p>
       </details>
     </div>
   </Fragment>
 </CalculatorLayout>
 
+<!-- FAQ Schema JSON-LD -->
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is the thumb rule for steel in an RCC beam?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The standard CPWD / IS 456 thumb rule is 1.0% to 2.0% steel reinforcement by volume of concrete (80 kg to 160 kg per m³). For standard floor beams, 120 kg/m³ is standard."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do you calculate the cutting length of a rectangular stirrup ring?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Cutting Length = 2 × (Core Width + Core Depth) + 2 × (Hook Length) - Bend Deductions. Hook length is 10d for 135° seismic hooks."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why are stirrups placed closer together near the column supports?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Under IS 13920, shear stress is maximum at support faces. Placing stirrups closer over L/4 from column face prevents shear failure and confines concrete."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "When is side face reinforcement required in an RCC beam?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "IS 456 requires side face reinforcement when beam depth exceeds 750 mm (0.1% of web area equally divided on both faces)."
+      }
+    }
+  ]
+})} />
+
+<!-- CLIENT-SIDE SCRIPT LOGIC -->
 <script is:inline>
+  let currentDimensionUnit = 'm'; // 'm' or 'ft'
+  let currentCalculationMode = 'adv'; // 'adv' or 'norm'
+
+  // Input elements
   const bmL = document.getElementById('bm-len');
+  const bmSupportW = document.getElementById('bm-support-width');
   const bmW = document.getElementById('bm-width');
   const bmD = document.getElementById('bm-depth');
+  const bmCover = document.getElementById('bm-cover');
+  const bmCount = document.getElementById('bm-count');
+
+  // Advanced Mode Inputs
+  const selConcreteGrade = document.getElementById('select-concrete-grade');
+  const selEndAnchoring = document.getElementById('select-end-anchoring');
+  const inputWastage = document.getElementById('input-wastage');
+
   const topC = document.getElementById('bm-top-count');
   const topD = document.getElementById('bm-top-dia');
+  const topExC = document.getElementById('bm-top-extra-count');
+  const topExD = document.getElementById('bm-top-extra-dia');
+
   const botC = document.getElementById('bm-bot-count');
   const botD = document.getElementById('bm-bot-dia');
-  const stirrupS = document.getElementById('bm-stirrup-spacing');
+  const botExC = document.getElementById('bm-bot-extra-count');
+  const botExD = document.getElementById('bm-bot-extra-dia');
 
-  const resTotal = document.getElementById('res-beam-total-steel');
+  const checkSideFace = document.getElementById('check-side-face');
+  const sectionSideFaceInputs = document.getElementById('section-side-face-inputs');
+  const badgeSideFaceAlert = document.getElementById('badge-side-face-alert');
+  const bmSideC = document.getElementById('bm-side-count');
+  const bmSideD = document.getElementById('bm-side-dia');
+
+  const stirrupD = document.getElementById('bm-stirrup-dia');
+  const stirrupLegs = document.getElementById('bm-stirrup-legs');
+  const stirrupMode = document.getElementById('bm-stirrup-mode');
+  const boxStirrupSpacingUniform = document.getElementById('box-stirrup-spacing-uniform');
+  const boxStirrupSpacingTwozone = document.getElementById('box-stirrup-spacing-twozone');
+  const stirrupSpacingUniform = document.getElementById('bm-stirrup-spacing-uniform');
+  const stirrupSpacingSup = document.getElementById('bm-stirrup-spacing-sup');
+  const stirrupSpacingMid = document.getElementById('bm-stirrup-spacing-mid');
+
+  // Normal Mode Inputs
+  const selNormType = document.getElementById('select-norm-type');
+  const boxNormCustomRate = document.getElementById('box-norm-custom-rate');
+  const inputNormCustomRate = document.getElementById('input-norm-custom-rate');
+  const selNormDia = document.getElementById('select-norm-dia');
+  const selNormConcrete = document.getElementById('select-norm-concrete');
+
+  // Costs
+  const costSteel = document.getElementById('cost-steel');
+  const costConc = document.getElementById('cost-concrete');
+  const costShut = document.getElementById('cost-shuttering');
+  const costWire = document.getElementById('cost-wire');
+
+  // Mode & Unit Buttons
+  const btnModeAdv = document.getElementById('btn-mode-adv');
+  const btnModeNorm = document.getElementById('btn-mode-norm');
+  const sectionAdvInputs = document.getElementById('section-adv-inputs');
+  const sectionNormInputs = document.getElementById('section-norm-inputs');
+  const boxBbsTable = document.getElementById('box-bbs-table');
+
+  const btnUnitM = document.getElementById('btn-unit-m');
+  const btnUnitFt = document.getElementById('btn-unit-ft');
+
+  // Result displays
+  const resTotalSteel = document.getElementById('res-beam-total-steel');
+  const resTotalSteelOther = document.getElementById('res-beam-total-steel-other');
   const resConc = document.getElementById('res-beam-concrete');
-  const resTop = document.getElementById('res-beam-top-wt');
-  const resBot = document.getElementById('res-beam-bot-wt');
-  const resStirrupLen = document.getElementById('res-beam-stirrup-len');
-  const resStirrupCount = document.getElementById('res-beam-stirrup-count');
+  const resShuttering = document.getElementById('res-beam-shuttering');
 
+  const resGeomDim = document.getElementById('res-geom-dim');
+  const resGeomLength = document.getElementById('res-geom-length');
+  const resIntensityVol = document.getElementById('res-intensity-vol');
+  const resCostTotal = document.getElementById('res-cost-total');
+
+  const tbodyBBS = document.getElementById('tbody-bbs');
+  const tbodyDiaSummary = document.getElementById('tbody-diameter-summary');
+
+  const resBoqCement = document.getElementById('res-boq-cement');
+  const resBoqSand = document.getElementById('res-boq-sand');
+  const resBoqAggregate = document.getElementById('res-boq-aggregate');
+  const resBoqShuttering = document.getElementById('res-boq-shuttering');
+  const resBoqWire = document.getElementById('res-boq-wire');
+
+  const resCostSteelQty = document.getElementById('res-cost-steel-qty');
+  const resCostSteelRate = document.getElementById('res-cost-steel-rate');
+  const resCostSteelAmt = document.getElementById('res-cost-steel-amt');
+
+  const resCostConcQty = document.getElementById('res-cost-conc-qty');
+  const resCostConcRate = document.getElementById('res-cost-conc-rate');
+  const resCostConcAmt = document.getElementById('res-cost-conc-amt');
+
+  const resCostShutQty = document.getElementById('res-cost-shut-qty');
+  const resCostShutRate = document.getElementById('res-cost-shut-rate');
+  const resCostShutAmt = document.getElementById('res-cost-shut-amt');
+
+  const resCostWireQty = document.getElementById('res-cost-wire-qty');
+  const resCostWireRate = document.getElementById('res-cost-wire-rate');
+  const resCostWireAmt = document.getElementById('res-cost-wire-amt');
+  const resCostGrandAmt = document.getElementById('res-cost-grand-amt');
+
+  const svgCross = document.getElementById('svg-cross-section');
+  const svgElevation = document.getElementById('svg-elevation');
+  const lblCrossCaption = document.getElementById('lbl-cross-caption');
+  const lblElevationCaption = document.getElementById('lbl-elevation-caption');
+
+  const BARS_PER_BUNDLE_MAP = { 6: 15, 8: 10, 10: 7, 12: 5, 16: 3, 20: 2, 25: 1, 32: 1 };
+
+  function getBarUnitWeight(d) {
+    return (d * d) / 162;
+  }
+
+  // --- UNIT SWITCHING HANDLER ---
+  function setUnit(unit) {
+    if (unit === currentDimensionUnit) return;
+    const oldUnit = currentDimensionUnit;
+    currentDimensionUnit = unit;
+
+    if (unit === 'm') {
+      btnUnitM.classList.add('active', 'bg-blue-600', 'text-white');
+      btnUnitM.classList.remove('border', 'border-slate-300', 'bg-white', 'text-slate-700');
+      btnUnitFt.classList.remove('active', 'bg-blue-600', 'text-white');
+      btnUnitFt.classList.add('border', 'border-slate-300', 'bg-white', 'text-slate-700');
+
+      document.querySelectorAll('.lbl-dim-unit').forEach(el => el.textContent = 'm');
+      document.querySelectorAll('.lbl-sec-unit').forEach(el => el.textContent = 'mm');
+
+      // Convert values ft -> m, in -> mm
+      if (oldUnit === 'ft') {
+        if (bmL.value) bmL.value = (parseFloat(bmL.value) * 0.3048).toFixed(1);
+        if (bmSupportW.value) bmSupportW.value = Math.round(parseFloat(bmSupportW.value) * 25.4);
+        if (bmW.value) bmW.value = Math.round(parseFloat(bmW.value) * 25.4);
+        if (bmD.value) bmD.value = Math.round(parseFloat(bmD.value) * 25.4);
+        if (bmCover.value) bmCover.value = Math.round(parseFloat(bmCover.value) * 25.4);
+        if (stirrupSpacingUniform.value) stirrupSpacingUniform.value = Math.round(parseFloat(stirrupSpacingUniform.value) * 25.4);
+        if (stirrupSpacingSup.value) stirrupSpacingSup.value = Math.round(parseFloat(stirrupSpacingSup.value) * 25.4);
+        if (stirrupSpacingMid.value) stirrupSpacingMid.value = Math.round(parseFloat(stirrupSpacingMid.value) * 25.4);
+      }
+    } else {
+      btnUnitFt.classList.add('active', 'bg-blue-600', 'text-white');
+      btnUnitFt.classList.remove('border', 'border-slate-300', 'bg-white', 'text-slate-700');
+      btnUnitM.classList.remove('active', 'bg-blue-600', 'text-white');
+      btnUnitM.classList.add('border', 'border-slate-300', 'bg-white', 'text-slate-700');
+
+      document.querySelectorAll('.lbl-dim-unit').forEach(el => el.textContent = 'ft');
+      document.querySelectorAll('.lbl-sec-unit').forEach(el => el.textContent = 'in');
+
+      // Convert values m -> ft, mm -> in
+      if (oldUnit === 'm') {
+        if (bmL.value) bmL.value = (parseFloat(bmL.value) / 0.3048).toFixed(1);
+        if (bmSupportW.value) bmSupportW.value = (parseFloat(bmSupportW.value) / 25.4).toFixed(1);
+        if (bmW.value) bmW.value = (parseFloat(bmW.value) / 25.4).toFixed(1);
+        if (bmD.value) bmD.value = (parseFloat(bmD.value) / 25.4).toFixed(1);
+        if (bmCover.value) bmCover.value = (parseFloat(bmCover.value) / 25.4).toFixed(1);
+        if (stirrupSpacingUniform.value) stirrupSpacingUniform.value = (parseFloat(stirrupSpacingUniform.value) / 25.4).toFixed(1);
+        if (stirrupSpacingSup.value) stirrupSpacingSup.value = (parseFloat(stirrupSpacingSup.value) / 25.4).toFixed(1);
+        if (stirrupSpacingMid.value) stirrupSpacingMid.value = (parseFloat(stirrupSpacingMid.value) / 25.4).toFixed(1);
+      }
+    }
+    calculate();
+  }
+
+  // --- MODE SWITCHING HANDLER ---
+  function setMode(mode) {
+    currentCalculationMode = mode;
+    if (mode === 'adv') {
+      btnModeAdv.classList.add('bg-white', 'text-blue-700', 'dark:bg-blue-600', 'dark:text-white', 'font-bold');
+      btnModeAdv.classList.remove('text-slate-600', 'font-semibold');
+      btnModeNorm.classList.remove('bg-white', 'text-blue-700', 'dark:bg-blue-600', 'dark:text-white', 'font-bold');
+      btnModeNorm.classList.add('text-slate-600', 'font-semibold');
+
+      sectionAdvInputs.classList.remove('hidden');
+      sectionNormInputs.classList.add('hidden');
+      boxBbsTable.classList.remove('hidden');
+    } else {
+      btnModeNorm.classList.add('bg-white', 'text-blue-700', 'dark:bg-blue-600', 'dark:text-white', 'font-bold');
+      btnModeNorm.classList.remove('text-slate-600', 'font-semibold');
+      btnModeAdv.classList.remove('bg-white', 'text-blue-700', 'dark:bg-blue-600', 'dark:text-white', 'font-bold');
+      btnModeAdv.classList.add('text-slate-600', 'font-semibold');
+
+      sectionNormInputs.classList.remove('hidden');
+      sectionAdvInputs.classList.add('hidden');
+      boxBbsTable.classList.add('hidden');
+    }
+    calculate();
+  }
+
+  // Check depth for side face reinforcement auto-warning
+  function checkDepthSkin() {
+    const rawD = parseFloat(bmD.value) || 0;
+    const depthMm = currentDimensionUnit === 'ft' ? rawD * 25.4 : rawD;
+    if (depthMm > 750) {
+      badgeSideFaceAlert.classList.remove('hidden');
+      checkSideFace.checked = true;
+      sectionSideFaceInputs.classList.remove('hidden');
+    } else {
+      badgeSideFaceAlert.classList.add('hidden');
+    }
+  }
+
+  if (checkSideFace) {
+    checkSideFace.addEventListener('change', () => {
+      if (checkSideFace.checked) {
+        sectionSideFaceInputs.classList.remove('hidden');
+      } else {
+        sectionSideFaceInputs.classList.add('hidden');
+      }
+      calculate();
+    });
+  }
+
+  if (stirrupMode) {
+    stirrupMode.addEventListener('change', () => {
+      if (stirrupMode.value === 'uniform') {
+        boxStirrupSpacingUniform.classList.remove('hidden');
+        boxStirrupSpacingTwozone.classList.add('hidden');
+      } else {
+        boxStirrupSpacingUniform.classList.add('hidden');
+        boxStirrupSpacingTwozone.classList.remove('hidden');
+      }
+      calculate();
+    });
+  }
+
+  if (selNormType) {
+    selNormType.addEventListener('change', () => {
+      if (selNormType.value === 'custom') {
+        boxNormCustomRate.classList.remove('hidden');
+      } else {
+        boxNormCustomRate.classList.add('hidden');
+      }
+      calculate();
+    });
+  }
+
+  // --- SVG DIAGRAM DRAWING ---
+  function drawCrossSection(Bmm, Dmm, coverMm, topN, topDmm, botN, botDmm, sideN, sideDmm, stirrupDmm) {
+    if (!svgCross) return;
+    const W = 280, H = 240;
+    const maxDim = Math.max(Bmm, Dmm);
+    const scale = 140 / maxDim;
+    const w = Bmm * scale;
+    const h = Dmm * scale;
+    const ox = (W - w) / 2;
+    const oy = (H - h) / 2;
+    const c = Math.max(4, coverMm * scale);
+
+    let circles = '';
+    // Top bars
+    const topSpacing = (w - 2 * c) / (topN - 1 || 1);
+    for (let i = 0; i < topN; i++) {
+      const cx = ox + c + i * topSpacing;
+      const cy = oy + c + 4;
+      circles += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="4" fill="#2563eb" stroke="#1e40af" stroke-width="1.5" />`;
+    }
+
+    // Bottom bars
+    const botSpacing = (w - 2 * c) / (botN - 1 || 1);
+    for (let i = 0; i < botN; i++) {
+      const cx = ox + c + i * botSpacing;
+      const cy = oy + h - c - 4;
+      circles += `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="5" fill="#059669" stroke="#047857" stroke-width="1.5" />`;
+    }
+
+    // Side face bars
+    if (sideN > 0) {
+      const sideStep = (h - 2 * c - 16) / (sideN + 1);
+      for (let i = 1; i <= sideN; i++) {
+        const cy = oy + c + 8 + i * sideStep;
+        circles += `<circle cx="${(ox + c + 2).toFixed(1)}" cy="${cy.toFixed(1)}" r="3.5" fill="#9333ea" stroke="#7e22ce" stroke-width="1.5" />`;
+        circles += `<circle cx="${(ox + w - c - 2).toFixed(1)}" cy="${cy.toFixed(1)}" r="3.5" fill="#9333ea" stroke="#7e22ce" stroke-width="1.5" />`;
+      }
+    }
+
+    svgCross.innerHTML = `
+      <rect x="${ox.toFixed(1)}" y="${oy.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="4" fill="#f1f5f9" stroke="#94a3b8" stroke-width="2" />
+      <rect x="${(ox + c).toFixed(1)}" y="${(oy + c).toFixed(1)}" width="${(w - 2 * c).toFixed(1)}" height="${(h - 2 * c).toFixed(1)}" rx="3" fill="none" stroke="#d97706" stroke-width="2" stroke-dasharray="4,2" />
+      ${circles}
+      <!-- Dimensions -->
+      <line x1="${ox.toFixed(1)}" y1="${(oy + h + 14).toFixed(1)}" x2="${(ox + w).toFixed(1)}" y2="${(oy + h + 14).toFixed(1)}" stroke="#64748b" stroke-width="1.5" marker-start="url(#dot)" marker-end="url(#dot)" />
+      <text x="${(ox + w / 2).toFixed(1)}" y="${(oy + h + 26).toFixed(1)}" text-anchor="middle" font-size="10" font-weight="bold" fill="#334155">B = ${Math.round(Bmm)} mm</text>
+      <text x="${(ox - 8).toFixed(1)}" y="${(oy + h / 2).toFixed(1)}" text-anchor="middle" transform="rotate(-90 ${(ox - 8).toFixed(1)} ${(oy + h / 2).toFixed(1)})" font-size="10" font-weight="bold" fill="#334155">D = ${Math.round(Dmm)} mm</text>
+    `;
+
+    if (lblCrossCaption) {
+      lblCrossCaption.innerHTML = `Top: <strong class="text-blue-600">${topN} Nos × ${topDmm}mm</strong> | Bottom: <strong class="text-emerald-600">${botN} Nos × ${botDmm}mm</strong> | Stirrup: <strong class="text-amber-600">${stirrupDmm}mm Ring</strong>`;
+    }
+  }
+
+  function drawElevation(spanM, supWmm, Dmm, isTwoZone, supSpacingMm, midSpacingMm) {
+    if (!svgElevation) return;
+    const W = 420, H = 220;
+    const colW = 35;
+    const beamW = W - 2 * colW - 30;
+    const startX = colW + 15;
+    const beamH = 65;
+    const beamY = 70;
+
+    let stirrupTicks = '';
+    const zoneLen = isTwoZone ? beamW * 0.25 : beamW;
+    if (isTwoZone) {
+      // Left zone
+      const numL = 6;
+      for (let i = 0; i < numL; i++) {
+        const x = startX + (i * zoneLen) / numL;
+        stirrupTicks += `<line x1="${x.toFixed(1)}" y1="${beamY + 5}" x2="${x.toFixed(1)}" y2="${beamY + beamH - 5}" stroke="#d97706" stroke-width="1.5" />`;
+      }
+      // Mid zone
+      const midLen = beamW * 0.5;
+      const numM = 5;
+      for (let i = 1; i < numM; i++) {
+        const x = startX + zoneLen + (i * midLen) / numM;
+        stirrupTicks += `<line x1="${x.toFixed(1)}" y1="${beamY + 5}" x2="${x.toFixed(1)}" y2="${beamY + beamH - 5}" stroke="#f59e0b" stroke-width="1" stroke-dasharray="3,1" />`;
+      }
+      // Right zone
+      for (let i = 0; i <= numL; i++) {
+        const x = startX + zoneLen + midLen + (i * zoneLen) / numL;
+        stirrupTicks += `<line x1="${x.toFixed(1)}" y1="${beamY + 5}" x2="${x.toFixed(1)}" y2="${beamY + beamH - 5}" stroke="#d97706" stroke-width="1.5" />`;
+      }
+    } else {
+      const num = 14;
+      for (let i = 0; i <= num; i++) {
+        const x = startX + (i * beamW) / num;
+        stirrupTicks += `<line x1="${x.toFixed(1)}" y1="${beamY + 5}" x2="${x.toFixed(1)}" y2="${beamY + beamH - 5}" stroke="#d97706" stroke-width="1.5" />`;
+      }
+    }
+
+    svgElevation.innerHTML = `
+      <!-- Columns -->
+      <rect x="15" y="30" width="${colW}" height="150" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5" />
+      <text x="${15 + colW / 2}" y="110" text-anchor="middle" font-size="9" font-weight="bold" fill="#64748b" transform="rotate(-90 ${15 + colW / 2} 110)">COLUMN</text>
+      <rect x="${startX + beamW}" y="30" width="${colW}" height="150" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5" />
+      <text x="${startX + beamW + colW / 2}" y="110" text-anchor="middle" font-size="9" font-weight="bold" fill="#64748b" transform="rotate(-90 ${startX + beamW + colW / 2} 110)">COLUMN</text>
+
+      <!-- Beam Concrete Body -->
+      <rect x="${startX}" y="${beamY}" width="${beamW}" height="${beamH}" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" />
+
+      <!-- Top Main Bar with 90° bends -->
+      <path d="M ${startX - 15} ${beamY + 22} L ${startX - 15} ${beamY + 8} L ${startX + beamW + 15} ${beamY + 8} L ${startX + beamW + 15} ${beamY + 22}" fill="none" stroke="#2563eb" stroke-width="2.5" />
+      <!-- Bottom Main Bar with 90° bends -->
+      <path d="M ${startX - 15} ${beamY + beamH - 22} L ${startX - 15} ${beamY + beamH - 8} L ${startX + beamW + 15} ${beamY + beamH - 8} L ${startX + beamW + 15} ${beamY + beamH - 22}" fill="none" stroke="#059669" stroke-width="3" />
+
+      <!-- Top Extra Support Bars (Hogging @ L/4) -->
+      <path d="M ${startX - 12} ${beamY + 20} L ${startX - 12} ${beamY + 14} L ${startX + beamW * 0.25} ${beamY + 14}" fill="none" stroke="#3b82f6" stroke-width="1.8" stroke-dasharray="4,2" />
+      <path d="M ${startX + beamW - beamW * 0.25} ${beamY + 14} L ${startX + beamW + 12} ${beamY + 14} L ${startX + beamW + 12} ${beamY + 20}" fill="none" stroke="#3b82f6" stroke-width="1.8" stroke-dasharray="4,2" />
+
+      <!-- Stirrup Ticks -->
+      ${stirrupTicks}
+
+      <!-- Labels & Zone indicators -->
+      ${isTwoZone ? `
+        <rect x="${startX}" y="${beamY + beamH + 4}" width="${beamW * 0.25}" height="14" fill="#fef3c7" rx="3" />
+        <text x="${startX + beamW * 0.125}" y="${beamY + beamH + 15}" text-anchor="middle" font-size="8" font-weight="bold" fill="#92400e">L/4 @ ${supSpacingMm}mm</text>
+        <rect x="${startX + beamW * 0.25}" y="${beamY + beamH + 4}" width="${beamW * 0.5}" height="14" fill="#f1f5f9" rx="3" />
+        <text x="${startX + beamW * 0.5}" y="${beamY + beamH + 15}" text-anchor="middle" font-size="8" font-weight="bold" fill="#475569">Mid-Span @ ${midSpacingMm}mm</text>
+        <rect x="${startX + beamW * 0.75}" y="${beamY + beamH + 4}" width="${beamW * 0.25}" height="14" fill="#fef3c7" rx="3" />
+        <text x="${startX + beamW * 0.875}" y="${beamY + beamH + 15}" text-anchor="middle" font-size="8" font-weight="bold" fill="#92400e">L/4 @ ${supSpacingMm}mm</text>
+      ` : `
+        <rect x="${startX}" y="${beamY + beamH + 4}" width="${beamW}" height="14" fill="#fef3c7" rx="3" />
+        <text x="${startX + beamW * 0.5}" y="${beamY + beamH + 15}" text-anchor="middle" font-size="8" font-weight="bold" fill="#92400e">Uniform Spacing @ ${supSpacingMm}mm c/c</text>
+      `}
+
+      <!-- Span Dimension -->
+      <line x1="${startX}" y1="20" x2="${startX + beamW}" y2="20" stroke="#0284c7" stroke-width="1.5" />
+      <text x="${startX + beamW / 2}" y="15" text-anchor="middle" font-size="10" font-weight="bold" fill="#0369a1">Clear Span L = ${spanM.toFixed(2)} m</text>
+    `;
+
+    if (lblElevationCaption) {
+      lblElevationCaption.innerHTML = isTwoZone
+        ? `IS 13920 Ductile Detailing: <strong class="text-amber-700">Support Zones (L/4) @ ${supSpacingMm}mm</strong> | <strong class="text-slate-700">Mid-Span @ ${midSpacingMm}mm</strong>`
+        : `Uniform Spacing: <strong class="text-amber-700">@ ${supSpacingMm}mm c/c throughout span</strong>`;
+    }
+  }
+
+  // --- MAIN CALCULATION FUNCTION ---
   function calculate() {
-    const rawL = bmL.value.trim();
-    const rawW = bmW.value.trim();
-    const rawD = bmD.value.trim();
+    checkDepthSkin();
 
-    if (rawL === '' && rawW === '' && rawD === '') {
-      resTotal.textContent = '0.0 kg';
+    const rawL = parseFloat(bmL.value) || 0;
+    const rawSupW = parseFloat(bmSupportW.value) || 230;
+    const rawW = parseFloat(bmW.value) || 230;
+    const rawD = parseFloat(bmD.value) || 450;
+    const rawCover = parseFloat(bmCover.value) || 25;
+    const rawN = Math.max(1, parseInt(bmCount.value) || 1);
+
+    if (rawL <= 0) {
+      resTotalSteel.textContent = '0.0 kg';
+      resTotalSteelOther.textContent = '(0.00 Quintals | 0.000 Tonnes)';
       resConc.textContent = '0.00 m³';
-      resTop.textContent = '0.0 kg';
-      resBot.textContent = '0.0 kg';
-      resStirrupLen.textContent = '0.00 m';
-      resStirrupCount.textContent = '0 Rings';
+      resShuttering.textContent = 'Formwork: 0.00 m²';
       try { document.dispatchEvent(new CustomEvent('calculator:updated')); } catch (e) {}
       return;
     }
 
-    const L = Math.max(0, parseFloat(bmL.value) || 0);
-    const Bmm = Math.max(0.05, parseFloat(bmW.value) || 230);
-    const Dmm = Math.max(0.05, parseFloat(bmD.value) || 450);
-    const nTop = Math.max(2, parseInt(topC.value) || 2);
-    const dTop = parseFloat(topD.value) || 12;
-    const nBot = Math.max(2, parseInt(botC.value) || 3);
-    const dBot = parseFloat(botD.value) || 16;
-    const sStirrup = Math.max(10, parseFloat(stirrupS.value) || 150);
-    const dStirrup = 8;
-    const cover = 25; // 25mm clear cover
+    // Convert to metric standard meters & mm for calculations
+    const lengthM = currentDimensionUnit === 'ft' ? rawL * 0.3048 : rawL;
+    const supportWidthM = currentDimensionUnit === 'ft' ? (rawSupW * 25.4) / 1000 : rawSupW / 1000;
+    const widthMm = currentDimensionUnit === 'ft' ? rawW * 25.4 : rawW;
+    const depthMm = currentDimensionUnit === 'ft' ? rawD * 25.4 : rawD;
+    const coverMm = currentDimensionUnit === 'ft' ? rawCover * 25.4 : rawCover;
 
-    const concVol = L * (Bmm / 1000) * (Dmm / 1000);
+    const totalLengthM = lengthM + 2 * supportWidthM;
+    const B = widthMm / 1000;
+    const D = depthMm / 1000;
+    const singleBeamVol = lengthM * B * D;
+    const totalConcreteVol = singleBeamVol * rawN;
+    const totalConcreteCuft = totalConcreteVol * 35.3147;
 
-    const lenTop = L + 2 * (12 * dTop / 1000);
-    const lenBot = L + 2 * (12 * dBot / 1000);
+    // Costs inputs
+    const rateSteel = parseFloat(costSteel.value) || 75;
+    const rateConc = parseFloat(costConc.value) || 4800;
+    const rateShut = parseFloat(costShut.value) || 350;
+    const rateWire = parseFloat(costWire.value) || 100;
 
-    const wtTop = nTop * lenTop * ((dTop * dTop) / 162);
-    const wtBot = nBot * lenBot * ((dBot * dBot) / 162);
+    let totalSteelKg = 0;
+    let baseSteelKg = 0;
+    let wastageKg = 0;
+    let bbsList = [];
+    let diaSummaryMap = new Map();
 
-    const coreW = Math.max(0, Bmm - 2 * cover);
-    const coreD = Math.max(0, Dmm - 2 * cover);
-    const stirrupLen = Math.max(0, (2 * (coreW + coreD) + 2 * (10 * dStirrup) - 6 * dStirrup) / 1000);
-    const nStirrup = sStirrup > 0 && L > 0 ? Math.floor((L * 1000) / sStirrup) + 1 : 0;
-    const wtStirrup = nStirrup * stirrupLen * ((dStirrup * dStirrup) / 162);
+    if (currentCalculationMode === 'norm') {
+      // NORMAL THUMB RULE MODE
+      let steelRate = 120;
+      const type = selNormType.value;
+      if (type === 'light') steelRate = 80;
+      else if (type === 'standard') steelRate = 120;
+      else if (type === 'heavy') steelRate = 160;
+      else if (type === 'custom') steelRate = parseFloat(inputNormCustomRate.value) || 120;
 
-    const totalSteel = wtTop + wtBot + wtStirrup;
+      baseSteelKg = totalConcreteVol * steelRate;
+      wastageKg = baseSteelKg * 0.03;
+      totalSteelKg = baseSteelKg + wastageKg;
 
-    resTotal.textContent = `${totalSteel.toFixed(1)} kg`;
-    resConc.textContent = `${concVol.toFixed(2)} m³`;
-    resTop.textContent = `${wtTop.toFixed(1)} kg (${nTop} Nos)`;
-    resBot.textContent = `${wtBot.toFixed(1)} kg (${nBot} Nos)`;
-    resStirrupLen.textContent = `${stirrupLen.toFixed(2)} m`;
-    resStirrupCount.textContent = `${nStirrup} Rings (${wtStirrup.toFixed(1)} kg)`;
+      const normDia = parseInt(selNormDia.value) || 16;
+      const uWt = getBarUnitWeight(normDia);
+      const totLen = totalSteelKg / uWt;
+      const stock12m = Math.ceil(totLen / 12);
+      const bSize = BARS_PER_BUNDLE_MAP[normDia] || 3;
+      const bundles = Math.ceil(stock12m / bSize);
+
+      diaSummaryMap.set(normDia, { totalLen: totLen, totalWt: totalSteelKg, stock12m, bSize, bundles });
+
+      // Concrete Grade Mix
+      renderBOQ(totalConcreteVol, selNormConcrete.value);
+    } else {
+      // ADVANCED BBS MODE
+      const wastagePct = parseFloat(inputWastage.value) || 3;
+      const endAnchor = selEndAnchoring.value;
+
+      function getHook(dia) {
+        return endAnchor === 'deep_ld' ? (48 * dia) / 1000 : Math.max(0.15, (12 * dia) / 1000);
+      }
+      const endCoverM = Math.max(0.015, coverMm / 1000);
+      const bearingEmbedM = Math.max(0.08, supportWidthM - endCoverM);
+
+      // 1. Top Main Through Bars
+      const nTop = Math.max(2, parseInt(topC.value) || 2);
+      const dTop = parseInt(topD.value) || 12;
+      const hookTop = getHook(dTop);
+      const cutTop = Math.max(0.5, lengthM + 2 * bearingEmbedM + 2 * hookTop - (4 * dTop) / 1000);
+      const totTopCount = nTop * rawN;
+      const totTopLen = totTopCount * cutTop;
+      const wtTop = totTopLen * getBarUnitWeight(dTop);
+      bbsList.push({ mark: '01', desc: 'Top Main Straight Through Bars', dia: dTop, shape: 'L-HOOK (90° Both Ends)', count: totTopCount, cutLen: cutTop, totLen: totTopLen, uWt: getBarUnitWeight(dTop), totWt: wtTop });
+
+      // 2. Top Extra Support Bars (Hogging @ L/4)
+      const nTopEx = Math.max(0, parseInt(topExC.value) || 0);
+      const dTopEx = parseInt(topExD.value) || 12;
+      if (nTopEx > 0) {
+        const hookTopEx = getHook(dTopEx);
+        const cutTopEx = Math.max(0.3, lengthM * 0.25 + bearingEmbedM + hookTopEx - (2 * dTopEx) / 1000);
+        const totTopExCount = nTopEx * 2 * rawN; // 2 supports
+        const totTopExLen = totTopExCount * cutTopEx;
+        const wtTopEx = totTopExLen * getBarUnitWeight(dTopEx);
+        bbsList.push({ mark: '02', desc: 'Top Extra Support Bars (Hogging @ L/4)', dia: dTopEx, shape: 'ONE-HOOK (90° into Col)', count: totTopExCount, cutLen: cutTopEx, totLen: totTopExLen, uWt: getBarUnitWeight(dTopEx), totWt: wtTopEx });
+      }
+
+      // 3. Bottom Main Through Bars
+      const nBot = Math.max(2, parseInt(botC.value) || 3);
+      const dBot = parseInt(botD.value) || 16;
+      const hookBot = getHook(dBot);
+      const cutBot = Math.max(0.5, lengthM + 2 * bearingEmbedM + 2 * hookBot - (4 * dBot) / 1000);
+      const totBotCount = nBot * rawN;
+      const totBotLen = totBotCount * cutBot;
+      const wtBot = totBotLen * getBarUnitWeight(dBot);
+      bbsList.push({ mark: '03', desc: 'Bottom Main Tension Bars (Full Span)', dia: dBot, shape: 'L-HOOK (90° Both Ends)', count: totBotCount, cutLen: cutBot, totLen: totBotLen, uWt: getBarUnitWeight(dBot), totWt: wtBot });
+
+      // 4. Bottom Extra Mid-Span Bars (Sagging @ 0.75L)
+      const nBotEx = Math.max(0, parseInt(botExC.value) || 0);
+      const dBotEx = parseInt(botExD.value) || 16;
+      if (nBotEx > 0) {
+        const cutBotEx = Math.max(0.4, lengthM * 0.75);
+        const totBotExCount = nBotEx * rawN;
+        const totBotExLen = totBotExCount * cutBotEx;
+        const wtBotEx = totBotExLen * getBarUnitWeight(dBotEx);
+        bbsList.push({ mark: '04', desc: 'Bottom Extra Mid-Span Bars (Sagging 0.75L)', dia: dBotEx, shape: 'STRAIGHT (Curtailed)', count: totBotExCount, cutLen: cutBotEx, totLen: totBotExLen, uWt: getBarUnitWeight(dBotEx), totWt: wtBotEx });
+      }
+
+      // 5. Side Face Reinforcement
+      if (checkSideFace.checked || depthMm > 750) {
+        const nSide = Math.max(1, parseInt(bmSideC.value) || 1);
+        const dSide = parseInt(bmSideD.value) || 10;
+        const cutSide = Math.max(0.5, lengthM + 2 * bearingEmbedM + 0.2 - 0.04);
+        const totSideCount = nSide * 2 * rawN;
+        const totSideLen = totSideCount * cutSide;
+        const wtSide = totSideLen * getBarUnitWeight(dSide);
+        bbsList.push({ mark: '05', desc: 'Side Face Skin Reinforcement (IS 456)', dia: dSide, shape: 'L-HOOK (Skin Rebar)', count: totSideCount, cutLen: cutSide, totLen: totSideLen, uWt: getBarUnitWeight(dSide), totWt: wtSide });
+      }
+
+      // 6. Stirrups
+      const dStirrup = parseInt(stirrupD.value) || 8;
+      const nLegs = parseInt(stirrupLegs.value) || 2;
+      const coreW = Math.max(50, widthMm - 2 * coverMm);
+      const coreD = Math.max(50, depthMm - 2 * coverMm);
+      const hookStirrupMm = Math.max(75, 10 * dStirrup);
+      let cutStirrupMm = 2 * (coreW + coreD) + 2 * hookStirrupMm - 12 * dStirrup;
+      if (nLegs === 4) cutStirrupMm += coreD + 2 * hookStirrupMm - 6 * dStirrup;
+      const cutStirrupM = Math.max(0.4, cutStirrupMm / 1000);
+
+      let stirrupsPerBeam = 0;
+      let stirrupDesc = '';
+      if (stirrupMode.value === 'two_zone') {
+        const sSup = currentDimensionUnit === 'ft' ? (parseFloat(stirrupSpacingSup.value) || 4) * 25.4 : parseFloat(stirrupSpacingSup.value) || 100;
+        const sMid = currentDimensionUnit === 'ft' ? (parseFloat(stirrupSpacingMid.value) || 6) * 25.4 : parseFloat(stirrupSpacingMid.value) || 150;
+        const zoneLenM = Math.min(lengthM * 0.25, Math.max(0.5, 2 * D));
+        const midLenM = Math.max(0, lengthM - 2 * zoneLenM);
+        const ringsSup = Math.floor((zoneLenM * 1000) / sSup) + 1;
+        const ringsMid = sMid > 0 && midLenM > 0 ? Math.floor((midLenM * 1000) / sMid) : 0;
+        stirrupsPerBeam = ringsSup * 2 + ringsMid;
+        stirrupDesc = `2-Zone Stirrups (${nLegs}-Legged @ ${Math.round(sSup)}mm & ${Math.round(sMid)}mm)`;
+      } else {
+        const sUni = currentDimensionUnit === 'ft' ? (parseFloat(stirrupSpacingUniform.value) || 6) * 25.4 : parseFloat(stirrupSpacingUniform.value) || 150;
+        stirrupsPerBeam = Math.floor((lengthM * 1000) / sUni) + 1;
+        stirrupDesc = `Uniform Stirrups (${nLegs}-Legged @ ${Math.round(sUni)}mm c/c)`;
+      }
+
+      const totStirrupCount = stirrupsPerBeam * rawN;
+      const totStirrupLen = totStirrupCount * cutStirrupM;
+      const wtStirrup = totStirrupLen * getBarUnitWeight(dStirrup);
+      bbsList.push({ mark: '06', desc: stirrupDesc, dia: dStirrup, shape: 'RING-135° (Seismic Ties)', count: totStirrupCount, cutLen: cutStirrupM, totLen: totStirrupLen, uWt: getBarUnitWeight(dStirrup), totWt: wtStirrup });
+
+      // Sum totals
+      baseSteelKg = bbsList.reduce((acc, it) => acc + it.totWt, 0);
+      wastageKg = baseSteelKg * (wastagePct / 100);
+      totalSteelKg = baseSteelKg + wastageKg;
+
+      // Group diameter breakdown
+      for (const it of bbsList) {
+        const cur = diaSummaryMap.get(it.dia) || { totalLen: 0, totalWt: 0 };
+        cur.totalLen += it.totLen;
+        cur.totalWt += it.totWt;
+        diaSummaryMap.set(it.dia, cur);
+      }
+      for (const [dia, val] of diaSummaryMap.entries()) {
+        val.stock12m = Math.ceil(val.totalLen / 12);
+        val.bSize = BARS_PER_BUNDLE_MAP[dia] || 3;
+        val.bundles = Math.ceil(val.stock12m / val.bSize);
+      }
+
+      renderBBS(bbsList);
+      renderBOQ(totalConcreteVol, selConcreteGrade.value);
+
+      // Draw SVG diagrams
+      drawCrossSection(widthMm, depthMm, coverMm, nTop, dTop, nBot, dBot, (checkSideFace.checked ? parseInt(bmSideC.value) : 0), (checkSideFace.checked ? parseInt(bmSideD.value) : 0), dStirrup);
+      const isTwo = stirrupMode.value === 'two_zone';
+      const s1 = currentDimensionUnit === 'ft' ? Math.round((parseFloat(stirrupSpacingSup.value) || 4) * 25.4) : Math.round(parseFloat(stirrupSpacingSup.value) || 100);
+      const s2 = currentDimensionUnit === 'ft' ? Math.round((parseFloat(stirrupSpacingMid.value) || 6) * 25.4) : Math.round(parseFloat(stirrupSpacingMid.value) || 150);
+      drawElevation(lengthM, supportWidthM * 1000, depthMm, isTwo, s1, s2);
+    }
+
+    renderDiameterSummary(diaSummaryMap);
+
+    // Formwork Shuttering: bottom soffit + 2 vertical sides = (2D + B) * L
+    const singleShutteringSqm = lengthM * (2 * D + B);
+    const totalShutteringSqm = singleShutteringSqm * rawN;
+    const totalShutteringSqft = totalShutteringSqm * 10.7639;
+
+    // Binding wire ~1% of steel weight
+    const bindingWireKg = Math.max(1, Math.round((totalSteelKg * 0.01) * 10) / 10);
+
+    // Hero Takeaway Displays
+    resTotalSteel.textContent = `${totalSteelKg.toFixed(1)} kg`;
+    resTotalSteelOther.textContent = `(${(totalSteelKg / 100).toFixed(2)} Quintals | ${(totalSteelKg / 1000).toFixed(3)} Tonnes)`;
+    resConc.textContent = `${totalConcreteVol.toFixed(2)} m³ (${totalConcreteCuft.toFixed(1)} cu ft)`;
+    resShuttering.textContent = `Formwork: ${totalShutteringSqm.toFixed(1)} m² (${totalShutteringSqft.toFixed(1)} sq ft)`;
+
+    resGeomDim.textContent = `${Math.round(widthMm)} × ${Math.round(depthMm)} mm (${(widthMm / 25.4).toFixed(0)}" × ${(depthMm / 25.4).toFixed(0)}")`;
+    resGeomLength.textContent = `${(lengthM * rawN).toFixed(1)} m span (${rawN} Beam${rawN > 1 ? 's' : ''})`;
+    const intensity = totalConcreteVol > 0 ? (totalSteelKg / totalConcreteVol).toFixed(1) : '0';
+    resIntensityVol.textContent = `${intensity} kg/m³`;
+
+    // Costs Calculation
+    const costSteelAmt = Math.round(totalSteelKg * rateSteel);
+    const costConcAmt = Math.round(totalConcreteVol * rateConc);
+    const costShutAmt = Math.round(totalShutteringSqm * rateShut);
+    const costWireAmt = Math.round(bindingWireKg * rateWire);
+    const totalCostAmt = costSteelAmt + costConcAmt + costShutAmt + costWireAmt;
+
+    resCostTotal.textContent = `₹ ${totalCostAmt.toLocaleString('en-IN')}`;
+    resCostSteelQty.textContent = `${totalSteelKg.toFixed(1)} kg`;
+    resCostSteelRate.textContent = `₹ ${rateSteel}/kg`;
+    resCostSteelAmt.textContent = `₹ ${costSteelAmt.toLocaleString('en-IN')}`;
+
+    resCostConcQty.textContent = `${totalConcreteVol.toFixed(2)} m³`;
+    resCostConcRate.textContent = `₹ ${rateConc}/m³`;
+    resCostConcAmt.textContent = `₹ ${costConcAmt.toLocaleString('en-IN')}`;
+
+    resCostShutQty.textContent = `${totalShutteringSqm.toFixed(1)} m²`;
+    resCostShutRate.textContent = `₹ ${rateShut}/m²`;
+    resCostShutAmt.textContent = `₹ ${costShutAmt.toLocaleString('en-IN')}`;
+
+    resCostWireQty.textContent = `${bindingWireKg.toFixed(1)} kg`;
+    resCostWireRate.textContent = `₹ ${rateWire}/kg`;
+    resCostWireAmt.textContent = `₹ ${costWireAmt.toLocaleString('en-IN')}`;
+    resCostGrandAmt.textContent = `₹ ${totalCostAmt.toLocaleString('en-IN')}`;
+
+    // Ancillaries
+    resBoqShuttering.textContent = `${totalShutteringSqm.toFixed(1)} m² (${totalShutteringSqft.toFixed(1)} sq ft)`;
+    resBoqWire.textContent = `${bindingWireKg.toFixed(1)} kg (18 Gauge GI Wire)`;
 
     try { document.dispatchEvent(new CustomEvent('calculator:updated')); } catch (e) {}
   }
 
-  const btnCalcBeam = document.getElementById('btn-calc-beam');
-  const btnClearBeam = document.getElementById('btn-clear-beam');
+  function renderBBS(items) {
+    if (!tbodyBBS) return;
+    let html = '';
+    for (const it of items) {
+      html += `
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+          <td class="p-2.5 font-bold text-blue-600 dark:text-blue-400">${it.mark}</td>
+          <td class="p-2.5 font-semibold text-slate-900 dark:text-white">${it.desc}</td>
+          <td class="p-2.5 text-center font-bold font-mono">${it.dia}</td>
+          <td class="p-2.5 text-slate-600 dark:text-slate-400 font-mono text-[11px]">${it.shape}</td>
+          <td class="p-2.5 text-center font-bold">${it.count}</td>
+          <td class="p-2.5 text-right font-mono">${it.cutLen.toFixed(2)}</td>
+          <td class="p-2.5 text-right font-mono">${it.totLen.toFixed(1)}</td>
+          <td class="p-2.5 text-right font-mono text-slate-500">${it.uWt.toFixed(3)}</td>
+          <td class="p-2.5 text-right font-bold text-slate-900 dark:text-white">${it.totWt.toFixed(1)}</td>
+        </tr>
+      `;
+    }
+    tbodyBBS.innerHTML = html;
+  }
 
-  if (btnCalcBeam) {
-    btnCalcBeam.addEventListener('click', () => {
-      if (!bmL.value) bmL.value = '5.0';
-      if (!bmW.value) bmW.value = '230';
-      if (!bmD.value) bmD.value = '450';
+  function renderDiameterSummary(diaMap) {
+    if (!tbodyDiaSummary) return;
+    let html = '';
+    const sorted = Array.from(diaMap.keys()).sort((a, b) => a - b);
+    for (const dia of sorted) {
+      const data = diaMap.get(dia);
+      html += `
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+          <td class="p-2 font-bold text-blue-600 dark:text-blue-400">${dia} mm</td>
+          <td class="p-2 text-right font-mono">${data.totalLen.toFixed(1)} m</td>
+          <td class="p-2 text-right font-bold text-slate-900 dark:text-white">${data.totalWt.toFixed(1)} kg</td>
+          <td class="p-2 text-center font-bold text-emerald-600 dark:text-emerald-400">${data.stock12m} Rods</td>
+          <td class="p-2 text-center font-semibold text-slate-700 dark:text-slate-300">${data.bundles} Bndl (${data.bSize}/bndl)</td>
+        </tr>
+      `;
+    }
+    tbodyDiaSummary.innerHTML = html;
+  }
+
+  function renderBOQ(volumeM3, grade) {
+    const dryVol = volumeM3 * 1.54;
+    let cementRatio = 1, sandRatio = 1.5, aggRatio = 3;
+    if (grade === 'M25') { cementRatio = 1; sandRatio = 1; aggRatio = 2; }
+    else if (grade === 'M15') { cementRatio = 1; sandRatio = 2; aggRatio = 4; }
+    const totalRatio = cementRatio + sandRatio + aggRatio;
+
+    const cementM3 = dryVol * (cementRatio / totalRatio);
+    const cementKg = cementM3 * 1440;
+    const cementBags = Math.ceil(cementKg / 50);
+
+    const sandM3 = dryVol * (sandRatio / totalRatio);
+    const sandCft = sandM3 * 35.3147;
+
+    const aggM3 = dryVol * (aggRatio / totalRatio);
+    const aggCft = aggM3 * 35.3147;
+
+    if (resBoqCement) resBoqCement.textContent = `${cementBags} Bags (${cementKg.toFixed(0)} kg)`;
+    if (resBoqSand) resBoqSand.textContent = `${sandCft.toFixed(1)} cft (${sandM3.toFixed(2)} m³)`;
+    if (resBoqAggregate) resBoqAggregate.textContent = `${aggCft.toFixed(1)} cft (${aggM3.toFixed(2)} m³)`;
+  }
+
+  // --- BUTTON EVENT LISTENERS ---
+  const btnCalc = document.getElementById('btn-calc-beam');
+  const btnClear = document.getElementById('btn-clear-beam');
+
+  if (btnCalc) {
+    btnCalc.addEventListener('click', () => {
       calculate();
       const card = document.getElementById('results-card');
       if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      const orig = btnCalcBeam.innerHTML;
-      btnCalcBeam.innerHTML = '<span>✅ Calculated!</span>';
-      setTimeout(() => { btnCalcBeam.innerHTML = orig; }, 1200);
+      const orig = btnCalc.innerHTML;
+      btnCalc.innerHTML = '<span>✅ Calculated!</span>';
+      setTimeout(() => { btnCalc.innerHTML = orig; }, 1200);
     });
   }
 
-  if (btnClearBeam) {
-    btnClearBeam.addEventListener('click', () => {
+  if (btnClear) {
+    btnClear.addEventListener('click', () => {
       bmL.value = '';
-      bmW.value = '';
-      bmD.value = '';
       bmL.focus();
       calculate();
-      const orig = btnClearBeam.innerHTML;
-      btnClearBeam.innerHTML = '<span>✓ Cleared</span>';
-      setTimeout(() => { btnClearBeam.innerHTML = orig; }, 1000);
+      const orig = btnClear.innerHTML;
+      btnClear.innerHTML = '<span>✓ Cleared</span>';
+      setTimeout(() => { btnClear.innerHTML = orig; }, 1000);
     });
   }
 
-  [bmL, bmW, bmD, topC, topD, botC, botD, stirrupS].forEach((el) => {
-    el.addEventListener('input', calculate);
-    el.addEventListener('change', calculate);
-    el.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        calculate();
+  if (btnModeAdv) btnModeAdv.addEventListener('click', () => setMode('adv'));
+  if (btnModeNorm) btnModeNorm.addEventListener('click', () => setMode('norm'));
+  if (btnUnitM) btnUnitM.addEventListener('click', () => setUnit('m'));
+  if (btnUnitFt) btnUnitFt.addEventListener('click', () => setUnit('ft'));
+
+  // Preset buttons handler
+  document.querySelectorAll('.btn-preset').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const u = btn.getAttribute('data-unit') || 'm';
+      setUnit(u);
+      setMode('adv');
+
+      if (btn.hasAttribute('data-span')) bmL.value = btn.getAttribute('data-span');
+      if (btn.hasAttribute('data-support')) bmSupportW.value = btn.getAttribute('data-support');
+      if (btn.hasAttribute('data-w')) bmW.value = btn.getAttribute('data-w');
+      if (btn.hasAttribute('data-d')) bmD.value = btn.getAttribute('data-d');
+
+      if (btn.hasAttribute('data-top-c')) topC.value = btn.getAttribute('data-top-c');
+      if (btn.hasAttribute('data-top-d')) topD.value = btn.getAttribute('data-top-d');
+      if (btn.hasAttribute('data-top-ex-c')) topExC.value = btn.getAttribute('data-top-ex-c');
+
+      if (btn.hasAttribute('data-bot-c')) botC.value = btn.getAttribute('data-bot-c');
+      if (btn.hasAttribute('data-bot-d')) botD.value = btn.getAttribute('data-bot-d');
+      if (btn.hasAttribute('data-bot-ex-c')) botExC.value = btn.getAttribute('data-bot-ex-c');
+
+      if (btn.getAttribute('data-side') === 'true') {
+        checkSideFace.checked = true;
+        sectionSideFaceInputs.classList.remove('hidden');
+        if (btn.hasAttribute('data-side-c')) bmSideC.value = btn.getAttribute('data-side-c');
+        if (btn.hasAttribute('data-side-d')) bmSideD.value = btn.getAttribute('data-side-d');
+      } else {
+        checkSideFace.checked = false;
+        sectionSideFaceInputs.classList.add('hidden');
       }
+
+      if (btn.hasAttribute('data-stirrup-d')) stirrupD.value = btn.getAttribute('data-stirrup-d');
+      if (btn.hasAttribute('data-stirrup-mode')) {
+        stirrupMode.value = btn.getAttribute('data-stirrup-mode');
+        if (stirrupMode.value === 'uniform') {
+          boxStirrupSpacingUniform.classList.remove('hidden');
+          boxStirrupSpacingTwozone.classList.add('hidden');
+          if (btn.hasAttribute('data-stirrup-s')) stirrupSpacingUniform.value = btn.getAttribute('data-stirrup-s');
+        } else {
+          boxStirrupSpacingUniform.classList.add('hidden');
+          boxStirrupSpacingTwozone.classList.remove('hidden');
+          if (btn.hasAttribute('data-stirrup-sup')) stirrupSpacingSup.value = btn.getAttribute('data-stirrup-sup');
+          if (btn.hasAttribute('data-stirrup-mid')) stirrupSpacingMid.value = btn.getAttribute('data-stirrup-mid');
+        }
+      }
+
+      calculate();
     });
   });
+
+  // Table Copy, CSV, Print
+  const btnCopyBbs = document.getElementById('btn-copy-bbs');
+  if (btnCopyBbs) {
+    btnCopyBbs.addEventListener('click', () => {
+      let tsv = 'Mark\tDescription\tDia(mm)\tShape Code\tCount\tCut Len(m)\tTot Len(m)\tUnit Wt(kg/m)\tTot Wt(kg)\n';
+      document.querySelectorAll('#tbody-bbs tr').forEach(row => {
+        const cols = Array.from(row.querySelectorAll('td')).map(td => td.textContent.trim());
+        tsv += cols.join('\t') + '\n';
+      });
+      navigator.clipboard.writeText(tsv).then(() => {
+        const orig = btnCopyBbs.textContent;
+        btnCopyBbs.textContent = '✅ Copied!';
+        setTimeout(() => { btnCopyBbs.textContent = orig; }, 1500);
+      });
+    });
+  }
+
+  const btnDownloadCsv = document.getElementById('btn-download-csv');
+  if (btnDownloadCsv) {
+    btnDownloadCsv.addEventListener('click', () => {
+      let csv = 'Mark,Description,Dia(mm),Shape Code,Count,Cut Len(m),Tot Len(m),Unit Wt(kg/m),Tot Wt(kg)\n';
+      document.querySelectorAll('#tbody-bbs tr').forEach(row => {
+        const cols = Array.from(row.querySelectorAll('td')).map(td => `"${td.textContent.trim().replace(/"/g, '""')}"`);
+        csv += cols.join(',') + '\n';
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'RCC_Beam_Steel_BBS.csv';
+      link.click();
+    });
+  }
+
+  const btnPrintBbs = document.getElementById('btn-print-bbs');
+  if (btnPrintBbs) {
+    btnPrintBbs.addEventListener('click', () => {
+      window.print();
+    });
+  }
+
+  // Live input events
+  // Live Diagram Update (Diagram updates in real-time as user types without computing result numbers)
+  function updateLiveDiagrams() {
+    let B = parseFloat(bmW.value) || 230;
+    let D = parseFloat(bmD.value) || 450;
+    let L = parseFloat(bmL.value) || 4.0;
+    let supW = parseFloat(bmSupportW.value) || 230;
+    let cover = parseFloat(bmCover.value) || 25;
+
+    if (currentDimensionUnit === 'ft') {
+      B *= 25.4;
+      D *= 25.4;
+      L *= 0.3048;
+      supW *= 25.4;
+      cover *= 25.4;
+    }
+
+    const nTop = (currentCalculationMode === 'norm' ? (parseInt(topCNorm?.value) || 2) : (parseInt(topC?.value) || 2));
+    const dTop = (currentCalculationMode === 'norm' ? (parseInt(topDNorm?.value) || 12) : (parseInt(topD?.value) || 12));
+    const nBot = (currentCalculationMode === 'norm' ? (parseInt(botCNorm?.value) || 3) : (parseInt(botC?.value) || 3));
+    const dBot = (currentCalculationMode === 'norm' ? (parseInt(botDNorm?.value) || 16) : (parseInt(botD?.value) || 16));
+    const nSide = (checkSideFace && checkSideFace.checked) ? (parseInt(bmSideC?.value) || 0) : 0;
+    const dSide = (checkSideFace && checkSideFace.checked) ? (parseInt(bmSideD?.value) || 0) : 0;
+    const dStirrup = (currentCalculationMode === 'norm' ? (parseInt(stirrupDNorm?.value) || 8) : (parseInt(stirrupD?.value) || 8));
+
+    drawCrossSection(B, D, cover, nTop, dTop, nBot, dBot, nSide, dSide, dStirrup);
+
+    const isTwo = stirrupMode && stirrupMode.value === 'two_zone';
+    const s1 = currentDimensionUnit === 'ft' ? Math.round((parseFloat(stirrupSpacingSup?.value) || 4) * 25.4) : Math.round(parseFloat(stirrupSpacingSup?.value) || 100);
+    const s2 = currentDimensionUnit === 'ft' ? Math.round((parseFloat(stirrupSpacingMid?.value) || 6) * 25.4) : Math.round(parseFloat(stirrupSpacingMid?.value) || 150);
+    drawElevation(L, supW, D, isTwo, s1, s2);
+  }
+
+  const liveInputs = [
+    bmL, bmSupportW, bmW, bmD, bmCover, bmCount,
+    selConcreteGrade, selEndAnchoring, inputWastage,
+    topC, topD, topExC, topExD,
+    botC, botD, botExC, botExD,
+    bmSideC, bmSideD,
+    stirrupD, stirrupLegs, stirrupSpacingUniform, stirrupSpacingSup, stirrupSpacingMid,
+    selNormType, inputNormCustomRate, selNormDia, selNormConcrete,
+    costSteel, costConc, costShut, costWire
+  ];
+
+  liveInputs.forEach(el => {
+    if (el) {
+      el.addEventListener('input', updateLiveDiagrams);
+      el.addEventListener('change', updateLiveDiagrams);
+    }
+  });
+
+  // Initial calculation on page load
   calculate();
 </script>
+
+<style>
+  .rcc-beam-steel-content h2 {
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.3;
+    color: #0f172a;
+  }
+
+  .rcc-beam-steel-content h2:first-child {
+    margin-top: 0;
+  }
+
+  .rcc-beam-steel-content h3 {
+    margin-top: 1.75rem;
+    margin-bottom: 0.625rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .rcc-beam-steel-content p {
+    margin: 0 0 1rem;
+    line-height: 1.75;
+    color: #475569;
+  }
+
+  .rcc-beam-steel-content ul,
+  .rcc-beam-steel-content ol {
+    margin: 0.75rem 0 1.5rem;
+    padding-left: 1.5rem;
+  }
+
+  .rcc-beam-steel-content ul {
+    list-style: disc;
+  }
+
+  .rcc-beam-steel-content ol {
+    list-style: decimal;
+  }
+
+  .rcc-beam-steel-content li + li {
+    margin-top: 0.5rem;
+  }
+
+  :global(.dark) .rcc-beam-steel-content h2,
+  :global(.dark) .rcc-beam-steel-content h3 {
+    color: #f8fafc;
+  }
+
+  :global(.dark) .rcc-beam-steel-content p {
+    color: #cbd5e1;
+  }
+
+  @media print {
+    header, footer, .btn-preset, #form-rcc-beam, button {
+      display: none !important;
+    }
+    #results-card {
+      box-shadow: none !important;
+      border: 1px solid #ccc !important;
+      background: white !important;
+      color: black !important;
+    }
+  }
+</style>

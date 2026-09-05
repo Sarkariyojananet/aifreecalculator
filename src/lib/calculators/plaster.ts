@@ -1,25 +1,70 @@
 /**
  * Plaster & Mortar Calculation Engine
  * Supports:
- * 1. Wall Plaster Material Estimation (Net area, wet/dry volume, cement bags, sand CFT/tons)
- * 2. General Mortar Quantity Estimation
- * 3. Tile Mortar / Adhesive Estimation (Coverage, bed thickness, bag count)
+ * 1. Wall Plaster Material Estimation (Net area, openings deductions, wet/dry volume, cement bags, sand CFT/tons, cost summary)
+ * 2. General Mortar Quantity Estimation (Length, width, depth, section count, mix ratio, cement bags, sand CFT/tons, cost summary)
+ * 3. Tile Mortar / Adhesive Estimation (Coverage, bed thickness, bag count, packaging size, cost summary)
  * 4. Gaming Mortar Artillery Calculations (Coordinates, distance, bearing in deg/mils, Squad & Arma aiming references)
+ * 
+ * Standards Reference: IS 1661 / IS 2250 / CPWD specifications / ASTM C270 / ACI 530
  */
+
+export type Currency = 'INR' | 'USD';
+
+export interface MaterialCostItem {
+  name: string;
+  quantity: number;
+  unit: string;
+  unitRate: number;
+  totalCost: number;
+}
+
+export interface MaterialCostSummary {
+  currency: Currency;
+  currencySymbol: string;
+  items: MaterialCostItem[];
+  totalMaterialCost: number;
+  formattedTotalCost: string;
+}
+
+export const DEFAULT_PLASTER_PRICES_INR = {
+  cementBagRate: 380, // ₹ per 50kg bag
+  sandRatePerCft: 55, // ₹ per CFT
+  tileAdhesiveBagRate: 450, // ₹ per 20kg bag
+};
+
+export const DEFAULT_PLASTER_PRICES_USD = {
+  cementBagRate: 14.50, // $ per 50kg bag
+  sandRatePerCft: 1.80, // $ per CFT
+  tileAdhesiveBagRate: 22.00, // $ per 20kg bag
+};
+
+export function formatCurrency(amount: number, currency: Currency): string {
+  if (!Number.isFinite(amount)) return currency === 'INR' ? '₹0' : '$0.00';
+  if (currency === 'INR') {
+    return '₹' + Math.round(amount).toLocaleString('en-IN');
+  }
+  return '$' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
 
 export interface WallPlasterInput {
   unitSystem: 'metric' | 'imperial';
   wallLength: number; // m or ft
   wallHeight: number; // m or ft
-  numberOfWalls: number;
-  openingsDeduction: number; // m² or sq.ft
+  numberOfWalls?: number;
+  openingsDeduction?: number; // m² or sq.ft
   thickness: number; // mm, cm, or in
-  thicknessUnit: 'mm' | 'cm' | 'in';
+  thicknessUnit?: 'mm' | 'cm' | 'in';
   mortarRatio: string; // '1:3' | '1:4' | '1:5' | '1:6' | 'custom'
   customCementPart?: number;
   customSandPart?: number;
-  dryVolumeFactor?: number; // default 1.30
+  dryVolumeFactor?: number; // default 1.30 (1.30 - 1.33 standard)
   wastagePercent?: number; // default 10%
+  // Cost estimation (optional)
+  enableCost?: boolean;
+  currency?: Currency;
+  cementBagRate?: number;
+  sandRatePerCft?: number;
 }
 
 export interface WallPlasterResult {
@@ -39,12 +84,14 @@ export interface WallPlasterResult {
   cementVolumeCum: number;
   cementWeightKg: number;
   cementBags50kg: number;
+  cementBagsRound: number;
   sandVolumeCum: number;
   sandVolumeCft: number;
   sandWeightTons: number;
   wastagePercent: number;
   dryVolumeFactor: number;
   ratioLabel: string;
+  costSummary?: MaterialCostSummary;
 }
 
 export interface GeneralMortarInput {
@@ -52,13 +99,18 @@ export interface GeneralMortarInput {
   length: number; // m or ft
   width: number; // m or ft
   depth: number; // mm, cm, m, or in
-  depthUnit: 'mm' | 'cm' | 'm' | 'in';
-  numberOfSections: number;
+  depthUnit?: 'mm' | 'cm' | 'm' | 'in';
+  numberOfSections?: number;
   mortarRatio: string;
   customCementPart?: number;
   customSandPart?: number;
   dryVolumeFactor?: number; // default 1.30
   wastagePercent?: number; // default 10%
+  // Cost estimation (optional)
+  enableCost?: boolean;
+  currency?: Currency;
+  cementBagRate?: number;
+  sandRatePerCft?: number;
 }
 
 export interface GeneralMortarResult {
@@ -66,14 +118,19 @@ export interface GeneralMortarResult {
   wetVolumeCft: number;
   dryVolumeCum: number;
   dryVolumeCft: number;
+  cementPart: number;
+  sandPart: number;
+  cementVolumeCum: number;
   cementWeightKg: number;
   cementBags50kg: number;
+  cementBagsRound: number;
   sandVolumeCum: number;
   sandVolumeCft: number;
   sandWeightTons: number;
   wastagePercent: number;
   dryVolumeFactor: number;
   ratioLabel: string;
+  costSummary?: MaterialCostSummary;
 }
 
 export interface TileMortarInput {
@@ -81,10 +138,14 @@ export interface TileMortarInput {
   area: number; // m² or sq.ft
   tileType: 'floor' | 'wall';
   tilePreset: string; // '300x300' | '600x600' | '600x1200' | 'custom'
-  bedThicknessMm: number; // mm
+  bedThicknessMm?: number; // mm
   coverageRateKgPerSqm: number; // kg/m²
   wastagePercent?: number; // default 10%
-  bagSizeKg: number; // e.g. 20, 25, 30, 40
+  bagSizeKg?: number; // e.g. 20, 25, 30, 40
+  // Cost estimation (optional)
+  enableCost?: boolean;
+  currency?: Currency;
+  tileAdhesiveBagRate?: number;
 }
 
 export interface TileMortarResult {
@@ -100,6 +161,7 @@ export interface TileMortarResult {
   estimatedBagsExact: number;
   estimatedBagsRounded: number;
   wastagePercent: number;
+  costSummary?: MaterialCostSummary;
 }
 
 export interface GamingMortarInput {
@@ -154,13 +216,33 @@ export function calculateWallPlaster(input: WallPlasterInput): WallPlasterResult
     numberOfWalls = 1,
     openingsDeduction = 0,
     thickness,
-    thicknessUnit,
+    thicknessUnit = 'mm',
     mortarRatio,
     customCementPart = 1,
     customSandPart = 4,
     dryVolumeFactor = 1.30,
     wastagePercent = 10,
+    enableCost = false,
+    currency = 'INR',
+    cementBagRate,
+    sandRatePerCft,
   } = input;
+
+  if (!Number.isFinite(wallLength) || wallLength <= 0) {
+    throw new Error('Wall length must be a valid positive number.');
+  }
+  if (!Number.isFinite(wallHeight) || wallHeight <= 0) {
+    throw new Error('Wall height must be a valid positive number.');
+  }
+  if (!Number.isFinite(numberOfWalls) || numberOfWalls <= 0) {
+    throw new Error('Number of walls must be at least 1.');
+  }
+  if (!Number.isFinite(thickness) || thickness <= 0) {
+    throw new Error('Plaster thickness must be a valid positive number.');
+  }
+  if (!Number.isFinite(openingsDeduction) || openingsDeduction < 0) {
+    throw new Error('Openings deduction cannot be negative.');
+  }
 
   // Convert raw wall area to square meters
   let totalWallAreaSqm = 0;
@@ -168,17 +250,21 @@ export function calculateWallPlaster(input: WallPlasterInput): WallPlasterResult
 
   if (unitSystem === 'imperial') {
     const rawAreaSqft = wallLength * wallHeight * numberOfWalls;
-    totalWallAreaSqm = rawAreaSqft / 10.7639;
-    openingsAreaSqm = openingsDeduction / 10.7639;
+    totalWallAreaSqm = rawAreaSqft / 10.7639104;
+    openingsAreaSqm = openingsDeduction / 10.7639104;
   } else {
     totalWallAreaSqm = wallLength * wallHeight * numberOfWalls;
     openingsAreaSqm = openingsDeduction;
   }
 
+  if (openingsAreaSqm >= totalWallAreaSqm) {
+    throw new Error('Openings deduction area cannot exceed or equal total wall area.');
+  }
+
   const netPlasterAreaSqm = Math.max(0, totalWallAreaSqm - openingsAreaSqm);
-  const totalWallAreaSqft = totalWallAreaSqm * 10.7639;
-  const openingsAreaSqft = openingsAreaSqm * 10.7639;
-  const netPlasterAreaSqft = netPlasterAreaSqm * 10.7639;
+  const totalWallAreaSqft = totalWallAreaSqm * 10.7639104;
+  const openingsAreaSqft = openingsAreaSqm * 10.7639104;
+  const netPlasterAreaSqft = netPlasterAreaSqm * 10.7639104;
 
   // Convert thickness to meters and mm
   let thicknessMeters = 0;
@@ -197,11 +283,13 @@ export function calculateWallPlaster(input: WallPlasterInput): WallPlasterResult
 
   // Wet Volume in m³
   const wetMortarVolumeCum = netPlasterAreaSqm * thicknessMeters;
-  const wetMortarVolumeCft = wetMortarVolumeCum * 35.3147;
+  const wetMortarVolumeCft = wetMortarVolumeCum * 35.3146667;
 
   // Dry Mortar Volume (dry factor accounts for sand void ratio + optional wastage)
-  const dryMortarVolumeCum = wetMortarVolumeCum * dryVolumeFactor * (1 + wastagePercent / 100);
-  const dryMortarVolumeCft = dryMortarVolumeCum * 35.3147;
+  const safeDryFactor = Math.max(1.1, Math.min(1.6, dryVolumeFactor));
+  const safeWastage = Math.max(0, wastagePercent);
+  const dryMortarVolumeCum = wetMortarVolumeCum * safeDryFactor * (1 + safeWastage / 100);
+  const dryMortarVolumeCft = dryMortarVolumeCum * 35.3146667;
 
   // Mortar ratio parts
   let cementPart = 1;
@@ -214,7 +302,7 @@ export function calculateWallPlaster(input: WallPlasterInput): WallPlasterResult
     ratioLabel = `${cementPart}:${sandPart}`;
   } else {
     const parts = mortarRatio.split(':').map(Number);
-    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1]) && parts[0] > 0 && parts[1] > 0) {
       cementPart = parts[0];
       sandPart = parts[1];
     }
@@ -222,15 +310,51 @@ export function calculateWallPlaster(input: WallPlasterInput): WallPlasterResult
 
   const totalParts = cementPart + sandPart;
 
-  // Cement (Density ~ 1440 kg/m³, 50kg bag)
+  // Cement (Bulk Density ~ 1440 kg/m³, 50kg bag)
   const cementVolumeCum = (dryMortarVolumeCum * cementPart) / totalParts;
   const cementWeightKg = cementVolumeCum * 1440;
   const cementBags50kg = cementWeightKg / 50;
+  const cementBagsRound = Math.ceil(cementBags50kg);
 
-  // Sand (Density ~ 1600 kg/m³)
+  // Sand (Bulk Density ~ 1600 kg/m³)
   const sandVolumeCum = (dryMortarVolumeCum * sandPart) / totalParts;
-  const sandVolumeCft = sandVolumeCum * 35.3147;
+  const sandVolumeCft = sandVolumeCum * 35.3146667;
   const sandWeightTons = (sandVolumeCum * 1600) / 1000;
+
+  // Cost summary calculation
+  let costSummary: MaterialCostSummary | undefined;
+  if (enableCost) {
+    const defaults = currency === 'INR' ? DEFAULT_PLASTER_PRICES_INR : DEFAULT_PLASTER_PRICES_USD;
+    const cRate = cementBagRate ?? defaults.cementBagRate;
+    const sRate = sandRatePerCft ?? defaults.sandRatePerCft;
+
+    const cementCost = cementBagsRound * cRate;
+    const sandCost = sandVolumeCft * sRate;
+    const totalCost = cementCost + sandCost;
+
+    costSummary = {
+      currency,
+      currencySymbol: currency === 'INR' ? '₹' : '$',
+      items: [
+        {
+          name: 'Cement (50 kg Bags)',
+          quantity: cementBagsRound,
+          unit: 'Bags',
+          unitRate: cRate,
+          totalCost: Number(cementCost.toFixed(2)),
+        },
+        {
+          name: 'Sand (Coarse/River Sand)',
+          quantity: Number(sandVolumeCft.toFixed(2)),
+          unit: 'CFT',
+          unitRate: sRate,
+          totalCost: Number(sandCost.toFixed(2)),
+        },
+      ],
+      totalMaterialCost: Number(totalCost.toFixed(2)),
+      formattedTotalCost: formatCurrency(totalCost, currency),
+    };
+  }
 
   return {
     totalWallAreaSqm: Number(totalWallAreaSqm.toFixed(2)),
@@ -249,12 +373,14 @@ export function calculateWallPlaster(input: WallPlasterInput): WallPlasterResult
     cementVolumeCum: Number(cementVolumeCum.toFixed(3)),
     cementWeightKg: Number(cementWeightKg.toFixed(1)),
     cementBags50kg: Number(cementBags50kg.toFixed(2)),
+    cementBagsRound,
     sandVolumeCum: Number(sandVolumeCum.toFixed(3)),
     sandVolumeCft: Number(sandVolumeCft.toFixed(2)),
     sandWeightTons: Number(sandWeightTons.toFixed(2)),
-    wastagePercent,
-    dryVolumeFactor,
+    wastagePercent: safeWastage,
+    dryVolumeFactor: safeDryFactor,
     ratioLabel,
+    costSummary,
   };
 }
 
@@ -267,14 +393,31 @@ export function calculateGeneralMortar(input: GeneralMortarInput): GeneralMortar
     length,
     width,
     depth,
-    depthUnit,
+    depthUnit = 'mm',
     numberOfSections = 1,
     mortarRatio,
     customCementPart = 1,
     customSandPart = 4,
     dryVolumeFactor = 1.30,
     wastagePercent = 10,
+    enableCost = false,
+    currency = 'INR',
+    cementBagRate,
+    sandRatePerCft,
   } = input;
+
+  if (!Number.isFinite(length) || length <= 0) {
+    throw new Error('Length must be a valid positive number.');
+  }
+  if (!Number.isFinite(width) || width <= 0) {
+    throw new Error('Width must be a valid positive number.');
+  }
+  if (!Number.isFinite(depth) || depth <= 0) {
+    throw new Error('Depth/thickness must be a valid positive number.');
+  }
+  if (!Number.isFinite(numberOfSections) || numberOfSections <= 0) {
+    throw new Error('Number of sections must be at least 1.');
+  }
 
   let lengthM = length;
   let widthM = width;
@@ -294,10 +437,12 @@ export function calculateGeneralMortar(input: GeneralMortarInput): GeneralMortar
   }
 
   const wetVolumeCum = lengthM * widthM * depthM * numberOfSections;
-  const wetVolumeCft = wetVolumeCum * 35.3147;
+  const wetVolumeCft = wetVolumeCum * 35.3146667;
 
-  const dryVolumeCum = wetVolumeCum * dryVolumeFactor * (1 + wastagePercent / 100);
-  const dryVolumeCft = dryVolumeCum * 35.3147;
+  const safeDryFactor = Math.max(1.1, Math.min(1.6, dryVolumeFactor));
+  const safeWastage = Math.max(0, wastagePercent);
+  const dryVolumeCum = wetVolumeCum * safeDryFactor * (1 + safeWastage / 100);
+  const dryVolumeCft = dryVolumeCum * 35.3146667;
 
   let cementPart = 1;
   let sandPart = 4;
@@ -309,7 +454,7 @@ export function calculateGeneralMortar(input: GeneralMortarInput): GeneralMortar
     ratioLabel = `${cementPart}:${sandPart}`;
   } else {
     const parts = mortarRatio.split(':').map(Number);
-    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1]) && parts[0] > 0 && parts[1] > 0) {
       cementPart = parts[0];
       sandPart = parts[1];
     }
@@ -320,24 +465,65 @@ export function calculateGeneralMortar(input: GeneralMortarInput): GeneralMortar
   const cementVolumeCum = (dryVolumeCum * cementPart) / totalParts;
   const cementWeightKg = cementVolumeCum * 1440;
   const cementBags50kg = cementWeightKg / 50;
+  const cementBagsRound = Math.ceil(cementBags50kg);
 
   const sandVolumeCum = (dryVolumeCum * sandPart) / totalParts;
-  const sandVolumeCft = sandVolumeCum * 35.3147;
+  const sandVolumeCft = sandVolumeCum * 35.3146667;
   const sandWeightTons = (sandVolumeCum * 1600) / 1000;
+
+  // Cost summary
+  let costSummary: MaterialCostSummary | undefined;
+  if (enableCost) {
+    const defaults = currency === 'INR' ? DEFAULT_PLASTER_PRICES_INR : DEFAULT_PLASTER_PRICES_USD;
+    const cRate = cementBagRate ?? defaults.cementBagRate;
+    const sRate = sandRatePerCft ?? defaults.sandRatePerCft;
+
+    const cementCost = cementBagsRound * cRate;
+    const sandCost = sandVolumeCft * sRate;
+    const totalCost = cementCost + sandCost;
+
+    costSummary = {
+      currency,
+      currencySymbol: currency === 'INR' ? '₹' : '$',
+      items: [
+        {
+          name: 'Cement (50 kg Bags)',
+          quantity: cementBagsRound,
+          unit: 'Bags',
+          unitRate: cRate,
+          totalCost: Number(cementCost.toFixed(2)),
+        },
+        {
+          name: 'Sand (CFT)',
+          quantity: Number(sandVolumeCft.toFixed(2)),
+          unit: 'CFT',
+          unitRate: sRate,
+          totalCost: Number(sandCost.toFixed(2)),
+        },
+      ],
+      totalMaterialCost: Number(totalCost.toFixed(2)),
+      formattedTotalCost: formatCurrency(totalCost, currency),
+    };
+  }
 
   return {
     wetVolumeCum: Number(wetVolumeCum.toFixed(3)),
     wetVolumeCft: Number(wetVolumeCft.toFixed(2)),
     dryVolumeCum: Number(dryVolumeCum.toFixed(3)),
     dryVolumeCft: Number(dryVolumeCft.toFixed(2)),
+    cementPart,
+    sandPart,
+    cementVolumeCum: Number(cementVolumeCum.toFixed(3)),
     cementWeightKg: Number(cementWeightKg.toFixed(1)),
     cementBags50kg: Number(cementBags50kg.toFixed(2)),
+    cementBagsRound,
     sandVolumeCum: Number(sandVolumeCum.toFixed(3)),
     sandVolumeCft: Number(sandVolumeCft.toFixed(2)),
     sandWeightTons: Number(sandWeightTons.toFixed(2)),
-    wastagePercent,
-    dryVolumeFactor,
+    wastagePercent: safeWastage,
+    dryVolumeFactor: safeDryFactor,
     ratioLabel,
+    costSummary,
   };
 }
 
@@ -349,25 +535,62 @@ export function calculateTileMortar(input: TileMortarInput): TileMortarResult {
     unitSystem,
     area,
     tileType,
-    bedThicknessMm,
+    bedThicknessMm = 6,
     coverageRateKgPerSqm,
     wastagePercent = 10,
     bagSizeKg = 20,
+    enableCost = false,
+    currency = 'INR',
+    tileAdhesiveBagRate,
   } = input;
 
+  if (!Number.isFinite(area) || area <= 0) {
+    throw new Error('Tiling area must be a valid positive number.');
+  }
+  if (!Number.isFinite(coverageRateKgPerSqm) || coverageRateKgPerSqm <= 0) {
+    throw new Error('Coverage rate must be a valid positive number.');
+  }
+  if (!Number.isFinite(bagSizeKg) || bagSizeKg <= 0) {
+    throw new Error('Bag packaging size must be greater than zero.');
+  }
+
   let areaSqm = area;
-  let areaSqft = area * 10.7639;
+  let areaSqft = area * 10.7639104;
 
   if (unitSystem === 'imperial') {
-    areaSqm = area / 10.7639;
+    areaSqm = area / 10.7639104;
     areaSqft = area;
   }
 
+  const safeWastage = Math.max(0, wastagePercent);
   const baseMaterialKg = areaSqm * coverageRateKgPerSqm;
-  const wastageKg = baseMaterialKg * (wastagePercent / 100);
+  const wastageKg = baseMaterialKg * (safeWastage / 100);
   const totalRequiredKg = baseMaterialKg + wastageKg;
   const estimatedBagsExact = totalRequiredKg / bagSizeKg;
   const estimatedBagsRounded = Math.ceil(estimatedBagsExact);
+
+  let costSummary: MaterialCostSummary | undefined;
+  if (enableCost) {
+    const defaults = currency === 'INR' ? DEFAULT_PLASTER_PRICES_INR : DEFAULT_PLASTER_PRICES_USD;
+    const aRate = tileAdhesiveBagRate ?? defaults.tileAdhesiveBagRate;
+    const totalCost = estimatedBagsRounded * aRate;
+
+    costSummary = {
+      currency,
+      currencySymbol: currency === 'INR' ? '₹' : '$',
+      items: [
+        {
+          name: `Tile Adhesive (${bagSizeKg} kg Bags)`,
+          quantity: estimatedBagsRounded,
+          unit: 'Bags',
+          unitRate: aRate,
+          totalCost: Number(totalCost.toFixed(2)),
+        },
+      ],
+      totalMaterialCost: Number(totalCost.toFixed(2)),
+      formattedTotalCost: formatCurrency(totalCost, currency),
+    };
+  }
 
   return {
     areaSqm: Number(areaSqm.toFixed(2)),
@@ -381,7 +604,8 @@ export function calculateTileMortar(input: TileMortarInput): TileMortarResult {
     bagSizeKg,
     estimatedBagsExact: Number(estimatedBagsExact.toFixed(2)),
     estimatedBagsRounded,
-    wastagePercent,
+    wastagePercent: safeWastage,
+    costSummary,
   };
 }
 
@@ -391,11 +615,19 @@ export function calculateTileMortar(input: TileMortarInput): TileMortarResult {
 export function calculateGamingMortar(input: GamingMortarInput): GamingMortarResult {
   const { game, mortarX, mortarY, targetX, targetY, elevationDiffMeters = 0 } = input;
 
+  if (!Number.isFinite(mortarX) || !Number.isFinite(mortarY) || !Number.isFinite(targetX) || !Number.isFinite(targetY)) {
+    throw new Error('Mortar and Target coordinates must be valid finite numbers.');
+  }
+
   const deltaX = targetX - mortarX;
   const deltaY = targetY - mortarY;
 
   // Euclidean 2D distance
   const distanceMeters = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+  if (distanceMeters === 0) {
+    throw new Error('Mortar and Target positions cannot be identical.');
+  }
+
   const distanceKm = distanceMeters / 1000;
 
   // Standard military bearing: 0 deg = North (+Y), 90 deg = East (+X)

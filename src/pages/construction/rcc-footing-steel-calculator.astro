@@ -4,267 +4,1894 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
 
 <CalculatorLayout
   title="RCC Footing Steel & Concrete Calculator - Foundation Mesh BBS"
-  description="Calculate RCC isolated pad footing mesh reinforcement steel weight, bar cutting length, total steel length, concrete volume, and pit excavation."
+  description="Calculate isolated pad and sloped footing reinforcement steel weight, bar cutting length with L-bends, column starter dowels, BBS schedule, concrete volume, and excavation pit size."
   category="Construction"
   calculatorName="RCC Footing Steel Calculator"
   slug="rcc-footing-steel-calculator"
-  keywords={['rcc footing steel', 'footing bbs', 'foundation mesh rebar', 'footing concrete volume', 'footing excavation', 'pad footing calculation']}
+  keywords={[
+    'rcc footing steel calculator',
+    'footing bbs bar bending schedule',
+    'foundation mesh rebar weight',
+    'isolated pad footing concrete volume',
+    'sloped footing calculation',
+    'column starter dowels footing',
+    'footing excavation pcc boq'
+  ]}
 >
   <div class="space-y-6">
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <div>
-        <label for="ft-len" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Footing Length L (mm)</label>
-        <input type="number" id="ft-len" value="1500" min="100" step="50" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
-      </div>
-      <div>
-        <label for="ft-width" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Footing Width B (mm)</label>
-        <input type="number" id="ft-width" value="1500" min="100" step="50" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
-      </div>
-      <div>
-        <label for="ft-depth" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Footing Depth D (mm)</label>
-        <input type="number" id="ft-depth" value="300" min="50" step="25" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
-      </div>
-
-      <div>
-        <label for="ft-dia" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Mesh Rebar Diameter (mm)</label>
-        <select id="ft-dia" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white cursor-pointer">
-          <option value="8">8 mm</option>
-          <option value="10">10 mm</option>
-          <option value="12" selected>12 mm</option>
-          <option value="16">16 mm</option>
-          <option value="20">20 mm</option>
-          <option value="25">25 mm</option>
-        </select>
-      </div>
-      <div>
-        <label for="ft-spacing" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Mesh Spacing c/c (mm)</label>
-        <input type="number" id="ft-spacing" value="150" min="25" step="10" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
-      </div>
-      <div>
-        <label for="ft-count" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Number of Footings</label>
-        <input type="number" id="ft-count" value="1" min="1" step="1" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
-      </div>
-    </div>
-
-    <!-- ACTION BUTTONS: CALCULATE & CLEAR -->
-    <div class="flex flex-wrap items-center gap-3 pt-1">
-      <button
-        type="button"
-        id="btn-calc-footing"
-        class="flex-1 min-w-[200px] inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-blue-500/25 transition active:scale-[0.98] cursor-pointer"
-      >
-        <span>⚡ Calculate Footing Steel & Concrete</span>
-        <span>→</span>
-      </button>
-      <button
-        type="button"
-        id="btn-clear-footing"
-        class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3.5 text-sm font-bold text-slate-700 hover:bg-slate-100 hover:text-red-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-red-400 transition cursor-pointer"
-        title="Reset or Clear Inputs"
-      >
-        <span>🔄 Clear / Reset</span>
-      </button>
-    </div>
-
-    <!-- Output Box -->
-    <div id="results-card" class="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-950">
-      <div class="border-b border-slate-200/80 pb-4 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+    
+    <!-- TOP TOOLBAR: PRESET BUTTONS & MODE SWITCHER -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
         <div>
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Steel for All Footings</span>
-          <div id="res-ft-total-steel" class="mt-1 text-3xl font-black text-blue-600 dark:text-blue-400">-- kg</div>
+          <span class="text-xs font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">IS 456:2000 & ACI 318 Foundation Takeoff</span>
+          <h2 class="text-lg font-black text-slate-900 dark:text-white sm:text-xl">
+            RCC Isolated Pad & Sloped Footing BBS Calculator
+          </h2>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Calculate orthogonal rebar mesh, end L-bends, column starter dowels, concrete volume, commercial 12m bundles, PCC blinding, and cost.
+          </p>
         </div>
-        <div class="text-left sm:text-right">
-          <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Concrete:</span>
-          <div id="res-ft-concrete" class="mt-1 text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400">-- m³</div>
+        
+        <!-- CALCULATION METHOD SWITCHER PILLS -->
+        <div class="inline-flex rounded-xl bg-slate-200/80 p-1 dark:bg-slate-800/80 self-start sm:self-center">
+          <button
+            type="button"
+            id="btn-mode-adv"
+            class="rounded-lg bg-white px-3 py-1.5 text-xs font-bold text-blue-700 shadow-xs dark:bg-blue-600 dark:text-white transition cursor-pointer"
+          >
+            📐 Advanced BBS Mode
+          </button>
+          <button
+            type="button"
+            id="btn-mode-norm"
+            class="rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white transition cursor-pointer"
+          >
+            ⚡ Normal (Thumb Rule)
+          </button>
         </div>
       </div>
 
-      <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5 text-xs">
-        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
-          <div class="text-slate-500 dark:text-slate-400 font-semibold">Steel Per Footing</div>
-          <div id="res-ft-single-steel" class="mt-1 text-base font-bold text-slate-900 dark:text-white">--</div>
+      <!-- QUICK ENGINEERING PRESETS -->
+      <div class="mt-3 flex flex-wrap items-center gap-2">
+        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1">Quick Presets:</span>
+        <button
+          type="button"
+          class="btn-preset rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+          data-type="flat" data-l="1200" data-b="1200" data-d="300" data-dia="10" data-sp="150" data-dowels="4" data-doweldia="12" data-unit="m"
+        >
+          🏡 1.2m Pad (Residential)
+        </button>
+        <button
+          type="button"
+          class="btn-preset rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+          data-type="flat" data-l="1500" data-b="1500" data-d="350" data-dia="12" data-sp="150" data-dowels="4" data-doweldia="16" data-unit="m"
+        >
+          🏢 1.5m Standard Isolated
+        </button>
+        <button
+          type="button"
+          class="btn-preset rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+          data-type="flat" data-l="1800" data-b="1800" data-d="450" data-dia="12" data-sp="125" data-dowels="6" data-doweldia="16" data-unit="m"
+        >
+          🏗️ 1.8m Heavy Commercial
+        </button>
+        <button
+          type="button"
+          class="btn-preset rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+          data-type="sloped" data-l="2400" data-b="2400" data-d="600" data-d1="200" data-pedl="450" data-pedb="450" data-dia="16" data-sp="100" data-dowels="8" data-doweldia="20" data-unit="m"
+        >
+          🏛️ 2.4m High-Rise Sloped Footing
+        </button>
+        <button
+          type="button"
+          class="btn-preset rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-blue-500 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+          data-type="flat" data-l="5.0" data-b="5.0" data-d="16" data-dia="12" data-sp="6" data-dowels="4" data-doweldia="16" data-unit="ft"
+        >
+          🇺🇸 5ft × 5ft US Pad (#4 @ 6")
+        </button>
+      </div>
+
+      <form id="form-rcc-footing" class="mt-5 space-y-5" novalidate onsubmit="return false;">
+        
+        <!-- SECTION 1: FOOTING GEOMETRY & UNIT CONTROLS -->
+        <div>
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <span>1.</span> Footing Geometry & Configuration
+            </h3>
+            <div class="flex items-center gap-1 text-xs">
+              <span class="text-slate-500 dark:text-slate-400 font-semibold mr-1">Unit:</span>
+              <button type="button" id="btn-unit-m" class="btn-unit active rounded-lg bg-blue-600 px-2.5 py-1 font-bold text-white shadow-xs cursor-pointer" data-unit="m">Metric (m / mm)</button>
+              <button type="button" id="btn-unit-ft" class="btn-unit rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-unit="ft">Imperial (ft / in)</button>
+            </div>
+          </div>
+
+          <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <label for="ft-type" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Footing Geometry Type</label>
+              <select id="ft-type" class="mt-1 w-full rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white cursor-pointer">
+                <option value="flat" selected>Flat Isolated Pad Footing</option>
+                <option value="sloped">Trapezoidal / Sloped Footing</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="ft-len" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Footing Length L (<span class="lbl-dim-unit">mm</span>)
+              </label>
+              <input
+                type="number"
+                id="ft-len"
+                value="1500"
+                step="50"
+                min="300"
+                class="mt-1 w-full rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label for="ft-width" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Footing Width B (<span class="lbl-dim-unit">mm</span>)
+              </label>
+              <input
+                type="number"
+                id="ft-width"
+                value="1500"
+                step="50"
+                min="300"
+                class="mt-1 w-full rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label for="ft-depth" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Total Footing Depth D (<span class="lbl-sec-unit">mm</span>)
+              </label>
+              <input
+                type="number"
+                id="ft-depth"
+                value="350"
+                step="25"
+                min="100"
+                class="mt-1 w-full rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              />
+            </div>
+
+            <!-- SLOPED FOOTING SPECIFIC PARAMETERS -->
+            <div id="box-sloped-d1" class="hidden">
+              <label for="ft-d1" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Base Vertical Edge Depth D₁ (<span class="lbl-sec-unit">mm</span>)
+              </label>
+              <input
+                type="number"
+                id="ft-d1"
+                value="150"
+                step="25"
+                min="100"
+                class="mt-1 w-full rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              />
+            </div>
+
+            <div id="box-sloped-ped" class="hidden sm:col-span-2 grid grid-cols-2 gap-2">
+              <div>
+                <label for="ft-ped-l" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Pedestal Top Length a (<span class="lbl-sec-unit">mm</span>)
+                </label>
+                <input
+                  type="number"
+                  id="ft-ped-l"
+                  value="400"
+                  step="25"
+                  min="200"
+                  class="mt-1 w-full rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                />
+              </div>
+              <div>
+                <label for="ft-ped-w" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Pedestal Top Width b (<span class="lbl-sec-unit">mm</span>)
+                </label>
+                <input
+                  type="number"
+                  id="ft-ped-w"
+                  value="400"
+                  step="25"
+                  min="200"
+                  class="mt-1 w-full rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label for="ft-cover" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                Clear Cover (<span class="lbl-sec-unit">mm</span>)
+              </label>
+              <input
+                type="number"
+                id="ft-cover"
+                value="50"
+                step="5"
+                min="25"
+                class="mt-1 w-full rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              />
+              <span class="text-[10px] text-slate-500 dark:text-slate-400">IS 456 Cl 26.4.2.2: Min 50mm for footings</span>
+            </div>
+
+            <div>
+              <label for="ft-count" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Number of Footings</label>
+              <input
+                type="number"
+                id="ft-count"
+                value="1"
+                min="1"
+                step="1"
+                class="mt-1 w-full rounded-xl border-2 border-slate-300 bg-white px-3 py-2 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              />
+            </div>
+          </div>
         </div>
-        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
-          <div class="text-slate-500 dark:text-slate-400 font-semibold">Mesh Bar Cut Length</div>
-          <div id="res-ft-cut-len" class="mt-1 text-base font-bold text-emerald-600 dark:text-emerald-400">--</div>
+
+        <!-- SECTION 2A: ADVANCED BBS REBAR DETAILING (SHOWN IN ADVANCED MODE) -->
+        <div id="section-adv-inputs" class="space-y-4">
+          <div class="flex items-center justify-between border-t border-slate-200/80 pt-4 dark:border-slate-800">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <span>2.</span> Bottom Reinforcement Mesh & Rebar Specifications
+            </h3>
+            <span class="text-[11px] font-semibold text-blue-600 dark:text-blue-400">IS 2502 & IS 456 Compliant</span>
+          </div>
+
+          <!-- BOTTOM MESH X & Y GRID -->
+          <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            <!-- X-Direction Rebars -->
+            <div class="rounded-2xl border border-blue-100 bg-blue-50/50 p-4 dark:border-blue-950/40 dark:bg-blue-950/20">
+              <div class="flex items-center justify-between">
+                <h4 class="text-xs font-bold text-blue-900 dark:text-blue-200 flex items-center gap-1.5">
+                  <span>↔️</span> X-Direction Bottom Mesh (Parallel to Length L)
+                </h4>
+                <span class="text-[10px] font-bold rounded-md bg-blue-100 px-2 py-0.5 text-blue-800 dark:bg-blue-900 dark:text-blue-200">Main Mat</span>
+              </div>
+              <div class="mt-3 grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label for="ft-dia-x" class="block font-bold text-slate-700 dark:text-slate-300">Bar Diameter</label>
+                  <select id="ft-dia-x" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                    <option value="8">8 mm</option>
+                    <option value="10">10 mm</option>
+                    <option value="12" selected>12 mm (Standard)</option>
+                    <option value="16">16 mm (Heavy Load)</option>
+                    <option value="20">20 mm</option>
+                    <option value="25">25 mm</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="ft-sp-x" class="block font-bold text-slate-700 dark:text-slate-300">
+                    Spacing c/c (<span class="lbl-sec-unit">mm</span>)
+                  </label>
+                  <input type="number" id="ft-sp-x" value="150" step="10" min="50" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Y-Direction Rebars -->
+            <div class="rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4 dark:border-emerald-950/40 dark:bg-emerald-950/20">
+              <div class="flex items-center justify-between">
+                <h4 class="text-xs font-bold text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
+                  <span>↕️</span> Y-Direction Bottom Mesh (Parallel to Width B)
+                </h4>
+                <span class="text-[10px] font-bold rounded-md bg-emerald-100 px-2 py-0.5 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">Main Mat</span>
+              </div>
+              <div class="mt-3 grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label for="ft-dia-y" class="block font-bold text-slate-700 dark:text-slate-300">Bar Diameter</label>
+                  <select id="ft-dia-y" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                    <option value="8">8 mm</option>
+                    <option value="10">10 mm</option>
+                    <option value="12" selected>12 mm (Standard)</option>
+                    <option value="16">16 mm (Heavy Load)</option>
+                    <option value="20">20 mm</option>
+                    <option value="25">25 mm</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="ft-sp-y" class="block font-bold text-slate-700 dark:text-slate-300">
+                    Spacing c/c (<span class="lbl-sec-unit">mm</span>)
+                  </label>
+                  <input type="number" id="ft-sp-y" value="150" step="10" min="50" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- END ANCHORAGE BEND-UPS & COLUMN STARTER DOWELS -->
+          <div class="rounded-2xl border border-slate-200/80 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-950/60 space-y-4">
+            
+            <div class="flex flex-wrap items-center justify-between gap-3">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="check-bend-up" checked class="h-4 w-4 rounded-md border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" />
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Include 90° Vertical End Bend-ups (L-hooks) on Mesh Ends
+                </span>
+              </label>
+              <span class="text-[11px] text-slate-500 dark:text-slate-400">Leg = Depth − 2×Cover (IS 2502 Bend Deduction Applied)</span>
+            </div>
+
+            <!-- COLUMN STARTER DOWELS -->
+            <div class="border-t border-slate-200/60 pt-3 dark:border-slate-800">
+              <div class="flex items-center justify-between">
+                <label class="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" id="check-dowels" checked class="h-4 w-4 rounded-md border-amber-300 text-amber-600 focus:ring-amber-500 cursor-pointer" />
+                  <span class="text-xs font-bold text-slate-800 dark:text-slate-200">
+                    Include Column Starter Dowel Rebars Anchored into Footing
+                  </span>
+                </label>
+                <span class="text-[10px] font-bold text-amber-800 dark:text-amber-300 bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 rounded-md">Critical for Foundation BBS</span>
+              </div>
+
+              <div id="box-dowel-details" class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-3 text-xs">
+                <div>
+                  <label for="ft-dowel-count" class="block font-semibold text-slate-700 dark:text-slate-300">Number of Dowels</label>
+                  <select id="ft-dowel-count" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                    <option value="4" selected>4 Dowels (Corner)</option>
+                    <option value="6">6 Dowels</option>
+                    <option value="8">8 Dowels (Heavy Column)</option>
+                    <option value="12">12 Dowels</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="ft-dowel-dia" class="block font-semibold text-slate-700 dark:text-slate-300">Dowel Bar Diameter</label>
+                  <select id="ft-dowel-dia" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                    <option value="12">12 mm</option>
+                    <option value="16" selected>16 mm (Standard)</option>
+                    <option value="20">20 mm</option>
+                    <option value="25">25 mm</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="ft-dowel-lap" class="block font-semibold text-slate-700 dark:text-slate-300">
+                    Lap / Projection (<span class="lbl-sec-unit">mm</span>)
+                  </label>
+                  <input type="number" id="ft-dowel-lap" value="800" step="50" min="300" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                  <span class="text-[10px] text-slate-500">IS 456 Cl 26.2: 50d = 800mm + 300mm foot</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- OPTIONAL TOP MESH MAT -->
+            <div class="border-t border-slate-200/60 pt-3 dark:border-slate-800">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" id="check-top-mesh" class="h-4 w-4 rounded-md border-indigo-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer" />
+                <span class="text-xs font-bold text-slate-800 dark:text-slate-200">
+                  Include Top Mesh Mat (For Raft / Heavy Dual-Mesh Footings)
+                </span>
+              </label>
+
+              <div id="box-top-mesh-details" class="hidden mt-3 grid grid-cols-2 gap-3 text-xs">
+                <div>
+                  <label for="ft-top-dia" class="block font-semibold text-slate-700 dark:text-slate-300">Top Bar Diameter</label>
+                  <select id="ft-top-dia" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                    <option value="8">8 mm</option>
+                    <option value="10" selected>10 mm</option>
+                    <option value="12">12 mm</option>
+                    <option value="16">16 mm</option>
+                  </select>
+                </div>
+                <div>
+                  <label for="ft-top-sp" class="block font-semibold text-slate-700 dark:text-slate-300">
+                    Top Spacing c/c (<span class="lbl-sec-unit">mm</span>)
+                  </label>
+                  <input type="number" id="ft-top-sp" value="150" step="10" min="50" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PCC BLINDING & PIT EXCAVATION SPECIFICATIONS -->
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div>
+              <label for="select-concrete-grade" class="block text-xs font-bold text-slate-700 dark:text-slate-300">RCC Concrete Grade</label>
+              <select id="select-concrete-grade" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                <option value="M20" selected>M20 (1 : 1.5 : 3) - Standard</option>
+                <option value="M25">M25 (1 : 1 : 2) - Heavy / Coastal</option>
+                <option value="M15">M15 (1 : 2 : 4) - Light Footing</option>
+                <option value="M30">M30 (Design Mix)</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="ft-pcc-thick" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                PCC Blinding Bed (<span class="lbl-sec-unit">mm</span>)
+              </label>
+              <select id="ft-pcc-thick" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                <option value="75">75 mm (3 inches)</option>
+                <option value="100" selected>100 mm (4 inches) - Standard</option>
+                <option value="150">150 mm (6 inches)</option>
+                <option value="0">None / No PCC</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="ft-excav-depth" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Pit Excavation Depth (<span class="lbl-dim-unit">m</span>)
+              </label>
+              <input type="number" id="ft-excav-depth" value="1.5" step="0.1" min="0.5" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+          </div>
         </div>
-        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
-          <div class="text-slate-500 dark:text-slate-400 font-semibold">Bars Per Footing (X+Y)</div>
-          <div id="res-ft-bars-count" class="mt-1 text-base font-bold text-slate-900 dark:text-white">-- Bars</div>
+
+        <!-- SECTION 2B: NORMAL (THUMB-RULE) MODE INPUTS (SHOWN IN NORMAL MODE) -->
+        <div id="section-norm-inputs" class="hidden space-y-4">
+          <div class="border-t border-slate-200/80 pt-4 dark:border-slate-800">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <span>2.</span> Thumb-Rule Steel Intensity & Fast Estimation
+            </h3>
+          </div>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div>
+              <label for="select-norm-type" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Footing Steel Rate Type</label>
+              <select id="select-norm-type" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                <option value="light">Light Residential (55 kg/m³ | 0.70%)</option>
+                <option value="standard" selected>Standard Isolated (75 kg/m³ | 0.95%)</option>
+                <option value="heavy">Heavy Commercial / High-Rise (100 kg/m³ | 1.25%)</option>
+                <option value="custom">Custom Steel Rate (kg/m³)</option>
+              </select>
+            </div>
+
+            <div id="box-norm-custom-rate" class="hidden">
+              <label for="input-norm-custom-rate" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Custom Rate (kg/m³)</label>
+              <input type="number" id="input-norm-custom-rate" value="75" step="5" min="20" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+
+            <div>
+              <label for="select-norm-dia" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Nominal Mesh Bar Diameter</label>
+              <select id="select-norm-dia" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                <option value="10">10 mm</option>
+                <option value="12" selected>12 mm (Standard)</option>
+                <option value="16">16 mm</option>
+              </select>
+            </div>
+
+            <div>
+              <label for="select-norm-concrete" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Concrete Mix Grade</label>
+              <select id="select-norm-concrete" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                <option value="M20" selected>M20 (1 : 1.5 : 3)</option>
+                <option value="M25">M25 (1 : 1 : 2)</option>
+                <option value="M15">M15 (1 : 2 : 4)</option>
+              </select>
+            </div>
+          </div>
         </div>
-        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
-          <div class="text-slate-500 dark:text-slate-400 font-semibold">Steel Length / Footing</div>
-          <div id="res-ft-total-len" class="mt-1 text-base font-bold text-blue-600 dark:text-blue-400">-- m</div>
+
+        <!-- SECTION 3: PROJECT PRICING & CURRENCY (COLLAPSIBLE / CUSTOMIZABLE) -->
+        <div class="border-t border-slate-200/80 pt-4 dark:border-slate-800">
+          <div class="flex items-center justify-between">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <span>3.</span> Material Rates & Cost Estimation (INR / USD)
+            </h3>
+            <div class="flex items-center gap-1 text-xs">
+              <span class="text-slate-500 dark:text-slate-400 font-semibold mr-1">Currency:</span>
+              <button type="button" id="btn-curr-inr" class="btn-curr active rounded-lg bg-emerald-600 px-2.5 py-1 font-bold text-white shadow-xs cursor-pointer" data-curr="INR">₹ INR</button>
+              <button type="button" id="btn-curr-usd" class="btn-curr rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-curr="USD">$ USD</button>
+            </div>
+          </div>
+
+          <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 text-xs">
+            <div>
+              <label for="cost-steel" class="text-slate-600 dark:text-slate-400 font-semibold">
+                Steel (<span class="lbl-curr-sym">₹</span>/<span class="lbl-wt-unit">kg</span>)
+              </label>
+              <input type="number" id="cost-steel" value="75" step="1" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+            <div>
+              <label for="cost-concrete" class="text-slate-600 dark:text-slate-400 font-semibold">
+                Concrete (<span class="lbl-curr-sym">₹</span>/<span class="lbl-vol-unit">m³</span>)
+              </label>
+              <input type="number" id="cost-concrete" value="4800" step="50" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+            <div>
+              <label for="cost-pcc" class="text-slate-600 dark:text-slate-400 font-semibold">
+                PCC Bed (<span class="lbl-curr-sym">₹</span>/<span class="lbl-vol-unit">m³</span>)
+              </label>
+              <input type="number" id="cost-pcc" value="3800" step="50" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+            <div>
+              <label for="cost-shuttering" class="text-slate-600 dark:text-slate-400 font-semibold">
+                Formwork (<span class="lbl-curr-sym">₹</span>/<span class="lbl-area-unit">m²</span>)
+              </label>
+              <input type="number" id="cost-shuttering" value="300" step="10" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+            <div>
+              <label for="cost-excavation" class="text-slate-600 dark:text-slate-400 font-semibold">
+                Excavation (<span class="lbl-curr-sym">₹</span>/<span class="lbl-vol-unit">m³</span>)
+              </label>
+              <input type="number" id="cost-excavation" value="180" step="10" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+            <div>
+              <label for="cost-wire" class="text-slate-600 dark:text-slate-400 font-semibold">
+                Wire (<span class="lbl-curr-sym">₹</span>/<span class="lbl-wt-unit">kg</span>)
+              </label>
+              <input type="number" id="cost-wire" value="100" step="5" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+          </div>
         </div>
-        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60 col-span-2 sm:col-span-1">
-          <div class="text-slate-500 dark:text-slate-400 font-semibold">Total Pit Excavation</div>
-          <div id="res-ft-excavation" class="mt-1 text-base font-bold text-slate-900 dark:text-white">-- m³</div>
+
+        <!-- ACTION BUTTONS: CALCULATE & CLEAR -->
+        <div class="flex flex-wrap items-center gap-3 pt-1">
+          <button
+            type="button"
+            id="btn-calc-footing"
+            class="flex-1 min-w-[220px] inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-blue-500/25 transition active:scale-[0.98] cursor-pointer"
+          >
+            <span>⚡ Calculate Footing Steel & Concrete</span>
+            <span>→</span>
+          </button>
+          <button
+            type="button"
+            id="btn-clear-footing"
+            class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3.5 text-sm font-bold text-slate-700 hover:bg-slate-100 hover:text-red-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-red-400 transition cursor-pointer"
+            title="Reset or Clear Inputs"
+          >
+            <span>🔄 Clear / Reset</span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- COMPREHENSIVE OUTPUT RESULTS CONTAINER -->
+    <!-- ========================================================= -->
+    <div id="results-card" class="rounded-3xl border border-slate-200 bg-white p-5 sm:p-7 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 space-y-6">
+      
+      <!-- HERO TAKEAWAY STATS -->
+      <div class="rounded-2xl bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-800 p-5 sm:p-6 text-white shadow-lg">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-white/15 pb-5">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-widest text-blue-200">Total Steel Rebars Required</span>
+            <div id="res-ft-total-steel" class="mt-1 text-3xl sm:text-4xl font-black tracking-tight">-- kg</div>
+            <div id="res-ft-total-steel-other" class="text-xs text-blue-100 font-medium">(-- Quintals | -- Tonnes)</div>
+          </div>
+          <div class="sm:text-right">
+            <span class="text-xs font-bold uppercase tracking-widest text-blue-200">RCC Concrete Volume</span>
+            <div id="res-ft-concrete" class="mt-1 text-2xl sm:text-3xl font-black">-- m³</div>
+            <div id="res-ft-shuttering" class="text-xs text-blue-100 font-medium">Formwork: -- m²</div>
+          </div>
+        </div>
+
+        <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 text-xs">
+          <div class="rounded-xl bg-white/10 p-2.5 backdrop-blur-xs">
+            <div class="text-blue-200 font-medium">Footing Plan Size</div>
+            <div id="res-geom-dim" class="mt-1 text-sm font-bold">--</div>
+          </div>
+          <div class="rounded-xl bg-white/10 p-2.5 backdrop-blur-xs">
+            <div class="text-blue-200 font-medium">PCC Blinding Bed</div>
+            <div id="res-pcc-volume" class="mt-1 text-sm font-bold">-- m³</div>
+          </div>
+          <div class="rounded-xl bg-white/10 p-2.5 backdrop-blur-xs">
+            <div class="text-blue-200 font-medium">Pit Excavation</div>
+            <div id="res-excav-volume" class="mt-1 text-sm font-bold">-- m³</div>
+          </div>
+          <div class="rounded-xl bg-white/10 p-2.5 backdrop-blur-xs">
+            <div class="text-blue-200 font-medium">Estimated Project Cost</div>
+            <div id="res-cost-total" class="mt-1 text-sm font-bold text-emerald-300">₹ --</div>
+          </div>
         </div>
       </div>
+
+      <!-- LIVE VISUAL DETAILING SVG DIAGRAMS (PLAN VIEW & SECTIONAL ELEVATION) -->
+      <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-800">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-2">
+            <span>📐</span> Live Visual Detailing Diagrams (Updates Real-Time)
+          </h3>
+          <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">IS 456 / IS 2502 Standards</span>
+        </div>
+
+        <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+          
+          <!-- FOOTING PLAN VIEW SVG -->
+          <div class="rounded-xl border border-slate-200 bg-white p-3 text-center dark:border-slate-800 dark:bg-slate-900">
+            <div class="text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-2">Plan View (Reinforcement Mesh & Column Pedestal)</div>
+            <div class="flex justify-center items-center overflow-x-auto min-h-[240px]">
+              <svg id="svg-footing-plan" viewBox="0 0 280 240" class="w-full max-w-[280px] h-auto"></svg>
+            </div>
+            <div id="lbl-plan-caption" class="mt-2 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+              --
+            </div>
+          </div>
+
+          <!-- FOOTING SECTIONAL ELEVATION SVG -->
+          <div class="rounded-xl border border-slate-200 bg-white p-3 text-center dark:border-slate-800 dark:bg-slate-900">
+            <div class="text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-2">Sectional Elevation (Depth, PCC & Starter Dowels)</div>
+            <div class="flex justify-center items-center overflow-x-auto min-h-[240px]">
+              <svg id="svg-footing-elevation" viewBox="0 0 340 240" class="w-full max-w-[340px] h-auto"></svg>
+            </div>
+            <div id="lbl-elevation-caption" class="mt-2 text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+              --
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ADVANCED BBS DETAILED TABLE (SHOWN IN ADVANCED MODE) -->
+      <div id="box-bbs-table" class="space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <h3 class="text-sm font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📋</span> Bar Bending Schedule (BBS) Table
+          </h3>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              id="btn-copy-bbs"
+              class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+            >
+              📋 Copy Table
+            </button>
+            <button
+              type="button"
+              id="btn-download-csv"
+              class="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+            >
+              📥 CSV
+            </button>
+            <button
+              type="button"
+              id="btn-print-bbs"
+              class="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700 shadow-xs cursor-pointer"
+            >
+              🖨️ Print / PDF
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
+          <table id="tbl-bbs" class="w-full text-left text-xs border-collapse">
+            <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold border-b border-slate-200 dark:border-slate-700">
+              <tr>
+                <th class="p-2.5">Mark</th>
+                <th class="p-2.5">Description</th>
+                <th class="p-2.5 text-center">Dia (mm)</th>
+                <th class="p-2.5">Shape Code</th>
+                <th class="p-2.5 text-center">Nos</th>
+                <th class="p-2.5 text-right">Cut Len (m)</th>
+                <th class="p-2.5 text-right">Tot Len (m)</th>
+                <th class="p-2.5 text-right">Unit Wt (kg/m)</th>
+                <th class="p-2.5 text-right">Tot Wt (kg)</th>
+              </tr>
+            </thead>
+            <tbody id="tbody-bbs" class="divide-y divide-slate-100 dark:divide-slate-800/80 bg-white dark:bg-slate-900 font-medium text-slate-800 dark:text-slate-200">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- COMMERCIAL 12-METER REBAR STOCK & BUNDLE PROCUREMENT TAKEOFF -->
+      <div class="grid grid-cols-1 gap-5 lg:grid-cols-2">
+        <div class="rounded-2xl border border-slate-200 bg-white p-4.5 dark:border-slate-800 dark:bg-slate-900 space-y-3">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+            <span>📦</span> Commercial 12-Meter Rebar Stock & Bundles
+          </h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
+                <tr>
+                  <th class="p-2">Dia</th>
+                  <th class="p-2 text-right">Total (m)</th>
+                  <th class="p-2 text-right">Weight (kg)</th>
+                  <th class="p-2 text-center">12m Rods</th>
+                  <th class="p-2 text-center">Bundles</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-diameter-summary" class="divide-y divide-slate-100 dark:divide-slate-800">
+                <!-- Dynamically populated -->
+              </tbody>
+            </table>
+          </div>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">
+            * Commercial factory bundles calculated as per standard rolling mill packing counts (8mm=10, 10mm=7, 12mm=5, 16mm=3, 20mm=2 rods/bundle).
+          </p>
+        </div>
+
+        <!-- CONCRETE MIX BOQ & SHUTTERING TAKEOFF -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-4.5 dark:border-slate-800 dark:bg-slate-900 space-y-3">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+            <span>🧱</span> Concrete Mix BOQ & Shuttering Takeoff
+          </h3>
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Cement (50 kg Bags):</div>
+              <div id="res-boq-cement" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">-- Bags</div>
+            </div>
+            <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Sand (Fine Aggregate):</div>
+              <div id="res-boq-sand" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">-- cft</div>
+            </div>
+            <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Coarse Aggregate:</div>
+              <div id="res-boq-aggregate" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">-- cft</div>
+            </div>
+            <div class="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Formwork Shuttering:</div>
+              <div id="res-boq-shuttering" class="mt-1 text-sm font-bold text-emerald-600 dark:text-emerald-400">-- m²</div>
+            </div>
+            <div class="col-span-2 rounded-xl border border-slate-100 bg-slate-50 p-2.5 text-center dark:border-slate-800 dark:bg-slate-800/50">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Binding Wire:</div>
+              <div id="res-boq-wire" class="mt-0.5 text-sm font-bold text-slate-900 dark:text-white">-- kg (18 Gauge GI Wire)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ESTIMATED PROJECT COST BREAKDOWN TABLE -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-4.5 dark:border-slate-800 dark:bg-slate-900 space-y-3">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+          <span>💰</span> Estimated Project Cost Breakdown
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 dark:bg-slate-800/50 text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800">
+              <tr>
+                <th class="p-2">Item</th>
+                <th class="p-2 text-right">Quantity</th>
+                <th class="p-2 text-right">Unit Rate</th>
+                <th class="p-2 text-right">Total Amount</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              <tr>
+                <td class="p-2 font-medium">Steel Rebars (Fe 500 / TMT)</td>
+                <td id="res-cost-steel-qty" class="p-2 text-right font-semibold">--</td>
+                <td id="res-cost-steel-rate" class="p-2 text-right font-mono">--</td>
+                <td id="res-cost-steel-amt" class="p-2 text-right font-bold text-blue-600 dark:text-blue-400">--</td>
+              </tr>
+              <tr>
+                <td class="p-2 font-medium">RCC Concrete Mix (Ready/Site Mix)</td>
+                <td id="res-cost-conc-qty" class="p-2 text-right font-semibold">--</td>
+                <td id="res-cost-conc-rate" class="p-2 text-right font-mono">--</td>
+                <td id="res-cost-conc-amt" class="p-2 text-right font-bold">--</td>
+              </tr>
+              <tr>
+                <td class="p-2 font-medium">PCC Blinding Bed (M10 1:3:6)</td>
+                <td id="res-cost-pcc-qty" class="p-2 text-right font-semibold">--</td>
+                <td id="res-cost-pcc-rate" class="p-2 text-right font-mono">--</td>
+                <td id="res-cost-pcc-amt" class="p-2 text-right font-bold">--</td>
+              </tr>
+              <tr>
+                <td class="p-2 font-medium">Footing Formwork Shuttering</td>
+                <td id="res-cost-shut-qty" class="p-2 text-right font-semibold">--</td>
+                <td id="res-cost-shut-rate" class="p-2 text-right font-mono">--</td>
+                <td id="res-cost-shut-amt" class="p-2 text-right font-bold">--</td>
+              </tr>
+              <tr>
+                <td class="p-2 font-medium">Pit Excavation & Soil Dressing</td>
+                <td id="res-cost-excav-qty" class="p-2 text-right font-semibold">--</td>
+                <td id="res-cost-excav-rate" class="p-2 text-right font-mono">--</td>
+                <td id="res-cost-excav-amt" class="p-2 text-right font-bold">--</td>
+              </tr>
+              <tr>
+                <td class="p-2 font-medium">Binding Wire (18 Gauge)</td>
+                <td id="res-cost-wire-qty" class="p-2 text-right font-semibold">--</td>
+                <td id="res-cost-wire-rate" class="p-2 text-right font-mono">--</td>
+                <td id="res-cost-wire-amt" class="p-2 text-right font-bold">--</td>
+              </tr>
+              <tr class="bg-blue-50/50 dark:bg-blue-950/20 font-black">
+                <td class="p-2.5 text-slate-900 dark:text-white text-sm">Grand Total Estimated Cost</td>
+                <td colspan="2" class="p-2.5"></td>
+                <td id="res-cost-grand-amt" class="p-2.5 text-right text-base text-blue-600 dark:text-blue-400 font-black">₹ --</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
   </div>
 
+  <!-- ========================================================= -->
+  <!-- COMPREHENSIVE ENGINEERING DOCUMENTATION -->
+  <!-- ========================================================= -->
   <Fragment slot="content">
-    <h2>Isolated Pad Footing Steel & Concrete Calculation</h2>
-    <p>
-      An isolated pad footing supports a single column and distributes concentrated loads to the soil bed. Accurate quantification of footing concrete volume, excavation pit size, and steel rebar mesh weight ensures proper site budgeting and zero material wastage.
-    </p>
+    <div class="rcc-footing-content">
+      <h2>Complete RCC Isolated Pad & Sloped Footing Design Guide</h2>
+      <p>
+        An isolated pad footing (or spread footing) is a shallow foundation unit designed to distribute heavy concentrated loads from a single column safely onto the underlying soil stratum. Proper quantification of bottom reinforcement mesh cutting lengths, vertical development hooks, column starter dowels, concrete mix volume, and PCC blinding is crucial for site structural integrity and procurement efficiency as per <strong>IS 456:2000 (Cl. 34)</strong> and <strong>IS 2502:1963</strong>.
+      </p>
 
-    <h3>1. Footing Concrete Volume Formula</h3>
-    <p>
-      All footing dimensions entered in millimeters (mm) are converted to meters (m) to calculate volume in cubic meters (m³):
-    </p>
-    <ul>
-      <li><code>Length (m) = L (mm) ÷ 1000</code></li>
-      <li><code>Width (m) = B (mm) ÷ 1000</code></li>
-      <li><code>Depth (m) = D (mm) ÷ 1000</code></li>
-      <li><code>Concrete Volume per Footing = Length (m) × Width (m) × Depth (m)</code></li>
-      <li><code>Total Concrete = Volume per Footing × Number of Footings</code></li>
-    </ul>
+      <h3>1. Mathematical Formulas for Footing Concrete Volume</h3>
+      <p>
+        Depending on structural engineering requirements, isolated footings are constructed either as uniform rectangular flat pads or economical trapezoidal (sloped) footings:
+      </p>
+      <ul>
+        <li>
+          <strong>Flat Pad Footing Volume:</strong><br />
+          <code>V = L × B × D</code><br />
+          Where <em>L</em> = base length, <em>B</em> = base width, and <em>D</em> = total footing thickness.
+        </li>
+        <li>
+          <strong>Trapezoidal / Sloped Footing Volume (Prismoidal Formula):</strong><br />
+          <code>V = V_base + V_trapezoid = (L × B × D₁) + [ (D - D₁) / 3 ] × [ A₁ + A₂ + √(A₁ × A₂) ]</code><br />
+          Where <em>D₁</em> is the vertical edge depth, <em>A₁ = L × B</em> is bottom area, and <em>A₂ = a × b</em> is the top pedestal contact area.
+        </li>
+      </ul>
 
-    <h3>2. Mesh Rebar Count (X and Y Directions)</h3>
-    <p>
-      The number of bottom mesh reinforcement bars is calculated using center-to-center spacing:
-    </p>
-    <ul>
-      <li><code>Bars in X Direction = ceil(Width ÷ Spacing) + 1</code></li>
-      <li><code>Bars in Y Direction = ceil(Length ÷ Spacing) + 1</code></li>
-      <li><code>Total Bars per Footing = Bars in X Direction + Bars in Y Direction</code></li>
-    </ul>
+      <h3>2. Bar Bending Schedule (BBS) Cutting Length & Anchorage Hooks</h3>
+      <p>
+        As per <strong>IS 456 Cl. 26.4.2.2</strong>, footings must have a minimum clear cover of <strong>50 mm</strong> (or 75 mm when cast directly against unformed soil). To ensure full bending anchorage:
+      </p>
+      <ul>
+        <li>
+          <strong>Bottom Mesh X-Bars (Spanning Length L):</strong><br />
+          <code>Cutting Length = (L − 2 × Cover) + 2 × (D − 2 × Cover) − 2 × (2 × d)</code><br />
+          Where <code>2 × (D − 2 × Cover)</code> represents the two vertical 90° end bend-ups, and <code>2 × (2 × d)</code> is the standard bend deduction for two 90° bends as prescribed by IS 2502.
+        </li>
+        <li>
+          <strong>Bottom Mesh Y-Bars (Spanning Width B):</strong><br />
+          <code>Cutting Length = (B − 2 × Cover) + 2 × (D − 2 × Cover) − 4 × d</code>
+        </li>
+        <li>
+          <strong>Column Starter Dowel Rebars:</strong><br />
+          <code>Cutting Length = Development Lap (50d) + Embedment (D − Cover) + Foot Bend (300mm) − 2d</code><br />
+          Dowels must project vertically by at least 50 times the bar diameter into the upper column and terminate with a minimum 300 mm 90° horizontal bend tied firmly to the footing mesh.
+        </li>
+      </ul>
 
-    <h3>3. Mesh Bar Cutting Length & Steel Weight</h3>
-    <p>
-      For standard isolated footings:
-    </p>
-    <ul>
-      <li><code>Bar Length in X Direction = Length (m)</code></li>
-      <li><code>Bar Length in Y Direction = Width (m)</code></li>
-      <li><code>Total Steel Length per Footing = (Bars X × Length X) + (Bars Y × Length Y)</code></li>
-      <li><code>Unit Weight of Rebar (kg/m) = (d² ÷ 162)</code>, where <code>d</code> is rebar diameter in mm</li>
-      <li><code>Steel Weight per Footing (kg) = Total Steel Length × Unit Weight</code></li>
-      <li><code>Total Steel for All Footings (kg) = Steel per Footing × Number of Footings</code></li>
-    </ul>
+      <h3>3. Standard Rebar Unit Weights & Commercial Bundles</h3>
+      <p>
+        Theoretical steel weight is computed using the standard mass formula <code>Unit Weight = d² / 162.2 kg/m</code>. Commercial TMT bars are delivered from rolling mills in standard <strong>12-meter (39.37 ft)</strong> lengths. The table below outlines standard factory bundle counts:
+      </p>
+      <div class="overflow-x-auto my-3">
+        <table class="w-full text-left text-xs border border-slate-200 dark:border-slate-800">
+          <thead class="bg-slate-100 dark:bg-slate-800 font-bold">
+            <tr>
+              <th class="p-2 border-b border-slate-200 dark:border-slate-700">Rebar Diameter</th>
+              <th class="p-2 border-b border-slate-200 dark:border-slate-700">Unit Wt (kg/m)</th>
+              <th class="p-2 border-b border-slate-200 dark:border-slate-700">Unit Wt (lb/ft)</th>
+              <th class="p-2 border-b border-slate-200 dark:border-slate-700">12m Rod Wt (kg)</th>
+              <th class="p-2 border-b border-slate-200 dark:border-slate-700">Bars per Factory Bundle</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            <tr><td class="p-2 font-bold">8 mm (#3)</td><td class="p-2">0.395 kg/m</td><td class="p-2">0.265 lb/ft</td><td class="p-2">4.74 kg</td><td class="p-2 font-semibold">10 Rods/Bundle</td></tr>
+            <tr><td class="p-2 font-bold">10 mm</td><td class="p-2">0.617 kg/m</td><td class="p-2">0.414 lb/ft</td><td class="p-2">7.40 kg</td><td class="p-2 font-semibold">7 Rods/Bundle</td></tr>
+            <tr><td class="p-2 font-bold">12 mm (#4)</td><td class="p-2">0.888 kg/m</td><td class="p-2">0.597 lb/ft</td><td class="p-2">10.66 kg</td><td class="p-2 font-semibold">5 Rods/Bundle</td></tr>
+            <tr><td class="p-2 font-bold">16 mm (#5)</td><td class="p-2">1.578 kg/m</td><td class="p-2">1.060 lb/ft</td><td class="p-2">18.94 kg</td><td class="p-2 font-semibold">3 Rods/Bundle</td></tr>
+            <tr><td class="p-2 font-bold">20 mm (#6)</td><td class="p-2">2.466 kg/m</td><td class="p-2">1.657 lb/ft</td><td class="p-2">29.60 kg</td><td class="p-2 font-semibold">2 Rods/Bundle</td></tr>
+            <tr><td class="p-2 font-bold">25 mm (#8)</td><td class="p-2">3.853 kg/m</td><td class="p-2">2.589 lb/ft</td><td class="p-2">46.24 kg</td><td class="p-2 font-semibold">1 Rod/Bundle</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
   </Fragment>
 
+  <!-- ========================================================= -->
+  <!-- DETAILED FREQUENTLY ASKED QUESTIONS (FAQS) -->
+  <!-- ========================================================= -->
   <Fragment slot="faq">
-    <div class="space-y-4 text-xs sm:text-sm">
-      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open>
+    <div class="space-y-3 text-xs sm:text-sm">
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900" open>
         <summary class="font-bold text-slate-900 dark:text-white cursor-pointer flex justify-between items-center">
-          What units should I enter for footing dimensions?
+          What is the minimum clear cover required for an RCC footing?
           <span class="group-open:rotate-180 transition-transform">▼</span>
         </summary>
-        <p class="mt-2 text-slate-600 dark:text-slate-300">
-          All dimensions (Length L, Width B, Depth D, Mesh Spacing, and Rebar Diameter) should be entered in millimeters (mm). The calculator automatically converts them to meters for volume and steel length computations.
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed">
+          As per <strong>IS 456:2000 Cl. 26.4.2.2</strong>, the minimum nominal cover for reinforcement in isolated footings is <strong>50 mm</strong> when placed on a lean concrete (PCC) blinding bed. If the footing is poured directly against earth without blinding concrete, the minimum clear cover increases to <strong>75 mm</strong>.
         </p>
       </details>
-      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
         <summary class="font-bold text-slate-900 dark:text-white cursor-pointer flex justify-between items-center">
-          How is the rebar unit weight calculated?
+          Why are vertical L-bends necessary at the ends of footing mesh bars?
           <span class="group-open:rotate-180 transition-transform">▼</span>
         </summary>
-        <p class="mt-2 text-slate-600 dark:text-slate-300">
-          The standard standard civil engineering formula <code>(d² / 162)</code> is used, where <code>d</code> is the rebar diameter in mm. For example, 12 mm rebar weighs <code>(12 × 12) ÷ 162 = 0.889 kg/m</code>.
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed">
+          Footings experience maximum bending moment at the column face, and shear stresses are highest near the edges. Standard 90° upward $L$-hooks (height equal to <em>D − 2×Cover</em>) provide full development anchorage length ($L_d$) so the rebars do not slip under peak flexural loads.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <summary class="font-bold text-slate-900 dark:text-white cursor-pointer flex justify-between items-center">
+          Why is a 100mm PCC blinding bed laid before pouring the footing?
+          <span class="group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed">
+          Plain Cement Concrete (PCC M10 or M7.5, 1:3:6 / 1:4:8) provides a smooth, hard, level foundation bed. It prevents soil moisture from contaminating structural RCC concrete, guarantees uniform 50mm cover block placement, and stops cement slurry from leaking into the ground.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <summary class="font-bold text-slate-900 dark:text-white cursor-pointer flex justify-between items-center">
+          How do I calculate starter dowel bars for columns?
+          <span class="group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed">
+          Column starter dowels must have the same or larger diameter than the column's vertical rebars. They require an embedment into the footing depth, a horizontal 90° bend of at least 300 mm resting on and tied to the bottom mesh, and an upward projection of at least 50 times the bar diameter ($50d$) to form a seismic lap zone with column rebars.
         </p>
       </details>
     </div>
   </Fragment>
+
 </CalculatorLayout>
 
+<!-- CLIENT-SIDE SCRIPT LOGIC -->
 <script is:inline>
+  let currentDimensionUnit = 'm'; // 'm' or 'ft'
+  let currentCalculationMode = 'adv'; // 'adv' or 'norm'
+  let currentCurrency = 'INR'; // 'INR' or 'USD'
+
+  // Input Elements
+  const ftType = document.getElementById('ft-type');
   const ftL = document.getElementById('ft-len');
   const ftB = document.getElementById('ft-width');
   const ftD = document.getElementById('ft-depth');
-  const ftDia = document.getElementById('ft-dia');
-  const ftSp = document.getElementById('ft-spacing');
+  const ftD1 = document.getElementById('ft-d1');
+  const boxSlopedD1 = document.getElementById('box-sloped-d1');
+  const boxSlopedPed = document.getElementById('box-sloped-ped');
+  const ftPedL = document.getElementById('ft-ped-l');
+  const ftPedW = document.getElementById('ft-ped-w');
+  const ftCover = document.getElementById('ft-cover');
   const ftCnt = document.getElementById('ft-count');
 
-  const resTotal = document.getElementById('res-ft-total-steel');
+  // Advanced Mode Inputs
+  const sectionAdvInputs = document.getElementById('section-adv-inputs');
+  const ftDiaX = document.getElementById('ft-dia-x');
+  const ftSpX = document.getElementById('ft-sp-x');
+  const ftDiaY = document.getElementById('ft-dia-y');
+  const ftSpY = document.getElementById('ft-sp-y');
+  const checkBendUp = document.getElementById('check-bend-up');
+  const checkDowels = document.getElementById('check-dowels');
+  const boxDowelDetails = document.getElementById('box-dowel-details');
+  const ftDowelCount = document.getElementById('ft-dowel-count');
+  const ftDowelDia = document.getElementById('ft-dowel-dia');
+  const ftDowelLap = document.getElementById('ft-dowel-lap');
+
+  const checkTopMesh = document.getElementById('check-top-mesh');
+  const boxTopMeshDetails = document.getElementById('box-top-mesh-details');
+  const ftTopDia = document.getElementById('ft-top-dia');
+  const ftTopSp = document.getElementById('ft-top-sp');
+
+  const selConcreteGrade = document.getElementById('select-concrete-grade');
+  const ftPccThick = document.getElementById('ft-pcc-thick');
+  const ftExcavDepth = document.getElementById('ft-excav-depth');
+
+  // Normal Mode Inputs
+  const sectionNormInputs = document.getElementById('section-norm-inputs');
+  const selNormType = document.getElementById('select-norm-type');
+  const boxNormCustomRate = document.getElementById('box-norm-custom-rate');
+  const inputNormCustomRate = document.getElementById('input-norm-custom-rate');
+  const selNormDia = document.getElementById('select-norm-dia');
+  const selNormConcrete = document.getElementById('select-norm-concrete');
+
+  // Costs
+  const costSteel = document.getElementById('cost-steel');
+  const costConc = document.getElementById('cost-concrete');
+  const costPcc = document.getElementById('cost-pcc');
+  const costShut = document.getElementById('cost-shuttering');
+  const costExcav = document.getElementById('cost-excavation');
+  const costWire = document.getElementById('cost-wire');
+
+  // Mode & Unit & Currency Buttons
+  const btnModeAdv = document.getElementById('btn-mode-adv');
+  const btnModeNorm = document.getElementById('btn-mode-norm');
+  const btnUnitM = document.getElementById('btn-unit-m');
+  const btnUnitFt = document.getElementById('btn-unit-ft');
+  const btnCurrInr = document.getElementById('btn-curr-inr');
+  const btnCurrUsd = document.getElementById('btn-curr-usd');
+
+  // Results Displays
+  const resTotalSteel = document.getElementById('res-ft-total-steel');
+  const resTotalSteelOther = document.getElementById('res-ft-total-steel-other');
   const resConc = document.getElementById('res-ft-concrete');
-  const resSingle = document.getElementById('res-ft-single-steel');
-  const resCutLen = document.getElementById('res-ft-cut-len');
-  const resBarsCnt = document.getElementById('res-ft-bars-count');
-  const resTotalLen = document.getElementById('res-ft-total-len');
-  const resExcavation = document.getElementById('res-ft-excavation');
+  const resShuttering = document.getElementById('res-ft-shuttering');
 
+  const resGeomDim = document.getElementById('res-geom-dim');
+  const resPccVolume = document.getElementById('res-pcc-volume');
+  const resExcavVolume = document.getElementById('res-excav-volume');
+  const resCostTotal = document.getElementById('res-cost-total');
+
+  const boxBbsTable = document.getElementById('box-bbs-table');
+  const tbodyBBS = document.getElementById('tbody-bbs');
+  const tbodyDiaSummary = document.getElementById('tbody-diameter-summary');
+
+  const resBoqCement = document.getElementById('res-boq-cement');
+  const resBoqSand = document.getElementById('res-boq-sand');
+  const resBoqAggregate = document.getElementById('res-boq-aggregate');
+  const resBoqShuttering = document.getElementById('res-boq-shuttering');
+  const resBoqWire = document.getElementById('res-boq-wire');
+
+  const resCostSteelQty = document.getElementById('res-cost-steel-qty');
+  const resCostSteelRate = document.getElementById('res-cost-steel-rate');
+  const resCostSteelAmt = document.getElementById('res-cost-steel-amt');
+
+  const resCostConcQty = document.getElementById('res-cost-conc-qty');
+  const resCostConcRate = document.getElementById('res-cost-conc-rate');
+  const resCostConcAmt = document.getElementById('res-cost-conc-amt');
+
+  const resCostPccQty = document.getElementById('res-cost-pcc-qty');
+  const resCostPccRate = document.getElementById('res-cost-pcc-rate');
+  const resCostPccAmt = document.getElementById('res-cost-pcc-amt');
+
+  const resCostShutQty = document.getElementById('res-cost-shut-qty');
+  const resCostShutRate = document.getElementById('res-cost-shut-rate');
+  const resCostShutAmt = document.getElementById('res-cost-shut-amt');
+
+  const resCostExcavQty = document.getElementById('res-cost-excav-qty');
+  const resCostExcavRate = document.getElementById('res-cost-excav-rate');
+  const resCostExcavAmt = document.getElementById('res-cost-excav-amt');
+
+  const resCostWireQty = document.getElementById('res-cost-wire-qty');
+  const resCostWireRate = document.getElementById('res-cost-wire-rate');
+  const resCostWireAmt = document.getElementById('res-cost-wire-amt');
+  const resCostGrandAmt = document.getElementById('res-cost-grand-amt');
+
+  // SVG Displays
+  const svgPlan = document.getElementById('svg-footing-plan');
+  const svgElevation = document.getElementById('svg-footing-elevation');
+  const lblPlanCaption = document.getElementById('lbl-plan-caption');
+  const lblElevationCaption = document.getElementById('lbl-elevation-caption');
+
+  const BARS_PER_BUNDLE_MAP = { 8: 10, 10: 7, 12: 5, 16: 3, 20: 2, 25: 1, 32: 1 };
+
+  function getBarUnitWeight(d) {
+    return (d * d) / 162.0;
+  }
+
+  // Handle Geometry Type (Flat vs Sloped)
+  function updateFootingTypeUI() {
+    const isSloped = ftType.value === 'sloped';
+    if (isSloped) {
+      boxSlopedD1.classList.remove('hidden');
+      boxSlopedPed.classList.remove('hidden');
+    } else {
+      boxSlopedD1.classList.add('hidden');
+      boxSlopedPed.classList.add('hidden');
+    }
+  }
+
+  if (ftType) {
+    ftType.addEventListener('change', () => {
+      updateFootingTypeUI();
+      calculate();
+    });
+  }
+
+  // Handle Dowel & Top Mesh Checkboxes
+  if (checkDowels) {
+    checkDowels.addEventListener('change', () => {
+      if (checkDowels.checked) {
+        boxDowelDetails.classList.remove('hidden');
+      } else {
+        boxDowelDetails.classList.add('hidden');
+      }
+      calculate();
+    });
+  }
+
+  if (checkTopMesh) {
+    checkTopMesh.addEventListener('change', () => {
+      if (checkTopMesh.checked) {
+        boxTopMeshDetails.classList.remove('hidden');
+      } else {
+        boxTopMeshDetails.classList.add('hidden');
+      }
+      calculate();
+    });
+  }
+
+  // Unit Switching
+  function setUnit(unit) {
+    if (unit === currentDimensionUnit) return;
+    const oldUnit = currentDimensionUnit;
+    currentDimensionUnit = unit;
+
+    if (unit === 'm') {
+      btnUnitM.classList.add('active', 'bg-blue-600', 'text-white');
+      btnUnitM.classList.remove('border', 'border-slate-300', 'bg-white', 'text-slate-700');
+      btnUnitFt.classList.remove('active', 'bg-blue-600', 'text-white');
+      btnUnitFt.classList.add('border', 'border-slate-300', 'bg-white', 'text-slate-700');
+
+      document.querySelectorAll('.lbl-dim-unit').forEach(el => el.textContent = 'mm');
+      document.querySelectorAll('.lbl-sec-unit').forEach(el => el.textContent = 'mm');
+      document.querySelectorAll('.lbl-vol-unit').forEach(el => el.textContent = 'm³');
+      document.querySelectorAll('.lbl-area-unit').forEach(el => el.textContent = 'm²');
+      document.querySelectorAll('.lbl-wt-unit').forEach(el => el.textContent = 'kg');
+
+      if (oldUnit === 'ft') {
+        if (ftL.value) ftL.value = Math.round(parseFloat(ftL.value) * 304.8);
+        if (ftB.value) ftB.value = Math.round(parseFloat(ftB.value) * 304.8);
+        if (ftD.value) ftD.value = Math.round(parseFloat(ftD.value) * 25.4);
+        if (ftD1.value) ftD1.value = Math.round(parseFloat(ftD1.value) * 25.4);
+        if (ftPedL.value) ftPedL.value = Math.round(parseFloat(ftPedL.value) * 25.4);
+        if (ftPedW.value) ftPedW.value = Math.round(parseFloat(ftPedW.value) * 25.4);
+        if (ftCover.value) ftCover.value = Math.round(parseFloat(ftCover.value) * 25.4);
+        if (ftSpX.value) ftSpX.value = Math.round(parseFloat(ftSpX.value) * 25.4);
+        if (ftSpY.value) ftSpY.value = Math.round(parseFloat(ftSpY.value) * 25.4);
+        if (ftDowelLap.value) ftDowelLap.value = Math.round(parseFloat(ftDowelLap.value) * 25.4);
+        if (ftTopSp.value) ftTopSp.value = Math.round(parseFloat(ftTopSp.value) * 25.4);
+        if (ftExcavDepth.value) ftExcavDepth.value = (parseFloat(ftExcavDepth.value) * 0.3048).toFixed(1);
+      }
+    } else {
+      btnUnitFt.classList.add('active', 'bg-blue-600', 'text-white');
+      btnUnitFt.classList.remove('border', 'border-slate-300', 'bg-white', 'text-slate-700');
+      btnUnitM.classList.remove('active', 'bg-blue-600', 'text-white');
+      btnUnitM.classList.add('border', 'border-slate-300', 'bg-white', 'text-slate-700');
+
+      document.querySelectorAll('.lbl-dim-unit').forEach(el => el.textContent = 'ft');
+      document.querySelectorAll('.lbl-sec-unit').forEach(el => el.textContent = 'in');
+      document.querySelectorAll('.lbl-vol-unit').forEach(el => el.textContent = 'yd³');
+      document.querySelectorAll('.lbl-area-unit').forEach(el => el.textContent = 'sq ft');
+      document.querySelectorAll('.lbl-wt-unit').forEach(el => el.textContent = 'lb');
+
+      if (oldUnit === 'm') {
+        if (ftL.value) ftL.value = (parseFloat(ftL.value) / 304.8).toFixed(1);
+        if (ftB.value) ftB.value = (parseFloat(ftB.value) / 304.8).toFixed(1);
+        if (ftD.value) ftD.value = (parseFloat(ftD.value) / 25.4).toFixed(1);
+        if (ftD1.value) ftD1.value = (parseFloat(ftD1.value) / 25.4).toFixed(1);
+        if (ftPedL.value) ftPedL.value = (parseFloat(ftPedL.value) / 25.4).toFixed(1);
+        if (ftPedW.value) ftPedW.value = (parseFloat(ftPedW.value) / 25.4).toFixed(1);
+        if (ftCover.value) ftCover.value = (parseFloat(ftCover.value) / 25.4).toFixed(1);
+        if (ftSpX.value) ftSpX.value = (parseFloat(ftSpX.value) / 25.4).toFixed(1);
+        if (ftSpY.value) ftSpY.value = (parseFloat(ftSpY.value) / 25.4).toFixed(1);
+        if (ftDowelLap.value) ftDowelLap.value = (parseFloat(ftDowelLap.value) / 25.4).toFixed(1);
+        if (ftTopSp.value) ftTopSp.value = (parseFloat(ftTopSp.value) / 25.4).toFixed(1);
+        if (ftExcavDepth.value) ftExcavDepth.value = (parseFloat(ftExcavDepth.value) / 0.3048).toFixed(1);
+      }
+    }
+    calculate();
+  }
+
+  // Currency Switching
+  function setCurrency(curr) {
+    if (curr === currentCurrency) return;
+    currentCurrency = curr;
+    const sym = curr === 'INR' ? '₹' : '$';
+
+    if (curr === 'INR') {
+      btnCurrInr.classList.add('active', 'bg-emerald-600', 'text-white');
+      btnCurrInr.classList.remove('border', 'border-slate-300', 'bg-white', 'text-slate-700');
+      btnCurrUsd.classList.remove('active', 'bg-emerald-600', 'text-white');
+      btnCurrUsd.classList.add('border', 'border-slate-300', 'bg-white', 'text-slate-700');
+
+      costSteel.value = '75';
+      costConc.value = '4800';
+      costPcc.value = '3800';
+      costShut.value = '300';
+      costExcav.value = '180';
+      costWire.value = '100';
+    } else {
+      btnCurrUsd.classList.add('active', 'bg-emerald-600', 'text-white');
+      btnCurrUsd.classList.remove('border', 'border-slate-300', 'bg-white', 'text-slate-700');
+      btnCurrInr.classList.remove('active', 'bg-emerald-600', 'text-white');
+      btnCurrInr.classList.add('border', 'border-slate-300', 'bg-white', 'text-slate-700');
+
+      costSteel.value = '0.75';
+      costConc.value = '135';
+      costPcc.value = '110';
+      costShut.value = '3.50';
+      costExcav.value = '15';
+      costWire.value = '1.20';
+    }
+
+    document.querySelectorAll('.lbl-curr-sym').forEach(el => el.textContent = sym);
+    calculate();
+  }
+
+  // Mode Switching
+  function setMode(mode) {
+    currentCalculationMode = mode;
+    if (mode === 'adv') {
+      btnModeAdv.classList.add('bg-white', 'text-blue-700', 'dark:bg-blue-600', 'dark:text-white', 'font-bold');
+      btnModeAdv.classList.remove('text-slate-600', 'font-semibold');
+      btnModeNorm.classList.remove('bg-white', 'text-blue-700', 'dark:bg-blue-600', 'dark:text-white', 'font-bold');
+      btnModeNorm.classList.add('text-slate-600', 'font-semibold');
+
+      sectionAdvInputs.classList.remove('hidden');
+      sectionNormInputs.classList.add('hidden');
+      boxBbsTable.classList.remove('hidden');
+    } else {
+      btnModeNorm.classList.add('bg-white', 'text-blue-700', 'dark:bg-blue-600', 'dark:text-white', 'font-bold');
+      btnModeNorm.classList.remove('text-slate-600', 'font-semibold');
+      btnModeAdv.classList.remove('bg-white', 'text-blue-700', 'dark:bg-blue-600', 'dark:text-white', 'font-bold');
+      btnModeAdv.classList.add('text-slate-600', 'font-semibold');
+
+      sectionNormInputs.classList.remove('hidden');
+      sectionAdvInputs.classList.add('hidden');
+      boxBbsTable.classList.add('hidden');
+    }
+    calculate();
+  }
+
+  if (selNormType) {
+    selNormType.addEventListener('change', () => {
+      if (selNormType.value === 'custom') {
+        boxNormCustomRate.classList.remove('hidden');
+      } else {
+        boxNormCustomRate.classList.add('hidden');
+      }
+      calculate();
+    });
+  }
+
+  // --- LIVE SVG DIAGRAMS ---
+  function drawEmptyDiagrams() {
+    if (svgPlan) {
+      svgPlan.innerHTML = `
+        <rect x="15" y="15" width="250" height="210" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="6,4" />
+        <circle cx="140" cy="95" r="30" fill="#eff6ff" stroke="#60a5fa" stroke-width="1.5" />
+        <rect x="120" y="75" width="40" height="40" rx="2" fill="none" stroke="#2563eb" stroke-width="1.5" stroke-dasharray="3,2" />
+        <line x1="120" y1="95" x2="160" y2="95" stroke="#2563eb" stroke-width="1.5" />
+        <line x1="140" y1="75" x2="140" y2="115" stroke="#2563eb" stroke-width="1.5" />
+        <text x="140" y="150" text-anchor="middle" font-size="12" font-weight="700" fill="#334155">Plan View Preview</text>
+        <text x="140" y="168" text-anchor="middle" font-size="10.5" font-weight="500" fill="#94a3b8">Enter footing length & width to preview</text>
+      `;
+    }
+    if (lblPlanCaption) {
+      lblPlanCaption.innerHTML = 'Enter dimensions & mesh spacing above to preview plan';
+    }
+    if (svgElevation) {
+      svgElevation.innerHTML = `
+        <rect x="20" y="15" width="300" height="210" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" stroke-dasharray="6,4" />
+        <circle cx="170" cy="95" r="30" fill="#fef3c7" stroke="#fbbf24" stroke-width="1.5" />
+        <rect x="135" y="105" width="70" height="15" fill="#e2e8f0" stroke="#94a3b8" />
+        <path d="M140 100 L140 103 L200 103 L200 100" fill="none" stroke="#2563eb" stroke-width="2" />
+        <line x1="165" y1="65" x2="165" y2="103" stroke="#d97706" stroke-width="2" />
+        <line x1="175" y1="65" x2="175" y2="103" stroke="#d97706" stroke-width="2" />
+        <text x="170" y="150" text-anchor="middle" font-size="12" font-weight="700" fill="#334155">Sectional Elevation Preview</text>
+        <text x="170" y="168" text-anchor="middle" font-size="10.5" font-weight="500" fill="#94a3b8">Enter footing depth to preview elevation</text>
+      `;
+    }
+    if (lblElevationCaption) {
+      lblElevationCaption.innerHTML = 'Enter footing depth & details to preview elevation';
+    }
+  }
+
+  function resetOutputs() {
+    resTotalSteel.textContent = '0.0 kg';
+    resTotalSteelOther.textContent = '(0.00 Quintals | 0.000 Tonnes)';
+    resConc.textContent = '0.000 m³';
+    resShuttering.textContent = 'Formwork: 0.00 m²';
+    resGeomDim.textContent = '--';
+    resPccVolume.textContent = '0.00 m³';
+    resExcavVolume.textContent = '0.00 m³';
+
+    if (tbodyBBS) {
+      tbodyBBS.innerHTML = '<tr><td colspan="9" class="p-4 text-center text-slate-400 font-medium">Enter footing dimensions to calculate Bar Bending Schedule.</td></tr>';
+    }
+    if (tbodyDiaSummary) {
+      tbodyDiaSummary.innerHTML = '<tr><td colspan="5" class="p-4 text-center text-slate-400 font-medium">No rebar calculated yet.</td></tr>';
+    }
+
+    if (resBoqCement) resBoqCement.textContent = '0 Bags (0 kg)';
+    if (resBoqSand) resBoqSand.textContent = '0.0 cft (0.00 m³)';
+    if (resBoqAggregate) resBoqAggregate.textContent = '0.0 cft (0.00 m³)';
+    if (resBoqShuttering) resBoqShuttering.textContent = '0.0 m²';
+    if (resBoqWire) resBoqWire.textContent = '0.0 kg';
+
+    const sym = currentCurrency === 'INR' ? '₹' : '$';
+    resCostTotal.textContent = `${sym} 0`;
+    resCostSteelQty.textContent = '0.0 kg'; resCostSteelAmt.textContent = `${sym} 0`;
+    resCostConcQty.textContent = '0.000 m³'; resCostConcAmt.textContent = `${sym} 0`;
+    resCostPccQty.textContent = '0.000 m³'; resCostPccAmt.textContent = `${sym} 0`;
+    resCostShutQty.textContent = '0.0 m²'; resCostShutAmt.textContent = `${sym} 0`;
+    resCostExcavQty.textContent = '0.00 m³'; resCostExcavAmt.textContent = `${sym} 0`;
+    resCostWireQty.textContent = '0.0 kg'; resCostWireAmt.textContent = `${sym} 0`;
+    resCostGrandAmt.textContent = `${sym} 0`;
+
+    drawEmptyDiagrams();
+    try { document.dispatchEvent(new CustomEvent('calculator:updated')); } catch (e) {}
+  }
+
+  function drawPlanView(Lmm, Bmm, coverMm, diaX, spX, diaY, spY, dowelCount, dowelDia, isSloped, pedLMm, pedWMm) {
+    if (!svgPlan) return;
+    const W = 280, H = 240;
+    const maxDim = Math.max(Lmm, Bmm);
+    const scale = Math.min(150 / maxDim, 0.42);
+
+    let w = Math.max(70, Math.min(170, Lmm * scale));
+    let h = Math.max(70, Math.min(150, Bmm * scale));
+
+    if (Math.abs(Lmm - Bmm) < 10) {
+      const sq = Math.max(80, Math.min(145, 110 * Math.sqrt(Lmm / 1500)));
+      w = sq;
+      h = sq;
+    }
+
+    const c = Math.max(6, Math.min(18, (coverMm / Math.min(Lmm, Bmm)) * Math.min(w, h)));
+    const ox = (W - w) / 2;
+    const oy = 110 - h / 2;
+
+    const coreW = w - 2 * c;
+    const coreH = h - 2 * c;
+
+    // Number of visual mesh lines (bounded between 4 and 10 for clean look)
+    const nMeshX = Math.max(4, Math.min(10, Math.round(Bmm / Math.max(50, spX))));
+    const nMeshY = Math.max(4, Math.min(10, Math.round(Lmm / Math.max(50, spY))));
+
+    let meshXLines = '';
+    for (let i = 0; i <= nMeshX; i++) {
+      const y = oy + c + (i * coreH) / nMeshX;
+      meshXLines += `<line x1="${(ox + c).toFixed(1)}" y1="${y.toFixed(1)}" x2="${(ox + w - c).toFixed(1)}" y2="${y.toFixed(1)}" stroke="#2563eb" stroke-width="1.8" />`;
+    }
+
+    let meshYLines = '';
+    for (let j = 0; j <= nMeshY; j++) {
+      const x = ox + c + (j * coreW) / nMeshY;
+      meshYLines += `<line x1="${x.toFixed(1)}" y1="${(oy + c).toFixed(1)}" x2="${x.toFixed(1)}" y2="${(oy + h - c).toFixed(1)}" stroke="#059669" stroke-width="1.8" />`;
+    }
+
+    // Column Pedestal / Starter Dowels outline at center
+    const colPedScaleW = Math.max(26, Math.min(50, (pedLMm || 400) * scale));
+    const colPedScaleH = Math.max(26, Math.min(50, (pedWMm || 400) * scale));
+    const colX = (W - colPedScaleW) / 2;
+    const colY = 110 - colPedScaleH / 2;
+
+    let dowelDots = '';
+    if (dowelCount >= 4) {
+      const dotCoords = [
+        [colX + 5, colY + 5],
+        [colX + colPedScaleW - 5, colY + 5],
+        [colX + 5, colY + colPedScaleH - 5],
+        [colX + colPedScaleW - 5, colY + colPedScaleH - 5]
+      ];
+      if (dowelCount >= 6) {
+        dotCoords.push([colX + 5, colY + colPedScaleH / 2]);
+        dotCoords.push([colX + colPedScaleW - 5, colY + colPedScaleH / 2]);
+      }
+      if (dowelCount >= 8) {
+        dotCoords.push([colX + colPedScaleW / 2, colY + 5]);
+        dotCoords.push([colX + colPedScaleW / 2, colY + colPedScaleH - 5]);
+      }
+      dotCoords.forEach(([dx, dy]) => {
+        dowelDots += `<circle cx="${dx.toFixed(1)}" cy="${dy.toFixed(1)}" r="3" fill="#b45309" stroke="#78350f" stroke-width="1" />`;
+      });
+    }
+
+    // Sloped footing trapezoid projection lines
+    let slopedLines = '';
+    if (isSloped) {
+      slopedLines = `
+        <line x1="${ox.toFixed(1)}" y1="${oy.toFixed(1)}" x2="${colX.toFixed(1)}" y2="${colY.toFixed(1)}" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="3,2" />
+        <line x1="${(ox + w).toFixed(1)}" y1="${oy.toFixed(1)}" x2="${(colX + colPedScaleW).toFixed(1)}" y2="${colY.toFixed(1)}" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="3,2" />
+        <line x1="${ox.toFixed(1)}" y1="${(oy + h).toFixed(1)}" x2="${colX.toFixed(1)}" y2="${(colY + colPedScaleH).toFixed(1)}" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="3,2" />
+        <line x1="${(ox + w).toFixed(1)}" y1="${(oy + h).toFixed(1)}" x2="${(colX + colPedScaleW).toFixed(1)}" y2="${(colY + colPedScaleH).toFixed(1)}" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="3,2" />
+      `;
+    }
+
+    svgPlan.innerHTML = `
+      <!-- Footing Base Outline -->
+      <rect x="${ox.toFixed(1)}" y="${oy.toFixed(1)}" width="${w.toFixed(1)}" height="${h.toFixed(1)}" rx="6" fill="#f8fafc" stroke="#64748b" stroke-width="2.2" />
+
+      <!-- Clear Cover Boundary -->
+      <rect x="${(ox + c).toFixed(1)}" y="${(oy + c).toFixed(1)}" width="${coreW.toFixed(1)}" height="${coreH.toFixed(1)}" fill="none" stroke="#cbd5e1" stroke-width="1.2" stroke-dasharray="4,2" />
+
+      ${slopedLines}
+
+      <!-- Rebar Mesh Lines -->
+      ${meshXLines}
+      ${meshYLines}
+
+      <!-- Central Column Pedestal -->
+      <rect x="${colX.toFixed(1)}" y="${colY.toFixed(1)}" width="${colPedScaleW.toFixed(1)}" height="${colPedScaleH.toFixed(1)}" rx="3" fill="#fef3c7" stroke="#d97706" stroke-width="1.8" />
+      <text x="${(W / 2).toFixed(1)}" y="${(110 + 3).toFixed(1)}" text-anchor="middle" font-size="8.5" font-weight="bold" fill="#92400e">COLUMN</text>
+      ${dowelDots}
+
+      <!-- Dimension Lines -->
+      <line x1="${ox.toFixed(1)}" y1="${(oy + h + 14).toFixed(1)}" x2="${(ox + w).toFixed(1)}" y2="${(oy + h + 14).toFixed(1)}" stroke="#0284c7" stroke-width="1.5" />
+      <text x="${(ox + w / 2).toFixed(1)}" y="${(oy + h + 26).toFixed(1)}" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#0369a1">L = ${Math.round(Lmm)} mm</text>
+
+      <line x1="${(ox - 12).toFixed(1)}" y1="${oy.toFixed(1)}" x2="${(ox - 12).toFixed(1)}" y2="${(oy + h).toFixed(1)}" stroke="#0284c7" stroke-width="1.5" />
+      <text x="${(ox - 16).toFixed(1)}" y="${(oy + h / 2).toFixed(1)}" text-anchor="middle" transform="rotate(-90 ${(ox - 16).toFixed(1)} ${(oy + h / 2).toFixed(1)})" font-size="10.5" font-weight="bold" fill="#0369a1">B = ${Math.round(Bmm)} mm</text>
+
+      <text x="${(W / 2).toFixed(1)}" y="22" text-anchor="middle" font-size="9" font-weight="600" fill="#64748b">Clear Cover = ${Math.round(coverMm)} mm</text>
+    `;
+
+    if (lblPlanCaption) {
+      lblPlanCaption.innerHTML = `Bottom Mesh: <strong class="text-blue-600">${diaX}mm X-Bars @ ${Math.round(spX)}mm</strong> & <strong class="text-emerald-600">${diaY}mm Y-Bars @ ${Math.round(spY)}mm</strong> ${dowelCount > 0 ? `| <strong class="text-amber-600">${dowelCount} Nos × ${dowelDia}mm Dowels</strong>` : ''}`;
+    }
+  }
+
+  function drawSectionalElevation(Lmm, Bmm, Dmm, D1mm, isSloped, coverMm, pccThickMm, dowelCount, dowelDia, includeBendUp) {
+    if (!svgElevation) return;
+    const W = 340, H = 240;
+    const ftBaseW = Math.max(140, Math.min(220, 150 + (Lmm / 2000) * 50));
+    const ftX = (W - ftBaseW) / 2;
+
+    // Depth scaling
+    const ftTotalH = Math.max(45, Math.min(85, 40 + (Dmm / 600) * 35));
+    const pccH = Math.max(8, Math.min(16, (pccThickMm / 100) * 12));
+    const pccOffset = 12;
+
+    const baseLineY = 185;
+    const pccTopY = baseLineY - pccH;
+    const ftTopY = pccTopY - ftTotalH;
+
+    const colW = 44;
+    const colX = (W - colW) / 2;
+    const colH = 65;
+    const colTopY = ftTopY - colH;
+
+    let concreteFootingPath = '';
+    if (isSloped) {
+      const d1ScaleH = Math.max(18, Math.min(ftTotalH * 0.6, (D1mm / Dmm) * ftTotalH));
+      const d1TopY = pccTopY - d1ScaleH;
+      concreteFootingPath = `
+        <polygon points="
+          ${ftX},${pccTopY}
+          ${ftX},${d1TopY}
+          ${colX - 6},${ftTopY}
+          ${colX + colW + 6},${ftTopY}
+          ${ftX + ftBaseW},${d1TopY}
+          ${ftX + ftBaseW},${pccTopY}
+        " fill="#f8fafc" stroke="#64748b" stroke-width="2" />
+      `;
+    } else {
+      concreteFootingPath = `
+        <rect x="${ftX}" y="${ftTopY}" width="${ftBaseW}" height="${ftTotalH}" fill="#f8fafc" stroke="#64748b" stroke-width="2" rx="2" />
+      `;
+    }
+
+    // Bottom Mesh with L-bend end hooks
+    const meshY = pccTopY - 8;
+    const hookH = includeBendUp ? Math.max(12, Math.min(ftTotalH - 12, ftTotalH * 0.7)) : 0;
+    const meshX1 = ftX + 8;
+    const meshX2 = ftX + ftBaseW - 8;
+
+    let meshSvg = '';
+    if (includeBendUp) {
+      meshSvg = `
+        <path d="M ${meshX1} ${(meshY - hookH).toFixed(1)} L ${meshX1} ${meshY} L ${meshX2} ${meshY} L ${meshX2} ${(meshY - hookH).toFixed(1)}" fill="none" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" />
+      `;
+    } else {
+      meshSvg = `
+        <line x1="${meshX1}" y1="${meshY}" x2="${meshX2}" y2="${meshY}" stroke="#2563eb" stroke-width="2.5" stroke-linecap="round" />
+      `;
+    }
+
+    // Cross rebar dots along bottom mesh
+    let crossDots = '';
+    const nDots = 8;
+    for (let k = 1; k < nDots; k++) {
+      const kx = meshX1 + (k * (meshX2 - meshX1)) / nDots;
+      crossDots += `<circle cx="${kx.toFixed(1)}" cy="${meshY}" r="2.2" fill="#059669" />`;
+    }
+
+    // Column starter dowels
+    let dowelSvg = '';
+    if (dowelCount > 0) {
+      const footBendLen = 22;
+      dowelSvg = `
+        <!-- Left Dowel -->
+        <path d="M ${colX + 8} ${colTopY} L ${colX + 8} ${meshY - 2} L ${colX + 8 - footBendLen} ${meshY - 2}" fill="none" stroke="#b45309" stroke-width="2.2" stroke-linecap="round" />
+        <!-- Right Dowel -->
+        <path d="M ${colX + colW - 8} ${colTopY} L ${colX + colW - 8} ${meshY - 2} L ${colX + colW - 8 + footBendLen} ${meshY - 2}" fill="none" stroke="#b45309" stroke-width="2.2" stroke-linecap="round" />
+      `;
+    }
+
+    svgElevation.innerHTML = `
+      <!-- Natural Ground Level -->
+      <line x1="15" y1="${colTopY + 25}" x2="${W - 15}" y2="${colTopY + 25}" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="4,2" />
+      <text x="25" y="${colTopY + 20}" font-size="8.5" font-weight="bold" fill="#64748b">GROUND LEVEL</text>
+
+      <!-- Excavation Pit Profile -->
+      <path d="M 30 ${colTopY + 25} L ${ftX - pccOffset - 8} ${baseLineY} L ${ftX + ftBaseW + pccOffset + 8} ${baseLineY} L ${W - 30} ${colTopY + 25}" fill="none" stroke="#cbd5e1" stroke-width="1.2" stroke-dasharray="4,3" />
+
+      <!-- PCC Blinding Bed Layer -->
+      <rect x="${ftX - pccOffset}" y="${pccTopY}" width="${ftBaseW + 2 * pccOffset}" height="${pccH}" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5" />
+      <text x="${(W / 2).toFixed(1)}" y="${(baseLineY - pccH / 2 + 3).toFixed(1)}" text-anchor="middle" font-size="8" font-weight="bold" fill="#475569">PCC BLINDING BED (100mm)</text>
+
+      <!-- Concrete Footing Body -->
+      ${concreteFootingPath}
+
+      <!-- Column Stem -->
+      <rect x="${colX}" y="${colTopY}" width="${colW}" height="${colH}" fill="#f1f5f9" stroke="#94a3b8" stroke-width="1.8" />
+      <text x="${(W / 2).toFixed(1)}" y="${(colTopY + colH / 2 + 3).toFixed(1)}" text-anchor="middle" font-size="8.5" font-weight="bold" fill="#64748b">COLUMN</text>
+
+      <!-- Rebars -->
+      ${meshSvg}
+      ${crossDots}
+      ${dowelSvg}
+
+      <!-- Dimension Lines -->
+      <line x1="${ftX - pccOffset - 10}" y1="${ftTopY}" x2="${ftX - pccOffset - 10}" y2="${pccTopY}" stroke="#0284c7" stroke-width="1.5" />
+      <text x="${ftX - pccOffset - 15}" y="${(ftTopY + ftTotalH / 2).toFixed(1)}" text-anchor="middle" transform="rotate(-90 ${ftX - pccOffset - 15} ${ftTopY + ftTotalH / 2})" font-size="9" font-weight="bold" fill="#0369a1">D = ${Math.round(Dmm)}mm</text>
+
+      <line x1="${ftX}" y1="${baseLineY + 12}" x2="${ftX + ftBaseW}" y2="${baseLineY + 12}" stroke="#0284c7" stroke-width="1.5" />
+      <text x="${(W / 2).toFixed(1)}" y="${baseLineY + 24}" text-anchor="middle" font-size="9.5" font-weight="bold" fill="#0369a1">L = ${Math.round(Lmm)} mm</text>
+    `;
+
+    if (lblElevationCaption) {
+      lblElevationCaption.innerHTML = `${isSloped ? `Sloped Footing: Total D = <strong>${Math.round(Dmm)}mm</strong>, Edge D₁ = <strong>${Math.round(D1mm)}mm</strong>` : `Flat Pad Depth D = <strong>${Math.round(Dmm)}mm</strong>`} | PCC = <strong>${Math.round(pccThickMm)}mm</strong>`;
+    }
+  }
+
+  // --- MAIN CALCULATION FUNCTION ---
   function calculate() {
-    const rawL = ftL.value.trim();
-    const rawB = ftB.value.trim();
-    const rawD = ftD.value.trim();
+    updateFootingTypeUI();
 
-    if (rawL === '' && rawB === '' && rawD === '') {
-      if (resTotal) resTotal.textContent = '0.00 kg (0.00 q)';
-      if (resConc) resConc.textContent = '0.000 m³';
-      if (resSingle) resSingle.textContent = '0.00 kg';
-      if (resCutLen) resCutLen.textContent = '0.00 m';
-      if (resBarsCnt) resBarsCnt.textContent = '0 Bars';
-      if (resTotalLen) resTotalLen.textContent = '0.0 m';
-      if (resExcavation) resExcavation.textContent = '0.00 m³';
-      try { document.dispatchEvent(new CustomEvent('calculator:updated')); } catch (e) {}
+    const rawL = parseFloat(ftL.value) || 0;
+    const rawB = parseFloat(ftB.value) || 0;
+    const rawD = parseFloat(ftD.value) || 0;
+    const rawD1 = parseFloat(ftD1.value) || 150;
+    const rawPedL = parseFloat(ftPedL.value) || 400;
+    const rawPedW = parseFloat(ftPedW.value) || 400;
+    const rawCover = parseFloat(ftCover.value) || 50;
+    const rawN = Math.max(1, parseInt(ftCnt.value) || 1);
+    const type = ftType.value;
+
+    const lengthMm = currentDimensionUnit === 'ft' ? rawL * 304.8 : rawL;
+    const widthMm = currentDimensionUnit === 'ft' ? rawB * 304.8 : rawB;
+    const depthMm = currentDimensionUnit === 'ft' ? rawD * 25.4 : rawD;
+    const d1Mm = currentDimensionUnit === 'ft' ? rawD1 * 25.4 : rawD1;
+    const pedLMm = currentDimensionUnit === 'ft' ? rawPedL * 25.4 : rawPedL;
+    const pedWMm = currentDimensionUnit === 'ft' ? rawPedW * 25.4 : rawPedW;
+    const coverMm = currentDimensionUnit === 'ft' ? rawCover * 25.4 : rawCover;
+
+    if (lengthMm <= 0 || widthMm <= 0 || depthMm <= 0) {
+      resetOutputs();
       return;
     }
 
-    // 1. Raw user inputs in millimeters
-    const lengthMm = Math.max(0, parseFloat(ftL.value) || 0);
-    const widthMm = Math.max(0, parseFloat(ftB.value) || 0);
-    const depthMm = Math.max(0, parseFloat(ftD.value) || 0);
-    const spacingMm = Math.max(1, parseFloat(ftSp.value) || 150);
-    const rebarDiaMm = parseFloat(ftDia.value) || 12;
-    const count = Math.max(1, parseInt(ftCnt.value) || 1);
-
-    // 2. Convert to meters for volume and length calculations
     const lengthM = lengthMm / 1000;
     const widthM = widthMm / 1000;
     const depthM = depthMm / 1000;
-    const spacingM = spacingMm / 1000;
+    const coverM = coverMm / 1000;
 
-    // 3. Concrete Volume Formula (m³)
-    const volumePerFooting = lengthM * widthM * depthM;
-    const totalConcrete = volumePerFooting * count;
+    // Concrete volume
+    let singleFootingVol = 0;
+    let singleFormworkArea = 0;
 
-    // 4. Mesh Bar Calculation (bars in X direction span B, bars in Y direction span L)
-    const barsX = spacingMm > 0 && widthMm > 0 ? Math.ceil(widthMm / spacingMm) + 1 : 0;
-    const barsY = spacingMm > 0 && lengthMm > 0 ? Math.ceil(lengthMm / spacingMm) + 1 : 0;
-    const totalBarsPerFooting = barsX + barsY;
+    if (type === 'sloped') {
+      const D1 = Math.min(depthM, Math.max(0.1, d1Mm / 1000));
+      const hTrap = Math.max(0, depthM - D1);
+      const vBase = lengthM * widthM * D1;
 
-    // 5. Mesh Bar Cut Length in meters
-    const lengthX = lengthM;
-    const lengthY = widthM;
+      const a = (pedLMm || 400) / 1000;
+      const b = (pedWMm || 400) / 1000;
+      const A1 = lengthM * widthM;
+      const A2 = a * b;
 
-    // 6. Total Steel Length in meters
-    const totalSteelLengthPerFooting = (barsX * lengthX) + (barsY * lengthY);
-    const totalSteelLengthAllFootings = totalSteelLengthPerFooting * count;
+      const vTrap = hTrap > 0 ? (hTrap / 3) * (A1 + A2 + Math.sqrt(A1 * A2)) : 0;
+      singleFootingVol = vBase + vTrap;
+      singleFormworkArea = 2 * (lengthM + widthM) * D1;
+    } else {
+      singleFootingVol = lengthM * widthM * depthM;
+      singleFormworkArea = 2 * (lengthM + widthM) * depthM;
+    }
 
-    // 7. Rebar Unit Weight (d² / 162)
-    const unitWeight = (rebarDiaMm * rebarDiaMm) / 162;
+    const totalConcreteVol = singleFootingVol * rawN;
+    const totalConcreteCuft = totalConcreteVol * 35.3147;
 
-    // 8. Total Steel Weight (kg)
-    const steelPerFooting = totalSteelLengthPerFooting * unitWeight;
-    const totalSteelAllFootings = steelPerFooting * count;
+    // PCC Bed & Pit Excavation
+    const pccThickVal = parseFloat(ftPccThick.value) || 100;
+    const pccThickM = pccThickVal / 1000;
+    const pccL = lengthM + 0.2;
+    const pccB = widthM + 0.2;
+    const totalPccVol = pccThickM > 0 ? pccL * pccB * pccThickM * rawN : 0;
 
-    // 9. Total Pit Excavation Volume (m³)
-    // Allowance: 0.3m working space each side (+0.6m) and +1.0m extra pit depth
-    const excavation = (lengthM + 0.6) * (widthM + 0.6) * (depthM + 1.0) * count;
+    const excavDepthVal = parseFloat(ftExcavDepth.value) || 1.5;
+    const excavDepthM = currentDimensionUnit === 'ft' ? excavDepthVal * 0.3048 : excavDepthVal;
+    const pitL = lengthM + 0.6;
+    const pitB = widthM + 0.6;
+    const totalExcavVol = pitL * pitB * Math.max(depthM + pccThickM, excavDepthM) * rawN;
 
-    // 10. Update UI Results
-    if (resTotal) resTotal.textContent = `${totalSteelAllFootings.toFixed(2)} kg (${(totalSteelAllFootings / 100).toFixed(2)} q)`;
-    if (resConc) resConc.textContent = `${totalConcrete.toFixed(3)} m³ (${count} Unit${count === 1 ? '' : 's'})`;
-    if (resSingle) resSingle.textContent = `${steelPerFooting.toFixed(2)} kg`;
-    if (resCutLen) resCutLen.textContent = lengthX === lengthY ? `${lengthX.toFixed(2)} m` : `${lengthX.toFixed(2)} m (X) / ${lengthY.toFixed(2)} m (Y)`;
-    if (resBarsCnt) resBarsCnt.textContent = `${totalBarsPerFooting} Bars (${barsX}X + ${barsY}Y)`;
-    if (resTotalLen) resTotalLen.textContent = `${totalSteelLengthPerFooting.toFixed(1)} m`;
-    if (resExcavation) resExcavation.textContent = `${excavation.toFixed(2)} m³`;
+    const totalFormworkSqm = singleFormworkArea * rawN;
+
+    // Pricing rates
+    const rateSteel = parseFloat(costSteel.value) || 75;
+    const rateConc = parseFloat(costConc.value) || 4800;
+    const ratePcc = parseFloat(costPcc.value) || 3800;
+    const rateShut = parseFloat(costShut.value) || 300;
+    const rateExcav = parseFloat(costExcav.value) || 180;
+    const rateWire = parseFloat(costWire.value) || 100;
+
+    let totalSteelKg = 0;
+    let bbsList = [];
+    let diaSummaryMap = new Map();
+
+    if (currentCalculationMode === 'norm') {
+      // NORMAL THUMB RULE MODE
+      let rateKgM3 = 75;
+      const t = selNormType.value;
+      if (t === 'light') rateKgM3 = 55;
+      else if (t === 'standard') rateKgM3 = 75;
+      else if (t === 'heavy') rateKgM3 = 100;
+      else if (t === 'custom') rateKgM3 = parseFloat(inputNormCustomRate.value) || 75;
+
+      const baseSteel = totalConcreteVol * rateKgM3;
+      totalSteelKg = baseSteel * 1.03;
+
+      const normDia = parseInt(selNormDia.value) || 12;
+      const uWt = getBarUnitWeight(normDia);
+      const totLen = totalSteelKg / uWt;
+      const stock12m = Math.ceil(totLen / 12);
+      const bSize = BARS_PER_BUNDLE_MAP[normDia] || 5;
+      const bundles = Math.ceil(stock12m / bSize);
+
+      diaSummaryMap.set(normDia, { totalLen: totLen, totalWt: totalSteelKg, stock12m, bSize, bundles });
+      renderBOQ(totalConcreteVol, selNormConcrete.value);
+
+      // Live SVG for normal mode
+      drawPlanView(lengthMm, widthMm, coverMm, normDia, 150, normDia, 150, 4, 16, type === 'sloped', pedLMm, pedWMm);
+      drawSectionalElevation(lengthMm, widthMm, depthMm, d1Mm, type === 'sloped', coverMm, pccThickVal, 4, 16, true);
+    } else {
+      // ADVANCED BBS MODE
+      const dX = parseInt(ftDiaX.value) || 12;
+      const dY = parseInt(ftDiaY.value) || 12;
+      const sXMm = currentDimensionUnit === 'ft' ? (parseFloat(ftSpX.value) || 6) * 25.4 : parseFloat(ftSpX.value) || 150;
+      const sYMm = currentDimensionUnit === 'ft' ? (parseFloat(ftSpY.value) || 6) * 25.4 : parseFloat(ftSpY.value) || 150;
+      const isBendUp = checkBendUp.checked;
+
+      // X-Bars (Span L, along width B)
+      const netSpanB = Math.max(0.1, widthM - 2 * coverM);
+      const countXPerFt = Math.floor((netSpanB * 1000) / sXMm) + 1;
+      const totCountX = countXPerFt * rawN;
+
+      const legHeightX = isBendUp ? Math.max(0.1, depthM - 2 * coverM) : 0;
+      const bendDeductX = isBendUp ? (4 * dX) / 1000 : 0;
+      const cutLenX = Math.max(0.2, Number((lengthM - 2 * coverM + 2 * legHeightX - bendDeductX).toFixed(3)));
+      const totLenX = totCountX * cutLenX;
+      const uWtX = getBarUnitWeight(dX);
+      const totWtX = totLenX * uWtX;
+
+      bbsList.push({
+        mark: '01',
+        desc: `Bottom Mesh Rebars (X-Direction, along Length L)`,
+        dia: dX,
+        shape: isBendUp ? 'U-MESH (90° End Bend-ups)' : 'STRAIGHT (Flat Mesh)',
+        count: totCountX,
+        cutLen: cutLenX,
+        totLen: totLenX,
+        uWt: uWtX,
+        totWt: totWtX,
+      });
+
+      // Y-Bars (Span B, along length L)
+      const netSpanL = Math.max(0.1, lengthM - 2 * coverM);
+      const countYPerFt = Math.floor((netSpanL * 1000) / sYMm) + 1;
+      const totCountY = countYPerFt * rawN;
+
+      const legHeightY = isBendUp ? Math.max(0.1, depthM - 2 * coverM) : 0;
+      const bendDeductY = isBendUp ? (4 * dY) / 1000 : 0;
+      const cutLenY = Math.max(0.2, Number((widthM - 2 * coverM + 2 * legHeightY - bendDeductY).toFixed(3)));
+      const totLenY = totCountY * cutLenY;
+      const uWtY = getBarUnitWeight(dY);
+      const totWtY = totLenY * uWtY;
+
+      bbsList.push({
+        mark: '02',
+        desc: `Bottom Mesh Rebars (Y-Direction, along Width B)`,
+        dia: dY,
+        shape: isBendUp ? 'U-MESH (90° End Bend-ups)' : 'STRAIGHT (Flat Mesh)',
+        count: totCountY,
+        cutLen: cutLenY,
+        totLen: totLenY,
+        uWt: uWtY,
+        totWt: totWtY,
+      });
+
+      // Top Mesh (Optional)
+      if (checkTopMesh.checked) {
+        const topD = parseInt(ftTopDia.value) || 10;
+        const topSpMm = currentDimensionUnit === 'ft' ? (parseFloat(ftTopSp.value) || 6) * 25.4 : parseFloat(ftTopSp.value) || 150;
+        const uWtTop = getBarUnitWeight(topD);
+
+        const countTopX = Math.floor((netSpanB * 1000) / topSpMm) + 1;
+        const totTopX = countTopX * rawN;
+        const cutLenTopX = Math.max(0.2, Number((lengthM - 2 * coverM).toFixed(3)));
+        const totLenTopX = totTopX * cutLenTopX;
+        const totWtTopX = totLenTopX * uWtTop;
+
+        bbsList.push({
+          mark: '03',
+          desc: `Top Mesh Rebars (X-Direction)`,
+          dia: topD,
+          shape: 'STRAIGHT (Top Mat)',
+          count: totTopX,
+          cutLen: cutLenTopX,
+          totLen: totLenTopX,
+          uWt: uWtTop,
+          totWt: totWtTopX,
+        });
+
+        const countTopY = Math.floor((netSpanL * 1000) / topSpMm) + 1;
+        const totTopY = countTopY * rawN;
+        const cutLenTopY = Math.max(0.2, Number((widthM - 2 * coverM).toFixed(3)));
+        const totLenTopY = totTopY * cutLenTopY;
+        const totWtTopY = totLenTopY * uWtTop;
+
+        bbsList.push({
+          mark: '04',
+          desc: `Top Mesh Rebars (Y-Direction)`,
+          dia: topD,
+          shape: 'STRAIGHT (Top Mat)',
+          count: totTopY,
+          cutLen: cutLenTopY,
+          totLen: totLenTopY,
+          uWt: uWtTop,
+          totWt: totWtTopY,
+        });
+      }
+
+      // Column Starter Dowel Rebars
+      let dDowel = 0, nDowel = 0;
+      if (checkDowels.checked) {
+        nDowel = parseInt(ftDowelCount.value) || 4;
+        dDowel = parseInt(ftDowelDia.value) || 16;
+        const uWtDowel = getBarUnitWeight(dDowel);
+
+        const lapM = currentDimensionUnit === 'ft'
+          ? (parseFloat(ftDowelLap.value) || 30) * 0.0254
+          : (parseFloat(ftDowelLap.value) || 800) / 1000;
+        const embedM = Math.max(0.2, depthM - coverM);
+        const footM = 0.30; // 300mm standard foot tied to mesh
+        const dowelBendDeduct = (2 * dDowel) / 1000;
+
+        const cutLenDowel = Math.max(0.5, Number((lapM + embedM + footM - dowelBendDeduct).toFixed(3)));
+        const totDowelCount = nDowel * rawN;
+        const totDowelLen = totDowelCount * cutLenDowel;
+        const totDowelWt = totDowelLen * uWtDowel;
+
+        bbsList.push({
+          mark: checkTopMesh.checked ? '05' : '03',
+          desc: `Column Starter Dowel Rebars (${dDowel}mm Lap + Embedment + 300mm Foot Bend)`,
+          dia: dDowel,
+          shape: 'L-DOWEL (Starter Bar)',
+          count: totDowelCount,
+          cutLen: cutLenDowel,
+          totLen: totDowelLen,
+          uWt: uWtDowel,
+          totWt: totDowelWt,
+        });
+      }
+
+      const baseSteel = bbsList.reduce((acc, it) => acc + it.totWt, 0);
+      totalSteelKg = baseSteel * 1.03; // 3% standard site wastage
+
+      // Diameter Breakdown
+      for (const it of bbsList) {
+        const cur = diaSummaryMap.get(it.dia) || { totalLen: 0, totalWt: 0 };
+        cur.totalLen += it.totLen;
+        cur.totalWt += it.totWt;
+        diaSummaryMap.set(it.dia, cur);
+      }
+      for (const [dia, val] of diaSummaryMap.entries()) {
+        val.stock12m = Math.ceil((val.totalLen * 1.03) / 12);
+        val.bSize = BARS_PER_BUNDLE_MAP[dia] || 5;
+        val.bundles = Math.ceil(val.stock12m / val.bSize);
+      }
+
+      renderBBS(bbsList);
+      renderBOQ(totalConcreteVol, selConcreteGrade.value);
+
+      // Draw SVG Detailing
+      drawPlanView(lengthMm, widthMm, coverMm, dX, sXMm, dY, sYMm, checkDowels.checked ? nDowel : 0, dDowel, type === 'sloped', pedLMm, pedWMm);
+      drawSectionalElevation(lengthMm, widthMm, depthMm, d1Mm, type === 'sloped', coverMm, pccThickVal, checkDowels.checked ? nDowel : 0, dDowel, isBendUp);
+    }
+
+    renderDiameterSummary(diaSummaryMap);
+
+    // Hero displays
+    const bindingWireKg = Math.max(1, Math.round(totalSteelKg * 0.01 * 10) / 10);
+    const sym = currentCurrency === 'INR' ? '₹' : '$';
+
+    resTotalSteel.textContent = `${totalSteelKg.toFixed(1)} kg`;
+    resTotalSteelOther.textContent = `(${(totalSteelKg / 100).toFixed(2)} Quintals | ${(totalSteelKg / 1000).toFixed(3)} Tonnes | ${(totalSteelKg * 2.20462).toFixed(1)} lbs)`;
+    resConc.textContent = `${totalConcreteVol.toFixed(3)} m³ (${totalConcreteCuft.toFixed(1)} cu ft)`;
+    resShuttering.textContent = `Formwork: ${totalFormworkSqm.toFixed(1)} m² (${(totalFormworkSqm * 10.7639).toFixed(1)} sq ft)`;
+
+    resGeomDim.textContent = `${Math.round(lengthMm)} × ${Math.round(widthMm)} × ${Math.round(depthMm)} mm (${rawN} Footing${rawN > 1 ? 's' : ''})`;
+    resPccVolume.textContent = `${totalPccVol.toFixed(3)} m³`;
+    resExcavVolume.textContent = `${totalExcavVol.toFixed(2)} m³`;
+
+    // Costs
+    const costSteelAmt = Math.round(totalSteelKg * rateSteel);
+    const costConcAmt = Math.round(totalConcreteVol * rateConc);
+    const costPccAmt = Math.round(totalPccVol * ratePcc);
+    const costShutAmt = Math.round(totalFormworkSqm * rateShut);
+    const costExcavAmt = Math.round(totalExcavVol * rateExcav);
+    const costWireAmt = Math.round(bindingWireKg * rateWire);
+    const totalCostAmt = costSteelAmt + costConcAmt + costPccAmt + costShutAmt + costExcavAmt + costWireAmt;
+
+    resCostTotal.textContent = `${sym} ${totalCostAmt.toLocaleString(currentCurrency === 'INR' ? 'en-IN' : 'en-US')}`;
+    resCostSteelQty.textContent = `${totalSteelKg.toFixed(1)} kg`;
+    resCostSteelRate.textContent = `${sym} ${rateSteel}/kg`;
+    resCostSteelAmt.textContent = `${sym} ${costSteelAmt.toLocaleString()}`;
+
+    resCostConcQty.textContent = `${totalConcreteVol.toFixed(3)} m³`;
+    resCostConcRate.textContent = `${sym} ${rateConc}/m³`;
+    resCostConcAmt.textContent = `${sym} ${costConcAmt.toLocaleString()}`;
+
+    resCostPccQty.textContent = `${totalPccVol.toFixed(3)} m³`;
+    resCostPccRate.textContent = `${sym} ${ratePcc}/m³`;
+    resCostPccAmt.textContent = `${sym} ${costPccAmt.toLocaleString()}`;
+
+    resCostShutQty.textContent = `${totalFormworkSqm.toFixed(1)} m²`;
+    resCostShutRate.textContent = `${sym} ${rateShut}/m²`;
+    resCostShutAmt.textContent = `${sym} ${costShutAmt.toLocaleString()}`;
+
+    resCostExcavQty.textContent = `${totalExcavVol.toFixed(2)} m³`;
+    resCostExcavRate.textContent = `${sym} ${rateExcav}/m³`;
+    resCostExcavAmt.textContent = `${sym} ${costExcavAmt.toLocaleString()}`;
+
+    resCostWireQty.textContent = `${bindingWireKg.toFixed(1)} kg`;
+    resCostWireRate.textContent = `${sym} ${rateWire}/kg`;
+    resCostWireAmt.textContent = `${sym} ${costWireAmt.toLocaleString()}`;
+
+    resCostGrandAmt.textContent = `${sym} ${totalCostAmt.toLocaleString(currentCurrency === 'INR' ? 'en-IN' : 'en-US')}`;
+
+    resBoqShuttering.textContent = `${totalFormworkSqm.toFixed(1)} m² (${(totalFormworkSqm * 10.7639).toFixed(1)} sq ft)`;
+    resBoqWire.textContent = `${bindingWireKg.toFixed(1)} kg (18 Gauge GI Wire)`;
 
     try { document.dispatchEvent(new CustomEvent('calculator:updated')); } catch (e) {}
   }
 
+  function renderBBS(items) {
+    if (!tbodyBBS) return;
+    let html = '';
+    for (const it of items) {
+      html += `
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+          <td class="p-2.5 font-bold text-blue-600 dark:text-blue-400">${it.mark}</td>
+          <td class="p-2.5 font-semibold text-slate-900 dark:text-white">${it.desc}</td>
+          <td class="p-2.5 text-center font-bold font-mono">${it.dia}</td>
+          <td class="p-2.5 text-slate-600 dark:text-slate-400 font-mono text-[11px]">${it.shape}</td>
+          <td class="p-2.5 text-center font-bold">${it.count}</td>
+          <td class="p-2.5 text-right font-mono">${it.cutLen.toFixed(2)}</td>
+          <td class="p-2.5 text-right font-mono">${it.totLen.toFixed(1)}</td>
+          <td class="p-2.5 text-right font-mono text-slate-500">${it.uWt.toFixed(3)}</td>
+          <td class="p-2.5 text-right font-bold text-slate-900 dark:text-white">${it.totWt.toFixed(1)}</td>
+        </tr>
+      `;
+    }
+    tbodyBBS.innerHTML = html;
+  }
+
+  function renderDiameterSummary(diaMap) {
+    if (!tbodyDiaSummary) return;
+    let html = '';
+    const sorted = Array.from(diaMap.keys()).sort((a, b) => a - b);
+    for (const dia of sorted) {
+      const data = diaMap.get(dia);
+      html += `
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">
+          <td class="p-2 font-bold text-blue-600 dark:text-blue-400">${dia} mm</td>
+          <td class="p-2 text-right font-mono">${data.totalLen.toFixed(1)} m</td>
+          <td class="p-2 text-right font-bold text-slate-900 dark:text-white">${data.totalWt.toFixed(1)} kg</td>
+          <td class="p-2 text-center font-bold text-emerald-600 dark:text-emerald-400">${data.stock12m} Rods</td>
+          <td class="p-2 text-center font-semibold text-slate-700 dark:text-slate-300">${data.bundles} Bndl (${data.bSize}/bndl)</td>
+        </tr>
+      `;
+    }
+    tbodyDiaSummary.innerHTML = html;
+  }
+
+  function renderBOQ(volumeM3, grade) {
+    const dryVol = volumeM3 * 1.54;
+    let cementRatio = 1, sandRatio = 1.5, aggRatio = 3;
+    if (grade === 'M25') { cementRatio = 1; sandRatio = 1; aggRatio = 2; }
+    else if (grade === 'M15') { cementRatio = 1; sandRatio = 2; aggRatio = 4; }
+    const totalRatio = cementRatio + sandRatio + aggRatio;
+
+    const cementM3 = dryVol * (cementRatio / totalRatio);
+    const cementKg = cementM3 * 1440;
+    const cementBags = Math.ceil(cementKg / 50);
+
+    const sandM3 = dryVol * (sandRatio / totalRatio);
+    const sandCft = sandM3 * 35.3147;
+
+    const aggM3 = dryVol * (aggRatio / totalRatio);
+    const aggCft = aggM3 * 35.3147;
+
+    if (resBoqCement) resBoqCement.textContent = `${cementBags} Bags (${cementKg.toFixed(0)} kg)`;
+    if (resBoqSand) resBoqSand.textContent = `${sandCft.toFixed(1)} cft (${sandM3.toFixed(2)} m³)`;
+    if (resBoqAggregate) resBoqAggregate.textContent = `${aggCft.toFixed(1)} cft (${aggM3.toFixed(2)} m³)`;
+  }
+
+  // Button Handlers
   const btnCalcFooting = document.getElementById('btn-calc-footing');
   const btnClearFooting = document.getElementById('btn-clear-footing');
 
   if (btnCalcFooting) {
     btnCalcFooting.addEventListener('click', () => {
-      if (!ftL.value) ftL.value = '1500';
-      if (!ftB.value) ftB.value = '1500';
-      if (!ftD.value) ftD.value = '300';
       calculate();
       const card = document.getElementById('results-card');
       if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -279,26 +1906,219 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
       ftL.value = '';
       ftB.value = '';
       ftD.value = '';
-      ftSp.value = '';
-      calculate();
       ftL.focus();
+      resetOutputs();
       const orig = btnClearFooting.innerHTML;
       btnClearFooting.innerHTML = '<span>✓ Cleared</span>';
       setTimeout(() => { btnClearFooting.innerHTML = orig; }, 1000);
     });
   }
 
-  [ftL, ftB, ftD, ftDia, ftSp, ftCnt].forEach((el) => {
-    if (!el) return;
-    el.addEventListener('input', calculate);
-    el.addEventListener('change', calculate);
-    el.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        calculate();
+  if (btnModeAdv) btnModeAdv.addEventListener('click', () => setMode('adv'));
+  if (btnModeNorm) btnModeNorm.addEventListener('click', () => setMode('norm'));
+  if (btnUnitM) btnUnitM.addEventListener('click', () => setUnit('m'));
+  if (btnUnitFt) btnUnitFt.addEventListener('click', () => setUnit('ft'));
+  if (btnCurrInr) btnCurrInr.addEventListener('click', () => setCurrency('INR'));
+  if (btnCurrUsd) btnCurrUsd.addEventListener('click', () => setCurrency('USD'));
+
+  // Preset Buttons
+  document.querySelectorAll('.btn-preset').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const u = btn.getAttribute('data-unit') || 'm';
+      setUnit(u);
+      setMode('adv');
+
+      if (btn.hasAttribute('data-type')) ftType.value = btn.getAttribute('data-type');
+      updateFootingTypeUI();
+
+      if (btn.hasAttribute('data-l')) ftL.value = btn.getAttribute('data-l');
+      if (btn.hasAttribute('data-b')) ftB.value = btn.getAttribute('data-b');
+      if (btn.hasAttribute('data-d')) ftD.value = btn.getAttribute('data-d');
+      if (btn.hasAttribute('data-d1')) ftD1.value = btn.getAttribute('data-d1');
+      if (btn.hasAttribute('data-pedl')) ftPedL.value = btn.getAttribute('data-pedl');
+      if (btn.hasAttribute('data-pedb')) ftPedW.value = btn.getAttribute('data-pedb');
+
+      if (btn.hasAttribute('data-dia')) {
+        ftDiaX.value = btn.getAttribute('data-dia');
+        ftDiaY.value = btn.getAttribute('data-dia');
       }
+      if (btn.hasAttribute('data-sp')) {
+        ftSpX.value = btn.getAttribute('data-sp');
+        ftSpY.value = btn.getAttribute('data-sp');
+      }
+      if (btn.hasAttribute('data-dowels')) {
+        checkDowels.checked = true;
+        boxDowelDetails.classList.remove('hidden');
+        ftDowelCount.value = btn.getAttribute('data-dowels');
+        if (btn.hasAttribute('data-doweldia')) ftDowelDia.value = btn.getAttribute('data-doweldia');
+      }
+
+      calculate();
     });
   });
 
+  // Table Copy, CSV, Print
+  const btnCopyBbs = document.getElementById('btn-copy-bbs');
+  if (btnCopyBbs) {
+    btnCopyBbs.addEventListener('click', () => {
+      let tsv = 'Mark\tDescription\tDia(mm)\tShape Code\tCount\tCut Len(m)\tTot Len(m)\tUnit Wt(kg/m)\tTot Wt(kg)\n';
+      document.querySelectorAll('#tbody-bbs tr').forEach(row => {
+        const cols = Array.from(row.querySelectorAll('td')).map(td => td.textContent.trim());
+        tsv += cols.join('\t') + '\n';
+      });
+      navigator.clipboard.writeText(tsv).then(() => {
+        const orig = btnCopyBbs.textContent;
+        btnCopyBbs.textContent = '✅ Copied!';
+        setTimeout(() => { btnCopyBbs.textContent = orig; }, 1500);
+      });
+    });
+  }
+
+  const btnDownloadCsv = document.getElementById('btn-download-csv');
+  if (btnDownloadCsv) {
+    btnDownloadCsv.addEventListener('click', () => {
+      let csv = 'Mark,Description,Dia(mm),Shape Code,Count,Cut Len(m),Tot Len(m),Unit Wt(kg/m),Tot Wt(kg)\n';
+      document.querySelectorAll('#tbody-bbs tr').forEach(row => {
+        const cols = Array.from(row.querySelectorAll('td')).map(td => `"${td.textContent.trim().replace(/"/g, '""')}"`);
+        csv += cols.join(',') + '\n';
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'RCC_Footing_Steel_BBS.csv';
+      link.click();
+    });
+  }
+
+  const btnPrintBbs = document.getElementById('btn-print-bbs');
+  if (btnPrintBbs) {
+    btnPrintBbs.addEventListener('click', () => {
+      window.print();
+    });
+  }
+
+  // Live Diagram Update (Diagram updates in real-time as user types without computing result numbers)
+  function updateLiveDiagrams() {
+    const isSloped = ftType && ftType.value === 'sloped';
+    let L = parseFloat(ftL?.value) || 1.8;
+    let B = parseFloat(ftB?.value) || 1.8;
+    let D = parseFloat(ftD?.value) || 450;
+    let D1 = isSloped ? (parseFloat(ftD1?.value) || 200) : D;
+    let cover = parseFloat(ftCover?.value) || 50;
+    let pedL = parseFloat(ftPedL?.value) || 400;
+    let pedW = parseFloat(ftPedW?.value) || 400;
+
+    if (currentDimensionUnit === 'ft') {
+      L *= 0.3048 * 1000;
+      B *= 0.3048 * 1000;
+      D *= 25.4;
+      D1 *= 25.4;
+      cover *= 25.4;
+      pedL *= 25.4;
+      pedW *= 25.4;
+    } else {
+      L *= 1000;
+      B *= 1000;
+    }
+
+    const diaX = (currentCalculationMode === 'norm' ? (parseInt(ftDiaXNorm?.value) || 12) : (parseInt(ftDiaX?.value) || 12));
+    const spX = currentDimensionUnit === 'ft' ? Math.round((parseFloat(ftSpX?.value) || 6) * 25.4) : Math.round(parseFloat(ftSpX?.value) || 150);
+    const diaY = (currentCalculationMode === 'norm' ? (parseInt(ftDiaYNorm?.value) || 12) : (parseInt(ftDiaY?.value) || 12));
+    const spY = currentDimensionUnit === 'ft' ? Math.round((parseFloat(ftSpY?.value) || 6) * 25.4) : Math.round(parseFloat(ftSpY?.value) || 150);
+
+    const hasDowels = checkDowels ? checkDowels.checked : true;
+    const dowelCnt = hasDowels ? (parseInt(ftDowelCount?.value) || 4) : 0;
+    const dowelDia = parseInt(ftDowelDia?.value) || 16;
+    const hasTop = checkTopMesh ? checkTopMesh.checked : false;
+
+    drawPlanView(L, B, cover, diaX, spX, diaY, spY, dowelCnt, dowelDia, isSloped, pedL, pedW);
+    drawElevationView(L, D, D1, cover, hasDowels, dowelDia, isSloped, pedL, hasTop);
+  }
+
+  // Live input events for Real-time Visual Diagram Updating
+  const liveInputs = [
+    ftType, ftL, ftB, ftD, ftD1, ftPedL, ftPedW, ftCover, ftCnt,
+    ftDiaX, ftSpX, ftDiaY, ftSpY, checkBendUp, checkDowels, ftDowelCount, ftDowelDia, ftDowelLap,
+    checkTopMesh, ftTopDia, ftTopSp, selConcreteGrade, ftPccThick, ftExcavDepth,
+    selNormType, inputNormCustomRate, selNormDia, selNormConcrete,
+    costSteel, costConc, costPcc, costShut, costExcav, costWire
+  ];
+
+  liveInputs.forEach(el => {
+    if (el) {
+      el.addEventListener('input', updateLiveDiagrams);
+      el.addEventListener('change', updateLiveDiagrams);
+    }
+  });
+
+  // Initial calculation on page load
   calculate();
 </script>
+
+<style>
+  .rcc-footing-content h2 {
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    line-height: 1.3;
+    color: #0f172a;
+  }
+
+  .rcc-footing-content h2:first-child {
+    margin-top: 0;
+  }
+
+  .rcc-footing-content h3 {
+    margin-top: 1.75rem;
+    margin-bottom: 0.625rem;
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .rcc-footing-content p {
+    margin: 0 0 1rem;
+    line-height: 1.75;
+    color: #475569;
+  }
+
+  .rcc-footing-content ul,
+  .rcc-footing-content ol {
+    margin: 0.75rem 0 1.5rem;
+    padding-left: 1.5rem;
+  }
+
+  .rcc-footing-content ul {
+    list-style: disc;
+  }
+
+  .rcc-footing-content ol {
+    list-style: decimal;
+  }
+
+  .rcc-footing-content li + li {
+    margin-top: 0.5rem;
+  }
+
+  :global(.dark) .rcc-footing-content h2,
+  :global(.dark) .rcc-footing-content h3 {
+    color: #f8fafc;
+  }
+
+  :global(.dark) .rcc-footing-content p {
+    color: #cbd5e1;
+  }
+
+  @media print {
+    header, footer, .btn-preset, #form-rcc-footing, button {
+      display: none !important;
+    }
+    #results-card {
+      box-shadow: none !important;
+      border: 1px solid #ccc !important;
+      background: white !important;
+      color: black !important;
+    }
+  }
+</style>

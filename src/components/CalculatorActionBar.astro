@@ -871,6 +871,61 @@ const { calculatorName, slug, category } = Astro.props;
           });
         }
 
+        // E. Visual Detailing Diagrams (SVG & Canvas elements)
+        var diagrams = [];
+        var svgNodes = container.querySelectorAll('svg#svg-cross-section, svg#svg-elevation, svg#bmi-gauge-svg, svg[id*="diagram"], svg[class*="donut"], svg.visual-diagram');
+        var seenSvgs = {};
+        svgNodes.forEach(function (svg) {
+          if (!svg.offsetParent && svg.offsetWidth === 0 && svg.offsetHeight === 0) return;
+          var sid = svg.id || ('diag_' + diagrams.length);
+          if (seenSvgs[sid]) return;
+          seenSvgs[sid] = true;
+
+          var parentCard = svg.closest('[class*="rounded"], [class*="card"], div');
+          var title = '';
+          if (parentCard) {
+            var headingEl = parentCard.querySelector('h3, h4, [class*="font-bold"], [class*="font-semibold"], span:first-child');
+            if (headingEl && headingEl !== svg) {
+              title = headingEl.textContent.trim().replace(/\s+/g, ' ');
+            }
+          }
+          if (!title) {
+            if (sid === 'svg-cross-section') title = 'Cross-Section Detailing Diagram';
+            else if (sid === 'svg-elevation') title = 'Longitudinal Elevation Diagram';
+            else if (sid.includes('bmi')) title = 'Body Mass Index Radial Gauge';
+            else if (sid.includes('donut')) title = 'Visual Investment Breakdown';
+            else title = sid.replace(/^svg-/, '').replace(/-/g, ' ').toUpperCase() + ' Diagram';
+          }
+
+          var clone = svg.cloneNode(true);
+          clone.style.maxWidth = '100%';
+          clone.style.height = 'auto';
+          clone.style.display = 'block';
+          clone.style.margin = '0 auto';
+
+          var svgStr = clone.outerHTML;
+          if (svgStr && svgStr.length > 40) {
+            diagrams.push({ title: title, html: svgStr });
+          }
+        });
+
+        // Also extract canvas graph if available (e.g. scientific calculator graphs)
+        var canvasNodes = container.querySelectorAll('canvas:not(#captcha-canvas)');
+        canvasNodes.forEach(function (can) {
+          if (!can.offsetParent && can.offsetWidth === 0) return;
+          try {
+            var dataUrl = can.toDataURL('image/png');
+            if (dataUrl && dataUrl.length > 80) {
+              var cTitle = can.getAttribute('aria-label') || (can.id ? can.id.replace(/^(res-|graph-)/, '').replace(/-/g, ' ') : 'Visual Plot');
+              cTitle = cTitle.charAt(0).toUpperCase() + cTitle.slice(1) + ' Diagram';
+              diagrams.push({
+                title: cTitle,
+                html: '<img src="' + dataUrl + '" style="max-width:100%;height:auto;border-radius:8px;display:block;margin:0 auto;" alt="' + escapeHtml(cTitle) + '" />'
+              });
+            }
+          } catch {}
+        });
+
         var uniqueResults = [];
         var seen = {};
         results.forEach(function (r) {
@@ -891,7 +946,8 @@ const { calculatorName, slug, category } = Astro.props;
           shareableUrl: generateShareableUrl(),
           inputs: inputs,
           results: uniqueResults,
-          tables: tables
+          tables: tables,
+          diagrams: diagrams
         };
       }
 
@@ -1078,20 +1134,64 @@ const { calculatorName, slug, category } = Astro.props;
           return;
         }
 
-        var inputsRowsHtml = '';
+        var formulas = extractFormulas(data.slug, data.category);
+
+        // 1. Inputs Section HTML (Splits into 2 side-by-side tables when > 4 rows)
+        var inputsHtml = '';
         if (data.inputs.length === 0) {
-          inputsRowsHtml = '<tr><td colspan="2" style="padding:8px 12px;color:#94a3b8;font-style:italic;font-size:12px;">No input parameters specified</td></tr>';
-        } else {
-          data.inputs.forEach(function (inp, idx) {
+          inputsHtml = '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:10px;color:#94a3b8;font-style:italic;font-size:12px;text-align:center;background:#ffffff;">Standard default parameters used</div>';
+        } else if (data.inputs.length <= 4) {
+          // Single Clean Table
+          var singleRowsHtml = data.inputs.map(function (inp, idx) {
             var bg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
-            inputsRowsHtml += '<tr style="background:' + bg + ';border-bottom:1px solid #e2e8f0;">' +
-              '<td style="padding:6.5px 12px;font-weight:600;color:#475569;font-size:12px;width:50%;">' + escapeHtml(inp.label) + '</td>' +
-              '<td style="padding:6.5px 12px;font-weight:700;color:#0f172a;font-size:12px;width:50%;">' + escapeHtml(inp.value) + '</td>' +
+            return '<tr style="background:' + bg + ';border-bottom:1px solid #e2e8f0;">' +
+              '<td style="padding:7px 12px;font-weight:600;color:#475569;font-size:12px;width:52%;">' + escapeHtml(inp.label) + '</td>' +
+              '<td style="padding:7px 12px;font-weight:700;color:#0f172a;font-size:12.5px;width:48%;">' + escapeHtml(inp.value) + '</td>' +
               '</tr>';
-          });
+          }).join('');
+
+          inputsHtml = '<div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.02);">' +
+            '<table style="width:100%;border-collapse:collapse;font-size:12px;">' +
+            '<thead><tr style="background:#f1f5f9;border-bottom:1.5px solid #cbd5e1;">' +
+            '<th style="padding:6.5px 12px;text-align:left;font-weight:700;color:#475569;font-size:10.5px;text-transform:uppercase;letter-spacing:0.4px;width:52%;">Input Parameter</th>' +
+            '<th style="padding:6.5px 12px;text-align:left;font-weight:700;color:#475569;font-size:10.5px;text-transform:uppercase;letter-spacing:0.4px;width:48%;">Specified Value</th>' +
+            '</tr></thead>' +
+            '<tbody>' + singleRowsHtml + '</tbody>' +
+            '</table>' +
+            '</div>';
+        } else {
+          // Multi-Column Split Side-by-Side (When > 4 items)
+          var mid = Math.ceil(data.inputs.length / 2);
+          var col1Inputs = data.inputs.slice(0, mid);
+          var col2Inputs = data.inputs.slice(mid);
+
+          function renderInputTableBlock(inputsList) {
+            var rows = inputsList.map(function (inp, idx) {
+              var bg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+              return '<tr style="background:' + bg + ';border-bottom:1px solid #e2e8f0;">' +
+                '<td style="padding:6px 10px;font-weight:600;color:#475569;font-size:11.5px;width:54%;line-height:1.35;">' + escapeHtml(inp.label) + '</td>' +
+                '<td style="padding:6px 10px;font-weight:700;color:#0f172a;font-size:12px;width:46%;line-height:1.35;">' + escapeHtml(inp.value) + '</td>' +
+                '</tr>';
+            }).join('');
+
+            return '<div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,0.02);">' +
+              '<table style="width:100%;border-collapse:collapse;font-size:11.5px;">' +
+              '<thead><tr style="background:#f1f5f9;border-bottom:1.5px solid #cbd5e1;">' +
+              '<th style="padding:6px 10px;text-align:left;font-weight:700;color:#475569;font-size:10px;text-transform:uppercase;letter-spacing:0.4px;width:54%;">Input Parameter</th>' +
+              '<th style="padding:6px 10px;text-align:left;font-weight:700;color:#475569;font-size:10px;text-transform:uppercase;letter-spacing:0.4px;width:46%;">Specified Value</th>' +
+              '</tr></thead>' +
+              '<tbody>' + rows + '</tbody>' +
+              '</table>' +
+              '</div>';
+          }
+
+          inputsHtml = '<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:10px;align-items:start;">' +
+            renderInputTableBlock(col1Inputs) +
+            renderInputTableBlock(col2Inputs) +
+            '</div>';
         }
 
-        // Separate hero highlights and full results
+        // 2. Hero Highlights (Clean, compact, proportionate output badges)
         var heroList = data.results.filter(function (r) { return r.isHero; });
         if (heroList.length === 0 && data.results.length > 0) {
           heroList = data.results.slice(0, Math.min(4, data.results.length));
@@ -1102,127 +1202,209 @@ const { calculatorName, slug, category } = Astro.props;
         var heroHighlightsHtml = '';
         if (heroList.length > 0) {
           var heroCards = heroList.map(function (res) {
-            return '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:8px 12px;">' +
-              '<div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;letter-spacing:0.4px;">' + escapeHtml(res.label) + '</div>' +
-              '<div style="margin-top:2px;font-size:15px;font-weight:800;color:#0284c7;">' + escapeHtml(res.value) + '</div>' +
+            return '<div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:10px;padding:9px 12px;box-shadow:0 1px 3px rgba(0,0,0,0.02);">' +
+              '<div style="font-size:10px;font-weight:800;text-transform:uppercase;color:#475569;letter-spacing:0.4px;">' + escapeHtml(res.label) + '</div>' +
+              '<div style="margin-top:2px;font-size:15px;font-weight:800;color:#0f172a;font-family:system-ui,-apple-system,sans-serif;">' + escapeHtml(res.value) + '</div>' +
               '</div>';
           }).join('');
-          heroHighlightsHtml = '<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));gap:8px;margin-bottom:10px;">' + heroCards + '</div>';
+          heroHighlightsHtml = '<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));gap:8px;margin-bottom:12px;">' + heroCards + '</div>';
         }
 
-        var resultsTableRowsHtml = '';
+        // 3. Full Results Table (Splits into 2 side-by-side tables if > 6 rows)
+        var resultsSectionHtml = '';
         if (data.results.length === 0) {
-          resultsTableRowsHtml = '<tr><td colspan="2" style="padding:10px;color:#94a3b8;font-style:italic;font-size:12px;">No calculation results detected</td></tr>';
-        } else {
-          data.results.forEach(function (res, idx) {
+          resultsSectionHtml = '<div style="border:1px solid #e2e8f0;border-radius:10px;padding:10px;color:#94a3b8;font-style:italic;font-size:12px;text-align:center;background:#ffffff;">No calculation results detected</div>';
+        } else if (data.results.length <= 6) {
+          var singleResRows = data.results.map(function (res, idx) {
             var bg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
-            resultsTableRowsHtml += '<tr style="background:' + bg + ';border-bottom:1px solid #e2e8f0;">' +
+            return '<tr style="background:' + bg + ';border-bottom:1px solid #e2e8f0;">' +
               '<td style="padding:6.5px 12px;font-weight:600;color:#334155;font-size:12px;width:55%;">' + escapeHtml(res.label) + '</td>' +
-              '<td style="padding:6.5px 12px;font-weight:700;color:#0f172a;font-size:12px;text-align:right;width:45%;">' + escapeHtml(res.value) + '</td>' +
+              '<td style="padding:6.5px 12px;font-weight:700;color:#0f172a;font-size:12.5px;text-align:right;width:45%;font-family:system-ui,-apple-system,sans-serif;">' + escapeHtml(res.value) + '</td>' +
               '</tr>';
-          });
+          }).join('');
+
+          resultsSectionHtml = '<div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.02);">' +
+            '<table style="width:100%;border-collapse:collapse;font-size:12px;">' +
+            '<thead><tr style="background:#f1f5f9;border-bottom:1.5px solid #cbd5e1;">' +
+            '<th style="padding:6.5px 12px;text-align:left;font-weight:700;color:#475569;font-size:10.5px;text-transform:uppercase;letter-spacing:0.4px;width:55%;">Output Metric Description</th>' +
+            '<th style="padding:6.5px 12px;text-align:right;font-weight:700;color:#475569;font-size:10.5px;text-transform:uppercase;letter-spacing:0.4px;width:45%;">Calculated Value</th>' +
+            '</tr></thead>' +
+            '<tbody>' + singleResRows + '</tbody>' +
+            '</table>' +
+            '</div>';
+        } else {
+          // Multi-Column Split for Long Result Lists
+          var resMid = Math.ceil(data.results.length / 2);
+          var col1Res = data.results.slice(0, resMid);
+          var col2Res = data.results.slice(resMid);
+
+          function renderResTableBlock(resList) {
+            var rows = resList.map(function (res, idx) {
+              var bg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+              return '<tr style="background:' + bg + ';border-bottom:1px solid #e2e8f0;">' +
+                '<td style="padding:6px 10px;font-weight:600;color:#334155;font-size:11.5px;width:56%;line-height:1.35;">' + escapeHtml(res.label) + '</td>' +
+                '<td style="padding:6px 10px;font-weight:700;color:#0f172a;font-size:12px;text-align:right;width:44%;font-family:system-ui,-apple-system,sans-serif;line-height:1.35;">' + escapeHtml(res.value) + '</td>' +
+                '</tr>';
+            }).join('');
+
+            return '<div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;background:#ffffff;box-shadow:0 1px 3px rgba(0,0,0,0.02);">' +
+              '<table style="width:100%;border-collapse:collapse;font-size:11.5px;">' +
+              '<thead><tr style="background:#f1f5f9;border-bottom:1.5px solid #cbd5e1;">' +
+              '<th style="padding:6px 10px;text-align:left;font-weight:700;color:#475569;font-size:10px;text-transform:uppercase;letter-spacing:0.4px;width:56%;">Output Metric</th>' +
+              '<th style="padding:6px 10px;text-align:right;font-weight:700;color:#475569;font-size:10px;text-transform:uppercase;letter-spacing:0.4px;width:44%;">Calculated Value</th>' +
+              '</tr></thead>' +
+              '<tbody>' + rows + '</tbody>' +
+              '</table>' +
+              '</div>';
+          }
+
+          resultsSectionHtml = '<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:10px;align-items:start;">' +
+            renderResTableBlock(col1Res) +
+            renderResTableBlock(col2Res) +
+            '</div>';
         }
 
+        // 4. Visual Detailing & Structural Diagrams (If Available)
+        var diagramsSectionHtml = '';
+        if (data.diagrams && data.diagrams.length > 0) {
+          var diagramCards = data.diagrams.map(function (diag) {
+            return '<div style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;padding:12px;box-shadow:0 1px 3px rgba(0,0,0,0.02);text-align:center;">' +
+              '<div style="font-size:10.5px;font-weight:800;color:#334155;margin-bottom:8px;text-transform:uppercase;letter-spacing:0.4px;">' + escapeHtml(diag.title) + '</div>' +
+              '<div style="display:flex;justify-content:center;align-items:center;background:#f8fafc;border-radius:8px;padding:8px;border:1px solid #f1f5f9;min-height:140px;overflow:hidden;">' +
+              diag.html +
+              '</div>' +
+              '</div>';
+          }).join('');
+
+          diagramsSectionHtml = '<div style="margin-top:16px;">' +
+            '<div style="font-size:11.5px;font-weight:800;text-transform:uppercase;color:#475569;letter-spacing:0.4px;margin-bottom:6px;display:flex;align-items:center;gap:5px;">' +
+            '<span>📐</span> 3. Visual Detailing &amp; Structural Diagrams' +
+            '</div>' +
+            '<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:10px;">' +
+            diagramCards +
+            '</div>' +
+            '</div>';
+        }
+
+        // 5. Step-by-Step Formulas / Calculation Process (If Available)
+        var formulaSectionHtml = '';
+        if (formulas && formulas.length > 0) {
+          var formulaBlocks = formulas.map(function (f) {
+            var itemsHtml = f.items.map(function (item) {
+              return '<li style="margin-bottom:4px;font-size:11.5px;color:#334155;line-height:1.45;">' +
+                '<span style="background:#e2e8f0;padding:1.5px 5px;border-radius:4px;font-family:monospace;font-size:11px;font-weight:600;color:#0f172a;">' + escapeHtml(item) + '</span>' +
+                '</li>';
+            }).join('');
+
+            return '<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:10px 14px;margin-bottom:8px;">' +
+              '<div style="font-size:11.5px;font-weight:800;color:#0f172a;margin-bottom:6px;display:flex;align-items:center;gap:5px;"><span>📐</span> ' + escapeHtml(f.heading) + '</div>' +
+              '<ul style="margin:0;padding-left:16px;">' + itemsHtml + '</ul>' +
+              '</div>';
+          }).join('');
+
+          formulaSectionHtml = '<div style="margin-top:16px;">' +
+            '<div style="font-size:11.5px;font-weight:800;text-transform:uppercase;color:#475569;letter-spacing:0.4px;margin-bottom:6px;display:flex;align-items:center;gap:5px;">' +
+            '<span>⚙️</span> ' + (data.diagrams && data.diagrams.length > 0 ? '4.' : '3.') + ' Calculation Process &amp; Formulas Applied' +
+            '</div>' +
+            formulaBlocks +
+            '</div>';
+        }
+
+        // 6. Detailed Breakdown Tables (If Available)
         var tablesHtml = '';
         if (data.tables && data.tables.length > 0) {
           data.tables.forEach(function (tbl, idx) {
             var headersHtml = tbl.headers.map(function (h) {
-              return '<th style="padding:7px 10px;background:#f1f5f9;color:#334155;font-weight:700;text-align:left;border-bottom:1.5px solid #cbd5e1;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;">' + escapeHtml(h) + '</th>';
+              return '<th style="padding:6.5px 10px;background:#f1f5f9;color:#334155;font-weight:700;text-align:left;border-bottom:1.5px solid #cbd5e1;font-size:10.5px;text-transform:uppercase;letter-spacing:0.4px;">' + escapeHtml(h) + '</th>';
             }).join('');
 
             var rowsHtml = tbl.rows.map(function (row, rIdx) {
               var bg = rIdx % 2 === 0 ? '#ffffff' : '#f8fafc';
               var cells = row.map(function (c) {
-                return '<td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;font-size:11.5px;font-family:monospace;">' + escapeHtml(c) + '</td>';
+                return '<td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;font-size:11.5px;font-family:system-ui,-apple-system,sans-serif;">' + escapeHtml(c) + '</td>';
               }).join('');
               return '<tr style="background:' + bg + ';">' + cells + '</tr>';
             }).join('');
 
-            tablesHtml += '<div style="margin-top:18px;">' +
-              '<div style="font-size:12px;font-weight:800;text-transform:uppercase;color:#475569;margin-bottom:6px;letter-spacing:0.4px;">Detailed Breakdown Table ' + (data.tables.length > 1 ? (idx + 1) : '') + '</div>' +
-              '<div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:10px;">' +
-              '<table style="width:100%;border-collapse:collapse;font-size:12px;">' +
+            tablesHtml += '<div style="margin-top:16px;">' +
+              '<div style="font-size:11.5px;font-weight:800;text-transform:uppercase;color:#475569;margin-bottom:6px;letter-spacing:0.4px;display:flex;align-items:center;gap:5px;">' +
+              '<span>📊</span> ' + (data.diagrams && data.diagrams.length > 0 ? '5.' : '4.') + ' Detailed Schedule &amp; Material Breakdown ' + (data.tables.length > 1 ? ('(' + (idx + 1) + ')') : '') +
+              '</div>' +
+              '<div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,0.02);">' +
+              '<table style="width:100%;border-collapse:collapse;font-size:11.5px;">' +
               '<thead><tr>' + headersHtml + '</tr></thead>' +
               '<tbody>' + rowsHtml + '</tbody>' +
               '</table></div></div>';
           });
         }
 
-        var pageHtml = '<!DOCTYPE html><html><head><meta charset="utf-8">' +
-          '<title>' + escapeHtml(data.calculatorName) + ' - AI Free Calculator Report</title>' +
+        // Complete Page HTML
+        var pageHtml = '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8">' +
+          '<title>' + escapeHtml(data.calculatorName) + ' - Calculation Report Preview</title>' +
           '<meta name="viewport" content="width=device-width, initial-scale=1">' +
           '<style>' +
-          'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; background: #f1f5f9; color: #0f172a; line-height: 1.45; }' +
-          '.top-nav { background: #0f172a; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }' +
+          '* { box-sizing: border-box; }' +
+          'body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; background: #f8fafc; color: #0f172a; line-height: 1.45; -webkit-font-smoothing: antialiased; }' +
+          '.top-nav { background: #0f172a; color: white; padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 12px rgba(0,0,0,0.12); position: sticky; top: 0; z-index: 100; }' +
           '.top-nav h1 { margin: 0; font-size: 15px; font-weight: 800; display: flex; align-items: center; gap: 8px; }' +
-          '.top-nav .nav-btns { display: flex; gap: 8px; }' +
-          '.btn { border: 1px solid #334155; background: #1e293b; color: white; border-radius: 7px; padding: 6px 12px; font-size: 12px; font-weight: 600; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }' +
-          '.btn:hover { background: #334155; }' +
-          '.btn-primary { background: #007b8f; border-color: #00687a; color: white; }' +
-          '.btn-primary:hover { background: #00687a; }' +
-          '.report-card { max-width: 820px; margin: 20px auto; background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 24px 28px; box-shadow: 0 4px 14px rgba(0,0,0,0.04); }' +
-          '.report-header { border-bottom: 2px solid #007b8f; padding-bottom: 12px; margin-bottom: 18px; display: flex; justify-content: space-between; align-items: flex-end; }' +
-          '.report-title { font-size: 20px; font-weight: 900; color: #0f172a; margin: 0 0 3px 0; }' +
-          '.report-brand { font-size: 11px; font-weight: 800; color: #007b8f; text-transform: uppercase; letter-spacing: 0.5px; }' +
-          '.meta-text { font-size: 11px; color: #64748b; margin: 2px 0 0 0; }' +
-          '.section-title { font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: 0.4px; margin: 18px 0 8px 0; display: flex; align-items: center; gap: 6px; }' +
-          '.report-footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #e2e8f0; font-size: 10.5px; color: #94a3b8; display: flex; justify-content: space-between; }' +
+          '.top-nav .nav-btns { display: flex; gap: 8px; flex-wrap: wrap; }' +
+          '.btn { border: 1px solid #334155; background: #1e293b; color: white; border-radius: 7px; padding: 6px 12px; font-size: 11.5px; font-weight: 700; cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s ease; }' +
+          '.btn:hover { background: #334155; border-color: #475569; }' +
+          '.btn-primary { background: #2563eb; border-color: #1d4ed8; color: white; }' +
+          '.btn-primary:hover { background: #1d4ed8; }' +
+          '.report-wrapper { max-width: 860px; margin: 18px auto 30px; padding: 0 14px; }' +
+          '.report-card { background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 22px 26px; box-shadow: 0 4px 16px rgba(0,0,0,0.04); position: relative; overflow: hidden; }' +
+          '.report-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #2563eb 0%, #06b6d4 100%); }' +
+          '.report-header { border-bottom: 2px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end; gap: 12px; flex-wrap: wrap; }' +
+          '.report-title { font-size: 19px; font-weight: 900; color: #0f172a; margin: 2px 0 3px 0; }' +
+          '.report-brand { font-size: 10.5px; font-weight: 800; color: #2563eb; text-transform: uppercase; letter-spacing: 0.6px; display: flex; align-items: center; gap: 4px; }' +
+          '.meta-text { font-size: 11px; color: #64748b; margin: 0; }' +
+          '.section-title { font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: 0.4px; margin: 16px 0 8px 0; display: flex; align-items: center; gap: 5px; }' +
+          '.report-footer { margin-top: 22px; padding-top: 10px; border-top: 1px solid #e2e8f0; font-size: 10.5px; color: #94a3b8; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; }' +
           '@media print {' +
           '  .top-nav { display: none !important; }' +
-          '  body { background: white !important; font-size: 11pt; }' +
-          '  .report-card { margin: 0 !important; padding: 0 !important; border: none !important; box-shadow: none !important; max-width: 100% !important; }' +
+          '  body { background: white !important; font-size: 10.5pt; }' +
+          '  .report-wrapper { margin: 0 !important; padding: 0 !important; max-width: 100% !important; }' +
+          '  .report-card { border: none !important; box-shadow: none !important; padding: 0 !important; }' +
           '}' +
           '</style></head><body>' +
           '<div class="top-nav">' +
           '  <div>' +
           '    <h1><span>⚙️</span> AI Free Calculator</h1>' +
-          '    <div style="font-size:11px;color:#94a3b8;margin-top:2px;">' + escapeHtml(data.calculatorName) + ' • Complete Report Preview</div>' +
+          '    <div style="font-size:11px;color:#94a3b8;margin-top:1px;">' + escapeHtml(data.calculatorName) + ' • Verified Calculation Preview</div>' +
           '  </div>' +
           '  <div class="nav-btns">' +
           '    <button class="btn btn-primary" onclick="window.print()">🖨️ Print / Save PDF</button>' +
-          '    <a class="btn" href="' + escapeHtml(data.shareableUrl || data.url) + '" target="_blank">🔗 Open in Calculator</a>' +
+          '    <a class="btn" href="' + escapeHtml(data.shareableUrl || data.url) + '" target="_blank">🔗 Open Live Tool</a>' +
           '    <button class="btn" onclick="window.close()">✕ Close</button>' +
           '  </div>' +
           '</div>' +
+          '<div class="report-wrapper">' +
           '<div class="report-card">' +
           '  <div class="report-header">' +
           '    <div>' +
-          '      <div class="report-brand">AI Free Calculator • Verified Calculation Report</div>' +
+          '      <div class="report-brand"><span>✓</span> AI Free Calculator • Verified Computation Sheet</div>' +
           '      <h2 class="report-title">' + escapeHtml(data.calculatorName) + '</h2>' +
           '      <p class="meta-text">Generated on ' + escapeHtml(data.formattedDate) + '</p>' +
           '    </div>' +
           '    <div style="text-align:right;">' +
-          '      <div style="background:#e0f2fe;color:#0369a1;padding:3px 8px;border-radius:6px;font-size:10.5px;font-weight:700;display:inline-block;">' + escapeHtml(data.category) + ' Tool</div>' +
-          '      <p class="meta-text" style="font-family:monospace;margin-top:4px;">aifreecalculator.com</p>' +
+          '      <div style="background:#eff6ff;color:#1d4ed8;padding:3px 8px;border-radius:6px;font-size:10.5px;font-weight:800;display:inline-block;border:1px solid #dbeafe;">' + escapeHtml(data.category) + ' Suite</div>' +
+          '      <p class="meta-text" style="font-family:monospace;margin-top:3px;font-weight:600;">aifreecalculator.com</p>' +
           '    </div>' +
           '  </div>' +
           '  <div class="section-title"><span>📥</span> 1. Given Input Parameters</div>' +
-          '  <div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;">' +
-          '    <table style="width:100%;border-collapse:collapse;font-size:12px;">' +
-          '      <thead><tr style="background:#f1f5f9;border-bottom:1.5px solid #cbd5e1;">' +
-          '        <th style="padding:6px 12px;text-align:left;font-weight:700;color:#475569;font-size:10.5px;text-transform:uppercase;letter-spacing:0.3px;width:50%;">Input Parameter</th>' +
-          '        <th style="padding:6px 12px;text-align:left;font-weight:700;color:#475569;font-size:10.5px;text-transform:uppercase;letter-spacing:0.3px;width:50%;">Specified Value</th>' +
-          '      </tr></thead>' +
-          '      <tbody>' + inputsRowsHtml + '</tbody>' +
-          '    </table>' +
-          '  </div>' +
-          '  <div class="section-title"><span>📊</span> 2. Calculation Results</div>' +
+          inputsHtml +
+          '  <div class="section-title"><span>📊</span> 2. Calculation Results &amp; Key Highlights</div>' +
           heroHighlightsHtml +
-          '  <div style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;">' +
-          '    <table style="width:100%;border-collapse:collapse;font-size:12px;">' +
-          '      <thead><tr style="background:#f1f5f9;border-bottom:1.5px solid #cbd5e1;">' +
-          '        <th style="padding:6px 12px;text-align:left;font-weight:700;color:#475569;font-size:10.5px;text-transform:uppercase;letter-spacing:0.3px;width:55%;">Metric / Parameter Description</th>' +
-          '        <th style="padding:6px 12px;text-align:right;font-weight:700;color:#475569;font-size:10.5px;text-transform:uppercase;letter-spacing:0.3px;width:45%;">Calculated Quantity</th>' +
-          '      </tr></thead>' +
-          '      <tbody>' + resultsTableRowsHtml + '</tbody>' +
-          '    </table>' +
-          '  </div>' +
+          resultsSectionHtml +
+          diagramsSectionHtml +
+          formulaSectionHtml +
           tablesHtml +
           '  <div class="report-footer">' +
-          '    <span>AI Free Calculator • Free online calculation tools</span>' +
+          '    <span>AI Free Calculator • 100% Client-Side Private Computation</span>' +
           '    <span>' + escapeHtml(data.shareableUrl || data.url) + '</span>' +
           '  </div>' +
-          '</div></body></html>';
+          '</div></div></body></html>';
 
         previewWin.document.open();
         previewWin.document.write(pageHtml);

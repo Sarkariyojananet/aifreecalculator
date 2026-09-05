@@ -6,6 +6,8 @@
 export type DimensionUnit = 'mm' | 'cm' | 'meter' | 'feet' | 'inches';
 export type VolumeUnit = 'cum' | 'cft' | 'cyd'; // m³, ft³, yd³
 export type ConcreteMode = 'concrete_volume' | 'slab' | 'beam' | 'column' | 'footing' | 'custom_dimensions';
+export type UnitSystem = 'metric' | 'imperial';
+export type Currency = 'INR' | 'USD';
 
 export interface ConcreteMixPreset {
   id: string;
@@ -32,6 +34,29 @@ export const AGG_DENSITY_KG_M3 = 1500;    // Standard crushed gravel / coarse ag
 export const CFT_PER_M3 = 35.3146667;
 export const CYD_PER_M3 = 1.30795;
 export const LITERS_PER_GALLON = 3.78541;
+
+export const DEFAULT_PRICES_INR = {
+  cementPerBag: 380, // ₹ / 50kg bag
+  sandPerCft: 45,    // ₹ / CFT
+  aggPerCft: 40,     // ₹ / CFT
+  waterPer1000L: 50, // ₹ / 1000 Liters
+};
+
+export const DEFAULT_PRICES_USD = {
+  cementPerBag: 14.50, // $ / bag
+  sandPerCft: 1.80,    // $ / CFT (~$48.60 / cu yd)
+  aggPerCft: 1.95,     // $ / CFT (~$52.65 / cu yd)
+  waterPer1000L: 4.00, // $ / 1000 Liters
+};
+
+export function formatCurrency(val: number, currency: Currency): string {
+  const symbol = currency === 'INR' ? '₹' : '$';
+  if (!Number.isFinite(val) || val < 0) return `${symbol} 0.00`;
+  if (currency === 'INR') {
+    return `${symbol} ${val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  }
+  return `${symbol}${val.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 /**
  * Unit conversion helper to meters
@@ -72,6 +97,31 @@ export interface MaterialItemBreakdown {
   practicalDisplay: string;
 }
 
+export interface MaterialCostItem {
+  item: string;
+  unitPrice: number;
+  rateUnit: string;
+  quantity: number;
+  quantityDisplay: string;
+  cost: number;
+  costFormatted: string;
+  percentage: number;
+}
+
+export interface MaterialCostSummary {
+  currency: Currency;
+  currencySymbol: string;
+  cementCost: number;
+  sandCost: number;
+  aggregateCost: number;
+  waterCost: number;
+  totalCost: number;
+  totalCostFormatted: string;
+  costPerCum: number;
+  costPerCft: number;
+  items: MaterialCostItem[];
+}
+
 export interface ConcreteMixComparisonRow {
   presetId: string;
   name: string;
@@ -89,6 +139,8 @@ export interface ConcreteMixComparisonRow {
 
 export interface ConcreteMaterialCalculationInput {
   mode: ConcreteMode;
+  unitSystem?: UnitSystem;
+  currency?: Currency;
   // Volume mode
   volumeValue?: number | string;
   volumeUnit?: VolumeUnit;
@@ -113,10 +165,20 @@ export interface ConcreteMaterialCalculationInput {
   // Water Estimation
   enableWater?: boolean;
   waterCementRatio?: number | string; // default 0.50
+  // Cost Estimation
+  enableCost?: boolean;
+  cementPricePerBag?: number | string;
+  sandPrice?: number | string;
+  sandPriceUnit?: 'cft' | 'ton' | 'cum';
+  aggregatePrice?: number | string;
+  aggregatePriceUnit?: 'cft' | 'ton' | 'cum';
+  waterPricePerKiloLiter?: number | string;
 }
 
 export interface ConcreteMaterialCalculationResult {
   mode: ConcreteMode;
+  unitSystem: UnitSystem;
+  currency: Currency;
   singleUnitVolumeCum: number;
   singleUnitVolumeCft: number;
   totalWetVolumeCum: number;
@@ -160,6 +222,7 @@ export interface ConcreteMaterialCalculationResult {
 
   tableBreakdown: MaterialItemBreakdown[];
   comparisonTable: ConcreteMixComparisonRow[];
+  costSummary?: MaterialCostSummary;
   stepDetails: string[];
 }
 
@@ -497,8 +560,138 @@ export function calculateConcreteMaterial(input: ConcreteMaterialCalculationInpu
     );
   }
 
+  const unitSystem: UnitSystem = input.unitSystem === 'imperial' ? 'imperial' : 'metric';
+  const currency: Currency = input.currency === 'USD' ? 'USD' : 'INR';
+
+  // Cost Estimation
+  let costSummary: MaterialCostSummary | undefined = undefined;
+  if (input.enableCost) {
+    const defaultPrices = currency === 'USD' ? DEFAULT_PRICES_USD : DEFAULT_PRICES_INR;
+
+    const rawCementRate = input.cementPricePerBag !== undefined && input.cementPricePerBag !== null && input.cementPricePerBag !== ''
+      ? Number(input.cementPricePerBag)
+      : defaultPrices.cementPerBag;
+    const cementRate = Number.isFinite(rawCementRate) && rawCementRate >= 0 ? rawCementRate : 0;
+
+    const sandUnit = input.sandPriceUnit || 'cft';
+    const rawSandRate = input.sandPrice !== undefined && input.sandPrice !== null && input.sandPrice !== ''
+      ? Number(input.sandPrice)
+      : defaultPrices.sandPerCft;
+    const sandRate = Number.isFinite(rawSandRate) && rawSandRate >= 0 ? rawSandRate : 0;
+
+    const aggUnit = input.aggregatePriceUnit || 'cft';
+    const rawAggRate = input.aggregatePrice !== undefined && input.aggregatePrice !== null && input.aggregatePrice !== ''
+      ? Number(input.aggregatePrice)
+      : defaultPrices.aggPerCft;
+    const aggRate = Number.isFinite(rawAggRate) && rawAggRate >= 0 ? rawAggRate : 0;
+
+    const rawWaterRate = input.waterPricePerKiloLiter !== undefined && input.waterPricePerKiloLiter !== null && input.waterPricePerKiloLiter !== ''
+      ? Number(input.waterPricePerKiloLiter)
+      : defaultPrices.waterPer1000L;
+    const waterRate = Number.isFinite(rawWaterRate) && rawWaterRate >= 0 ? rawWaterRate : 0;
+
+    // Cement Cost
+    const cementCost = cementBags * cementRate;
+
+    // Sand Cost based on pricing unit
+    let sandQtyForCost = finalSandVolCft;
+    let sandRateLabel = `${currency === 'INR' ? '₹' : '$'}${sandRate} / CFT`;
+    if (sandUnit === 'cum') {
+      sandQtyForCost = finalSandVolCum;
+      sandRateLabel = `${currency === 'INR' ? '₹' : '$'}${sandRate} / m³`;
+    } else if (sandUnit === 'ton') {
+      sandQtyForCost = sandWeightTons;
+      sandRateLabel = `${currency === 'INR' ? '₹' : '$'}${sandRate} / Ton`;
+    }
+    const sandCost = sandQtyForCost * sandRate;
+
+    // Aggregate Cost based on pricing unit
+    let aggQtyForCost = finalAggVolCft;
+    let aggRateLabel = `${currency === 'INR' ? '₹' : '$'}${aggRate} / CFT`;
+    if (aggUnit === 'cum') {
+      aggQtyForCost = finalAggVolCum;
+      aggRateLabel = `${currency === 'INR' ? '₹' : '$'}${aggRate} / m³`;
+    } else if (aggUnit === 'ton') {
+      aggQtyForCost = aggWeightTons;
+      aggRateLabel = `${currency === 'INR' ? '₹' : '$'}${aggRate} / Ton`;
+    }
+    const aggCost = aggQtyForCost * aggRate;
+
+    // Water Cost (per 1000 Liters)
+    const waterQtyKiloLiters = waterLiters / 1000;
+    const waterCost = enableWater ? waterQtyKiloLiters * waterRate : 0;
+
+    const totalCost = cementCost + sandCost + aggCost + waterCost;
+    const costPerCum = totalWetVolumeCum > 0 ? totalCost / totalWetVolumeCum : 0;
+    const costPerCft = totalWetVolumeCft > 0 ? totalCost / totalWetVolumeCft : 0;
+
+    const calcPct = (c: number) => (totalCost > 0 ? Number(((c / totalCost) * 100).toFixed(1)) : 0);
+
+    const items: MaterialCostItem[] = [
+      {
+        item: 'Portland Cement',
+        unitPrice: cementRate,
+        rateUnit: `per ${cementBagSizeKg}kg bag`,
+        quantity: Number(cementBags.toFixed(1)),
+        quantityDisplay: `${cementBags.toFixed(1)} Bags`,
+        cost: Number(cementCost.toFixed(2)),
+        costFormatted: formatCurrency(cementCost, currency),
+        percentage: calcPct(cementCost),
+      },
+      {
+        item: 'Sand (Fine Aggregate)',
+        unitPrice: sandRate,
+        rateUnit: `per ${sandUnit.toUpperCase()}`,
+        quantity: Number(sandQtyForCost.toFixed(2)),
+        quantityDisplay: `${sandQtyForCost.toFixed(1)} ${sandUnit.toUpperCase()}`,
+        cost: Number(sandCost.toFixed(2)),
+        costFormatted: formatCurrency(sandCost, currency),
+        percentage: calcPct(sandCost),
+      },
+      {
+        item: 'Coarse Aggregate',
+        unitPrice: aggRate,
+        rateUnit: `per ${aggUnit.toUpperCase()}`,
+        quantity: Number(aggQtyForCost.toFixed(2)),
+        quantityDisplay: `${aggQtyForCost.toFixed(1)} ${aggUnit.toUpperCase()}`,
+        cost: Number(aggCost.toFixed(2)),
+        costFormatted: formatCurrency(aggCost, currency),
+        percentage: calcPct(aggCost),
+      },
+    ];
+
+    if (enableWater && waterLiters > 0) {
+      items.push({
+        item: 'Water',
+        unitPrice: waterRate,
+        rateUnit: 'per 1,000 Liters',
+        quantity: Number(waterQtyKiloLiters.toFixed(2)),
+        quantityDisplay: `${Math.round(waterLiters).toLocaleString()} Liters`,
+        cost: Number(waterCost.toFixed(2)),
+        costFormatted: formatCurrency(waterCost, currency),
+        percentage: calcPct(waterCost),
+      });
+    }
+
+    costSummary = {
+      currency,
+      currencySymbol: currency === 'INR' ? '₹' : '$',
+      cementCost: Number(cementCost.toFixed(2)),
+      sandCost: Number(sandCost.toFixed(2)),
+      aggregateCost: Number(aggCost.toFixed(2)),
+      waterCost: Number(waterCost.toFixed(2)),
+      totalCost: Number(totalCost.toFixed(2)),
+      totalCostFormatted: formatCurrency(totalCost, currency),
+      costPerCum: Number(costPerCum.toFixed(2)),
+      costPerCft: Number(costPerCft.toFixed(2)),
+      items,
+    };
+  }
+
   return {
     mode,
+    unitSystem,
+    currency,
     singleUnitVolumeCum: Number(singleUnitVolumeCum.toFixed(3)),
     singleUnitVolumeCft: Number(singleUnitVolumeCft.toFixed(2)),
     totalWetVolumeCum: Number(totalWetVolumeCum.toFixed(3)),
@@ -535,6 +728,7 @@ export function calculateConcreteMaterial(input: ConcreteMaterialCalculationInpu
     waterGallons: Math.round(waterGallons),
     tableBreakdown,
     comparisonTable,
+    costSummary,
     stepDetails,
   };
 }
