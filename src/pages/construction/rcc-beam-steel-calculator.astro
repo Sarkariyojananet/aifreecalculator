@@ -55,8 +55,28 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
       </div>
     </div>
 
+    <!-- ACTION BUTTONS: CALCULATE & CLEAR -->
+    <div class="flex flex-wrap items-center gap-3 pt-1">
+      <button
+        type="button"
+        id="btn-calc-beam"
+        class="flex-1 min-w-[200px] inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-blue-500/25 transition active:scale-[0.98] cursor-pointer"
+      >
+        <span>⚡ Calculate Beam Steel & Concrete</span>
+        <span>→</span>
+      </button>
+      <button
+        type="button"
+        id="btn-clear-beam"
+        class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3.5 text-sm font-bold text-slate-700 hover:bg-slate-100 hover:text-red-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-red-400 transition cursor-pointer"
+        title="Reset or Clear Inputs"
+      >
+        <span>🔄 Clear / Reset</span>
+      </button>
+    </div>
+
     <!-- Output Box -->
-    <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-950">
+    <div id="results-card" class="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-950">
       <div class="border-b border-slate-200/80 pb-4 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Beam Steel Weight</span>
@@ -129,6 +149,21 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
   const resStirrupCount = document.getElementById('res-beam-stirrup-count');
 
   function calculate() {
+    const rawL = bmL.value.trim();
+    const rawW = bmW.value.trim();
+    const rawD = bmD.value.trim();
+
+    if (rawL === '' && rawW === '' && rawD === '') {
+      resTotal.textContent = '0.0 kg';
+      resConc.textContent = '0.00 m³';
+      resTop.textContent = '0.0 kg';
+      resBot.textContent = '0.0 kg';
+      resStirrupLen.textContent = '0.00 m';
+      resStirrupCount.textContent = '0 Rings';
+      try { document.dispatchEvent(new CustomEvent('calculator:updated')); } catch (e) {}
+      return;
+    }
+
     const L = Math.max(0, parseFloat(bmL.value) || 0);
     const Bmm = Math.max(0.05, parseFloat(bmW.value) || 230);
     const Dmm = Math.max(0.05, parseFloat(bmD.value) || 450);
@@ -162,6 +197,38 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
     resBot.textContent = `${wtBot.toFixed(1)} kg (${nBot} Nos)`;
     resStirrupLen.textContent = `${stirrupLen.toFixed(2)} m`;
     resStirrupCount.textContent = `${nStirrup} Rings (${wtStirrup.toFixed(1)} kg)`;
+
+    try { document.dispatchEvent(new CustomEvent('calculator:updated')); } catch (e) {}
+  }
+
+  const btnCalcBeam = document.getElementById('btn-calc-beam');
+  const btnClearBeam = document.getElementById('btn-clear-beam');
+
+  if (btnCalcBeam) {
+    btnCalcBeam.addEventListener('click', () => {
+      if (!bmL.value) bmL.value = '5.0';
+      if (!bmW.value) bmW.value = '230';
+      if (!bmD.value) bmD.value = '450';
+      calculate();
+      const card = document.getElementById('results-card');
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const orig = btnCalcBeam.innerHTML;
+      btnCalcBeam.innerHTML = '<span>✅ Calculated!</span>';
+      setTimeout(() => { btnCalcBeam.innerHTML = orig; }, 1200);
+    });
+  }
+
+  if (btnClearBeam) {
+    btnClearBeam.addEventListener('click', () => {
+      bmL.value = '';
+      bmW.value = '';
+      bmD.value = '';
+      bmL.focus();
+      calculate();
+      const orig = btnClearBeam.innerHTML;
+      btnClearBeam.innerHTML = '<span>✓ Cleared</span>';
+      setTimeout(() => { btnClearBeam.innerHTML = orig; }, 1000);
+    });
   }
 
   [bmL, bmW, bmD, topC, topD, botC, botD, stirrupS].forEach((el) => {

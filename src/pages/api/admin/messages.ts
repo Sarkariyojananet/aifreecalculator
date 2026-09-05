@@ -150,7 +150,7 @@ export const DELETE: APIRoute = async ({ request, cookies, locals }) => {
       try {
         const body = await request.json();
         id = body?.id;
-      } catch {}
+      } catch { }
     }
 
     if (!id) {

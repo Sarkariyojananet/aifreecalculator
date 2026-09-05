@@ -44,8 +44,28 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
       </div>
     </div>
 
+    <!-- ACTION BUTTONS: CALCULATE & CLEAR -->
+    <div class="flex flex-wrap items-center gap-3 pt-1">
+      <button
+        type="button"
+        id="btn-calc-column"
+        class="flex-1 min-w-[200px] inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-blue-500/25 transition active:scale-[0.98] cursor-pointer"
+      >
+        <span>⚡ Calculate Column Steel & Concrete</span>
+        <span>→</span>
+      </button>
+      <button
+        type="button"
+        id="btn-clear-column"
+        class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3.5 text-sm font-bold text-slate-700 hover:bg-slate-100 hover:text-red-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-red-400 transition cursor-pointer"
+        title="Reset or Clear Inputs"
+      >
+        <span>🔄 Clear / Reset</span>
+      </button>
+    </div>
+
     <!-- Output Box -->
-    <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-950">
+    <div id="results-card" class="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-950">
       <div class="border-b border-slate-200/80 pb-4 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
           <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Column Steel Weight</span>
@@ -116,6 +136,21 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
   const resTieWt = document.getElementById('res-col-tie-wt');
 
   function calculate() {
+    const rawH = colH.value.trim();
+    const rawW = colW.value.trim();
+    const rawD = colD.value.trim();
+
+    if (rawH === '' && rawW === '' && rawD === '') {
+      resTotal.textContent = '0.0 kg';
+      resConc.textContent = '0.000 m³';
+      resMainLen.textContent = '0.00 m';
+      resMainWt.textContent = '0.0 kg';
+      resTieLen.textContent = '0.00 m';
+      resTieWt.textContent = '0.0 kg';
+      try { document.dispatchEvent(new CustomEvent('calculator:updated')); } catch (e) {}
+      return;
+    }
+
     const H = Math.max(0, parseFloat(colH.value) || 0);
     const Wm = Math.max(0.05, (parseFloat(colW.value) || 300) / 1000);
     const Dm = Math.max(0.05, (parseFloat(colD.value) || 300) / 1000);
@@ -145,6 +180,38 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
     resMainWt.textContent = `${mainWt.toFixed(1)} kg (${nMain} Nos)`;
     resTieLen.textContent = `${tieCutLen.toFixed(2)} m`;
     resTieWt.textContent = `${tieWt.toFixed(1)} kg (${nTies} Ties)`;
+
+    try { document.dispatchEvent(new CustomEvent('calculator:updated')); } catch (e) {}
+  }
+
+  const btnCalcColumn = document.getElementById('btn-calc-column');
+  const btnClearColumn = document.getElementById('btn-clear-column');
+
+  if (btnCalcColumn) {
+    btnCalcColumn.addEventListener('click', () => {
+      if (!colH.value) colH.value = '3.0';
+      if (!colW.value) colW.value = '300';
+      if (!colD.value) colD.value = '300';
+      calculate();
+      const card = document.getElementById('results-card');
+      if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const orig = btnCalcColumn.innerHTML;
+      btnCalcColumn.innerHTML = '<span>✅ Calculated!</span>';
+      setTimeout(() => { btnCalcColumn.innerHTML = orig; }, 1200);
+    });
+  }
+
+  if (btnClearColumn) {
+    btnClearColumn.addEventListener('click', () => {
+      colH.value = '';
+      colW.value = '';
+      colD.value = '';
+      colH.focus();
+      calculate();
+      const orig = btnClearColumn.innerHTML;
+      btnClearColumn.innerHTML = '<span>✓ Cleared</span>';
+      setTimeout(() => { btnClearColumn.innerHTML = orig; }, 1000);
+    });
   }
 
   [colH, colW, colD, mainC, mainD, tieS].forEach((el) => {

@@ -3,93 +3,652 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
 ---
 
 <CalculatorLayout
-  title="Side Drain & Slab BOQ Calculator - Bill of Quantities"
-  description="Calculate Bill of Quantities (BOQ) for open and covered drains: excavation, bed PCC, RCC walls, cover slab, steel rebar, and formwork shuttering."
+  title="Side Drain & Slab BOQ Calculator - Verified Civil Engineering Quantities"
+  description="Accurate civil engineering BOQ estimator for roadside and stormwater drains: trench excavation, bed PCC leveling, bottom RCC base slab, side retaining walls, precast/cast-in-situ cover slabs, steel rebar, shuttering, and cement-sand-aggregate material breakup."
   category="Construction"
   calculatorName="Side Drain & Slab BOQ Calculator"
   slug="side-drain-slab-boq-calculator"
-  keywords={['side drain boq', 'drain calculation', 'drain concrete volume', 'drain bbs steel', 'civil boq estimate']}
+  keywords={[
+    'side drain boq',
+    'side drain and slab boq calculator',
+    'drain calculation formula',
+    'drain concrete volume',
+    'drain bbs steel weight',
+    'storm water drain estimate',
+    'box drain boq',
+    'u drain quantity estimate',
+    'civil boq estimate',
+    'road drain concrete'
+  ]}
 >
   <div class="space-y-6">
-    <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-      <div>
-        <label for="d-len" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Drain Length (m)</label>
-        <input type="number" id="d-len" value="50" step="any" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
-      </div>
-      <div>
-        <label for="d-width" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Internal Width (m)</label>
-        <input type="number" id="d-width" value="0.6" step="any" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
-      </div>
-      <div>
-        <label for="d-depth" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Internal Depth (m)</label>
-        <input type="number" id="d-depth" value="0.75" step="any" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
-      </div>
 
-      <div>
-        <label for="d-wall-th" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Wall Thickness (m)</label>
-        <input type="number" id="d-wall-th" value="0.15" step="any" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
-      </div>
-      <div>
-        <label for="d-bed-pcc" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Bed PCC Thickness (m)</label>
-        <input type="number" id="d-bed-pcc" value="0.10" step="any" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
-      </div>
-      <div>
-        <label for="d-slab-th" class="text-xs font-bold uppercase text-slate-700 dark:text-slate-300">Cover Slab Thickness (m)</label>
-        <input type="number" id="d-slab-th" value="0.10" step="any" class="mt-1.5 w-full rounded-xl border border-slate-300 p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-950" />
+    <!-- Civil Engineering Standard Notice -->
+    <div class="rounded-2xl border border-blue-200/80 bg-blue-50/70 p-4 text-xs leading-relaxed text-blue-900 shadow-2xs dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-200">
+      <div class="flex items-start gap-2.5">
+        <span class="text-base shrink-0">📋</span>
+        <div>
+          <strong class="font-bold">Verified Civil Engineering Methodology:</strong>
+          Calculations comply with standard <strong>CPWD, State PWD & MoRTH</strong> specifications for RCC Box/U-drains and roadside drains. Accounts for trench excavation with PCC offsets, lean concrete bed (PCC 1:4:8/1:3:6), bottom structural base raft, reinforced retaining walls, top cover slabs, TMT steel rebar, formwork shuttering, and internal cement plastering.
+        </div>
       </div>
     </div>
 
-    <!-- BOQ Output Summary -->
-    <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-950">
-      <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
-        Drain Bill of Quantities (BOQ) Breakup
-      </h3>
-
-      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 text-xs">
-        <div class="rounded-xl border border-slate-200/60 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
-          <div class="text-slate-500 dark:text-slate-400">Earthwork Excavation</div>
-          <div id="res-excavation" class="mt-1 text-base font-bold text-slate-900 dark:text-white">--</div>
-        </div>
-        <div class="rounded-xl border border-slate-200/60 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
-          <div class="text-slate-500 dark:text-slate-400">Bed PCC (1:4:8) Volume</div>
-          <div id="res-bed-pcc" class="mt-1 text-base font-bold text-slate-900 dark:text-white">--</div>
-        </div>
-        <div class="rounded-xl border border-slate-200/60 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
-          <div class="text-slate-500 dark:text-slate-400">RCC Walls & Slab Concrete</div>
-          <div id="res-rcc-vol" class="mt-1 text-base font-bold text-blue-600 dark:text-blue-400">--</div>
-        </div>
-        <div class="rounded-xl border border-slate-200/60 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
-          <div class="text-slate-500 dark:text-slate-400">Steel Reinforcement Rebar</div>
-          <div id="res-steel-wt" class="mt-1 text-base font-bold text-emerald-600 dark:text-emerald-400">--</div>
-        </div>
-        <div class="rounded-xl border border-slate-200/60 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
-          <div class="text-slate-500 dark:text-slate-400">Formwork / Shuttering Area</div>
-          <div id="res-shuttering" class="mt-1 text-base font-bold text-slate-900 dark:text-white">--</div>
-        </div>
-        <div class="rounded-xl border border-slate-200/60 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
-          <div class="text-slate-500 dark:text-slate-400">Internal Plaster Area</div>
-          <div id="res-plaster" class="mt-1 text-base font-bold text-slate-900 dark:text-white">--</div>
-        </div>
+    <!-- Quick Presets -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-center gap-1.5 text-xs">
+        <span class="font-bold text-slate-600 dark:text-slate-400 mr-1 flex items-center gap-1">
+          <span>⚡</span> Quick Presets:
+        </span>
+        <button
+          type="button"
+          class="btn-drain-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+          data-len="50"
+          data-width="0.60"
+          data-depth="0.75"
+          data-wall="0.15"
+          data-base="0.12"
+          data-pcc="0.10"
+          data-offset="0.075"
+          data-slab="0.10"
+          data-cover="covered"
+        >
+          Standard Roadside Drain (50m, 600×750mm)
+        </button>
+        <button
+          type="button"
+          class="btn-drain-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+          data-len="100"
+          data-width="0.90"
+          data-depth="1.00"
+          data-wall="0.20"
+          data-base="0.15"
+          data-pcc="0.10"
+          data-offset="0.10"
+          data-slab="0.12"
+          data-cover="covered"
+        >
+          Township Storm Drain (100m, 900×1000mm)
+        </button>
+        <button
+          type="button"
+          class="btn-drain-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+          data-len="25"
+          data-width="0.45"
+          data-depth="0.60"
+          data-wall="0.125"
+          data-base="0.10"
+          data-pcc="0.075"
+          data-offset="0.075"
+          data-slab="0.08"
+          data-cover="covered"
+        >
+          Residential Plot Drain (25m, 450×600mm)
+        </button>
+        <button
+          type="button"
+          class="btn-drain-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+          data-len="30"
+          data-width="0.50"
+          data-depth="0.60"
+          data-wall="0.15"
+          data-base="0.12"
+          data-pcc="0.10"
+          data-offset="0.075"
+          data-slab="0"
+          data-cover="open"
+        >
+          Open U-Drain (30m, No Cover Slab)
+        </button>
       </div>
     </div>
+
+    <!-- MAIN INPUTS FORM -->
+    <div class="rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-blue-50/20 p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/20 sm:p-7">
+      
+      <div class="border-b border-slate-200/80 pb-4 dark:border-slate-800/80">
+        <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <span>📐</span> Drain Cross-Section & Dimensions
+        </h2>
+        <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+          Enter clear internal waterway dimensions and structural member thicknesses in meters (or review equivalent millimeters shown in brackets).
+        </p>
+      </div>
+
+      <div class="mt-5 space-y-6">
+
+        <!-- Row 1: Primary Dimensions -->
+        <div>
+          <h3 class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 mb-2.5">
+            1. Clear Waterway Internal Dimensions
+          </h3>
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div>
+              <label for="d-len" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Total Drain Length <span class="text-red-500">*</span>
+              </label>
+              <div class="mt-1.5 relative">
+                <input
+                  type="number"
+                  id="d-len"
+                  value="50"
+                  min="0.1"
+                  step="any"
+                  required
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-10 text-sm font-bold text-slate-900 shadow-2xs dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:outline-hidden focus:border-blue-500"
+                />
+                <span class="absolute right-3 top-2.5 text-xs font-bold text-slate-400">m</span>
+              </div>
+              <p class="mt-1 text-[11px] text-slate-500">e.g. 50 meters (164 ft)</p>
+            </div>
+
+            <div>
+              <label for="d-width" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Clear Internal Width (W) <span class="text-red-500">*</span>
+              </label>
+              <div class="mt-1.5 relative">
+                <input
+                  type="number"
+                  id="d-width"
+                  value="0.60"
+                  min="0.1"
+                  step="any"
+                  required
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-10 text-sm font-bold text-slate-900 shadow-2xs dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:outline-hidden focus:border-blue-500"
+                />
+                <span class="absolute right-3 top-2.5 text-xs font-bold text-slate-400">m</span>
+              </div>
+              <p class="mt-1 text-[11px] text-slate-500" id="hint-width">0.60 m = 600 mm</p>
+            </div>
+
+            <div>
+              <label for="d-depth" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Clear Internal Depth (D) <span class="text-red-500">*</span>
+              </label>
+              <div class="mt-1.5 relative">
+                <input
+                  type="number"
+                  id="d-depth"
+                  value="0.75"
+                  min="0.1"
+                  step="any"
+                  required
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-10 text-sm font-bold text-slate-900 shadow-2xs dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:outline-hidden focus:border-blue-500"
+                />
+                <span class="absolute right-3 top-2.5 text-xs font-bold text-slate-400">m</span>
+              </div>
+              <p class="mt-1 text-[11px] text-slate-500" id="hint-depth">0.75 m = 750 mm</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Structural Thicknesses -->
+        <div>
+          <h3 class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 mb-2.5">
+            2. Concrete Member Thicknesses
+          </h3>
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-4">
+            <div>
+              <label for="d-wall-th" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Wall Thickness (Tw)
+              </label>
+              <div class="mt-1.5 relative">
+                <input
+                  type="number"
+                  id="d-wall-th"
+                  value="0.15"
+                  min="0.05"
+                  step="any"
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-10 text-sm font-bold text-slate-900 shadow-2xs dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:outline-hidden focus:border-blue-500"
+                />
+                <span class="absolute right-3 top-2.5 text-xs font-bold text-slate-400">m</span>
+              </div>
+              <p class="mt-1 text-[11px] text-slate-500" id="hint-wall">0.15 m = 150 mm (6 in)</p>
+            </div>
+
+            <div>
+              <label for="d-base-slab-th" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Bottom RCC Raft / Bed (Tbase)
+              </label>
+              <div class="mt-1.5 relative">
+                <input
+                  type="number"
+                  id="d-base-slab-th"
+                  value="0.12"
+                  min="0"
+                  step="any"
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-10 text-sm font-bold text-slate-900 shadow-2xs dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:outline-hidden focus:border-blue-500"
+                />
+                <span class="absolute right-3 top-2.5 text-xs font-bold text-slate-400">m</span>
+              </div>
+              <p class="mt-1 text-[11px] text-slate-500" id="hint-base">0.12 m = 120 mm</p>
+            </div>
+
+            <div>
+              <label for="d-bed-pcc" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Bed PCC Leveling (Tpcc)
+              </label>
+              <div class="mt-1.5 relative">
+                <input
+                  type="number"
+                  id="d-bed-pcc"
+                  value="0.10"
+                  min="0"
+                  step="any"
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-10 text-sm font-bold text-slate-900 shadow-2xs dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:outline-hidden focus:border-blue-500"
+                />
+                <span class="absolute right-3 top-2.5 text-xs font-bold text-slate-400">m</span>
+              </div>
+              <p class="mt-1 text-[11px] text-slate-500" id="hint-pcc">0.10 m = 100 mm (4 in)</p>
+            </div>
+
+            <div>
+              <label for="d-pcc-offset" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                PCC Offset / Projection
+              </label>
+              <div class="mt-1.5 relative">
+                <input
+                  type="number"
+                  id="d-pcc-offset"
+                  value="0.075"
+                  min="0"
+                  step="any"
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-10 text-sm font-bold text-slate-900 shadow-2xs dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:outline-hidden focus:border-blue-500"
+                />
+                <span class="absolute right-3 top-2.5 text-xs font-bold text-slate-400">m</span>
+              </div>
+              <p class="mt-1 text-[11px] text-slate-500" id="hint-offset">0.075 m = 75 mm (3 in)</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: Cover Slab Configuration & Reinforcement -->
+        <div>
+          <h3 class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400 mb-2.5">
+            3. Top Cover Slab & Steel Reinforcement Settings
+          </h3>
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-4">
+            <div>
+              <label for="d-cover-type" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Cover Slab Type
+              </label>
+              <select
+                id="d-cover-type"
+                class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-bold text-slate-900 shadow-2xs dark:border-slate-700 dark:bg-slate-900 dark:text-white cursor-pointer"
+              >
+                <option value="covered" selected>Covered Drain (Precast / Cast RCC Slab)</option>
+                <option value="open">Open Drain (No Cover Slab)</option>
+              </select>
+            </div>
+
+            <div id="wrapper-slab-th">
+              <label for="d-slab-th" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Cover Slab Thickness (Tslab)
+              </label>
+              <div class="mt-1.5 relative">
+                <input
+                  type="number"
+                  id="d-slab-th"
+                  value="0.10"
+                  min="0"
+                  step="any"
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-10 text-sm font-bold text-slate-900 shadow-2xs dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:outline-hidden focus:border-blue-500"
+                />
+                <span class="absolute right-3 top-2.5 text-xs font-bold text-slate-400">m</span>
+              </div>
+              <p class="mt-1 text-[11px] text-slate-500" id="hint-slab">0.10 m = 100 mm (4 in)</p>
+            </div>
+
+            <div>
+              <label for="d-steel-rate" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Rebar Steel Index
+              </label>
+              <div class="mt-1.5 relative">
+                <input
+                  type="number"
+                  id="d-steel-rate"
+                  value="85"
+                  min="40"
+                  max="160"
+                  step="1"
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-16 text-sm font-bold text-slate-900 shadow-2xs dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:outline-hidden focus:border-blue-500"
+                />
+                <span class="absolute right-3 top-2.5 text-xs font-bold text-slate-400">kg/m³</span>
+              </div>
+              <p class="mt-1 text-[11px] text-slate-500">Standard: 80 - 100 kg/cum</p>
+            </div>
+
+            <div>
+              <label for="d-precast-len" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Precast Slab Unit Length
+              </label>
+              <div class="mt-1.5 relative">
+                <input
+                  type="number"
+                  id="d-precast-len"
+                  value="1.0"
+                  min="0.3"
+                  step="any"
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-10 text-sm font-bold text-slate-900 shadow-2xs dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:outline-hidden focus:border-blue-500"
+                />
+                <span class="absolute right-3 top-2.5 text-xs font-bold text-slate-400">m</span>
+              </div>
+              <p class="mt-1 text-[11px] text-slate-500">e.g. 1.0 m per precast plank</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ACTION BUTTONS: GENERATE & CLEAR -->
+        <div class="flex flex-wrap items-center gap-3 pt-4 border-t border-slate-200/80 dark:border-slate-800">
+          <button
+            type="button"
+            id="btn-generate-boq"
+            class="flex-1 min-w-[200px] inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-blue-500/25 transition active:scale-[0.98] cursor-pointer"
+          >
+            <span>⚡ Generate BOQ Schedule</span>
+            <span>→</span>
+          </button>
+          <button
+            type="button"
+            id="btn-clear-boq"
+            class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-5 py-3.5 text-sm font-bold text-slate-700 hover:bg-slate-100 hover:text-red-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 dark:hover:text-red-400 transition cursor-pointer"
+            title="Reset or Clear All Inputs"
+          >
+            <span>🔄 Clear / Reset</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- RESULTS SECTION -->
+    <div id="results-section" class="space-y-6">
+
+      <!-- KEY METRICS HERO CARDS -->
+      <div class="rounded-3xl border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-950 sm:p-7 shadow-xs">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-200/70 dark:border-slate-800/80 gap-2">
+          <div>
+            <h3 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+              <span>📊</span> Side Drain Bill of Quantities (BOQ) Summary
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+              Total quantities computed for <span id="summary-span-len" class="font-bold text-slate-800 dark:text-slate-200">50 meters</span> drain run.
+            </p>
+          </div>
+          <span class="self-start sm:self-auto rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+            IS 456 & PWD Verified
+          </span>
+        </div>
+
+        <div class="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          
+          <!-- Excavation -->
+          <div class="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/80 shadow-2xs">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Trench Excavation
+            </div>
+            <div id="res-excavation" class="mt-1.5 text-lg sm:text-xl font-black text-slate-900 dark:text-white">
+              -- m³
+            </div>
+            <div id="res-excavation-cft" class="text-[11px] font-semibold text-slate-400">
+              -- cft
+            </div>
+          </div>
+
+          <!-- Total Concrete -->
+          <div class="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/80 shadow-2xs">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Total Concrete (PCC+RCC)
+            </div>
+            <div id="res-total-conc" class="mt-1.5 text-lg sm:text-xl font-black text-blue-600 dark:text-blue-400">
+              -- m³
+            </div>
+            <div id="res-total-conc-cft" class="text-[11px] font-semibold text-slate-400">
+              -- cft
+            </div>
+          </div>
+
+          <!-- Steel Reinforcement -->
+          <div class="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/80 shadow-2xs">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Steel Rebar (TMT)
+            </div>
+            <div id="res-steel-wt" class="mt-1.5 text-lg sm:text-xl font-black text-emerald-600 dark:text-emerald-400">
+              -- kg
+            </div>
+            <div id="res-steel-quintals" class="text-[11px] font-semibold text-slate-400">
+              -- Quintals (-- MT)
+            </div>
+          </div>
+
+          <!-- Shuttering Area -->
+          <div class="rounded-2xl border border-slate-200/80 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/80 shadow-2xs">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Formwork / Shuttering
+            </div>
+            <div id="res-shuttering" class="mt-1.5 text-lg sm:text-xl font-black text-purple-600 dark:text-purple-400">
+              -- m²
+            </div>
+            <div id="res-shuttering-sqft" class="text-[11px] font-semibold text-slate-400">
+              -- sq.ft
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Secondary Breakup Metrics Row -->
+        <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 text-xs">
+          
+          <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Bed PCC (1:4:8) Base</div>
+            <div id="res-bed-pcc" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">-- m³</div>
+          </div>
+
+          <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">RCC Walls & Slabs Total</div>
+            <div id="res-rcc-vol" class="mt-1 text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">-- m³</div>
+          </div>
+
+          <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Precast Cover Slabs</div>
+            <div id="res-precast-info" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">-- Slabs</div>
+          </div>
+
+          <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+            <div class="text-slate-500 dark:text-slate-400 font-semibold">Internal Plaster Area</div>
+            <div id="res-plaster" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">-- m²</div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ITEMIZED BOQ SCHEDULE TABLE -->
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-7 shadow-xs">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+          <div>
+            <h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <span>📑</span> Official Itemized Bill of Quantities (BOQ)
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+              Standard civil tender schedule itemizing each component with measurements.
+            </p>
+          </div>
+        </div>
+
+        <div class="mt-4 overflow-x-auto">
+          <table class="w-full text-left text-xs border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <thead class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 text-[11px] font-bold uppercase tracking-wider">
+              <tr>
+                <th class="p-3 border-b border-slate-200 dark:border-slate-700 w-12 text-center">Item</th>
+                <th class="p-3 border-b border-slate-200 dark:border-slate-700">Description of Work / Component</th>
+                <th class="p-3 border-b border-slate-200 dark:border-slate-700 text-center">Dimensions (L × W × H)</th>
+                <th class="p-3 border-b border-slate-200 dark:border-slate-700 text-right">Quantity</th>
+                <th class="p-3 border-b border-slate-200 dark:border-slate-700 text-center w-20">Unit</th>
+              </tr>
+            </thead>
+            <tbody id="boq-table-body" class="divide-y divide-slate-100 dark:divide-slate-800">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- MATERIAL BREAKUP ESTIMATE (Cement, Sand, Aggregate) -->
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 sm:p-7 shadow-xs">
+        <h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-white flex items-center gap-2 mb-1">
+          <span>🧱</span> Raw Material Procurement Estimate
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">
+          Estimated raw materials required for both Bed PCC (1:4:8) and Structural RCC (M20 grade) with standard 54% dry volume factor.
+        </p>
+
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          
+          <div class="rounded-2xl border border-slate-200/80 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/50">
+            <div class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Total Cement Bags</div>
+            <div id="mat-cement" class="mt-1 text-lg font-black text-slate-900 dark:text-white">-- Bags</div>
+            <div class="text-[10px] text-slate-400">50 kg OPC/PPC bags</div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200/80 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/50">
+            <div class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Fine Aggregate (Sand)</div>
+            <div id="mat-sand" class="mt-1 text-lg font-black text-slate-900 dark:text-white">-- m³</div>
+            <div id="mat-sand-cft" class="text-[10px] text-slate-400">-- cft</div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200/80 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/50">
+            <div class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Coarse Aggregate (Grit)</div>
+            <div id="mat-agg" class="mt-1 text-lg font-black text-slate-900 dark:text-white">-- m³</div>
+            <div id="mat-agg-cft" class="text-[10px] text-slate-400">-- cft (10/20/40mm)</div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200/80 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/50">
+            <div class="text-[11px] font-bold uppercase text-slate-500 dark:text-slate-400">Total Steel Rebar</div>
+            <div id="mat-steel" class="mt-1 text-lg font-black text-emerald-600 dark:text-emerald-400">-- kg</div>
+            <div id="mat-steel-sub" class="text-[10px] text-slate-400">Fe 500 TMT bars</div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
   </div>
 
   <Fragment slot="content">
-    <h2>Side Drain BOQ Engineering Standards</h2>
+    <h2>Standard Civil Engineering Formulas for Side Drain & Slab BOQ</h2>
     <p>
-      Side drains for roadways and building boundaries require systematic estimation of cross-sectional components: bed excavation, leveling PCC, reinforced concrete retaining walls, and precast/cast-in-situ cover slabs.
+      In road construction, highway engineering, and residential development, open and covered roadside drains carry stormwater runoff away from the road pavement to prevent waterlogging and subgrade deterioration. Preparing an accurate Bill of Quantities (BOQ) requires computing trench earthwork, lean concrete bed, reinforced concrete bottom raft, side retaining walls, removable cover slabs, steel reinforcement, and formwork shuttering.
     </p>
+
+    <h3>1. Trench Earthwork Excavation Formula</h3>
+    <p>
+      The trench excavation width must accommodate the drain box plus the outer projection/offset of the lean bed PCC on both sides. The excavation depth extends down to the underside of the bed PCC:
+    </p>
+    <ul>
+      <li><code>Outer Drain Width (B_outer) = Clear Width (W) + 2 × Wall Thickness (Tw)</code></li>
+      <li><code>Trench Excavation Width (B_exc) = B_outer + 2 × PCC Side Offset (P_off)</code></li>
+      <li><code>Trench Excavation Depth (H_exc) = Clear Depth (D) + Bottom Raft Thickness (T_base) + Bed PCC Thickness (T_pcc)</code></li>
+      <li><code>Earthwork Excavation Volume (m³) = Drain Length (L) × B_exc × H_exc</code></li>
+    </ul>
+
+    <h3>2. Bed PCC (Lean Concrete Leveling Bed) Formula</h3>
+    <p>
+      Bed PCC (typically M7.5 in 1:4:8 mix or M10 in 1:3:6 mix) provides a flat, clean, and rigid working platform directly on top of the compacted soil bed:
+    </p>
+    <ul>
+      <li><code>Bed PCC Width = B_outer + 2 × PCC Offset (P_off)</code></li>
+      <li><code>Bed PCC Volume (m³) = Length (L) × Bed PCC Width × Bed PCC Thickness (T_pcc)</code></li>
+    </ul>
+
+    <h3>3. RCC Bottom Base Slab (Raft) Formula</h3>
+    <p>
+      The structural bottom slab spans across the entire outer drain width and resists hydraulic uplift and soil pressure:
+    </p>
+    <ul>
+      <li><code>Bottom Base Slab Width = Clear Width (W) + 2 × Wall Thickness (Tw)</code></li>
+      <li><code>Bottom Base Slab Volume (m³) = Length (L) × Bottom Slab Width × Bottom Slab Thickness (T_base)</code></li>
+    </ul>
+
+    <h3>4. RCC Side Retaining Walls (2 Walls) Formula</h3>
+    <p>
+      Two vertical reinforced concrete walls retain the surrounding soil and define the waterway:
+    </p>
+    <ul>
+      <li><code>Volume of 2 Side Walls (m³) = 2 × [ Length (L) × Wall Thickness (Tw) × Clear Depth (D) ]</code></li>
+    </ul>
+
+    <h3>5. RCC Top Cover Slab (Precast / Cast-in-Situ) Formula</h3>
+    <p>
+      Cover slabs span across the drain walls to protect pedestrians, vehicles, and keep debris out:
+    </p>
+    <ul>
+      <li><code>Cover Slab Width = Clear Width (W) + 2 × Wall Thickness (Tw)</code></li>
+      <li><code>Cover Slab Volume (m³) = Length (L) × Cover Slab Width × Cover Slab Thickness (T_slab)</code></li>
+      <li><code>Precast Slabs Count = ceil(Drain Length ÷ Precast Unit Length)</code></li>
+      <li><code>Total Structural RCC Volume (m³) = Base Slab Volume + 2 Walls Volume + Cover Slab Volume</code></li>
+    </ul>
+
+    <h3>6. Steel Reinforcement Rebar Formula</h3>
+    <p>
+      Per CPWD and State PWD specifications for drains, reinforcement steel is budgeted based on standard density rates per cubic meter of RCC concrete (80 kg/m³ to 100 kg/m³):
+    </p>
+    <ul>
+      <li><code>Total Steel Weight (kg) = Total RCC Volume (m³) × Steel Index Rate (kg/m³)</code></li>
+      <li><code>Total Steel in Quintals = Total Steel Weight (kg) ÷ 100</code></li>
+      <li><code>Total Steel in Metric Tonnes = Total Steel Weight (kg) ÷ 1000</code></li>
+    </ul>
+
+    <h3>7. Centering and Shuttering (Formwork Area) Formula</h3>
+    <p>
+      Formwork is required for the inner faces of the walls, outer faces of the walls & base slab, and cover slab sides:
+    </p>
+    <ul>
+      <li><code>Inner Wall Shuttering (m²) = 2 × Clear Depth (D) × Length (L)</code></li>
+      <li><code>Outer Wall & Base Shuttering (m²) = 2 × [ Clear Depth (D) + Bottom Slab (T_base) ] × Length (L)</code></li>
+      <li><code>Cover Slab Formwork (m²) = [ Clear Width (W) × Length (L) ] + 2 × [ Cover Slab Thickness (T_slab) × Length (L) ]</code></li>
+      <li><code>Total Formwork Area (m²) = Inner Shuttering + Outer Shuttering + Cover Slab Formwork</code></li>
+    </ul>
+
+    <h3>8. Internal Waterproof Cement Plastering Formula</h3>
+    <p>
+      The internal wetted perimeter in contact with flowing stormwater is plastered with 12mm/15mm cement mortar (1:3 or 1:4) mixed with waterproofing compound to ensure smooth hydraulic flow and water tightness:
+    </p>
+    <ul>
+      <li><code>Wetted Perimeter (m) = Clear Width (W) + 2 × Clear Depth (D)</code></li>
+      <li><code>Total Internal Plaster Area (m²) = Wetted Perimeter × Drain Length (L)</code></li>
+    </ul>
   </Fragment>
 
   <Fragment slot="faq">
     <div class="space-y-4 text-xs sm:text-sm">
       <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open>
         <summary class="font-bold text-slate-900 dark:text-white cursor-pointer flex justify-between items-center">
-          What concrete grade is recommended for storm water drains?
+          Why is Bed PCC offset added to trench excavation width?
           <span class="group-open:rotate-180 transition-transform">▼</span>
         </summary>
         <p class="mt-2 text-slate-600 dark:text-slate-300">
-          Bed leveling PCC commonly uses M7.5 (1:4:8) or M10 (1:3:6), while drain RCC walls and cover slabs use M20 or M25 for water impermeability and structural durability.
+          In civil construction, the leveling bed PCC projects 75 mm to 100 mm beyond the exterior face of the drain walls. This projection distributes structural loads onto the soil, prevents soil cave-ins during wall formwork erection, and provides working clearance for shuttering props.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="font-bold text-slate-900 dark:text-white cursor-pointer flex justify-between items-center">
+          What concrete grade is recommended for drain construction?
+          <span class="group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Bed PCC generally uses lean concrete M7.5 (1:4:8) or M10 (1:3:6). Structural components (bottom raft slab, side retaining walls, and precast cover slabs) should use minimum M20 (1:1.5:3) or M25 (1:1:2) per IS 456 to withstand water erosion and earth pressure.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="font-bold text-slate-900 dark:text-white cursor-pointer flex justify-between items-center">
+          How is rebar quantity estimated for drains?
+          <span class="group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">
+          Standard civil engineering quantity index for roadside RCC drains is 80 to 100 kg of TMT steel per cubic meter of RCC concrete (equivalent to approximately 1.0% to 1.25% steel by volume). Main vertical bars are typically 10mm or 12mm @ 150mm c/c, and longitudinal distribution bars are 8mm @ 200mm c/c.
         </p>
       </details>
     </div>
@@ -97,58 +656,383 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
 </CalculatorLayout>
 
 <script is:inline>
-  const dLen = document.getElementById('d-len');
-  const dWidth = document.getElementById('d-width');
-  const dDepth = document.getElementById('d-depth');
-  const dWallTh = document.getElementById('d-wall-th');
-  const dBedPcc = document.getElementById('d-bed-pcc');
-  const dSlabTh = document.getElementById('d-slab-th');
+  (function () {
+    // Input elements
+    var dLen = document.getElementById('d-len');
+    var dWidth = document.getElementById('d-width');
+    var dDepth = document.getElementById('d-depth');
+    var dWallTh = document.getElementById('d-wall-th');
+    var dBaseSlabTh = document.getElementById('d-base-slab-th');
+    var dBedPcc = document.getElementById('d-bed-pcc');
+    var dPccOffset = document.getElementById('d-pcc-offset');
+    var dCoverType = document.getElementById('d-cover-type');
+    var dSlabTh = document.getElementById('d-slab-th');
+    var dSteelRate = document.getElementById('d-steel-rate');
+    var dPrecastLen = document.getElementById('d-precast-len');
+    var wrapperSlabTh = document.getElementById('wrapper-slab-th');
 
-  const resExcavation = document.getElementById('res-excavation');
-  const resBedPcc = document.getElementById('res-bed-pcc');
-  const resRccVol = document.getElementById('res-rcc-vol');
-  const resSteelWt = document.getElementById('res-steel-wt');
-  const resShuttering = document.getElementById('res-shuttering');
-  const resPlaster = document.getElementById('res-plaster');
+    // Hints
+    var hintWidth = document.getElementById('hint-width');
+    var hintDepth = document.getElementById('hint-depth');
+    var hintWall = document.getElementById('hint-wall');
+    var hintBase = document.getElementById('hint-base');
+    var hintPcc = document.getElementById('hint-pcc');
+    var hintOffset = document.getElementById('hint-offset');
+    var hintSlab = document.getElementById('hint-slab');
+    var summarySpanLen = document.getElementById('summary-span-len');
 
-  function calculate() {
-    const L = Math.max(0, parseFloat(dLen.value) || 0);
-    const W = Math.max(0, parseFloat(dWidth.value) || 0);
-    const D = Math.max(0, parseFloat(dDepth.value) || 0);
-    const Tw = Math.max(0, parseFloat(dWallTh.value) || 0);
-    const Tb = Math.max(0, parseFloat(dBedPcc.value) || 0);
-    const Ts = Math.max(0, parseFloat(dSlabTh.value) || 0);
+    // Key Result Hero elements
+    var resExcavation = document.getElementById('res-excavation');
+    var resExcavationCft = document.getElementById('res-excavation-cft');
+    var resTotalConc = document.getElementById('res-total-conc');
+    var resTotalConcCft = document.getElementById('res-total-conc-cft');
+    var resSteelWt = document.getElementById('res-steel-wt');
+    var resSteelQuintals = document.getElementById('res-steel-quintals');
+    var resShuttering = document.getElementById('res-shuttering');
+    var resShutteringSqft = document.getElementById('res-shuttering-sqft');
 
-    const totalWidth = W + 2 * Tw;
-    const totalDepth = D + Tb + Ts;
+    // Secondary metrics
+    var resBedPcc = document.getElementById('res-bed-pcc');
+    var resRccVol = document.getElementById('res-rcc-vol');
+    var resPrecastInfo = document.getElementById('res-precast-info');
+    var resPlaster = document.getElementById('res-plaster');
 
-    const excavation = L * totalWidth * totalDepth;
-    const bedPcc = L * totalWidth * Tb;
-    const wallsRcc = 2 * L * Tw * D;
-    const coverSlabRcc = L * totalWidth * Ts;
-    const totalRcc = wallsRcc + coverSlabRcc;
+    // Material Breakup
+    var matCement = document.getElementById('mat-cement');
+    var matSand = document.getElementById('mat-sand');
+    var matSandCft = document.getElementById('mat-sand-cft');
+    var matAgg = document.getElementById('mat-agg');
+    var matAggCft = document.getElementById('mat-agg-cft');
+    var matSteel = document.getElementById('mat-steel');
+    var matSteelSub = document.getElementById('mat-steel-sub');
 
-    const steelKg = totalRcc * 85; // ~85 kg/cum
-    const shuttering = 2 * (2 * D) * L + L * totalWidth;
-    const plaster = L * (W + 2 * D);
+    // BOQ Table Body
+    var boqTableBody = document.getElementById('boq-table-body');
 
-    resExcavation.textContent = `${excavation.toFixed(2)} m³ (CUM)`;
-    resBedPcc.textContent = `${bedPcc.toFixed(2)} m³ (CUM)`;
-    resRccVol.textContent = `${totalRcc.toFixed(2)} m³ (CUM)`;
-    resSteelWt.textContent = `${steelKg.toFixed(1)} kg (${(steelKg / 100).toFixed(2)} q)`;
-    resShuttering.textContent = `${shuttering.toFixed(2)} m² (${(shuttering * 10.7639).toFixed(1)} sqft)`;
-    resPlaster.textContent = `${plaster.toFixed(2)} m²`;
-  }
+    // Action Buttons
+    var btnGenerateBoq = document.getElementById('btn-generate-boq');
+    var btnClearBoq = document.getElementById('btn-clear-boq');
 
-  [dLen, dWidth, dDepth, dWallTh, dBedPcc, dSlabTh].forEach((el) => {
-    el.addEventListener('input', calculate);
-    el.addEventListener('change', calculate);
-    el.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        calculate();
+    function calculateDrainBOQ() {
+      var rawLen = dLen ? dLen.value.trim() : '';
+      var rawWidth = dWidth ? dWidth.value.trim() : '';
+      var rawDepth = dDepth ? dDepth.value.trim() : '';
+
+      // Check if user cleared all dimensions
+      if (rawLen === '' && rawWidth === '' && rawDepth === '') {
+        if (resExcavation) resExcavation.textContent = '0.00 m³';
+        if (resExcavationCft) resExcavationCft.textContent = '0.0 cft';
+        if (resTotalConc) resTotalConc.textContent = '0.00 m³';
+        if (resTotalConcCft) resTotalConcCft.textContent = '0.0 cft';
+        if (resSteelWt) resSteelWt.textContent = '0.0 kg';
+        if (resSteelQuintals) resSteelQuintals.textContent = '0.00 Quintals (0.000 MT)';
+        if (resShuttering) resShuttering.textContent = '0.00 m²';
+        if (resShutteringSqft) resShutteringSqft.textContent = '0.0 sq.ft';
+        if (resBedPcc) resBedPcc.textContent = '0.00 m³ (0.0 cft)';
+        if (resRccVol) resRccVol.textContent = '0.00 m³ (0.0 cft)';
+        if (resPrecastInfo) resPrecastInfo.textContent = '0 Slabs';
+        if (resPlaster) resPlaster.textContent = '0.00 m² (0.0 sq.ft)';
+        if (matCement) matCement.textContent = '0 Bags';
+        if (matSand) matSand.textContent = '0.00 m³';
+        if (matSandCft) matSandCft.textContent = '0.0 cft';
+        if (matAgg) matAgg.textContent = '0.00 m³';
+        if (matAggCft) matAggCft.textContent = '0.0 cft';
+        if (matSteel) matSteel.textContent = '0.0 kg';
+        if (matSteelSub) matSteelSub.textContent = '0.00 Quintals (0.000 MT)';
+        if (summarySpanLen) summarySpanLen.textContent = '0.0 meters';
+        if (boqTableBody) {
+          boqTableBody.innerHTML = '<tr><td colspan="5" class="p-8 text-center text-sm font-semibold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900">Fields cleared. Enter your drain dimensions and click <span class="text-blue-600 dark:text-blue-400 font-bold">⚡ Generate BOQ Schedule</span>.</td></tr>';
+        }
+        return;
       }
+
+      // 1. Extract values
+      var L = Math.max(0.01, parseFloat(dLen ? dLen.value : 50) || 50);
+      var W = Math.max(0.01, parseFloat(dWidth ? dWidth.value : 0.6) || 0.6);
+      var D = Math.max(0.01, parseFloat(dDepth ? dDepth.value : 0.75) || 0.75);
+      var Tw = Math.max(0, parseFloat(dWallTh ? dWallTh.value : 0.15) || 0.15);
+      var Tbase = Math.max(0, parseFloat(dBaseSlabTh ? dBaseSlabTh.value : 0.12) || 0.12);
+      var Tpcc = Math.max(0, parseFloat(dBedPcc ? dBedPcc.value : 0.10) || 0.10);
+      var Poff = Math.max(0, parseFloat(dPccOffset ? dPccOffset.value : 0.075) || 0.075);
+      var isCovered = dCoverType ? dCoverType.value === 'covered' : true;
+      var Tslab = isCovered ? Math.max(0, parseFloat(dSlabTh ? dSlabTh.value : 0.10) || 0.10) : 0;
+      var steelRate = Math.max(20, parseFloat(dSteelRate ? dSteelRate.value : 85) || 85);
+      var precastLen = Math.max(0.2, parseFloat(dPrecastLen ? dPrecastLen.value : 1.0) || 1.0);
+
+      // Toggle cover slab input visibility
+      if (wrapperSlabTh) {
+        wrapperSlabTh.style.display = isCovered ? 'block' : 'none';
+      }
+
+      // Update unit hint labels
+      if (hintWidth) hintWidth.textContent = W.toFixed(2) + ' m = ' + Math.round(W * 1000) + ' mm';
+      if (hintDepth) hintDepth.textContent = D.toFixed(2) + ' m = ' + Math.round(D * 1000) + ' mm';
+      if (hintWall) hintWall.textContent = Tw.toFixed(2) + ' m = ' + Math.round(Tw * 1000) + ' mm';
+      if (hintBase) hintBase.textContent = Tbase.toFixed(2) + ' m = ' + Math.round(Tbase * 1000) + ' mm';
+      if (hintPcc) hintPcc.textContent = Tpcc.toFixed(2) + ' m = ' + Math.round(Tpcc * 1000) + ' mm';
+      if (hintOffset) hintOffset.textContent = Poff.toFixed(3) + ' m = ' + Math.round(Poff * 1000) + ' mm';
+      if (hintSlab) hintSlab.textContent = Tslab.toFixed(2) + ' m = ' + Math.round(Tslab * 1000) + ' mm';
+      if (summarySpanLen) summarySpanLen.textContent = L.toFixed(1) + ' meters (' + (L * 3.28084).toFixed(0) + ' ft)';
+
+      // 2. Cross-Section Dimensions
+      var Bouter = W + 2 * Tw;
+      var Bpcc = Bouter + 2 * Poff;
+      var Hexc = D + Tbase + Tpcc;
+
+      // 3. Concrete & Excavation Quantities
+      var Vexc = L * Bpcc * Hexc;
+      var Vpcc = L * Bpcc * Tpcc;
+      var Vbase = L * Bouter * Tbase;
+      var Vwalls = 2 * (L * Tw * D);
+      var Vslab = isCovered ? (L * Bouter * Tslab) : 0;
+      var Vrcc = Vbase + Vwalls + Vslab;
+      var VtotalConc = Vpcc + Vrcc;
+
+      // 4. Precast Units
+      var numSlabs = isCovered ? Math.ceil(L / precastLen) : 0;
+      var volPerSlab = numSlabs > 0 ? (Vslab / numSlabs) : 0;
+      var wtPerSlabKg = volPerSlab * 2400; // 2400 kg/m³ for RCC
+
+      // 5. Steel Reinforcement (kg, quintals, metric tonnes)
+      var steelKg = Vrcc * steelRate;
+      var steelQuintals = steelKg / 100;
+      var steelTonnes = steelKg / 1000;
+
+      // 6. Formwork (Shuttering Area)
+      var innerShuttering = 2 * (D * L);
+      var outerShuttering = 2 * ((D + Tbase) * L);
+      var slabFormwork = isCovered ? ((W * L) + 2 * (Tslab * L)) : 0;
+      var totalShuttering = innerShuttering + outerShuttering + slabFormwork;
+
+      // 7. Internal Cement Plastering (1:3 or 1:4 with waterproofing)
+      var wettedPerimeter = W + 2 * D;
+      var totalPlasterArea = wettedPerimeter * L;
+
+      // 8. Raw Materials Breakup (Dry Volume Factor = 1.54)
+      // PCC 1:4:8 -> Total parts = 13
+      var dryVolPcc = Vpcc * 1.54;
+      var cementVolPcc = dryVolPcc * (1 / 13);
+      var cementBagsPcc = cementVolPcc / 0.0347;
+      var sandVolPcc = dryVolPcc * (4 / 13);
+      var aggVolPcc = dryVolPcc * (8 / 13);
+
+      // RCC M20 (1:1.5:3) -> Total parts = 5.5
+      var dryVolRcc = Vrcc * 1.54;
+      var cementVolRcc = dryVolRcc * (1 / 5.5);
+      var cementBagsRcc = cementVolRcc / 0.0347;
+      var sandVolRcc = dryVolRcc * (1.5 / 5.5);
+      var aggVolRcc = dryVolRcc * (3 / 5.5);
+
+      var totalCementBags = Math.ceil(cementBagsPcc + cementBagsRcc);
+      var totalSandM3 = sandVolPcc + sandVolRcc;
+      var totalAggM3 = aggVolPcc + aggVolRcc;
+
+      var CUM_TO_CFT = 35.3147;
+      var SQM_TO_SQFT = 10.7639;
+
+      // 9. Update UI Hero Metrics
+      if (resExcavation) resExcavation.textContent = Vexc.toFixed(2) + ' m³';
+      if (resExcavationCft) resExcavationCft.textContent = (Vexc * CUM_TO_CFT).toFixed(1) + ' cft (cubic feet)';
+
+      if (resTotalConc) resTotalConc.textContent = VtotalConc.toFixed(2) + ' m³';
+      if (resTotalConcCft) resTotalConcCft.textContent = (VtotalConc * CUM_TO_CFT).toFixed(1) + ' cft (' + Vrcc.toFixed(2) + ' RCC + ' + Vpcc.toFixed(2) + ' PCC)';
+
+      if (resSteelWt) resSteelWt.textContent = steelKg.toFixed(1) + ' kg';
+      if (resSteelQuintals) resSteelQuintals.textContent = steelQuintals.toFixed(2) + ' Quintals (' + steelTonnes.toFixed(3) + ' MT)';
+
+      if (resShuttering) resShuttering.textContent = totalShuttering.toFixed(2) + ' m²';
+      if (resShutteringSqft) resShutteringSqft.textContent = (totalShuttering * SQM_TO_SQFT).toFixed(1) + ' sq.ft';
+
+      // Secondary Metrics
+      if (resBedPcc) resBedPcc.textContent = Vpcc.toFixed(2) + ' m³ (' + (Vpcc * CUM_TO_CFT).toFixed(1) + ' cft)';
+      if (resRccVol) resRccVol.textContent = Vrcc.toFixed(2) + ' m³ (' + (Vrcc * CUM_TO_CFT).toFixed(1) + ' cft)';
+      if (resPrecastInfo) {
+        if (isCovered) {
+          resPrecastInfo.textContent = numSlabs + ' Slabs (' + wtPerSlabKg.toFixed(0) + ' kg/slab)';
+        } else {
+          resPrecastInfo.textContent = 'Open Drain (No Slabs)';
+        }
+      }
+      if (resPlaster) resPlaster.textContent = totalPlasterArea.toFixed(2) + ' m² (' + (totalPlasterArea * SQM_TO_SQFT).toFixed(1) + ' sq.ft)';
+
+      // Material Breakup
+      if (matCement) matCement.textContent = totalCementBags + ' Bags';
+      if (matSand) matSand.textContent = totalSandM3.toFixed(2) + ' m³';
+      if (matSandCft) matSandCft.textContent = (totalSandM3 * CUM_TO_CFT).toFixed(1) + ' cft (' + (totalSandM3 * 1.6).toFixed(1) + ' Tonnes)';
+      if (matAgg) matAgg.textContent = totalAggM3.toFixed(2) + ' m³';
+      if (matAggCft) matAggCft.textContent = (totalAggM3 * CUM_TO_CFT).toFixed(1) + ' cft (' + (totalAggM3 * 1.5).toFixed(1) + ' Tonnes)';
+      if (matSteel) matSteel.textContent = steelKg.toFixed(1) + ' kg';
+      if (matSteelSub) matSteelSub.textContent = steelQuintals.toFixed(2) + ' Quintals (' + steelTonnes.toFixed(3) + ' MT)';
+
+      // 10. Populate BOQ Itemized Table
+      if (boqTableBody) {
+        var items = [
+          {
+            itemNo: '1',
+            desc: 'Earthwork excavation in trenches in all types of soil including trimming, dressing of bed, and disposal within 50m lead.',
+            dim: L.toFixed(1) + ' × ' + Bpcc.toFixed(2) + ' × ' + Hexc.toFixed(2) + ' m',
+            qty: Vexc.toFixed(2),
+            unit: 'm³'
+          },
+          {
+            itemNo: '2',
+            desc: 'Providing and laying in position Cement Concrete (PCC 1:4:8 or M10) for leveling bed under drain including compaction and curing.',
+            dim: L.toFixed(1) + ' × ' + Bpcc.toFixed(2) + ' × ' + Tpcc.toFixed(2) + ' m',
+            qty: Vpcc.toFixed(2),
+            unit: 'm³'
+          },
+          {
+            itemNo: '3',
+            desc: 'Providing and laying Reinforced Cement Concrete (M20/M25) in bottom structural base raft slab including mechanical vibration and curing.',
+            dim: L.toFixed(1) + ' × ' + Bouter.toFixed(2) + ' × ' + Tbase.toFixed(2) + ' m',
+            qty: Vbase.toFixed(2),
+            unit: 'm³'
+          },
+          {
+            itemNo: '4',
+            desc: 'Providing and laying Reinforced Cement Concrete (M20/M25) in side retaining walls (2 walls) including vibrated compaction and curing.',
+            dim: '2 × (' + L.toFixed(1) + ' × ' + Tw.toFixed(2) + ' × ' + D.toFixed(2) + ' m)',
+            qty: Vwalls.toFixed(2),
+            unit: 'm³'
+          }
+        ];
+
+        if (isCovered && Vslab > 0) {
+          items.push({
+            itemNo: '5',
+            desc: 'Providing, casting and placing in position Precast/Cast-in-situ RCC (M20/M25) top cover slabs with lifting hooks/weep holes (' + numSlabs + ' units).',
+            dim: L.toFixed(1) + ' × ' + Bouter.toFixed(2) + ' × ' + Tslab.toFixed(2) + ' m',
+            qty: Vslab.toFixed(2),
+            unit: 'm³'
+          });
+        }
+
+        items.push(
+          {
+            itemNo: String(items.length + 1),
+            desc: 'Steel reinforcement for RCC work including straightening, cutting, bending, binding with 18-gauge wire and placing in position complete (Fe 500 TMT).',
+            dim: 'Index: ' + steelRate + ' kg/m³ of RCC',
+            qty: steelKg.toFixed(1),
+            unit: 'kg'
+          },
+          {
+            itemNo: String(items.length + 1),
+            desc: 'Centering, shuttering and formwork for walls, base raft, and cover slab including strutting, propping and removal of forms.',
+            dim: 'Inner + Outer + Slab',
+            qty: totalShuttering.toFixed(2),
+            unit: 'm²'
+          },
+          {
+            itemNo: String(items.length + 1),
+            desc: '12mm / 15mm thick cement plaster in 1:3 or 1:4 mortar with water-proofing compound on inner wetted surface of drain with neat cement punning.',
+            dim: L.toFixed(1) + ' × ' + wettedPerimeter.toFixed(2) + ' m',
+            qty: totalPlasterArea.toFixed(2),
+            unit: 'm²'
+          }
+        );
+
+        var tableHtml = '';
+        items.forEach(function (it, idx) {
+          var bg = idx % 2 === 0 ? 'bg-white dark:bg-slate-900' : 'bg-slate-50/70 dark:bg-slate-800/40';
+          tableHtml += '<tr class="' + bg + ' hover:bg-blue-50/50 dark:hover:bg-slate-800/80 transition">' +
+            '<td class="p-3 font-bold text-center text-slate-700 dark:text-slate-300 border-b border-slate-100 dark:border-slate-800">' + it.itemNo + '</td>' +
+            '<td class="p-3 font-medium text-slate-800 dark:text-slate-200 border-b border-slate-100 dark:border-slate-800">' + it.desc + '</td>' +
+            '<td class="p-3 text-center font-mono text-[11px] text-slate-600 dark:text-slate-400 border-b border-slate-100 dark:border-slate-800">' + it.dim + '</td>' +
+            '<td class="p-3 text-right font-bold text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800">' + it.qty + '</td>' +
+            '<td class="p-3 text-center font-bold text-blue-600 dark:text-blue-400 border-b border-slate-100 dark:border-slate-800">' + it.unit + '</td>' +
+            '</tr>';
+        });
+
+        boqTableBody.innerHTML = tableHtml;
+      }
+
+      // Notify action bar
+      try {
+        document.dispatchEvent(new CustomEvent('calculator:updated'));
+      } catch (e) {}
+    }
+
+    // Bind event listeners to inputs
+    var allInputs = [dLen, dWidth, dDepth, dWallTh, dBaseSlabTh, dBedPcc, dPccOffset, dCoverType, dSlabTh, dSteelRate, dPrecastLen];
+    allInputs.forEach(function (inp) {
+      if (!inp) return;
+      inp.addEventListener('input', calculateDrainBOQ);
+      inp.addEventListener('change', calculateDrainBOQ);
+      inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          calculateDrainBOQ();
+        }
+      });
     });
-  });
-  calculate();
+
+    // Preset button click handling
+    var presetBtns = document.querySelectorAll('.btn-drain-preset');
+    presetBtns.forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        if (dLen) dLen.value = btn.getAttribute('data-len');
+        if (dWidth) dWidth.value = btn.getAttribute('data-width');
+        if (dDepth) dDepth.value = btn.getAttribute('data-depth');
+        if (dWallTh) dWallTh.value = btn.getAttribute('data-wall');
+        if (dBaseSlabTh) dBaseSlabTh.value = btn.getAttribute('data-base');
+        if (dBedPcc) dBedPcc.value = btn.getAttribute('data-pcc');
+        if (dPccOffset) dPccOffset.value = btn.getAttribute('data-offset');
+        if (dSlabTh) dSlabTh.value = btn.getAttribute('data-slab');
+        if (dCoverType) dCoverType.value = btn.getAttribute('data-cover');
+        calculateDrainBOQ();
+      });
+    });
+
+    // Generate BOQ Button Click
+    if (btnGenerateBoq) {
+      btnGenerateBoq.addEventListener('click', function () {
+        if (!dLen.value || parseFloat(dLen.value) <= 0) dLen.value = '50';
+        if (!dWidth.value || parseFloat(dWidth.value) <= 0) dWidth.value = '0.60';
+        if (!dDepth.value || parseFloat(dDepth.value) <= 0) dDepth.value = '0.75';
+        if (!dWallTh.value) dWallTh.value = '0.15';
+        if (!dBaseSlabTh.value) dBaseSlabTh.value = '0.12';
+        if (!dBedPcc.value) dBedPcc.value = '0.10';
+        if (!dPccOffset.value) dPccOffset.value = '0.075';
+        if (!dSlabTh.value) dSlabTh.value = '0.10';
+
+        calculateDrainBOQ();
+
+        var resSec = document.getElementById('results-section');
+        if (resSec) {
+          resSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        var origHtml = btnGenerateBoq.innerHTML;
+        btnGenerateBoq.innerHTML = '<span>✅ BOQ Schedule Generated!</span>';
+        setTimeout(function () {
+          btnGenerateBoq.innerHTML = origHtml;
+        }, 1200);
+      });
+    }
+
+    // Clear / Reset Button Click
+    if (btnClearBoq) {
+      btnClearBoq.addEventListener('click', function () {
+        if (dLen) dLen.value = '';
+        if (dWidth) dWidth.value = '';
+        if (dDepth) dDepth.value = '';
+        if (dWallTh) dWallTh.value = '';
+        if (dBaseSlabTh) dBaseSlabTh.value = '';
+        if (dBedPcc) dBedPcc.value = '';
+        if (dPccOffset) dPccOffset.value = '';
+        if (dSlabTh) dSlabTh.value = '';
+        calculateDrainBOQ();
+        if (dLen) dLen.focus();
+
+        var origHtml = btnClearBoq.innerHTML;
+        btnClearBoq.innerHTML = '<span>✓ Cleared</span>';
+        setTimeout(function () {
+          btnClearBoq.innerHTML = origHtml;
+        }, 1000);
+      });
+    }
+
+    // Initial calculation
+    calculateDrainBOQ();
+  })();
 </script>
