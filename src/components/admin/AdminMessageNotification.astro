@@ -1,0 +1,276 @@
+---
+/**
+ * AdminMessageNotification.astro
+ *
+ * Floating unread message notification popup and real-time sidebar badge controller.
+ * Checks for unread contact form inquiries in real-time and updates badges and popups automatically.
+ */
+---
+
+<!-- Floating New Message Notification Popup -->
+<aside
+  id="admin-unread-messages-popup"
+  class="fixed bottom-6 right-6 z-50 hidden max-w-sm w-[calc(100vw-3rem)] transition-all duration-300 transform translate-y-4 opacity-0 pointer-events-none select-none"
+  role="alert"
+  aria-live="polite"
+>
+  <div class="rounded-2xl border border-blue-500/30 bg-white/95 p-4 shadow-xl shadow-blue-500/10 backdrop-blur-md dark:border-blue-500/40 dark:bg-slate-900/95 dark:shadow-2xl dark:shadow-black/60 pointer-events-auto">
+    <div class="flex items-start justify-between gap-3">
+      <div class="flex items-start gap-3 min-w-0">
+        <!-- Pulsing Notification Icon -->
+        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-lg text-blue-700 dark:bg-blue-950 dark:text-blue-300 relative">
+          <span>📬</span>
+          <span class="absolute -top-1 -right-1 flex h-3 w-3">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-3 w-3 bg-blue-600"></span>
+          </span>
+        </div>
+
+        <div class="space-y-1 min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">
+              New Notification
+            </span>
+            <span id="admin-unread-popup-badge" class="rounded-full bg-blue-100 px-1.5 py-0.2 text-[9px] font-black text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+              Inbox
+            </span>
+          </div>
+          <p id="admin-unread-popup-title" class="text-sm font-extrabold text-slate-900 dark:text-white truncate">
+            You have 1 new message
+          </p>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400">
+            Visitor inquiry awaiting review in your inbox.
+          </p>
+        </div>
+      </div>
+
+      <!-- Close Button -->
+      <button
+        id="btn-dismiss-unread-popup"
+        type="button"
+        class="shrink-0 rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition cursor-pointer"
+        title="Dismiss notification (messages remain unread)"
+      >
+        <span class="sr-only">Dismiss notification</span>
+        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Actions Row -->
+    <div class="mt-3.5 flex items-center justify-end gap-2 pt-2.5 border-t border-slate-100 dark:border-slate-800/80">
+      <button
+        id="btn-dismiss-unread-popup-text"
+        type="button"
+        class="rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200 transition cursor-pointer"
+      >
+        Dismiss
+      </button>
+      <a
+        href="/admin/messages/"
+        id="btn-view-unread-messages"
+        class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-sm shadow-blue-500/25 hover:bg-blue-700 active:scale-95 transition cursor-pointer"
+      >
+        <span>View Messages</span>
+        <span>→</span>
+      </a>
+    </div>
+  </div>
+</aside>
+
+<!-- Client Controller Script -->
+<script is:inline>
+  (function initUnreadMessageController() {
+    let pollIntervalId = null;
+    let currentUnreadCount = 0;
+    let isPolling = false;
+
+    const popup = document.getElementById('admin-unread-messages-popup');
+    const popupTitle = document.getElementById('admin-unread-popup-title');
+    const btnDismiss = document.getElementById('btn-dismiss-unread-popup');
+    const btnDismissText = document.getElementById('btn-dismiss-unread-popup-text');
+
+    function getAuthToken() {
+      try {
+        return localStorage.getItem('admin_token') || '';
+      } catch {
+        return '';
+      }
+    }
+
+    /**
+     * Updates sidebar and mobile nav unread count badges.
+     */
+    function updateBadgeElements(count) {
+      const badges = document.querySelectorAll('.admin-messages-unread-badge');
+      badges.forEach((badge) => {
+        if (count > 0) {
+          badge.textContent = count > 99 ? '99+' : String(count);
+          badge.setAttribute('data-count', String(count));
+          badge.classList.remove('hidden');
+        } else {
+          badge.textContent = '0';
+          badge.setAttribute('data-count', '0');
+          badge.classList.add('hidden');
+        }
+      });
+    }
+
+    /**
+     * Displays the notification popup with smooth entrance animation.
+     */
+    function showPopup(count) {
+      if (!popup || count <= 0) return;
+
+      if (popupTitle) {
+        popupTitle.textContent = count === 1 ? 'You have 1 new message' : `You have ${count} new messages`;
+      }
+
+      popup.classList.remove('hidden', 'pointer-events-none');
+      // Trigger animation frame for CSS transition
+      requestAnimationFrame(() => {
+        popup.classList.remove('translate-y-4', 'opacity-0');
+        popup.classList.add('translate-y-0', 'opacity-100');
+      });
+    }
+
+    /**
+     * Hides the notification popup with smooth exit animation.
+     */
+    function hidePopup() {
+      if (!popup || popup.classList.contains('hidden')) return;
+
+      popup.classList.remove('translate-y-0', 'opacity-100');
+      popup.classList.add('translate-y-4', 'opacity-0');
+      setTimeout(() => {
+        popup.classList.add('hidden', 'pointer-events-none');
+      }, 300);
+    }
+
+    /**
+     * Main dispatcher to synchronize unread count across badges and popup.
+     */
+    function applyUnreadCount(count, source = 'poll') {
+      const prevCount = currentUnreadCount;
+      currentUnreadCount = Math.max(0, parseInt(count, 10) || 0);
+
+      // 1. Update all sidebar/mobile badges
+      updateBadgeElements(currentUnreadCount);
+
+      // 2. Handle popup visibility
+      if (currentUnreadCount === 0) {
+        // Automatically hide popup when all messages are read
+        hidePopup();
+        try {
+          sessionStorage.removeItem('admin_unread_dismissed_count');
+        } catch {}
+        return;
+      }
+
+      // Check session dismissal
+      let dismissedCount = 0;
+      try {
+        const raw = sessionStorage.getItem('admin_unread_dismissed_count');
+        if (raw) dismissedCount = parseInt(raw, 10) || 0;
+      } catch {}
+
+      // If count is greater than previously dismissed count, a NEW message has arrived!
+      if (currentUnreadCount > dismissedCount) {
+        try {
+          sessionStorage.removeItem('admin_unread_dismissed_count');
+        } catch {}
+        showPopup(currentUnreadCount);
+      } else if (dismissedCount === 0) {
+        // Not dismissed yet
+        showPopup(currentUnreadCount);
+      } else {
+        // Dismissed for this count, keep hidden but update text in case it opens
+        if (popupTitle) {
+          popupTitle.textContent = currentUnreadCount === 1 ? 'You have 1 new message' : `You have ${currentUnreadCount} new messages`;
+        }
+      }
+    }
+
+    /**
+     * Dismiss popup without marking messages as read.
+     */
+    function dismissPopup() {
+      try {
+        sessionStorage.setItem('admin_unread_dismissed_count', String(currentUnreadCount));
+      } catch {}
+      hidePopup();
+    }
+
+    btnDismiss?.addEventListener('click', dismissPopup);
+    btnDismissText?.addEventListener('click', dismissPopup);
+
+    /**
+     * Lightweight unread count checker via API.
+     */
+    async function checkUnreadMessages() {
+      if (isPolling) return;
+      isPolling = true;
+
+      try {
+        const token = getAuthToken();
+        const res = await fetch('/api/admin/messages?countOnly=true', {
+          method: 'GET',
+          credentials: 'include',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data && typeof data.unreadCount === 'number') {
+            applyUnreadCount(data.unreadCount, 'fetch');
+          }
+        }
+      } catch {
+        // Fail silently during network drops or background tab throttling
+      } finally {
+        isPolling = false;
+      }
+    }
+
+    // Expose global methods for instant DOM updates from messages page
+    window.updateAdminUnreadCount = function (newCount) {
+      applyUnreadCount(newCount, 'manual');
+    };
+
+    window.refreshAdminUnreadCount = function () {
+      checkUnreadMessages();
+    };
+
+    // 1. Initial check immediately on admin panel load
+    checkUnreadMessages();
+
+    // 2. Efficient periodic polling (every 20 seconds)
+    function startPolling() {
+      if (pollIntervalId) clearInterval(pollIntervalId);
+      pollIntervalId = setInterval(() => {
+        // Only poll when tab is visible to prevent unnecessary server load
+        if (document.visibilityState === 'visible') {
+          checkUnreadMessages();
+        }
+      }, 20000);
+    }
+
+    startPolling();
+
+    // 3. Immediately check when returning to tab from another window
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        checkUnreadMessages();
+      }
+    });
+
+    // 4. Cleanup on unload
+    window.addEventListener('beforeunload', () => {
+      if (pollIntervalId) clearInterval(pollIntervalId);
+    });
+  })();
+</script>

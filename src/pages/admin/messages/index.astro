@@ -491,14 +491,114 @@ const totalCount = messages.length;
         });
       }
 
+      // Helper to update card DOM and counters dynamically without full page reload
+      function applyCardStatusUpdate(card, id, status) {
+        if (!card) return;
+        const oldStatus = card.getAttribute('data-status');
+        card.setAttribute('data-status', status);
+
+        // If transitioning from 'new' to another status:
+        if (oldStatus === 'new' && status !== 'new') {
+          card.classList.remove('border-blue-200', 'dark:border-blue-900/60', 'bg-blue-50/10');
+          card.classList.add('border-slate-200', 'dark:border-slate-800');
+
+          // Remove pulsating "● New" badge
+          const newBadge = card.querySelector('.animate-pulse');
+          if (newBadge) newBadge.remove();
+
+          // Remove "Mark as Read" button
+          card.querySelectorAll('.btn-set-status').forEach((b) => {
+            if (b.getAttribute('data-status') === 'read' && b.textContent.includes('Mark as Read')) {
+              b.remove();
+            }
+          });
+        }
+
+        // If marked as replied
+        if (status === 'replied') {
+          const badgesContainer = card.querySelector('.flex.flex-wrap.items-center.gap-2');
+          if (badgesContainer && !badgesContainer.querySelector('.badge-replied')) {
+            const repliedBadge = document.createElement('span');
+            repliedBadge.className = 'badge-replied rounded-md bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300';
+            repliedBadge.textContent = '✓ Replied';
+            badgesContainer.appendChild(repliedBadge);
+          }
+          // Remove "Mark Replied" button
+          card.querySelectorAll('.btn-set-status').forEach((b) => {
+            if (b.getAttribute('data-status') === 'replied') b.remove();
+          });
+        }
+
+        // Recalculate stats on page
+        const remainingUnread = document.querySelectorAll('.message-card[data-status="new"]').length;
+        const repliedCount = document.querySelectorAll('.message-card[data-status="replied"]').length;
+        const totalCount = document.querySelectorAll('.message-card').length;
+
+        const unreadStatEl = document.getElementById('stat-unread-count');
+        if (unreadStatEl) unreadStatEl.textContent = String(remainingUnread);
+
+        const repliedStatEl = document.getElementById('stat-replied-count');
+        if (repliedStatEl) repliedStatEl.textContent = String(repliedCount);
+
+        const totalStatEl = document.getElementById('stat-total-count');
+        if (totalStatEl) totalStatEl.textContent = String(totalCount);
+
+        const unreadTabBtn = document.querySelector('.filter-btn[data-filter="new"]');
+        if (unreadTabBtn) unreadTabBtn.textContent = `Unread (${remainingUnread})`;
+
+        const repliedTabBtn = document.querySelector('.filter-btn[data-filter="replied"]');
+        if (repliedTabBtn) repliedTabBtn.textContent = `Replied (${repliedCount})`;
+
+        const allTabBtn = document.querySelector('.filter-btn[data-filter="all"]');
+        if (allTabBtn) allTabBtn.textContent = `All (${totalCount})`;
+
+        // Update global sidebar badge and notification popup immediately!
+        if (typeof window.updateAdminUnreadCount === 'function') {
+          window.updateAdminUnreadCount(remainingUnread);
+        }
+
+        // If currently filtering to "new", smoothly hide the card
+        if (currentFilter === 'new') {
+          card.style.display = 'none';
+        }
+      }
+
+      // Mark message as read when clicking an unread message card to view it
+      document.querySelectorAll('.message-card').forEach((card) => {
+        card.addEventListener('click', async (e) => {
+          // Ignore clicks on buttons, links, or inputs inside the card
+          if (e.target.closest('button') || e.target.closest('a') || e.target.closest('input')) return;
+
+          const id = card.getAttribute('data-id');
+          const status = card.getAttribute('data-status');
+          if (status === 'new' && id) {
+            applyCardStatusUpdate(card, id, 'read');
+            try {
+              const token = getAuthToken();
+              fetch('/api/admin/messages', {
+                method: 'PATCH',
+                credentials: 'include',
+                headers: {
+                  'Content-Type': 'application/json',
+                  ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+                body: JSON.stringify({ id: id, status: 'read' }),
+              }).catch(() => {});
+            } catch {}
+          }
+        });
+      });
+
       // Direct Button Listeners for Mark Read / Replied / Archive
       document.querySelectorAll('.btn-set-status').forEach((btn) => {
         btn.addEventListener('click', async (e) => {
           e.preventDefault();
+          e.stopPropagation();
           const id = btn.getAttribute('data-id');
           const status = btn.getAttribute('data-status');
           if (!id || !status) return;
 
+          const card = btn.closest('.message-card');
           btn.disabled = true;
           const originalText = btn.textContent;
           btn.textContent = 'Updating...';
@@ -510,13 +610,13 @@ const totalCount = messages.length;
               credentials: 'include',
               headers: {
                 'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
               },
               body: JSON.stringify({ id: id, status: status }),
             });
 
             if (res.ok) {
-              window.location.reload();
+              applyCardStatusUpdate(card, id, status);
             } else {
               const errData = await res.json().catch(() => ({}));
               alert(errData.error || 'Failed to update message status.');
@@ -535,6 +635,7 @@ const totalCount = messages.length;
       document.querySelectorAll('.btn-delete-msg').forEach((btn) => {
         btn.addEventListener('click', async (e) => {
           e.preventDefault();
+          e.stopPropagation();
           const id = btn.getAttribute('data-id');
           if (!id) return;
           if (!confirm('Are you sure you want to permanently delete this message?')) return;
@@ -547,15 +648,22 @@ const totalCount = messages.length;
             const res = await fetch('/api/admin/messages?id=' + encodeURIComponent(id), {
               method: 'DELETE',
               credentials: 'include',
-              headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+              headers: token ? { Authorization: `Bearer ${token}` } : {},
             });
 
             if (res.ok) {
               if (card) {
-                card.style.opacity = '0.3';
-                card.style.pointerEvents = 'none';
+                card.remove();
+                const remainingUnread = document.querySelectorAll('.message-card[data-status="new"]').length;
+                const totalCount = document.querySelectorAll('.message-card').length;
+                const unreadStatEl = document.getElementById('stat-unread-count');
+                if (unreadStatEl) unreadStatEl.textContent = String(remainingUnread);
+                const totalStatEl = document.getElementById('stat-total-count');
+                if (totalStatEl) totalStatEl.textContent = String(totalCount);
+                if (typeof window.updateAdminUnreadCount === 'function') {
+                  window.updateAdminUnreadCount(remainingUnread);
+                }
               }
-              window.location.reload();
             } else {
               const errData = await res.json().catch(() => ({}));
               alert(errData.error || 'Failed to delete message.');
@@ -570,16 +678,19 @@ const totalCount = messages.length;
 
       // Direct Button Listeners for Reply via Email
       document.querySelectorAll('.btn-reply-email').forEach((btn) => {
-        btn.addEventListener('click', () => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
           const id = btn.getAttribute('data-id');
+          const card = btn.closest('.message-card');
           if (id) {
+            applyCardStatusUpdate(card, id, 'replied');
             const token = getAuthToken();
             fetch('/api/admin/messages', {
               method: 'PATCH',
               credentials: 'include',
               headers: {
                 'Content-Type': 'application/json',
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
               },
               body: JSON.stringify({ id: id, status: 'replied' }),
             }).catch(() => {});

@@ -20,14 +20,48 @@ export const GET: APIRoute = async ({ request, cookies, locals }) => {
     });
   }
 
+  const url = new URL(request.url);
+  const countOnly = url.searchParams.get('countOnly') === 'true';
+
   const db = getDb(locals);
   const messages = await getContactMessages(db);
+  const unreadCount = messages.filter((m) => m.status === 'new').length;
+
+  if (countOnly) {
+    return new Response(
+      JSON.stringify({
+        success: true,
+        unreadCount,
+        totalCount: messages.length,
+      }),
+      {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+        },
+      }
+    );
+  }
+
   const targetEmail = await getContactNotificationEmail(db, locals);
 
-  return new Response(JSON.stringify({ success: true, messages, count: messages.length, targetEmail }), {
-    status: 200,
-    headers: { 'Content-Type': 'application/json' },
-  });
+  return new Response(
+    JSON.stringify({
+      success: true,
+      messages,
+      count: messages.length,
+      unreadCount,
+      targetEmail,
+    }),
+    {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
+    }
+  );
 };
 
 export const POST: APIRoute = async ({ request, cookies, locals }) => {
