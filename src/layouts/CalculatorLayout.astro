@@ -316,6 +316,95 @@ const categoryPath = `/${category.toLowerCase()}/`;
           }
         } catch (e) {}
       };
+
+      // =========================================================
+      // UNIVERSAL AUTO-SCROLL TO RESULTS ON CALCULATION
+      // =========================================================
+      (function initAutoScrollToResults() {
+        function scrollToVisibleResult() {
+          // 1. Check if any error / alert message is currently displayed
+          var errorCandidates = document.querySelectorAll(
+            '[role="alert"]:not(.hidden), [id*="error"]:not(.hidden), [id*="err"]:not(.hidden)'
+          );
+          for (var i = 0; i < errorCandidates.length; i++) {
+            var err = errorCandidates[i];
+            if (err && err.offsetParent !== null && err.textContent.trim().length > 0) {
+              err.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              return;
+            }
+          }
+
+          // 2. Selectors for results container across all calculator types
+          var resultSelectors = [
+            '#pm-results-section:not(.hidden)',
+            '#results-section:not(.hidden)',
+            '#results-card:not(.hidden)',
+            '[id*="-results-section"]:not(.hidden)',
+            '[id*="-results-card"]:not(.hidden)',
+            '[id*="results-container"]:not(.hidden)',
+            '[id$="-results"]:not(.hidden)',
+            '#age-result:not(.hidden)',
+            '#gpa-results-card:not(.hidden)',
+            '#wheel-result-box:not(.hidden)',
+            '#sci-result-line:not(.hidden)',
+            '.results-section:not(.hidden)',
+            '[id*="result"]:not(.hidden):not([id*="placeholder"]):not([id*="stale"])'
+          ];
+
+          for (var j = 0; j < resultSelectors.length; j++) {
+            var resultEl = document.querySelector(resultSelectors[j]);
+            if (resultEl && resultEl.offsetParent !== null) {
+              var rect = resultEl.getBoundingClientRect();
+              // Scroll with sticky navbar offset (approx 85px)
+              var headerOffset = 85;
+              var targetY = window.pageYOffset + rect.top - headerOffset;
+
+              window.scrollTo({
+                top: Math.max(0, targetY),
+                behavior: 'smooth'
+              });
+              return;
+            }
+          }
+        }
+
+        // Listen for Calculate button clicks across all forms and widgets
+        document.addEventListener('click', function(e) {
+          var btn = e.target.closest('button, input[type="submit"], input[type="button"]');
+          if (!btn) return;
+
+          var text = (btn.textContent || btn.value || '').toLowerCase();
+          var id = (btn.id || '').toLowerCase();
+
+          // Exclude clear, reset, copy, download buttons
+          if (
+            text.includes('clear') || id.includes('clear') ||
+            text.includes('reset') || id.includes('reset') ||
+            text.includes('copy') || id.includes('copy') ||
+            text.includes('download') || id.includes('download') ||
+            text.includes('share') || id.includes('share')
+          ) {
+            return;
+          }
+
+          var isCalcTrigger = text.includes('calculate') ||
+                              text.includes('convert') ||
+                              text.includes('generate') ||
+                              id.includes('calc') ||
+                              btn.type === 'submit' ||
+                              btn.classList.contains('btn-calculate');
+
+          if (isCalcTrigger) {
+            // Give calculation engine 100ms to compute and unhide results
+            setTimeout(scrollToVisibleResult, 100);
+          }
+        }, true);
+
+        // Listen for form submissions (e.g. hitting Enter in input field)
+        document.addEventListener('submit', function() {
+          setTimeout(scrollToVisibleResult, 100);
+        }, true);
+      })();
     })();
   </script>
 </BaseLayout>

@@ -1600,10 +1600,11 @@ const faqSchema = {
     if (!errBox) return;
     errBox.textContent = msg;
     errBox.classList.remove('hidden');
+    errBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   // MAIN CALCULATION ROUTINE (Manual Trigger - Rule 8)
-  function performCalculation() {
+  function performCalculation(shouldScroll = true) {
     if (errBox) {
       errBox.classList.add('hidden');
       errBox.textContent = '';
@@ -2295,6 +2296,9 @@ const faqSchema = {
       if (staleWarning) staleWarning.classList.add('hidden');
       if (resultsSection) {
         resultsSection.classList.remove('hidden');
+        if (shouldScroll) {
+          resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       }
       try { document.dispatchEvent(new CustomEvent('calculator:updated')); } catch (e) {}
     } catch (e) {
@@ -2360,23 +2364,22 @@ const faqSchema = {
     renderDynamicVisual();
   }
 
-  btnCalc.addEventListener('click', performCalculation);
+  btnCalc.addEventListener('click', () => performCalculation(true));
   btnClear.addEventListener('click', performClearAll);
-  if (btnRecalculateStale) btnRecalculateStale.addEventListener('click', performCalculation);
+  if (btnRecalculateStale) btnRecalculateStale.addEventListener('click', () => performCalculation(true));
 
   // Enter Key Handler
   document.querySelectorAll('input').forEach((inp) => {
     inp.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         e.preventDefault();
-        performCalculation();
+        performCalculation(true);
       }
     });
   });
 
-  // Initial Visual Rendering & Calculation
+  // Initial Visual Rendering
   renderDynamicVisual();
-  performCalculation();
 
   // PDF Export
   if (btnDownloadPdf) {
