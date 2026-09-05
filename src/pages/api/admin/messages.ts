@@ -144,7 +144,14 @@ export const DELETE: APIRoute = async ({ request, cookies, locals }) => {
 
   try {
     const url = new URL(request.url);
-    const id = url.searchParams.get('id');
+    let id = url.searchParams.get('id');
+
+    if (!id) {
+      try {
+        const body = await request.json();
+        id = body?.id;
+      } catch {}
+    }
 
     if (!id) {
       return new Response(JSON.stringify({ error: 'Message ID is required' }), {

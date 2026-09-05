@@ -26,7 +26,7 @@ const totalCount = messages.length;
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
       <div>
         <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-          <span>📬</span> Contact Inquiries &amp; Messages ({totalCount})
+          <span>📬</span> Contact Inquiries &amp; Messages (<span id="header-total-count">{totalCount}</span>)
         </h2>
         <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
           Messages received from visitors via the Contact Us form and sent to <code class="font-mono text-blue-600 dark:text-blue-400 font-bold">support@aifreecalculator.com</code>.
@@ -180,16 +180,15 @@ const totalCount = messages.length;
 
     <!-- Messages Container -->
     <div id="messages-list" class="space-y-4">
-      {messages.length === 0 ? (
-        <div class="rounded-3xl border border-dashed border-slate-300 dark:border-slate-800 p-12 text-center bg-slate-50/50 dark:bg-slate-900/30">
-          <span class="text-4xl">📭</span>
-          <h3 class="mt-3 text-sm font-bold text-slate-900 dark:text-white">No Contact Messages Yet</h3>
-          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
-            When users submit questions, bug reports, or calculator requests on the Contact page, they will appear right here and be forwarded to support@aifreecalculator.com.
-          </p>
-        </div>
-      ) : (
-        messages.map((msg) => {
+      <div id="empty-messages-placeholder" class={`${messages.length === 0 ? '' : 'hidden '}rounded-3xl border border-dashed border-slate-300 dark:border-slate-800 p-12 text-center bg-slate-50/50 dark:bg-slate-900/30`}>
+        <span class="text-4xl">📭</span>
+        <h3 class="mt-3 text-sm font-bold text-slate-900 dark:text-white">No Contact Messages Yet</h3>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+          When users submit questions, bug reports, or calculator requests on the Contact page, they will appear right here and be forwarded to support@aifreecalculator.com.
+        </p>
+      </div>
+
+      {messages.map((msg) => {
           const isNew = msg.status === 'new';
           const isReplied = msg.status === 'replied';
           const isArchived = msg.status === 'archived';
@@ -330,7 +329,7 @@ const totalCount = messages.length;
             </div>
           );
         })
-      )}
+      }
     </div>
 
     <!-- No Match Alert when filtering/searching -->
@@ -354,8 +353,9 @@ const totalCount = messages.length;
       let searchQuery = '';
 
       function applyFilters() {
+        const currentCards = document.querySelectorAll('.message-card');
         let visibleCount = 0;
-        messageCards.forEach((card) => {
+        currentCards.forEach((card) => {
           const status = card.getAttribute('data-status') || '';
           const searchData = card.getAttribute('data-search') || '';
 
@@ -371,11 +371,56 @@ const totalCount = messages.length;
         });
 
         if (noFilterMatches) {
-          if (messageCards.length > 0 && visibleCount === 0) {
+          if (currentCards.length > 0 && visibleCount === 0) {
             noFilterMatches.classList.remove('hidden');
           } else {
             noFilterMatches.classList.add('hidden');
           }
+        }
+      }
+
+      function recalculateDashboardCounters() {
+        const remainingUnread = document.querySelectorAll('.message-card[data-status="new"]').length;
+        const repliedCount = document.querySelectorAll('.message-card[data-status="replied"]').length;
+        const totalCount = document.querySelectorAll('.message-card').length;
+
+        // Stat cards
+        const unreadStatEl = document.getElementById('stat-unread-count');
+        if (unreadStatEl) unreadStatEl.textContent = String(remainingUnread);
+
+        const repliedStatEl = document.getElementById('stat-replied-count');
+        if (repliedStatEl) repliedStatEl.textContent = String(repliedCount);
+
+        const totalStatEl = document.getElementById('stat-total-count');
+        if (totalStatEl) totalStatEl.textContent = String(totalCount);
+
+        // Top Header total count
+        const headerTotalEl = document.getElementById('header-total-count');
+        if (headerTotalEl) headerTotalEl.textContent = String(totalCount);
+
+        // Filter tab buttons (All, Unread, Replied)
+        const allTabBtn = document.querySelector('.filter-btn[data-filter="all"]');
+        if (allTabBtn) allTabBtn.textContent = `All (${totalCount})`;
+
+        const unreadTabBtn = document.querySelector('.filter-btn[data-filter="new"]');
+        if (unreadTabBtn) unreadTabBtn.textContent = `Unread (${remainingUnread})`;
+
+        const repliedTabBtn = document.querySelector('.filter-btn[data-filter="replied"]');
+        if (repliedTabBtn) repliedTabBtn.textContent = `Replied (${repliedCount})`;
+
+        // Empty state placeholder
+        const emptyPlaceholder = document.getElementById('empty-messages-placeholder');
+        if (emptyPlaceholder) {
+          if (totalCount === 0) {
+            emptyPlaceholder.classList.remove('hidden');
+          } else {
+            emptyPlaceholder.classList.add('hidden');
+          }
+        }
+
+        // Global sidebar badge & floating notification popup
+        if (typeof window.updateAdminUnreadCount === 'function') {
+          window.updateAdminUnreadCount(remainingUnread);
         }
       }
 
@@ -529,38 +574,14 @@ const totalCount = messages.length;
           });
         }
 
-        // Recalculate stats on page
-        const remainingUnread = document.querySelectorAll('.message-card[data-status="new"]').length;
-        const repliedCount = document.querySelectorAll('.message-card[data-status="replied"]').length;
-        const totalCount = document.querySelectorAll('.message-card').length;
-
-        const unreadStatEl = document.getElementById('stat-unread-count');
-        if (unreadStatEl) unreadStatEl.textContent = String(remainingUnread);
-
-        const repliedStatEl = document.getElementById('stat-replied-count');
-        if (repliedStatEl) repliedStatEl.textContent = String(repliedCount);
-
-        const totalStatEl = document.getElementById('stat-total-count');
-        if (totalStatEl) totalStatEl.textContent = String(totalCount);
-
-        const unreadTabBtn = document.querySelector('.filter-btn[data-filter="new"]');
-        if (unreadTabBtn) unreadTabBtn.textContent = `Unread (${remainingUnread})`;
-
-        const repliedTabBtn = document.querySelector('.filter-btn[data-filter="replied"]');
-        if (repliedTabBtn) repliedTabBtn.textContent = `Replied (${repliedCount})`;
-
-        const allTabBtn = document.querySelector('.filter-btn[data-filter="all"]');
-        if (allTabBtn) allTabBtn.textContent = `All (${totalCount})`;
-
-        // Update global sidebar badge and notification popup immediately!
-        if (typeof window.updateAdminUnreadCount === 'function') {
-          window.updateAdminUnreadCount(remainingUnread);
-        }
+        // Recalculate stats on page, tabs, header, and global badge immediately!
+        recalculateDashboardCounters();
 
         // If currently filtering to "new", smoothly hide the card
         if (currentFilter === 'new') {
           card.style.display = 'none';
         }
+        applyFilters();
       }
 
       // Mark message as read when clicking an unread message card to view it
@@ -653,16 +674,17 @@ const totalCount = messages.length;
 
             if (res.ok) {
               if (card) {
-                card.remove();
-                const remainingUnread = document.querySelectorAll('.message-card[data-status="new"]').length;
-                const totalCount = document.querySelectorAll('.message-card').length;
-                const unreadStatEl = document.getElementById('stat-unread-count');
-                if (unreadStatEl) unreadStatEl.textContent = String(remainingUnread);
-                const totalStatEl = document.getElementById('stat-total-count');
-                if (totalStatEl) totalStatEl.textContent = String(totalCount);
-                if (typeof window.updateAdminUnreadCount === 'function') {
-                  window.updateAdminUnreadCount(remainingUnread);
-                }
+                card.style.transition = 'all 0.2s ease-out';
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.96)';
+                setTimeout(() => {
+                  card.remove();
+                  recalculateDashboardCounters();
+                  applyFilters();
+                }, 200);
+              } else {
+                recalculateDashboardCounters();
+                applyFilters();
               }
             } else {
               const errData = await res.json().catch(() => ({}));
