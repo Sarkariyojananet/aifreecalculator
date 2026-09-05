@@ -142,12 +142,23 @@ const resolvedOgImage = ogImage.startsWith('http')
 
         async function fetchAdConfig() {
           try {
-            const res = await fetch('/api/adsense-config/?t=' + Date.now(), {
-              cache: 'no-store',
-              headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' },
-            });
+            const CACHE_KEY = 'adsense_cfg';
+            const cached = sessionStorage.getItem(CACHE_KEY);
+            if (cached) {
+              try {
+                const parsed = JSON.parse(cached);
+                if (parsed && parsed.expiry > Date.now() && parsed.data) {
+                  return parsed.data;
+                }
+              } catch {}
+            }
+            const res = await fetch('/api/adsense-config/');
             if (!res.ok) return null;
-            return await res.json();
+            const data = await res.json();
+            try {
+              sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data, expiry: Date.now() + 300_000 }));
+            } catch {}
+            return data;
           } catch (err) {
             return null;
           }

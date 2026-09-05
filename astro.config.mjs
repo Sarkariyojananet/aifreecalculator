@@ -1,6 +1,7 @@
 import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 import cloudflare from '@astrojs/cloudflare';
+import { cacheCloudflare } from '@astrojs/cloudflare/cache';
 
 import sitemap from '@astrojs/sitemap';
 
@@ -10,6 +11,10 @@ export default defineConfig({
   adapter: cloudflare({
     imageService: 'passthrough',
   }),
+
+  cache: {
+    provider: cacheCloudflare(),
+  },
 
   vite: {
     plugins: [tailwindcss()],

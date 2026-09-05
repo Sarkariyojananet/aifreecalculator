@@ -236,11 +236,24 @@ export async function deleteFAQ(id: string, locals?: any): Promise<FAQItem[]> {
   return filtered;
 }
 
+// In-memory cache with 60-second TTL to avoid D1 queries on every page request
+let inMemoryRedirectsCache: { data: RedirectRule[]; expiry: number } | null = null;
+
 export async function getRedirectRules(locals?: any): Promise<RedirectRule[]> {
-  return await readSetting<RedirectRule[]>('cms_redirects', [], locals);
+  const now = Date.now();
+  if (inMemoryRedirectsCache && inMemoryRedirectsCache.expiry > now) {
+    return inMemoryRedirectsCache.data;
+  }
+  const rules = await readSetting<RedirectRule[]>('cms_redirects', [], locals);
+  inMemoryRedirectsCache = {
+    data: rules,
+    expiry: now + 60_000, // 60-second TTL
+  };
+  return rules;
 }
 
 export async function saveRedirectRules(rules: RedirectRule[], locals?: any): Promise<void> {
+  inMemoryRedirectsCache = null; // Invalidate cache immediately on save
   await writeSetting('cms_redirects', rules, locals);
 }
 
