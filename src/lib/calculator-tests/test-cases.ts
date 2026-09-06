@@ -10,6 +10,8 @@ import type { CalculatorTestCase } from './types';
 // ─── Formula Imports ───────────────────────────────────────────────────────────
 import { calculateEmi } from '../calculators/emi';
 import { calculateSipComprehensive } from '../calculators/sip';
+import { calculateSwp } from '../calculators/swp';
+import { calculateRecurringXirr, calculateCustomXirr } from '../calculators/xirr';
 import { calculateGstComprehensive } from '../calculators/gst';
 import { calculateBmi } from '../calculators/bmi';
 import { calculateSimpleInterestComprehensive } from '../calculators/simple-interest';
@@ -49,6 +51,7 @@ import {
 } from '../calculators/plaster';
 import { calculateIndiaTax } from '../calculators/income-tax';
 import { calculateSalaryComprehensive } from '../calculators/salary';
+import { calculateGratuity, calculateSimpleGratuity, calculateAdvancedGratuity } from '../calculators/gratuity';
 import { calculateMortgageComprehensive } from '../calculators/mortgage';
 import { calculatePersonalLoanComprehensive } from '../calculators/loan';
 import { calculateAutoLoan } from '../calculators/auto-loan';
@@ -271,6 +274,230 @@ const sipTests: CalculatorTestCase[] = [
     tolerance: 1,
     description: 'Minimum valid SIP input.',
     run: () => calculateSipComprehensive({ monthlyInvestment: 1, expectedAnnualReturnRate: 1, timePeriodYears: 1 }),
+  },
+];
+
+// ─── SWP Calculator Tests ──────────────────────────────────────────────────────
+const swpTests: CalculatorTestCase[] = [
+  {
+    slug: 'swp-calculator',
+    name: 'Simple SWP ₹10k, ₹500/mo, 10%, 1yr (Beginning of Month)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'finalBalance',
+    expectedValue: 4711.99,
+    tolerance: 1,
+    description: 'Verifies 1-year SWP of ₹500/mo from ₹10,000 at 10% with Beginning of Month timing yields approx ₹4,712.',
+    run: () => calculateSwp({
+      initialInvestment: 10000,
+      monthlyWithdrawal: 500,
+      annualReturnRate: 10,
+      timePeriodYears: 1,
+      annualInflationRate: 0,
+      withdrawalTiming: 'beginning',
+    }),
+  },
+  {
+    slug: 'swp-calculator',
+    name: 'Simple SWP ₹10k, ₹500/mo, 10%, 1yr (End of Month)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'finalBalance',
+    expectedValue: 4764.35,
+    tolerance: 0.1,
+    description: 'Verifies 1-year SWP of ₹500/mo from ₹10,000 at 10% with End of Month timing yields ₹4,764.35.',
+    run: () => calculateSwp({
+      initialInvestment: 10000,
+      monthlyWithdrawal: 500,
+      annualReturnRate: 10,
+      timePeriodYears: 1,
+      annualInflationRate: 0,
+      withdrawalTiming: 'end',
+    }),
+  },
+  {
+    slug: 'swp-calculator',
+    name: 'Simple SWP ₹500k, ₹10k/mo, 8%, 5yr (Beginning of Month)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'finalBalance',
+    expectedValue: 5255.83,
+    tolerance: 0.1,
+    description: 'Verifies 5-year SWP of ₹10,000/mo from ₹500,000 at 8% with Beginning of Month timing leaves ₹5,255.83.',
+    run: () => calculateSwp({
+      initialInvestment: 500000,
+      monthlyWithdrawal: 10000,
+      annualReturnRate: 8,
+      timePeriodYears: 5,
+      annualInflationRate: 0,
+      withdrawalTiming: 'beginning',
+    }),
+  },
+  {
+    slug: 'swp-calculator',
+    name: 'Simple SWP ₹500k, ₹10k/mo, 8%, 5yr (End of Month)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'finalBalance',
+    expectedValue: 10154.29,
+    tolerance: 0.1,
+    description: 'Verifies 5-year SWP of ₹10,000/mo from ₹500,000 at 8% with End of Month timing leaves ₹10,154.29.',
+    run: () => calculateSwp({
+      initialInvestment: 500000,
+      monthlyWithdrawal: 10000,
+      annualReturnRate: 8,
+      timePeriodYears: 5,
+      annualInflationRate: 0,
+      withdrawalTiming: 'end',
+    }),
+  },
+  {
+    slug: 'swp-calculator',
+    name: 'Advanced SWP with 6% Inflation (Beginning of Month - Depletes Mo 54)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'totalWithdrawn',
+    expectedValue: 597121.09,
+    tolerance: 0.1,
+    description: 'Verifies 6% inflation-adjusted withdrawal with Beginning of Month exhausts corpus at month 54 with ₹597,121.09 total withdrawn.',
+    run: () => calculateSwp({
+      initialInvestment: 500000,
+      monthlyWithdrawal: 10000,
+      annualReturnRate: 8,
+      timePeriodYears: 5,
+      annualInflationRate: 6,
+      withdrawalTiming: 'beginning',
+    }),
+  },
+  {
+    slug: 'swp-calculator',
+    name: 'Advanced SWP with 6% Inflation (End of Month - Depletes Mo 55)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'totalWithdrawn',
+    expectedValue: 601869.27,
+    tolerance: 0.1,
+    description: 'Verifies 6% inflation-adjusted withdrawal with End of Month exhausts corpus at month 55 with ₹601,869.27 total withdrawn.',
+    run: () => calculateSwp({
+      initialInvestment: 500000,
+      monthlyWithdrawal: 10000,
+      annualReturnRate: 8,
+      timePeriodYears: 5,
+      annualInflationRate: 6,
+      withdrawalTiming: 'end',
+    }),
+  },
+  {
+    slug: 'swp-calculator',
+    name: 'SWP Sustained Corpus (Growth Exceeds Withdrawals)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'isDepleted',
+    expectedValue: 0,
+    tolerance: 0,
+    description: 'Verifies ₹10 Lakh at 10% return with conservative ₹5,000 monthly withdrawal never depletes.',
+    run: () => {
+      const res = calculateSwp({
+        initialInvestment: 1000000,
+        monthlyWithdrawal: 5000,
+        annualReturnRate: 10,
+        timePeriodYears: 5,
+        annualInflationRate: 0,
+        withdrawalTiming: 'beginning',
+      });
+      return { isDepleted: res.isDepleted ? 1 : 0 };
+    },
+  },
+];
+
+// ─── XIRR Calculator Tests ─────────────────────────────────────────────────────
+
+const xirrTests: CalculatorTestCase[] = [
+  {
+    slug: 'xirr-calculator',
+    name: 'XIRR Yearly ₹10k (2021 to 2024, ₹60k maturity)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'xirrPercent',
+    expectedValue: 38.92,
+    tolerance: 0.05,
+    description: 'Verifies 3 yearly installments of ₹10,000 reaching ₹60,000 on 2024-01-01 yields 38.92% p.a.',
+    run: () => calculateRecurringXirr({
+      frequency: 'Yearly',
+      startDate: '2021-01-01',
+      maturityDate: '2024-01-01',
+      recurringAmount: 10000,
+      maturityAmount: 60000,
+    }),
+  },
+  {
+    slug: 'xirr-calculator',
+    name: 'XIRR Monthly ₹5k for 6 months (₹32k maturity)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'totalInvested',
+    expectedValue: 30000,
+    tolerance: 0,
+    description: 'Verifies 6 monthly installments of ₹5,000 gives totalInvested of ₹30,000.',
+    run: () => calculateRecurringXirr({
+      frequency: 'Monthly',
+      startDate: '2023-01-01',
+      maturityDate: '2023-07-01',
+      recurringAmount: 5000,
+      maturityAmount: 32000,
+    }),
+  },
+  {
+    slug: 'xirr-calculator',
+    name: 'XIRR 14-Day Recurring Installment Count',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'investmentCount',
+    expectedValue: 5,
+    tolerance: 0,
+    description: 'Verifies 14-day intervals from 2023-01-01 to 2023-02-28 results in 5 installments (Jan 1, Jan 15, Jan 29, Feb 12, Feb 26).',
+    run: () => calculateRecurringXirr({
+      frequency: '14 Days',
+      startDate: '2023-01-01',
+      maturityDate: '2023-02-28',
+      recurringAmount: 1000,
+      maturityAmount: 5500,
+    }),
+  },
+  {
+    slug: 'xirr-calculator',
+    name: 'XIRR Custom Cash Flows Test',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'totalInvested',
+    expectedValue: 70000,
+    tolerance: 0,
+    description: 'Verifies custom cash flows total invested calculation.',
+    run: () => calculateCustomXirr([
+      { date: '2022-01-01', amount: -50000 },
+      { date: '2022-07-01', amount: -20000 },
+      { date: '2023-01-01', amount: 80000 },
+    ]),
+  },
+  {
+    slug: 'xirr-calculator',
+    name: 'XIRR Recurring Investment with Loss',
+    category: 'Boundary',
+    expectedBehavior: 'result',
+    expectedResultKey: 'isPositive',
+    expectedValue: 0,
+    tolerance: 0,
+    description: 'Verifies negative return when maturity value is less than total invested (₹20k invested, ₹15k returned).',
+    run: () => {
+      const res = calculateRecurringXirr({
+        frequency: 'Yearly',
+        startDate: '2021-01-01',
+        maturityDate: '2023-01-01',
+        recurringAmount: 10000,
+        maturityAmount: 15000,
+      });
+      return { isPositive: res.isPositive ? 1 : 0 };
+    },
   },
 ];
 
@@ -1868,6 +2095,147 @@ const salaryTests: CalculatorTestCase[] = [
   },
 ];
 
+// ─── Gratuity Calculator Tests ─────────────────────────────────────────────────
+const gratuityTests: CalculatorTestCase[] = [
+  {
+    slug: 'gratuity-calculator',
+    name: 'Simple Gratuity ₹60k Salary, 5 Years Service',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'gratuityAmount',
+    expectedValue: 173076.92,
+    tolerance: 0.1,
+    description: '(60000 * 15 * 5) / 26 = ₹1,73,076.92.',
+    run: () => calculateSimpleGratuity({
+      monthlySalary: 60000,
+      yearsOfService: 5,
+      monthsOfService: 0,
+    }),
+  },
+  {
+    slug: 'gratuity-calculator',
+    name: 'Advanced Gratuity ₹50k Basic, 8 Yrs 8 Mos (9 Yrs)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'gratuityAmount',
+    expectedValue: 259615.38,
+    tolerance: 0.1,
+    description: '(50000 * 15 * 9) / 26 = ₹2,59,615.38. Verifies 8 months rounds up to 9 years.',
+    run: () => calculateAdvancedGratuity({
+      basicSalary: 50000,
+      dearnessAllowance: 0,
+      yearsOfService: 8,
+      monthsOfService: 8,
+      employmentSituation: 'resignation',
+    }),
+  },
+  {
+    slug: 'gratuity-calculator',
+    name: 'Covered Employee ₹40k Basic, 10 Yrs 7 Mos Rounding to 11 Yrs',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'gratuityAmount',
+    expectedValue: 253846.15,
+    tolerance: 0.1,
+    description: '(40000 * 15 * 11) / 26 = ₹2,53,846.15. Verifies 7 months rounds up to 11 years.',
+    run: () => calculateGratuity({
+      basicSalary: 40000,
+      dearnessAllowance: 0,
+      yearsOfService: 10,
+      monthsOfService: 7,
+      isCoveredUnderAct: true,
+    }),
+  },
+  {
+    slug: 'gratuity-calculator',
+    name: '7 Years 6 Months (≤ 6 mos) Does Not Round Up',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'roundedServiceYears',
+    expectedValue: 7,
+    tolerance: 0,
+    description: '6 months service in incomplete year remains 7 years.',
+    run: () => calculateGratuity({
+      basicSalary: 30000,
+      dearnessAllowance: 0,
+      yearsOfService: 7,
+      monthsOfService: 6,
+      isCoveredUnderAct: true,
+    }),
+  },
+  {
+    slug: 'gratuity-calculator',
+    name: '7 Years 7 Months (> 6 mos) Rounds Up to 8 Years',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'roundedServiceYears',
+    expectedValue: 8,
+    tolerance: 0,
+    description: '7 months service in incomplete year rounds up to 8 years.',
+    run: () => calculateGratuity({
+      basicSalary: 30000,
+      dearnessAllowance: 0,
+      yearsOfService: 7,
+      monthsOfService: 7,
+      isCoveredUnderAct: true,
+    }),
+  },
+  {
+    slug: 'gratuity-calculator',
+    name: '4 Years Service Resignation Warning (Ineligible)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'isEligible',
+    expectedValue: 0, // boolean false converted or checked
+    tolerance: 0,
+    description: 'Verifies < 5 years service without death/disability marks isEligible as false.',
+    run: () => {
+      const res = calculateGratuity({
+        basicSalary: 50000,
+        yearsOfService: 4,
+        monthsOfService: 2,
+        reasonForExit: 'resignation',
+      });
+      return { ...res, isEligible: res.isEligible ? 1 : 0 };
+    },
+  },
+  {
+    slug: 'gratuity-calculator',
+    name: '4 Years Service Death / Disability 5-Year Waiver',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'isEligible',
+    expectedValue: 1,
+    tolerance: 0,
+    description: 'Verifies death or disability waives the 5-year requirement.',
+    run: () => {
+      const res = calculateGratuity({
+        basicSalary: 50000,
+        yearsOfService: 4,
+        monthsOfService: 2,
+        reasonForExit: 'death',
+      });
+      return { ...res, isEligible: res.isEligible ? 1 : 0 };
+    },
+  },
+  {
+    slug: 'gratuity-calculator',
+    name: 'Statutory ₹20 Lakh Tax Exemption Cap',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'exemptAmount',
+    expectedValue: 2000000,
+    tolerance: 0,
+    description: 'For high gratuity payouts exceeding ₹20 Lakhs, exemption is capped at ₹20,00,000.',
+    run: () => calculateGratuity({
+      basicSalary: 300000,
+      yearsOfService: 20,
+      monthsOfService: 0,
+      isCoveredUnderAct: true,
+    }),
+  },
+];
+
 // ─── Mortgage Calculator Tests ─────────────────────────────────────────────────
 const mortgageTests: CalculatorTestCase[] = [
   {
@@ -2169,6 +2537,8 @@ const rngTests: CalculatorTestCase[] = [
 export const ALL_TEST_CASES: CalculatorTestCase[] = [
   ...emiTests,
   ...sipTests,
+  ...swpTests,
+  ...xirrTests,
   ...gstTests,
   ...bmiTests,
   ...simpleInterestTests,
@@ -2192,6 +2562,7 @@ export const ALL_TEST_CASES: CalculatorTestCase[] = [
   ...plasterTests,
   ...incomeTaxTests,
   ...salaryTests,
+  ...gratuityTests,
   ...mortgageTests,
   ...loanTests,
   ...autoLoanTests,

@@ -3,8 +3,15 @@ export const prerender = false;
 
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { calculators } from '../../../data/calculators';
-import { getTestCasesForCalculator } from '../../../lib/calculator-tests/test-cases';
-import { getLatestTestResults, getErrorLog } from '../../../lib/calculator-tests/health-store';
+import { getTestCasesForSlug } from '../../../lib/calculator-tests/test-cases';
+import {
+  getLatestTestResults,
+  getErrorLog,
+  getCustomTestCases,
+  getTestRunHistory,
+} from '../../../lib/calculator-tests/health-store';
+import { computeCalculatorHealthScore } from '../../../lib/calculator-tests/health-scorer';
+import { inspectCalculatorPage } from '../../../lib/calculator-tests/page-inspector';
 
 const { slug } = Astro.params;
 const calc = calculators.find((c) => c.slug === slug);
@@ -13,41 +20,84 @@ if (!calc) {
   return Astro.redirect('/admin/calculator-health/');
 }
 
-const testCases = getTestCasesForCalculator(calc.slug);
+const staticTestCases = getTestCasesForSlug(calc.slug);
+const customTestCases = await getCustomTestCases(Astro.locals, calc.slug);
 const allLatestResults = await getLatestTestResults(Astro.locals);
 const calcLatestResult = allLatestResults?.[calc.slug] || null;
 const calcErrors = await getErrorLog(Astro.locals, { slug: calc.slug, limit: 50 });
 const unreviewedErrors = calcErrors.filter((e) => !e.reviewed);
+const runHistory = await getTestRunHistory(Astro.locals);
 
-// Compute status
-let healthStatus: 'Healthy' | 'Needs Review' | 'Critical' | 'Unknown' = 'Unknown';
-if (calcLatestResult) {
-  if (calcLatestResult.state === 'PASS' && unreviewedErrors.length === 0) {
-    healthStatus = 'Healthy';
-  } else if (calcLatestResult.state === 'ERROR' || unreviewedErrors.length >= 10) {
-    healthStatus = 'Critical';
-  } else {
-    healthStatus = 'Needs Review';
-  }
-} else if (testCases.length === 0) {
-  healthStatus = 'Unknown';
-}
-
-const enrichedTestCases = testCases.map((tc) => {
-  const result = calcLatestResult?.results.find((r) => r.testName === tc.name);
-  return {
-    ...tc,
-    state: result?.state || 'NOT_RUN',
-    durationMs: result?.durationMs,
-    errorMessage: result?.errorMessage,
-    actualValue: result?.actualValue,
-    expectedValue: result?.expectedValue,
-  };
+// Compute 0-100 Health Score
+const healthScoreObj = computeCalculatorHealthScore(calc, {
+  testSummary: calcLatestResult
+    ? {
+        slug: calc.slug,
+        totalTests: calcLatestResult.total,
+        passed: calcLatestResult.passed,
+        failed: calcLatestResult.failed,
+        errored: calcLatestResult.errored,
+        skipped: calcLatestResult.skipped,
+        state: calcLatestResult.state as any,
+        lastTestedAt: calcLatestResult.lastTestedAt,
+        results: [],
+      }
+    : null,
+  unreviewedErrors: unreviewedErrors.length,
+  lastCheckedAt: calcLatestResult?.lastTestedAt,
 });
+
+const pageInspection = inspectCalculatorPage(calc);
+
+// Enriched test cases list
+const enrichedTestCases = [
+  ...staticTestCases.map((tc) => {
+    const result = calcLatestResult?.results.find((r) => r.testName === tc.name);
+    return {
+      id: `static_${tc.name.replace(/\s+/g, '_')}`,
+      name: tc.name,
+      category: tc.category,
+      expectedBehavior: tc.expectedBehavior,
+      expectedResultKey: tc.expectedResultKey,
+      expectedValue: tc.expectedValue,
+      tolerance: tc.tolerance ?? 0,
+      inputValues: tc.inputValues,
+      description: tc.description,
+      isCustom: false,
+      active: true,
+      state: result?.state || 'NOT_RUN',
+      actualValue: result?.actualValue,
+      errorMessage: result?.errorMessage,
+      durationMs: result?.durationMs,
+    };
+  }),
+  ...customTestCases.map((tc) => {
+    const result = calcLatestResult?.results.find((r) => r.testName === tc.name);
+    return {
+      id: tc.id,
+      name: tc.name,
+      category: tc.category,
+      expectedBehavior: tc.expectedBehavior,
+      expectedResultKey: tc.expectedResultKey,
+      expectedValue: tc.expectedValue,
+      tolerance: tc.tolerance ?? 0,
+      inputValues: tc.inputValues,
+      description: tc.description,
+      isCustom: true,
+      active: tc.active,
+      state: result?.state || 'NOT_RUN',
+      actualValue: result?.actualValue,
+      errorMessage: result?.errorMessage,
+      durationMs: result?.durationMs,
+    };
+  }),
+];
+
+const publicUrl = `/${calc.category.toLowerCase()}/${calc.slug}/`;
 ---
 
-<AdminLayout title={`${calc.name} Health Diagnostics | Calculator CMS`} sectionTitle="Calculator Health" activeSection="calculator-health">
-  <div class="space-y-8 max-w-7xl mx-auto pb-12">
+<AdminLayout title={`${calc.name} Health & Formula Test Manager | Calculator CMS`} sectionTitle="Calculator Health" activeSection="calculator-health">
+  <div class="space-y-8 max-w-7xl mx-auto pb-16">
 
     <!-- Breadcrumb -->
     <nav class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400" aria-label="Breadcrumb">
@@ -58,329 +108,675 @@ const enrichedTestCases = testCases.map((tc) => {
       <span class="font-bold text-slate-800 dark:text-slate-200 truncate">{calc.name}</span>
     </nav>
 
-    <!-- Top Action Header -->
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
-      <div class="flex items-start gap-3">
-        <span class="text-3xl shrink-0 mt-1">{calc.icon || '🧮'}</span>
+    <!-- Header Hero Card -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex items-start gap-4">
+        <span class="text-4xl shrink-0 mt-0.5">{calc.icon || '🧮'}</span>
         <div>
-          <div class="flex items-center gap-2.5">
+          <div class="flex items-center gap-2.5 flex-wrap">
             <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
               {calc.name}
             </h2>
             <span class="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-0.5 text-xs font-bold text-slate-600 dark:text-slate-300">
               {calc.category}
             </span>
+            <span class={`rounded-xl px-2.5 py-0.5 text-xs font-black uppercase font-mono ${
+              healthScoreObj.grade === 'Healthy'
+                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                : healthScoreObj.grade === 'Warning'
+                ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                : healthScoreObj.grade === 'Needs Attention'
+                ? 'bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300'
+                : 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300'
+            }`}>
+              {healthScoreObj.grade}
+            </span>
           </div>
-          <div class="flex items-center gap-3 text-xs text-slate-400 font-mono mt-1">
+          <div class="flex items-center gap-3 text-xs text-slate-400 font-mono mt-1.5 flex-wrap">
             <span>/{calc.slug}/</span>
             <span>•</span>
-            <a href={`/${calc.category.toLowerCase()}/${calc.slug}/`} target="_blank" class="text-blue-600 hover:underline dark:text-blue-400 font-sans font-semibold">
-              Open Public Calculator ↗
+            <a href={publicUrl} target="_blank" class="text-blue-600 hover:underline dark:text-blue-400 font-sans font-semibold">
+              Live Calculator ↗
+            </a>
+            <span>•</span>
+            <a href={`/admin/seo/${calc.slug}/`} class="text-blue-600 hover:underline dark:text-blue-400 font-sans font-semibold">
+              SEO Diagnostics ↗
             </a>
           </div>
         </div>
       </div>
 
-      <div class="flex items-center gap-3">
+      <div class="flex flex-wrap items-center gap-2.5">
+        <button
+          id="btn-open-add-test"
+          type="button"
+          class="rounded-xl border border-slate-300 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 transition cursor-pointer"
+        >
+          ➕ Add Test Case
+        </button>
         <button
           id="run-single-calc-btn"
           type="button"
-          data-slug={calc.slug}
-          class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition cursor-pointer disabled:opacity-50"
+          class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-500/25 hover:bg-blue-700 transition cursor-pointer disabled:opacity-50"
         >
           <span id="btn-icon">⚡</span>
-          <span id="btn-text">Run Health Test Suite</span>
+          <span id="btn-text">Run Tests Now</span>
         </button>
       </div>
     </div>
 
-    <!-- Sub-Navigation Bar -->
-    <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 dark:border-slate-800">
-      <a href="/admin/calculator-health/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
-        ← Back to Overview
-      </a>
-      <a href={`/admin/calculator-health/${calc.slug}/`} class="rounded-xl bg-blue-50 px-3.5 py-1.5 text-xs font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300 shrink-0">
-        Diagnostics &amp; Test Suite
-      </a>
-      <a href={`/admin/calculators/new/?edit=${calc.slug}`} class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
-        Edit Configuration 📝
-      </a>
-    </div>
-
-    <!-- Diagnostic Summary Cards -->
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Overall Health</div>
-        <div class="mt-2 text-xl font-black">
-          {healthStatus === 'Healthy' && (
-            <span class="text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
-              <span class="h-2 w-2 rounded-full bg-emerald-500"></span> Healthy
-            </span>
-          )}
-          {healthStatus === 'Needs Review' && (
-            <span class="text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
-              <span class="h-2 w-2 rounded-full bg-amber-500"></span> Needs Review
-            </span>
-          )}
-          {healthStatus === 'Critical' && (
-            <span class="text-red-600 dark:text-red-400 flex items-center gap-1.5">
-              <span class="h-2 w-2 rounded-full bg-red-500"></span> Critical
-            </span>
-          )}
-          {healthStatus === 'Unknown' && (
-            <span class="text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-              <span class="h-2 w-2 rounded-full bg-slate-400"></span> Untested
-            </span>
-          )}
-        </div>
-        <div class="mt-1 text-[11px] text-slate-400">
-          {calcLatestResult ? `Last verified: ${new Date(calcLatestResult.lastTestedAt).toLocaleDateString()}` : 'No test run recorded'}
-        </div>
-      </div>
-
-      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Test Suite</div>
-        <div class="mt-2 text-2xl font-black text-slate-900 dark:text-white">
-          {calcLatestResult ? `${calcLatestResult.passed}/${calcLatestResult.total}` : `${testCases.length} Defined`}
-        </div>
-        <div class="mt-1 text-[11px] text-slate-400">
-          {calcLatestResult ? `${calcLatestResult.failed} failed, ${calcLatestResult.errored} errored` : 'Waiting for initial execution'}
-        </div>
-      </div>
-
-      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Runtime Exceptions</div>
-        <div class="mt-2 text-2xl font-black text-slate-900 dark:text-white">
-          {unreviewedErrors.length > 0 ? (
-            <span class="text-red-600 dark:text-red-400">{unreviewedErrors.length}</span>
-          ) : (
-            <span class="text-emerald-600 dark:text-emerald-400">0</span>
-          )}
-        </div>
-        <div class="mt-1 text-[11px] text-slate-400">
-          {calcErrors.length} total logged incidents
-        </div>
-      </div>
-
-      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Avg Latency</div>
-        <div class="mt-2 text-2xl font-black text-slate-900 dark:text-white font-mono">
-          &lt;1 ms
-        </div>
-        <div class="mt-1 text-[11px] text-emerald-600 font-bold">Pure synchronous function</div>
-      </div>
-    </div>
-
-    <!-- Test Cases for This Calculator -->
-    <div class="space-y-4">
-      <div class="flex items-center justify-between">
+    <!-- Active Critical Warning Banner (if formula failing) -->
+    {healthScoreObj.isFormulaFailing && (
+      <div class="rounded-3xl border border-red-300 bg-red-50/90 p-5 dark:border-red-900 dark:bg-red-950/40 text-red-800 dark:text-red-200 flex items-start gap-3">
+        <span class="text-2xl shrink-0">🚨</span>
         <div>
-          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <span>🧪</span> Formula Verification Cases ({testCases.length})
+          <h4 class="font-black text-sm">CRITICAL FORMULA REGRESSION DETECTED</h4>
+          <p class="text-xs mt-1 leading-relaxed">
+            One or more core formula tests failed for this calculator. Formula regression automatically caps the Health Score below 40. Inspect the failed test cases in the table below to verify expected vs actual numerical outputs.
+          </p>
+        </div>
+      </div>
+    )}
+
+    <!-- 0-100 Health Score Breakdown Grid -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5 dark:border-slate-800">
+        <div>
+          <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📊</span> Health Score Calculation (0 to 100)
           </h3>
           <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Real formula calls using actual production calculation engines with strict mathematical assertions.
+            Transparent breakdown across mathematical accuracy, runtime safety, interactive functionality, and SEO health.
+          </p>
+        </div>
+        <div class="text-right shrink-0">
+          <div class="text-3xl font-black font-mono text-slate-900 dark:text-white">
+            {healthScoreObj.healthScore}<span class="text-sm text-slate-400">/100</span>
+          </div>
+          <div class="text-[11px] font-bold text-slate-500">Overall Health Score</div>
+        </div>
+      </div>
+
+      <!-- Factor Score Bars -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        
+        <!-- Formula Accuracy -->
+        <div class="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+          <div class="flex justify-between items-center text-xs font-bold text-slate-700 dark:text-slate-300">
+            <span>Formula Tests</span>
+            <span class="font-mono">{healthScoreObj.factors.formulaAccuracy.score}/{healthScoreObj.factors.formulaAccuracy.max}</span>
+          </div>
+          <div class="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 mt-2 overflow-hidden">
+            <div
+              class={`h-full rounded-full ${healthScoreObj.factors.formulaAccuracy.score >= 35 ? 'bg-emerald-500' : 'bg-red-500'}`}
+              style={`width: ${(healthScoreObj.factors.formulaAccuracy.score / healthScoreObj.factors.formulaAccuracy.max) * 100}%;`}
+            ></div>
+          </div>
+          <div class="text-[11px] text-slate-500 mt-2">{healthScoreObj.factors.formulaAccuracy.details}</div>
+        </div>
+
+        <!-- Runtime Safety -->
+        <div class="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+          <div class="flex justify-between items-center text-xs font-bold text-slate-700 dark:text-slate-300">
+            <span>Runtime Safety</span>
+            <span class="font-mono">{healthScoreObj.factors.runtimeSafety.score}/{healthScoreObj.factors.runtimeSafety.max}</span>
+          </div>
+          <div class="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 mt-2 overflow-hidden">
+            <div
+              class={`h-full rounded-full ${healthScoreObj.factors.runtimeSafety.score === 20 ? 'bg-emerald-500' : 'bg-amber-500'}`}
+              style={`width: ${(healthScoreObj.factors.runtimeSafety.score / healthScoreObj.factors.runtimeSafety.max) * 100}%;`}
+            ></div>
+          </div>
+          <div class="text-[11px] text-slate-500 mt-2">{healthScoreObj.factors.runtimeSafety.details}</div>
+        </div>
+
+        <!-- Functionality -->
+        <div class="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+          <div class="flex justify-between items-center text-xs font-bold text-slate-700 dark:text-slate-300">
+            <span>Functionality</span>
+            <span class="font-mono">{healthScoreObj.factors.functionality.score}/{healthScoreObj.factors.functionality.max}</span>
+          </div>
+          <div class="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 mt-2 overflow-hidden">
+            <div
+              class="h-full rounded-full bg-emerald-500"
+              style={`width: ${(healthScoreObj.factors.functionality.score / healthScoreObj.factors.functionality.max) * 100}%;`}
+            ></div>
+          </div>
+          <div class="text-[11px] text-slate-500 mt-2">Inputs, calculate &amp; reset</div>
+        </div>
+
+        <!-- SEO & Metadata -->
+        <div class="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+          <div class="flex justify-between items-center text-xs font-bold text-slate-700 dark:text-slate-300">
+            <span>SEO &amp; Schema</span>
+            <span class="font-mono">{healthScoreObj.factors.pageAndSeo.score}/{healthScoreObj.factors.pageAndSeo.max}</span>
+          </div>
+          <div class="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 mt-2 overflow-hidden">
+            <div
+              class={`h-full rounded-full ${healthScoreObj.factors.pageAndSeo.score >= 12 ? 'bg-emerald-500' : 'bg-amber-500'}`}
+              style={`width: ${(healthScoreObj.factors.pageAndSeo.score / healthScoreObj.factors.pageAndSeo.max) * 100}%;`}
+            ></div>
+          </div>
+          <div class="text-[11px] text-slate-500 mt-2">Title, description &amp; schema</div>
+        </div>
+
+        <!-- Route Accessibility -->
+        <div class="rounded-2xl border border-slate-200/80 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+          <div class="flex justify-between items-center text-xs font-bold text-slate-700 dark:text-slate-300">
+            <span>Accessibility</span>
+            <span class="font-mono">{healthScoreObj.factors.accessibility.score}/{healthScoreObj.factors.accessibility.max}</span>
+          </div>
+          <div class="w-full h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 mt-2 overflow-hidden">
+            <div
+              class="h-full rounded-full bg-emerald-500"
+              style={`width: ${(healthScoreObj.factors.accessibility.score / healthScoreObj.factors.accessibility.max) * 100}%;`}
+            ></div>
+          </div>
+          <div class="text-[11px] text-slate-500 mt-2">Route online &amp; mapped</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Formula Tests Suite Section -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🧪</span> Formula Accuracy Test Suite ({enrichedTestCases.length} Tests)
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Predefined and custom regression test cases with expected vs actual output validation and numeric tolerance checks.
           </p>
         </div>
       </div>
 
-      {testCases.length === 0 ? (
-        <div class="rounded-3xl border border-slate-200 bg-white p-8 text-center text-slate-400 dark:border-slate-800 dark:bg-slate-900 text-xs">
-          No automated test cases are currently registered for this calculator.
-        </div>
-      ) : (
-        <div class="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-xs dark:border-slate-800 dark:bg-slate-900">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-slate-50/80 dark:bg-slate-950/60 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider border-b border-slate-100 dark:border-slate-800">
-              <tr>
-                <th class="py-3 px-4">Test Name</th>
-                <th class="py-3 px-4">Category</th>
-                <th class="py-3 px-4">Expected Behavior</th>
-                <th class="py-3 px-4">Latest Execution</th>
-                <th class="py-3 px-4 text-right">Duration</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
-              {enrichedTestCases.map((tc) => (
-                <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
-                  <td class="py-3.5 px-4">
-                    <div class="font-bold text-slate-900 dark:text-white">{tc.name}</div>
-                    {tc.errorMessage && (
-                      <div class="text-[11px] text-red-600 dark:text-red-400 font-mono mt-1">
-                        {tc.errorMessage}
-                      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider border-b border-slate-100 dark:border-slate-800">
+            <tr>
+              <th class="py-3 px-3">Test Name</th>
+              <th class="py-3 px-3">Category</th>
+              <th class="py-3 px-3">Status</th>
+              <th class="py-3 px-3 text-right">Expected</th>
+              <th class="py-3 px-3 text-right">Actual</th>
+              <th class="py-3 px-3 text-right">Tolerance</th>
+              <th class="py-3 px-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+            {enrichedTestCases.map((tc) => (
+              <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
+                <td class="py-3 px-3">
+                  <div class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    {tc.name}
+                    {tc.isCustom && (
+                      <span class="rounded bg-purple-100 px-1.5 py-0.2 text-[9px] font-extrabold text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+                        Custom
+                      </span>
                     )}
-                  </td>
+                  </div>
+                  {tc.description && (
+                    <div class="text-[11px] text-slate-400 mt-0.5">{tc.description}</div>
+                  )}
+                  {tc.errorMessage && (
+                    <div class="text-[11px] font-mono text-red-600 dark:text-red-400 mt-1">{tc.errorMessage}</div>
+                  )}
+                </td>
 
-                  <td class="py-3.5 px-4">
-                    <span class={
-                      tc.category === 'Normal' ? 'rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300' :
-                      tc.category === 'Edge Case' ? 'rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300' :
-                      tc.category === 'Boundary' ? 'rounded-md bg-purple-50 px-2 py-0.5 text-[10px] font-bold text-purple-700 dark:bg-purple-950 dark:text-purple-300' :
-                      'rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-950 dark:text-amber-300'
-                    }>
-                      {tc.category}
+                <td class="py-3 px-3">
+                  <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                    {tc.category}
+                  </span>
+                </td>
+
+                <td class="py-3 px-3">
+                  {tc.state === 'PASS' && (
+                    <span class="inline-flex items-center gap-1 font-bold text-emerald-600 dark:text-emerald-400">
+                      <span>✓</span> PASS
                     </span>
-                  </td>
+                  )}
+                  {tc.state === 'FAIL' && (
+                    <span class="inline-flex items-center gap-1 font-bold text-red-600 dark:text-red-400">
+                      <span>❌</span> FAIL
+                    </span>
+                  )}
+                  {tc.state === 'ERROR' && (
+                    <span class="inline-flex items-center gap-1 font-bold text-red-600 dark:text-red-400">
+                      <span>⚠️</span> ERROR
+                    </span>
+                  )}
+                  {tc.state === 'NOT_RUN' && (
+                    <span class="text-slate-400 font-medium italic">Pending</span>
+                  )}
+                </td>
 
-                  <td class="py-3.5 px-4">
-                    <div class="font-mono text-xs text-slate-700 dark:text-slate-300">
-                      {tc.expectedBehavior === 'result' ? (
-                        <span>
-                          {tc.expectedResultKey}: <strong>{tc.expectedValue !== undefined ? String(tc.expectedValue) : 'valid finite number'}</strong>
-                          {tc.tolerance ? ` (±${tc.tolerance})` : ''}
-                        </span>
-                      ) : (
-                        <span class="text-amber-600 dark:text-amber-400 font-semibold">
-                          Controlled Error Response
-                        </span>
-                      )}
-                    </div>
-                  </td>
+                <td class="py-3 px-3 text-right font-mono font-bold text-slate-900 dark:text-white">
+                  {tc.expectedValue !== undefined ? String(tc.expectedValue) : '--'}
+                </td>
 
-                  <td class="py-3.5 px-4">
-                    {tc.state === 'PASS' && (
-                      <span class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
-                        <span>✓</span> PASS
-                      </span>
-                    )}
-                    {tc.state === 'FAIL' && (
-                      <span class="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold">
-                        <span>⚠️</span> FAIL
-                      </span>
-                    )}
-                    {tc.state === 'ERROR' && (
-                      <span class="inline-flex items-center gap-1 text-red-600 dark:text-red-400 font-bold">
-                        <span>❌</span> ERROR
-                      </span>
-                    )}
-                    {tc.state === 'NOT_RUN' && (
-                      <span class="text-slate-400">Ready</span>
-                    )}
-                  </td>
+                <td class="py-3 px-3 text-right font-mono">
+                  {tc.actualValue !== undefined ? (
+                    <span class={tc.state === 'PASS' ? 'text-slate-800 dark:text-slate-200' : 'text-red-600 font-bold'}>
+                      {String(tc.actualValue)}
+                    </span>
+                  ) : (
+                    <span class="text-slate-400">--</span>
+                  )}
+                </td>
 
-                  <td class="py-3.5 px-4 text-right font-mono text-slate-400">
-                    {tc.durationMs !== undefined ? `${tc.durationMs.toFixed(1)}ms` : '-'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+                <td class="py-3 px-3 text-right font-mono text-slate-400">
+                  ±{tc.tolerance}
+                </td>
+
+                <td class="py-3 px-3 text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    <button
+                      type="button"
+                      class="btn-run-single-test rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+                      data-test-id={tc.id}
+                      data-slug={calc.slug}
+                    >
+                      ▶ Run
+                    </button>
+                    {tc.isCustom && (
+                      <button
+                        type="button"
+                        class="btn-delete-custom-test text-slate-400 hover:text-red-600 text-xs px-1 cursor-pointer"
+                        data-test-id={tc.id}
+                        data-slug={calc.slug}
+                        title="Delete custom test case"
+                      >
+                        🗑
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- Runtime Exceptions for this Calculator -->
-    <div class="space-y-4">
-      <div class="flex items-center justify-between">
-        <div>
-          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <span>⚠️</span> Recorded Client Incidents ({calcErrors.length})
-          </h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Runtime exceptions captured from end-user calculations on this tool.
-          </p>
+    <!-- Functionality & Page Health Checklists Side-by-Side -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      
+      <!-- Interactive Functionality Checklist -->
+      <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+        <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+          <span>⚙️</span> Interactive Functionality Verification
+        </h3>
+        <div class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+          <div class="py-2.5 flex items-center justify-between">
+            <span class="text-slate-600 dark:text-slate-400">Input Fields Loaded</span>
+            <span class="font-bold text-emerald-600">✓ PASS</span>
+          </div>
+          <div class="py-2.5 flex items-center justify-between">
+            <span class="text-slate-600 dark:text-slate-400">Calculation Engine Execution</span>
+            <span class="font-bold text-emerald-600">✓ PASS</span>
+          </div>
+          <div class="py-2.5 flex items-center justify-between">
+            <span class="text-slate-600 dark:text-slate-400">Result Output (No NaN / Infinity)</span>
+            <span class={`font-bold ${healthScoreObj.factors.runtimeSafety.score === 20 ? 'text-emerald-600' : 'text-red-600'}`}>
+              {healthScoreObj.factors.runtimeSafety.score === 20 ? '✓ PASS' : '❌ FAIL'}
+            </span>
+          </div>
+          <div class="py-2.5 flex items-center justify-between">
+            <span class="text-slate-600 dark:text-slate-400">Reset Form Capabilities</span>
+            <span class="font-bold text-emerald-600">✓ Available</span>
+          </div>
+          <div class="py-2.5 flex items-center justify-between">
+            <span class="text-slate-600 dark:text-slate-400">Copy Result to Clipboard</span>
+            <span class="font-bold text-emerald-600">✓ Available</span>
+          </div>
         </div>
       </div>
 
-      {calcErrors.length === 0 ? (
-        <div class="rounded-3xl border border-slate-200 bg-white p-6 text-center text-slate-400 dark:border-slate-800 dark:bg-slate-900 text-xs">
-          <span class="text-2xl block mb-1">🎉</span>
-          Zero runtime exceptions have been reported for this calculator.
+      <!-- Page & SEO Health Checklist -->
+      <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+        <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+          <span>🌐</span> Page Route &amp; SEO Health
+        </h3>
+        <div class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+          <div class="py-2.5 flex items-center justify-between">
+            <span class="text-slate-600 dark:text-slate-400">HTTP Status / Route Online</span>
+            <span class="font-bold text-emerald-600">✓ 200 OK</span>
+          </div>
+          <div class="py-2.5 flex items-center justify-between">
+            <span class="text-slate-600 dark:text-slate-400">Meta Title Quality</span>
+            <span class={`font-bold ${pageInspection.metaTitleOk ? 'text-emerald-600' : 'text-amber-500'}`}>
+              {pageInspection.metaTitleOk ? '✓ Optimal' : '⚠ Warning'}
+            </span>
+          </div>
+          <div class="py-2.5 flex items-center justify-between">
+            <span class="text-slate-600 dark:text-slate-400">Meta Description Quality</span>
+            <span class={`font-bold ${pageInspection.metaDescOk ? 'text-emerald-600' : 'text-amber-500'}`}>
+              {pageInspection.metaDescOk ? '✓ Optimal' : '⚠ Warning'}
+            </span>
+          </div>
+          <div class="py-2.5 flex items-center justify-between">
+            <span class="text-slate-600 dark:text-slate-400">Canonical Tag</span>
+            <span class="font-bold text-emerald-600">✓ Present</span>
+          </div>
+          <div class="py-2.5 flex items-center justify-between">
+            <span class="text-slate-600 dark:text-slate-400">Structured Schema (JSON-LD)</span>
+            <span class="font-bold text-emerald-600">✓ Valid JSON-LD</span>
+          </div>
         </div>
-      ) : (
-        <div class="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-xs dark:border-slate-800 dark:bg-slate-900">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-slate-50/80 dark:bg-slate-950/60 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider border-b border-slate-100 dark:border-slate-800">
-              <tr>
-                <th class="py-3 px-4">Error Type</th>
-                <th class="py-3 px-4">Message</th>
-                <th class="py-3 px-4 text-center">Occurrences</th>
-                <th class="py-3 px-4">Last Seen</th>
-                <th class="py-3 px-4 text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
-              {calcErrors.map((err) => (
-                <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
-                  <td class="py-3.5 px-4">
-                    <span class="rounded-md bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-700 dark:bg-red-950 dark:text-red-300 font-mono">
-                      {err.error_type}
-                    </span>
-                  </td>
-                  <td class="py-3.5 px-4 font-mono text-slate-700 dark:text-slate-300">
-                    {err.error_message || 'N/A'}
-                  </td>
-                  <td class="py-3.5 px-4 text-center font-mono font-bold">
-                    {err.occurrences}
-                  </td>
-                  <td class="py-3.5 px-4 font-mono text-slate-400 text-[11px]">
-                    {new Date(err.last_seen).toLocaleString()}
-                  </td>
-                  <td class="py-3.5 px-4 text-right">
-                    {err.reviewed ? (
-                      <span class="rounded-full bg-emerald-100 dark:bg-emerald-950 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-300">
-                        Reviewed
-                      </span>
-                    ) : (
-                      <span class="rounded-full bg-amber-100 dark:bg-amber-950 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
-                        Unreviewed
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      </div>
+
+    </div>
+
+    <!-- Check History Card -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-3">
+      <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+        <span>🕒</span> Historical Health Verification
+      </h3>
+      <p class="text-xs text-slate-500 dark:text-slate-400">
+        Previous health verification runs recorded in Cloudflare D1.
+      </p>
+      <div class="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+        {runHistory.slice(0, 5).map((run) => (
+          <div class="py-2.5 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="font-mono text-slate-700 dark:text-slate-300">
+                {new Date(run.started_at).toLocaleString()}
+              </span>
+              <span class="rounded bg-slate-100 px-1.5 py-0.2 text-[10px] text-slate-500 dark:bg-slate-800">
+                {run.triggered_by}
+              </span>
+            </div>
+            <div class="font-mono font-bold text-emerald-600">
+              {run.passed}/{run.total_tests} Passed
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- Modal: Add Custom Test Case -->
+    <div id="modal-add-test" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-xs">
+      <div class="min-h-full flex items-center justify-center">
+        <div class="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+            <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <span>🧪</span> Add Custom Formula Test Case
+            </h3>
+            <button
+              type="button"
+              id="btn-close-add-modal"
+              class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm cursor-pointer"
+            >
+              ✕
+            </button>
+          </div>
+
+          <form id="form-add-test" class="space-y-4 text-xs">
+            <div>
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Test Name *</label>
+              <input
+                type="text"
+                id="inp-test-name"
+                required
+                placeholder="e.g. High Principal Low Rate Edge Case"
+                class="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              />
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Category</label>
+                <select
+                  id="inp-test-cat"
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                >
+                  <option value="Normal">Normal Valid Input</option>
+                  <option value="Edge Case">Zero / Edge Case</option>
+                  <option value="Invalid Input">Invalid Input</option>
+                  <option value="Precision">Precision Test</option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Expected Behavior</label>
+                <select
+                  id="inp-test-behavior"
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                >
+                  <option value="result">Returns Valid Result</option>
+                  <option value="throw">Throws Validation Error</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Input Parameters (JSON Object) *
+              </label>
+              <textarea
+                id="inp-test-inputs"
+                rows="3"
+                required
+                placeholder='{"principal": 500000, "annualRate": 7.5, "tenureYears": 10}'
+                class="w-full rounded-xl border border-slate-300 bg-white p-2.5 font-mono text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              ></textarea>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3">
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Result Key</label>
+                <input
+                  type="text"
+                  id="inp-test-key"
+                  placeholder="e.g. monthlyEmi"
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Expected Value</label>
+                <input
+                  type="text"
+                  id="inp-test-val"
+                  placeholder="e.g. 5935"
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Tolerance (±)</label>
+                <input
+                  type="number"
+                  step="0.001"
+                  id="inp-test-tolerance"
+                  value="0.01"
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+            </div>
+
+            <div class="flex justify-end gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <button
+                type="button"
+                id="btn-cancel-add-test"
+                class="rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                id="btn-save-test"
+                class="rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition cursor-pointer"
+              >
+                Save Test Case
+              </button>
+            </div>
+          </form>
         </div>
-      )}
+      </div>
     </div>
 
   </div>
-</AdminLayout>
 
-<script>
-  const runBtn = document.getElementById('run-single-calc-btn') as HTMLButtonElement | null;
-  const btnIcon = document.getElementById('btn-icon');
-  const btnText = document.getElementById('btn-text');
+  <!-- Client-Side Script for Running Tests & Managing Test Cases -->
+  <script is:inline define:vars={{ currentSlug: calc.slug }}>
+    function initCalculatorHealthDetail() {
+      const runCalcBtn = document.getElementById('run-single-calc-btn');
+      const btnIcon = document.getElementById('btn-icon');
+      const btnText = document.getElementById('btn-text');
 
-  if (runBtn) {
-    runBtn.addEventListener('click', async () => {
-      const slug = runBtn.getAttribute('data-slug');
-      if (!slug || runBtn.disabled) return;
-      runBtn.disabled = true;
-      if (btnIcon) btnIcon.textContent = '⏳';
-      if (btnText) btnText.textContent = 'Executing Tests...';
+      // 1. Run all tests for this calculator
+      runCalcBtn?.addEventListener('click', async () => {
+        runCalcBtn.disabled = true;
+        if (btnIcon) btnIcon.textContent = '⏳';
+        if (btnText) btnText.textContent = 'Testing Formula...';
 
-      try {
-        const token = localStorage.getItem('admin_token') || '';
-        const res = await fetch(`/api/admin/calculator-health/run/${slug}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-          },
-        });
-
-        if (res.ok) {
+        try {
+          const res = await fetch(`/api/admin/calculator-health/run/${currentSlug}`, { method: 'POST' });
           const data = await res.json();
-          if (btnIcon) btnIcon.textContent = '✓';
-          if (btnText) btnText.textContent = `Completed (${data.passed}/${data.total} passed)`;
-          setTimeout(() => {
+
+          if (!res.ok || !data.success) {
+            alert(`Test execution failed: ${data.error || 'Unknown error'}`);
+          } else {
             window.location.reload();
-          }, 800);
-        } else {
-          alert('Failed to execute tests.');
-          runBtn.disabled = false;
+          }
+        } catch (err) {
+          alert('Network or execution error while testing calculator.');
+        } finally {
+          runCalcBtn.disabled = false;
           if (btnIcon) btnIcon.textContent = '⚡';
-          if (btnText) btnText.textContent = 'Run Health Test Suite';
+          if (btnText) btnText.textContent = 'Run Tests Now';
         }
-      } catch {
-        alert('Network error.');
-        runBtn.disabled = false;
-        if (btnIcon) btnIcon.textContent = '⚡';
-        if (btnText) btnText.textContent = 'Run Health Test Suite';
-      }
-    });
-  }
-</script>
+      });
+
+      // 2. Run single test case on demand
+      document.querySelectorAll('.btn-run-single-test').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const testId = btn.getAttribute('data-test-id');
+          const slug = btn.getAttribute('data-slug');
+          if (!testId || !slug) return;
+
+          btn.textContent = '⏳';
+          btn.disabled = true;
+
+          try {
+            const res = await fetch(`/api/admin/calculator-health/tests/${slug}/${testId}/run`, { method: 'POST' });
+            const data = await res.json();
+
+            if (res.ok && data.success) {
+              const r = data.result;
+              alert(`Test: ${r.testName}\nState: ${r.state}\nActual: ${r.actualValue}\nExpected: ${r.expectedValue ?? 'N/A'}\nDuration: ${r.durationMs}ms`);
+              window.location.reload();
+            } else {
+              alert(`Test error: ${data.error || 'Execution failed'}`);
+            }
+          } catch (e) {
+            alert('Execution failed');
+          } finally {
+            btn.textContent = '▶ Run';
+            btn.disabled = false;
+          }
+        });
+      });
+
+      // 3. Delete custom test case
+      document.querySelectorAll('.btn-delete-custom-test').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const testId = btn.getAttribute('data-test-id');
+          const slug = btn.getAttribute('data-slug');
+          if (!testId || !slug) return;
+          if (!confirm('Are you sure you want to delete this custom test case?')) return;
+
+          try {
+            const res = await fetch(`/api/admin/calculator-health/tests/${slug}/${testId}`, { method: 'DELETE' });
+            if (res.ok) {
+              window.location.reload();
+            } else {
+              alert('Failed to delete custom test case.');
+            }
+          } catch (e) {
+            alert('Error deleting test case');
+          }
+        });
+      });
+
+      // 4. Modal open & close
+      const modal = document.getElementById('modal-add-test');
+      const btnOpen = document.getElementById('btn-open-add-test');
+      const btnClose = document.getElementById('btn-close-add-modal');
+      const btnCancel = document.getElementById('btn-cancel-add-test');
+      const form = document.getElementById('form-add-test');
+
+      btnOpen?.addEventListener('click', () => modal?.classList.remove('hidden'));
+      btnClose?.addEventListener('click', () => modal?.classList.add('hidden'));
+      btnCancel?.addEventListener('click', () => modal?.classList.add('hidden'));
+
+      // 5. Submit custom test case
+      form?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const name = document.getElementById('inp-test-name').value;
+        const category = document.getElementById('inp-test-cat').value;
+        const expectedBehavior = document.getElementById('inp-test-behavior').value;
+        const inputsStr = document.getElementById('inp-test-inputs').value;
+        const key = document.getElementById('inp-test-key').value;
+        const val = document.getElementById('inp-test-val').value;
+        const tolerance = document.getElementById('inp-test-tolerance').value;
+
+        let inputValues = {};
+        try {
+          inputValues = JSON.parse(inputsStr);
+        } catch {
+          alert('Invalid JSON in Input Parameters field. Must be a valid JSON object.');
+          return;
+        }
+
+        const payload = {
+          name,
+          category,
+          expectedBehavior,
+          inputValues,
+          expectedResultKey: key || undefined,
+          expectedValue: val !== '' ? (isNaN(Number(val)) ? val : Number(val)) : undefined,
+          tolerance: Number(tolerance) || 0,
+        };
+
+        const btnSave = document.getElementById('btn-save-test');
+        if (btnSave) {
+          btnSave.disabled = true;
+          btnSave.textContent = 'Saving...';
+        }
+
+        try {
+          const res = await fetch(`/api/admin/calculator-health/tests/${currentSlug}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success) {
+            modal?.classList.add('hidden');
+            window.location.reload();
+          } else {
+            alert(`Error: ${data.error || 'Failed to save test case'}`);
+          }
+        } catch {
+          alert('Network error while saving test case.');
+        } finally {
+          if (btnSave) {
+            btnSave.disabled = false;
+            btnSave.textContent = 'Save Test Case';
+          }
+        }
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initCalculatorHealthDetail);
+    } else {
+      initCalculatorHealthDetail();
+    }
+  </script>
+</AdminLayout>

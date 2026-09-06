@@ -4,12 +4,15 @@ export const prerender = false;
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { runFullSEOAudit } from '../../../lib/seo/audit-engine';
 import { authenticateAdminRequest } from '../../../lib/auth';
+import { syncGscPerformanceData, getGscCredentials } from '../../../lib/seo/gsc-store';
+import type { GscDateRange } from '../../../lib/seo/gsc-types';
 
 const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
 if (!user) {
   return Astro.redirect('/admin/barwalaoffice/');
 }
 
+// 1. Run static rules audit (existing)
 const report = await runFullSEOAudit(Astro.locals);
 const auditGeneratedAt = new Date(report.timestamp).toLocaleString('en-IN', {
   dateStyle: 'medium',
@@ -24,26 +27,63 @@ const linkCount = report.issues.filter((i) => i.category === 'links').length;
 const canonicalCount = report.issues.filter((i) => i.category === 'canonical').length;
 
 const auditSuccess = Astro.url.searchParams.get('audited');
+
+// 2. Fetch GSC Snapshot
+const requestedRange = (Astro.url.searchParams.get('range') || '28d') as GscDateRange;
+const range: GscDateRange = requestedRange === '7d' || requestedRange === '3m' ? requestedRange : '28d';
+
+const gscSnapshot = await syncGscPerformanceData(Astro.locals, range, false);
+const isGscConnected = gscSnapshot.status === 'connected';
+const gscData = gscSnapshot.data?.[range];
+
+const lastGscSyncFormatted = gscSnapshot.lastSyncedAt
+  ? new Date(gscSnapshot.lastSyncedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
+  : 'Never';
+
+// Top growing pages
+const topGrowingPages = (gscData?.topPages || [])
+  .filter((p) => p.clickChangePercent > 10 && p.clicks >= 5)
+  .sort((a, b) => b.clickChangePercent - a.clickChangePercent)
+  .slice(0, 4);
+
+// Needs attention pages (high impressions, low CTR, or dropped rank)
+const needsAttentionPages = (gscData?.topPages || [])
+  .filter((p) => (p.impressions > 200 && p.ctr < 2.5) || p.positionChange > 2)
+  .slice(0, 4);
 ---
 
-<AdminLayout title="SEO Intelligence & Health Dashboard | Calculator CMS" sectionTitle="SEO Intelligence" activeSection="seo-health" badge={`${report.criticalCount + report.highCount} Action Items`}>
+<AdminLayout title="SEO Intelligence & Health Dashboard | Calculator CMS" sectionTitle="SEO Intelligence" activeSection="seo" badge={`${report.criticalCount + report.highCount} Action Items`}>
   <div class="space-y-8 max-w-7xl mx-auto pb-16">
     
-    <!-- Top Action Header -->
+    
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
       <div>
         <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
           <span>🩺</span> SEO Intelligence Dashboard
         </h2>
         <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Rule-based metadata audit across all public pages. Results generated fresh on this page load — not stored or cached.
-        </p>
-        <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
-          Last Audit Run: <span id="audit-timestamp-label" class="font-mono font-semibold text-slate-600 dark:text-slate-400">{auditGeneratedAt}</span>
+          Google Search Console performance metrics, opportunity finder, content decay detection, and technical health audit.
         </p>
       </div>
 
-      <div class="flex items-center gap-2 shrink-0">
+      <div class="flex flex-wrap items-center gap-2 shrink-0">
+        <button
+          type="button"
+          id="btn-sync-gsc"
+          class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm shadow-emerald-500/20 hover:bg-emerald-700 transition cursor-pointer"
+        >
+          <span id="btn-sync-gsc-icon">🔄</span>
+          <span id="btn-sync-gsc-text">Sync GSC Data</span>
+        </button>
+
+        <button
+          type="button"
+          id="btn-open-gsc-modal"
+          class="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition shadow-2xs cursor-pointer"
+        >
+          <span>⚙️</span> GSC Setup
+        </button>
+
         <button
           type="button"
           id="btn-trigger-audit"
@@ -52,6 +92,7 @@ const auditSuccess = Astro.url.searchParams.get('audited');
           <span id="btn-trigger-icon">⚡</span>
           <span id="btn-trigger-text">Re-run Audit</span>
         </button>
+
         <a
           href="/admin/seo/bulk/"
           class="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition shadow-2xs"
@@ -61,24 +102,26 @@ const auditSuccess = Astro.url.searchParams.get('audited');
       </div>
     </div>
 
-    <!-- Live Audit In-Progress / Success Notification Container -->
+    
     <div id="live-audit-status" class="hidden rounded-2xl p-4 text-xs font-bold shadow-xs"></div>
 
-    <!-- Persistent Audit Success Notice (after reload) -->
     {auditSuccess && (
       <div id="audit-success-banner" class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-bold text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-300 flex items-center justify-between shadow-2xs">
         <div class="flex items-center gap-2">
           <span class="text-base">✅</span>
-          <span>Fresh SEO Audit completed successfully just now! Scanned all {report.totalPages} live routes ({report.issues.length} active issue items).</span>
+          <span>Fresh SEO Audit completed successfully! Scanned all {report.totalPages} live routes ({report.issues.length} active issue items).</span>
         </div>
         <a href="/admin/seo/" class="text-emerald-700 dark:text-emerald-400 hover:underline text-[11px] shrink-0">Dismiss ✕</a>
       </div>
     )}
 
-    <!-- SEO Sub-Navigation Bar -->
+    
     <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 dark:border-slate-800">
-      <a href="/admin/seo/" class="rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs shrink-0">
-        📊 Audit Overview
+      <a href="#gsc-performance" class="rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs shrink-0">
+        📈 GSC Performance &amp; Ops
+      </a>
+      <a href="#technical-audit" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        🩺 Technical Health Audit ({report.issues.length})
       </a>
       <a href="/admin/seo/bulk/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
         📝 Bulk Meta Editor
@@ -87,7 +130,7 @@ const auditSuccess = Astro.url.searchParams.get('audited');
         👯 Duplicate Content ({report.duplicates.length})
       </a>
       <a href="/admin/seo/links/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
-        🔗 Internal Link Audit ({report.orphanPages.length} Orphans)
+        🔗 Internal Links ({report.orphanPages.length} Orphans)
       </a>
       <a href="/admin/seo/sitemap-schema/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
         🗺️ Sitemap &amp; Schema
@@ -97,446 +140,982 @@ const auditSuccess = Astro.url.searchParams.get('audited');
       </a>
     </div>
 
-    <!-- 1. Executive Health Cards Grid -->
-    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
-      <div data-kpi-filter="all" class="cursor-pointer rounded-3xl border border-slate-200 bg-white p-4 shadow-2xs hover:shadow-md hover:border-blue-400 transition-all dark:border-slate-800 dark:bg-slate-900" title="Click to show all issues">
-        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Pages Audited</div>
-        <div class="mt-1 text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-mono">{report.totalPages}</div>
-        <div class="mt-1 text-[11px] font-semibold text-slate-500">All live routes</div>
-      </div>
+    
+    
+    
+    <div id="gsc-performance" class="space-y-6">
+      
+      
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex items-center gap-3">
+          <div class={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-lg ${
+            isGscConnected ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400' : 'bg-slate-100 text-slate-400 dark:bg-slate-800'
+          }`}>
+            {isGscConnected ? '🟢' : '⚪'}
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-bold text-slate-900 dark:text-white">
+                Google Search Console
+              </span>
+              <span class={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
+                isGscConnected ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+              }`}>
+                {isGscConnected ? 'Connected' : 'Not Connected'}
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+              Property: <strong class="text-slate-700 dark:text-slate-300">{gscSnapshot.propertyUrl}</strong> • Last Synced: <strong class="text-slate-700 dark:text-slate-300">{lastGscSyncFormatted}</strong>
+            </p>
+          </div>
+        </div>
 
-      <div class="rounded-3xl border border-emerald-200 bg-emerald-50/50 p-4 shadow-2xs dark:border-emerald-900/40 dark:bg-emerald-950/20">
-        <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Healthy Pages</div>
-        <div class="mt-1 text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 font-mono">{report.healthyPages}</div>
-        <div class="mt-1 text-[11px] font-semibold text-emerald-700/80 dark:text-emerald-400">Zero high issues</div>
-      </div>
-
-      <div data-kpi-filter="critical" class="cursor-pointer rounded-3xl border border-red-200 bg-red-50/60 p-4 shadow-2xs hover:shadow-md hover:border-red-400 transition-all dark:border-red-900/50 dark:bg-red-950/30" title="Click to filter Critical issues">
-        <div class="text-[10px] font-bold uppercase tracking-wider text-red-700 dark:text-red-300">Critical</div>
-        <div class="mt-1 text-2xl sm:text-3xl font-black text-red-600 dark:text-red-400 font-mono">{report.criticalCount}</div>
-        <div class="mt-1 text-[11px] font-semibold text-red-700/80 dark:text-red-400">Fix immediately</div>
-      </div>
-
-      <div data-kpi-filter="high" class="cursor-pointer rounded-3xl border border-amber-200 bg-amber-50/60 p-4 shadow-2xs hover:shadow-md hover:border-amber-400 transition-all dark:border-amber-900/50 dark:bg-amber-950/30" title="Click to filter High Priority issues">
-        <div class="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">High Priority</div>
-        <div class="mt-1 text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 font-mono">{report.highCount}</div>
-        <div class="mt-1 text-[11px] font-semibold text-amber-700/80 dark:text-amber-400">Impacting ranking</div>
-      </div>
-
-      <div data-kpi-filter="medium" class="cursor-pointer rounded-3xl border border-blue-200 bg-blue-50/50 p-4 shadow-2xs hover:shadow-md hover:border-blue-400 transition-all dark:border-blue-900/40 dark:bg-blue-950/20" title="Click to filter Medium Priority issues">
-        <div class="text-[10px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">Medium Priority</div>
-        <div class="mt-1 text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400 font-mono">{report.mediumCount}</div>
-        <div class="mt-1 text-[11px] font-semibold text-blue-700/80 dark:text-blue-400">Optimization ops</div>
-      </div>
-
-      <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
-        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Avg Score</div>
-        <div class="mt-1 text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-mono">{report.overallScore}%</div>
-        <div class="mt-1 text-[11px] font-semibold text-emerald-600">Site-wide health</div>
-      </div>
-    </div>
-
-    <!-- 2. Transparent Audit Methodology Explanation Banner -->
-    <div class="rounded-3xl border border-slate-200 bg-slate-50/70 p-5 dark:border-slate-800 dark:bg-slate-900/60 text-xs text-slate-600 dark:text-slate-300 space-y-1.5 leading-relaxed">
-      <div class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 text-sm">
-        <span>📖</span> Rule-Based Scoring Transparency
-      </div>
-      <div>
-        Every issue listed below is derived from explicit rules: Meta Title presence (30–65 chars), Meta Description (100–165 chars), Canonical URL integrity, Duplicate content scans, Orphan link audits, and Schema validation. Zero opaque AI scores.
-      </div>
-    </div>
-
-    <!-- 3. Filter & Search Controls -->
-    <div class="space-y-4">
-      <div class="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
         
-        <!-- Search -->
-        <div class="relative w-full sm:w-80">
-          <input
-            type="text"
-            id="search-issues-input"
-            placeholder="Search page, issue, or reason..."
-            class="w-full rounded-2xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white focus:border-blue-600 focus:outline-hidden"
-          />
-          <span class="absolute left-3 top-2.5 text-xs text-slate-400">🔍</span>
-        </div>
-
-        <!-- Severity Filter Buttons -->
-        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0" id="severity-filter-group">
-          <button
-            type="button"
-            data-severity="all"
-            class="sev-btn active rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition-colors cursor-pointer"
-          >
-            All ({report.issues.length})
-          </button>
-          <button
-            type="button"
-            data-severity="critical"
-            class="sev-btn rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
-          >
-            Critical ({report.criticalCount})
-          </button>
-          <button
-            type="button"
-            data-severity="high"
-            class="sev-btn rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
-          >
-            High ({report.highCount})
-          </button>
-          <button
-            type="button"
-            data-severity="medium"
-            class="sev-btn rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
-          >
-            Medium ({report.mediumCount})
-          </button>
-          <button
-            type="button"
-            data-severity="low"
-            class="sev-btn rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer"
-          >
-            Low ({report.lowCount})
-          </button>
+        <div class="flex items-center gap-2 self-start md:self-center">
+          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Range:</span>
+          <div class="inline-flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+            <a
+              href="?range=7d"
+              class={`rounded-lg px-3 py-1 text-xs font-bold transition ${
+                range === '7d'
+                  ? 'bg-white text-blue-600 shadow-xs dark:bg-slate-900 dark:text-blue-400'
+                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+              }`}
+            >
+              7 Days
+            </a>
+            <a
+              href="?range=28d"
+              class={`rounded-lg px-3 py-1 text-xs font-bold transition ${
+                range === '28d'
+                  ? 'bg-white text-blue-600 shadow-xs dark:bg-slate-900 dark:text-blue-400'
+                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+              }`}
+            >
+              28 Days
+            </a>
+            <a
+              href="?range=3m"
+              class={`rounded-lg px-3 py-1 text-xs font-bold transition ${
+                range === '3m'
+                  ? 'bg-white text-blue-600 shadow-xs dark:bg-slate-900 dark:text-blue-400'
+                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+              }`}
+            >
+              3 Months
+            </a>
+          </div>
         </div>
       </div>
 
-      <!-- Category Filter Pills -->
-      <div class="flex flex-wrap items-center gap-1.5 text-xs" id="cat-filter-group">
-        <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider mr-1">Category:</span>
-        <button
-          type="button"
-          data-cat="all"
-          class="cat-btn active rounded-lg bg-blue-600 px-3 py-1 text-[11px] font-bold text-white shadow-xs transition-colors cursor-pointer"
-        >
-          All Issues ({report.issues.length})
-        </button>
-        <button
-          type="button"
-          data-cat="title"
-          class="cat-btn rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1 text-[11px] font-semibold transition-colors cursor-pointer"
-        >
-          Titles ({titleCount})
-        </button>
-        <button
-          type="button"
-          data-cat="description"
-          class="cat-btn rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1 text-[11px] font-semibold transition-colors cursor-pointer"
-        >
-          Descriptions ({descCount})
-        </button>
-        <button
-          type="button"
-          data-cat="duplicate"
-          class="cat-btn rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1 text-[11px] font-semibold transition-colors cursor-pointer"
-        >
-          Duplicates ({dupCount})
-        </button>
-        <button
-          type="button"
-          data-cat="links"
-          class="cat-btn rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1 text-[11px] font-semibold transition-colors cursor-pointer"
-        >
-          Internal Links &amp; Orphans ({linkCount})
-        </button>
-        <button
-          type="button"
-          data-cat="canonical"
-          class="cat-btn rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1 text-[11px] font-semibold transition-colors cursor-pointer"
-        >
-          Canonical URLs ({canonicalCount})
-        </button>
-      </div>
+      {!isGscConnected && (
+        <div class="rounded-3xl border border-dashed border-slate-300 bg-slate-50/60 p-8 sm:p-12 text-center dark:border-slate-800 dark:bg-slate-900/30 space-y-4">
+          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-2xl dark:bg-blue-950/60">
+            📈
+          </div>
+          <div class="max-w-xl mx-auto">
+            <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">
+              Connect Google Search Console Property
+            </h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400 mt-1.5 leading-relaxed">
+              Connect your Google Service Account to unlock real search metrics, automated content decay detection, striking distance keyword opportunities, and calculator ranking diagnostics.
+            </p>
+          </div>
+          <div class="pt-2 flex flex-wrap justify-center gap-3">
+            <button
+              type="button"
+              onclick="document.getElementById('modal-gsc-config')?.classList.remove('hidden')"
+              class="rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-500/25 hover:bg-blue-700 transition cursor-pointer"
+            >
+              Connect Google Search Console →
+            </button>
+          </div>
+        </div>
+      )}
+
+      {isGscConnected && (
+        <div class="space-y-8">
+          
+          
+          {gscData?.performance && (
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              
+              
+              <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                <div class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Search Clicks</div>
+                <div class="mt-2 flex items-baseline gap-2">
+                  <span class="text-3xl font-black text-slate-900 dark:text-white font-mono">
+                    {gscData.performance.currentPeriod.summary.clicks.toLocaleString()}
+                  </span>
+                  <span class={`text-xs font-bold ${gscData.performance.deltas.clicks.isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
+                    {gscData.performance.deltas.clicks.isPositive ? '↑' : '↓'} {Math.abs(gscData.performance.deltas.clicks.percentageChange)}%
+                  </span>
+                </div>
+                <div class="mt-1 text-[11px] text-slate-400">
+                  Prev: {gscData.performance.previousPeriod.summary.clicks.toLocaleString()} clicks
+                </div>
+              </div>
+
+              
+              <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                <div class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Impressions</div>
+                <div class="mt-2 flex items-baseline gap-2">
+                  <span class="text-3xl font-black text-slate-900 dark:text-white font-mono">
+                    {gscData.performance.currentPeriod.summary.impressions.toLocaleString()}
+                  </span>
+                  <span class={`text-xs font-bold ${gscData.performance.deltas.impressions.isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
+                    {gscData.performance.deltas.impressions.isPositive ? '↑' : '↓'} {Math.abs(gscData.performance.deltas.impressions.percentageChange)}%
+                  </span>
+                </div>
+                <div class="mt-1 text-[11px] text-slate-400">
+                  Prev: {gscData.performance.previousPeriod.summary.impressions.toLocaleString()} impressions
+                </div>
+              </div>
+
+              
+              <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                <div class="text-xs font-bold uppercase tracking-wider text-slate-500">Average CTR</div>
+                <div class="mt-2 flex items-baseline gap-2">
+                  <span class="text-3xl font-black text-slate-900 dark:text-white font-mono">
+                    {gscData.performance.currentPeriod.summary.ctr}%
+                  </span>
+                  <span class={`text-xs font-bold ${gscData.performance.deltas.ctr.isPositive ? 'text-emerald-600' : 'text-amber-600'}`}>
+                    {gscData.performance.deltas.ctr.isPositive ? '↑' : '↓'} {Math.abs(gscData.performance.deltas.ctr.delta)}%
+                  </span>
+                </div>
+                <div class="mt-1 text-[11px] text-slate-400">
+                  Prev: {gscData.performance.previousPeriod.summary.ctr}%
+                </div>
+              </div>
+
+              
+              <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+                <div class="text-xs font-bold uppercase tracking-wider text-slate-500">Average Position</div>
+                <div class="mt-2 flex items-baseline gap-2">
+                  <span class="text-3xl font-black text-slate-900 dark:text-white font-mono">
+                    {gscData.performance.currentPeriod.summary.position.toFixed(1)}
+                  </span>
+                  <span class={`text-xs font-bold ${gscData.performance.deltas.position.isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
+                    {gscData.performance.deltas.position.isPositive ? '↑' : '↓'} {Math.abs(gscData.performance.deltas.position.delta).toFixed(1)} spots
+                  </span>
+                </div>
+                <div class="mt-1 text-[11px] text-slate-400">
+                  Prev: {gscData.performance.previousPeriod.summary.position.toFixed(1)}
+                </div>
+              </div>
+
+            </div>
+          )}
+
+          
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>🚀</span> Top SEO Opportunities ({gscData?.opportunities?.length || 0})
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Actionable striking-distance keywords, low-CTR page 1 queries, and high-impression pages.
+                </p>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {(!gscData?.opportunities || gscData.opportunities.length === 0) ? (
+                <div class="col-span-full rounded-3xl border border-slate-200 bg-white p-8 text-center text-xs text-slate-400 dark:border-slate-800 dark:bg-slate-900">
+                  No high-confidence opportunities detected in this timeframe. Check back as search impressions accumulate.
+                </div>
+              ) : (
+                gscData.opportunities.slice(0, 6).map((opp) => (
+                  <div class="rounded-3xl border border-blue-200/70 bg-white p-5 shadow-xs dark:border-blue-950 dark:bg-slate-900 flex flex-col justify-between hover:shadow-md transition">
+                    <div>
+                      <div class="flex items-center justify-between gap-2">
+                        <span class="rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200/50 dark:border-blue-900">
+                          {opp.type === 'position' ? 'Striking Distance' : opp.type === 'ctr' ? 'Low CTR' : 'Page 1 Potential'}
+                        </span>
+                        <span class="font-mono text-xs font-bold text-emerald-600">
+                          Score: {opp.opportunityScore}/100
+                        </span>
+                      </div>
+
+                      <div class="mt-3 flex items-center gap-2">
+                        <span class="text-lg">{opp.icon || '🧮'}</span>
+                        <h4 class="text-xs font-extrabold text-slate-900 dark:text-white truncate">
+                          {opp.calculatorName}
+                        </h4>
+                      </div>
+
+                      {opp.query && (
+                        <div class="mt-1 text-xs font-bold text-blue-600 dark:text-blue-400 font-mono">
+                          "{opp.query}"
+                        </div>
+                      )}
+
+                      <div class="mt-3 grid grid-cols-3 gap-2 text-center rounded-2xl bg-slate-50 p-2 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300 text-[11px] font-mono">
+                        <div>
+                          <span class="text-[9px] block text-slate-400 uppercase">Pos</span>
+                          <strong>#{opp.currentPosition.toFixed(1)}</strong>
+                        </div>
+                        <div>
+                          <span class="text-[9px] block text-slate-400 uppercase">Impr</span>
+                          <strong>{opp.impressions.toLocaleString()}</strong>
+                        </div>
+                        <div>
+                          <span class="text-[9px] block text-slate-400 uppercase">CTR</span>
+                          <strong>{opp.ctr}%</strong>
+                        </div>
+                      </div>
+
+                      <p class="mt-3 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                        {opp.reason}
+                      </p>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                      <span class="text-[11px] text-slate-400 font-medium truncate max-w-45">
+                        {opp.recommendedAction}
+                      </span>
+                      {opp.calculatorSlug ? (
+                        <a
+                          href={`/admin/seo/${opp.calculatorSlug}/?range=${range}`}
+                          class="rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300 shrink-0 transition"
+                        >
+                          View Details →
+                        </a>
+                      ) : (
+                        <a
+                          href={opp.pageUrl}
+                          target="_blank"
+                          class="text-xs text-blue-600 hover:underline shrink-0"
+                        >
+                          Visit ↗
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>📉</span> Content Decay Detection ({gscData?.decayAlerts?.length || 0})
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Pages with meaningful traffic decline or ranking drops requiring immediate content refreshment.
+                </p>
+              </div>
+            </div>
+
+            {(!gscData?.decayAlerts || gscData.decayAlerts.length === 0) ? (
+              <div class="rounded-3xl border border-emerald-200 bg-emerald-50/50 p-6 text-center text-xs font-semibold text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
+                ✅ Zero content decay alerts detected! All active pages maintained or grew traffic across comparison periods.
+              </div>
+            ) : (
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {gscData.decayAlerts.map((decay) => (
+                  <div class="rounded-3xl border border-red-200 bg-red-50/40 p-5 shadow-xs dark:border-red-900/50 dark:bg-red-950/20 flex flex-col justify-between">
+                    <div>
+                      <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                          <span class="text-lg">{decay.icon || '🧮'}</span>
+                          <h4 class="text-sm font-extrabold text-slate-900 dark:text-white">
+                            {decay.calculatorName}
+                          </h4>
+                        </div>
+                        <span class={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase ${
+                          decay.priority === 'critical' ? 'bg-red-600 text-white animate-pulse' :
+                          decay.priority === 'high' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                          'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
+                        }`}>
+                          {decay.priority}
+                        </span>
+                      </div>
+
+                      <div class="mt-3 flex items-center gap-4 text-xs font-mono">
+                        <div>
+                          <span class="text-slate-400 block text-[10px] uppercase">Traffic Drop</span>
+                          <strong class="text-red-600 text-sm">↓ {decay.trafficDeclinePercent}%</strong>
+                        </div>
+                        <div>
+                          <span class="text-slate-400 block text-[10px] uppercase">Clicks Shift</span>
+                          <span class="text-slate-700 dark:text-slate-300">{decay.previousClicks} → {decay.currentClicks}</span>
+                        </div>
+                        <div>
+                          <span class="text-slate-400 block text-[10px] uppercase">Position</span>
+                          <span class="text-slate-700 dark:text-slate-300">#{decay.previousPosition.toFixed(1)} → #{decay.currentPosition.toFixed(1)}</span>
+                        </div>
+                      </div>
+
+                      <p class="mt-3 text-xs text-slate-600 dark:text-slate-400">
+                        {decay.explanation}
+                      </p>
+                    </div>
+
+                    <div class="mt-4 pt-3 border-t border-red-100 dark:border-red-950 flex items-center justify-between">
+                      <span class="text-[11px] text-slate-500 truncate max-w-60">
+                        • {decay.recommendedFixes[0]}
+                      </span>
+                      {decay.calculatorSlug && (
+                        <a
+                          href={`/admin/seo/${decay.calculatorSlug}/?range=${range}`}
+                          class="rounded-lg bg-red-100 px-3 py-1 text-xs font-bold text-red-800 hover:bg-red-200 dark:bg-red-950 dark:text-red-200 transition"
+                        >
+                          Review &amp; Fix →
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            
+            
+            <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-3">
+              <h4 class="text-xs font-black uppercase tracking-wider text-emerald-600 flex items-center gap-1.5">
+                <span>🔥</span> Top Growing Calculators
+              </h4>
+              {topGrowingPages.length === 0 ? (
+                <p class="text-xs text-slate-400 py-3">No significant growth outliers in this timeframe.</p>
+              ) : (
+                <div class="space-y-2">
+                  {topGrowingPages.map((p) => (
+                    <div class="flex items-center justify-between p-2 rounded-2xl bg-slate-50 dark:bg-slate-800/50 text-xs">
+                      <div class="flex items-center gap-2 truncate">
+                        <span>{p.icon || '🧮'}</span>
+                        <strong class="text-slate-800 dark:text-slate-200 truncate">{p.calculatorName || p.path}</strong>
+                      </div>
+                      <div class="flex items-center gap-3 shrink-0 font-mono">
+                        <span class="text-slate-500">{p.clicks} clicks</span>
+                        <span class="font-bold text-emerald-600">+{p.clickChangePercent}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            
+            <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-3">
+              <h4 class="text-xs font-black uppercase tracking-wider text-amber-600 flex items-center gap-1.5">
+                <span>⚠️</span> Needs Attention (Low CTR / Slipped)
+              </h4>
+              {needsAttentionPages.length === 0 ? (
+                <p class="text-xs text-slate-400 py-3">All top landing pages meet baseline CTR and ranking benchmarks.</p>
+              ) : (
+                <div class="space-y-2">
+                  {needsAttentionPages.map((p) => (
+                    <div class="flex items-center justify-between p-2 rounded-2xl bg-slate-50 dark:bg-slate-800/50 text-xs">
+                      <div class="flex items-center gap-2 truncate">
+                        <span>{p.icon || '🧮'}</span>
+                        <strong class="text-slate-800 dark:text-slate-200 truncate">{p.calculatorName || p.path}</strong>
+                      </div>
+                      <div class="flex items-center gap-3 shrink-0 font-mono">
+                        <span class="text-slate-500">{p.impressions.toLocaleString()} impr</span>
+                        <span class="font-bold text-amber-600">{p.ctr}% CTR</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+          </div>
+
+          
+          <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>📄</span> Top Pages Performance
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Organic performance breakdown for public URLs on https://aifreecalculator.com/.
+                </p>
+              </div>
+
+              
+              <div class="flex flex-wrap items-center gap-2">
+                <input
+                  type="text"
+                  id="search-gsc-pages"
+                  placeholder="Filter pages..."
+                  class="rounded-xl border border-slate-300 bg-white py-1.5 px-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                />
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table id="table-gsc-pages" class="w-full text-left text-xs">
+                <thead>
+                  <tr class="border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                    <th class="pb-3 pr-4">Page / Calculator</th>
+                    <th class="pb-3 px-3 text-right">Clicks</th>
+                    <th class="pb-3 px-3 text-right">Impressions</th>
+                    <th class="pb-3 px-3 text-right">CTR</th>
+                    <th class="pb-3 px-3 text-right">Avg Position</th>
+                    <th class="pb-3 px-3 text-right">Growth %</th>
+                    <th class="pb-3 pl-3 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+                  {(!gscData?.topPages || gscData.topPages.length === 0) ? (
+                    <tr>
+                      <td colspan="7" class="py-8 text-center text-slate-400">
+                        No page-level performance data recorded for this date range.
+                      </td>
+                    </tr>
+                  ) : (
+                    gscData.topPages.map((page) => (
+                      <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition page-table-row">
+                        <td class="py-3 pr-4">
+                          <div class="flex items-center gap-2">
+                            <span class="text-base">{page.icon || '📄'}</span>
+                            <div>
+                              <div class="font-bold text-slate-800 dark:text-slate-200 page-row-title">
+                                {page.calculatorName || page.path}
+                              </div>
+                              <div class="font-mono text-[10px] text-slate-400 truncate max-w-xs">
+                                {page.path}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td class="py-3 px-3 text-right font-mono font-bold text-slate-900 dark:text-white">
+                          {page.clicks.toLocaleString()}
+                        </td>
+                        <td class="py-3 px-3 text-right font-mono text-slate-600 dark:text-slate-300">
+                          {page.impressions.toLocaleString()}
+                        </td>
+                        <td class="py-3 px-3 text-right font-mono text-slate-600 dark:text-slate-300">
+                          {page.ctr}%
+                        </td>
+                        <td class="py-3 px-3 text-right font-mono font-semibold text-slate-800 dark:text-slate-200">
+                          #{page.position.toFixed(1)}
+                        </td>
+                        <td class="py-3 px-3 text-right font-mono font-bold">
+                          {page.clickChangePercent > 0 ? (
+                            <span class="text-emerald-600">+{page.clickChangePercent}%</span>
+                          ) : page.clickChangePercent < 0 ? (
+                            <span class="text-red-600">{page.clickChangePercent}%</span>
+                          ) : (
+                            <span class="text-slate-400">0%</span>
+                          )}
+                        </td>
+                        <td class="py-3 pl-3 text-right">
+                          {page.calculatorSlug ? (
+                            <a
+                              href={`/admin/seo/${page.calculatorSlug}/?range=${range}`}
+                              class="rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300 transition"
+                            >
+                              Details →
+                            </a>
+                          ) : (
+                            <a
+                              href={page.url}
+                              target="_blank"
+                              class="text-xs text-blue-600 hover:underline"
+                            >
+                              Visit ↗
+                            </a>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          
+          <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <span>🔍</span> Top Search Queries
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                  Organic queries sending impressions and clicks from Google Search.
+                </p>
+              </div>
+
+              <input
+                type="text"
+                id="search-gsc-queries"
+                placeholder="Filter queries..."
+                class="rounded-xl border border-slate-300 bg-white py-1.5 px-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+              />
+            </div>
+
+            <div class="overflow-x-auto">
+              <table id="table-gsc-queries" class="w-full text-left text-xs">
+                <thead>
+                  <tr class="border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                    <th class="pb-3 pr-4">Search Query</th>
+                    <th class="pb-3 px-3 text-right">Clicks</th>
+                    <th class="pb-3 px-3 text-right">Impressions</th>
+                    <th class="pb-3 px-3 text-right">CTR</th>
+                    <th class="pb-3 px-3 text-right">Avg Position</th>
+                    <th class="pb-3 px-3 text-right">Trend</th>
+                    <th class="pb-3 pl-3 text-right">Landing Page</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+                  {(!gscData?.topQueries || gscData.topQueries.length === 0) ? (
+                    <tr>
+                      <td colspan="7" class="py-8 text-center text-slate-400">
+                        No query-level performance data recorded for this date range.
+                      </td>
+                    </tr>
+                  ) : (
+                    gscData.topQueries.slice(0, 50).map((q) => (
+                      <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition query-table-row">
+                        <td class="py-2.5 pr-4 font-bold text-slate-800 dark:text-slate-200 query-row-text">
+                          {q.query}
+                        </td>
+                        <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-900 dark:text-white">
+                          {q.clicks.toLocaleString()}
+                        </td>
+                        <td class="py-2.5 px-3 text-right font-mono text-slate-600 dark:text-slate-300">
+                          {q.impressions.toLocaleString()}
+                        </td>
+                        <td class="py-2.5 px-3 text-right font-mono text-slate-600 dark:text-slate-300">
+                          {q.ctr}%
+                        </td>
+                        <td class="py-2.5 px-3 text-right font-mono font-semibold text-slate-800 dark:text-slate-200">
+                          #{q.position.toFixed(1)}
+                        </td>
+                        <td class="py-2.5 px-3 text-right font-mono text-[11px]">
+                          {q.clickChangePercent > 0 ? (
+                            <span class="text-emerald-600 font-bold">+{q.clickChangePercent}%</span>
+                          ) : q.clickChangePercent < 0 ? (
+                            <span class="text-red-600 font-bold">{q.clickChangePercent}%</span>
+                          ) : (
+                            <span class="text-slate-400">--</span>
+                          )}
+                        </td>
+                        <td class="py-2.5 pl-3 text-right">
+                          {q.topCalculatorSlug ? (
+                            <a
+                              href={`/admin/seo/${q.topCalculatorSlug}/?range=${range}`}
+                              class="text-blue-600 hover:underline font-medium text-[11px]"
+                            >
+                              View Calculator →
+                            </a>
+                          ) : q.topPageUrl ? (
+                            <a
+                              href={q.topPageUrl}
+                              target="_blank"
+                              class="text-slate-400 hover:text-blue-600 text-[11px] truncate max-w-xs inline-block"
+                            >
+                              {q.topPageUrl.replace('https://aifreecalculator.com', '')}
+                            </a>
+                          ) : (
+                            <span class="text-slate-400">--</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      )}
+
     </div>
 
-    <!-- 4. Detailed Issue Cards List -->
-    <div id="issues-container" class="space-y-3">
-      {report.issues.length === 0 ? (
-        <div class="rounded-3xl border border-emerald-200 bg-emerald-50/40 p-12 text-center dark:border-emerald-900/50 dark:bg-emerald-950/20">
-          <span class="text-4xl">🎉</span>
-          <h3 class="mt-3 text-base font-bold text-emerald-900 dark:text-emerald-200">100% Optimal SEO Health</h3>
-          <p class="mt-1 text-xs text-emerald-700 dark:text-emerald-300">All 42+ calculators and category hubs pass all title, description, canonical, schema, and internal linking checks.</p>
+    
+    
+    
+    <div id="technical-audit" class="space-y-6 pt-6 border-t border-slate-200 dark:border-slate-800">
+      
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🩺</span> Technical Health &amp; Metadata Audit
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Rule-based code &amp; DOM audit across all 42+ calculator routes. Last run: {auditGeneratedAt}
+          </p>
         </div>
-      ) : (
-        report.issues.map((item) => {
-          const isCrit = item.severity === 'critical';
-          const isHigh = item.severity === 'high';
-          const isMed  = item.severity === 'medium';
-          const isLow  = item.severity === 'low';
+      </div>
 
-          return (
-            <div
-              class="issue-card rounded-2xl border bg-white p-5 shadow-2xs dark:bg-slate-900 transition-all hover:shadow-sm"
-              data-severity={item.severity}
-              data-category={item.category}
-              data-type={item.pageType}
-              data-search={`${item.pageName} ${item.pagePath} ${item.issue} ${item.reason} ${item.suggestedAction}`.toLowerCase()}
-              class:list={[
-                isCrit ? 'border-red-200 dark:border-red-900/60 bg-red-50/10' :
-                isHigh ? 'border-amber-200 dark:border-amber-900/60 bg-amber-50/10' :
-                isMed  ? 'border-blue-200 dark:border-blue-900/50' : 'border-slate-200 dark:border-slate-800'
-              ]}
-            >
-              <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                <div class="space-y-1.5 flex-1 min-w-0">
-                  <div class="flex flex-wrap items-center gap-2">
-                    <!-- Severity Badge -->
-                    {isCrit && <span class="rounded-md bg-red-100 px-2 py-0.5 text-[10px] font-black uppercase text-red-700 dark:bg-red-950 dark:text-red-300">CRITICAL</span>}
-                    {isHigh && <span class="rounded-md bg-amber-100 px-2 py-0.5 text-[10px] font-black uppercase text-amber-700 dark:bg-amber-950 dark:text-amber-300">HIGH PRIORITY</span>}
-                    {isMed  && <span class="rounded-md bg-blue-100 px-2 py-0.5 text-[10px] font-black uppercase text-blue-700 dark:bg-blue-950 dark:text-blue-300">MEDIUM</span>}
-                    {isLow  && <span class="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-black uppercase text-slate-600 dark:bg-slate-800 dark:text-slate-300">LOW</span>}
+      
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+        <div data-kpi-filter="all" class="cursor-pointer rounded-3xl border border-slate-200 bg-white p-4 shadow-2xs hover:shadow-md hover:border-blue-400 transition-all dark:border-slate-800 dark:bg-slate-900" title="Click to show all issues">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Pages Audited</div>
+          <div class="mt-1 text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-mono">{report.totalPages}</div>
+          <div class="mt-1 text-[11px] font-semibold text-slate-500">All live routes</div>
+        </div>
 
-                    <!-- Category Pill -->
-                    <span class="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300 uppercase">
-                      {item.category}
+        <div class="rounded-3xl border border-emerald-200 bg-emerald-50/50 p-4 shadow-2xs dark:border-emerald-900/40 dark:bg-emerald-950/20">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Healthy Pages</div>
+          <div class="mt-1 text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400 font-mono">{report.healthyPages}</div>
+          <div class="mt-1 text-[11px] font-semibold text-emerald-700/80 dark:text-emerald-400">Zero high issues</div>
+        </div>
+
+        <div data-kpi-filter="critical" class="cursor-pointer rounded-3xl border border-red-200 bg-red-50/60 p-4 shadow-2xs hover:shadow-md hover:border-red-400 transition-all dark:border-red-900/50 dark:bg-red-950/30" title="Click to filter Critical issues">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-red-700 dark:text-red-300">Critical</div>
+          <div class="mt-1 text-2xl sm:text-3xl font-black text-red-600 dark:text-red-400 font-mono">{report.criticalCount}</div>
+          <div class="mt-1 text-[11px] font-semibold text-red-700/80 dark:text-red-400">Fix immediately</div>
+        </div>
+
+        <div data-kpi-filter="high" class="cursor-pointer rounded-3xl border border-amber-200 bg-amber-50/60 p-4 shadow-2xs hover:shadow-md hover:border-amber-400 transition-all dark:border-amber-900/50 dark:bg-amber-950/30" title="Click to filter High Priority issues">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">High Priority</div>
+          <div class="mt-1 text-2xl sm:text-3xl font-black text-amber-600 dark:text-amber-400 font-mono">{report.highCount}</div>
+          <div class="mt-1 text-[11px] font-semibold text-amber-700/80 dark:text-amber-400">Impacting ranking</div>
+        </div>
+
+        <div data-kpi-filter="medium" class="cursor-pointer rounded-3xl border border-blue-200 bg-blue-50/50 p-4 shadow-2xs hover:shadow-md hover:border-blue-400 transition-all dark:border-blue-900/40 dark:bg-blue-950/20" title="Click to filter Medium Priority issues">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">Medium Priority</div>
+          <div class="mt-1 text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400 font-mono">{report.mediumCount}</div>
+          <div class="mt-1 text-[11px] font-semibold text-blue-700/80 dark:text-blue-400">Optimization ops</div>
+        </div>
+
+        <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Avg Score</div>
+          <div class="mt-1 text-2xl sm:text-3xl font-black text-slate-900 dark:text-white font-mono">{report.overallScore}%</div>
+          <div class="mt-1 text-[11px] font-semibold text-emerald-600">Site-wide health</div>
+        </div>
+      </div>
+
+      
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Severity:</span>
+            <button type="button" data-sev-filter="all" class="sev-btn active rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-3 py-1 text-xs font-bold transition">All ({report.issues.length})</button>
+            <button type="button" data-sev-filter="critical" class="sev-btn rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 px-3 py-1 text-xs font-bold transition">Critical ({report.criticalCount})</button>
+            <button type="button" data-sev-filter="high" class="sev-btn rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 px-3 py-1 text-xs font-bold transition">High ({report.highCount})</button>
+            <button type="button" data-sev-filter="medium" class="sev-btn rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 px-3 py-1 text-xs font-bold transition">Medium ({report.mediumCount})</button>
+            <button type="button" data-sev-filter="low" class="sev-btn rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 px-3 py-1 text-xs font-bold transition">Low ({report.lowCount})</button>
+          </div>
+
+          <div class="relative min-w-55">
+            <input
+              type="text"
+              id="search-audit-issues"
+              placeholder="Search audit issues..."
+              class="w-full rounded-xl border border-slate-300 bg-white py-1.5 px-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+            />
+          </div>
+        </div>
+
+        
+        <div id="issues-container" class="space-y-3 pt-2">
+          {report.issues.map((issue) => (
+            <div class="issue-card rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-950/40" data-severity={issue.severity} data-category={issue.category}>
+              <div class="flex items-start justify-between gap-3">
+                <div>
+                  <div class="flex items-center gap-2">
+                    <span class={`rounded-md px-2 py-0.5 text-[10px] font-black uppercase ${
+                      issue.severity === 'critical' ? 'bg-red-600 text-white' :
+                      issue.severity === 'high' ? 'bg-amber-500 text-white' :
+                      issue.severity === 'medium' ? 'bg-blue-600 text-white' :
+                      'bg-slate-500 text-white'
+                    }`}>
+                      {issue.severity}
                     </span>
-
-                    <span class="font-bold text-sm text-slate-900 dark:text-white">
-                      {item.pageName}
-                    </span>
-
-                    <a href={item.pagePath} target="_blank" class="font-mono text-xs text-blue-600 hover:underline dark:text-blue-400 truncate">
-                      {item.pagePath} ↗
-                    </a>
+                    <span class="text-xs font-extrabold text-slate-900 dark:text-white">{issue.issue}</span>
                   </div>
-
-                  <h4 class="font-bold text-xs text-slate-800 dark:text-slate-200 pt-0.5">
-                    Issue: <span class="text-red-700 dark:text-red-300 font-semibold">{item.issue}</span>
-                  </h4>
-
-                  <div class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                    <strong>Diagnosis:</strong> {item.reason}
-                  </div>
-
-                  <div class="rounded-xl bg-blue-50/60 p-2.5 text-xs text-blue-950 dark:bg-blue-950/30 dark:text-blue-200 border border-blue-100 dark:border-blue-900/40">
-                    <strong>💡 Action Required:</strong> {item.suggestedAction}
-                  </div>
+                  <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">{issue.reason}</p>
+                  <div class="mt-2 text-[11px] font-mono text-slate-500">{issue.pagePath}</div>
                 </div>
-
-                <div class="shrink-0 flex sm:flex-col items-center sm:items-end gap-2">
-                  {item.editUrl && (
-                    <a
-                      href={item.editUrl}
-                      class="inline-flex items-center gap-1 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition"
-                    >
-                      <span>✏️</span> Fix Issue
-                    </a>
-                  )}
+                <div class="text-right shrink-0">
+                  <div class="text-xs text-slate-500">Suggested Action:</div>
+                  <div class="text-xs font-bold text-blue-600 dark:text-blue-400 mt-0.5">{issue.suggestedAction}</div>
                 </div>
               </div>
             </div>
-          );
-        })
-      )}
+          ))}
+        </div>
+      </div>
+
     </div>
 
-    <!-- Empty State When Filters Yield 0 Matches -->
-    <div
-      id="no-filter-matches"
-      style="display: none;"
-      class="rounded-3xl border border-dashed border-slate-300 bg-white/50 p-10 text-center dark:border-slate-800 dark:bg-slate-900/50"
-    >
-      <div class="text-3xl mb-2">🎯</div>
-      <h4 class="text-sm font-bold text-slate-900 dark:text-white">No Issues Match Active Filter</h4>
-      <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-md mx-auto">
-        There are zero issues under this specific category or severity filter.
-      </p>
-      <button
-        type="button"
-        id="btn-reset-filters"
-        class="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition cursor-pointer"
-      >
-        <span>↺</span> Reset All Filters
-      </button>
+    
+    
+    
+    <div id="modal-gsc-config" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-xs">
+      <div class="min-h-full flex items-center justify-center">
+        <div class="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 space-y-5">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>⚙️</span> Connect Google Search Console Property
+          </h3>
+          <button
+            type="button"
+            onclick="document.getElementById('modal-gsc-config')?.classList.add('hidden')"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+
+        <form id="form-gsc-credentials" class="space-y-4 text-xs">
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300">Property URL or Domain Property</label>
+            <input
+              type="text"
+              id="inp-gsc-property"
+              value={gscSnapshot.propertyUrl || 'https://aifreecalculator.com/'}
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="https://aifreecalculator.com/ or sc-domain:aifreecalculator.com"
+            />
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300">Service Account Client Email</label>
+            <input
+              type="email"
+              id="inp-gsc-email"
+              value={gscSnapshot.clientEmail || ''}
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="gsc-bot@your-project.iam.gserviceaccount.com"
+            />
+          </div>
+
+          <div>
+            <label class="block font-semibold text-slate-700 dark:text-slate-300">
+              Private Key (PEM format with -----BEGIN PRIVATE KEY-----)
+            </label>
+            <textarea
+              id="inp-gsc-key"
+              rows="4"
+              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 font-mono text-[11px] text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              placeholder="-----BEGIN PRIVATE KEY-----&#10;MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC...&#10;-----END PRIVATE KEY-----"
+            ></textarea>
+            <p class="text-[11px] text-slate-400 mt-1">
+              Tip: You can also paste your entire Google Cloud service account JSON file into either field, and it will be auto-parsed.
+            </p>
+          </div>
+
+          <div id="gsc-config-status" class="hidden rounded-xl p-3 text-xs font-bold"></div>
+
+          <div class="flex items-center justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onclick="document.getElementById('modal-gsc-config')?.classList.add('hidden')"
+              class="rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              id="btn-save-gsc"
+              class="rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition cursor-pointer"
+            >
+              Validate &amp; Connect
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
+  </div>
 
   </div>
 
-  <!-- Page Controller Script moved INSIDE AdminLayout -->
+  
   <script is:inline>
-    function initSeoDashboard() {
-      const searchInput = document.getElementById('search-issues-input');
-      const sevButtons  = document.querySelectorAll('.sev-btn');
-      const catButtons  = document.querySelectorAll('.cat-btn');
-      const emptyFilterBox = document.getElementById('no-filter-matches');
-      const btnTriggerAudit = document.getElementById('btn-trigger-audit');
-      const btnTriggerIcon = document.getElementById('btn-trigger-icon');
-      const btnTriggerText = document.getElementById('btn-trigger-text');
-      const btnResetFilters = document.getElementById('btn-reset-filters');
-      const liveStatus = document.getElementById('live-audit-status');
-
-      let activeSeverity = 'all';
-      let activeCategory = 'all';
-      let searchQuery    = '';
-
-      function filterCards() {
-        let visibleCount = 0;
-        const cards = document.querySelectorAll('.issue-card');
-        
-        cards.forEach((card) => {
-          const sev = card.getAttribute('data-severity') || '';
-          const cat = card.getAttribute('data-category') || '';
-          const searchData = card.getAttribute('data-search') || '';
-
-          const matchSev = activeSeverity === 'all' || sev === activeSeverity;
-          const matchCat = activeCategory === 'all' || cat === activeCategory;
-          const matchSearch = !searchQuery || searchData.includes(searchQuery);
-
-          if (matchSev && matchCat && matchSearch) {
-            card.style.display = '';
-            visibleCount++;
-          } else {
-            card.style.display = 'none';
-          }
-        });
-
-        if (emptyFilterBox) {
-          emptyFilterBox.style.display = (visibleCount === 0 && cards.length > 0) ? 'block' : 'none';
-        }
-      }
-
-      function updateSevButtons(targetSev) {
-        activeSeverity = targetSev;
-        sevButtons.forEach((b) => {
-          const isMatch = (b.getAttribute('data-severity') || '') === targetSev;
-          if (isMatch) {
-            b.className = 'sev-btn active rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition-colors cursor-pointer';
-          } else {
-            b.className = 'sev-btn rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1.5 text-xs font-semibold transition-colors cursor-pointer';
-          }
+    function initGscDashboard() {
+      // 1. Search Filter for Top Pages Table
+      const searchPages = document.getElementById('search-gsc-pages');
+      if (searchPages) {
+        searchPages.addEventListener('input', (e) => {
+          const q = (e.target.value || '').toLowerCase().trim();
+          document.querySelectorAll('.page-table-row').forEach((row) => {
+            const text = row.querySelector('.page-row-title')?.textContent?.toLowerCase() || '';
+            const path = row.querySelector('.font-mono')?.textContent?.toLowerCase() || '';
+            row.style.display = (text.includes(q) || path.includes(q)) ? '' : 'none';
+          });
         });
       }
 
-      function updateCatButtons(targetCat) {
-        activeCategory = targetCat;
-        catButtons.forEach((b) => {
-          const isMatch = (b.getAttribute('data-cat') || '') === targetCat;
-          if (isMatch) {
-            b.className = 'cat-btn active rounded-lg bg-blue-600 px-3 py-1 text-[11px] font-bold text-white shadow-xs transition-colors cursor-pointer';
-          } else {
-            b.className = 'cat-btn rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 px-3 py-1 text-[11px] font-semibold transition-colors cursor-pointer';
-          }
+      // 2. Search Filter for Top Queries Table
+      const searchQueries = document.getElementById('search-gsc-queries');
+      if (searchQueries) {
+        searchQueries.addEventListener('input', (e) => {
+          const q = (e.target.value || '').toLowerCase().trim();
+          document.querySelectorAll('.query-table-row').forEach((row) => {
+            const text = row.querySelector('.query-row-text')?.textContent?.toLowerCase() || '';
+            row.style.display = text.includes(q) ? '' : 'none';
+          });
         });
       }
 
-      // Severity Buttons Click Listeners
-      sevButtons.forEach((btn) => {
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          const sev = btn.getAttribute('data-severity') || 'all';
-          updateSevButtons(sev);
-          updateCatButtons('all');
-          filterCards();
-        });
-      });
+      // 3. Manual Sync Button
+      const btnSync = document.getElementById('btn-sync-gsc');
+      const btnSyncIcon = document.getElementById('btn-sync-gsc-icon');
+      const btnSyncText = document.getElementById('btn-sync-gsc-text');
 
-      // Category Buttons Click Listeners
-      catButtons.forEach((btn) => {
-        btn.addEventListener('click', (e) => {
-          e.preventDefault();
-          const cat = btn.getAttribute('data-cat') || 'all';
-          updateCatButtons(cat);
-          updateSevButtons('all');
-          filterCards();
-        });
-      });
-
-      // Executive Health Metric KPI Cards
-      document.querySelectorAll('[data-kpi-filter]').forEach((card) => {
-        card.addEventListener('click', () => {
-          const targetSev = card.getAttribute('data-kpi-filter');
-          if (!targetSev) return;
-          updateSevButtons(targetSev);
-          updateCatButtons('all');
-          filterCards();
-        });
-      });
-
-      // Search Input
-      searchInput?.addEventListener('input', (e) => {
-        searchQuery = (e.target.value || '').trim().toLowerCase();
-        filterCards();
-      });
-
-      // Reset All Filters
-      btnResetFilters?.addEventListener('click', () => {
-        updateSevButtons('all');
-        updateCatButtons('all');
-        searchQuery = '';
-        if (searchInput) searchInput.value = '';
-        filterCards();
-      });
-
-      // Re-run Audit Button with Live Visual Feedback
-      if (btnTriggerAudit) {
-        btnTriggerAudit.addEventListener('click', async () => {
-          if (btnTriggerAudit.disabled) return;
-          btnTriggerAudit.disabled = true;
-          btnTriggerAudit.classList.add('opacity-75', 'cursor-wait');
-          if (btnTriggerIcon) btnTriggerIcon.textContent = '⏳';
-          if (btnTriggerText) btnTriggerText.textContent = 'Running Fresh Audit...';
-
-          if (liveStatus) {
-            liveStatus.className = 'rounded-2xl border border-blue-200 bg-blue-50 text-blue-900 dark:border-blue-900/60 dark:bg-blue-950/60 dark:text-blue-200 p-4 text-xs font-bold block shadow-xs animate-pulse';
-            liveStatus.innerHTML = '<span>⚡ Executing comprehensive SEO rules audit across all 42+ calculators, canonicals, descriptions, titles, and orphan links...</span>';
-          }
+      if (btnSync) {
+        btnSync.addEventListener('click', async () => {
+          if (btnSync.disabled) return;
+          btnSync.disabled = true;
+          if (btnSyncIcon) btnSyncIcon.textContent = '⏳';
+          if (btnSyncText) btnSyncText.textContent = 'Syncing GSC...';
 
           try {
-            const token = localStorage.getItem('admin_token') || '';
-            const res = await fetch('/api/admin/seo/audit?t=' + Date.now(), {
-              method: 'GET',
-              credentials: 'include',
-              headers: {
-                ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-              },
+            const urlParams = new URLSearchParams(window.location.search);
+            const range = urlParams.get('range') || '28d';
+            const res = await fetch('/api/admin/seo/gsc/sync', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ range }),
             });
 
-            if (res.ok) {
-              const data = await res.json();
-              if (btnTriggerIcon) btnTriggerIcon.textContent = '✓';
-              if (btnTriggerText) btnTriggerText.textContent = 'Audit Complete!';
-
-              if (liveStatus) {
-                liveStatus.className = 'rounded-2xl border border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-200 p-4 text-xs font-bold block shadow-xs';
-                liveStatus.innerHTML = `<span>✅ SEO Audit Finished! Scanned ${data.report?.totalPages || 42} pages. Found ${data.report?.issues?.length || 0} issues. Reloading dashboard with updated analysis...</span>`;
-              }
-
-              setTimeout(() => {
-                window.location.href = '/admin/seo/?audited=1&t=' + Date.now();
-              }, 700);
+            const data = await res.json();
+            if (res.ok && data.success) {
+              if (btnSyncIcon) btnSyncIcon.textContent = '✓';
+              if (btnSyncText) btnSyncText.textContent = 'Synced!';
+              setTimeout(() => window.location.reload(), 600);
             } else {
-              const data = await res.json().catch(() => ({}));
-              alert(data.error || 'Failed to re-run audit. Please verify admin session.');
-              btnTriggerAudit.disabled = false;
-              btnTriggerAudit.classList.remove('opacity-75', 'cursor-wait');
-              if (btnTriggerIcon) btnTriggerIcon.textContent = '⚡';
-              if (btnTriggerText) btnTriggerText.textContent = 'Re-run Audit';
-              if (liveStatus) liveStatus.className = 'hidden';
+              alert(data.error || 'Failed to sync with Search Console. Please verify credentials.');
+              btnSync.disabled = false;
+              if (btnSyncIcon) btnSyncIcon.textContent = '🔄';
+              if (btnSyncText) btnSyncText.textContent = 'Sync GSC Data';
             }
           } catch (err) {
-            alert('Network connection error while running audit. Refreshing page...');
-            window.location.reload();
+            alert('Network error while syncing Google Search Console data.');
+            btnSync.disabled = false;
+            if (btnSyncIcon) btnSyncIcon.textContent = '🔄';
+            if (btnSyncText) btnSyncText.textContent = 'Sync GSC Data';
           }
         });
       }
 
-      // Read initial URL query parameters if present (e.g. ?severity=critical or ?category=title)
-      try {
-        const qParams = new URLSearchParams(window.location.search);
-        const qSev = qParams.get('severity');
-        const qCat = qParams.get('category');
-        if (qSev) updateSevButtons(qSev);
-        if (qCat) updateCatButtons(qCat);
-        if (qSev || qCat) filterCards();
-      } catch (e) {}
+      // 4. GSC Credentials Form Submission
+      const formGsc = document.getElementById('form-gsc-credentials');
+      const statusBox = document.getElementById('gsc-config-status');
+      const btnSaveGsc = document.getElementById('btn-save-gsc');
+
+      if (formGsc) {
+        // Auto-parse if JSON pasted into email or key field
+        const inpEmail = document.getElementById('inp-gsc-email');
+        const inpKey = document.getElementById('inp-gsc-key');
+        const inpProperty = document.getElementById('inp-gsc-property');
+
+        const tryParseJson = (text) => {
+          try {
+            const parsed = JSON.parse(text);
+            if (parsed.client_email && parsed.private_key) {
+              if (inpEmail) inpEmail.value = parsed.client_email;
+              if (inpKey) inpKey.value = parsed.private_key;
+              return true;
+            }
+          } catch {}
+          return false;
+        };
+
+        inpKey?.addEventListener('paste', (e) => {
+          setTimeout(() => {
+            if (inpKey.value.includes('{') && tryParseJson(inpKey.value)) {
+              statusBox.className = 'rounded-xl p-3 text-xs font-bold block bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-300';
+              statusBox.textContent = '✓ Service Account JSON detected and auto-parsed successfully.';
+            }
+          }, 50);
+        });
+
+        formGsc.addEventListener('submit', async (e) => {
+          e.preventDefault();
+          if (btnSaveGsc.disabled) return;
+          btnSaveGsc.disabled = true;
+          btnSaveGsc.textContent = 'Connecting...';
+
+          statusBox.className = 'rounded-xl p-3 text-xs font-bold block bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-300';
+          statusBox.textContent = '⚡ Authenticating with Google Search Console API...';
+
+          try {
+            const clientEmail = inpEmail?.value?.trim() || '';
+            let privateKey = inpKey?.value?.trim() || '';
+            const propertyUrl = inpProperty?.value?.trim() || 'https://aifreecalculator.com/';
+
+            // If user pasted raw JSON
+            if (privateKey.includes('{')) {
+              try {
+                const parsed = JSON.parse(privateKey);
+                if (parsed.private_key) privateKey = parsed.private_key;
+              } catch {}
+            }
+
+            const res = await fetch('/api/admin/seo/gsc', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ clientEmail, privateKey, propertyUrl }),
+            });
+
+            const result = await res.json();
+
+            if (res.ok && result.success) {
+              statusBox.className = 'rounded-xl p-3 text-xs font-bold block bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+              statusBox.textContent = '✅ Google Search Console connected successfully! Reloading...';
+              setTimeout(() => window.location.reload(), 1000);
+            } else {
+              statusBox.className = 'rounded-xl p-3 text-xs font-bold block bg-red-50 text-red-800 dark:bg-red-950 dark:text-red-300';
+              statusBox.textContent = `❌ ${result.error || 'Authentication failed'}`;
+              btnSaveGsc.disabled = false;
+              btnSaveGsc.textContent = 'Validate & Connect';
+            }
+          } catch (err) {
+            statusBox.className = 'rounded-xl p-3 text-xs font-bold block bg-red-50 text-red-800 dark:bg-red-950 dark:text-red-300';
+            statusBox.textContent = '❌ Network error communicating with server.';
+            btnSaveGsc.disabled = false;
+            btnSaveGsc.textContent = 'Validate & Connect';
+          }
+        });
+      }
+
+      // 5. Open GSC Modal Button
+      const btnOpenModal = document.getElementById('btn-open-gsc-modal');
+      const modal = document.getElementById('modal-gsc-config');
+      if (btnOpenModal && modal) {
+        btnOpenModal.addEventListener('click', () => modal.classList.remove('hidden'));
+      }
+
+      // 6. Filter issue cards in technical audit
+      const sevButtons = document.querySelectorAll('.sev-btn');
+      const searchAudit = document.getElementById('search-audit-issues');
+      let currentSeverity = 'all';
+
+      sevButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          sevButtons.forEach((b) => b.classList.remove('active', 'bg-slate-900', 'text-white', 'dark:bg-white', 'dark:text-slate-900'));
+          btn.classList.add('active', 'bg-slate-900', 'text-white', 'dark:bg-white', 'dark:text-slate-900');
+          currentSeverity = btn.getAttribute('data-sev-filter') || 'all';
+          filterAuditCards();
+        });
+      });
+
+      searchAudit?.addEventListener('input', () => filterAuditCards());
+
+      function filterAuditCards() {
+        const q = (searchAudit?.value || '').toLowerCase().trim();
+        document.querySelectorAll('.issue-card').forEach((card) => {
+          const sev = card.getAttribute('data-severity');
+          const text = card.textContent?.toLowerCase() || '';
+          const matchesSev = currentSeverity === 'all' || sev === currentSeverity;
+          const matchesText = !q || text.includes(q);
+          card.style.display = matchesSev && matchesText ? '' : 'none';
+        });
+      }
     }
 
-    // Execute immediately and on DOMContentLoaded
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initSeoDashboard);
+      document.addEventListener('DOMContentLoaded', initGscDashboard);
     } else {
-      initSeoDashboard();
+      initGscDashboard();
     }
   </script>
 </AdminLayout>
-

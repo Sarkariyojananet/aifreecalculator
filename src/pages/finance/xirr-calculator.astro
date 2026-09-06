@@ -1,0 +1,1413 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="XIRR Calculator - Calculate Annualized Return on Investments"
+  description="Calculate the exact Extended Internal Rate of Return (XIRR) for SIPs, mutual funds, and irregular cash flows using real calendar dates and actual day differences."
+  category="Finance"
+  calculatorName="XIRR Calculator"
+  slug="xirr-calculator"
+  keywords={[
+    'xirr calculator',
+    'extended internal rate of return',
+    'xirr return calculator',
+    'xirr calculator india',
+    'investment xirr calculator',
+    'mutual fund xirr calculator',
+    'sip xirr calculator',
+    'annualized return calculator',
+    'cagr vs xirr calculator'
+  ]}
+>
+  <div class="space-y-6">
+
+      <!-- MODE SELECTION TABS -->
+      <div class="flex items-center gap-2 overflow-x-auto border-b border-slate-200 pb-2 text-sm dark:border-slate-800">
+        <button
+          type="button"
+          id="tab-btn-recurring"
+          class="btn-xirr-tab active shrink-0 rounded-xl bg-blue-600 px-4 py-2 font-bold text-white shadow-xs cursor-pointer transition flex items-center gap-1.5"
+          data-tab="recurring"
+        >
+          <span>🔄</span>
+          <span>Recurring Investment XIRR</span>
+        </button>
+        <button
+          type="button"
+          id="tab-btn-custom"
+          class="btn-xirr-tab shrink-0 rounded-xl border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition flex items-center gap-1.5"
+          data-tab="custom"
+        >
+          <span>📝</span>
+          <span>Custom Cash Flows XIRR</span>
+        </button>
+      </div>
+
+      <p id="mode-desc" class="text-xs text-slate-500 dark:text-slate-400">
+        Automatically generate periodic investment cash flows and compute the annualized XIRR on actual dates.
+      </p>
+
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <!-- TAB 1: RECURRING INVESTMENT XIRR -->
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <div id="panel-recurring" class="xirr-panel space-y-6">
+        
+        <form id="form-rec-xirr" class="space-y-4" novalidate onsubmit="return false;">
+          
+          <!-- 1. Investment Frequency -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Investment Frequency <span class="text-red-500">*</span>
+            </label>
+            <div class="grid grid-cols-2 sm:grid-cols-5 gap-1.5 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+              <button
+                type="button"
+                data-freq="14days"
+                class="btn-freq-opt rounded-lg py-2 text-xs font-semibold transition-all text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer text-center"
+              >
+                14 Days
+              </button>
+              <button
+                type="button"
+                data-freq="monthly"
+                class="btn-freq-opt rounded-lg py-2 text-xs font-semibold transition-all text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer text-center"
+              >
+                Monthly
+              </button>
+              <button
+                type="button"
+                data-freq="quarterly"
+                class="btn-freq-opt rounded-lg py-2 text-xs font-semibold transition-all text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer text-center"
+              >
+                Quarterly
+              </button>
+              <button
+                type="button"
+                data-freq="halfyearly"
+                class="btn-freq-opt rounded-lg py-2 text-xs font-semibold transition-all text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer text-center"
+              >
+                Half Yearly
+              </button>
+              <button
+                type="button"
+                data-freq="yearly"
+                class="btn-freq-opt active col-span-2 sm:col-span-1 rounded-lg py-2 text-xs font-bold transition-all bg-white text-blue-600 shadow-2xs dark:bg-slate-700 dark:text-blue-400 cursor-pointer text-center"
+              >
+                Yearly
+              </button>
+            </div>
+            <p id="hint-freq-desc" class="text-[11px] text-slate-500 dark:text-slate-400">
+              Recurring payments occur once every 12 months on the start date anniversary.
+            </p>
+          </div>
+
+          <!-- 2. Date Pickers Grid -->
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <!-- Start Date -->
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-1.5">
+              <label for="inp-rec-start" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Start Date (First Investment) <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                id="inp-rec-start"
+                value="2021-01-01"
+                class="w-full rounded-xl border border-slate-300 bg-white py-2 px-3 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              />
+              <p class="text-[11px] text-slate-400">Date of initial recurring contribution</p>
+            </div>
+
+            <!-- Maturity Date -->
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-1.5">
+              <label for="inp-rec-end" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Maturity Date (Redemption) <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="date"
+                id="inp-rec-end"
+                value="2024-01-01"
+                class="w-full rounded-xl border border-slate-300 bg-white py-2 px-3 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              />
+              <p class="text-[11px] text-slate-400">Must be strictly after the start date</p>
+            </div>
+          </div>
+
+          <!-- 3. Currency Inputs Grid -->
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <!-- Recurring Investment Amount -->
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+              <div class="flex items-center justify-between">
+                <label for="inp-rec-amt" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Recurring Investment <span class="text-red-500">*</span>
+                </label>
+                <div class="relative w-32 sm:w-36">
+                  <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-xs font-bold text-slate-400">₹</span>
+                  <input
+                    type="number"
+                    id="inp-rec-amt"
+                    value="10000"
+                    step="500"
+                    min="100"
+                    class="w-full rounded-xl border border-slate-300 bg-white py-1.5 pl-7 pr-3 text-right text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                </div>
+              </div>
+              <!-- Quick preset pills -->
+              <div class="flex flex-wrap gap-1.5 text-[11px] font-semibold text-slate-500">
+                <button type="button" class="btn-rec-amt-pill rounded-md bg-slate-100 px-2 py-0.5 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800 dark:hover:bg-slate-700 cursor-pointer" data-val="5000">₹5k</button>
+                <button type="button" class="btn-rec-amt-pill rounded-md bg-slate-100 px-2 py-0.5 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800 dark:hover:bg-slate-700 cursor-pointer" data-val="10000">₹10k</button>
+                <button type="button" class="btn-rec-amt-pill rounded-md bg-slate-100 px-2 py-0.5 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800 dark:hover:bg-slate-700 cursor-pointer" data-val="25000">₹25k</button>
+                <button type="button" class="btn-rec-amt-pill rounded-md bg-slate-100 px-2 py-0.5 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800 dark:hover:bg-slate-700 cursor-pointer" data-val="50000">₹50k</button>
+              </div>
+            </div>
+
+            <!-- Total Maturity Amount -->
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+              <div class="flex items-center justify-between">
+                <label for="inp-rec-mat" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Total Maturity Amount <span class="text-red-500">*</span>
+                </label>
+                <div class="relative w-32 sm:w-36">
+                  <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-xs font-bold text-slate-400">₹</span>
+                  <input
+                    type="number"
+                    id="inp-rec-mat"
+                    value="60000"
+                    step="1000"
+                    min="100"
+                    class="w-full rounded-xl border border-slate-300 bg-white py-1.5 pl-7 pr-3 text-right text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                </div>
+              </div>
+              <!-- Quick preset pills -->
+              <div class="flex flex-wrap gap-1.5 text-[11px] font-semibold text-slate-500">
+                <button type="button" class="btn-mat-amt-pill rounded-md bg-slate-100 px-2 py-0.5 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800 dark:hover:bg-slate-700 cursor-pointer" data-val="50000">₹50k</button>
+                <button type="button" class="btn-mat-amt-pill rounded-md bg-slate-100 px-2 py-0.5 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800 dark:hover:bg-slate-700 cursor-pointer" data-val="60000">₹60k</button>
+                <button type="button" class="btn-mat-amt-pill rounded-md bg-slate-100 px-2 py-0.5 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800 dark:hover:bg-slate-700 cursor-pointer" data-val="100000">₹1 Lakh</button>
+                <button type="button" class="btn-mat-amt-pill rounded-md bg-slate-100 px-2 py-0.5 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800 dark:hover:bg-slate-700 cursor-pointer" data-val="500000">₹5 Lakh</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- ACTION BUTTONS -->
+          <div class="flex items-center gap-2 pt-2">
+            <button
+              type="submit"
+              id="btn-calc-rec-xirr"
+              class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer text-center"
+            >
+              Calculate XIRR →
+            </button>
+            <button
+              type="button"
+              id="btn-clear-rec-xirr"
+              class="rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer"
+            >
+              Clear (✕)
+            </button>
+          </div>
+
+          <p id="err-rec-xirr" class="hidden rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300" role="alert" aria-live="polite"></p>
+
+        </form>
+
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- LIVE INTERACTIVE GRAPH (Updates dynamically on input changes) -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div>
+              <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <span>📈</span> Live Investment Timeline &amp; Cash Flow Progression
+              </h3>
+              <p class="text-[11px] text-slate-400">Updates live as you change frequency, dates, or investment amounts</p>
+            </div>
+            <div class="flex items-center gap-4 text-[11px] font-bold">
+              <span class="flex items-center gap-1.5 text-blue-600 dark:text-blue-400">
+                <span class="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block"></span> Cumulative Invested
+              </span>
+              <span class="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Maturity Value
+              </span>
+            </div>
+          </div>
+
+          <!-- Interactive Responsive SVG Timeline Canvas -->
+          <div class="relative w-full overflow-hidden">
+            <svg id="svg-timeline-chart" viewBox="0 0 700 280" class="w-full h-auto select-none overflow-visible cursor-crosshair"></svg>
+            <!-- Hover Floating Tooltip -->
+            <div id="chart-tooltip" class="pointer-events-none absolute hidden z-20 rounded-xl bg-slate-900/95 p-2.5 text-xs text-white shadow-xl backdrop-blur-xs border border-slate-700 space-y-1 transition-opacity duration-150">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <!-- Quick Cash Flow Indicator Pills -->
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px] text-slate-500 dark:text-slate-400">
+            <span id="txt-chart-summary-inflow">Maturity Inflow: <strong>₹60,000</strong></span>
+            <span id="txt-chart-summary-invested">Total Invested: <strong>₹30,000 (3 installments)</strong></span>
+            <span id="txt-chart-summary-tenure">Tenure: <strong>3.0 Years (1,095 Days)</strong></span>
+          </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <!-- RECURRING RESULTS CONTAINER (Hidden until button is clicked) -->
+        <!-- ═══════════════════════════════════════════════════════════════════ -->
+        <div id="rec-results-section" class="hidden space-y-6">
+          
+          <!-- Highlight Result Card -->
+          <div class="overflow-hidden rounded-3xl border border-emerald-200 bg-linear-to-br from-white via-emerald-50/40 to-emerald-100/50 p-5 shadow-lg shadow-emerald-500/5 dark:border-emerald-900/60 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/30 sm:p-7">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-emerald-200/80 pb-4 dark:border-slate-800">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Estimated Annualized Return (XIRR)</span>
+                <div id="res-rec-xirr" class="mt-1 text-3xl sm:text-5xl font-black text-emerald-600 dark:text-emerald-400">
+                  38.92% p.a.
+                </div>
+              </div>
+              <div class="sm:text-right">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Net Gain / Profit:</span>
+                <div id="res-rec-profit" class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                  + ₹ 30,000
+                </div>
+              </div>
+            </div>
+
+            <!-- 6 Metrics Grid -->
+            <div class="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Total Invested Capital</div>
+                <div id="res-rec-invested" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">₹ 30,000</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Total Maturity Value</div>
+                <div id="res-rec-maturity" class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">₹ 60,000</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Absolute Return</div>
+                <div id="res-rec-abs-return" class="mt-1 text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">+ 100.0%</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Number of Investments</div>
+                <div id="res-rec-count" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">3 Installments</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Investment Frequency</div>
+                <div id="res-rec-freq" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">Yearly</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Total Investment Period</div>
+                <div id="res-rec-tenure" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">3.0 Years (1,095 Days)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detailed Cash Flow Schedule Table -->
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 space-y-4">
+            <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <span>📅</span> Detailed Cash Flow Schedule
+            </h3>
+            <div class="overflow-x-auto max-h-96 scrollbar-thin">
+              <table class="w-full text-left text-xs">
+                <thead class="sticky top-0 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold">
+                  <tr>
+                    <th class="p-2.5 rounded-l-lg">#</th>
+                    <th class="p-2.5">Date</th>
+                    <th class="p-2.5">Cash Flow Type</th>
+                    <th class="p-2.5 text-right">Cash Flow Amount</th>
+                    <th class="p-2.5 text-right rounded-r-lg">Cumulative Invested</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-rec-schedule" class="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono">
+                  <!-- Dynamically populated -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <!-- TAB 2: CUSTOM CASH FLOWS XIRR (Advanced Mode) -->
+      <!-- ═══════════════════════════════════════════════════════════════════════ -->
+      <div id="panel-custom" class="xirr-panel hidden space-y-6">
+        
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+            <div>
+              <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <span>📝</span> Custom Irregular Cash Flow Entries
+              </h3>
+              <p class="text-[11px] text-slate-400">Add arbitrary dates, investments (outflows), and redemptions (inflows)</p>
+            </div>
+            <!-- Preset Samples -->
+            <div class="flex items-center gap-1.5 text-xs">
+              <span class="text-[11px] text-slate-400 font-medium">Presets:</span>
+              <button type="button" id="btn-custom-preset-sip" class="rounded-lg bg-slate-100 px-2 py-1 text-slate-700 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">3-Yr Annual</button>
+              <button type="button" id="btn-custom-preset-trade" class="rounded-lg bg-slate-100 px-2 py-1 text-slate-700 hover:bg-blue-50 hover:text-blue-600 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">Irregular Trades</button>
+            </div>
+          </div>
+
+          <!-- Dynamic Cash Flow Table -->
+          <div class="overflow-x-auto max-h-96 scrollbar-thin">
+            <table class="w-full text-left text-xs">
+              <thead class="sticky top-0 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold">
+                <tr>
+                  <th class="p-2.5 rounded-l-lg w-12">#</th>
+                  <th class="p-2.5 w-44">Date</th>
+                  <th class="p-2.5 w-36">Type</th>
+                  <th class="p-2.5">Amount (₹)</th>
+                  <th class="p-2.5 text-center w-12 rounded-r-lg">Action</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-custom-cfs" class="divide-y divide-slate-100 dark:divide-slate-800/60">
+                <!-- Dynamically populated rows -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <button
+              type="button"
+              id="btn-add-custom-cf"
+              class="rounded-xl border border-slate-300 bg-white hover:bg-slate-100 px-3.5 py-2 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer flex items-center gap-1.5"
+            >
+              <span>➕ Add Cash Flow</span>
+            </button>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                id="btn-calc-custom-xirr"
+                class="rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-2.5 text-xs font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer"
+              >
+                Calculate Custom XIRR →
+              </button>
+              <button
+                type="button"
+                id="btn-clear-custom-cfs"
+                class="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer"
+              >
+                Reset
+              </button>
+            </div>
+          </div>
+
+          <p id="err-custom-xirr" class="hidden rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300" role="alert" aria-live="polite"></p>
+        </div>
+
+        <!-- Custom Results Container -->
+        <div id="custom-results-section" class="hidden space-y-6">
+          <div class="overflow-hidden rounded-3xl border border-emerald-200 bg-linear-to-br from-white via-emerald-50/40 to-emerald-100/50 p-5 shadow-lg shadow-emerald-500/5 dark:border-emerald-900/60 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/30 sm:p-7">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-emerald-200/80 pb-4 dark:border-slate-800">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Custom Cash Flow XIRR</span>
+                <div id="res-custom-xirr" class="mt-1 text-3xl sm:text-5xl font-black text-emerald-600 dark:text-emerald-400">
+                  18.82% p.a.
+                </div>
+              </div>
+              <div class="sm:text-right">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Net Gain / Loss:</span>
+                <div id="res-custom-profit" class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                  + ₹ 30,000
+                </div>
+              </div>
+            </div>
+
+            <!-- Metrics Grid -->
+            <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Total Invested (Outflows)</div>
+                <div id="res-custom-invested" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">₹ 1,00,000</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Total Returns (Inflows)</div>
+                <div id="res-custom-maturity" class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">₹ 1,30,000</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Absolute Return</div>
+                <div id="res-custom-abs-return" class="mt-1 text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">+ 30.0%</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Duration</div>
+                <div id="res-custom-tenure" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">2.0 Years (730 Days)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  <!-- ═════════════════════════════════════════════════════════════════════════ -->
+  <!-- SEO EDUCATIONAL CONTENT, COMPARISON TABLES & FAQ -->
+  <!-- ═════════════════════════════════════════════════════════════════════════ -->
+  <Fragment slot="content">
+    <section class="xirr-content max-w-4xl mx-auto space-y-8 text-slate-700 dark:text-slate-300">
+      
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+          XIRR Calculator – Extended Internal Rate of Return
+        </h1>
+        <p class="mt-2 text-sm sm:text-base leading-relaxed text-slate-600 dark:text-slate-400">
+          The <strong>XIRR Calculator</strong> (Extended Internal Rate of Return) calculates the true annualized return for series of irregular, lump sum, or recurring investment cash flows. Unlike standard CAGR, which only considers the initial and final values of a lump sum, XIRR accurately accounts for the exact dates when each installment or redemption occurs.
+        </p>
+      </div>
+
+      <h2>What is an XIRR Calculator?</h2>
+      <p>
+        In personal finance, most real-world investments do not happen as a single one-off deposit. Mutual fund SIPs, dividend reinvestments, periodic top-ups, ULIP installments, and systematic withdrawals occur across multiple distinct calendar dates.
+      </p>
+      <p>
+        Because cash invested at the beginning of year 1 has much more time to compound than cash invested in year 3, a standard average return or point-to-point formula gives a distorted picture. <strong>XIRR</strong> solves this by finding the exact discount rate at which the Net Present Value (NPV) of all cash outflows (investments) equals the Net Present Value of all cash inflows (maturity or current portfolio valuation).
+      </p>
+
+      <h2>How does XIRR Work? The Mathematical Formula</h2>
+      <p>
+        XIRR represents the discount rate <em>r</em> that satisfies the Net Present Value (NPV) equation using actual day differences:
+      </p>
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 font-mono text-sm sm:text-base text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 overflow-x-auto my-3 text-center">
+        &Sigma; [ C<sub>i</sub> / (1 + <var>r</var>)<sup>(D<sub>i</sub> - D<sub>0</sub>) / 365</sup> ] = 0
+      </div>
+      <p>Where:</p>
+      <ul>
+        <li><strong>C<sub>i</sub>:</strong> Cash flow amount on date <em>i</em>. Outflows (investments) are negative, and inflows (maturity value or current valuation) are positive.</li>
+        <li><strong>D<sub>i</sub>:</strong> The calendar date of cash flow <em>i</em>.</li>
+        <li><strong>D<sub>0</sub>:</strong> The calendar date of the initial investment.</li>
+        <li><strong>(D<sub>i</sub> - D<sub>0</sub>) / 365:</strong> The exact elapsed duration fraction in years based on actual calendar days.</li>
+        <li><strong>r:</strong> The annualized Extended Internal Rate of Return (XIRR).</li>
+      </ul>
+
+      <h2>XIRR vs. CAGR vs. Absolute Return: Key Differences</h2>
+      <div class="overflow-x-auto my-4">
+        <table class="w-full text-left text-xs sm:text-sm border-collapse border border-slate-200 dark:border-slate-800">
+          <thead class="bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold">
+            <tr>
+              <th class="p-3 border border-slate-200 dark:border-slate-800">Metric</th>
+              <th class="p-3 border border-slate-200 dark:border-slate-800">When to Use</th>
+              <th class="p-3 border border-slate-200 dark:border-slate-800">Cash Flow Support</th>
+              <th class="p-3 border border-slate-200 dark:border-slate-800">Considers Dates?</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+            <tr>
+              <td class="p-3 font-semibold border border-slate-200 dark:border-slate-800">Absolute Return</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Short-term investments (&lt; 1 year)</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Single lump sum</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">No (ignores duration)</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold border border-slate-200 dark:border-slate-800">CAGR</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">One-time lump sum investment (&gt; 1 year)</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Only initial &amp; final value</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Only total years</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold border border-slate-200 dark:border-slate-800">XIRR</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">SIPs, multiple deposits, irregular cash flows</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Multiple inflows &amp; outflows</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Yes (exact calendar dates)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Step-by-Step Example Calculation</h2>
+      <p>
+        Consider an investor making three annual installments of ₹10,000 each into an equity fund:
+      </p>
+      <ul>
+        <li><strong>01/01/2021:</strong> First installment of <strong>-₹10,000</strong></li>
+        <li><strong>01/01/2022:</strong> Second installment of <strong>-₹10,000</strong> (Day 365)</li>
+        <li><strong>01/01/2023:</strong> Third installment of <strong>-₹10,000</strong> (Day 730)</li>
+        <li><strong>01/01/2024:</strong> Redemption / Maturity of <strong>+₹60,000</strong> (Day 1,095)</li>
+      </ul>
+      <p>
+        Total invested capital is ₹30,000, and the maturity value is ₹60,000. Applying the XIRR root-finding equation:
+      </p>
+      <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 font-mono text-sm sm:text-base text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 overflow-x-auto my-3 text-center">
+        -10,000 - [ 10,000 / (1 + <var>r</var>)<sup>1</sup> ] - [ 10,000 / (1 + <var>r</var>)<sup>2</sup> ] + [ 60,000 / (1 + <var>r</var>)<sup>3</sup> ] = 0
+      </div>
+      <p>
+        Solving for <em>r</em> yields <em>r &approx; 0.38919</em>, or an <strong>XIRR of 38.92% p.a.</strong> Note that a naive CAGR calculation using just ₹30,000 over 3 years would yield only 25.99%, significantly understating the actual compounding power of the latter installments!
+      </p>
+
+      <h2>Why Actual Investment Dates Matter</h2>
+      <p>
+        Unlike theoretical financial models that assume each month has exactly 30.416 days or that every year has 365 days, actual financial returns depend on exact banking dates:
+      </p>
+      <ul>
+        <li><strong>Calendar Discrepancies:</strong> Leap years (such as 2024) have 366 days. February has 28 or 29 days, while July and August both have 31 days.</li>
+        <li><strong>Weekend &amp; Holiday Shifts:</strong> In real mutual funds, if an SIP falls on a Saturday, Sunday, or market holiday, the NAV allocation happens on the next business day.</li>
+        <li><strong>Unequal Holding Periods:</strong> Money invested on January 1 has 365 days to grow, whereas money invested on December 1 has only 31 days. XIRR discounts each installment by its exact calendar duration.</li>
+      </ul>
+
+      <h2>How Recurring Investment Frequencies Affect Cash Flows</h2>
+      <p>
+        Our calculator supports five standard recurring investment intervals:
+      </p>
+      <ul>
+        <li><strong>14 Days:</strong> Popular for bi-weekly payroll deduction programs and high-frequency equity savings.</li>
+        <li><strong>Monthly:</strong> The standard SIP (Systematic Investment Plan) schedule used across mutual funds.</li>
+        <li><strong>Quarterly:</strong> Standard frequency for corporate dividends and government small savings schemes (such as NSC and PPF interest).</li>
+        <li><strong>Half Yearly:</strong> Traditional frequency for fixed deposit interest payouts and bond coupon payments.</li>
+        <li><strong>Yearly:</strong> Standard interval for tax-saving investments (ELSS, PPF annual contributions, life insurance premiums).</li>
+      </ul>
+
+      <h2>Related Financial Calculators</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 my-4">
+        <a href="/finance/sip-calculator/" class="block p-3 rounded-xl border border-slate-200 bg-white hover:border-blue-500 dark:border-slate-800 dark:bg-slate-900 transition">
+          <div class="font-bold text-slate-900 dark:text-white">📈 SIP Calculator</div>
+          <div class="text-xs text-slate-500 mt-1">Estimate future wealth accumulation for regular mutual fund SIPs.</div>
+        </a>
+        <a href="/finance/swp-calculator/" class="block p-3 rounded-xl border border-slate-200 bg-white hover:border-blue-500 dark:border-slate-800 dark:bg-slate-900 transition">
+          <div class="font-bold text-slate-900 dark:text-white">💸 SWP Calculator</div>
+          <div class="text-xs text-slate-500 mt-1">Simulate regular pension withdrawals with inflation step-up.</div>
+        </a>
+        <a href="/finance/compound-interest-calculator/" class="block p-3 rounded-xl border border-slate-200 bg-white hover:border-blue-500 dark:border-slate-800 dark:bg-slate-900 transition">
+          <div class="font-bold text-slate-900 dark:text-white">📊 Compound Interest</div>
+          <div class="text-xs text-slate-500 mt-1">Compute compounding interest across varying compounding intervals.</div>
+        </a>
+      </div>
+
+      <h2>Frequently Asked Questions (FAQ)</h2>
+      <div class="space-y-4 my-6">
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">What is the difference between XIRR and IRR?</h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            IRR assumes that all cash flows occur at strictly equal time intervals (e.g., exactly 1 year apart). XIRR allows each cash flow to occur on any arbitrary calendar date and calculates the exact day difference, making it suitable for real-world investments.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Why can't I use CAGR to evaluate my mutual fund SIP?</h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            CAGR only considers the first investment date and the final value. In an SIP, you invest fresh capital each month, so each installment has a different holding period. Applying CAGR to an SIP ignores the staggered nature of your capital and produces inaccurate results.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Can XIRR be negative?</h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            Yes. If the total maturity or current valuation of your investment is less than the cumulative capital invested, the XIRR will be negative, reflecting an annualized portfolio loss.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Does the maturity date include another recurring investment?</h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            No. Our calculator strictly halts recurring investments once the schedule reaches the maturity date. On the maturity date, only the positive redemption cash flow is recorded.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Is this calculator affiliated with any specific mutual fund house?</h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            No. This is an independent mathematical tool. It applies standard financial root-finding mathematics to evaluate any mutual fund, stock portfolio, or cash flow schedule.
+          </p>
+        </div>
+      </div>
+    </section>
+  </Fragment>
+</CalculatorLayout>
+
+<style>
+  .xirr-content h2 {
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+
+  .xirr-content h2:first-child {
+    margin-top: 0;
+  }
+
+  .xirr-content h3 {
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .xirr-content p {
+    margin: 0 0 1rem;
+    line-height: 1.75;
+    color: #475569;
+  }
+
+  .xirr-content ul,
+  .xirr-content ol {
+    margin: 0.75rem 0 1.5rem;
+    padding-left: 1.5rem;
+  }
+
+  .xirr-content ul {
+    list-style: disc;
+  }
+
+  .xirr-content ol {
+    list-style: decimal;
+  }
+
+  .xirr-content li + li {
+    margin-top: 0.5rem;
+  }
+
+  :global(.dark) .xirr-content h2,
+  :global(.dark) .xirr-content h3 {
+    color: #f8fafc;
+  }
+
+  :global(.dark) .xirr-content p {
+    color: #cbd5e1;
+  }
+</style>
+
+<!-- FAQ Schema JSON-LD -->
+<script type="application/ld+json" is:inline set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is the difference between XIRR and IRR?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "IRR assumes that all cash flows occur at strictly equal time intervals. XIRR allows each cash flow to occur on any arbitrary calendar date and calculates the exact day difference, making it suitable for real-world investments."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why can't I use CAGR to evaluate my mutual fund SIP?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "CAGR only considers the first investment date and the final value. In an SIP, you invest fresh capital each month, so each installment has a different holding period. Applying CAGR to an SIP ignores the staggered nature of your capital."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can XIRR be negative?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. If the total maturity or current valuation of your investment is less than the cumulative capital invested, the XIRR will be negative, reflecting an annualized portfolio loss."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does the maturity date include another recurring investment?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Our calculator strictly halts recurring investments once the schedule reaches the maturity date. On the maturity date, only the positive redemption cash flow is recorded."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is this calculator affiliated with any specific mutual fund house?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. This is an independent mathematical tool. It applies standard financial root-finding mathematics to evaluate any mutual fund, stock portfolio, or cash flow schedule."
+      }
+    }
+  ]
+})}></script>
+
+<!-- SoftwareApplication Schema -->
+<script type="application/ld+json" is:inline set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "XIRR Calculator",
+  "operatingSystem": "All",
+  "applicationCategory": "FinanceApplication",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "description": "Calculate exact annualized Extended Internal Rate of Return (XIRR) for SIPs, mutual funds, and irregular cash flows using real calendar dates."
+})}></script>
+
+<script>
+  import {
+    calculateRecurringXirr,
+    calculateCustomXirr,
+    generateRecurringCashFlows,
+    type XirrFrequency,
+    type CashFlowItem,
+    type XirrResult,
+  } from '../../lib/calculators/xirr';
+
+  function formatINR(val: number): string {
+    const isNegative = val < 0;
+    const absVal = Math.abs(val);
+    const parts = absVal.toFixed(2).split('.');
+    let intPart = parts[0];
+    const decPart = parts[1];
+
+    if (intPart.length > 3) {
+      const last3 = intPart.substring(intPart.length - 3);
+      const other = intPart.substring(0, intPart.length - 3);
+      intPart = other.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',' + last3;
+    }
+
+    const formatted = decPart === '00' ? intPart : `${intPart}.${decPart}`;
+    return isNegative ? `-₹ ${formatted}` : `₹ ${formatted}`;
+  }
+
+  // Tab switching
+  const tabBtnRecurring = document.getElementById('tab-btn-recurring') as HTMLButtonElement;
+  const tabBtnCustom = document.getElementById('tab-btn-custom') as HTMLButtonElement;
+  const panelRecurring = document.getElementById('panel-recurring') as HTMLDivElement;
+  const panelCustom = document.getElementById('panel-custom') as HTMLDivElement;
+  const modeDesc = document.getElementById('mode-desc') as HTMLParagraphElement;
+
+  function switchTab(mode: 'recurring' | 'custom') {
+    if (mode === 'recurring') {
+      tabBtnRecurring.className = 'btn-xirr-tab active shrink-0 rounded-xl bg-blue-600 px-4 py-2 font-bold text-white shadow-xs cursor-pointer transition flex items-center gap-1.5';
+      tabBtnCustom.className = 'btn-xirr-tab shrink-0 rounded-xl border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition flex items-center gap-1.5';
+      panelRecurring.classList.remove('hidden');
+      panelCustom.classList.add('hidden');
+      modeDesc.textContent = 'Automatically generate periodic investment cash flows and compute the annualized XIRR on actual dates.';
+    } else {
+      tabBtnCustom.className = 'btn-xirr-tab active shrink-0 rounded-xl bg-blue-600 px-4 py-2 font-bold text-white shadow-xs cursor-pointer transition flex items-center gap-1.5';
+      tabBtnRecurring.className = 'btn-xirr-tab shrink-0 rounded-xl border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition flex items-center gap-1.5';
+      panelCustom.classList.remove('hidden');
+      panelRecurring.classList.add('hidden');
+      modeDesc.textContent = 'Calculate XIRR from customized irregular dates, deposits, and withdrawal cash flows.';
+    }
+  }
+
+  tabBtnRecurring.addEventListener('click', () => switchTab('recurring'));
+  tabBtnCustom.addEventListener('click', () => switchTab('custom'));
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TAB 1: RECURRING XIRR CONTROLS & LIVE GRAPH
+  // ─────────────────────────────────────────────────────────────────────────
+  let selectedFrequency: XirrFrequency = 'yearly';
+
+  const freqButtons = document.querySelectorAll('.btn-freq-opt');
+  const hintFreqDesc = document.getElementById('hint-freq-desc') as HTMLParagraphElement;
+  const inpRecStart = document.getElementById('inp-rec-start') as HTMLInputElement;
+  const inpRecEnd = document.getElementById('inp-rec-end') as HTMLInputElement;
+  const inpRecAmt = document.getElementById('inp-rec-amt') as HTMLInputElement;
+  const inpRecMat = document.getElementById('inp-rec-mat') as HTMLInputElement;
+
+  const btnCalcRecXirr = document.getElementById('btn-calc-rec-xirr') as HTMLButtonElement;
+  const btnClearRecXirr = document.getElementById('btn-clear-rec-xirr') as HTMLButtonElement;
+  const errRecXirr = document.getElementById('err-rec-xirr') as HTMLParagraphElement;
+
+  const recResultsSection = document.getElementById('rec-results-section') as HTMLDivElement;
+  const resRecXirr = document.getElementById('res-rec-xirr') as HTMLDivElement;
+  const resRecProfit = document.getElementById('res-rec-profit') as HTMLDivElement;
+  const resRecInvested = document.getElementById('res-rec-invested') as HTMLDivElement;
+  const resRecMaturity = document.getElementById('res-rec-maturity') as HTMLDivElement;
+  const resRecAbsReturn = document.getElementById('res-rec-abs-return') as HTMLDivElement;
+  const resRecCount = document.getElementById('res-rec-count') as HTMLDivElement;
+  const resRecFreq = document.getElementById('res-rec-freq') as HTMLDivElement;
+  const resRecTenure = document.getElementById('res-rec-tenure') as HTMLDivElement;
+  const tbodyRecSchedule = document.getElementById('tbody-rec-schedule') as HTMLTableSectionElement;
+
+  // Chart Elements
+  const svgTimelineChart = document.getElementById('svg-timeline-chart') as unknown as SVGSVGElement;
+  const chartTooltip = document.getElementById('chart-tooltip') as HTMLDivElement;
+  const txtChartSummaryInflow = document.getElementById('txt-chart-summary-inflow') as HTMLSpanElement;
+  const txtChartSummaryInvested = document.getElementById('txt-chart-summary-invested') as HTMLSpanElement;
+  const txtChartSummaryTenure = document.getElementById('txt-chart-summary-tenure') as HTMLSpanElement;
+
+  const FREQ_DESCRIPTIONS: Record<XirrFrequency, string> = {
+    '14days': 'Recurring payments occur every 14 days (bi-weekly schedule).',
+    'monthly': 'Recurring payments occur once every month on the start date of the month.',
+    'quarterly': 'Recurring payments occur once every 3 months.',
+    'halfyearly': 'Recurring payments occur once every 6 months.',
+    'yearly': 'Recurring payments occur once every 12 months on the start date anniversary.',
+  };
+
+  freqButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const f = btn.getAttribute('data-freq') as XirrFrequency;
+      if (!f || f === selectedFrequency) return;
+      selectedFrequency = f;
+
+      freqButtons.forEach((b) => {
+        b.className = 'btn-freq-opt rounded-lg py-2 text-xs font-semibold transition-all text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer text-center';
+      });
+      btn.className = 'btn-freq-opt active rounded-lg py-2 text-xs font-bold transition-all bg-white text-blue-600 shadow-2xs dark:bg-slate-700 dark:text-blue-400 cursor-pointer text-center';
+
+      hintFreqDesc.textContent = FREQ_DESCRIPTIONS[selectedFrequency];
+
+      // Hide results on modification (on-demand calculation requirement)
+      handleRecurringInputModified();
+    });
+  });
+
+  // Preset pills
+  document.querySelectorAll('.btn-rec-amt-pill').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      inpRecAmt.value = btn.getAttribute('data-val') || '10000';
+      handleRecurringInputModified();
+    });
+  });
+
+  document.querySelectorAll('.btn-mat-amt-pill').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      inpRecMat.value = btn.getAttribute('data-val') || '60000';
+      handleRecurringInputModified();
+    });
+  });
+
+  function handleRecurringInputModified() {
+    recResultsSection.classList.add('hidden');
+    errRecXirr.classList.add('hidden');
+    // Live update graph without waiting for calculate button
+    renderLiveChart();
+  }
+
+  inpRecStart.addEventListener('change', handleRecurringInputModified);
+  inpRecEnd.addEventListener('change', handleRecurringInputModified);
+  inpRecAmt.addEventListener('input', handleRecurringInputModified);
+  inpRecMat.addEventListener('input', handleRecurringInputModified);
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // LIVE INTERACTIVE GRAPH ENGINE (SVG)
+  // ─────────────────────────────────────────────────────────────────────────
+  interface ChartDataPoint {
+    date: string;
+    label: string;
+    amount: number;
+    cumulative: number;
+    type: 'investment' | 'maturity';
+    x: number;
+    y: number;
+  }
+
+  let currentChartPoints: ChartDataPoint[] = [];
+
+  function renderLiveChart() {
+    const startStr = inpRecStart.value;
+    const endStr = inpRecEnd.value;
+    const recAmt = parseFloat(inpRecAmt.value) || 0;
+    const matAmt = parseFloat(inpRecMat.value) || 0;
+
+    if (!startStr || !endStr || endStr <= startStr || recAmt <= 0 || matAmt <= 0) {
+      svgTimelineChart.innerHTML = `
+        <text x="350" y="140" fill="#94a3b8" font-size="12" font-weight="bold" text-anchor="middle">
+          Please enter valid start date, maturity date (&gt; start), and positive amounts to view chart.
+        </text>
+      `;
+      return;
+    }
+
+    let cashFlows: CashFlowItem[] = [];
+    try {
+      cashFlows = generateRecurringCashFlows({
+        frequency: selectedFrequency,
+        startDate: startStr,
+        maturityDate: endStr,
+        recurringAmount: recAmt,
+        maturityAmount: matAmt,
+      });
+    } catch {
+      return;
+    }
+
+    if (cashFlows.length < 2) return;
+
+    const totalInvested = cashFlows
+      .filter((c) => c.amount < 0)
+      .reduce((sum, c) => sum + Math.abs(c.amount), 0);
+    const investCount = cashFlows.filter((c) => c.amount < 0).length;
+
+    txtChartSummaryInflow.innerHTML = `Maturity Inflow: <strong>${formatINR(matAmt)}</strong>`;
+    txtChartSummaryInvested.innerHTML = `Total Invested: <strong>${formatINR(totalInvested)} (${investCount} installments)</strong>`;
+
+    const dStart = new Date(startStr + 'T00:00:00').getTime();
+    const dEnd = new Date(endStr + 'T00:00:00').getTime();
+    const totalDays = Math.max(1, Math.round((dEnd - dStart) / (1000 * 60 * 60 * 24)));
+    txtChartSummaryTenure.innerHTML = `Tenure: <strong>${(totalDays / 365).toFixed(1)} Yrs (${totalDays} Days)</strong>`;
+
+    const W = 700;
+    const H = 280;
+    const padL = 60;
+    const padR = 40;
+    const padT = 30;
+    const padB = 40;
+    const chartW = W - padL - padR;
+    const chartH = H - padT - padB;
+
+    const maxVal = Math.max(matAmt, totalInvested) * 1.15;
+    const minVal = 0;
+
+    const getX = (dateStr: string) => {
+      const t = new Date(dateStr + 'T00:00:00').getTime();
+      const progress = Math.min(1, Math.max(0, (t - dStart) / (dEnd - dStart)));
+      return padL + progress * chartW;
+    };
+
+    const getY = (val: number) => {
+      const ratio = (val - minVal) / (maxVal - minVal);
+      return padT + chartH - ratio * chartH;
+    };
+
+    // Calculate chart coordinates
+    currentChartPoints = cashFlows.map((cf) => {
+      const cx = getX(cf.date);
+      const cy = cf.type === 'maturity' ? getY(matAmt) : getY(cf.cumulativeInvested || 0);
+      return {
+        date: cf.date,
+        label: cf.type === 'maturity' ? 'Maturity Redemption' : `Investment #${cf.index}`,
+        amount: cf.amount,
+        cumulative: cf.cumulativeInvested || 0,
+        type: cf.type === 'maturity' ? 'maturity' : 'investment',
+        x: cx,
+        y: cy,
+      };
+    });
+
+    // Build cumulative step line and area path
+    const investPoints = currentChartPoints.filter((p) => p.type === 'investment');
+    let pathD = '';
+    let areaD = '';
+
+    if (investPoints.length > 0) {
+      pathD = `M ${investPoints[0].x} ${investPoints[0].y}`;
+      areaD = `M ${investPoints[0].x} ${padT + chartH} L ${investPoints[0].x} ${investPoints[0].y}`;
+
+      for (let i = 1; i < investPoints.length; i++) {
+        // Step line progression
+        const prev = investPoints[i - 1];
+        const curr = investPoints[i];
+        pathD += ` L ${curr.x} ${prev.y} L ${curr.x} ${curr.y}`;
+        areaD += ` L ${curr.x} ${prev.y} L ${curr.x} ${curr.y}`;
+      }
+
+      // Connect to maturity X coordinate
+      const lastInvest = investPoints[investPoints.length - 1];
+      const matPoint = currentChartPoints[currentChartPoints.length - 1];
+      pathD += ` L ${matPoint.x} ${lastInvest.y}`;
+      areaD += ` L ${matPoint.x} ${lastInvest.y} L ${matPoint.x} ${padT + chartH} Z`;
+    }
+
+    // Grid Y Lines (4 horizontal reference levels)
+    let gridLinesSvg = '';
+    for (let i = 0; i <= 4; i++) {
+      const val = (maxVal / 4) * i;
+      const y = getY(val);
+      gridLinesSvg += `
+        <line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="currentColor" class="text-slate-100 dark:text-slate-800/80" stroke-width="1" stroke-dasharray="3 3"></line>
+        <text x="${padL - 8}" y="${y + 3}" fill="#94a3b8" font-size="9" font-weight="600" text-anchor="end">${formatINR(val)}</text>
+      `;
+    }
+
+    // Date X Labels (Start, Mid, End)
+    const midDateMs = dStart + (dEnd - dStart) / 2;
+    const midDateStr = new Date(midDateMs).toISOString().split('T')[0];
+    const xLabelsSvg = `
+      <text x="${padL}" y="${H - 12}" fill="#64748b" font-size="10" font-weight="700" text-anchor="start">${startStr}</text>
+      <text x="${padL + chartW / 2}" y="${H - 12}" fill="#94a3b8" font-size="9" font-weight="600" text-anchor="middle">${midDateStr}</text>
+      <text x="${W - padR}" y="${H - 12}" fill="#10b981" font-size="10" font-weight="700" text-anchor="end">${endStr}</text>
+    `;
+
+    // Maturity Bar / Target Marker
+    const matPoint = currentChartPoints[currentChartPoints.length - 1];
+    const maturitySvg = `
+      <line x1="${matPoint.x}" y1="${padT + chartH}" x2="${matPoint.x}" y2="${matPoint.y}" stroke="#10b981" stroke-width="3.5" stroke-linecap="round"></line>
+      <circle cx="${matPoint.x}" cy="${matPoint.y}" r="6" fill="#10b981" stroke="#ffffff" stroke-width="2.5" class="shadow-md"></circle>
+      <text x="${matPoint.x}" y="${matPoint.y - 10}" fill="#10b981" font-size="10" font-weight="900" text-anchor="middle">Maturity: ${formatINR(matAmt)}</text>
+    `;
+
+    // Investment points circles
+    const investDotsSvg = investPoints.map((p) => `
+      <circle cx="${p.x}" cy="${p.y}" r="4" fill="#3b82f6" stroke="#ffffff" stroke-width="1.5"></circle>
+    `).join('');
+
+    svgTimelineChart.innerHTML = `
+      <defs>
+        <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.25"></stop>
+          <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.01"></stop>
+        </linearGradient>
+      </defs>
+      ${gridLinesSvg}
+      <path d="${areaD}" fill="url(#areaGrad)"></path>
+      <path d="${pathD}" fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
+      ${investDotsSvg}
+      ${maturitySvg}
+      ${xLabelsSvg}
+      <line id="hover-line" x1="0" y1="${padT}" x2="0" y2="${padT + chartH}" stroke="#64748b" stroke-width="1" stroke-dasharray="2 2" class="hidden"></line>
+    `;
+  }
+
+  // Interactive Hover Tooltip for SVG Chart
+  svgTimelineChart.addEventListener('mousemove', (e) => {
+    if (currentChartPoints.length === 0) return;
+    const rect = svgTimelineChart.getBoundingClientRect();
+    const clientX = e.clientX - rect.left;
+    const scaleX = 700 / rect.width;
+    const svgX = clientX * scaleX;
+
+    // Find closest data point
+    let closest = currentChartPoints[0];
+    let minDist = Math.abs(currentChartPoints[0].x - svgX);
+
+    for (let i = 1; i < currentChartPoints.length; i++) {
+      const dist = Math.abs(currentChartPoints[i].x - svgX);
+      if (dist < minDist) {
+        minDist = dist;
+        closest = currentChartPoints[i];
+      }
+    }
+
+    const hoverLine = document.getElementById('hover-line');
+    if (hoverLine) {
+      hoverLine.setAttribute('x1', String(closest.x));
+      hoverLine.setAttribute('x2', String(closest.x));
+      hoverLine.classList.remove('hidden');
+    }
+
+    // Position tooltip
+    const tooltipX = (closest.x / 700) * rect.width;
+    const tooltipY = Math.max(10, (closest.y / 280) * rect.height - 70);
+
+    chartTooltip.style.left = `${Math.min(rect.width - 150, Math.max(10, tooltipX - 60))}px`;
+    chartTooltip.style.top = `${tooltipY}px`;
+    chartTooltip.innerHTML = `
+      <div class="font-bold text-slate-300">${closest.date}</div>
+      <div class="font-black ${closest.type === 'maturity' ? 'text-emerald-400' : 'text-blue-400'}">
+        ${closest.label}: ${closest.amount < 0 ? formatINR(closest.amount) : '+' + formatINR(closest.amount)}
+      </div>
+      <div class="text-[10px] text-slate-400">
+        Cumulative Invested: <strong>${formatINR(closest.cumulative)}</strong>
+      </div>
+    `;
+    chartTooltip.classList.remove('hidden');
+  });
+
+  svgTimelineChart.addEventListener('mouseleave', () => {
+    chartTooltip.classList.add('hidden');
+    const hoverLine = document.getElementById('hover-line');
+    if (hoverLine) hoverLine.classList.add('hidden');
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // ON-DEMAND RECURRING CALCULATION (Executes on Calculate Button Click)
+  // ─────────────────────────────────────────────────────────────────────────
+  function executeRecurringXirrCalculation() {
+    errRecXirr.classList.add('hidden');
+
+    const startStr = inpRecStart.value;
+    const endStr = inpRecEnd.value;
+    const recAmt = parseFloat(inpRecAmt.value);
+    const matAmt = parseFloat(inpRecMat.value);
+
+    if (!startStr) {
+      errRecXirr.textContent = 'Please select a valid Start Date.';
+      errRecXirr.classList.remove('hidden');
+      return;
+    }
+    if (!endStr) {
+      errRecXirr.textContent = 'Please select a valid Maturity Date.';
+      errRecXirr.classList.remove('hidden');
+      return;
+    }
+    if (endStr <= startStr) {
+      errRecXirr.textContent = 'Maturity Date must be strictly after the Start Date.';
+      errRecXirr.classList.remove('hidden');
+      return;
+    }
+    if (isNaN(recAmt) || recAmt <= 0) {
+      errRecXirr.textContent = 'Recurring Investment Amount must be greater than zero.';
+      errRecXirr.classList.remove('hidden');
+      return;
+    }
+    if (isNaN(matAmt) || matAmt <= 0) {
+      errRecXirr.textContent = 'Total Maturity Amount must be greater than zero.';
+      errRecXirr.classList.remove('hidden');
+      return;
+    }
+
+    try {
+      const res = calculateRecurringXirr({
+        frequency: selectedFrequency,
+        startDate: startStr,
+        maturityDate: endStr,
+        recurringAmount: recAmt,
+        maturityAmount: matAmt,
+      });
+
+      if (!res.converged || res.xirrPercent === null) {
+        errRecXirr.textContent = res.errorMessage || 'Unable to converge on a valid rate of return.';
+        errRecXirr.classList.remove('hidden');
+        return;
+      }
+
+      // Populate Main Metrics
+      resRecXirr.textContent = `${res.xirrPercent.toFixed(2)}% p.a.`;
+      const isProfit = res.netProfit >= 0;
+      resRecProfit.textContent = `${isProfit ? '+' : ''}${formatINR(res.netProfit)}`;
+      resRecProfit.className = `text-2xl sm:text-3xl font-black ${isProfit ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`;
+
+      resRecInvested.textContent = formatINR(res.totalInvested);
+      resRecMaturity.textContent = formatINR(res.maturityAmount);
+      resRecAbsReturn.textContent = `${res.absoluteReturnPercent >= 0 ? '+' : ''}${res.absoluteReturnPercent.toFixed(1)}%`;
+      resRecCount.textContent = `${res.investmentCount} Installments`;
+      resRecFreq.textContent = res.frequencyLabel || 'Yearly';
+      resRecTenure.textContent = `${res.durationYears} Years (${res.durationDays} Days)`;
+
+      // Populate Table
+      tbodyRecSchedule.innerHTML = res.cashFlows.map((cf) => {
+        const isMat = cf.type === 'maturity';
+        return `
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+            <td class="p-2.5 font-bold text-slate-800 dark:text-slate-200">${cf.index}</td>
+            <td class="p-2.5 text-slate-700 dark:text-slate-300">${cf.date}</td>
+            <td class="p-2.5">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-bold ${
+                isMat
+                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
+                  : 'bg-blue-100 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300'
+              }">
+                ${isMat ? 'Maturity Inflow' : 'Investment Outflow'}
+              </span>
+            </td>
+            <td class="p-2.5 text-right font-bold ${isMat ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}">
+              ${isMat ? '+' + formatINR(cf.amount) : formatINR(cf.amount)}
+            </td>
+            <td class="p-2.5 text-right font-bold text-slate-900 dark:text-white">
+              ${formatINR(cf.cumulativeInvested || 0)}
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      recResultsSection.classList.remove('hidden');
+      recResultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (err: any) {
+      errRecXirr.textContent = err.message || 'An error occurred during calculation.';
+      errRecXirr.classList.remove('hidden');
+    }
+  }
+
+  btnCalcRecXirr.addEventListener('click', executeRecurringXirrCalculation);
+
+  btnClearRecXirr.addEventListener('click', () => {
+    inpRecStart.value = '2021-01-01';
+    inpRecEnd.value = '2024-01-01';
+    inpRecAmt.value = '10000';
+    inpRecMat.value = '60000';
+    selectedFrequency = 'yearly';
+    freqButtons.forEach((b) => {
+      b.className = 'btn-freq-opt rounded-lg py-2 text-xs font-semibold transition-all text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer text-center';
+      if (b.getAttribute('data-freq') === 'yearly') {
+        b.className = 'btn-freq-opt active rounded-lg py-2 text-xs font-bold transition-all bg-white text-blue-600 shadow-2xs dark:bg-slate-700 dark:text-blue-400 cursor-pointer text-center';
+      }
+    });
+    hintFreqDesc.textContent = FREQ_DESCRIPTIONS['yearly'];
+    handleRecurringInputModified();
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TAB 2: CUSTOM CASH FLOW LOGIC
+  // ─────────────────────────────────────────────────────────────────────────
+  const tbodyCustomCfs = document.getElementById('tbody-custom-cfs') as HTMLTableSectionElement;
+  const btnAddCustomCf = document.getElementById('btn-add-custom-cf') as HTMLButtonElement;
+  const btnCalcCustomXirr = document.getElementById('btn-calc-custom-xirr') as HTMLButtonElement;
+  const btnClearCustomCfs = document.getElementById('btn-clear-custom-cfs') as HTMLButtonElement;
+  const errCustomXirr = document.getElementById('err-custom-xirr') as HTMLParagraphElement;
+
+  const customResultsSection = document.getElementById('custom-results-section') as HTMLDivElement;
+  const resCustomXirr = document.getElementById('res-custom-xirr') as HTMLDivElement;
+  const resCustomProfit = document.getElementById('res-custom-profit') as HTMLDivElement;
+  const resCustomInvested = document.getElementById('res-custom-invested') as HTMLDivElement;
+  const resCustomMaturity = document.getElementById('res-custom-maturity') as HTMLDivElement;
+  const resCustomAbsReturn = document.getElementById('res-custom-abs-return') as HTMLDivElement;
+  const resCustomTenure = document.getElementById('res-custom-tenure') as HTMLDivElement;
+
+  interface CustomRowData {
+    id: string;
+    date: string;
+    type: 'outflow' | 'inflow';
+    amount: number;
+  }
+
+  let customRows: CustomRowData[] = [
+    { id: 'cf-1', date: '2022-01-01', type: 'outflow', amount: 50000 },
+    { id: 'cf-2', date: '2023-01-01', type: 'outflow', amount: 50000 },
+    { id: 'cf-3', date: '2024-01-01', type: 'inflow', amount: 130000 },
+  ];
+
+  function renderCustomRows() {
+    tbodyCustomCfs.innerHTML = customRows.map((row, idx) => `
+      <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50" data-id="${row.id}">
+        <td class="p-2.5 font-bold text-slate-800 dark:text-slate-200">${idx + 1}</td>
+        <td class="p-2.5">
+          <input
+            type="date"
+            value="${row.date}"
+            class="input-custom-date w-full rounded-lg border border-slate-300 bg-white py-1 px-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          />
+        </td>
+        <td class="p-2.5">
+          <select class="select-custom-type rounded-lg border border-slate-300 bg-white py-1 px-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white">
+            <option value="outflow" ${row.type === 'outflow' ? 'selected' : ''}>Outflow (-)</option>
+            <option value="inflow" ${row.type === 'inflow' ? 'selected' : ''}>Inflow (+)</option>
+          </select>
+        </td>
+        <td class="p-2.5">
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-2 text-xs font-bold text-slate-400">₹</span>
+            <input
+              type="number"
+              value="${row.amount}"
+              step="500"
+              min="1"
+              class="input-custom-amount w-full rounded-lg border border-slate-300 bg-white py-1 pl-6 pr-2 text-right text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            />
+          </div>
+        </td>
+        <td class="p-2.5 text-center">
+          <button
+            type="button"
+            class="btn-delete-row text-red-500 hover:text-red-700 p-1 text-sm font-bold cursor-pointer"
+            title="Delete Cash Flow"
+          >
+            ✕
+          </button>
+        </td>
+      </tr>
+    `).join('');
+
+    // Attach row events
+    tbodyCustomCfs.querySelectorAll('tr').forEach((tr, index) => {
+      const dateInp = tr.querySelector('.input-custom-date') as HTMLInputElement;
+      const typeSel = tr.querySelector('.select-custom-type') as HTMLSelectElement;
+      const amtInp = tr.querySelector('.input-custom-amount') as HTMLInputElement;
+      const delBtn = tr.querySelector('.btn-delete-row') as HTMLButtonElement;
+
+      dateInp.addEventListener('change', () => {
+        customRows[index].date = dateInp.value;
+        customResultsSection.classList.add('hidden');
+      });
+
+      typeSel.addEventListener('change', () => {
+        customRows[index].type = typeSel.value as 'outflow' | 'inflow';
+        customResultsSection.classList.add('hidden');
+      });
+
+      amtInp.addEventListener('input', () => {
+        customRows[index].amount = parseFloat(amtInp.value) || 0;
+        customResultsSection.classList.add('hidden');
+      });
+
+      delBtn.addEventListener('click', () => {
+        if (customRows.length <= 2) {
+          errCustomXirr.textContent = 'At least two cash flows (one outflow and one inflow) are required.';
+          errCustomXirr.classList.remove('hidden');
+          return;
+        }
+        customRows.splice(index, 1);
+        renderCustomRows();
+        customResultsSection.classList.add('hidden');
+      });
+    });
+  }
+
+  btnAddCustomCf.addEventListener('click', () => {
+    const lastDate = customRows.length > 0 ? customRows[customRows.length - 1].date : '2024-01-01';
+    const nextParts = lastDate.split('-').map(Number);
+    const nextYear = nextParts[0] + 1;
+    const nextDateStr = `${nextYear}-${String(nextParts[1]).padStart(2, '0')}-${String(nextParts[2]).padStart(2, '0')}`;
+
+    customRows.push({
+      id: `cf-${Date.now()}`,
+      date: nextDateStr,
+      type: 'inflow',
+      amount: 50000,
+    });
+    renderCustomRows();
+    customResultsSection.classList.add('hidden');
+  });
+
+  btnClearCustomCfs.addEventListener('click', () => {
+    customRows = [
+      { id: 'cf-1', date: '2022-01-01', type: 'outflow', amount: 50000 },
+      { id: 'cf-2', date: '2023-01-01', type: 'outflow', amount: 50000 },
+      { id: 'cf-3', date: '2024-01-01', type: 'inflow', amount: 130000 },
+    ];
+    renderCustomRows();
+    customResultsSection.classList.add('hidden');
+    errCustomXirr.classList.add('hidden');
+  });
+
+  document.getElementById('btn-custom-preset-sip')?.addEventListener('click', () => {
+    customRows = [
+      { id: 'cf-1', date: '2021-01-01', type: 'outflow', amount: 10000 },
+      { id: 'cf-2', date: '2022-01-01', type: 'outflow', amount: 10000 },
+      { id: 'cf-3', date: '2023-01-01', type: 'outflow', amount: 10000 },
+      { id: 'cf-4', date: '2024-01-01', type: 'inflow', amount: 60000 },
+    ];
+    renderCustomRows();
+    executeCustomXirrCalculation();
+  });
+
+  document.getElementById('btn-custom-preset-trade')?.addEventListener('click', () => {
+    customRows = [
+      { id: 'cf-1', date: '2022-03-15', type: 'outflow', amount: 50000 },
+      { id: 'cf-2', date: '2022-08-20', type: 'outflow', amount: 30000 },
+      { id: 'cf-3', date: '2023-01-10', type: 'outflow', amount: 20000 },
+      { id: 'cf-4', date: '2023-11-05', type: 'inflow', amount: 145000 },
+    ];
+    renderCustomRows();
+    executeCustomXirrCalculation();
+  });
+
+  function executeCustomXirrCalculation() {
+    errCustomXirr.classList.add('hidden');
+
+    if (customRows.length < 2) {
+      errCustomXirr.textContent = 'Please provide at least two cash flow entries.';
+      errCustomXirr.classList.remove('hidden');
+      return;
+    }
+
+    const items: CashFlowItem[] = customRows.map((r) => ({
+      date: r.date,
+      amount: r.type === 'outflow' ? -Math.abs(r.amount) : Math.abs(r.amount),
+      type: r.type,
+    }));
+
+    try {
+      const res = calculateCustomXirr(items);
+
+      if (!res.converged || res.xirrPercent === null) {
+        errCustomXirr.textContent = res.errorMessage || 'Calculation could not converge on a valid rate of return.';
+        errCustomXirr.classList.remove('hidden');
+        return;
+      }
+
+      resCustomXirr.textContent = `${res.xirrPercent.toFixed(2)}% p.a.`;
+      const isProfit = res.netProfit >= 0;
+      resCustomProfit.textContent = `${isProfit ? '+' : ''}${formatINR(res.netProfit)}`;
+      resCustomProfit.className = `text-2xl sm:text-3xl font-black ${isProfit ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`;
+
+      resCustomInvested.textContent = formatINR(res.totalInvested);
+      resCustomMaturity.textContent = formatINR(res.maturityAmount);
+      resCustomAbsReturn.textContent = `${res.absoluteReturnPercent >= 0 ? '+' : ''}${res.absoluteReturnPercent.toFixed(1)}%`;
+      resCustomTenure.textContent = `${res.durationYears} Years (${res.durationDays} Days)`;
+
+      customResultsSection.classList.remove('hidden');
+      customResultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (err: any) {
+      errCustomXirr.textContent = err.message || 'Error occurred during calculation.';
+      errCustomXirr.classList.remove('hidden');
+    }
+  }
+
+  btnCalcCustomXirr.addEventListener('click', executeCustomXirrCalculation);
+
+  // Initial setup
+  renderLiveChart();
+  renderCustomRows();
+</script>

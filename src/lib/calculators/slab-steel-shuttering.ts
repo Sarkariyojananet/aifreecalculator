@@ -189,6 +189,7 @@ export interface NormalSlabShutteringResult {
   slabWidthM: number;
   slabThicknessMm: number;
   grossAreaSqm: number;
+  slabGrossAreaSqm: number;
   grossAreaSqft: number;
   openingAreaSqm: number;
   openingAreaSqft: number;
@@ -334,6 +335,7 @@ export function calculateNormalSlabSteelShuttering(input: NormalSlabShutteringIn
     slabWidthM: Number(W.toFixed(3)),
     slabThicknessMm: Number(thicknessMm.toFixed(1)),
     grossAreaSqm,
+    slabGrossAreaSqm: grossAreaSqm,
     grossAreaSqft,
     openingAreaSqm: Number(openingSqm.toFixed(3)),
     openingAreaSqft: openingSqft,
@@ -436,6 +438,7 @@ export interface AdvancedSlabShutteringResult {
   slabThicknessMm: number;
   clearCoverMm: number;
   grossAreaSqm: number;
+  slabGrossAreaSqm: number;
   grossAreaSqft: number;
   openingAreaSqm: number;
   openingAreaSqft: number;
@@ -690,6 +693,7 @@ export function calculateAdvancedSlabSteelShuttering(input: AdvancedSlabShutteri
     slabThicknessMm: Number(thicknessMm.toFixed(1)),
     clearCoverMm,
     grossAreaSqm,
+    slabGrossAreaSqm: grossAreaSqm,
     grossAreaSqft,
     openingAreaSqm: Number(openingSqm.toFixed(3)),
     openingAreaSqft: openingSqft,
@@ -737,7 +741,7 @@ export function calculateAdvancedSlabSteelShuttering(input: AdvancedSlabShutteri
 
 // Backward compatibility alias
 export const calculateSlabSteelShuttering = (input: any) => {
-  return calculateNormalSlabSteelShuttering({
+  const res = calculateNormalSlabSteelShuttering({
     length: input.lengthMeters,
     width: input.widthMeters,
     dimensionUnit: 'm',
@@ -753,4 +757,8 @@ export const calculateSlabSteelShuttering = (input: any) => {
     propSpacingWidth: input.propSpacingWidthM || 1.2,
     propSpacingUnit: 'm',
   });
+  return {
+    ...res,
+    slabGrossAreaSqm: res.grossAreaSqm,
+  };
 };

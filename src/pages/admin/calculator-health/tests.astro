@@ -3,22 +3,38 @@ export const prerender = false;
 
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { ALL_TEST_CASES, getTestedSlugs } from '../../../lib/calculator-tests/test-cases';
-import { getLatestTestResults, getTestRunHistory } from '../../../lib/calculator-tests/health-store';
+import { getLatestTestResults, getTestRunHistory, getCustomTestCases } from '../../../lib/calculator-tests/health-store';
 import { calculators } from '../../../data/calculators';
 
 const testedSlugs = getTestedSlugs();
 const latestResults = await getLatestTestResults(Astro.locals);
+const customTestCases = await getCustomTestCases(Astro.locals);
 const runHistory = await getTestRunHistory(Astro.locals);
 const latestRun = runHistory[0] || null;
 
-const totalTests = ALL_TEST_CASES.length;
-const normalTests = ALL_TEST_CASES.filter((t) => t.category === 'Normal').length;
-const edgeTests = ALL_TEST_CASES.filter((t) => t.category === 'Edge Case').length;
-const boundaryTests = ALL_TEST_CASES.filter((t) => t.category === 'Boundary').length;
-const invalidTests = ALL_TEST_CASES.filter((t) => t.category === 'Invalid Input').length;
+const allTestsCombined = [
+  ...ALL_TEST_CASES,
+  ...customTestCases.map((c) => ({
+    slug: c.slug,
+    name: c.name,
+    category: c.category,
+    expectedBehavior: c.expectedBehavior,
+    expectedResultKey: c.expectedResultKey,
+    expectedValue: c.expectedValue,
+    tolerance: c.tolerance,
+    run: () => {},
+    description: c.description,
+  })),
+];
+
+const totalTests = allTestsCombined.length;
+const normalTests = allTestsCombined.filter((t) => t.category === 'Normal').length;
+const edgeTests = allTestsCombined.filter((t) => t.category === 'Edge Case').length;
+const boundaryTests = allTestsCombined.filter((t) => t.category === 'Boundary').length;
+const invalidTests = allTestsCombined.filter((t) => t.category === 'Invalid Input').length;
 
 // Map test cases with their latest execution results if available
-const enrichedTests = ALL_TEST_CASES.map((tc) => {
+const enrichedTests = allTestsCombined.map((tc) => {
   const calc = calculators.find((c) => c.slug === tc.slug);
   const calcResults = latestResults?.[tc.slug]?.results;
   const matchResult = calcResults?.find((r) => r.testName === tc.name);

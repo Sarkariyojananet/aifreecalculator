@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { authenticateAdminRequest } from '../../../lib/auth';
 import { getCMSCategories, saveCMSCategories, deleteCMSCategory, type CategoryItem } from '../../../lib/admin/content-store';
+import { purgeCloudflareCache } from '../../../lib/performance/cloudflare-client';
 import { calculators } from '../../../data/calculators';
 
 export const prerender = false;
@@ -66,6 +67,11 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     }
 
     await saveCMSCategories(current, locals);
+
+    // Asynchronously invalidate targeted edge cache for this category hub
+    try {
+      await purgeCloudflareCache({ target: 'category', value: cleanSlug }, locals);
+    } catch {}
 
     return new Response(JSON.stringify({ success: true, category: categoryItem, categories: current }), {
       status: 200,

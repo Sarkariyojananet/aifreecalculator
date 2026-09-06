@@ -86,6 +86,14 @@ export const LIVE_PAGE_METADATA: Record<string, PageMetaItem> = {
     "title": "SIP Calculator - Mutual Fund Return & Growth Estimator",
     "description": "Calculate expected returns on mutual fund SIP investments, total wealth created, and projected growth with regular and step-up monthly contributions."
   },
+  "swp-calculator": {
+    "title": "SWP Calculator - Systematic Withdrawal Plan & Inflation",
+    "description": "Calculate monthly withdrawals, total withdrawn amount, remaining corpus, and inflation-adjusted systematic withdrawal schedules for mutual funds."
+  },
+  "xirr-calculator": {
+    "title": "XIRR Calculator - Extended Internal Rate of Return Online",
+    "description": "Calculate accurate annualized returns (XIRR) for irregular cash flows, recurring SIP investments, and mutual funds with exact calendar dates."
+  },
   "income-tax-calculator": {
     "title": "Income Tax Calculator - Old vs New Tax Regime Slabs",
     "description": "Calculate your income tax liability, compare Old vs New tax regimes, and estimate deductions under Section 80C, 80D, and standard deductions."
@@ -105,6 +113,10 @@ export const LIVE_PAGE_METADATA: Record<string, PageMetaItem> = {
   "salary-calculator": {
     "title": "Salary Calculator - In-Hand Take Home Pay & Deductions",
     "description": "Calculate your monthly in-hand take-home salary from annual CTC after EPF, professional tax, income tax, and standard salary component deductions."
+  },
+  "gratuity-calculator": {
+    "title": "Gratuity Calculator - Payment of Gratuity Act 1972",
+    "description": "Calculate statutory gratuity payout under Payment of Gratuity Act 1972 with tenure rounding, 5-year eligibility checks, and ₹20 Lakh tax exemption rules."
   },
   "mortgage-calculator": {
     "title": "Mortgage Calculator - Monthly Payment & Amortization",

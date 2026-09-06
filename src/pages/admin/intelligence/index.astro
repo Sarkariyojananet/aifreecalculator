@@ -1,0 +1,894 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { authenticateAdminRequest } from '../../../lib/auth';
+import { gatherComprehensiveSnapshot, evaluateDataCoverage } from '../../../lib/intelligence/data-aggregator';
+import { generateDeterministicInsights, calculateExecutiveScore } from '../../../lib/intelligence/rule-engine';
+import { saveInsights, getStoredInsights, getAiConfig } from '../../../lib/intelligence/intelligence-store';
+import { generateWebsiteBriefing } from '../../../lib/intelligence/ai-explainer';
+import type { InsightPriority, IntelligenceInsight, SupportingMetric } from '../../../lib/intelligence/types';
+
+export const prerender = false;
+
+// 1. Enforce admin authentication
+const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
+if (!user) {
+  return Astro.redirect('/admin/login/');
+}
+
+// 2. Fetch comprehensive real snapshot & evaluate intelligence
+const snapshot = await gatherComprehensiveSnapshot(Astro.locals);
+const coverage = evaluateDataCoverage(snapshot);
+const generatedInsights: IntelligenceInsight[] = generateDeterministicInsights(snapshot);
+const healthScore = calculateExecutiveScore(snapshot, coverage);
+
+// 3. Persist and retrieve insights from D1
+await saveInsights(generatedInsights, Astro.locals);
+const storedInsights: IntelligenceInsight[] = await getStoredInsights(Astro.locals);
+const allInsights: IntelligenceInsight[] = storedInsights.length > 0 ? storedInsights : generatedInsights;
+
+// 4. Generate Executive Briefing
+const briefing = await generateWebsiteBriefing(snapshot, allInsights, healthScore, Astro.locals);
+
+// 5. Extract P0 and P1 top priorities
+const topPriorities: IntelligenceInsight[] = allInsights.filter(
+  (i: IntelligenceInsight) => (i.priority === 'P0' || i.priority === 'P1') && i.status !== 'resolved' && i.status !== 'ignored'
+);
+
+// 6. Counts by priority & category
+const countsByPriority: Record<InsightPriority, number> = { P0: 0, P1: 0, P2: 0, P3: 0 };
+const countsByCategory: Record<string, number> = {};
+
+for (const item of allInsights) {
+  const p = item.priority as InsightPriority;
+  if (p in countsByPriority) {
+    countsByPriority[p]++;
+  }
+  countsByCategory[item.category] = (countsByCategory[item.category] || 0) + 1;
+}
+
+const aiConfig = await getAiConfig(Astro.locals);
+---
+
+<AdminLayout title="AI Website Intelligence Hub" activeSection="intelligence">
+  <div class="space-y-8">
+    
+    <!-- Page Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-5 dark:border-slate-800">
+      <div>
+        <div class="flex items-center gap-3">
+          <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2.5">
+            <span>🧠</span> Complete AI Website Intelligence Hub
+          </h1>
+          <span
+            class={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
+              healthScore.grade === 'A+' || healthScore.grade === 'A'
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900/60'
+                : healthScore.grade === 'B'
+                ? 'bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900/60'
+                : healthScore.grade === 'C'
+                ? 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900/60'
+                : 'bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-900/60'
+            }`}
+          >
+            Grade {healthScore.grade} • {healthScore.overallScore}/100
+          </span>
+        </div>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Autonomous cross-system correlation, executive briefings, and prioritized action center based on 100% authentic data.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2.5 flex-wrap">
+        <button
+          id="btn-ai-modal"
+          class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 shadow-sm"
+        >
+          <span>⚙️</span>
+          <span>{aiConfig && aiConfig.enabled ? 'AI Provider: Configured' : 'Configure AI'}</span>
+        </button>
+
+        <button
+          id="btn-refresh-intel"
+          class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs sm:text-sm font-bold text-white hover:bg-blue-700 transition shadow-sm shadow-blue-500/20 active:scale-95"
+        >
+          <span id="refresh-spinner" class="hidden animate-spin">⏳</span>
+          <span id="refresh-icon">🔄</span>
+          <span>Run Fresh Analysis</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Top Executive Health Score & Data Coverage Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      
+      <!-- Executive Health Score (7 Cols) -->
+      <div class="lg:col-span-7 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-800/80 dark:bg-slate-900 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span>🎯</span> Overall Website Health Score
+              </h2>
+              <p class="text-xs text-slate-400 dark:text-slate-500">
+                Explainable composite index derived from real uptime, runtime errors, formula tests, and routing.
+              </p>
+            </div>
+            <div class="text-right">
+              <span class="text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                {healthScore.overallScore}<span class="text-slate-400 text-lg font-normal">/100</span>
+              </span>
+              <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                Confidence: <span class="text-blue-600 dark:text-blue-400">{healthScore.confidence}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Component Score Breakdown -->
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3.5 mt-5">
+            {Object.entries(healthScore.components).map(([, comp]) => (
+              <div class="rounded-xl border border-slate-100 bg-slate-50/50 p-3 dark:border-slate-800 dark:bg-slate-800/40">
+                <div class="flex items-center justify-between">
+                  <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 truncate">
+                    {comp.name}
+                  </span>
+                  <span class={`text-[10px] font-extrabold px-1.5 py-0.5 rounded ${
+                    comp.status === 'optimal'
+                      ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                      : comp.status === 'good'
+                      ? 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300'
+                      : comp.status === 'needs_attention'
+                      ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
+                      : comp.status === 'critical'
+                      ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300'
+                      : 'bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                  }`}>
+                    {comp.status === 'not_enough_data' ? 'N/A' : `${comp.score}%`}
+                  </span>
+                </div>
+                <div class="mt-2 text-xs font-bold text-slate-800 dark:text-slate-200 truncate">
+                  {comp.summary}
+                </div>
+                <div class="mt-1 text-[10px] text-slate-400 dark:text-slate-500">
+                  Weight: {comp.weight}%
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/80 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
+          <span class="flex items-center gap-1.5">
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>
+            100% Authentic Telemetry
+          </span>
+          <span class="italic">{healthScore.formulaExplanation}</span>
+        </div>
+      </div>
+
+      <!-- Data Coverage Checklist (5 Cols) -->
+      <div class="lg:col-span-5 rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-800/80 dark:bg-slate-900 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <div>
+              <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span>📡</span> Data Coverage Report
+              </h2>
+              <p class="text-xs text-slate-400 dark:text-slate-500">
+                Integrity checklist across all 7 operational systems.
+              </p>
+            </div>
+            <span class="rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-extrabold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+              {coverage.connectedCount} / {coverage.totalSources} Connected ({coverage.overallPercentage}%)
+            </span>
+          </div>
+
+          <div class="mt-4 space-y-2.5 max-h-56 overflow-y-auto pr-1">
+            {coverage.sources.map((src) => (
+              <div class="flex items-center justify-between text-xs p-2 rounded-lg bg-slate-50/70 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/80">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class={`h-2 w-2 rounded-full shrink-0 ${
+                    src.status === 'connected'
+                      ? 'bg-emerald-500'
+                      : src.status === 'active'
+                      ? 'bg-blue-500'
+                      : src.status === 'limited'
+                      ? 'bg-amber-500'
+                      : 'bg-slate-300 dark:bg-slate-600'
+                  }`}></span>
+                  <span class="font-medium text-slate-800 dark:text-slate-200 truncate">{src.name}</span>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <span class="text-[10px] text-slate-400 truncate max-w-30 hidden sm:inline">{src.description}</span>
+                  {src.actionUrl ? (
+                    <a
+                      href={src.actionUrl}
+                      class="text-[11px] font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400 hover:underline"
+                    >
+                      {src.actionLabel || 'Connect'} →
+                    </a>
+                  ) : (
+                    <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase">
+                      {src.status}
+                    </span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div class="mt-3 text-[11px] text-slate-400 dark:text-slate-500 italic">
+          Zero simulated data. Weight adjusts dynamically when optional external APIs are disconnected.
+        </div>
+      </div>
+    </div>
+
+    <!-- Executive Website Briefing Card -->
+    <div class="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-800/80 dark:bg-slate-900 space-y-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-4 dark:border-slate-800">
+        <div>
+          <div class="flex items-center gap-2.5">
+            <h2 class="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+              <span>📋</span> Executive Website Briefing
+            </h2>
+            <span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-[11px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              {briefing.period}
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+            Synthesized operational narrative for immediate decision-making.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          {briefing.isAiGenerated ? (
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-purple-50 px-2.5 py-1 text-xs font-bold text-purple-700 border border-purple-200 dark:bg-purple-950/50 dark:text-purple-300 dark:border-purple-900/60">
+              <span>✨</span> {briefing.aiProvider || 'AI Generated'}
+            </span>
+          ) : (
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+              <span>⚙️</span> Rule-Based Synthesis Active
+            </span>
+          )}
+        </div>
+      </div>
+
+      <!-- Briefing Body -->
+      <div class="space-y-4">
+        <p class="text-sm sm:text-base text-slate-700 dark:text-slate-300 leading-relaxed font-medium">
+          {briefing.overallStatusSummary}
+        </p>
+
+        <!-- Win vs Risk 2-col Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
+          {briefing.biggestWin && (
+            <div class="rounded-xl border border-emerald-200/80 bg-emerald-50/40 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+              <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                <span>🏆</span> Biggest Win
+              </div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white mt-1">
+                {briefing.biggestWin.title}
+              </h3>
+              <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                {briefing.biggestWin.detail}
+              </p>
+            </div>
+          )}
+
+          {briefing.biggestRisk && (
+            <div class="rounded-xl border border-amber-200/80 bg-amber-50/40 p-4 dark:border-amber-900/40 dark:bg-amber-950/20">
+              <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400">
+                <span>⚠️</span> Primary Operational Attention
+              </div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white mt-1">
+                {briefing.biggestRisk.title}
+              </h3>
+              <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-relaxed">
+                {briefing.biggestRisk.detail}
+              </p>
+            </div>
+          )}
+        </div>
+
+        <!-- Telemetry Highlights Strip -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+          <div class="rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+            <div class="text-[11px] font-bold text-slate-400 uppercase">Search Visibility</div>
+            <div class="text-xs text-slate-800 dark:text-slate-200 mt-1 font-medium leading-normal">
+              {briefing.seoHighlight || 'No SEO data available'}
+            </div>
+          </div>
+          <div class="rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+            <div class="text-[11px] font-bold text-slate-400 uppercase">Monetization</div>
+            <div class="text-xs text-slate-800 dark:text-slate-200 mt-1 font-medium leading-normal">
+              {briefing.revenueHighlight || 'AdSense credentials not linked'}
+            </div>
+          </div>
+          <div class="rounded-xl bg-slate-50 p-3 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800">
+            <div class="text-[11px] font-bold text-slate-400 uppercase">Performance &amp; Cache</div>
+            <div class="text-xs text-slate-800 dark:text-slate-200 mt-1 font-medium leading-normal">
+              {briefing.performanceHighlight || 'Edge latency nominal'}
+            </div>
+          </div>
+        </div>
+
+        <!-- Recommended Action Steps -->
+        {briefing.recommendedNextSteps && briefing.recommendedNextSteps.length > 0 && (
+          <div class="pt-2">
+            <div class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider mb-2">
+              Recommended Next Steps
+            </div>
+            <ul class="space-y-1.5">
+              {briefing.recommendedNextSteps.map((step, idx) => (
+                <li class="flex items-start gap-2 text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+                  <span class="text-blue-600 dark:text-blue-400 font-bold shrink-0">{idx + 1}.</span>
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    </div>
+
+    <!-- Top Priorities Alert Banner (P0 & P1) -->
+    {topPriorities.length > 0 && (
+      <div class="rounded-2xl border border-red-200 bg-red-50/50 p-5 dark:border-red-900/50 dark:bg-red-950/20 space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span class="text-xl">🚨</span>
+            <div>
+              <h2 class="text-base font-black text-red-900 dark:text-red-200">
+                Top Priority Problems ({topPriorities.length})
+              </h2>
+              <p class="text-xs text-red-700/80 dark:text-red-300/80">
+                These critical and high issues directly impact site availability, calculator accuracy, or revenue.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+          {topPriorities.map((item: IntelligenceInsight) => (
+            <div class="rounded-xl border border-red-200/80 bg-white p-4 shadow-xs dark:border-red-900/40 dark:bg-slate-900 flex flex-col justify-between">
+              <div>
+                <div class="flex items-center justify-between gap-2">
+                  <span class={`rounded px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                    item.priority === 'P0' ? 'bg-red-600 text-white' : 'bg-amber-500 text-white'
+                  }`}>
+                    {item.priority} • {item.category}
+                  </span>
+                  <span class="text-[10px] text-slate-400">{new Date(item.detectedAt).toLocaleTimeString()}</span>
+                </div>
+                <h3 class="text-sm font-bold text-slate-900 dark:text-white mt-2">
+                  {item.title}
+                </h3>
+                <p class="text-xs text-slate-600 dark:text-slate-400 mt-1 leading-normal">
+                  {item.whyDetected}
+                </p>
+              </div>
+
+              <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                  {item.affectedEntity?.name}
+                </span>
+                <a
+                  href={item.recommendedAction.url}
+                  class="inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-blue-700 transition"
+                >
+                  <span>{item.recommendedAction.label}</span>
+                  <span>→</span>
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <!-- Prioritized Action Center (Filterable Insights Grid) -->
+    <div class="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm dark:border-slate-800/80 dark:bg-slate-900 space-y-6">
+      
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-5 dark:border-slate-800">
+        <div>
+          <h2 class="text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🎯</span> Prioritized Action Center
+          </h2>
+          <p class="text-xs text-slate-400 dark:text-slate-500 mt-0.5">
+            Every problem is ranked by priority (P0 to P3) with direct navigation, supporting metrics, and lifecycle actions.
+          </p>
+        </div>
+
+        <!-- Priority Counts Chips -->
+        <div class="flex items-center gap-1.5 flex-wrap">
+          <span class="rounded-lg bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 text-xs font-extrabold px-2.5 py-1">
+            P0: {countsByPriority.P0}
+          </span>
+          <span class="rounded-lg bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-xs font-extrabold px-2.5 py-1">
+            P1: {countsByPriority.P1}
+          </span>
+          <span class="rounded-lg bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 text-xs font-extrabold px-2.5 py-1">
+            P2: {countsByPriority.P2}
+          </span>
+          <span class="rounded-lg bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 text-xs font-extrabold px-2.5 py-1">
+            P3: {countsByPriority.P3}
+          </span>
+        </div>
+      </div>
+
+      <!-- Controls & Filter Tabs -->
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 flex-wrap">
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full" id="filter-tabs">
+          <button class="filter-tab active rounded-xl bg-slate-900 text-white dark:bg-white dark:text-slate-900 px-3 py-1.5 text-xs font-bold" data-category="all">
+            All ({allInsights.length})
+          </button>
+          <button class="filter-tab rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 px-3 py-1.5 text-xs font-bold" data-category="critical">
+            Critical ({countsByCategory.critical || 0})
+          </button>
+          <button class="filter-tab rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 px-3 py-1.5 text-xs font-bold" data-category="health">
+            Health ({countsByCategory.health || 0})
+          </button>
+          <button class="filter-tab rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 px-3 py-1.5 text-xs font-bold" data-category="seo">
+            SEO ({countsByCategory.seo || 0})
+          </button>
+          <button class="filter-tab rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 px-3 py-1.5 text-xs font-bold" data-category="conversion">
+            Conversion ({countsByCategory.conversion || 0})
+          </button>
+          <button class="filter-tab rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 px-3 py-1.5 text-xs font-bold" data-category="performance">
+            Performance ({countsByCategory.performance || 0})
+          </button>
+          <button class="filter-tab rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 px-3 py-1.5 text-xs font-bold" data-category="revenue">
+            Revenue ({countsByCategory.revenue || 0})
+          </button>
+          <button class="filter-tab rounded-xl bg-slate-100 text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 px-3 py-1.5 text-xs font-bold" data-category="404">
+            404 Leaks ({countsByCategory['404'] || 0})
+          </button>
+        </div>
+
+        <!-- Search Input -->
+        <div class="relative w-full sm:w-64">
+          <input
+            id="insight-search"
+            type="text"
+            placeholder="Search insights or pages..."
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-1.5 text-xs font-medium text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:bg-white focus:outline-hidden dark:border-slate-800 dark:bg-slate-800/80 dark:text-white"
+          />
+        </div>
+      </div>
+
+      <!-- Insights Cards Container -->
+      <div class="space-y-4" id="insights-list">
+        {allInsights.length === 0 ? (
+          <div class="rounded-xl border border-dashed border-slate-200 p-8 text-center dark:border-slate-800">
+            <p class="text-sm font-semibold text-slate-600 dark:text-slate-400">
+              No insights detected. All systems are performing nominally!
+            </p>
+          </div>
+        ) : (
+          allInsights.map((insight: IntelligenceInsight) => (
+            <div
+              class="insight-item rounded-2xl border border-slate-200/80 bg-slate-50/40 p-5 dark:border-slate-800/80 dark:bg-slate-800/30 transition hover:border-slate-300 dark:hover:border-slate-700"
+              data-id={insight.id}
+              data-category={insight.category}
+              data-priority={insight.priority}
+              data-status={insight.status}
+            >
+              <div class="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
+                
+                <!-- Left: Priority Pill, Titles, Explanations, Metrics -->
+                <div class="space-y-2.5 flex-1 min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class={`rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-wider ${
+                      insight.priority === 'P0'
+                        ? 'bg-red-600 text-white'
+                        : insight.priority === 'P1'
+                        ? 'bg-amber-500 text-white'
+                        : insight.priority === 'P2'
+                        ? 'bg-blue-600 text-white'
+                        : 'bg-slate-600 text-white'
+                    }`}>
+                      {insight.priority}
+                    </span>
+
+                    <span class="rounded-md bg-slate-200/70 px-2 py-0.5 text-[10px] font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300 uppercase">
+                      {insight.category}
+                    </span>
+
+                    {insight.correlationType && (
+                      <span class="rounded-md bg-purple-100 px-2 py-0.5 text-[10px] font-bold text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+                        ⚡ Cross-System Correlation
+                      </span>
+                    )}
+
+                    <span class="text-[11px] font-semibold text-slate-400">
+                      Entity: <span class="text-slate-700 dark:text-slate-300 font-bold">{insight.affectedEntity.name}</span>
+                    </span>
+                  </div>
+
+                  <h3 class="text-base font-bold text-slate-900 dark:text-white leading-snug">
+                    {insight.title}
+                  </h3>
+
+                  <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                    <strong class="text-slate-900 dark:text-white">Why Detected:</strong> {insight.whyDetected}
+                  </p>
+
+                  <!-- Supporting Metrics Chips -->
+                  {insight.supportingMetrics && insight.supportingMetrics.length > 0 && (
+                    <div class="flex items-center gap-2 flex-wrap pt-1">
+                      {insight.supportingMetrics.map((m: SupportingMetric) => (
+                        <span class="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 shadow-2xs">
+                          <span class="text-slate-400">{m.label}:</span>
+                          <span class="font-bold text-slate-900 dark:text-white">{m.current}</span>
+                          {m.change && (
+                            <span class={`font-bold ${m.change.startsWith('+') ? 'text-emerald-600' : 'text-red-600'}`}>
+                              ({m.change})
+                            </span>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <!-- Data Sources Footnote -->
+                  <div class="flex items-center gap-2 text-[10px] text-slate-400 dark:text-slate-500 pt-1">
+                    <span>Sources:</span>
+                    {insight.dataSources.map((ds: string) => (
+                      <span class="rounded bg-slate-200/50 px-1.5 py-0.5 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                        {ds}
+                      </span>
+                    ))}
+                    <span>• Detected: {new Date(insight.detectedAt).toLocaleTimeString()}</span>
+                  </div>
+                </div>
+
+                <!-- Right: Action Center & Lifecycle Status -->
+                <div class="flex flex-col sm:flex-row lg:flex-col items-start lg:items-end gap-3 shrink-0 pt-2 lg:pt-0">
+                  <a
+                    href={insight.recommendedAction.url}
+                    class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 transition shadow-xs"
+                  >
+                    <span>{insight.recommendedAction.label}</span>
+                    <span>→</span>
+                  </a>
+
+                  <!-- Status Controller -->
+                  <div class="flex items-center gap-1.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-1 text-xs">
+                    <button
+                      class={`btn-status px-2.5 py-1 rounded-lg font-bold transition text-[11px] ${
+                        insight.status === 'active'
+                          ? 'bg-blue-600 text-white'
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                      data-id={insight.id}
+                      data-status="active"
+                    >
+                      Active
+                    </button>
+                    <button
+                      class={`btn-status px-2.5 py-1 rounded-lg font-bold transition text-[11px] ${
+                        insight.status === 'acknowledged'
+                          ? 'bg-amber-600 text-white'
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                      data-id={insight.id}
+                      data-status="acknowledged"
+                    >
+                      Ack
+                    </button>
+                    <button
+                      class={`btn-status px-2.5 py-1 rounded-lg font-bold transition text-[11px] ${
+                        insight.status === 'resolved'
+                          ? 'bg-emerald-600 text-white'
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                      }`}
+                      data-id={insight.id}
+                      data-status="resolved"
+                    >
+                      Resolved
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- AI Configuration Modal -->
+  <div
+    id="ai-modal"
+    class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4"
+  >
+    <div class="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-xl dark:border-slate-800 dark:bg-slate-900 space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+        <div>
+          <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span>⚙️</span> Optional AI Provider Settings
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Powers executive briefings. Rule-based intelligence works without this.
+          </p>
+        </div>
+        <button id="btn-close-modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 font-bold text-lg">
+          ✕
+        </button>
+      </div>
+
+      <form id="ai-config-form" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
+            AI Provider
+          </label>
+          <select
+            id="ai-provider"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-medium text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-hidden dark:border-slate-800 dark:bg-slate-800 dark:text-white"
+          >
+            <option value="gemini" selected={aiConfig?.provider === 'gemini'}>Google Gemini (Recommended)</option>
+            <option value="openai" selected={aiConfig?.provider === 'openai'}>OpenAI (ChatGPT)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
+            API Key
+          </label>
+          <input
+            id="ai-api-key"
+            type="password"
+            placeholder={aiConfig?.apiKey ? '••••••••••••••••••••••••' : 'Enter API Key...'}
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-medium text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-hidden dark:border-slate-800 dark:bg-slate-800 dark:text-white"
+          />
+          <p class="text-[10px] text-slate-400 mt-1">
+            Stored securely in Cloudflare D1 site_settings.
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 uppercase mb-1">
+            Model Name (Optional)
+          </label>
+          <input
+            id="ai-model"
+            type="text"
+            value={aiConfig?.model || ''}
+            placeholder="e.g. gemini-1.5-flash or gpt-4o-mini"
+            class="w-full rounded-xl border border-slate-200 bg-slate-50 p-2.5 text-xs font-medium text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-hidden dark:border-slate-800 dark:bg-slate-800 dark:text-white"
+          />
+        </div>
+
+        <div class="flex items-center gap-2 pt-2">
+          <input
+            id="ai-enabled"
+            type="checkbox"
+            checked={aiConfig?.enabled !== false}
+            class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 h-4 w-4"
+          />
+          <label for="ai-enabled" class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+            Enable AI Executive Briefing layer
+          </label>
+        </div>
+
+        <div id="ai-modal-message" class="hidden text-xs p-2 rounded-lg font-medium"></div>
+
+        <div class="flex items-center justify-between pt-4 border-t border-slate-100 dark:border-slate-800">
+          <button
+            type="button"
+            id="btn-delete-ai"
+            class="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400"
+          >
+            Remove Key
+          </button>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              id="btn-cancel-modal"
+              class="rounded-xl px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              id="btn-save-ai"
+              class="rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white hover:bg-blue-700 shadow-sm"
+            >
+              Save Configuration
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Client-side Interactive Script -->
+  <script is:inline>
+    // 1. Refresh Analysis Action
+    const refreshBtn = document.getElementById('btn-refresh-intel');
+    const refreshSpinner = document.getElementById('refresh-spinner');
+    const refreshIcon = document.getElementById('refresh-icon');
+
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', async () => {
+        refreshBtn.disabled = true;
+        refreshSpinner?.classList.remove('hidden');
+        refreshIcon?.classList.add('hidden');
+
+        try {
+          const res = await fetch('/api/admin/intelligence/refresh', { method: 'POST' });
+          if (res.ok) {
+            window.location.reload();
+          } else {
+            const data = await res.json().catch(() => ({}));
+            alert('Refresh failed: ' + (data.error || 'Server error'));
+          }
+        } catch (err) {
+          alert('Network error while refreshing intelligence');
+        } finally {
+          refreshBtn.disabled = false;
+          refreshSpinner?.classList.add('hidden');
+          refreshIcon?.classList.remove('hidden');
+        }
+      });
+    }
+
+    // 2. Category Tab Filtering & Search
+    const filterTabs = document.querySelectorAll('.filter-tab');
+    const insightItems = document.querySelectorAll('.insight-item');
+    const searchInput = document.getElementById('insight-search');
+
+    let activeCategory = 'all';
+    let searchQuery = '';
+
+    function applyFilters() {
+      insightItems.forEach((item) => {
+        const cat = item.getAttribute('data-category');
+        const text = item.textContent?.toLowerCase() || '';
+
+        const matchesCat = activeCategory === 'all' || cat === activeCategory;
+        const matchesSearch = !searchQuery || text.includes(searchQuery);
+
+        if (matchesCat && matchesSearch) {
+          item.classList.remove('hidden');
+        } else {
+          item.classList.add('hidden');
+        }
+      });
+    }
+
+    filterTabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        filterTabs.forEach((t) => {
+          t.classList.remove('bg-slate-900', 'text-white', 'dark:bg-white', 'dark:text-slate-900', 'active');
+          t.classList.add('bg-slate-100', 'text-slate-600', 'dark:bg-slate-800', 'dark:text-slate-300');
+        });
+
+        tab.classList.remove('bg-slate-100', 'text-slate-600', 'dark:bg-slate-800', 'dark:text-slate-300');
+        tab.classList.add('bg-slate-900', 'text-white', 'dark:bg-white', 'dark:text-slate-900', 'active');
+
+        activeCategory = tab.getAttribute('data-category') || 'all';
+        applyFilters();
+      });
+    });
+
+    searchInput?.addEventListener('input', (e) => {
+      searchQuery = e.target.value.toLowerCase().trim();
+      applyFilters();
+    });
+
+    // 3. Status Action Buttons (Active / Ack / Resolved)
+    const statusButtons = document.querySelectorAll('.btn-status');
+    statusButtons.forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const id = btn.getAttribute('data-id');
+        const status = btn.getAttribute('data-status');
+        if (!id || !status) return;
+
+        try {
+          btn.disabled = true;
+          const res = await fetch('/api/admin/intelligence/insights', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, status }),
+          });
+
+          if (res.ok) {
+            // Update UI styling for buttons within this card
+            const parent = btn.closest('.flex');
+            parent?.querySelectorAll('.btn-status').forEach((b) => {
+              b.classList.remove('bg-blue-600', 'bg-amber-600', 'bg-emerald-600', 'text-white');
+              b.classList.add('text-slate-600', 'dark:text-slate-400');
+            });
+
+            if (status === 'active') btn.classList.add('bg-blue-600', 'text-white');
+            if (status === 'acknowledged') btn.classList.add('bg-amber-600', 'text-white');
+            if (status === 'resolved') btn.classList.add('bg-emerald-600', 'text-white');
+          }
+        } catch (err) {
+          console.error('Error updating status:', err);
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    });
+
+    // 4. AI Modal Management
+    const aiModal = document.getElementById('ai-modal');
+    const btnAiModal = document.getElementById('btn-ai-modal');
+    const btnCloseModal = document.getElementById('btn-close-modal');
+    const btnCancelModal = document.getElementById('btn-cancel-modal');
+    const aiForm = document.getElementById('ai-config-form');
+    const btnDeleteAi = document.getElementById('btn-delete-ai');
+    const modalMessage = document.getElementById('ai-modal-message');
+
+    function openModal() {
+      aiModal?.classList.remove('hidden');
+      aiModal?.classList.add('flex');
+    }
+
+    function closeModal() {
+      aiModal?.classList.add('hidden');
+      aiModal?.classList.remove('flex');
+      if (modalMessage) modalMessage.className = 'hidden text-xs p-2 rounded-lg font-medium';
+    }
+
+    btnAiModal?.addEventListener('click', openModal);
+    btnCloseModal?.addEventListener('click', closeModal);
+    btnCancelModal?.addEventListener('click', closeModal);
+
+    aiForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const provider = document.getElementById('ai-provider')?.value;
+      const apiKey = document.getElementById('ai-api-key')?.value;
+      const model = document.getElementById('ai-model')?.value;
+      const enabled = document.getElementById('ai-enabled')?.checked;
+
+      const submitBtn = document.getElementById('btn-save-ai');
+      if (submitBtn) submitBtn.disabled = true;
+
+      try {
+        const res = await fetch('/api/admin/intelligence/ai-config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ provider, apiKey, model, enabled }),
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          if (modalMessage) {
+            modalMessage.className = 'text-xs p-2 rounded-lg font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+            modalMessage.textContent = 'Configuration saved successfully! Refreshing...';
+          }
+          setTimeout(() => window.location.reload(), 800);
+        } else {
+          if (modalMessage) {
+            modalMessage.className = 'text-xs p-2 rounded-lg font-medium bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300';
+            modalMessage.textContent = data.error || 'Failed to save configuration';
+          }
+        }
+      } catch (err) {
+        if (modalMessage) {
+          modalMessage.className = 'text-xs p-2 rounded-lg font-medium bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300';
+          modalMessage.textContent = 'Network error saving configuration';
+        }
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    });
+
+    btnDeleteAi?.addEventListener('click', async () => {
+      if (!confirm('Remove AI provider API keys and revert to deterministic rule-based analysis?')) return;
+
+      try {
+        const res = await fetch('/api/admin/intelligence/ai-config', { method: 'DELETE' });
+        if (res.ok) {
+          window.location.reload();
+        }
+      } catch (err) {
+        alert('Failed to remove AI config');
+      }
+    });
+  </script>
+</AdminLayout>

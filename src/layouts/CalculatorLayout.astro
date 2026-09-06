@@ -263,12 +263,81 @@ const categoryPath = `/${category.toLowerCase()}/`;
     <AdSlotFooter />
   </div>
 
-  <!-- Client-side Calculator Error & Anomaly Telemetry -->
+  <!-- Client-side Calculator Telemetry & Funnel Analytics (Phase 4) -->
   <script is:inline define:vars={{ slug }}>
     (function() {
       if (typeof window === 'undefined') return;
 
-      // Listen for uncaught calculation errors on the calculator page
+      // Safe lightweight event dispatcher (SendBeacon / fetch keepalive)
+      function trackAnalytics(eventName) {
+        try {
+          var deviceType = 'desktop';
+          var width = window.innerWidth || document.documentElement.clientWidth || 1024;
+          if (width < 768) {
+            deviceType = 'mobile';
+          } else if (width < 1024) {
+            deviceType = 'tablet';
+          }
+
+          var payload = JSON.stringify({
+            slug: slug,
+            event: eventName,
+            device: deviceType,
+            referrer: document.referrer || ''
+          });
+
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon('/api/analytics/event', payload);
+          } else {
+            fetch('/api/analytics/event', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: payload,
+              keepalive: true
+            }).catch(function() {});
+          }
+        } catch (e) {}
+      }
+
+      window.__trackCalculatorEvent = trackAnalytics;
+
+      // 1. Funnel Step: Page View (Deduplicated per session)
+      try {
+        var pvKey = 'afc_pv_' + slug;
+        if (!sessionStorage.getItem(pvKey)) {
+          sessionStorage.setItem(pvKey, '1');
+          trackAnalytics('page_view');
+        }
+      } catch (e) {
+        trackAnalytics('page_view');
+      }
+
+      // 2. Funnel Step: Calculator Started (Triggered on first input interaction)
+      var hasStarted = false;
+      function onFirstInteraction(e) {
+        if (hasStarted) return;
+        var target = e.target;
+        if (!target || !target.tagName) return;
+        var tag = target.tagName.toUpperCase();
+        if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') {
+          hasStarted = true;
+          try {
+            var startKey = 'afc_start_' + slug;
+            if (!sessionStorage.getItem(startKey)) {
+              sessionStorage.setItem(startKey, '1');
+              trackAnalytics('calculator_start');
+            }
+          } catch (err) {
+            trackAnalytics('calculator_start');
+          }
+          document.removeEventListener('input', onFirstInteraction, true);
+          document.removeEventListener('focusin', onFirstInteraction, true);
+        }
+      }
+      document.addEventListener('input', onFirstInteraction, true);
+      document.addEventListener('focusin', onFirstInteraction, true);
+
+      // 3. Listen for uncaught calculation errors on the calculator page
       window.addEventListener('error', function(event) {
         if (!event || !event.message) return;
         var msg = String(event.message || '');
@@ -281,6 +350,8 @@ const categoryPath = `/${category.toLowerCase()}/`;
         ) {
           return;
         }
+
+        trackAnalytics('calculation_error');
 
         try {
           var payload = JSON.stringify({
@@ -304,6 +375,7 @@ const categoryPath = `/${category.toLowerCase()}/`;
 
       // Global hook for calculator script handlers to report NaN / Infinite results
       window.__reportCalculatorAnomaly = function(type, details) {
+        trackAnalytics('calculation_error');
         try {
           var payload = JSON.stringify({
             calculatorSlug: slug,
@@ -318,10 +390,26 @@ const categoryPath = `/${category.toLowerCase()}/`;
       };
 
       // =========================================================
-      // UNIVERSAL AUTO-SCROLL TO RESULTS ON CALCULATION
+      // UNIVERSAL AUTO-SCROLL & CALCULATION SUCCESS/ERROR DETECTOR
       // =========================================================
-      (function initAutoScrollToResults() {
-        function scrollToVisibleResult() {
+      (function initAutoScrollAndTelemetry() {
+        var resultSelectors = [
+          '#pm-results-section:not(.hidden)',
+          '#results-section:not(.hidden)',
+          '#results-card:not(.hidden)',
+          '[id*="-results-section"]:not(.hidden)',
+          '[id*="-results-card"]:not(.hidden)',
+          '[id*="results-container"]:not(.hidden)',
+          '[id$="-results"]:not(.hidden)',
+          '#age-result:not(.hidden)',
+          '#gpa-results-card:not(.hidden)',
+          '#wheel-result-box:not(.hidden)',
+          '#sci-result-line:not(.hidden)',
+          '.results-section:not(.hidden)',
+          '[id*="result"]:not(.hidden):not([id*="placeholder"]):not([id*="stale"])'
+        ];
+
+        function checkCalculationOutcomeAndScroll() {
           // 1. Check if any error / alert message is currently displayed
           var errorCandidates = document.querySelectorAll(
             '[role="alert"]:not(.hidden), [id*="error"]:not(.hidden), [id*="err"]:not(.hidden)'
@@ -329,60 +417,85 @@ const categoryPath = `/${category.toLowerCase()}/`;
           for (var i = 0; i < errorCandidates.length; i++) {
             var err = errorCandidates[i];
             if (err && err.offsetParent !== null && err.textContent.trim().length > 0) {
+              trackAnalytics('calculation_error');
               err.scrollIntoView({ behavior: 'smooth', block: 'center' });
               return;
             }
           }
 
           // 2. Selectors for results container across all calculator types
-          var resultSelectors = [
-            '#pm-results-section:not(.hidden)',
-            '#results-section:not(.hidden)',
-            '#results-card:not(.hidden)',
-            '[id*="-results-section"]:not(.hidden)',
-            '[id*="-results-card"]:not(.hidden)',
-            '[id*="results-container"]:not(.hidden)',
-            '[id$="-results"]:not(.hidden)',
-            '#age-result:not(.hidden)',
-            '#gpa-results-card:not(.hidden)',
-            '#wheel-result-box:not(.hidden)',
-            '#sci-result-line:not(.hidden)',
-            '.results-section:not(.hidden)',
-            '[id*="result"]:not(.hidden):not([id*="placeholder"]):not([id*="stale"])'
-          ];
-
+          var foundResult = false;
           for (var j = 0; j < resultSelectors.length; j++) {
             var resultEl = document.querySelector(resultSelectors[j]);
             if (resultEl && resultEl.offsetParent !== null) {
-              var rect = resultEl.getBoundingClientRect();
-              // Scroll with sticky navbar offset (approx 85px)
-              var headerOffset = 85;
-              var targetY = window.pageYOffset + rect.top - headerOffset;
+              var text = (resultEl.textContent || '').trim();
+              if (text.length > 0) {
+                if (text.includes('NaN') || text.includes('Infinity')) {
+                  trackAnalytics('calculation_error');
+                } else {
+                  trackAnalytics('calculation_success');
+                }
+                foundResult = true;
 
-              window.scrollTo({
-                top: Math.max(0, targetY),
-                behavior: 'smooth'
-              });
-              return;
+                var rect = resultEl.getBoundingClientRect();
+                var headerOffset = 85;
+                var targetY = window.pageYOffset + rect.top - headerOffset;
+
+                window.scrollTo({
+                  top: Math.max(0, targetY),
+                  behavior: 'smooth'
+                });
+                return;
+              }
+            }
+          }
+
+          // If no result container found yet, check generic output or fallback
+          if (!foundResult) {
+            var genericOutputs = document.querySelectorAll('output, [aria-live="polite"]');
+            for (var k = 0; k < genericOutputs.length; k++) {
+              var out = genericOutputs[k];
+              if (out && out.offsetParent !== null && out.textContent.trim().length > 0) {
+                trackAnalytics('calculation_success');
+                return;
+              }
             }
           }
         }
 
-        // Listen for Calculate button clicks across all forms and widgets
+        // Listen for Calculate button clicks & action bar buttons across all forms and widgets
         document.addEventListener('click', function(e) {
-          var btn = e.target.closest('button, input[type="submit"], input[type="button"]');
+          var btn = e.target.closest('button, input[type="submit"], input[type="button"], a');
           if (!btn) return;
 
           var text = (btn.textContent || btn.value || '').toLowerCase();
           var id = (btn.id || '').toLowerCase();
+          var cls = (btn.className || '').toString().toLowerCase();
 
-          // Exclude clear, reset, copy, download buttons
+          // Copy action
+          if (id.includes('copy') || text.includes('copy') || cls.includes('copy')) {
+            trackAnalytics('result_copy');
+            return;
+          }
+
+          // Share action
+          if (id.includes('share') || text.includes('share') || cls.includes('share')) {
+            trackAnalytics('result_share');
+            return;
+          }
+
+          // Reset / Clear action
+          if (id.includes('clear') || id.includes('reset') || text.includes('clear') || text.includes('reset') || cls.includes('reset')) {
+            trackAnalytics('calculator_reset');
+            return;
+          }
+
+          // Exclude auxiliary buttons from calculate clicks
           if (
-            text.includes('clear') || id.includes('clear') ||
-            text.includes('reset') || id.includes('reset') ||
-            text.includes('copy') || id.includes('copy') ||
-            text.includes('download') || id.includes('download') ||
-            text.includes('share') || id.includes('share')
+            id.includes('download') || text.includes('download') ||
+            id.includes('preview') || text.includes('preview') ||
+            id.includes('print') || text.includes('print') ||
+            id.includes('project') || text.includes('project')
           ) {
             return;
           }
@@ -392,17 +505,19 @@ const categoryPath = `/${category.toLowerCase()}/`;
                               text.includes('generate') ||
                               id.includes('calc') ||
                               btn.type === 'submit' ||
-                              btn.classList.contains('btn-calculate');
+                              cls.includes('btn-calculate');
 
           if (isCalcTrigger) {
-            // Give calculation engine 100ms to compute and unhide results
-            setTimeout(scrollToVisibleResult, 100);
+            trackAnalytics('calculate_click');
+            // Give calculation engine 150ms to compute and render results
+            setTimeout(checkCalculationOutcomeAndScroll, 150);
           }
         }, true);
 
         // Listen for form submissions (e.g. hitting Enter in input field)
         document.addEventListener('submit', function() {
-          setTimeout(scrollToVisibleResult, 100);
+          trackAnalytics('calculate_click');
+          setTimeout(checkCalculationOutcomeAndScroll, 150);
         }, true);
       })();
     })();

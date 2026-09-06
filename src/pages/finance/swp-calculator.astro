@@ -1,0 +1,1584 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="SWP Calculator – Systematic Withdrawal Plan with Inflation"
+  description="Calculate monthly withdrawals, total withdrawn amount, remaining corpus, and inflation-adjusted systematic withdrawal schedules for mutual funds."
+  category="Finance"
+  calculatorName="SWP Calculator"
+  slug="swp-calculator"
+  keywords={[
+    'swp calculator',
+    'swp calculator with inflation',
+    'best swp calculator',
+    'swp calculator sbi',
+    'sbi swp calculator',
+    'systematic withdrawal plan calculator',
+    'mutual fund swp calculator',
+    'monthly swp calculator'
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- MODE TABS: SIMPLE VS INFLATION -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-2.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-semibold scrollbar-thin">
+        <button
+          type="button"
+          id="tab-btn-simple-swp"
+          class="btn-swp-tab active shrink-0 rounded-xl bg-blue-600 px-4 py-2 font-bold text-white shadow-xs cursor-pointer transition flex items-center gap-1.5"
+          data-mode="simple"
+        >
+          <span>⚡</span>
+          <span>Simple SWP Calculator</span>
+          <span class="hidden sm:inline text-[10px] font-normal opacity-90">(Fixed Monthly Payout)</span>
+        </button>
+        <button
+          type="button"
+          id="tab-btn-inf-swp"
+          class="btn-swp-tab shrink-0 rounded-xl border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition flex items-center gap-1.5"
+          data-mode="inflation"
+        >
+          <span>📈</span>
+          <span>SWP Calculator with Inflation</span>
+          <span class="hidden sm:inline text-[10px] font-normal opacity-90">(Annual Step-Up)</span>
+        </button>
+      </div>
+      <div id="swp-mode-desc" class="mt-2 px-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+        Estimate remaining corpus and total withdrawals with a fixed monthly payout.
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- 1. SIMPLE SWP CALCULATOR PANEL (Default)                          -->
+    <!-- ================================================================= -->
+    <div id="panel-simple-swp" class="space-y-6">
+      
+      <!-- SIMPLE PRESETS -->
+      <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex flex-wrap items-center gap-1.5 text-xs">
+          <span class="font-bold text-slate-600 dark:text-slate-400 mr-1 flex items-center gap-1">
+            <span>⚡</span> Quick Presets:
+          </span>
+          <button type="button" class="btn-preset-simple-swp rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-inv="500000" data-wd="10000" data-ret="8" data-yrs="5">💼 ₹5L @ 8%, ₹10k/mo (5 Yrs)</button>
+          <button type="button" class="btn-preset-simple-swp rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-inv="1000000" data-wd="8000" data-ret="10" data-yrs="10">🚀 ₹10L @ 10%, ₹8k/mo (10 Yrs)</button>
+          <button type="button" class="btn-preset-simple-swp rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-inv="2500000" data-wd="20000" data-ret="12" data-yrs="15">📈 ₹25L @ 12%, ₹20k/mo (15 Yrs)</button>
+          <button type="button" class="btn-preset-simple-swp rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-inv="5000000" data-wd="35000" data-ret="10" data-yrs="20">🏆 ₹50L @ 10%, ₹35k/mo (20 Yrs)</button>
+        </div>
+      </div>
+
+      <!-- SIMPLE FORM CONTAINER -->
+      <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-blue-50/30 p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/20 sm:p-7">
+        
+        <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+          <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <span>⚡</span> Simple SWP Calculator
+          </h2>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            Simulate a fixed monthly cash flow from your mutual fund investment with investment compounding applied each month.
+          </p>
+        </div>
+
+        <form id="form-simple-swp" class="mt-5 space-y-4" novalidate onsubmit="return false;">
+          
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <!-- 1. Initial Investment -->
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+              <div class="flex items-center justify-between">
+                <label for="inp-sim-inv" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Initial Investment (₹) <span class="text-red-500">*</span>
+                </label>
+                <div class="relative w-36">
+                  <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-xs font-bold text-slate-400">₹</span>
+                  <input
+                    type="number"
+                    id="inp-sim-inv"
+                    value="500000"
+                    step="10000"
+                    min="1000"
+                    class="w-full rounded-xl border border-slate-300 bg-white py-1.5 pl-6 pr-3 text-right text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                </div>
+              </div>
+              <input
+                type="range"
+                id="range-sim-inv"
+                value="500000"
+                min="50000"
+                max="5000000"
+                step="10000"
+                class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:bg-slate-700 dark:accent-blue-500"
+                aria-label="Initial Investment Slider"
+              />
+              <div class="flex justify-between text-[11px] font-semibold text-slate-400">
+                <span>₹50,000</span>
+                <span>₹25,00,000</span>
+                <span>₹50,00,000+</span>
+              </div>
+            </div>
+
+            <!-- 2. Monthly Withdrawal -->
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+              <div class="flex items-center justify-between">
+                <label for="inp-sim-wd" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Monthly Withdrawal (₹) <span class="text-red-500">*</span>
+                </label>
+                <div class="relative w-32">
+                  <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-xs font-bold text-slate-400">₹</span>
+                  <input
+                    type="number"
+                    id="inp-sim-wd"
+                    value="10000"
+                    step="500"
+                    min="100"
+                    class="w-full rounded-xl border border-slate-300 bg-white py-1.5 pl-6 pr-3 text-right text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                </div>
+              </div>
+              <input
+                type="range"
+                id="range-sim-wd"
+                value="10000"
+                min="500"
+                max="100000"
+                step="500"
+                class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:bg-slate-700 dark:accent-blue-500"
+                aria-label="Monthly Withdrawal Slider"
+              />
+              <div class="flex justify-between text-[11px] font-semibold text-slate-400">
+                <span>₹500</span>
+                <span>₹50,000</span>
+                <span>₹1,00,000</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <!-- 3. Expected Annual Return (%) -->
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+              <div class="flex items-center justify-between">
+                <label for="inp-sim-ret" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Expected Return (% p.a.) <span class="text-red-500">*</span>
+                </label>
+                <div class="relative w-28">
+                  <input
+                    type="number"
+                    id="inp-sim-ret"
+                    value="8"
+                    step="0.5"
+                    min="1"
+                    max="40"
+                    class="w-full rounded-xl border border-slate-300 bg-white py-1.5 pl-3 pr-6 text-right text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                  <span class="absolute inset-y-0 right-0 flex items-center pr-2.5 text-xs font-bold text-slate-400">%</span>
+                </div>
+              </div>
+              <input
+                type="range"
+                id="range-sim-ret"
+                value="8"
+                min="1"
+                max="30"
+                step="0.5"
+                class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:bg-slate-700 dark:accent-blue-500"
+                aria-label="Annual Return Slider"
+              />
+              <div class="flex justify-between text-[11px] font-semibold text-slate-400">
+                <span>1%</span>
+                <span>15%</span>
+                <span>30%</span>
+              </div>
+            </div>
+
+            <!-- 4. Time Period (Years) -->
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+              <div class="flex items-center justify-between">
+                <label for="inp-sim-yrs" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Time Period (Years) <span class="text-red-500">*</span>
+                </label>
+                <div class="relative w-28">
+                  <input
+                    type="number"
+                    id="inp-sim-yrs"
+                    value="5"
+                    step="1"
+                    min="1"
+                    max="40"
+                    class="w-full rounded-xl border border-slate-300 bg-white py-1.5 px-3 text-right text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                </div>
+              </div>
+              <input
+                type="range"
+                id="range-sim-yrs"
+                value="5"
+                min="1"
+                max="30"
+                step="1"
+                class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:bg-slate-700 dark:accent-blue-500"
+                aria-label="Time Period Slider"
+              />
+              <div class="flex justify-between text-[11px] font-semibold text-slate-400">
+                <span>1 Year</span>
+                <span>15 Years</span>
+                <span>30 Years</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 5. Withdrawal Timing -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2.5">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Withdrawal Timing <span class="text-red-500">*</span>
+            </label>
+            <div class="grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+              <button
+                type="button"
+                id="btn-sim-timing-beg"
+                data-timing="beginning"
+                class="timing-btn-sim rounded-lg py-2 text-xs font-bold transition-all bg-white text-blue-600 shadow-2xs dark:bg-slate-700 dark:text-blue-400 cursor-pointer"
+              >
+                Beginning of Month
+              </button>
+              <button
+                type="button"
+                id="btn-sim-timing-end"
+                data-timing="end"
+                class="timing-btn-sim rounded-lg py-2 text-xs font-semibold transition-all text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer"
+              >
+                End of Month
+              </button>
+            </div>
+            <p id="hint-sim-timing" class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+              The withdrawal is deducted at the start of each month, and investment growth is calculated on the remaining balance.
+            </p>
+          </div>
+
+          <!-- ACTION BUTTONS -->
+          <div class="flex items-center gap-2 pt-2">
+            <button
+              type="submit"
+              id="btn-calc-simple-swp"
+              class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer text-center"
+            >
+              Calculate SWP →
+            </button>
+            <button
+              type="button"
+              id="btn-clear-simple-swp"
+              class="rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer"
+            >
+              Clear (✕)
+            </button>
+          </div>
+
+          <p id="err-sim-swp" class="hidden rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300" role="alert" aria-live="polite"></p>
+
+        </form>
+
+        <!-- SIMPLE RESULTS CONTAINER (Hidden until button is clicked) -->
+        <div id="sim-results-section" class="hidden mt-6 space-y-6">
+          
+          <!-- Highlight Result Card -->
+          <div class="overflow-hidden rounded-3xl border border-emerald-200 bg-linear-to-br from-white via-emerald-50/40 to-emerald-100/50 p-5 shadow-lg shadow-emerald-500/5 dark:border-emerald-900/60 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/30 sm:p-7">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-emerald-200/80 pb-4 dark:border-slate-800">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Total Withdrawn Amount</span>
+                <div id="res-sim-total-wd" class="mt-1 text-3xl sm:text-5xl font-black text-emerald-600 dark:text-emerald-400">
+                  ₹ 6,00,000.00
+                </div>
+              </div>
+              <div class="sm:text-right">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Remaining Corpus Balance:</span>
+                <div id="res-sim-final-bal" class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                  ₹ 10,154.29
+                </div>
+              </div>
+            </div>
+
+            <!-- Corpus Exhaustion Notice -->
+            <div id="banner-sim-depleted" class="hidden mt-4 rounded-xl p-3.5 text-xs font-semibold bg-amber-50 border border-amber-300 dark:bg-amber-950/40 dark:border-amber-900/60 text-amber-900 dark:text-amber-200">
+              <!-- Dynamically populated -->
+            </div>
+
+            <!-- 6 Metrics Grid -->
+            <div class="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Initial Investment</div>
+                <div id="res-sim-init-inv" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">₹ 5,00,000</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Total Growth Returns</div>
+                <div id="res-sim-returns" class="mt-1 text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">₹ 1,05,255.83</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Monthly Withdrawal</div>
+                <div id="res-sim-payout" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">₹ 10,000 / mo</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Duration</div>
+                <div id="res-sim-duration" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">5 Years (60 Mo)</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Withdrawal Timing</div>
+                <div id="res-sim-timing" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">Beginning of Month</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Corpus Status</div>
+                <div id="res-sim-status" class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">Sustained</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- VISUAL BREAKDOWN CARD -->
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+            <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-1.5">
+              <span>📊</span> Capital Allocation &amp; Total Value Split
+            </h3>
+            <div class="flex flex-col sm:flex-row items-center justify-around gap-6">
+              
+              <!-- SVG Donut -->
+              <div class="relative w-40 h-40 flex items-center justify-center">
+                <svg viewBox="0 0 36 36" class="w-full h-full transform -rotate-90">
+                  <circle cx="18" cy="18" r="15.91549430918954" fill="transparent" stroke="#10b981" stroke-width="3.8"></circle>
+                  <circle id="svg-donut-sim-corpus" cx="18" cy="18" r="15.91549430918954" fill="transparent" stroke="#3b82f6" stroke-width="3.8" stroke-dasharray="1.7 98.3" stroke-dashoffset="0"></circle>
+                </svg>
+                <div class="absolute text-center">
+                  <span class="text-[11px] font-bold text-slate-400 block">TOTAL VALUE</span>
+                  <span id="txt-donut-sim-center" class="text-xs font-black text-slate-800 dark:text-slate-200">100%</span>
+                </div>
+              </div>
+
+              <!-- Legend & Stats -->
+              <div class="space-y-3 text-xs w-full sm:w-auto">
+                <div class="flex items-center justify-between gap-6 p-2.5 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40">
+                  <span class="flex items-center gap-2 font-bold text-emerald-700 dark:text-emerald-300">
+                    <span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span> Total Withdrawn:
+                  </span>
+                  <span id="txt-legend-sim-withdrawn" class="font-bold text-slate-900 dark:text-white font-mono">₹ 6,00,000 (98.3%)</span>
+                </div>
+                <div class="flex items-center justify-between gap-6 p-2.5 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40">
+                  <span class="flex items-center gap-2 font-bold text-blue-700 dark:text-blue-300">
+                    <span class="w-3 h-3 rounded-full bg-blue-600 inline-block"></span> Remaining Corpus:
+                  </span>
+                  <span id="txt-legend-sim-balance" class="font-bold text-slate-900 dark:text-white font-mono">₹ 10,154 (1.7%)</span>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- SCHEDULE TABLE -->
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <span>📅</span> Year-Wise SWP Withdrawal Schedule
+              </h3>
+              <div class="flex items-center gap-2 text-xs font-bold">
+                <button type="button" id="btn-sim-view-yearly" class="rounded-lg bg-blue-600 px-3 py-1 text-white shadow-2xs cursor-pointer">Yearly Summary</button>
+                <button type="button" id="btn-sim-view-monthly" class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 dark:border-slate-700 dark:text-slate-300 cursor-pointer">Monthly View</button>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto max-h-96 scrollbar-thin">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold sticky top-0">
+                  <tr>
+                    <th id="th-sim-period" class="p-2.5 rounded-l-lg">Year</th>
+                    <th class="p-2.5 text-right">Opening Balance</th>
+                    <th class="p-2.5 text-right text-emerald-600 dark:text-emerald-400">Withdrawals</th>
+                    <th class="p-2.5 text-right text-blue-600 dark:text-blue-400">Growth Earned</th>
+                    <th class="p-2.5 text-right rounded-r-lg font-black text-slate-900 dark:text-white">Closing Balance</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-sim-schedule" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                  <!-- Dynamically rendered -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- 2. ADVANCED SWP CALCULATOR WITH INFLATION PANEL                   -->
+    <!-- ================================================================= -->
+    <div id="panel-inf-swp" class="hidden space-y-6">
+      
+      <!-- INFLATION PRESETS -->
+      <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex flex-wrap items-center gap-1.5 text-xs">
+          <span class="font-bold text-slate-600 dark:text-slate-400 mr-1 flex items-center gap-1">
+            <span>⚡</span> Quick Presets:
+          </span>
+          <button type="button" class="btn-preset-inf-swp rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-inv="500000" data-wd="10000" data-ret="8" data-inf="6" data-yrs="5">🛡️ ₹5L @ 8%, ₹10k/mo, 6% Inf (5 Yrs)</button>
+          <button type="button" class="btn-preset-inf-swp rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-inv="1500000" data-wd="12000" data-ret="10" data-inf="6" data-yrs="10">📈 ₹15L @ 10%, ₹12k/mo, 6% Inf (10 Yrs)</button>
+          <button type="button" class="btn-preset-inf-swp rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-inv="5000000" data-wd="30000" data-ret="12" data-inf="7" data-yrs="20">👑 ₹50L @ 12%, ₹30k/mo, 7% Inf (20 Yrs)</button>
+        </div>
+      </div>
+
+      <!-- INFLATION FORM CONTAINER -->
+      <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-blue-50/30 p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/20 sm:p-7">
+        
+        <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+          <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📈</span> SWP Calculator with Inflation
+          </h2>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            Step up your monthly withdrawal once every 12 months to protect your purchasing power against inflation.
+          </p>
+        </div>
+
+        <form id="form-inf-swp" class="mt-5 space-y-4" novalidate onsubmit="return false;">
+          
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <!-- 1. Initial Investment -->
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+              <div class="flex items-center justify-between">
+                <label for="inp-inf-inv" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Initial Investment (₹) <span class="text-red-500">*</span>
+                </label>
+                <div class="relative w-36">
+                  <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-xs font-bold text-slate-400">₹</span>
+                  <input
+                    type="number"
+                    id="inp-inf-inv"
+                    value="500000"
+                    step="10000"
+                    min="1000"
+                    class="w-full rounded-xl border border-slate-300 bg-white py-1.5 pl-6 pr-3 text-right text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                </div>
+              </div>
+              <input
+                type="range"
+                id="range-inf-inv"
+                value="500000"
+                min="50000"
+                max="5000000"
+                step="10000"
+                class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:bg-slate-700 dark:accent-blue-500"
+                aria-label="Initial Investment Range Slider"
+              />
+              <div class="flex justify-between text-[11px] font-semibold text-slate-400">
+                <span>₹50,000</span>
+                <span>₹25,00,000</span>
+                <span>₹50,00,000+</span>
+              </div>
+            </div>
+
+            <!-- 2. Initial Monthly Withdrawal -->
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+              <div class="flex items-center justify-between">
+                <label for="inp-inf-wd" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Initial Monthly Withdrawal (₹) <span class="text-red-500">*</span>
+                </label>
+                <div class="relative w-32">
+                  <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-xs font-bold text-slate-400">₹</span>
+                  <input
+                    type="number"
+                    id="inp-inf-wd"
+                    value="10000"
+                    step="500"
+                    min="100"
+                    class="w-full rounded-xl border border-slate-300 bg-white py-1.5 pl-6 pr-3 text-right text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                </div>
+              </div>
+              <input
+                type="range"
+                id="range-inf-wd"
+                value="10000"
+                min="500"
+                max="100000"
+                step="500"
+                class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:bg-slate-700 dark:accent-blue-500"
+                aria-label="Initial Monthly Withdrawal Slider"
+              />
+              <div class="flex justify-between text-[11px] font-semibold text-slate-400">
+                <span>₹500</span>
+                <span>₹50,000</span>
+                <span>₹1,00,000</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <!-- 3. Expected Annual Return (%) -->
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+              <div class="flex items-center justify-between">
+                <label for="inp-inf-ret" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Return (% p.a.) <span class="text-red-500">*</span>
+                </label>
+                <div class="relative w-24">
+                  <input
+                    type="number"
+                    id="inp-inf-ret"
+                    value="8"
+                    step="0.5"
+                    min="1"
+                    max="40"
+                    class="w-full rounded-xl border border-slate-300 bg-white py-1.5 pl-2 pr-5 text-right text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                  <span class="absolute inset-y-0 right-0 flex items-center pr-2 text-xs font-bold text-slate-400">%</span>
+                </div>
+              </div>
+              <input
+                type="range"
+                id="range-inf-ret"
+                value="8"
+                min="1"
+                max="30"
+                step="0.5"
+                class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:bg-slate-700 dark:accent-blue-500"
+                aria-label="Return Slider"
+              />
+            </div>
+
+            <!-- 4. Annual Inflation (%) -->
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+              <div class="flex items-center justify-between">
+                <label for="inp-inf-rate" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Inflation (% p.a.) <span class="text-red-500">*</span>
+                </label>
+                <div class="relative w-24">
+                  <input
+                    type="number"
+                    id="inp-inf-rate"
+                    value="6"
+                    step="0.5"
+                    min="0"
+                    max="20"
+                    class="w-full rounded-xl border border-slate-300 bg-white py-1.5 pl-2 pr-5 text-right text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                  <span class="absolute inset-y-0 right-0 flex items-center pr-2 text-xs font-bold text-slate-400">%</span>
+                </div>
+              </div>
+              <input
+                type="range"
+                id="range-inf-rate"
+                value="6"
+                min="0"
+                max="15"
+                step="0.5"
+                class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:bg-slate-700 dark:accent-blue-500"
+                aria-label="Inflation Slider"
+              />
+            </div>
+
+            <!-- 5. Time Period (Years) -->
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+              <div class="flex items-center justify-between">
+                <label for="inp-inf-yrs" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Period (Years) <span class="text-red-500">*</span>
+                </label>
+                <div class="relative w-24">
+                  <input
+                    type="number"
+                    id="inp-inf-yrs"
+                    value="5"
+                    step="1"
+                    min="1"
+                    max="40"
+                    class="w-full rounded-xl border border-slate-300 bg-white py-1.5 px-3 text-right text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                </div>
+              </div>
+              <input
+                type="range"
+                id="range-inf-yrs"
+                value="5"
+                min="1"
+                max="30"
+                step="1"
+                class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:bg-slate-700 dark:accent-blue-500"
+                aria-label="Time Period Slider"
+              />
+              <div class="flex justify-between text-[11px] font-semibold text-slate-400">
+                <span>1 Year</span>
+                <span>15 Years</span>
+                <span>30 Years</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6. Withdrawal Timing -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2.5">
+            <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Withdrawal Timing <span class="text-red-500">*</span>
+            </label>
+            <div class="grid grid-cols-2 gap-2 rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+              <button
+                type="button"
+                id="btn-inf-timing-beg"
+                data-timing="beginning"
+                class="timing-btn-inf rounded-lg py-2 text-xs font-bold transition-all bg-white text-blue-600 shadow-2xs dark:bg-slate-700 dark:text-blue-400 cursor-pointer"
+              >
+                Beginning of Month
+              </button>
+              <button
+                type="button"
+                id="btn-inf-timing-end"
+                data-timing="end"
+                class="timing-btn-inf rounded-lg py-2 text-xs font-semibold transition-all text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer"
+              >
+                End of Month
+              </button>
+            </div>
+            <p id="hint-inf-timing" class="text-[11px] leading-relaxed text-slate-500 dark:text-slate-400">
+              The withdrawal is deducted at the start of each month, and investment growth is calculated on the remaining balance.
+            </p>
+          </div>
+
+          <!-- ACTION BUTTONS -->
+          <div class="flex items-center gap-2 pt-2">
+            <button
+              type="submit"
+              id="btn-calc-inf-swp"
+              class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer text-center"
+            >
+              Calculate SWP with Inflation →
+            </button>
+            <button
+              type="button"
+              id="btn-clear-inf-swp"
+              class="rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer"
+            >
+              Clear (✕)
+            </button>
+          </div>
+
+          <p id="err-inf-swp" class="hidden rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300" role="alert" aria-live="polite"></p>
+
+        </form>
+
+        <!-- INFLATION RESULTS CONTAINER (Hidden until button is clicked) -->
+        <div id="inf-results-section" class="hidden mt-6 space-y-6">
+          
+          <!-- Highlight Result Card -->
+          <div class="overflow-hidden rounded-3xl border border-emerald-200 bg-linear-to-br from-white via-emerald-50/40 to-emerald-100/50 p-5 shadow-lg shadow-emerald-500/5 dark:border-emerald-900/60 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/30 sm:p-7">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-emerald-200/80 pb-4 dark:border-slate-800">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Total Withdrawn (Inflation-Adjusted)</span>
+                <div id="res-inf-total-wd" class="mt-1 text-3xl sm:text-5xl font-black text-emerald-600 dark:text-emerald-400">
+                  ₹ 5,97,121.09
+                </div>
+              </div>
+              <div class="sm:text-right">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Remaining Corpus Balance:</span>
+                <div id="res-inf-final-bal" class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">
+                  ₹ 0.00
+                </div>
+              </div>
+            </div>
+
+            <!-- Corpus Exhaustion Notice -->
+            <div id="banner-inf-depleted" class="hidden mt-4 rounded-xl p-3.5 text-xs font-semibold bg-amber-50 border border-amber-300 dark:bg-amber-950/40 dark:border-amber-900/60 text-amber-900 dark:text-amber-200">
+              <!-- Dynamically populated -->
+            </div>
+
+            <!-- Detailed Metrics Grid -->
+            <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Initial Investment</div>
+                <div id="res-inf-init-inv" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">₹ 5,00,000</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Total Returns Earned</div>
+                <div id="res-inf-returns" class="mt-1 text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">₹ 97,121.09</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Initial Monthly Payout</div>
+                <div id="res-inf-init-payout" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">₹ 10,000 / mo</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Final Monthly Payout</div>
+                <div id="res-inf-final-payout" class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">₹ 12,625 / mo</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Withdrawal Timing</div>
+                <div id="res-inf-timing" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">Beginning of Month</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Inflation Rate</div>
+                <div id="res-inf-inflation-rate" class="mt-1 text-sm sm:text-base font-bold text-amber-600 dark:text-amber-400">6% p.a.</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Duration</div>
+                <div id="res-inf-duration" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">5 Years (60 Mo)</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Corpus Status</div>
+                <div id="res-inf-status" class="mt-1 text-sm sm:text-base font-bold text-amber-600 dark:text-amber-400">Depleted (Mo 54)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SCHEDULE TABLE -->
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <span>📅</span> Year-Wise SWP Withdrawal Schedule (with Inflation)
+              </h3>
+              <div class="flex items-center gap-2 text-xs font-bold">
+                <button type="button" id="btn-inf-view-yearly" class="rounded-lg bg-blue-600 px-3 py-1 text-white shadow-2xs cursor-pointer">Yearly Summary</button>
+                <button type="button" id="btn-inf-view-monthly" class="rounded-lg border border-slate-300 px-3 py-1 text-slate-700 dark:border-slate-700 dark:text-slate-300 cursor-pointer">Monthly View</button>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto max-h-96 scrollbar-thin">
+              <table class="w-full text-left text-xs">
+                <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold sticky top-0">
+                  <tr>
+                    <th id="th-inf-period" class="p-2.5 rounded-l-lg">Year</th>
+                    <th class="p-2.5 text-right">Opening Balance</th>
+                    <th class="p-2.5 text-right">Monthly Payout</th>
+                    <th class="p-2.5 text-right text-emerald-600 dark:text-emerald-400">Annual Withdrawals</th>
+                    <th class="p-2.5 text-right text-blue-600 dark:text-blue-400">Growth Earned</th>
+                    <th class="p-2.5 text-right rounded-r-lg font-black text-slate-900 dark:text-white">Closing Balance</th>
+                  </tr>
+                </thead>
+                <tbody id="tbody-inf-schedule" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                  <!-- Dynamically rendered -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- EDUCATIONAL SEO ARTICLE CONTENT SLOT -->
+  <Fragment slot="content">
+    <section class="swp-content">
+      <h2>What is an SWP (Systematic Withdrawal Plan) Calculator?</h2>
+      <p>
+        A <strong>Systematic Withdrawal Plan (SWP) Calculator</strong> is a specialized financial modeling tool designed to help mutual fund investors plan regular, periodic cash outflows from their accumulated corpus. Unlike a lump-sum redemption, an SWP allows you to withdraw a fixed or inflation-indexed amount of money on a monthly basis while the remainder of your investment continues to stay invested and generate returns.
+      </p>
+
+      <h2>How Does an SWP Calculator Work?</h2>
+      <p>
+        The mechanics of an SWP involve monthly compounding returns balanced against periodic redemptions:
+      </p>
+      <ul>
+        <li><strong>Growth Applied First:</strong> In our calculation engine, each month begins with your starting balance earning investment returns at the monthly rate: <code>Monthly Rate = Annual Return ÷ 12 ÷ 100</code>.</li>
+        <li><strong>Scheduled Withdrawal:</strong> After applying monthly compounding growth, the pre-determined monthly withdrawal amount is deducted from the portfolio.</li>
+        <li><strong>Corpus Longevity:</strong> If the returns generated by your investments exceed your monthly withdrawal, your corpus continues to grow or sustain indefinitely. If withdrawals exceed growth, the principal gradually decreases over time until the corpus is depleted.</li>
+      </ul>
+
+      <h2>Core Calculation Methodology &amp; Depletion Handling</h2>
+      <p>
+        The step-by-step mathematical algorithm executed by this calculator follows this exact standard:
+      </p>
+      <div class="my-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900 text-xs sm:text-sm space-y-1.5 font-mono">
+        <div>1. Monthly Return Rate = Annual Return Rate ÷ 1200</div>
+        <div>2. For each month m = 1 to (Years × 12):</div>
+        <div class="pl-4">a. Balance = Balance × (1 + Monthly Return Rate)</div>
+        <div class="pl-4">b. Year Number = ceil(m ÷ 12)</div>
+        <div class="pl-4">c. Scheduled Withdrawal = Initial Withdrawal × (1 + Inflation Rate)^(Year Number - 1)</div>
+        <div class="pl-4">d. If Balance ≥ Scheduled Withdrawal: Balance = Balance - Scheduled Withdrawal</div>
+        <div class="pl-4">e. Else: Total Withdrawn += Balance; Balance = 0; Corpus Depleted; Break.</div>
+      </div>
+
+      <h2>SWP Calculator with Inflation: Protecting Purchasing Power</h2>
+      <p>
+        A flat withdrawal of ₹25,000 per month may comfortably support your lifestyle today, but over a 10, 15, or 20-year horizon, persistent inflation reduces real purchasing power. With a 6% annual inflation rate, an expense that costs ₹25,000 in Year 1 will require:
+      </p>
+      <ul>
+        <li><strong>Year 1:</strong> ₹25,000 / month</li>
+        <li><strong>Year 2:</strong> ₹26,500 / month (+6%)</li>
+        <li><strong>Year 5:</strong> ₹31,562 / month (+26.2%)</li>
+        <li><strong>Year 10:</strong> ₹42,237 / month (+68.9%)</li>
+      </ul>
+      <p>
+        The <strong>SWP Calculator with Inflation</strong> mode allows retirees and financial planners to factor in this yearly step-up to verify whether the initial corpus can support escalating living expenses over the entire retirement horizon.
+      </p>
+
+      <h2>Fixed Withdrawal vs. Inflation-Adjusted Withdrawal</h2>
+      <div class="overflow-x-auto my-4">
+        <table class="w-full text-left text-xs sm:text-sm border-collapse border border-slate-200 dark:border-slate-800">
+          <thead class="bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold">
+            <tr>
+              <th class="p-3 border border-slate-200 dark:border-slate-800">Feature</th>
+              <th class="p-3 border border-slate-200 dark:border-slate-800">Simple SWP (Fixed)</th>
+              <th class="p-3 border border-slate-200 dark:border-slate-800">SWP with Inflation</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+            <tr>
+              <td class="p-3 font-semibold border border-slate-200 dark:border-slate-800">Monthly Payout</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Constant throughout the tenure</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Increases once every 12 months by inflation rate</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold border border-slate-200 dark:border-slate-800">Purchasing Power</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Gradually declines due to cost of living</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Preserved against general inflation</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold border border-slate-200 dark:border-slate-800">Corpus Longevity</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Lasts longer due to constant outflow</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Requires higher initial capital or return rate</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-semibold border border-slate-200 dark:border-slate-800">Ideal For</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Supplementary income &amp; loan repayments</td>
+              <td class="p-3 border border-slate-200 dark:border-slate-800">Full retirement living expense planning</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Beginning of Month vs. End of Month Withdrawal Timing</h2>
+      <p>
+        The timing of your monthly redemptions affects how long your capital stays invested and generates returns:
+      </p>
+      <ul>
+        <li>
+          <strong>Beginning of Month (Default):</strong> The scheduled withdrawal is deducted at the start of each month, and investment growth is calculated on the remaining balance. This accurately reflects scenarios where you need funds on the 1st of every month for living expenses, rent, or EMIs.
+        </li>
+        <li>
+          <strong>End of Month:</strong> The full balance earns investment growth across the month first, and the withdrawal is deducted at the end of the month. Because money remains invested for an additional month before deduction, the final corpus is slightly higher.
+        </li>
+      </ul>
+
+      <h2>Can this Calculator be used for SBI Mutual Fund SWP?</h2>
+      <p>
+        Yes. This calculator is a completely independent, general-purpose financial tool that can be used to simulate SWP scenarios for various mutual fund houses across India, including <strong>SBI Mutual Fund</strong> schemes (such as SBI Bluechip Fund, SBI Equity Hybrid Fund, SBI Balanced Advantage Fund, or debt funds), as well as schemes from HDFC, ICICI Prudential, Nippon India, and others.
+      </p>
+      <p>
+        Simply input your initial investment amount, desired monthly cash flow, and your expected conservative rate of return based on the asset allocation of your chosen mutual fund scheme.
+      </p>
+
+      <h2>Important Assumptions &amp; Limitations</h2>
+      <ul>
+        <li><strong>Constant Return Assumption:</strong> The calculator assumes a steady annualized rate of return compounded monthly. Actual mutual fund returns fluctuate daily depending on market conditions.</li>
+        <li><strong>Taxation:</strong> SWP redemptions are subject to Capital Gains Tax (LTCG / STCG based on holding period and equity vs debt classification). Net returns received in your bank account will reflect applicable tax deductions.</li>
+        <li><strong>Exit Loads:</strong> If redemptions occur within the scheme's exit load window (typically within 1 year for equity funds), an exit load of 1% may apply to redemptions exceeding the scheme's free limit.</li>
+      </ul>
+
+      <h2>Related Financial Calculators</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 my-4">
+        <a href="/finance/sip-calculator/" class="block p-3 rounded-xl border border-slate-200 bg-white hover:border-blue-500 dark:border-slate-800 dark:bg-slate-900 transition">
+          <div class="font-bold text-slate-900 dark:text-white">📈 SIP Calculator</div>
+          <div class="text-xs text-slate-500 mt-1">Calculate wealth accumulation via regular monthly mutual fund investments.</div>
+        </a>
+        <a href="/finance/compound-interest-calculator/" class="block p-3 rounded-xl border border-slate-200 bg-white hover:border-blue-500 dark:border-slate-800 dark:bg-slate-900 transition">
+          <div class="font-bold text-slate-900 dark:text-white">📊 Compound Interest</div>
+          <div class="text-xs text-slate-500 mt-1">Compute compounding returns across various deposit frequencies.</div>
+        </a>
+        <a href="/finance/retirement-calculator/" class="block p-3 rounded-xl border border-slate-200 bg-white hover:border-blue-500 dark:border-slate-800 dark:bg-slate-900 transition">
+          <div class="font-bold text-slate-900 dark:text-white">🏖️ Retirement Calculator</div>
+          <div class="text-xs text-slate-500 mt-1">Estimate the total retirement nest egg needed before starting your SWP.</div>
+        </a>
+      </div>
+
+      <h2>Frequently Asked Questions (FAQ)</h2>
+      <div class="space-y-4 my-6">
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">How is SWP calculated in mutual funds?</h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            SWP redemptions are processed by redeeming the exact number of mutual fund units corresponding to your requested monthly withdrawal at the prevailing Net Asset Value (NAV). The remaining units continue to generate market returns.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">What is an ideal withdrawal rate for an SWP?</h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            A conservative withdrawal rate of 6% to 8% per annum is widely recommended for hybrid/equity-oriented portfolios. When the withdrawal rate is kept below the expected portfolio return, your corpus can sustain you throughout retirement without premature depletion.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Can I use this calculator for SBI Mutual Fund SWP investments?</h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            Yes. This calculator is suitable for estimating systematic withdrawals from any mutual fund scheme, including SBI Mutual Fund, HDFC, or ICICI Prudential funds. It allows you to enter your customized initial corpus, expected returns, and inflation expectations.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">What happens if my corpus is depleted before the tenure ends?</h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            If your balance becomes insufficient, the calculator withdraws whatever remaining amount is left in that month, reduces the balance to ₹0, and highlights the exact month and year of depletion so you can adjust your withdrawal target accordingly.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">How does inflation impact an SWP?</h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            Inflation increases living costs every year. In the SWP with Inflation mode, your monthly payout increases annually by the chosen inflation rate, ensuring that your lifestyle is protected over decades of retirement.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">What is the difference between Beginning of Month and End of Month SWP?</h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            In Beginning of Month mode, the withdrawal is deducted at the start of each month, and growth is calculated on the remaining balance. In End of Month mode, growth is calculated on the opening balance first, and the withdrawal is deducted at month-end. End of Month produces a slightly higher ending corpus because funds stay invested longer.
+          </p>
+        </div>
+      </div>
+    </section>
+  </Fragment>
+</CalculatorLayout>
+
+<style>
+  .swp-content h2 {
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+
+  .swp-content h2:first-child {
+    margin-top: 0;
+  }
+
+  .swp-content h3 {
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .swp-content p {
+    margin: 0 0 1rem;
+    line-height: 1.75;
+    color: #475569;
+  }
+
+  .swp-content ul,
+  .swp-content ol {
+    margin: 0.75rem 0 1.5rem;
+    padding-left: 1.5rem;
+  }
+
+  .swp-content ul {
+    list-style: disc;
+  }
+
+  .swp-content ol {
+    list-style: decimal;
+  }
+
+  .swp-content li + li {
+    margin-top: 0.5rem;
+  }
+
+  :global(.dark) .swp-content h2,
+  :global(.dark) .swp-content h3 {
+    color: #f8fafc;
+  }
+
+  :global(.dark) .swp-content p {
+    color: #cbd5e1;
+  }
+</style>
+
+<!-- FAQ Schema JSON-LD -->
+<script type="application/ld+json" is:inline set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How is SWP calculated in mutual funds?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "SWP redemptions are processed by redeeming the exact number of mutual fund units corresponding to your requested monthly withdrawal at the prevailing Net Asset Value (NAV)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is an ideal withdrawal rate for an SWP?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A conservative withdrawal rate of 6% to 8% per annum is widely recommended for hybrid/equity-oriented portfolios."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I use this calculator for SBI Mutual Fund SWP investments?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. This calculator is suitable for estimating systematic withdrawals from any mutual fund scheme, including SBI Mutual Fund, HDFC, or ICICI Prudential funds."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What happens if my corpus is depleted before the tenure ends?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "If your balance becomes insufficient, the calculator withdraws whatever remaining amount is left in that month, reduces the balance to ₹0, and highlights the exact month and year of depletion."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does inflation impact an SWP?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Inflation increases living costs every year. In the SWP with Inflation mode, your monthly payout increases annually by the chosen inflation rate, ensuring that your lifestyle is protected over decades of retirement."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between Beginning of Month and End of Month SWP?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "In Beginning of Month mode, the withdrawal is deducted at the start of each month, and growth is calculated on the remaining balance. In End of Month mode, growth is calculated on the opening balance first, and the withdrawal is deducted at month-end. End of Month produces a slightly higher ending corpus because funds stay invested longer."
+      }
+    }
+  ]
+})}></script>
+
+<!-- SoftwareApplication Schema -->
+<script type="application/ld+json" is:inline set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "SWP Calculator",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "All",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "INR"
+  },
+  "description": "Calculate monthly withdrawals, total withdrawn amount, remaining corpus, and inflation-adjusted systematic withdrawal schedules for mutual funds."
+})} />
+
+<!-- CLIENT SIDE SCRIPT -->
+<script>
+  import { calculateSwp, type SwpResult } from '../../lib/calculators/swp';
+
+  function formatINR(val: number): string {
+    return '₹ ' + val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TAB SWITCHING
+  // ─────────────────────────────────────────────────────────────────────────
+  const tabBtnSimple = document.getElementById('tab-btn-simple-swp') as HTMLButtonElement;
+  const tabBtnInf = document.getElementById('tab-btn-inf-swp') as HTMLButtonElement;
+  const panelSimple = document.getElementById('panel-simple-swp') as HTMLDivElement;
+  const panelInf = document.getElementById('panel-inf-swp') as HTMLDivElement;
+  const modeDesc = document.getElementById('swp-mode-desc') as HTMLDivElement;
+
+  function switchTab(mode: 'simple' | 'inflation') {
+    if (mode === 'simple') {
+      tabBtnSimple.className = 'btn-swp-tab active shrink-0 rounded-xl bg-blue-600 px-4 py-2 font-bold text-white shadow-xs cursor-pointer transition flex items-center gap-1.5';
+      tabBtnInf.className = 'btn-swp-tab shrink-0 rounded-xl border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition flex items-center gap-1.5';
+      panelSimple.classList.remove('hidden');
+      panelInf.classList.add('hidden');
+      modeDesc.textContent = 'Estimate remaining corpus and total withdrawals with a fixed monthly payout.';
+    } else {
+      tabBtnInf.className = 'btn-swp-tab active shrink-0 rounded-xl bg-blue-600 px-4 py-2 font-bold text-white shadow-xs cursor-pointer transition flex items-center gap-1.5';
+      tabBtnSimple.className = 'btn-swp-tab shrink-0 rounded-xl border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition flex items-center gap-1.5';
+      panelInf.classList.remove('hidden');
+      panelSimple.classList.add('hidden');
+      modeDesc.textContent = 'Step up your monthly withdrawal once every 12 months to account for inflation.';
+    }
+  }
+
+  tabBtnSimple.addEventListener('click', () => switchTab('simple'));
+  tabBtnInf.addEventListener('click', () => switchTab('inflation'));
+
+  // Slider sync helper with modification callback
+  function setupSliderSync(input: HTMLInputElement, range: HTMLInputElement, onMod: () => void) {
+    range.addEventListener('input', () => {
+      input.value = range.value;
+      onMod();
+    });
+    input.addEventListener('input', () => {
+      range.value = input.value;
+      onMod();
+    });
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 1. SIMPLE SWP LOGIC
+  // ─────────────────────────────────────────────────────────────────────────
+  const formSimple = document.getElementById('form-simple-swp') as HTMLFormElement;
+  const inpSimInv = document.getElementById('inp-sim-inv') as HTMLInputElement;
+  const rangeSimInv = document.getElementById('range-sim-inv') as HTMLInputElement;
+
+  const inpSimWd = document.getElementById('inp-sim-wd') as HTMLInputElement;
+  const rangeSimWd = document.getElementById('range-sim-wd') as HTMLInputElement;
+
+  const inpSimRet = document.getElementById('inp-sim-ret') as HTMLInputElement;
+  const rangeSimRet = document.getElementById('range-sim-ret') as HTMLInputElement;
+
+  const inpSimYrs = document.getElementById('inp-sim-yrs') as HTMLInputElement;
+  const rangeSimYrs = document.getElementById('range-sim-yrs') as HTMLInputElement;
+
+  const btnCalcSimple = document.getElementById('btn-calc-simple-swp') as HTMLButtonElement;
+  const btnClearSimple = document.getElementById('btn-clear-simple-swp') as HTMLButtonElement;
+  const errSim = document.getElementById('err-sim-swp') as HTMLParagraphElement;
+
+  const simResultsSection = document.getElementById('sim-results-section') as HTMLDivElement;
+  const resSimTotalWd = document.getElementById('res-sim-total-wd') as HTMLDivElement;
+  const resSimFinalBal = document.getElementById('res-sim-final-bal') as HTMLDivElement;
+  const bannerSimDepleted = document.getElementById('banner-sim-depleted') as HTMLDivElement;
+  const resSimInitInv = document.getElementById('res-sim-init-inv') as HTMLDivElement;
+  const resSimReturns = document.getElementById('res-sim-returns') as HTMLDivElement;
+  const resSimPayout = document.getElementById('res-sim-payout') as HTMLDivElement;
+  const resSimDuration = document.getElementById('res-sim-duration') as HTMLDivElement;
+  const resSimTiming = document.getElementById('res-sim-timing') as HTMLDivElement;
+  const resSimStatus = document.getElementById('res-sim-status') as HTMLDivElement;
+
+  const btnSimTimingBeg = document.getElementById('btn-sim-timing-beg') as HTMLButtonElement;
+  const btnSimTimingEnd = document.getElementById('btn-sim-timing-end') as HTMLButtonElement;
+  const hintSimTiming = document.getElementById('hint-sim-timing') as HTMLParagraphElement;
+
+  let selectedSimTiming: 'beginning' | 'end' = 'beginning';
+
+  const svgDonutSimCorpus = document.getElementById('svg-donut-sim-corpus') as unknown as SVGCircleElement;
+  const txtDonutSimCenter = document.getElementById('txt-donut-sim-center') as HTMLSpanElement;
+  const txtLegendSimWd = document.getElementById('txt-legend-sim-withdrawn') as HTMLSpanElement;
+  const txtLegendSimBal = document.getElementById('txt-legend-sim-balance') as HTMLSpanElement;
+
+  const tbodySimSchedule = document.getElementById('tbody-sim-schedule') as HTMLTableSectionElement;
+  const btnSimViewYearly = document.getElementById('btn-sim-view-yearly') as HTMLButtonElement;
+  const btnSimViewMonthly = document.getElementById('btn-sim-view-monthly') as HTMLButtonElement;
+  const thSimPeriod = document.getElementById('th-sim-period') as HTMLTableCellElement;
+
+  let currentSimResult: SwpResult | null = null;
+  let currentSimViewMode: 'yearly' | 'monthly' = 'yearly';
+
+  // IMPORTANT: Hide results when inputs/sliders/timing change
+  function handleSimInputModification() {
+    simResultsSection.classList.add('hidden');
+    errSim.classList.add('hidden');
+    currentSimResult = null;
+  }
+
+  function setSimTiming(timing: 'beginning' | 'end') {
+    if (selectedSimTiming === timing) return;
+    selectedSimTiming = timing;
+    if (timing === 'beginning') {
+      btnSimTimingBeg.className = 'timing-btn-sim rounded-lg py-2 text-xs font-bold transition-all bg-white text-blue-600 shadow-2xs dark:bg-slate-700 dark:text-blue-400 cursor-pointer';
+      btnSimTimingEnd.className = 'timing-btn-sim rounded-lg py-2 text-xs font-semibold transition-all text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer';
+      hintSimTiming.textContent = 'The withdrawal is deducted at the start of each month, and investment growth is calculated on the remaining balance.';
+    } else {
+      btnSimTimingEnd.className = 'timing-btn-sim rounded-lg py-2 text-xs font-bold transition-all bg-white text-blue-600 shadow-2xs dark:bg-slate-700 dark:text-blue-400 cursor-pointer';
+      btnSimTimingBeg.className = 'timing-btn-sim rounded-lg py-2 text-xs font-semibold transition-all text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer';
+      hintSimTiming.textContent = 'Investment growth is calculated first, and the withdrawal is deducted at the end of each month.';
+    }
+    // Changing timing must NOT automatically update the result
+    handleSimInputModification();
+  }
+
+  btnSimTimingBeg.addEventListener('click', () => setSimTiming('beginning'));
+  btnSimTimingEnd.addEventListener('click', () => setSimTiming('end'));
+
+  setupSliderSync(inpSimInv, rangeSimInv, handleSimInputModification);
+  setupSliderSync(inpSimWd, rangeSimWd, handleSimInputModification);
+  setupSliderSync(inpSimRet, rangeSimRet, handleSimInputModification);
+  setupSliderSync(inpSimYrs, rangeSimYrs, handleSimInputModification);
+
+  function renderSimScheduleTable() {
+    if (!currentSimResult) return;
+    if (currentSimViewMode === 'yearly') {
+      thSimPeriod.textContent = 'Year';
+      tbodySimSchedule.innerHTML = currentSimResult.yearlySchedule.map((row) => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+          <td class="p-2.5 font-bold text-slate-800 dark:text-slate-200">Year ${row.year}</td>
+          <td class="p-2.5 text-right font-medium text-slate-700 dark:text-slate-300">${formatINR(row.openingBalance)}</td>
+          <td class="p-2.5 text-right font-bold text-emerald-600 dark:text-emerald-400">${formatINR(row.annualWithdrawal)}</td>
+          <td class="p-2.5 text-right font-medium text-blue-600 dark:text-blue-400">${formatINR(row.investmentGrowth)}</td>
+          <td class="p-2.5 text-right font-bold text-slate-900 dark:text-white">${formatINR(row.closingBalance)}</td>
+        </tr>
+      `).join('');
+    } else {
+      thSimPeriod.textContent = 'Month';
+      tbodySimSchedule.innerHTML = currentSimResult.monthlySchedule.map((row) => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+          <td class="p-2.5 font-bold text-slate-800 dark:text-slate-200">Mo ${row.month} (Yr ${row.year})</td>
+          <td class="p-2.5 text-right font-medium text-slate-700 dark:text-slate-300">${formatINR(row.openingBalance)}</td>
+          <td class="p-2.5 text-right font-bold text-emerald-600 dark:text-emerald-400">${formatINR(row.actualWithdrawal)}</td>
+          <td class="p-2.5 text-right font-medium text-blue-600 dark:text-blue-400">${formatINR(row.growthEarned)}</td>
+          <td class="p-2.5 text-right font-bold text-slate-900 dark:text-white">${formatINR(row.closingBalance)}</td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  btnSimViewYearly.addEventListener('click', () => {
+    currentSimViewMode = 'yearly';
+    btnSimViewYearly.className = 'rounded-lg bg-blue-600 px-3 py-1 text-white shadow-2xs cursor-pointer';
+    btnSimViewMonthly.className = 'rounded-lg border border-slate-300 px-3 py-1 text-slate-700 dark:border-slate-700 dark:text-slate-300 cursor-pointer';
+    renderSimScheduleTable();
+  });
+
+  btnSimViewMonthly.addEventListener('click', () => {
+    currentSimViewMode = 'monthly';
+    btnSimViewMonthly.className = 'rounded-lg bg-blue-600 px-3 py-1 text-white shadow-2xs cursor-pointer';
+    btnSimViewYearly.className = 'rounded-lg border border-slate-300 px-3 py-1 text-slate-700 dark:border-slate-700 dark:text-slate-300 cursor-pointer';
+    renderSimScheduleTable();
+  });
+
+  function executeSimpleSwpCalculation() {
+    errSim.classList.add('hidden');
+
+    const inv = parseFloat(inpSimInv.value);
+    const wd = parseFloat(inpSimWd.value);
+    const ret = parseFloat(inpSimRet.value);
+    const yrs = parseInt(inpSimYrs.value, 10);
+
+    if (isNaN(inv) || inv <= 0) {
+      errSim.textContent = 'Please enter a valid Initial Investment amount.';
+      errSim.classList.remove('hidden');
+      return;
+    }
+    if (isNaN(wd) || wd <= 0) {
+      errSim.textContent = 'Please enter a valid Monthly Withdrawal amount.';
+      errSim.classList.remove('hidden');
+      return;
+    }
+    if (isNaN(ret) || ret < 0) {
+      errSim.textContent = 'Please enter a valid Expected Annual Return rate.';
+      errSim.classList.remove('hidden');
+      return;
+    }
+    if (isNaN(yrs) || yrs <= 0) {
+      errSim.textContent = 'Please enter a valid Time Period in years.';
+      errSim.classList.remove('hidden');
+      return;
+    }
+
+    const res = calculateSwp({
+      initialInvestment: inv,
+      monthlyWithdrawal: wd,
+      annualReturnRate: ret,
+      timePeriodYears: yrs,
+      annualInflationRate: 0,
+      withdrawalTiming: selectedSimTiming,
+    });
+    currentSimResult = res;
+
+    // Highlight metrics
+    resSimTotalWd.textContent = formatINR(res.totalWithdrawn);
+    resSimFinalBal.textContent = formatINR(res.finalBalance);
+    resSimInitInv.textContent = formatINR(res.initialInvestment);
+    resSimReturns.textContent = formatINR(res.totalReturns);
+    resSimPayout.textContent = `${formatINR(res.initialMonthlyWithdrawal)} / mo`;
+    resSimDuration.textContent = `${res.timePeriodYears} Years (${res.totalMonths} Mo)`;
+    resSimTiming.textContent = res.withdrawalTimingLabel;
+    resSimStatus.textContent = res.isDepleted ? (res.depletedText ? 'Corpus Depleted' : 'Depleted') : 'Corpus Sustained';
+    resSimStatus.className = `mt-1 text-sm sm:text-base font-bold ${res.isDepleted ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`;
+
+    // Depletion banner
+    if (res.isDepleted && res.depletedText) {
+      bannerSimDepleted.innerHTML = `<strong>⚠️ Corpus Depletion Notice:</strong> ${res.depletedText} All available funds were paid out. Subsequent monthly withdrawals will be ₹0.`;
+      bannerSimDepleted.classList.remove('hidden');
+    } else {
+      bannerSimDepleted.innerHTML = `<strong>✅ Corpus Sustained:</strong> Your remaining investment balance after ${res.timePeriodYears} years is <strong>${formatINR(res.finalBalance)}</strong>.`;
+      bannerSimDepleted.className = 'mt-4 rounded-xl p-3.5 text-xs font-semibold bg-emerald-50 border border-emerald-300 dark:bg-emerald-950/40 dark:border-emerald-900/60 text-emerald-900 dark:text-emerald-200';
+      bannerSimDepleted.classList.remove('hidden');
+    }
+
+    // Donut chart logic
+    const totalPie = res.totalWithdrawn + res.finalBalance;
+    const wdPct = totalPie > 0 ? (res.totalWithdrawn / totalPie) * 100 : 100;
+    const balPct = totalPie > 0 ? (res.finalBalance / totalPie) * 100 : 0;
+
+    svgDonutSimCorpus.setAttribute('stroke-dasharray', `${balPct.toFixed(1)} ${(100 - balPct).toFixed(1)}`);
+    txtDonutSimCenter.textContent = '100%';
+    txtLegendSimWd.textContent = `${formatINR(res.totalWithdrawn)} (${wdPct.toFixed(1)}%)`;
+    txtLegendSimBal.textContent = `${formatINR(res.finalBalance)} (${balPct.toFixed(1)}%)`;
+
+    renderSimScheduleTable();
+
+    simResultsSection.classList.remove('hidden');
+    simResultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  btnCalcSimple.addEventListener('click', executeSimpleSwpCalculation);
+
+  btnClearSimple.addEventListener('click', () => {
+    inpSimInv.value = '500000';
+    rangeSimInv.value = '500000';
+    inpSimWd.value = '10000';
+    rangeSimWd.value = '10000';
+    inpSimRet.value = '8';
+    rangeSimRet.value = '8';
+    inpSimYrs.value = '5';
+    rangeSimYrs.value = '5';
+    setSimTiming('beginning');
+    handleSimInputModification();
+  });
+
+  document.querySelectorAll('.btn-preset-simple-swp').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      inpSimInv.value = btn.getAttribute('data-inv') || '500000';
+      rangeSimInv.value = inpSimInv.value;
+      inpSimWd.value = btn.getAttribute('data-wd') || '10000';
+      rangeSimWd.value = inpSimWd.value;
+      inpSimRet.value = btn.getAttribute('data-ret') || '8';
+      rangeSimRet.value = inpSimRet.value;
+      inpSimYrs.value = btn.getAttribute('data-yrs') || '5';
+      rangeSimYrs.value = inpSimYrs.value;
+
+      handleSimInputModification();
+      executeSimpleSwpCalculation();
+    });
+  });
+
+  formSimple.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      executeSimpleSwpCalculation();
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 2. ADVANCED SWP WITH INFLATION LOGIC
+  // ─────────────────────────────────────────────────────────────────────────
+  const formInf = document.getElementById('form-inf-swp') as HTMLFormElement;
+  const inpInfInv = document.getElementById('inp-inf-inv') as HTMLInputElement;
+  const rangeInfInv = document.getElementById('range-inf-inv') as HTMLInputElement;
+
+  const inpInfWd = document.getElementById('inp-inf-wd') as HTMLInputElement;
+  const rangeInfWd = document.getElementById('range-inf-wd') as HTMLInputElement;
+
+  const inpInfRet = document.getElementById('inp-inf-ret') as HTMLInputElement;
+  const rangeInfRet = document.getElementById('range-inf-ret') as HTMLInputElement;
+
+  const inpInfRate = document.getElementById('inp-inf-rate') as HTMLInputElement;
+  const rangeInfRate = document.getElementById('range-inf-rate') as HTMLInputElement;
+
+  const inpInfYrs = document.getElementById('inp-inf-yrs') as HTMLInputElement;
+  const rangeInfYrs = document.getElementById('range-inf-yrs') as HTMLInputElement;
+
+  const btnCalcInf = document.getElementById('btn-calc-inf-swp') as HTMLButtonElement;
+  const btnClearInf = document.getElementById('btn-clear-inf-swp') as HTMLButtonElement;
+  const errInf = document.getElementById('err-inf-swp') as HTMLParagraphElement;
+
+  const infResultsSection = document.getElementById('inf-results-section') as HTMLDivElement;
+  const resInfTotalWd = document.getElementById('res-inf-total-wd') as HTMLDivElement;
+  const resInfFinalBal = document.getElementById('res-inf-final-bal') as HTMLDivElement;
+  const bannerInfDepleted = document.getElementById('banner-inf-depleted') as HTMLDivElement;
+  const resInfInitInv = document.getElementById('res-inf-init-inv') as HTMLDivElement;
+  const resInfReturns = document.getElementById('res-inf-returns') as HTMLDivElement;
+  const resInfInitPayout = document.getElementById('res-inf-init-payout') as HTMLDivElement;
+  const resInfFinalPayout = document.getElementById('res-inf-final-payout') as HTMLDivElement;
+  const resInfTiming = document.getElementById('res-inf-timing') as HTMLDivElement;
+  const resInfInflationRate = document.getElementById('res-inf-inflation-rate') as HTMLDivElement;
+  const resInfDuration = document.getElementById('res-inf-duration') as HTMLDivElement;
+  const resInfStatus = document.getElementById('res-inf-status') as HTMLDivElement;
+
+  const btnInfTimingBeg = document.getElementById('btn-inf-timing-beg') as HTMLButtonElement;
+  const btnInfTimingEnd = document.getElementById('btn-inf-timing-end') as HTMLButtonElement;
+  const hintInfTiming = document.getElementById('hint-inf-timing') as HTMLParagraphElement;
+
+  let selectedInfTiming: 'beginning' | 'end' = 'beginning';
+
+  const tbodyInfSchedule = document.getElementById('tbody-inf-schedule') as HTMLTableSectionElement;
+  const btnInfViewYearly = document.getElementById('btn-inf-view-yearly') as HTMLButtonElement;
+  const btnInfViewMonthly = document.getElementById('btn-inf-view-monthly') as HTMLButtonElement;
+  const thInfPeriod = document.getElementById('th-inf-period') as HTMLTableCellElement;
+
+  let currentInfResult: SwpResult | null = null;
+  let currentInfViewMode: 'yearly' | 'monthly' = 'yearly';
+
+  function handleInfInputModification() {
+    infResultsSection.classList.add('hidden');
+    errInf.classList.add('hidden');
+    currentInfResult = null;
+  }
+
+  function setInfTiming(timing: 'beginning' | 'end') {
+    if (selectedInfTiming === timing) return;
+    selectedInfTiming = timing;
+    if (timing === 'beginning') {
+      btnInfTimingBeg.className = 'timing-btn-inf rounded-lg py-2 text-xs font-bold transition-all bg-white text-blue-600 shadow-2xs dark:bg-slate-700 dark:text-blue-400 cursor-pointer';
+      btnInfTimingEnd.className = 'timing-btn-inf rounded-lg py-2 text-xs font-semibold transition-all text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer';
+      hintInfTiming.textContent = 'The withdrawal is deducted at the start of each month, and investment growth is calculated on the remaining balance.';
+    } else {
+      btnInfTimingEnd.className = 'timing-btn-inf rounded-lg py-2 text-xs font-bold transition-all bg-white text-blue-600 shadow-2xs dark:bg-slate-700 dark:text-blue-400 cursor-pointer';
+      btnInfTimingBeg.className = 'timing-btn-inf rounded-lg py-2 text-xs font-semibold transition-all text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer';
+      hintInfTiming.textContent = 'Investment growth is calculated first, and the withdrawal is deducted at the end of each month.';
+    }
+    // Changing timing must NOT automatically update the result
+    handleInfInputModification();
+  }
+
+  btnInfTimingBeg.addEventListener('click', () => setInfTiming('beginning'));
+  btnInfTimingEnd.addEventListener('click', () => setInfTiming('end'));
+
+  setupSliderSync(inpInfInv, rangeInfInv, handleInfInputModification);
+  setupSliderSync(inpInfWd, rangeInfWd, handleInfInputModification);
+  setupSliderSync(inpInfRet, rangeInfRet, handleInfInputModification);
+  setupSliderSync(inpInfRate, rangeInfRate, handleInfInputModification);
+  setupSliderSync(inpInfYrs, rangeInfYrs, handleInfInputModification);
+
+  function renderInfScheduleTable() {
+    if (!currentInfResult) return;
+    if (currentInfViewMode === 'yearly') {
+      thInfPeriod.textContent = 'Year';
+      tbodyInfSchedule.innerHTML = currentInfResult.yearlySchedule.map((row) => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+          <td class="p-2.5 font-bold text-slate-800 dark:text-slate-200">Year ${row.year}</td>
+          <td class="p-2.5 text-right font-medium text-slate-700 dark:text-slate-300">${formatINR(row.openingBalance)}</td>
+          <td class="p-2.5 text-right font-medium text-slate-900 dark:text-white">${formatINR(row.monthlyWithdrawal)}/mo</td>
+          <td class="p-2.5 text-right font-bold text-emerald-600 dark:text-emerald-400">${formatINR(row.annualWithdrawal)}</td>
+          <td class="p-2.5 text-right font-medium text-blue-600 dark:text-blue-400">${formatINR(row.investmentGrowth)}</td>
+          <td class="p-2.5 text-right font-bold text-slate-900 dark:text-white">${formatINR(row.closingBalance)}</td>
+        </tr>
+      `).join('');
+    } else {
+      thInfPeriod.textContent = 'Month';
+      tbodyInfSchedule.innerHTML = currentInfResult.monthlySchedule.map((row) => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+          <td class="p-2.5 font-bold text-slate-800 dark:text-slate-200">Mo ${row.month} (Yr ${row.year})</td>
+          <td class="p-2.5 text-right font-medium text-slate-700 dark:text-slate-300">${formatINR(row.openingBalance)}</td>
+          <td class="p-2.5 text-right font-medium text-slate-900 dark:text-white">${formatINR(row.requestedWithdrawal)}</td>
+          <td class="p-2.5 text-right font-bold text-emerald-600 dark:text-emerald-400">${formatINR(row.actualWithdrawal)}</td>
+          <td class="p-2.5 text-right font-medium text-blue-600 dark:text-blue-400">${formatINR(row.growthEarned)}</td>
+          <td class="p-2.5 text-right font-bold text-slate-900 dark:text-white">${formatINR(row.closingBalance)}</td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  btnInfViewYearly.addEventListener('click', () => {
+    currentInfViewMode = 'yearly';
+    btnInfViewYearly.className = 'rounded-lg bg-blue-600 px-3 py-1 text-white shadow-2xs cursor-pointer';
+    btnInfViewMonthly.className = 'rounded-lg border border-slate-300 px-3 py-1 text-slate-700 dark:border-slate-700 dark:text-slate-300 cursor-pointer';
+    renderInfScheduleTable();
+  });
+
+  btnInfViewMonthly.addEventListener('click', () => {
+    currentInfViewMode = 'monthly';
+    btnInfViewMonthly.className = 'rounded-lg bg-blue-600 px-3 py-1 text-white shadow-2xs cursor-pointer';
+    btnInfViewYearly.className = 'rounded-lg border border-slate-300 px-3 py-1 text-slate-700 dark:border-slate-700 dark:text-slate-300 cursor-pointer';
+    renderInfScheduleTable();
+  });
+
+  function executeInflationSwpCalculation() {
+    errInf.classList.add('hidden');
+
+    const inv = parseFloat(inpInfInv.value);
+    const wd = parseFloat(inpInfWd.value);
+    const ret = parseFloat(inpInfRet.value);
+    const inf = parseFloat(inpInfRate.value) || 0;
+    const yrs = parseInt(inpInfYrs.value, 10);
+
+    if (isNaN(inv) || inv <= 0) {
+      errInf.textContent = 'Please enter a valid Initial Investment amount.';
+      errInf.classList.remove('hidden');
+      return;
+    }
+    if (isNaN(wd) || wd <= 0) {
+      errInf.textContent = 'Please enter a valid Initial Monthly Withdrawal amount.';
+      errInf.classList.remove('hidden');
+      return;
+    }
+    if (isNaN(ret) || ret < 0) {
+      errInf.textContent = 'Please enter a valid Expected Annual Return rate.';
+      errInf.classList.remove('hidden');
+      return;
+    }
+    if (isNaN(inf) || inf < 0) {
+      errInf.textContent = 'Inflation rate cannot be negative.';
+      errInf.classList.remove('hidden');
+      return;
+    }
+    if (isNaN(yrs) || yrs <= 0) {
+      errInf.textContent = 'Please enter a valid Time Period in years.';
+      errInf.classList.remove('hidden');
+      return;
+    }
+
+    const res = calculateSwp({
+      initialInvestment: inv,
+      monthlyWithdrawal: wd,
+      annualReturnRate: ret,
+      timePeriodYears: yrs,
+      annualInflationRate: inf,
+      withdrawalTiming: selectedInfTiming,
+    });
+    currentInfResult = res;
+
+    // Highlight metrics
+    resInfTotalWd.textContent = formatINR(res.totalWithdrawn);
+    resInfFinalBal.textContent = formatINR(res.finalBalance);
+    resInfInitInv.textContent = formatINR(res.initialInvestment);
+    resInfReturns.textContent = formatINR(res.totalReturns);
+    resInfInitPayout.textContent = `${formatINR(res.initialMonthlyWithdrawal)} / mo`;
+    resInfFinalPayout.textContent = `${formatINR(res.finalMonthlyWithdrawal)} / mo`;
+    resInfTiming.textContent = res.withdrawalTimingLabel;
+    resInfInflationRate.textContent = `${res.annualInflationRate}% p.a.`;
+    resInfDuration.textContent = `${res.timePeriodYears} Years (${res.totalMonths} Mo)`;
+    resInfStatus.textContent = res.isDepleted ? (res.depletedAtMonth ? `Depleted (Mo ${res.depletedAtMonth})` : 'Depleted') : 'Corpus Sustained';
+    resInfStatus.className = `mt-1 text-sm sm:text-base font-bold ${res.isDepleted ? 'text-amber-600 dark:text-amber-400' : 'text-emerald-600 dark:text-emerald-400'}`;
+
+    // Depletion banner
+    if (res.isDepleted && res.depletedText) {
+      bannerInfDepleted.innerHTML = `<strong>⚠️ Corpus Depletion Notice:</strong> ${res.depletedText} All available funds were paid out. Subsequent inflation-adjusted withdrawals will be ₹0.`;
+      bannerInfDepleted.className = 'mt-4 rounded-xl p-3.5 text-xs font-semibold bg-amber-50 border border-amber-300 dark:bg-amber-950/40 dark:border-amber-900/60 text-amber-900 dark:text-amber-200';
+      bannerInfDepleted.classList.remove('hidden');
+    } else {
+      bannerInfDepleted.innerHTML = `<strong>✅ Corpus Sustained:</strong> Your remaining investment balance after ${res.timePeriodYears} years is <strong>${formatINR(res.finalBalance)}</strong> even after increasing withdrawals by ${res.annualInflationRate}% each year.`;
+      bannerInfDepleted.className = 'mt-4 rounded-xl p-3.5 text-xs font-semibold bg-emerald-50 border border-emerald-300 dark:bg-emerald-950/40 dark:border-emerald-900/60 text-emerald-900 dark:text-emerald-200';
+      bannerInfDepleted.classList.remove('hidden');
+    }
+
+    renderInfScheduleTable();
+
+    infResultsSection.classList.remove('hidden');
+    infResultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  btnCalcInf.addEventListener('click', executeInflationSwpCalculation);
+
+  btnClearInf.addEventListener('click', () => {
+    inpInfInv.value = '500000';
+    rangeInfInv.value = '500000';
+    inpInfWd.value = '10000';
+    rangeInfWd.value = '10000';
+    inpInfRet.value = '8';
+    rangeInfRet.value = '8';
+    inpInfRate.value = '6';
+    rangeInfRate.value = '6';
+    inpInfYrs.value = '5';
+    rangeInfYrs.value = '5';
+    setInfTiming('beginning');
+    handleInfInputModification();
+  });
+
+  document.querySelectorAll('.btn-preset-inf-swp').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      inpInfInv.value = btn.getAttribute('data-inv') || '500000';
+      rangeInfInv.value = inpInfInv.value;
+      inpInfWd.value = btn.getAttribute('data-wd') || '10000';
+      rangeInfWd.value = inpInfWd.value;
+      inpInfRet.value = btn.getAttribute('data-ret') || '8';
+      rangeInfRet.value = inpInfRet.value;
+      inpInfRate.value = btn.getAttribute('data-inf') || '6';
+      rangeInfRate.value = inpInfRate.value;
+      inpInfYrs.value = btn.getAttribute('data-yrs') || '5';
+      rangeInfYrs.value = inpInfYrs.value;
+
+      handleInfInputModification();
+      executeInflationSwpCalculation();
+    });
+  });
+
+  formInf.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      executeInflationSwpCalculation();
+    }
+  });
+</script>

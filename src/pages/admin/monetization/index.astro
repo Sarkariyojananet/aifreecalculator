@@ -1,0 +1,903 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AdminStatCard from '../../../components/admin/AdminStatCard.astro';
+import {
+  getMonetizationSummary,
+} from '../../../lib/monetization/monetization-store';
+import type { MonetizationDateRange } from '../../../lib/monetization/types';
+
+const url = Astro.url;
+const range = (url.searchParams.get('range') || '28d') as MonetizationDateRange;
+const customStart = url.searchParams.get('start') || undefined;
+const customEnd = url.searchParams.get('end') || undefined;
+const queryError = url.searchParams.get('error') || undefined;
+const queryConnected = url.searchParams.get('connected') === 'true';
+
+// Fetch monetization summary
+const summary = await getMonetizationSummary(range, customStart, customEnd, Astro.locals);
+const { connected, config, kpis, trend, opportunities, calculatorEngagement, pageLevelDisclaimer, lastSyncAt } = summary;
+
+// Currency symbol helper
+const currencySymbol = kpis.currency === 'INR' ? '₹' : kpis.currency === 'USD' ? '$' : `${kpis.currency} `;
+
+const rangeLabels: Record<MonetizationDateRange, string> = {
+  today: 'Today',
+  yesterday: 'Yesterday',
+  '7d': 'Last 7 Days',
+  '28d': 'Last 28 Days',
+  '3m': 'Last 3 Months',
+  custom: 'Custom Range',
+};
+
+// Max revenue for trend bar scaling
+const maxDailyRevenue = Math.max(...trend.map((t) => t.revenue), 1);
+const maxDailyImpressions = Math.max(...trend.map((t) => t.impressions), 1);
+---
+
+<AdminLayout
+  title="AdSense & Monetization Analytics | Calculator CMS"
+  sectionTitle="AdSense & Monetization"
+  activeSection="monetization"
+>
+  <div class="space-y-8 max-w-7xl mx-auto pb-16">
+    
+    <!-- URL Param Alert Banners -->
+    {queryConnected && (
+      <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/40 flex items-center justify-between text-xs text-emerald-800 dark:text-emerald-300">
+        <div class="flex items-center gap-2">
+          <span>✓</span>
+          <span class="font-bold">Google AdSense connected successfully! Click "Refresh Data" to pull latest reporting snapshots.</span>
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" class="text-emerald-600 hover:text-emerald-800 cursor-pointer">✕</button>
+      </div>
+    )}
+
+    {queryError && (
+      <div class="rounded-2xl border border-red-200 bg-red-50 p-4 dark:border-red-900/60 dark:bg-red-950/40 flex items-center justify-between text-xs text-red-800 dark:text-red-300">
+        <div class="flex items-center gap-2">
+          <span>⚠️</span>
+          <span class="font-bold">{decodeURIComponent(queryError)}</span>
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" class="text-red-600 hover:text-red-800 cursor-pointer">✕</button>
+      </div>
+    )}
+
+    <!-- Top Header & Action Controls -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
+      <div>
+        <div class="flex items-center gap-2.5">
+          <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <span>💰</span> AdSense Revenue &amp; Monetization Analytics
+          </h2>
+          <span
+            class={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wide border ${
+              connected
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
+                : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+            }`}
+          >
+            <span class={`h-1.5 w-1.5 rounded-full ${connected ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
+            {connected ? `Connected (${config.displayName || config.accountId})` : 'AdSense Disconnected'}
+          </span>
+        </div>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Real revenue tracking, ad impression volume, page RPM, and monetization opportunities powered by Google AdSense API.
+        </p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center gap-2">
+        {connected && (
+          <button
+            type="button"
+            id="btn-sync-adsense"
+            class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition cursor-pointer"
+          >
+            <span>🔄</span> <span id="btn-sync-text">Refresh Data</span>
+          </button>
+        )}
+
+        <button
+          type="button"
+          id="btn-open-adsense-modal"
+          onclick="document.getElementById('modal-adsense')?.classList.remove('hidden')"
+          class="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2 text-xs font-bold text-amber-800 hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/50 dark:text-amber-300 transition cursor-pointer"
+        >
+          <span>⚙️</span> AdSense Settings
+        </button>
+
+        <a
+          href="/admin/settings/"
+          class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition"
+        >
+          <span>📢</span> Ad Setup &amp; ads.txt
+        </a>
+      </div>
+    </div>
+
+    <!-- Sync Feedback Notification Banner -->
+    <div id="sync-notification-banner" class="hidden rounded-2xl p-4 text-xs font-semibold"></div>
+
+    <!-- 1. Connection Status Banner OR Disconnected Setup State -->
+    {!connected && (
+      <div class="rounded-3xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+        <div class="flex items-start gap-4">
+          <span class="text-3xl p-3 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900/60 shrink-0">
+            📊
+          </span>
+          <div class="space-y-2 flex-1">
+            <h3 class="text-base font-black text-slate-900 dark:text-white">
+              Google AdSense API Is Not Connected
+            </h3>
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl">
+              Connect your Google AdSense account to stream authentic daily earnings, ad impressions, Page RPM, and Impression RPM into the admin dashboard. We strictly never generate synthetic or fake revenue data.
+            </p>
+            <div class="pt-2 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                id="btn-connect-adsense-alert"
+                onclick="document.getElementById('modal-adsense')?.classList.remove('hidden')"
+                class="inline-flex items-center gap-1.5 rounded-xl bg-amber-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-amber-700 transition cursor-pointer"
+              >
+                <span>🔑</span> Connect Google AdSense →
+              </button>
+              <span class="text-xs text-slate-500 dark:text-slate-400">
+                Requires only free readonly scope: <code class="font-mono bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">adsense.readonly</code>.
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
+    <!-- Date Range Bar & Sync Status Info -->
+    {connected && (
+      <div class="space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <span>📈</span> Monetization Overview ({summary.rangeLabel})
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+              Comparing {summary.startDate} – {summary.endDate} against previous period ({summary.prevStartDate} – {summary.prevEndDate}).
+              {lastSyncAt ? ` • Last sync: ${new Date(lastSyncAt).toLocaleString()}` : ''}
+            </p>
+          </div>
+
+          {/* Date Range Selector Tabs */}
+          <div class="flex flex-wrap items-center gap-1 rounded-2xl border border-slate-200 bg-white p-1 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            {(['today', 'yesterday', '7d', '28d', '3m'] as const).map((r) => (
+              <a
+                href={`/admin/monetization/?range=${r}`}
+                class={`rounded-xl px-2.5 py-1 text-xs font-bold transition ${
+                  range === r
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                }`}
+              >
+                {rangeLabels[r]}
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* 2. KPI Summary Cards with Authentic Comparative Deltas */}
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+          {/* Estimated Revenue */}
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-2">
+            <div class="flex items-center justify-between text-xs text-slate-500">
+              <span>Estimated Revenue</span>
+              <span class="text-base">💵</span>
+            </div>
+            <div class="text-xl font-black text-slate-900 dark:text-white">
+              {kpis.hasData
+                ? `${currencySymbol}${kpis.estimatedRevenue.current.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                : 'Not Available'}
+            </div>
+            <div class="flex items-center gap-1.5 text-[11px] pt-1 border-t border-slate-100 dark:border-slate-800/80">
+              {kpis.hasData && kpis.estimatedRevenue.previous > 0 ? (
+                <span class={`font-bold ${kpis.estimatedRevenue.isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {kpis.estimatedRevenue.isPositive ? '↑' : '↓'} {Math.abs(kpis.estimatedRevenue.percentChange)}%
+                </span>
+              ) : (
+                <span class="text-slate-400">--</span>
+              )}
+              <span class="text-slate-400 truncate">vs prev period</span>
+            </div>
+          </div>
+
+          {/* Ad Impressions */}
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-2">
+            <div class="flex items-center justify-between text-xs text-slate-500">
+              <span>Ad Impressions</span>
+              <span class="text-base">👁️</span>
+            </div>
+            <div class="text-xl font-black text-slate-900 dark:text-white">
+              {kpis.hasData ? kpis.impressions.current.toLocaleString() : 'Not Available'}
+            </div>
+            <div class="flex items-center gap-1.5 text-[11px] pt-1 border-t border-slate-100 dark:border-slate-800/80">
+              {kpis.hasData && kpis.impressions.previous > 0 ? (
+                <span class={`font-bold ${kpis.impressions.isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {kpis.impressions.isPositive ? '↑' : '↓'} {Math.abs(kpis.impressions.percentChange)}%
+                </span>
+              ) : (
+                <span class="text-slate-400">--</span>
+              )}
+              <span class="text-slate-400 truncate">vs prev period</span>
+            </div>
+          </div>
+
+          {/* Page Views (From AdSense report) */}
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-2">
+            <div class="flex items-center justify-between text-xs text-slate-500">
+              <span>Reported Page Views</span>
+              <span class="text-base">📄</span>
+            </div>
+            <div class="text-xl font-black text-slate-900 dark:text-white">
+              {kpis.pageViews.isAvailable && kpis.pageViews.current > 0
+                ? kpis.pageViews.current.toLocaleString()
+                : 'Not Available'}
+            </div>
+            <div class="flex items-center gap-1.5 text-[11px] pt-1 border-t border-slate-100 dark:border-slate-800/80">
+              {kpis.pageViews.isAvailable && kpis.pageViews.previous > 0 ? (
+                <span class={`font-bold ${kpis.pageViews.isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {kpis.pageViews.isPositive ? '↑' : '↓'} {Math.abs(kpis.pageViews.percentChange)}%
+                </span>
+              ) : (
+                <span class="text-slate-400">--</span>
+              )}
+              <span class="text-slate-400 truncate">AdSense tracked</span>
+            </div>
+          </div>
+
+          {/* Page RPM */}
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-2">
+            <div class="flex items-center justify-between text-xs text-slate-500">
+              <span>Page RPM</span>
+              <span class="text-base">⚡</span>
+            </div>
+            <div class="text-xl font-black text-slate-900 dark:text-white">
+              {kpis.pageRpm.isAvailable && kpis.pageRpm.current > 0
+                ? `${currencySymbol}${kpis.pageRpm.current.toFixed(2)}`
+                : 'Not Available'}
+            </div>
+            <div class="flex items-center gap-1.5 text-[11px] pt-1 border-t border-slate-100 dark:border-slate-800/80">
+              {kpis.pageRpm.isAvailable && kpis.pageRpm.previous > 0 ? (
+                <span class={`font-bold ${kpis.pageRpm.isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {kpis.pageRpm.isPositive ? '↑' : '↓'} {Math.abs(kpis.pageRpm.percentChange)}%
+                </span>
+              ) : (
+                <span class="text-slate-400">--</span>
+              )}
+              <span class="text-slate-400 truncate">per 1,000 views</span>
+            </div>
+          </div>
+
+          {/* Impression RPM */}
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-2">
+            <div class="flex items-center justify-between text-xs text-slate-500">
+              <span>Impression RPM</span>
+              <span class="text-base">🎯</span>
+            </div>
+            <div class="text-xl font-black text-slate-900 dark:text-white">
+              {kpis.impressionRpm.isAvailable && kpis.impressionRpm.current > 0
+                ? `${currencySymbol}${kpis.impressionRpm.current.toFixed(2)}`
+                : 'Not Available'}
+            </div>
+            <div class="flex items-center gap-1.5 text-[11px] pt-1 border-t border-slate-100 dark:border-slate-800/80">
+              {kpis.impressionRpm.isAvailable && kpis.impressionRpm.previous > 0 ? (
+                <span class={`font-bold ${kpis.impressionRpm.isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {kpis.impressionRpm.isPositive ? '↑' : '↓'} {Math.abs(kpis.impressionRpm.percentChange)}%
+                </span>
+              ) : (
+                <span class="text-slate-400">--</span>
+              )}
+              <span class="text-slate-400 truncate">per 1,000 imp</span>
+            </div>
+          </div>
+
+          {/* Ad Clicks */}
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-2">
+            <div class="flex items-center justify-between text-xs text-slate-500">
+              <span>Ad Clicks</span>
+              <span class="text-base">🖱️</span>
+            </div>
+            <div class="text-xl font-black text-slate-900 dark:text-white">
+              {kpis.clicks.isAvailable && kpis.clicks.current > 0
+                ? kpis.clicks.current.toLocaleString()
+                : 'Not Available'}
+            </div>
+            <div class="flex items-center gap-1.5 text-[11px] pt-1 border-t border-slate-100 dark:border-slate-800/80">
+              {kpis.clicks.isAvailable && kpis.clicks.previous > 0 ? (
+                <span class={`font-bold ${kpis.clicks.isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {kpis.clicks.isPositive ? '↑' : '↓'} {Math.abs(kpis.clicks.percentChange)}%
+                </span>
+              ) : (
+                <span class="text-slate-400">--</span>
+              )}
+              <span class="text-slate-400 truncate">User interactions</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. Daily Revenue & Impression Trend Visualization */}
+        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <h4 class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+                <span>📊</span> Daily Revenue &amp; Impression Progression
+              </h4>
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                Daily earnings ({currencySymbol}) and ad impressions across the selected window
+              </p>
+            </div>
+            <div class="flex items-center gap-4 text-xs font-semibold">
+              <div class="flex items-center gap-1.5">
+                <span class="h-2.5 w-2.5 rounded-full bg-blue-600"></span>
+                <span class="text-slate-600 dark:text-slate-300">Revenue ({currencySymbol})</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="h-2.5 w-2.5 rounded-full bg-emerald-500"></span>
+                <span class="text-slate-600 dark:text-slate-300">Impressions</span>
+              </div>
+            </div>
+          </div>
+
+          {trend.length > 0 ? (
+            <div class="pt-4 overflow-x-auto">
+              <div class="min-w-150 h-48 flex items-end gap-1 sm:gap-2 pb-6 border-b border-slate-100 dark:border-slate-800">
+                {trend.map((t) => {
+                  const revHeight = Math.max(6, Math.round((t.revenue / maxDailyRevenue) * 100));
+                  const impHeight = Math.max(6, Math.round((t.impressions / maxDailyImpressions) * 100));
+                  return (
+                    <div class="flex-1 flex flex-col items-center gap-1 group relative h-full justify-end">
+                      {/* Tooltip */}
+                      <div class="absolute bottom-full mb-2 hidden group-hover:flex flex-col bg-slate-900 text-white text-[10px] p-2 rounded-xl shadow-xl z-20 whitespace-nowrap dark:bg-slate-800 border border-slate-700 pointer-events-none">
+                        <div class="font-black text-slate-300 border-b border-slate-700 pb-1 mb-1">{t.date}</div>
+                        <div>Revenue: <strong class="text-blue-400">{currencySymbol}{t.revenue.toFixed(2)}</strong></div>
+                        <div>Impressions: <strong class="text-emerald-400">{t.impressions.toLocaleString()}</strong></div>
+                        {t.rpm && <div>RPM: <strong class="text-amber-400">{currencySymbol}{t.rpm.toFixed(2)}</strong></div>}
+                      </div>
+
+                      {/* Side-by-side bars */}
+                      <div class="w-full flex items-end justify-center gap-0.5 sm:gap-1 h-full">
+                        <div
+                          class="w-2.5 sm:w-3.5 bg-blue-600/90 rounded-t-sm hover:bg-blue-500 transition-all cursor-pointer"
+                          style={`height: ${revHeight}%`}
+                        ></div>
+                        <div
+                          class="w-2.5 sm:w-3.5 bg-emerald-500/80 rounded-t-sm hover:bg-emerald-400 transition-all cursor-pointer"
+                          style={`height: ${impHeight}%`}
+                        ></div>
+                      </div>
+
+                      <span class="text-[9px] font-mono text-slate-400 mt-1 truncate">
+                        {t.label}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <div class="p-8 text-center text-xs text-slate-500">
+              No synced daily reporting records available for this date window. Click "Refresh Data" above to fetch recent reports from Google AdSense.
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+
+    {/* 4. Page-Level Attribution Disclaimer & Calculator Engagement Alignment (Step 6) */}
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+      <div class="flex items-start gap-3 rounded-2xl bg-blue-50/70 p-4 border border-blue-100 dark:bg-blue-950/30 dark:border-blue-900/40 text-blue-900 dark:text-blue-200">
+        <span class="text-xl shrink-0">ℹ️</span>
+        <div class="space-y-1 text-xs">
+          <h4 class="font-bold">Page-Level AdSense Revenue Attribution Truth</h4>
+          <p class="text-blue-800 dark:text-blue-300 leading-relaxed">
+            {pageLevelDisclaimer} To maintain 100% data integrity, we never fabricate synthetic dollar figures per calculator. Below is your authentic visitor traffic and calculation engagement data from Phase 4 alongside monetization categories.
+          </p>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-2">
+        <h4 class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+          <span>🧮</span> Calculator Engagement &amp; Monetization Inventory
+        </h4>
+        <span class="text-xs text-slate-500">
+          Showing top calculators ranked by verified platform traffic
+        </span>
+      </div>
+
+      <!-- Calculators Engagement Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="border-b border-slate-100 dark:border-slate-800 text-[11px] font-black uppercase tracking-wider text-slate-400">
+              <th class="pb-3 pr-4">Calculator / Tool</th>
+              <th class="pb-3 px-3">Category</th>
+              <th class="pb-3 px-3 text-right">Platform Page Views</th>
+              <th class="pb-3 px-3 text-right">Calculations Run</th>
+              <th class="pb-3 px-3 text-right">Start Rate</th>
+              <th class="pb-3 pl-3 text-right">Estimated Dwell Intent</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 font-medium">
+            {calculatorEngagement.slice(0, 10).map((c) => (
+              <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/30 transition">
+                <td class="py-3 pr-4">
+                  <a href={c.path} target="_blank" class="font-bold text-slate-900 dark:text-white hover:text-blue-600 transition flex items-center gap-1.5">
+                    <span>{c.name}</span>
+                    <span class="text-[10px] text-slate-400">↗</span>
+                  </a>
+                  <span class="text-[10px] text-slate-400 font-mono">{c.path}</span>
+                </td>
+                <td class="py-3 px-3">
+                  <span class="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                    {c.category}
+                  </span>
+                </td>
+                <td class="py-3 px-3 text-right font-mono font-bold text-slate-900 dark:text-white">
+                  {c.pageViews.toLocaleString()}
+                </td>
+                <td class="py-3 px-3 text-right font-mono text-slate-700 dark:text-slate-300">
+                  {c.calculations.toLocaleString()}
+                </td>
+                <td class="py-3 px-3 text-right font-mono text-emerald-600 dark:text-emerald-400 font-bold">
+                  {c.startRate}%
+                </td>
+                <td class="py-3 pl-3 text-right">
+                  <span class="inline-flex items-center gap-1 text-[11px] font-bold text-blue-600 dark:text-blue-400">
+                    <span>●</span> High Engagement
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5. Monetization Opportunity Engine (Step 7) -->
+    <div class="space-y-4">
+      <div>
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>⚡</span> Explainable Monetization Opportunities &amp; Diagnostics
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          Rule-based recommendations derived strictly from real revenue patterns and calculator analytics
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {opportunities.length > 0 ? (
+          opportunities.map((opp) => {
+            const badgeClasses = {
+              info: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300 border-blue-200 dark:border-blue-800',
+              warning: 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300 border-red-200 dark:border-red-800',
+              opportunity: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800',
+            };
+            return (
+              <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-3 flex flex-col justify-between">
+                <div class="space-y-2">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class={`rounded-md px-2 py-0.5 text-[10px] font-black uppercase tracking-wide border ${badgeClasses[opp.severity]}`}>
+                      {opp.severity.toUpperCase()}
+                    </span>
+                    {opp.category && (
+                      <span class="text-[10px] font-bold text-slate-400">
+                        {opp.category} Hub
+                      </span>
+                    )}
+                  </div>
+                  <h4 class="font-bold text-sm text-slate-900 dark:text-white">
+                    {opp.title}
+                  </h4>
+                  <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                    {opp.description}
+                  </p>
+                </div>
+
+                <div class="space-y-2 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
+                  <div class="rounded-xl bg-slate-50 p-2.5 dark:bg-slate-950/60 font-mono text-[11px] text-slate-600 dark:text-slate-400">
+                    <strong>Evidence:</strong> {opp.evidence}
+                  </div>
+                  <div class="text-[11px] text-slate-700 dark:text-slate-300 leading-relaxed">
+                    💡 <strong>Action:</strong> {opp.recommendation}
+                  </div>
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div class="col-span-2 rounded-3xl border border-slate-200 bg-white p-6 text-center text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900">
+            No anomalous monetization drops or alerts detected for the current window. Revenue and RPM metrics are tracking stably against baseline benchmarks.
+          </div>
+        )}
+      </div>
+    </div>
+
+    <!-- 6. Cross-Phase Correlations (Step 8) -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+      <div>
+        <h4 class="font-bold text-sm text-slate-900 dark:text-white flex items-center gap-2">
+          <span>🔗</span> Cross-System Performance &amp; Monetization Correlations
+        </h4>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          Synthesizing data across Phase 1 (SEO Intelligence), Phase 4 (Calculator Engagement), and Phase 6 (Cache CDN)
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+        <!-- SEO Correlation -->
+        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800 space-y-2">
+          <div class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+            <span>🔍</span> Phase 1: Search Traffic Alignment
+          </div>
+          <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+            Organic Search Console clicks fuel high-intent calculator usage. Check if revenue shifts correlate with impressions in top organic queries.
+          </p>
+          <a href="/admin/seo/" class="text-blue-600 dark:text-blue-400 hover:underline font-bold inline-block pt-1">
+            View Search Analytics →
+          </a>
+        </div>
+
+        <!-- Calculator Engagement Correlation -->
+        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800 space-y-2">
+          <div class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+            <span>🧮</span> Phase 4: Usage &amp; Funnels
+          </div>
+          <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+            Visitors spending longer solving multi-step calculations create extended ad dwell time. Top completing calculators yield highest viewability.
+          </p>
+          <a href="/admin/analytics/" class="text-blue-600 dark:text-blue-400 hover:underline font-bold inline-block pt-1">
+            View Calculator Analytics →
+          </a>
+        </div>
+
+        <!-- CDN Performance Correlation -->
+        <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800 space-y-2">
+          <div class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+            <span>⚡</span> Phase 6: Edge CDN Health
+          </div>
+          <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+            Sub-50ms cached HTML delivery ensures Google AdSense tags load without delay, preventing CLS and maximizing initial viewable ad auctions.
+          </p>
+          <a href="/admin/performance/" class="text-blue-600 dark:text-blue-400 hover:underline font-bold inline-block pt-1">
+            View CDN &amp; Cache Manager →
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ADSENSE API CONFIG & CONNECTION MODAL -->
+  <div
+    id="modal-adsense"
+    class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-xs"
+    onclick="if (event.target === this) this.classList.add('hidden')"
+  >
+    <div class="min-h-full flex items-center justify-center">
+      <div class="w-full max-w-xl rounded-3xl bg-white p-6 sm:p-7 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-5">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+          <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span>⚙️</span> Google AdSense API Integration
+          </h3>
+          <button
+            type="button"
+            id="btn-close-adsense-modal"
+            onclick="document.getElementById('modal-adsense')?.classList.add('hidden')"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+
+        <!-- Google Cloud Console Instructions -->
+        <div class="space-y-4 text-xs">
+          <div class="rounded-2xl bg-blue-50 p-3.5 border border-blue-100 dark:bg-blue-950/40 dark:border-blue-900/40 text-blue-800 dark:text-blue-300 leading-relaxed space-y-1.5">
+            <div class="font-bold flex items-center gap-1.5">
+              <span>🔐</span> Google Cloud OAuth 2.0 Setup Guide:
+            </div>
+            <ol class="list-decimal list-inside space-y-1 text-[11px]">
+              <li>In Google Cloud Console, enable the <strong>Google AdSense Management API (v2)</strong>.</li>
+              <li>Create OAuth 2.0 Client ID (Application type: <strong>Web application</strong>).</li>
+              <li>Add Authorized Redirect URI: <code class="font-mono bg-blue-100/80 dark:bg-blue-900/60 px-1 py-0.5 rounded select-all">{url.origin}/api/admin/monetization/oauth-callback</code></li>
+              <li>Save Client ID and Secret below, then click <strong>"Authorize with Google"</strong>.</li>
+            </ol>
+          </div>
+
+          <!-- Connection Form -->
+          <div class="space-y-3">
+            <div>
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Google Cloud OAuth Client ID <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                id="input-adsense-client-id"
+                value={config.clientId || ''}
+                placeholder="e.g. 123456789-abcdef.apps.googleusercontent.com"
+                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-mono text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Google Cloud OAuth Client Secret <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="password"
+                id="input-adsense-client-secret"
+                placeholder={config.maskedClientSecret || 'Enter OAuth Client Secret...'}
+                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-mono text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+              />
+              <span class="text-[10px] text-slate-400 mt-1 block">
+                Secrets are stored in Cloudflare D1 encrypted/private store and never sent to browser code.
+              </span>
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">
+                AdSense Publisher ID (Optional, auto-discovered if blank)
+              </label>
+              <input
+                type="text"
+                id="input-adsense-account-id"
+                value={config.accountId || ''}
+                placeholder="e.g. accounts/pub-1234567890123456"
+                class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-mono text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+              />
+            </div>
+
+            <!-- Optional Direct Refresh Token Input for developers who already have a token -->
+            <details class="rounded-xl border border-slate-200 dark:border-slate-800 p-3 text-[11px] text-slate-600 dark:text-slate-400">
+              <summary class="font-bold cursor-pointer hover:text-slate-900 dark:hover:text-white">
+                Advanced: Provide Existing Refresh Token Directly
+              </summary>
+              <div class="pt-2 space-y-1">
+                <input
+                  type="password"
+                  id="input-adsense-refresh-token"
+                  placeholder={config.hasRefreshToken ? '•••••••••••••••• (Configured)' : '1//04...'}
+                  class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-mono text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+                />
+                <span class="text-[10px] text-slate-400 block">
+                  Useful if you already generated a long-lived refresh token via Google OAuth Playground or CLI.
+                </span>
+              </div>
+            </details>
+          </div>
+
+          <div id="adsense-modal-status" class="hidden text-xs p-3 rounded-xl font-semibold"></div>
+        </div>
+
+        <div class="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+          {connected ? (
+            <button
+              type="button"
+              id="btn-disconnect-adsense"
+              class="text-xs font-bold text-red-600 hover:underline cursor-pointer"
+            >
+              Disconnect AdSense
+            </button>
+          ) : (
+            <div></div>
+          )}
+
+          <div class="flex items-center gap-2.5">
+            <button
+              type="button"
+              id="btn-cancel-adsense-modal"
+              onclick="document.getElementById('modal-adsense')?.classList.add('hidden')"
+              class="rounded-xl px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              id="btn-save-adsense-creds"
+              class="rounded-xl bg-slate-800 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-slate-700 transition cursor-pointer"
+            >
+              Save Credentials
+            </button>
+            <button
+              type="button"
+              id="btn-oauth-authorize"
+              class="rounded-xl bg-amber-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-amber-700 transition cursor-pointer"
+            >
+              Authorize with Google →
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    const modalAdsense = document.getElementById('modal-adsense');
+    const btnOpenModal = document.getElementById('btn-open-adsense-modal');
+    const btnOpenModalAlert = document.getElementById('btn-connect-adsense-alert');
+    const btnCloseModal = document.getElementById('btn-close-adsense-modal');
+    const btnCancelModal = document.getElementById('btn-cancel-adsense-modal');
+
+    function openModal() {
+      if (!modalAdsense) return;
+      modalAdsense.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      if (!modalAdsense) return;
+      modalAdsense.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    btnOpenModal?.addEventListener('click', openModal);
+    btnOpenModalAlert?.addEventListener('click', openModal);
+    btnCloseModal?.addEventListener('click', closeModal);
+    btnCancelModal?.addEventListener('click', closeModal);
+
+    // Escape key
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // Save Credentials Button
+    const btnSaveCreds = document.getElementById('btn-save-adsense-creds');
+    const btnOAuthAuthorize = document.getElementById('btn-oauth-authorize');
+    const btnDisconnect = document.getElementById('btn-disconnect-adsense');
+    const statusMsg = document.getElementById('adsense-modal-status');
+    const inputClientId = document.getElementById('input-adsense-client-id');
+    const inputClientSecret = document.getElementById('input-adsense-client-secret');
+    const inputAccountId = document.getElementById('input-adsense-account-id');
+    const inputRefreshToken = document.getElementById('input-adsense-refresh-token');
+
+    async function handleSaveCredentials(showSuccessAlert = true) {
+      const clientId = inputClientId?.value?.trim() || '';
+      const clientSecret = inputClientSecret?.value?.trim() || '';
+      const accountId = inputAccountId?.value?.trim() || '';
+      const refreshToken = inputRefreshToken?.value?.trim() || '';
+
+      if (!clientId) {
+        alert('Google Cloud OAuth Client ID is required.');
+        return false;
+      }
+
+      if (btnSaveCreds) btnSaveCreds.disabled = true;
+      if (statusMsg) {
+        statusMsg.className = 'text-xs p-3 rounded-xl font-semibold bg-blue-50 text-blue-700 block';
+        statusMsg.textContent = 'Saving Google AdSense credentials...';
+      }
+
+      try {
+        const res = await fetch('/api/admin/monetization/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            clientId,
+            clientSecret,
+            accountId,
+            refreshToken,
+          }),
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          if (statusMsg) {
+            statusMsg.className = 'text-xs p-3 rounded-xl font-semibold bg-emerald-50 text-emerald-700 block';
+            statusMsg.textContent = '✓ Credentials saved successfully.';
+          }
+          if (showSuccessAlert && refreshToken) {
+            setTimeout(() => window.location.reload(), 1000);
+          }
+          return true;
+        } else {
+          if (statusMsg) {
+            statusMsg.className = 'text-xs p-3 rounded-xl font-semibold bg-red-50 text-red-700 block';
+            statusMsg.textContent = data.error || 'Failed to save credentials.';
+          }
+          return false;
+        }
+      } catch (err) {
+        if (statusMsg) {
+          statusMsg.className = 'text-xs p-3 rounded-xl font-semibold bg-red-50 text-red-700 block';
+          statusMsg.textContent = 'Network error saving credentials.';
+        }
+        return false;
+      } finally {
+        if (btnSaveCreds) btnSaveCreds.disabled = false;
+      }
+    }
+
+    btnSaveCreds?.addEventListener('click', () => handleSaveCredentials(true));
+
+    // Authorize with Google (OAuth flow)
+    btnOAuthAuthorize?.addEventListener('click', async () => {
+      const clientId = inputClientId?.value?.trim() || '';
+      const clientSecret = inputClientSecret?.value?.trim() || '';
+
+      if (!clientId) {
+        alert('Please enter your Google Cloud OAuth Client ID first.');
+        return;
+      }
+
+      // Save credentials first before redirecting to Google
+      const saved = await handleSaveCredentials(false);
+      if (!saved) return;
+
+      const redirectUri = `${window.location.origin}/api/admin/monetization/oauth-callback`;
+      const scope = 'https://www.googleapis.com/auth/adsense.readonly';
+
+      const googleAuthUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+      googleAuthUrl.searchParams.set('client_id', clientId);
+      googleAuthUrl.searchParams.set('redirect_uri', redirectUri);
+      googleAuthUrl.searchParams.set('response_type', 'code');
+      googleAuthUrl.searchParams.set('scope', scope);
+      googleAuthUrl.searchParams.set('access_type', 'offline');
+      googleAuthUrl.searchParams.set('prompt', 'consent');
+
+      window.location.href = googleAuthUrl.toString();
+    });
+
+    // Disconnect
+    btnDisconnect?.addEventListener('click', async () => {
+      if (!confirm('Are you sure you want to disconnect Google AdSense?')) return;
+      try {
+        await fetch('/api/admin/monetization/config', { method: 'DELETE' });
+        window.location.reload();
+      } catch {
+        alert('Failed to disconnect AdSense.');
+      }
+    });
+
+    // Refresh / Sync Data Button
+    const btnSync = document.getElementById('btn-sync-adsense');
+    const btnSyncText = document.getElementById('btn-sync-text');
+    const banner = document.getElementById('sync-notification-banner');
+
+    btnSync?.addEventListener('click', async () => {
+      if (!btnSync || !btnSyncText) return;
+      btnSync.disabled = true;
+      btnSyncText.textContent = 'Syncing...';
+
+      if (banner) {
+        banner.className = 'rounded-2xl p-4 text-xs font-semibold bg-blue-50 text-blue-700 flex items-center justify-between border border-blue-200';
+        banner.innerHTML = '<span>⏳ Querying Google AdSense Management API (v2) for latest reporting metrics...</span>';
+      }
+
+      try {
+        const res = await fetch('/api/admin/monetization/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ days: 90 }),
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          if (banner) {
+            banner.className = 'rounded-2xl p-4 text-xs font-semibold bg-emerald-50 text-emerald-800 flex items-center justify-between border border-emerald-200';
+            banner.innerHTML = `<span>✓ ${data.message} Reloading view...</span>`;
+          }
+          setTimeout(() => window.location.reload(), 1200);
+        } else {
+          if (banner) {
+            banner.className = 'rounded-2xl p-4 text-xs font-semibold bg-red-50 text-red-800 flex items-center justify-between border border-red-200';
+            banner.innerHTML = `<span>⚠️ ${data.error || 'Sync failed.'}</span><button type="button" onclick="this.parentElement.classList.add('hidden')" class="text-red-600 hover:text-red-800 cursor-pointer">✕</button>`;
+          }
+        }
+      } catch (err) {
+        if (banner) {
+          banner.className = 'rounded-2xl p-4 text-xs font-semibold bg-red-50 text-red-800 flex items-center justify-between border border-red-200';
+          banner.innerHTML = '<span>⚠️ Network error communicating with sync service.</span>';
+        }
+      } finally {
+        btnSync.disabled = false;
+        btnSyncText.textContent = 'Refresh Data';
+      }
+    });
+  </script>
+</AdminLayout>

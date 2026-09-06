@@ -384,5 +384,50 @@ const resolvedOgImage = ogImage.startsWith('http')
         });
       })();
     </script>
+
+    <!-- Lightweight Client-Side Error Telemetry (Phase 9 Step 7) -->
+    <script is:inline>
+      (function () {
+        var errorCount = 0;
+        var MAX_ERRORS_PER_SESSION = 3;
+
+        function reportClientError(message, source) {
+          if (errorCount >= MAX_ERRORS_PER_SESSION) return;
+          errorCount++;
+
+          try {
+            var payload = JSON.stringify({
+              route: window.location.pathname,
+              message: String(message || 'Unknown Error').slice(0, 200),
+              source: String(source || '').slice(0, 100),
+            });
+
+            if (navigator.sendBeacon) {
+              navigator.sendBeacon('/api/analytics/error', new Blob([payload], { type: 'application/json' }));
+            } else {
+              fetch('/api/analytics/error', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: payload,
+                keepalive: true,
+              }).catch(function () {});
+            }
+          } catch (e) {}
+        }
+
+        window.addEventListener('error', function (evt) {
+          if (evt && evt.message) {
+            reportClientError(evt.message, evt.filename);
+          }
+        });
+
+        window.addEventListener('unhandledrejection', function (evt) {
+          if (evt && evt.reason) {
+            var msg = evt.reason.message || String(evt.reason);
+            reportClientError('Unhandled Promise: ' + msg, 'promise');
+          }
+        });
+      })();
+    </script>
   </body>
 </html>

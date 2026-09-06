@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { calculators, type Calculator } from '../../../data/calculators';
 import { authenticateAdminRequest } from '../../../lib/auth';
 import { getCalculatorOverrides, saveCalculatorOverride, saveInternalLinks } from '../../../lib/admin/content-store';
+import { purgeCloudflareCache } from '../../../lib/performance/cloudflare-client';
 
 export const prerender = false;
 
@@ -68,6 +69,11 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     };
 
     await saveCalculatorOverride(cleanSlug, updateData, locals);
+
+    // Asynchronously invalidate targeted edge cache for this calculator
+    try {
+      await purgeCloudflareCache({ target: 'calculator', value: cleanSlug }, locals);
+    } catch {}
 
     // Save internal link relationships if passed
     const related = Array.isArray(relatedCalculators) ? relatedCalculators : (Array.isArray(relatedSlugs) ? relatedSlugs : null);

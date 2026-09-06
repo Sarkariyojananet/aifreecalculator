@@ -1,0 +1,521 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { calculators } from '../../../data/calculators';
+import { authenticateAdminRequest } from '../../../lib/auth';
+import { syncGscPerformanceData } from '../../../lib/seo/gsc-store';
+import type { GscDateRange } from '../../../lib/seo/gsc-types';
+
+const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
+if (!user) {
+  return Astro.redirect('/admin/barwalaoffice/');
+}
+
+const { slug } = Astro.params;
+const calc = calculators.find((c) => c.slug === slug);
+
+if (!calc) {
+  return Astro.redirect('/admin/seo/');
+}
+
+const requestedRange = (Astro.url.searchParams.get('range') || '28d') as GscDateRange;
+const range: GscDateRange = requestedRange === '7d' || requestedRange === '3m' ? requestedRange : '28d';
+
+// Fetch snapshot (uses D1 cache)
+const snapshot = await syncGscPerformanceData(Astro.locals, range, false);
+const isConnected = snapshot.status === 'connected';
+const rangeData = snapshot.data?.[range];
+
+// Find page row for this calculator
+const pageRow = rangeData?.topPages.find((p) => p.calculatorSlug === calc.slug || p.path === calc.path);
+
+// Find all queries associated with this calculator
+const relatedQueries = (rangeData?.topQueries || []).filter(
+  (q) => q.topCalculatorSlug === calc.slug || (q.topPageUrl && q.topPageUrl.includes(calc.slug))
+);
+
+// Find opportunities for this calculator
+const opportunities = (rangeData?.opportunities || []).filter(
+  (o) => o.calculatorSlug === calc.slug || o.pageUrl.includes(calc.slug)
+);
+
+// Find decay alerts for this calculator
+const decayAlert = (rangeData?.decayAlerts || []).find(
+  (d) => d.calculatorSlug === calc.slug || d.pageUrl.includes(calc.slug)
+);
+
+// Get SEO score
+const seoScore = rangeData?.calculatorScores?.[calc.slug] || {
+  calculatorSlug: calc.slug,
+  calculatorName: calc.name,
+  score: 65,
+  impressionsScore: 12,
+  growthScore: 15,
+  ctrScore: 15,
+  metadataScore: 23,
+  strengths: ['Calculations formula active', 'Valid semantic tags'],
+  needsImprovement: ['Connect Google Search Console to view live ranking data.'],
+  decayStatus: 'Healthy' as const,
+};
+
+const lastSyncFormatted = snapshot.lastSyncedAt
+  ? new Date(snapshot.lastSyncedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
+  : 'Never';
+---
+
+<AdminLayout title={`${calc.name} SEO Intelligence | Calculator CMS`} sectionTitle="SEO Intelligence" activeSection="seo">
+  <div class="space-y-8 max-w-7xl mx-auto pb-16">
+    
+    
+    <nav class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400" aria-label="Breadcrumb">
+      <a href="/admin/dashboard/" class="hover:text-blue-600 transition">Dashboard</a>
+      <span>/</span>
+      <a href="/admin/seo/" class="hover:text-blue-600 transition">SEO Intelligence</a>
+      <span>/</span>
+      <span class="font-bold text-slate-800 dark:text-slate-200 truncate">{calc.name}</span>
+    </nav>
+
+    
+    <div class="rounded-3xl border border-slate-200/90 bg-white p-6 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div class="flex items-start gap-4">
+          <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-blue-50 text-2xl shadow-sm dark:bg-blue-950/60 dark:text-blue-400 border border-blue-100 dark:border-blue-900/50">
+            {calc.icon || '🧮'}
+          </div>
+          <div>
+            <div class="flex flex-wrap items-center gap-2.5">
+              <h1 class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                {calc.name}
+              </h1>
+              <span class="rounded-full bg-slate-100 px-3 py-0.5 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                {calc.category}
+              </span>
+              {decayAlert && (
+                <span class="rounded-full bg-red-100 px-3 py-0.5 text-xs font-bold text-red-700 dark:bg-red-950 dark:text-red-300 animate-pulse">
+                  📉 Content Decay ({decayAlert.priority.toUpperCase()})
+                </span>
+              )}
+            </div>
+            <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-2xl">
+              {calc.description}
+            </p>
+            <div class="mt-2 flex items-center gap-3 text-xs text-slate-400">
+              <span class="font-mono text-blue-600 dark:text-blue-400">{calc.path}</span>
+              <span>•</span>
+              <span>GSC Sync: <strong class="text-slate-600 dark:text-slate-300">{lastSyncFormatted}</strong></span>
+            </div>
+          </div>
+        </div>
+
+        
+        <div class="flex flex-wrap items-center gap-2 shrink-0">
+          <a
+            href={calc.path}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition shadow-2xs"
+          >
+            <span>↗</span> View Live Page
+          </a>
+          <a
+            href={`/admin/calculator-health/${calc.slug}/`}
+            class="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition shadow-2xs"
+          >
+            <span>🛡️</span> Health Diagnostics
+          </a>
+          <a
+            href={`/admin/seo/bulk/?category=${encodeURIComponent(calc.category)}`}
+            class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition cursor-pointer"
+          >
+            <span>📝</span> Edit Meta
+          </a>
+        </div>
+      </div>
+    </div>
+
+    
+    <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+      <div class="flex items-center gap-2">
+        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Date Comparison:</span>
+        <div class="inline-flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+          <a
+            href={`?range=7d`}
+            class={`rounded-lg px-3 py-1 text-xs font-bold transition ${
+              range === '7d'
+                ? 'bg-white text-blue-600 shadow-xs dark:bg-slate-900 dark:text-blue-400'
+                : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+            }`}
+          >
+            Last 7 Days
+          </a>
+          <a
+            href={`?range=28d`}
+            class={`rounded-lg px-3 py-1 text-xs font-bold transition ${
+              range === '28d'
+                ? 'bg-white text-blue-600 shadow-xs dark:bg-slate-900 dark:text-blue-400'
+                : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+            }`}
+          >
+            Last 28 Days
+          </a>
+          <a
+            href={`?range=3m`}
+            class={`rounded-lg px-3 py-1 text-xs font-bold transition ${
+              range === '3m'
+                ? 'bg-white text-blue-600 shadow-xs dark:bg-slate-900 dark:text-blue-400'
+                : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+            }`}
+          >
+            Last 3 Months
+          </a>
+        </div>
+      </div>
+
+      <div class="text-xs text-slate-500">
+        Comparing against previous equivalent {range === '7d' ? '7 days' : range === '28d' ? '28 days' : '90 days'}
+      </div>
+    </div>
+
+    {!isConnected && (
+      <div class="rounded-3xl border border-dashed border-slate-300 bg-slate-50/50 p-10 text-center dark:border-slate-800 dark:bg-slate-900/40">
+        <div class="text-4xl mb-3">⚪</div>
+        <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200">Google Search Console Not Connected</h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-2 max-w-md mx-auto">
+          Connect your Google Service Account in the main SEO Intelligence dashboard to unlock live clicks, impressions, keyword queries, and content decay alerts for this calculator.
+        </p>
+        <div class="mt-5">
+          <a href="/admin/seo/" class="rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition">
+            Go to SEO Intelligence Dashboard →
+          </a>
+        </div>
+      </div>
+    )}
+
+    {isConnected && (
+      <div class="space-y-8">
+        
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-500">Search Clicks</div>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span class="text-3xl font-black text-slate-900 dark:text-white font-mono">
+                {pageRow ? pageRow.clicks.toLocaleString() : '0'}
+              </span>
+              {pageRow && pageRow.clickChangePercent !== 0 && (
+                <span class={`text-xs font-bold ${pageRow.clickChangePercent > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {pageRow.clickChangePercent > 0 ? '↑' : '↓'} {Math.abs(pageRow.clickChangePercent)}%
+                </span>
+              )}
+            </div>
+            <div class="mt-1 text-[11px] text-slate-400 font-medium">
+              Prev: {pageRow ? pageRow.previousClicks.toLocaleString() : '0'} clicks
+            </div>
+          </div>
+
+          
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-500">Impressions</div>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span class="text-3xl font-black text-slate-900 dark:text-white font-mono">
+                {pageRow ? pageRow.impressions.toLocaleString() : '0'}
+              </span>
+              {pageRow && pageRow.previousImpressions > 0 && (
+                <span class={`text-xs font-bold ${pageRow.impressions >= pageRow.previousImpressions ? 'text-emerald-600' : 'text-red-600'}`}>
+                  {pageRow.impressions >= pageRow.previousImpressions ? '↑' : '↓'} {Math.abs(Math.round(((pageRow.impressions - pageRow.previousImpressions) / pageRow.previousImpressions) * 100))}%
+                </span>
+              )}
+            </div>
+            <div class="mt-1 text-[11px] text-slate-400 font-medium">
+              Prev: {pageRow ? pageRow.previousImpressions.toLocaleString() : '0'} impressions
+            </div>
+          </div>
+
+          
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-500">Average CTR</div>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span class="text-3xl font-black text-slate-900 dark:text-white font-mono">
+                {pageRow ? `${pageRow.ctr}%` : '0%'}
+              </span>
+              {pageRow && (
+                <span class={`text-xs font-bold ${pageRow.ctr >= pageRow.previousCtr ? 'text-emerald-600' : 'text-amber-600'}`}>
+                  {pageRow.ctr >= pageRow.previousCtr ? '↑' : '↓'} {Math.abs(Math.round((pageRow.ctr - pageRow.previousCtr) * 10) / 10)}%
+                </span>
+              )}
+            </div>
+            <div class="mt-1 text-[11px] text-slate-400 font-medium">
+              Prev: {pageRow ? `${pageRow.previousCtr}%` : '0%'}
+            </div>
+          </div>
+
+          
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-500">Average Position</div>
+            <div class="mt-2 flex items-baseline gap-2">
+              <span class="text-3xl font-black text-slate-900 dark:text-white font-mono">
+                {pageRow && pageRow.position > 0 ? pageRow.position.toFixed(1) : '--'}
+              </span>
+              {pageRow && pageRow.previousPosition > 0 && (
+                <span class={`text-xs font-bold ${pageRow.positionChange < 0 ? 'text-emerald-600' : pageRow.positionChange > 0 ? 'text-red-600' : 'text-slate-500'}`}>
+                  {pageRow.positionChange < 0 ? `↑ ${Math.abs(pageRow.positionChange).toFixed(1)} spots` : pageRow.positionChange > 0 ? `↓ ${pageRow.positionChange.toFixed(1)} spots` : 'No change'}
+                </span>
+              )}
+            </div>
+            <div class="mt-1 text-[11px] text-slate-400 font-medium">
+              Prev: {pageRow && pageRow.previousPosition > 0 ? pageRow.previousPosition.toFixed(1) : '--'}
+            </div>
+          </div>
+
+        </div>
+
+        
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between">
+            <div>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500">SEO Health & Opportunity Score</span>
+                <span class={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                  seoScore.score >= 80 ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' :
+                  seoScore.score >= 60 ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' :
+                  'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                }`}>
+                  {seoScore.score >= 80 ? 'Excellent' : seoScore.score >= 60 ? 'Good' : 'Needs Work'}
+                </span>
+              </div>
+              <div class="mt-4 flex items-baseline gap-2">
+                <span class="text-5xl font-black text-slate-900 dark:text-white font-mono">{seoScore.score}</span>
+                <span class="text-lg font-bold text-slate-400">/ 100</span>
+              </div>
+              
+              
+              <div class="mt-3 w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
+                <div
+                  class={`h-2.5 rounded-full ${
+                    seoScore.score >= 80 ? 'bg-emerald-500' : seoScore.score >= 60 ? 'bg-blue-600' : 'bg-amber-500'
+                  }`}
+                  style={`width: ${seoScore.score}%`}
+                ></div>
+              </div>
+
+              
+              <div class="mt-5 space-y-2 text-xs">
+                <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                  <span class="text-slate-500">Search Impressions Factor:</span>
+                  <span class="font-bold text-slate-800 dark:text-slate-200">{seoScore.impressionsScore} / 25 pts</span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                  <span class="text-slate-500">Growth &amp; Trend Factor:</span>
+                  <span class="font-bold text-slate-800 dark:text-slate-200">{seoScore.growthScore} / 25 pts</span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                  <span class="text-slate-500">CTR Efficiency Factor:</span>
+                  <span class="font-bold text-slate-800 dark:text-slate-200">{seoScore.ctrScore} / 25 pts</span>
+                </div>
+                <div class="flex justify-between py-1">
+                  <span class="text-slate-500">Metadata Completeness:</span>
+                  <span class="font-bold text-slate-800 dark:text-slate-200">{seoScore.metadataScore} / 25 pts</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          
+          <div class="lg:col-span-2 rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+              <span>📋</span> Transparent Scoring Diagnostics
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
+              <div class="rounded-2xl bg-emerald-50/60 p-4 border border-emerald-200/80 dark:bg-emerald-950/20 dark:border-emerald-900/40">
+                <div class="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 mb-2">
+                  <span>✓</span> Identified Strengths
+                </div>
+                {seoScore.strengths.length > 0 ? (
+                  <ul class="space-y-1.5 text-xs text-emerald-900 dark:text-emerald-200">
+                    {seoScore.strengths.map((s) => (
+                      <li class="flex items-start gap-2">
+                        <span class="text-emerald-600 font-bold">✓</span>
+                        <span>{s}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p class="text-xs text-slate-500">No major strengths recorded yet.</p>
+                )}
+              </div>
+
+              
+              <div class="rounded-2xl bg-amber-50/60 p-4 border border-amber-200/80 dark:bg-amber-950/20 dark:border-amber-900/40">
+                <div class="text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5 mb-2">
+                  <span>⚠️</span> Actionable Opportunities
+                </div>
+                {seoScore.needsImprovement.length > 0 ? (
+                  <ul class="space-y-1.5 text-xs text-amber-900 dark:text-amber-200">
+                    {seoScore.needsImprovement.map((item) => (
+                      <li class="flex items-start gap-2">
+                        <span class="text-amber-600 font-bold">⚠</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p class="text-xs text-emerald-700 font-semibold">Zero critical issues detected!</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        
+        {decayAlert && (
+          <div class="rounded-3xl border border-red-200 bg-red-50/70 p-6 shadow-xs dark:border-red-900/60 dark:bg-red-950/30">
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-2">
+                <span class="text-2xl">📉</span>
+                <div>
+                  <h3 class="text-base font-bold text-red-900 dark:text-red-200">
+                    Content Decay Detected ({decayAlert.priority.toUpperCase()} Priority)
+                  </h3>
+                  <p class="text-xs text-red-800/80 dark:text-red-300/80 mt-0.5">
+                    {decayAlert.explanation}
+                  </p>
+                </div>
+              </div>
+              <span class="rounded-full bg-red-200 text-red-900 px-3 py-1 text-xs font-bold uppercase dark:bg-red-900 dark:text-red-100">
+                -{decayAlert.trafficDeclinePercent}% Traffic
+              </span>
+            </div>
+
+            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+              <div class="rounded-2xl bg-white/80 p-3.5 border border-red-100 dark:bg-slate-900 dark:border-slate-800">
+                <strong class="text-slate-800 dark:text-slate-200">Possible Causes:</strong>
+                <ul class="mt-1.5 space-y-1 text-slate-600 dark:text-slate-400">
+                  {decayAlert.possibleCauses.map((c) => (
+                    <li>• {c}</li>
+                  ))}
+                </ul>
+              </div>
+              <div class="rounded-2xl bg-white/80 p-3.5 border border-red-100 dark:bg-slate-900 dark:border-slate-800">
+                <strong class="text-slate-800 dark:text-slate-200">Recommended Next Steps:</strong>
+                <ul class="mt-1.5 space-y-1 text-slate-600 dark:text-slate-400">
+                  {decayAlert.recommendedFixes.map((f) => (
+                    <li>• {f}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          </div>
+        )}
+
+        
+        {opportunities.length > 0 && (
+          <div class="space-y-3">
+            <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <span>🚀</span> High-Impact SEO Opportunities ({opportunities.length})
+            </h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {opportunities.map((opp) => (
+                <div class="rounded-3xl border border-blue-200/80 bg-white p-5 shadow-xs dark:border-blue-950 dark:bg-slate-900 flex flex-col justify-between">
+                  <div>
+                    <div class="flex items-start justify-between gap-2">
+                      <span class="rounded-full bg-blue-100 px-2.5 py-0.5 text-[11px] font-bold text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                        {opp.type === 'position' ? 'Striking Distance' : opp.type === 'ctr' ? 'Low CTR' : 'Page 1 Potential'}
+                      </span>
+                      <span class="font-mono text-xs font-bold text-emerald-600">
+                        Score: {opp.opportunityScore}/100
+                      </span>
+                    </div>
+                    <h4 class="mt-2 text-sm font-bold text-slate-900 dark:text-white">
+                      {opp.title}
+                    </h4>
+                    <p class="mt-1.5 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                      {opp.reason}
+                    </p>
+                  </div>
+                  <div class="mt-4 rounded-xl bg-slate-50 p-3 text-[11px] text-slate-700 dark:bg-slate-800/60 dark:text-slate-300 border border-slate-200/60 dark:border-slate-800">
+                    <strong class="text-blue-600 dark:text-blue-400">Action:</strong> {opp.recommendedAction}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        
+        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <span>🔍</span> Top Search Queries Driving Impressions &amp; Clicks
+              </h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Exact keywords users typed into Google to discover {calc.name}.
+              </p>
+            </div>
+            <span class="text-xs text-slate-400 font-medium">
+              {relatedQueries.length} search queries recorded
+            </span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead>
+                <tr class="border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  <th class="pb-3 pr-4">Search Query</th>
+                  <th class="pb-3 px-3 text-right">Clicks</th>
+                  <th class="pb-3 px-3 text-right">Impressions</th>
+                  <th class="pb-3 px-3 text-right">CTR</th>
+                  <th class="pb-3 px-3 text-right">Avg Position</th>
+                  <th class="pb-3 pl-3 text-right">Trend</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+                {relatedQueries.length === 0 ? (
+                  <tr>
+                    <td colspan="6" class="py-8 text-center text-slate-400">
+                      No query-specific impressions recorded for this calculator in the selected date range.
+                    </td>
+                  </tr>
+                ) : (
+                  relatedQueries.slice(0, 30).map((q) => (
+                    <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
+                      <td class="py-2.5 pr-4 font-semibold text-slate-800 dark:text-slate-200">
+                        {q.query}
+                      </td>
+                      <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-900 dark:text-white">
+                        {q.clicks.toLocaleString()}
+                      </td>
+                      <td class="py-2.5 px-3 text-right font-mono text-slate-600 dark:text-slate-300">
+                        {q.impressions.toLocaleString()}
+                      </td>
+                      <td class="py-2.5 px-3 text-right font-mono text-slate-600 dark:text-slate-300">
+                        {q.ctr}%
+                      </td>
+                      <td class="py-2.5 px-3 text-right font-mono font-semibold text-slate-800 dark:text-slate-200">
+                        #{q.position.toFixed(1)}
+                      </td>
+                      <td class="py-2.5 pl-3 text-right font-mono text-[11px]">
+                        {q.clickChangePercent > 0 ? (
+                          <span class="text-emerald-600 font-bold">+{q.clickChangePercent}%</span>
+                        ) : q.clickChangePercent < 0 ? (
+                          <span class="text-red-600 font-bold">{q.clickChangePercent}%</span>
+                        ) : (
+                          <span class="text-slate-400">--</span>
+                        )}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    )}
+
+  </div>
+</AdminLayout>

@@ -2,40 +2,81 @@
 export const prerender = false;
 
 import AdminLayout from '../../../layouts/AdminLayout.astro';
-import { getCalculatorHealthSummaries, getTestRunHistory } from '../../../lib/calculator-tests/health-store';
+import {
+  getCalculatorHealthSummaries,
+  getTestRunHistory,
+  getAllCalculatorHealthScores,
+} from '../../../lib/calculator-tests/health-store';
 import { getTestedSlugs } from '../../../lib/calculator-tests/test-cases';
 
 const healthSummaries = await getCalculatorHealthSummaries(Astro.locals);
 const runHistory = await getTestRunHistory(Astro.locals);
 const latestRun = runHistory[0] || null;
 const testedSlugs = getTestedSlugs();
+const storedScores = await getAllCalculatorHealthScores(Astro.locals);
 
-const total = healthSummaries.length;
-const healthyCount = healthSummaries.filter((s) => s.healthStatus === 'Healthy').length;
-const reviewCount = healthSummaries.filter((s) => s.healthStatus === 'Needs Review').length;
-const criticalCount = healthSummaries.filter((s) => s.healthStatus === 'Critical').length;
-const unknownCount = healthSummaries.filter((s) => s.healthStatus === 'Unknown').length;
-const totalErrors = healthSummaries.reduce((sum, s) => sum + s.unreviewedErrors, 0);
+// Merge with cached scores if available
+const enrichedCalculators = healthSummaries.map((item) => {
+  const cached = storedScores[item.slug];
+  const score = cached?.healthScore ?? item.healthScore ?? (item.healthStatus === 'Healthy' ? 95 : item.healthStatus === 'Needs Review' ? 65 : item.healthStatus === 'Critical' ? 30 : 50);
+  const grade = cached?.grade ?? item.healthGrade ?? (score >= 90 ? 'Healthy' : score >= 70 ? 'Warning' : score >= 40 ? 'Needs Attention' : 'Critical');
+  const isFormulaFailing = cached?.isFormulaFailing ?? (item.testFailed !== undefined && item.testFailed > 0);
+  const seoStatus = cached?.seoStatus ?? 'Good';
+  const pageStatus = cached?.pageStatus ?? 'Online';
 
-const passRate = total > 0 ? Math.round((healthyCount / total) * 100) : 0;
+  return {
+    ...item,
+    healthScore: score,
+    grade,
+    isFormulaFailing,
+    seoStatus,
+    pageStatus,
+    criticalIssues: cached?.criticalIssues ?? [],
+    warnings: cached?.warnings ?? [],
+  };
+});
+
+const total = enrichedCalculators.length;
+const healthyCount = enrichedCalculators.filter((s) => s.grade === 'Healthy').length;
+const warningCount = enrichedCalculators.filter((s) => s.grade === 'Warning').length;
+const needsAttentionCount = enrichedCalculators.filter((s) => s.grade === 'Needs Attention').length;
+const criticalCount = enrichedCalculators.filter((s) => s.grade === 'Critical').length;
+const formulaFailedCount = enrichedCalculators.filter((s) => s.isFormulaFailing).length;
+const seoIssuesCount = enrichedCalculators.filter((s) => s.seoStatus !== 'Good').length;
+const totalErrors = enrichedCalculators.reduce((sum, s) => sum + s.unreviewedErrors, 0);
+
+// Average health score across all calculators
+const averageScore = total > 0
+  ? Math.round(enrichedCalculators.reduce((sum, c) => sum + c.healthScore, 0) / total)
+  : 0;
+
+// Critical alerts for broken or decaying calculations
+const criticalAlerts = enrichedCalculators.filter(
+  (c) => c.grade === 'Critical' || c.isFormulaFailing || c.unreviewedErrors >= 5
+);
+
+// Warnings for attention
+const warningAlerts = enrichedCalculators.filter(
+  (c) => (c.grade === 'Warning' || c.grade === 'Needs Attention' || c.seoStatus !== 'Good') && !c.isFormulaFailing
+);
 ---
 
 <AdminLayout title="Calculator Reliability & Health Monitor | Calculator CMS" sectionTitle="Calculator Health" activeSection="calculator-health">
-  <div class="space-y-8 max-w-7xl mx-auto pb-12">
+  <div class="space-y-8 max-w-7xl mx-auto pb-16">
 
     <!-- Top Action Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
       <div>
-        <div class="flex items-center gap-2">
-          <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-            Calculator Reliability &amp; Health Monitor
+        <div class="flex items-center gap-2.5">
+          <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🛡️</span> Calculator Health Monitor
           </h2>
-          <span class="rounded-full bg-blue-100 dark:bg-blue-950 px-2.5 py-0.5 text-xs font-bold text-blue-700 dark:text-blue-300">
-            {total} Calculators
+          <span class="rounded-full bg-blue-100 dark:bg-blue-950 px-3 py-1 text-xs font-bold text-blue-700 dark:text-blue-300">
+            {total} Calculators Active
           </span>
         </div>
         <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Automated regression testing, edge case verification, NaN/Infinity detection, and runtime exception monitoring.
+          Automated formula regression detection, 0–100 health scoring, edge-case tolerance verification, and runtime safety monitoring.
         </p>
       </div>
 
@@ -43,10 +84,10 @@ const passRate = total > 0 ? Math.round((healthyCount / total) * 100) : 0;
         <button
           id="run-all-tests-btn"
           type="button"
-          class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-500/25 hover:bg-blue-700 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <span id="btn-icon">⚡</span>
-          <span id="btn-text">Run All Health Tests</span>
+          <span id="btn-text">Run All Health Checks</span>
         </button>
       </div>
     </div>
@@ -56,28 +97,27 @@ const passRate = total > 0 ? Math.round((healthyCount / total) * 100) : 0;
       <div class="flex items-center gap-2.5 text-slate-600 dark:text-slate-300">
         <span class="text-base">🕒</span>
         <div>
-          <span class="font-bold text-slate-800 dark:text-slate-100">Audit Freshness:</span>{' '}
+          <span class="font-bold text-slate-800 dark:text-slate-100">Last Full Health Check:</span>{' '}
           {latestRun ? (
             <span>
-              Last comprehensive test run executed{' '}
               <strong class="font-mono">{new Date(latestRun.completed_at || latestRun.started_at).toLocaleString()}</strong>
               {' '}({latestRun.total_tests} test cases executed, {latestRun.passed} passed).
             </span>
           ) : (
             <span class="text-amber-700 dark:text-amber-400 font-medium">
-              No full test suite execution recorded yet. Click <strong>"Run All Health Tests"</strong> above to establish initial baseline data.
+              No full suite execution recorded yet. Click <strong>"Run All Health Checks"</strong> to evaluate all 39 calculators.
             </span>
           )}
         </div>
       </div>
-      <div class="text-[11px] text-slate-400 shrink-0">
-        Data stored in Cloudflare D1
+      <div class="text-[11px] text-slate-400 shrink-0 font-mono">
+        Cloudflare D1 Verified Storage
       </div>
     </div>
 
     <!-- Sub-Navigation Bar -->
     <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 dark:border-slate-800">
-      <a href="/admin/calculator-health/" class="rounded-xl bg-blue-50 px-3.5 py-1.5 text-xs font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300 shrink-0">
+      <a href="/admin/calculator-health/" class="rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs shrink-0">
         🛡️ Health Overview
       </a>
       <a href="/admin/calculator-health/tests/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
@@ -93,398 +133,434 @@ const passRate = total > 0 ? Math.round((healthyCount / total) * 100) : 0;
       </a>
     </div>
 
-    <!-- Summary Metrics Cards -->
-    <div class="grid grid-cols-2 sm:grid-cols-5 gap-4">
-      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Health Rate</div>
-        <div class="mt-2 text-3xl font-black text-slate-900 dark:text-white">{passRate}%</div>
-        <div class="mt-1 text-[11px] text-emerald-600 font-bold">{healthyCount} / {total} Healthy</div>
+    <!-- Executive Health KPI Cards Grid -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+      
+      <!-- Average Score -->
+      <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Average Health</div>
+        <div class="mt-2 flex items-baseline gap-1.5">
+          <span class="text-3xl font-black text-slate-900 dark:text-white font-mono">{averageScore}</span>
+          <span class="text-xs text-slate-400 font-bold">/100</span>
+        </div>
+        <div class="mt-1 text-[11px] font-semibold text-emerald-600">Site Reliability Metric</div>
       </div>
 
-      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Optimal / Healthy</div>
-        <div class="mt-2 text-3xl font-black text-emerald-600 dark:text-emerald-400">{healthyCount}</div>
-        <div class="mt-1 text-[11px] text-slate-400">All tests passing</div>
+      <!-- Healthy -->
+      <div class="cursor-pointer rounded-3xl border border-slate-200 bg-white p-4 shadow-2xs hover:border-emerald-400 transition-all dark:border-slate-800 dark:bg-slate-900 filter-kpi-card" data-status-filter="Healthy">
+        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">🟢 Healthy (90–100)</div>
+        <div class="mt-2 text-3xl font-black text-emerald-600 dark:text-emerald-400 font-mono">{healthyCount}</div>
+        <div class="mt-1 text-[11px] text-slate-400">All formulas passing</div>
       </div>
 
-      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Needs Review</div>
-        <div class="mt-2 text-3xl font-black text-amber-600 dark:text-amber-400">{reviewCount}</div>
-        <div class="mt-1 text-[11px] text-slate-400">Failed tests or errors</div>
+      <!-- Warning -->
+      <div class="cursor-pointer rounded-3xl border border-slate-200 bg-white p-4 shadow-2xs hover:border-amber-400 transition-all dark:border-slate-800 dark:bg-slate-900 filter-kpi-card" data-status-filter="Warning">
+        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">🟡 Warning (70–89)</div>
+        <div class="mt-2 text-3xl font-black text-amber-500 dark:text-amber-400 font-mono">{warningCount}</div>
+        <div class="mt-1 text-[11px] text-slate-400">Minor SEO / warning</div>
       </div>
 
-      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Critical / Broken</div>
-        <div class="mt-2 text-3xl font-black text-red-600 dark:text-red-400">{criticalCount}</div>
-        <div class="mt-1 text-[11px] text-slate-400">Throws exception</div>
+      <!-- Needs Attention -->
+      <div class="cursor-pointer rounded-3xl border border-slate-200 bg-white p-4 shadow-2xs hover:border-orange-400 transition-all dark:border-slate-800 dark:bg-slate-900 filter-kpi-card" data-status-filter="Needs Attention">
+        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">🟠 Attention (40–69)</div>
+        <div class="mt-2 text-3xl font-black text-orange-500 dark:text-orange-400 font-mono">{needsAttentionCount}</div>
+        <div class="mt-1 text-[11px] text-slate-400">Untested or degraded</div>
       </div>
 
-      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Untested</div>
-        <div class="mt-2 text-3xl font-black text-slate-500 dark:text-slate-400">{unknownCount}</div>
-        <div class="mt-1 text-[11px] text-slate-400">Awaiting test suite</div>
+      <!-- Critical -->
+      <div class="cursor-pointer rounded-3xl border border-slate-200 bg-white p-4 shadow-2xs hover:border-red-400 transition-all dark:border-slate-800 dark:bg-slate-900 filter-kpi-card" data-status-filter="Critical">
+        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">🔴 Critical (0–39)</div>
+        <div class="mt-2 text-3xl font-black text-red-600 dark:text-red-400 font-mono">{criticalCount}</div>
+        <div class="mt-1 text-[11px] text-slate-400">Formula failure / crash</div>
       </div>
+
+      <!-- Runtime Errors -->
+      <div class="rounded-3xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Runtime Errors</div>
+        <div class="mt-2 text-3xl font-black text-red-600 dark:text-red-400 font-mono">{totalErrors}</div>
+        <div class="mt-1 text-[11px] text-slate-400">NaN / exceptions</div>
+      </div>
+
     </div>
+
+    <!-- Active Real-Time Alerts Feed -->
+    {(criticalAlerts.length > 0 || warningAlerts.length > 0) && (
+      <div class="space-y-4">
+        
+        {/* Critical Alerts */}
+        {criticalAlerts.length > 0 && (
+          <div class="rounded-3xl border border-red-200 bg-red-50/70 p-5 dark:border-red-900/60 dark:bg-red-950/30 space-y-3">
+            <h4 class="text-xs font-black uppercase tracking-wider text-red-700 dark:text-red-300 flex items-center gap-1.5">
+              <span>🚨</span> Critical Alerts ({criticalAlerts.length})
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {criticalAlerts.map((calc) => (
+                <div class="flex items-start justify-between gap-3 bg-white p-3.5 rounded-2xl border border-red-100 shadow-2xs dark:bg-slate-900 dark:border-red-900/40">
+                  <div>
+                    <div class="flex items-center gap-2">
+                      <span class="text-base">{calc.icon}</span>
+                      <span class="font-bold text-xs text-slate-900 dark:text-white">{calc.name}</span>
+                      <span class="rounded px-1.5 py-0.5 text-[10px] font-black uppercase bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300">
+                        Score {calc.healthScore}/100
+                      </span>
+                    </div>
+                    <p class="text-[11px] text-red-600 dark:text-red-400 mt-1 font-medium">
+                      {calc.criticalIssues[0] || (calc.isFormulaFailing ? 'Formula regression detected: Output did not match expected value.' : 'Critical runtime error requires immediate investigation.')}
+                    </p>
+                  </div>
+                  <a
+                    href={`/admin/calculator-health/${calc.slug}/`}
+                    class="rounded-xl bg-red-600 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-red-700 shrink-0 transition"
+                  >
+                    Investigate →
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Warning Alerts */}
+        {warningAlerts.length > 0 && (
+          <div class="rounded-3xl border border-amber-200 bg-amber-50/60 p-5 dark:border-amber-900/60 dark:bg-amber-950/20 space-y-3">
+            <h4 class="text-xs font-black uppercase tracking-wider text-amber-700 dark:text-amber-300 flex items-center gap-1.5">
+              <span>⚠️</span> Warnings &amp; Action Items ({warningAlerts.length})
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+              {warningAlerts.slice(0, 6).map((calc) => (
+                <div class="flex items-start justify-between gap-2 bg-white p-3 rounded-2xl border border-amber-100 shadow-2xs dark:bg-slate-900 dark:border-amber-900/40">
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <span class="text-sm">{calc.icon}</span>
+                      <span class="font-bold text-xs text-slate-900 dark:text-white truncate">{calc.name}</span>
+                    </div>
+                    <p class="text-[11px] text-amber-600 dark:text-amber-400 mt-1 truncate">
+                      {calc.warnings[0] || 'Meta title or description optimization recommended.'}
+                    </p>
+                  </div>
+                  <a
+                    href={`/admin/calculator-health/${calc.slug}/`}
+                    class="text-[11px] font-bold text-blue-600 hover:underline shrink-0"
+                  >
+                    View
+                  </a>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+      </div>
+    )}
 
     <!-- Filters & Search Toolbar -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs">
-      <div class="flex flex-wrap items-center gap-2">
-        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mr-1">Status:</span>
-        <button type="button" class="filter-status-btn active px-3 py-1 rounded-xl text-xs font-bold transition bg-blue-600 text-white" data-status="all">
+      <div class="flex flex-wrap items-center gap-1.5">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider mr-1">Filter:</span>
+        <button type="button" class="filter-status-btn active px-3 py-1.5 rounded-xl text-xs font-bold transition bg-blue-600 text-white cursor-pointer" data-filter="all">
           All ({total})
         </button>
-        <button type="button" class="filter-status-btn px-3 py-1 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200" data-status="Healthy">
-          Healthy ({healthyCount})
+        <button type="button" class="filter-status-btn px-3 py-1.5 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 cursor-pointer" data-filter="Healthy">
+          🟢 Healthy ({healthyCount})
         </button>
-        <button type="button" class="filter-status-btn px-3 py-1 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200" data-status="Needs Review">
-          Needs Review ({reviewCount})
+        <button type="button" class="filter-status-btn px-3 py-1.5 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 cursor-pointer" data-filter="Warning">
+          🟡 Warning ({warningCount})
         </button>
-        <button type="button" class="filter-status-btn px-3 py-1 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200" data-status="Critical">
-          Critical ({criticalCount})
+        <button type="button" class="filter-status-btn px-3 py-1.5 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 cursor-pointer" data-filter="Needs Attention">
+          🟠 Attention ({needsAttentionCount})
         </button>
-        <button type="button" class="filter-status-btn px-3 py-1 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200" data-status="Unknown">
-          Untested ({unknownCount})
+        <button type="button" class="filter-status-btn px-3 py-1.5 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 cursor-pointer" data-filter="Critical">
+          🔴 Critical ({criticalCount})
         </button>
+        {formulaFailedCount > 0 && (
+          <button type="button" class="filter-status-btn px-3 py-1.5 rounded-xl text-xs font-bold transition bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300 hover:bg-red-200 cursor-pointer" data-filter="formula-failed">
+            ❌ Formula Failed ({formulaFailedCount})
+          </button>
+        )}
+        {seoIssuesCount > 0 && (
+          <button type="button" class="filter-status-btn px-3 py-1.5 rounded-xl text-xs font-bold transition bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 hover:bg-slate-200 cursor-pointer" data-filter="seo-issues">
+            ⚠️ SEO Issues ({seoIssuesCount})
+          </button>
+        )}
       </div>
 
       <div class="flex items-center gap-2">
         <select id="category-filter" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
           <option value="all">All Categories</option>
           <option value="Finance">Finance</option>
-          <option value="Health">Health</option>
           <option value="Construction">Construction</option>
-          <option value="Math">Math</option>
           <option value="General">General</option>
+          <option value="Health">Health</option>
+          <option value="Math">Math</option>
         </select>
 
         <input
           type="search"
           id="search-input"
-          placeholder="Filter calculators..."
+          placeholder="Search calculators..."
           class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs text-slate-800 placeholder-slate-400 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-500 w-44 sm:w-56"
         />
       </div>
     </div>
 
-    <!-- Health Diagnostics Table (Desktop) -->
-    <div class="hidden md:block rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-xs dark:border-slate-800 dark:bg-slate-900">
-      <table class="w-full text-left text-xs">
-        <thead class="bg-slate-50/80 dark:bg-slate-950/60 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider border-b border-slate-100 dark:border-slate-800">
-          <tr>
-            <th class="py-3.5 px-4">Calculator</th>
-            <th class="py-3.5 px-4">Category</th>
-            <th class="py-3.5 px-4">Health Status</th>
-            <th class="py-3.5 px-4">Test Cases</th>
-            <th class="py-3.5 px-4">Runtime Errors</th>
-            <th class="py-3.5 px-4">Last Verified</th>
-            <th class="py-3.5 px-4 text-right">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="calc-table-body" class="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
-          {healthSummaries.map((item) => (
-            <tr
-              class="calc-row hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition"
-              data-slug={item.slug}
-              data-name={item.name.toLowerCase()}
-              data-category={item.category}
-              data-status={item.healthStatus}
-            >
-              <td class="py-3.5 px-4">
-                <div class="flex items-center gap-2.5">
-                  <span class="text-lg shrink-0">{item.icon || '🧮'}</span>
-                  <div>
-                    <a href={`/admin/calculator-health/${item.slug}/`} class="font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition">
-                      {item.name}
-                    </a>
-                    <div class="text-[10px] font-mono text-slate-400">/{item.slug}/</div>
+    <!-- Calculator Health Diagnostics Table -->
+    <div class="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50/80 dark:bg-slate-950/60 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider border-b border-slate-100 dark:border-slate-800">
+            <tr>
+              <th class="py-3.5 px-4">Calculator</th>
+              <th class="py-3.5 px-3">Category</th>
+              <th class="py-3.5 px-4 text-center">Health Score</th>
+              <th class="py-3.5 px-3 text-center">Formula Tests</th>
+              <th class="py-3.5 px-3 text-center">Page Status</th>
+              <th class="py-3.5 px-3 text-center">SEO Status</th>
+              <th class="py-3.5 px-3">Last Checked</th>
+              <th class="py-3.5 px-4 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody id="calc-table-body" class="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+            {enrichedCalculators.map((item) => (
+              <tr
+                class="calc-row hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition"
+                data-slug={item.slug}
+                data-name={item.name.toLowerCase()}
+                data-category={item.category}
+                data-grade={item.grade}
+                data-formula-failed={item.isFormulaFailing ? 'true' : 'false'}
+                data-seo-issue={item.seoStatus !== 'Good' ? 'true' : 'false'}
+              >
+                <td class="py-3.5 px-4">
+                  <div class="flex items-center gap-2.5">
+                    <span class="text-xl shrink-0">{item.icon || '🧮'}</span>
+                    <div>
+                      <a href={`/admin/calculator-health/${item.slug}/`} class="font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition">
+                        {item.name}
+                      </a>
+                      <div class="text-[10px] font-mono text-slate-400">/{item.slug}/</div>
+                    </div>
                   </div>
-                </div>
-              </td>
+                </td>
 
-              <td class="py-3.5 px-4">
-                <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-                  {item.category}
-                </span>
-              </td>
+                <td class="py-3.5 px-3">
+                  <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                    {item.category}
+                  </span>
+                </td>
 
-              <td class="py-3.5 px-4">
-                {item.healthStatus === 'Healthy' && (
-                  <span class="inline-flex items-center gap-1.5 rounded-xl border border-emerald-200 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-black text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
-                    <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Healthy
-                  </span>
-                )}
-                {item.healthStatus === 'Needs Review' && (
-                  <span class="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-2.5 py-0.5 text-[11px] font-black text-amber-700 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-300">
-                    <span class="h-1.5 w-1.5 rounded-full bg-amber-500"></span> Needs Review
-                  </span>
-                )}
-                {item.healthStatus === 'Critical' && (
-                  <span class="inline-flex items-center gap-1.5 rounded-xl border border-red-200 bg-red-50 px-2.5 py-0.5 text-[11px] font-black text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300">
-                    <span class="h-1.5 w-1.5 rounded-full bg-red-500"></span> Critical
-                  </span>
-                )}
-                {item.healthStatus === 'Unknown' && (
-                  <span class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-[11px] font-black text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
-                    <span class="h-1.5 w-1.5 rounded-full bg-slate-400"></span> Untested
-                  </span>
-                )}
-              </td>
+                {/* 0-100 Health Score Badge & Progress Bar */}
+                <td class="py-3.5 px-4 text-center">
+                  <div class="inline-flex flex-col items-center gap-1">
+                    <span class={`rounded-xl px-2.5 py-0.5 text-[11px] font-black font-mono inline-flex items-center gap-1 ${
+                      item.grade === 'Healthy'
+                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800'
+                        : item.grade === 'Warning'
+                        ? 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800'
+                        : item.grade === 'Needs Attention'
+                        ? 'bg-orange-50 text-orange-700 border border-orange-200 dark:bg-orange-950 dark:text-orange-300 dark:border-orange-800'
+                        : 'bg-red-50 text-red-700 border border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800'
+                    }`}>
+                      <span class={`h-1.5 w-1.5 rounded-full ${
+                        item.grade === 'Healthy' ? 'bg-emerald-500' :
+                        item.grade === 'Warning' ? 'bg-amber-500' :
+                        item.grade === 'Needs Attention' ? 'bg-orange-500' : 'bg-red-500'
+                      }`}></span>
+                      {item.healthScore}/100
+                    </span>
+                    <div class="w-16 h-1 rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+                      <div
+                        class={`h-full rounded-full ${
+                          item.grade === 'Healthy' ? 'bg-emerald-500' :
+                          item.grade === 'Warning' ? 'bg-amber-500' :
+                          item.grade === 'Needs Attention' ? 'bg-orange-500' : 'bg-red-500'
+                        }`}
+                        style={`width: ${item.healthScore}%;`}
+                      ></div>
+                    </div>
+                  </div>
+                </td>
 
-              <td class="py-3.5 px-4">
-                {item.testTotal !== undefined ? (
-                  <div class="font-mono text-xs">
-                    <span class={item.testPassed === item.testTotal ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-amber-600 dark:text-amber-400 font-bold'}>
+                {/* Formula Tests Status */}
+                <td class="py-3.5 px-3 text-center">
+                  {item.testTotal !== undefined && item.testTotal > 0 ? (
+                    <span class={`font-mono text-xs font-bold inline-flex items-center gap-1 ${
+                      item.testFailed && item.testFailed > 0
+                        ? 'text-red-600 dark:text-red-400'
+                        : item.testPassed === item.testTotal
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : 'text-amber-600 dark:text-amber-400'
+                    }`}>
+                      <span>{item.testFailed && item.testFailed > 0 ? '❌' : '✓'}</span>
                       {item.testPassed}/{item.testTotal}
                     </span>
-                    <span class="text-slate-400 text-[10px] ml-1">passed</span>
-                  </div>
-                ) : (
-                  <span class="text-slate-400 italic text-[11px]">No tests</span>
-                )}
-              </td>
+                  ) : (
+                    <span class="text-slate-400 italic text-[11px]">Untested</span>
+                  )}
+                </td>
 
-              <td class="py-3.5 px-4">
-                {item.unreviewedErrors > 0 ? (
-                  <span class="inline-flex items-center gap-1 font-bold text-red-600 dark:text-red-400 font-mono">
-                    <span>⚠️</span> {item.unreviewedErrors}
+                {/* Page Status */}
+                <td class="py-3.5 px-3 text-center">
+                  <span class={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold ${
+                    item.pageStatus === 'Online'
+                      ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                      : 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300'
+                  }`}>
+                    {item.pageStatus === 'Online' ? '✓ Online' : '⚠️ Degraded'}
                   </span>
-                ) : (
-                  <span class="text-slate-400 font-mono text-[11px]">0</span>
-                )}
-              </td>
+                </td>
 
-              <td class="py-3.5 px-4 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
-                {item.lastTestedAt ? new Date(item.lastTestedAt).toLocaleDateString() : 'Never'}
-              </td>
+                {/* SEO Status */}
+                <td class="py-3.5 px-3 text-center">
+                  <span class={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold ${
+                    item.seoStatus === 'Good'
+                      ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300'
+                      : item.seoStatus === 'Warning'
+                      ? 'bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
+                      : 'bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300'
+                  }`}>
+                    {item.seoStatus === 'Good' ? '✓ Good' : '⚠️ Meta Warning'}
+                  </span>
+                </td>
 
-              <td class="py-3.5 px-4 text-right">
-                <div class="inline-flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    class="run-single-test-btn rounded-lg bg-blue-50 px-2.5 py-1 text-[11px] font-bold text-blue-600 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300 transition cursor-pointer"
-                    data-slug={item.slug}
-                  >
-                    Test ⚡
-                  </button>
+                {/* Last Checked */}
+                <td class="py-3.5 px-3 text-slate-500 dark:text-slate-400 font-mono text-[11px]">
+                  {item.lastTestedAt ? new Date(item.lastTestedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Never'}
+                </td>
+
+                {/* Action */}
+                <td class="py-3.5 px-4 text-right">
                   <a
                     href={`/admin/calculator-health/${item.slug}/`}
-                    class="rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition"
+                    class={`inline-flex items-center gap-1 rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+                      item.grade === 'Critical'
+                        ? 'bg-red-600 text-white hover:bg-red-700 shadow-xs'
+                        : 'bg-slate-100 text-slate-700 hover:bg-blue-50 hover:text-blue-700 dark:bg-slate-800 dark:text-slate-200'
+                    }`}
                   >
-                    Details →
+                    {item.grade === 'Critical' ? 'Investigate' : 'View'} →
                   </a>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Mobile Stacked Card View -->
-    <div id="calc-mobile-list" class="md:hidden space-y-3">
-      {healthSummaries.map((item) => (
-        <div
-          class="calc-card rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-3"
-          data-slug={item.slug}
-          data-name={item.name.toLowerCase()}
-          data-category={item.category}
-          data-status={item.healthStatus}
-        >
-          <div class="flex items-start justify-between gap-2">
-            <div class="flex items-center gap-2">
-              <span class="text-xl">{item.icon || '🧮'}</span>
-              <div>
-                <a href={`/admin/calculator-health/${item.slug}/`} class="font-bold text-xs text-slate-900 dark:text-white">
-                  {item.name}
-                </a>
-                <div class="text-[10px] text-slate-400 font-mono">/{item.slug}/</div>
-              </div>
-            </div>
-            <span class="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-              {item.category}
-            </span>
-          </div>
-
-          <div class="flex items-center justify-between text-xs pt-1 border-t border-slate-100 dark:border-slate-800">
-            <div>
-              Status:{' '}
-              <strong class={
-                item.healthStatus === 'Healthy' ? 'text-emerald-600 dark:text-emerald-400' :
-                item.healthStatus === 'Needs Review' ? 'text-amber-600 dark:text-amber-400' :
-                item.healthStatus === 'Critical' ? 'text-red-600 dark:text-red-400' : 'text-slate-400'
-              }>
-                {item.healthStatus}
-              </strong>
-            </div>
-            <div class="font-mono text-[11px]">
-              {item.testTotal !== undefined ? `${item.testPassed}/${item.testTotal} passed` : 'Untested'}
-            </div>
-          </div>
-
-          <div class="flex items-center justify-end gap-2 pt-1">
-            <button
-              type="button"
-              class="run-single-test-btn rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-600 dark:bg-blue-950 dark:text-blue-300"
-              data-slug={item.slug}
-            >
-              Test ⚡
-            </button>
-            <a
-              href={`/admin/calculator-health/${item.slug}/`}
-              class="rounded-lg bg-slate-100 px-2.5 py-1 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-            >
-              Details →
-            </a>
-          </div>
-        </div>
-      ))}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
 
   </div>
-</AdminLayout>
 
-<script>
-  // 1. Run All Tests
-  const runAllBtn = document.getElementById('run-all-tests-btn') as HTMLButtonElement | null;
-  const btnIcon = document.getElementById('btn-icon');
-  const btnText = document.getElementById('btn-text');
+  <!-- Client-Side Filtering & Real-Time Test Runner Script -->
+  <script is:inline>
+    function initHealthDashboard() {
+      // 1. Table Filtering Logic
+      const filterBtns = document.querySelectorAll('.filter-status-btn');
+      const kpiCards = document.querySelectorAll('.filter-kpi-card');
+      const catSelect = document.getElementById('category-filter');
+      const searchInput = document.getElementById('search-input');
+      const rows = document.querySelectorAll('.calc-row');
 
-  if (runAllBtn) {
-    runAllBtn.addEventListener('click', async () => {
-      if (runAllBtn.disabled) return;
-      runAllBtn.disabled = true;
-      if (btnIcon) btnIcon.textContent = '⏳';
-      if (btnText) btnText.textContent = 'Running All Tests...';
+      let currentFilter = 'all';
+      let currentCategory = 'all';
+      let currentSearch = '';
 
-      try {
-        const token = localStorage.getItem('admin_token') || '';
-        const res = await fetch('/api/admin/calculator-health/run', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-          },
+      function applyFilters() {
+        rows.forEach((row) => {
+          const grade = row.getAttribute('data-grade') || '';
+          const category = row.getAttribute('data-category') || '';
+          const name = row.getAttribute('data-name') || '';
+          const slug = row.getAttribute('data-slug') || '';
+          const formulaFailed = row.getAttribute('data-formula-failed') === 'true';
+          const seoIssue = row.getAttribute('data-seo-issue') === 'true';
+
+          let matchesStatus = true;
+          if (currentFilter === 'formula-failed') {
+            matchesStatus = formulaFailed;
+          } else if (currentFilter === 'seo-issues') {
+            matchesStatus = seoIssue;
+          } else if (currentFilter !== 'all') {
+            matchesStatus = (grade.toLowerCase() === currentFilter.toLowerCase());
+          }
+
+          const matchesCategory = (currentCategory === 'all' || category === currentCategory);
+          const matchesSearch = (!currentSearch || name.includes(currentSearch) || slug.includes(currentSearch));
+
+          row.style.display = (matchesStatus && matchesCategory && matchesSearch) ? '' : 'none';
         });
-
-        if (res.ok) {
-          const data = await res.json();
-          if (btnIcon) btnIcon.textContent = '✓';
-          if (btnText) btnText.textContent = `Completed (${data.passed}/${data.totalTests} passed)`;
-          setTimeout(() => {
-            window.location.reload();
-          }, 1000);
-        } else {
-          alert('Failed to execute test run. Please verify admin session.');
-          runAllBtn.disabled = false;
-          if (btnIcon) btnIcon.textContent = '⚡';
-          if (btnText) btnText.textContent = 'Run All Health Tests';
-        }
-      } catch (err) {
-        alert('Error connecting to test runner API.');
-        runAllBtn.disabled = false;
-        if (btnIcon) btnIcon.textContent = '⚡';
-        if (btnText) btnText.textContent = 'Run All Health Tests';
       }
-    });
-  }
 
-  // 2. Run Single Calculator Test
-  document.querySelectorAll<HTMLButtonElement>('.run-single-test-btn').forEach((btn) => {
-    btn.addEventListener('click', async () => {
-      const slug = btn.getAttribute('data-slug');
-      if (!slug || btn.disabled) return;
-      const originalText = btn.textContent;
-      btn.disabled = true;
-      btn.textContent = '⏳...';
+      filterBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          filterBtns.forEach((b) => {
+            b.classList.remove('active', 'bg-blue-600', 'text-white');
+            b.classList.add('bg-slate-100', 'text-slate-700', 'dark:bg-slate-800', 'dark:text-slate-300');
+          });
+          btn.classList.add('active', 'bg-blue-600', 'text-white');
+          btn.classList.remove('bg-slate-100', 'text-slate-700', 'dark:bg-slate-800', 'dark:text-slate-300');
 
-      try {
-        const token = localStorage.getItem('admin_token') || '';
-        const res = await fetch(`/api/admin/calculator-health/run/${slug}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-          },
+          currentFilter = btn.getAttribute('data-filter') || 'all';
+          applyFilters();
         });
-        if (res.ok) {
-          const data = await res.json();
-          btn.textContent = data.state === 'PASS' ? '✓ Passed' : '⚠️ Checked';
-          setTimeout(() => {
-            window.location.reload();
-          }, 800);
-        } else {
-          btn.textContent = 'Failed';
-          setTimeout(() => {
-            btn.textContent = originalText;
-            btn.disabled = false;
-          }, 1500);
-        }
-      } catch {
-        btn.textContent = 'Error';
-        setTimeout(() => {
-          btn.textContent = originalText;
-          btn.disabled = false;
-        }, 1500);
-      }
-    });
-  });
-
-  // 3. Client-side Filters
-  let activeStatus = 'all';
-  let activeCategory = 'all';
-  let searchQuery = '';
-
-  const statusBtns = document.querySelectorAll<HTMLButtonElement>('.filter-status-btn');
-  const categorySelect = document.getElementById('category-filter') as HTMLSelectElement | null;
-  const searchInput = document.getElementById('search-input') as HTMLInputElement | null;
-
-  function applyFilters() {
-    const rows = document.querySelectorAll<HTMLElement>('.calc-row, .calc-card');
-    rows.forEach((row) => {
-      const status = row.getAttribute('data-status') || '';
-      const category = row.getAttribute('data-category') || '';
-      const name = row.getAttribute('data-name') || '';
-      const slug = row.getAttribute('data-slug') || '';
-
-      const matchStatus = activeStatus === 'all' || status === activeStatus;
-      const matchCategory = activeCategory === 'all' || category === activeCategory;
-      const matchSearch =
-        !searchQuery ||
-        name.includes(searchQuery) ||
-        slug.includes(searchQuery);
-
-      if (matchStatus && matchCategory && matchSearch) {
-        row.style.display = '';
-      } else {
-        row.style.display = 'none';
-      }
-    });
-  }
-
-  statusBtns.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      statusBtns.forEach((b) => {
-        b.classList.remove('bg-blue-600', 'text-white');
-        b.classList.add('bg-slate-100', 'text-slate-700', 'dark:bg-slate-800', 'dark:text-slate-300');
       });
-      btn.classList.remove('bg-slate-100', 'text-slate-700', 'dark:bg-slate-800', 'dark:text-slate-300');
-      btn.classList.add('bg-blue-600', 'text-white');
-      activeStatus = btn.getAttribute('data-status') || 'all';
-      applyFilters();
-    });
-  });
 
-  if (categorySelect) {
-    categorySelect.addEventListener('change', () => {
-      activeCategory = categorySelect.value;
-      applyFilters();
-    });
-  }
+      kpiCards.forEach((card) => {
+        card.addEventListener('click', () => {
+          const targetFilter = card.getAttribute('data-status-filter');
+          if (!targetFilter) return;
 
-  if (searchInput) {
-    searchInput.addEventListener('input', () => {
-      searchQuery = searchInput.value.trim().toLowerCase();
-      applyFilters();
-    });
-  }
-</script>
+          filterBtns.forEach((b) => {
+            if (b.getAttribute('data-filter') === targetFilter) {
+              b.click();
+            }
+          });
+        });
+      });
+
+      catSelect?.addEventListener('change', (e) => {
+        currentCategory = e.target.value;
+        applyFilters();
+      });
+
+      searchInput?.addEventListener('input', (e) => {
+        currentSearch = e.target.value.toLowerCase().trim();
+        applyFilters();
+      });
+
+      // 2. Full Test Suite Execution via Button
+      const runBtn = document.getElementById('run-all-tests-btn');
+      const btnIcon = document.getElementById('btn-icon');
+      const btnText = document.getElementById('btn-text');
+
+      runBtn?.addEventListener('click', async () => {
+        if (!confirm('Execute formula tests and health scoring across all 39 calculators?')) return;
+
+        runBtn.disabled = true;
+        if (btnIcon) btnIcon.textContent = '⏳';
+        if (btnText) btnText.textContent = 'Running All Tests...';
+
+        try {
+          const res = await fetch('/api/admin/calculator-health/run', { method: 'POST' });
+          const data = await res.json();
+
+          if (!res.ok || !data.success) {
+            alert(`Test execution failed: ${data.error || 'Unknown error'}`);
+          } else {
+            // Success! Reload page to display fresh results
+            window.location.reload();
+          }
+        } catch (err) {
+          alert('Network or execution error while running tests.');
+        } finally {
+          runBtn.disabled = false;
+          if (btnIcon) btnIcon.textContent = '⚡';
+          if (btnText) btnText.textContent = 'Run All Health Checks';
+        }
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initHealthDashboard);
+    } else {
+      initHealthDashboard();
+    }
+  </script>
+</AdminLayout>

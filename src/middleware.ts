@@ -1,5 +1,7 @@
 import { defineMiddleware } from 'astro:middleware';
 import { getRedirectRules } from './lib/admin/content-store';
+import { record404Hit } from './lib/redirects/monitor';
+import { recordError } from './lib/monitoring/store';
 
 // Marketing, analytics, and social tracking query parameters that do not alter page HTML
 const TRACKING_QUERY_PARAMS = new Set([
@@ -120,7 +122,35 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
-  const response = await next();
+  let response: Response;
+  try {
+    response = await next();
+  } catch (err: any) {
+    const errorMsg = err?.message || 'Uncaught Server Exception';
+    safeWaitUntil(
+      context,
+      recordError(context.locals, {
+        route: pathname,
+        category: isApiRoute ? 'api' : 'worker_server',
+        severity: 'critical',
+        message: errorMsg,
+      })
+    );
+    throw err;
+  }
+
+  // Record 5xx responses (e.g. 500, 502, 503) during live runtime
+  if (response.status >= 500 && !isAstroInternal && !isPrerendered && !pathname.startsWith('/500')) {
+    safeWaitUntil(
+      context,
+      recordError(context.locals, {
+        route: pathname,
+        category: isApiRoute ? 'api' : 'worker_server',
+        severity: 'critical',
+        message: `HTTP ${response.status} Server Error`,
+      })
+    );
+  }
 
   // 3. Attach industry-standard HTTP security headers
   response.headers.set('X-Content-Type-Options', 'nosniff');
@@ -161,6 +191,15 @@ export const onRequest = defineMiddleware(async (context, next) => {
     if (cache && cacheKey && isWorkerCacheEligible) {
       safeWaitUntil(context, cache.put(cacheKey, response.clone()));
     }
+  }
+
+  // 5. Genuine 404 Detection & Monitoring
+  // Asynchronously logs the 404 event to D1 without delaying public response time
+  if (response.status === 404 && isGetOrHead && !isAdminRoute && !isApiRoute && !isAstroInternal) {
+    safeWaitUntil(context, record404Hit(context.url, context.request, context.locals));
+    // Set short edge cache (5 min) on 404s so newly created redirects take effect promptly
+    response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
+    response.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=300');
   }
 
   return response;

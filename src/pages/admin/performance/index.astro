@@ -1,0 +1,996 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AdminStatCard from '../../../components/admin/AdminStatCard.astro';
+import { getCalculatorStats } from '../../../lib/db';
+import { calculators, categories } from '../../../data/calculators';
+import {
+  getCloudflareConfig,
+  getMaskedCloudflareConfig,
+  fetchCloudflareCacheMetrics,
+} from '../../../lib/performance/cloudflare-client';
+import {
+  PLATFORM_CACHE_RULES,
+  getRoutePerformanceCatalog,
+} from '../../../lib/performance/cache-rules';
+import { getPerformanceRecommendations } from '../../../lib/performance/recommendations';
+
+const url = Astro.url;
+const range = (url.searchParams.get('range') || '28d') as 'today' | '7d' | '28d' | '3m';
+
+// Fetch Cloudflare connection and live metrics
+const rawConfig = await getCloudflareConfig(Astro.locals);
+const cfConfig = getMaskedCloudflareConfig(rawConfig);
+const cacheMetrics = await fetchCloudflareCacheMetrics(range, Astro.locals);
+
+// Fetch stats map for route catalog
+const statsMap = await getCalculatorStats();
+const routeCatalog = getRoutePerformanceCatalog(statsMap);
+const recommendations = getPerformanceRecommendations(rawConfig);
+
+const rangeLabels = {
+  today: 'Today',
+  '7d': 'Last 7 Days',
+  '28d': 'Last 28 Days',
+  '3m': 'Last 3 Months',
+};
+---
+
+<AdminLayout title="Cache & Performance Manager | Calculator CMS" sectionTitle="Cache & Performance" activeSection="performance">
+  <div class="space-y-8 max-w-7xl mx-auto pb-16">
+    
+    <!-- Top Header & Action Controls -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
+      <div>
+        <div class="flex items-center gap-2.5">
+          <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <span>⚡</span> Advanced Cache &amp; Performance Manager
+          </h2>
+          <span
+            class={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold uppercase tracking-wide border ${
+              cfConfig.status === 'connected'
+                ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-800'
+                : 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+            }`}
+          >
+            <span class={`h-1.5 w-1.5 rounded-full ${cfConfig.status === 'connected' ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`}></span>
+            {cfConfig.status === 'connected' ? `Connected (${cfConfig.zoneName || 'Zone Active'})` : 'Cloudflare API Disconnected'}
+          </span>
+        </div>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Inspect live Cloudflare CDN edge rules, execute instant URL/calculator cache purges, and manage edge warming.
+        </p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          id="btn-open-purge-modal"
+          onclick="document.getElementById('modal-purge')?.classList.remove('hidden')"
+          class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition cursor-pointer"
+        >
+          <span>🗑️</span> Purge Cache
+        </button>
+
+        <button
+          type="button"
+          id="btn-open-warm-modal"
+          onclick="document.getElementById('modal-warm')?.classList.remove('hidden')"
+          class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
+        >
+          <span>🔥</span> Warm Cache
+        </button>
+
+        <button
+          type="button"
+          id="btn-open-cf-modal"
+          onclick="document.getElementById('modal-cf')?.classList.remove('hidden')"
+          class="inline-flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-2 text-xs font-bold text-amber-800 hover:bg-amber-100 dark:border-amber-900/60 dark:bg-amber-950/50 dark:text-amber-300 transition cursor-pointer"
+        >
+          <span>⚙️</span> API Settings
+        </button>
+      </div>
+    </div>
+
+    <!-- 1. Real Cloudflare Cache Metrics OR Clean Setup State -->
+    {cacheMetrics.connected && cacheMetrics.totalRequests !== null ? (
+      <div class="space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <span>📊</span> Live Cloudflare CDN Cache Performance
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+              Real telemetry fetched via Cloudflare GraphQL Analytics API for zone "{cfConfig.zoneName}".
+            </p>
+          </div>
+
+          <!-- Date Range Pills -->
+          <div class="flex items-center gap-1 rounded-2xl border border-slate-200 bg-white p-1 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            {(['today', '7d', '28d', '3m'] as const).map((r) => (
+              <a
+                href={`/admin/performance/?range=${r}`}
+                class={`rounded-xl px-2.5 py-1 text-xs font-bold transition ${
+                  range === r
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
+                }`}
+              >
+                {rangeLabels[r]}
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <AdminStatCard
+            title="Edge Cache Hit Rate"
+            value={`${cacheMetrics.cacheHitRate ?? 0}%`}
+            icon="🎯"
+            badge="Live CDN"
+            badgeType={cacheMetrics.cacheHitRate && cacheMetrics.cacheHitRate >= 80 ? 'success' : 'info'}
+            subtitle="Served directly from edge"
+            iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400"
+          />
+
+          <AdminStatCard
+            title="Cached Requests"
+            value={(cacheMetrics.cachedRequests ?? 0).toLocaleString()}
+            icon="⚡"
+            badge="Edge Hits"
+            badgeType="success"
+            subtitle="Zero origin compute required"
+            iconBg="bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400"
+          />
+
+          <AdminStatCard
+            title="Uncached Requests"
+            value={(cacheMetrics.uncachedRequests ?? 0).toLocaleString()}
+            icon="🔄"
+            badge="Origin Passes"
+            badgeType="warning"
+            subtitle="Dynamic or revalidation"
+            iconBg="bg-amber-50 text-amber-600 dark:bg-amber-950 dark:text-amber-400"
+          />
+
+          <AdminStatCard
+            title="Bandwidth Saved"
+            value={`${cacheMetrics.bandwidthSavedPercent ?? 0}%`}
+            icon="💾"
+            badge="Saved"
+            badgeType="success"
+            subtitle="Egress bandwidth offloaded"
+            iconBg="bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400"
+          />
+        </div>
+      </div>
+    ) : (
+      <div class="rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+        <div class="flex items-start gap-4">
+          <span class="text-3xl p-2.5 rounded-2xl bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900/60 shrink-0">
+            📡
+          </span>
+          <div class="space-y-1.5 flex-1">
+            <h3 class="text-base font-black text-slate-900 dark:text-white">
+              Detailed Cloudflare Cache Metrics Are Not Connected
+            </h3>
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl">
+              We strictly never fabricate synthetic requests or fake cache hit rates. To stream authentic Cloudflare edge request metrics, cache hit percentages, and bandwidth savings, connect your scoped Cloudflare API Token.
+            </p>
+            <div class="pt-2 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                id="btn-connect-cf-alert"
+                onclick="document.getElementById('modal-cf')?.classList.remove('hidden')"
+                class="inline-flex items-center gap-1.5 rounded-xl bg-amber-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-amber-700 transition cursor-pointer"
+              >
+                <span>🔑</span> Connect Cloudflare API Token →
+              </button>
+              <span class="text-xs text-slate-500 dark:text-slate-400">
+                Requires only free permissions: <code class="font-mono bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">Zone.Cache Purge</code> and <code class="font-mono bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">Zone.Analytics:Read</code>.
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
+    <!-- 2. Active Platform Cache Rules Architecture -->
+    <div class="space-y-4">
+      <div>
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>🛡️</span> Configured Cache Strategy by Content Type
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          Exact caching policies and headers enforced by middleware and Cloudflare headers across each route tier
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {PLATFORM_CACHE_RULES.map((rule) => {
+          const badgeStyles = {
+            immutable: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300',
+            cdn_edge_swr: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300',
+            short_edge: 'bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300',
+            no_store: 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300',
+            api_dynamic: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
+          };
+
+          return (
+            <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between space-y-4">
+              <div class="space-y-2">
+                <div class="flex items-center justify-between gap-2">
+                  <span class={`rounded-md px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide ${badgeStyles[rule.strategy]}`}>
+                    {rule.strategy.replace(/_/g, ' ')}
+                  </span>
+                  <span class="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                    ● Enforced
+                  </span>
+                </div>
+                <h4 class="font-bold text-sm text-slate-900 dark:text-white">
+                  {rule.name}
+                </h4>
+                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                  {rule.description}
+                </p>
+              </div>
+
+              <div class="space-y-1.5 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
+                <div class="flex items-center justify-between text-slate-500">
+                  <span>Route Pattern:</span>
+                  <code class="font-mono text-[11px] text-slate-800 dark:text-slate-200">{rule.routePattern}</code>
+                </div>
+                <div class="flex items-center justify-between text-slate-500">
+                  <span>Edge CDN TTL:</span>
+                  <strong class="font-mono text-slate-900 dark:text-white">{rule.edgeTTL}</strong>
+                </div>
+                <div class="flex items-center justify-between text-slate-500">
+                  <span>Browser TTL:</span>
+                  <strong class="font-mono text-slate-900 dark:text-white">{rule.browserTTL}</strong>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+
+    <!-- 3. Route Performance & Invalidation Table -->
+    <div class="space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🗺️</span> Route Performance &amp; Invalidation Explorer
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Searchable catalog of public calculators, hub pages, and API endpoints with one-click purge and warm tools.
+          </p>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="flex flex-wrap items-center gap-2.5">
+          <input
+            type="text"
+            id="route-search-input"
+            placeholder="Search route or URL..."
+            class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+          />
+
+          <select
+            id="route-category-filter"
+            class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+          >
+            <option value="all">All Routes ({routeCatalog.length})</option>
+            <option value="calculator">Calculators ({calculators.length})</option>
+            <option value="category">Category Hubs</option>
+            <option value="core_page">Core Pages</option>
+            <option value="api">API Routes</option>
+            <option value="admin">Admin Panel</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Desktop Route Table -->
+      <div class="hidden md:block rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50/80 dark:bg-slate-950/60 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider border-b border-slate-100 dark:border-slate-800">
+            <tr>
+              <th class="py-3.5 px-5">Route Path</th>
+              <th class="py-3.5 px-4">Name / Purpose</th>
+              <th class="py-3.5 px-4">Cache Strategy</th>
+              <th class="py-3.5 px-4 text-center">Status</th>
+              <th class="py-3.5 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="route-table-body" class="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+            {routeCatalog.map((row) => (
+              <tr
+                class="route-row hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition"
+                data-type={row.type}
+                data-path={row.path.toLowerCase()}
+                data-name={row.name.toLowerCase()}
+              >
+                <td class="py-3.5 px-5 font-mono font-bold text-slate-900 dark:text-white">
+                  <a href={row.path.replace('*', '')} target="_blank" class="hover:text-blue-600 dark:hover:text-blue-400">
+                    {row.path}
+                  </a>
+                </td>
+                <td class="py-3.5 px-4">
+                  <div class="space-y-0.5">
+                    <span class="font-bold text-slate-800 dark:text-slate-200">{row.name}</span>
+                    <span class="block text-[10px] text-slate-400">{row.category}</span>
+                  </div>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span class="rounded bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-[10px] font-mono font-bold text-slate-700 dark:text-slate-300">
+                    {row.strategy}
+                  </span>
+                </td>
+                <td class="py-3.5 px-4 text-center">
+                  {row.statusBadge === 'cached_edge' ? (
+                    <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                      ● Edge SWR
+                    </span>
+                  ) : row.statusBadge === 'protected_no_store' ? (
+                    <span class="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[10px] font-bold text-red-700 dark:bg-red-950 dark:text-red-300">
+                      🔒 No Store
+                    </span>
+                  ) : (
+                    <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                      ⚡ Dynamic
+                    </span>
+                  )}
+                </td>
+                <td class="py-3.5 px-4 text-right">
+                  <div class="flex items-center justify-end gap-1.5">
+                    {row.canPurge && (
+                      <button
+                        type="button"
+                        class="btn-quick-purge rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-bold text-red-600 hover:bg-red-50 dark:border-slate-700 dark:bg-slate-800 dark:text-red-400 dark:hover:bg-slate-700 transition cursor-pointer"
+                        data-url={row.path}
+                        title="Purge URL from Cloudflare Edge"
+                      >
+                        Purge
+                      </button>
+                    )}
+                    {row.canWarm && (
+                      <button
+                        type="button"
+                        class="btn-quick-warm rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition cursor-pointer"
+                        data-url={row.path}
+                        title="Warm Edge Cache"
+                      >
+                        Warm
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile Cards View -->
+      <div class="md:hidden space-y-3" id="route-mobile-list">
+        {routeCatalog.slice(0, 15).map((row) => (
+          <div
+            class="route-card rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-3"
+            data-type={row.type}
+            data-path={row.path.toLowerCase()}
+            data-name={row.name.toLowerCase()}
+          >
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <span class="text-[10px] font-bold text-slate-400 uppercase">{row.category}</span>
+                <h4 class="font-bold text-xs text-slate-900 dark:text-white mt-0.5">{row.name}</h4>
+                <p class="font-mono text-[11px] text-blue-600 dark:text-blue-400 mt-0.5 truncate">{row.path}</p>
+              </div>
+              <span class="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-mono font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                {row.strategy}
+              </span>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+              <span class="text-[11px] text-slate-500">Strategy: <strong>{row.statusBadge}</strong></span>
+              <div class="flex items-center gap-1.5">
+                {row.canPurge && (
+                  <button
+                    type="button"
+                    class="btn-quick-purge text-xs font-bold text-red-600 hover:underline cursor-pointer"
+                    data-url={row.path}
+                  >
+                    Purge
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- 4. Performance & Recommendations Section -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 sm:p-7 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+      <div>
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>💡</span> Performance Diagnostic Recommendations
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          Explainable, rule-based speed, CDN caching, and Worker efficiency insights
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
+        {recommendations.map((rec) => (
+          <div class="rounded-2xl border border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-950/40 space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class={`rounded-md px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wider ${
+                rec.severity === 'optimal'
+                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                  : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+              }`}>
+                {rec.severity} • {rec.category}
+              </span>
+            </div>
+            <h4 class="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">
+              {rec.title}
+            </h4>
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              {rec.recommendation}
+            </p>
+          </div>
+        ))}
+      </div>
+    </div>
+
+  </div>
+
+  <!-- PURGE CACHE MODAL -->
+  <div
+    id="modal-purge"
+    class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-xs"
+    onclick="if (event.target === this) this.classList.add('hidden')"
+  >
+    <div class="min-h-full flex items-center justify-center">
+      <div class="w-full max-w-lg rounded-3xl bg-white p-6 sm:p-7 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-5">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+          <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🗑️</span> Purge Cloudflare Edge Cache
+          </h3>
+          <button
+            type="button"
+            id="btn-close-purge"
+            onclick="document.getElementById('modal-purge')?.classList.add('hidden')"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Purge Target Scope</label>
+            <select id="purge-scope-select" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+              <option value="calculator">Specific Calculator</option>
+              <option value="url">Custom URL Path</option>
+              <option value="category">Entire Category Hub</option>
+              <option value="homepage">Homepage Only (/)</option>
+              <option value="everything">⚠️ Entire Cache (Purge Everything)</option>
+            </select>
+          </div>
+
+          <!-- Calculator Selector -->
+          <div id="purge-calc-group">
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Select Calculator</label>
+            <select id="purge-calc-select" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+              {calculators.map((c) => (
+                <option value={c.slug}>{c.name} ({c.category})</option>
+              ))}
+            </select>
+          </div>
+
+          <!-- URL Input -->
+          <div id="purge-url-group" class="hidden">
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Relative Path (e.g. /finance/emi-calculator/)</label>
+            <input type="text" id="purge-url-input" placeholder="/finance/emi-calculator/" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+          </div>
+
+          <!-- Category Selector -->
+          <div id="purge-cat-group" class="hidden">
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">Select Category Hub</label>
+            <select id="purge-cat-select" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+              {categories.map((cat) => (
+                <option value={cat.name.toLowerCase()}>{cat.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <!-- Warning for Purge Everything -->
+          <div id="purge-everything-warning" class="hidden rounded-2xl bg-red-50 p-4 border border-red-200 dark:bg-red-950/50 dark:border-red-900/60 space-y-2">
+            <div class="flex items-center gap-2 text-xs font-black text-red-900 dark:text-red-200">
+              <span>🚨</span> DANGER: Purge All Edge Cache
+            </div>
+            <p class="text-xs text-red-700 dark:text-red-300 leading-relaxed">
+              This forces all global Cloudflare edge nodes to drop cached HTML and assets. Subsequent requests will temporarily trigger origin Worker executions until the cache warms again. Content in database and codebase is completely safe and unaffected.
+            </p>
+            <label class="flex items-center gap-2 text-xs font-bold text-red-900 dark:text-red-200 pt-1 cursor-pointer">
+              <input type="checkbox" id="confirm-everything-checkbox" class="rounded border-red-300 text-red-600" />
+              <span>I confirm I want to clear all edge cache across the entire domain.</span>
+            </label>
+          </div>
+
+          <div id="purge-status-msg" class="hidden text-xs p-3 rounded-xl"></div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <button
+            type="button"
+            id="btn-cancel-purge"
+            onclick="document.getElementById('modal-purge')?.classList.add('hidden')"
+            class="rounded-xl px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button type="button" id="btn-submit-purge" class="rounded-xl bg-red-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-red-700 transition cursor-pointer">
+            Execute Purge
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CACHE WARMING MODAL -->
+  <div
+    id="modal-warm"
+    class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-xs"
+    onclick="if (event.target === this) this.classList.add('hidden')"
+  >
+    <div class="min-h-full flex items-center justify-center">
+      <div class="w-full max-w-lg rounded-3xl bg-white p-6 sm:p-7 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-5">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+          <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🔥</span> Safe Edge Cache Warming
+          </h3>
+          <button
+            type="button"
+            id="btn-close-warm"
+            onclick="document.getElementById('modal-warm')?.classList.add('hidden')"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="space-y-3 text-xs">
+          <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+            Pre-populates Cloudflare edge nodes with freshly rendered static HTML. To protect your Cloudflare Free tier quotas, warming is strictly rate-limited and focused on top traffic hubs.
+          </p>
+
+          <div>
+            <label class="block font-bold text-slate-800 dark:text-slate-200 mb-1.5">Preset Warming Batch</label>
+            <div class="space-y-1.5 p-3 rounded-2xl bg-slate-50 dark:bg-slate-950/60 border border-slate-100 dark:border-slate-800 font-mono text-[11px]">
+              <div>• / (Homepage)</div>
+              <div>• /finance/emi-calculator/</div>
+              <div>• /health/bmi-calculator/</div>
+              <div>• /general/age-calculator/</div>
+              <div>• /construction/steel-weight-calculator/</div>
+            </div>
+          </div>
+
+          <div id="warm-results-container" class="hidden space-y-1.5 pt-2">
+            <label class="block font-bold text-slate-800 dark:text-slate-200">Execution Results</label>
+            <div id="warm-results-list" class="space-y-1"></div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <button
+            type="button"
+            id="btn-cancel-warm"
+            onclick="document.getElementById('modal-warm')?.classList.add('hidden')"
+            class="rounded-xl px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition cursor-pointer"
+          >
+            Close
+          </button>
+          <button type="button" id="btn-submit-warm" class="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition cursor-pointer">
+            Run Cache Warming
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CLOUDFLARE API CONFIG MODAL -->
+  <div
+    id="modal-cf"
+    class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-xs"
+    onclick="if (event.target === this) this.classList.add('hidden')"
+  >
+    <div class="min-h-full flex items-center justify-center">
+      <div class="w-full max-w-lg rounded-3xl bg-white p-6 sm:p-7 shadow-2xl dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-5">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+          <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span>⚙️</span> Cloudflare API Integration
+          </h3>
+          <button
+            type="button"
+            id="btn-close-cf"
+            onclick="document.getElementById('modal-cf')?.classList.add('hidden')"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div class="space-y-4 text-xs">
+          <div class="rounded-2xl bg-blue-50 p-3.5 border border-blue-100 dark:bg-blue-950/40 dark:border-blue-900/40 text-blue-800 dark:text-blue-300 leading-relaxed">
+            <strong>Principle of Least Privilege:</strong> Do not use your Global API Key. Create a custom API token with only these 2 permissions:
+            <ul class="list-disc list-inside mt-1 space-y-0.5 text-[11px]">
+              <li><code>Zone - Cache Purge - Purge</code></li>
+              <li><code>Zone - Analytics - Read</code></li>
+            </ul>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Cloudflare Scoped API Token</label>
+            <input
+              type="password"
+              id="input-cf-token"
+              placeholder={cfConfig.maskedToken || 'Enter Cloudflare API token...'}
+              class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-mono text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+            />
+            <span class="text-[10px] text-slate-400 mt-1 block">Tokens are stored securely in D1 and never sent to browser JavaScript.</span>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Zone ID</label>
+            <input
+              type="text"
+              id="input-cf-zone"
+              value={cfConfig.zoneId || ''}
+              placeholder="e.g. 023e105f4ecef8ad9ca31a8372d0c353"
+              class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-mono text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+            />
+            <span class="text-[10px] text-slate-400 mt-1 block">Found on Cloudflare dashboard overview page for aifreecalculator.com.</span>
+          </div>
+
+          <div id="cf-status-msg" class="hidden text-xs p-3 rounded-xl"></div>
+        </div>
+
+        <div class="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+          {cfConfig.status === 'connected' ? (
+            <button type="button" id="btn-disconnect-cf" class="text-xs font-bold text-red-600 hover:underline cursor-pointer">
+              Disconnect Token
+            </button>
+          ) : (
+            <div></div>
+          )}
+          <div class="flex items-center gap-2.5">
+            <button
+              type="button"
+              id="btn-cancel-cf"
+              onclick="document.getElementById('modal-cf')?.classList.add('hidden')"
+              class="rounded-xl px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button type="button" id="btn-save-cf" class="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition cursor-pointer">
+              Test &amp; Save
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    // Modal Helpers
+    const modalPurge = document.getElementById('modal-purge');
+    const modalWarm = document.getElementById('modal-warm');
+    const modalCf = document.getElementById('modal-cf');
+
+    function openModal(modal) {
+      if (!modal) return;
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal(modal) {
+      if (!modal) return;
+      modal.classList.add('hidden');
+      document.body.style.overflow = '';
+    }
+
+    // Modal Triggers & Controls
+    document.getElementById('btn-open-purge-modal')?.addEventListener('click', () => openModal(modalPurge));
+    document.getElementById('btn-close-purge')?.addEventListener('click', () => closeModal(modalPurge));
+    document.getElementById('btn-cancel-purge')?.addEventListener('click', () => closeModal(modalPurge));
+
+    document.getElementById('btn-open-warm-modal')?.addEventListener('click', () => openModal(modalWarm));
+    document.getElementById('btn-close-warm')?.addEventListener('click', () => closeModal(modalWarm));
+    document.getElementById('btn-cancel-warm')?.addEventListener('click', () => closeModal(modalWarm));
+
+    document.getElementById('btn-open-cf-modal')?.addEventListener('click', () => openModal(modalCf));
+    document.getElementById('btn-connect-cf-alert')?.addEventListener('click', () => openModal(modalCf));
+    document.getElementById('btn-close-cf')?.addEventListener('click', () => closeModal(modalCf));
+    document.getElementById('btn-cancel-cf')?.addEventListener('click', () => closeModal(modalCf));
+
+    // Close on Escape key
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeModal(modalPurge);
+        closeModal(modalWarm);
+        closeModal(modalCf);
+      }
+    });
+
+    // Search & Filter Routes
+    const searchInput = document.getElementById('route-search-input');
+    const catFilter = document.getElementById('route-category-filter');
+    const tableRows = document.querySelectorAll('.route-row');
+    const mobileCards = document.querySelectorAll('.route-card');
+
+    function filterRoutes() {
+      const q = (searchInput?.value || '').trim().toLowerCase();
+      const type = catFilter?.value || 'all';
+
+      function checkItem(el) {
+        const path = el.dataset.path || '';
+        const name = el.dataset.name || '';
+        const itemType = el.dataset.type || '';
+        const matchesSearch = !q || path.includes(q) || name.includes(q);
+        const matchesType = type === 'all' || itemType === type;
+        return matchesSearch && matchesType;
+      }
+
+      tableRows.forEach((row) => {
+        if (checkItem(row)) row.classList.remove('hidden');
+        else row.classList.add('hidden');
+      });
+
+      mobileCards.forEach((card) => {
+        if (checkItem(card)) card.classList.remove('hidden');
+        else card.classList.add('hidden');
+      });
+    }
+
+    searchInput?.addEventListener('input', filterRoutes);
+    catFilter?.addEventListener('change', filterRoutes);
+
+    // Purge Scope Switcher
+    const purgeScopeSelect = document.getElementById('purge-scope-select');
+    const purgeCalcGroup = document.getElementById('purge-calc-group');
+    const purgeUrlGroup = document.getElementById('purge-url-group');
+    const purgeCatGroup = document.getElementById('purge-cat-group');
+    const purgeEverythingWarning = document.getElementById('purge-everything-warning');
+    const confirmEverythingCheckbox = document.getElementById('confirm-everything-checkbox');
+
+    purgeScopeSelect?.addEventListener('change', () => {
+      const val = purgeScopeSelect.value;
+      purgeCalcGroup?.classList.toggle('hidden', val !== 'calculator');
+      purgeUrlGroup?.classList.toggle('hidden', val !== 'url');
+      purgeCatGroup?.classList.toggle('hidden', val !== 'category');
+      purgeEverythingWarning?.classList.toggle('hidden', val !== 'everything');
+    });
+
+    // Execute Purge
+    const btnSubmitPurge = document.getElementById('btn-submit-purge');
+    const purgeStatusMsg = document.getElementById('purge-status-msg');
+
+    async function executePurgeRequest(target, value, confirmEverything) {
+      if (!btnSubmitPurge || !purgeStatusMsg) return;
+      btnSubmitPurge.disabled = true;
+      purgeStatusMsg.classList.remove('hidden', 'bg-red-50', 'text-red-700', 'bg-emerald-50', 'text-emerald-700');
+      purgeStatusMsg.classList.add('bg-blue-50', 'text-blue-700');
+      purgeStatusMsg.textContent = 'Sending purge command to Cloudflare CDN edge...';
+
+      try {
+        const res = await fetch('/api/admin/performance/purge', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ target, value, confirmEverything }),
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          purgeStatusMsg.classList.remove('bg-blue-50', 'text-blue-700');
+          purgeStatusMsg.classList.add('bg-emerald-50', 'text-emerald-700');
+          purgeStatusMsg.textContent = `✓ ${data.message}`;
+          setTimeout(() => {
+            closeModal(modalPurge);
+            purgeStatusMsg.classList.add('hidden');
+          }, 2500);
+        } else {
+          purgeStatusMsg.classList.remove('bg-blue-50', 'text-blue-700');
+          purgeStatusMsg.classList.add('bg-red-50', 'text-red-700');
+          purgeStatusMsg.textContent = data.error || 'Purge failed.';
+        }
+      } catch {
+        purgeStatusMsg.classList.remove('bg-blue-50', 'text-blue-700');
+        purgeStatusMsg.classList.add('bg-red-50', 'text-red-700');
+        purgeStatusMsg.textContent = 'Network error communicating with server.';
+      } finally {
+        btnSubmitPurge.disabled = false;
+      }
+    }
+
+    btnSubmitPurge?.addEventListener('click', () => {
+      const target = purgeScopeSelect?.value || 'calculator';
+      let value = '';
+      if (target === 'calculator') {
+        value = document.getElementById('purge-calc-select')?.value || '';
+      } else if (target === 'url') {
+        value = document.getElementById('purge-url-input')?.value || '';
+      } else if (target === 'category') {
+        value = document.getElementById('purge-cat-select')?.value || '';
+      }
+
+      const confirmEverything = confirmEverythingCheckbox?.checked || false;
+      if (target === 'everything' && !confirmEverything) {
+        alert('Please check the confirmation box before purging everything.');
+        return;
+      }
+
+      executePurgeRequest(target, value, confirmEverything);
+    });
+
+    // Quick Purge buttons in table
+    document.querySelectorAll('.btn-quick-purge').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const url = btn.dataset.url;
+        if (!url) return;
+        if (!confirm(`Purge cache for "${url}"?`)) return;
+
+        btn.disabled = true;
+        try {
+          const res = await fetch('/api/admin/performance/purge', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ target: 'url', value: url }),
+          });
+          const data = await res.json();
+          if (res.ok) alert(`✓ Purged: ${url}`);
+          else alert(data.error || 'Purge failed.');
+        } catch {
+          alert('Network error.');
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    });
+
+    // Quick Warm buttons in table
+    document.querySelectorAll('.btn-quick-warm').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const url = btn.dataset.url;
+        if (!url) return;
+        btn.disabled = true;
+        try {
+          const res = await fetch('/api/admin/performance/warm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ urls: [url] }),
+          });
+          const data = await res.json();
+          if (res.ok && data.results?.[0]) {
+            const r = data.results[0];
+            alert(`✓ Warmed in ${r.timeMs}ms (Status: ${r.statusCode}, Cache: ${r.cfCacheStatus})`);
+          } else {
+            alert('Warming failed.');
+          }
+        } catch {
+          alert('Network error.');
+        } finally {
+          btn.disabled = false;
+        }
+      });
+    });
+
+    // Batch Cache Warming
+    const btnSubmitWarm = document.getElementById('btn-submit-warm');
+    const warmResultsContainer = document.getElementById('warm-results-container');
+    const warmResultsList = document.getElementById('warm-results-list');
+
+    btnSubmitWarm?.addEventListener('click', async () => {
+      btnSubmitWarm.disabled = true;
+      warmResultsContainer?.classList.remove('hidden');
+      if (warmResultsList) warmResultsList.innerHTML = '<div class="text-slate-400">Warming top pages...</div>';
+
+      try {
+        const res = await fetch('/api/admin/performance/warm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            urls: [
+              '/',
+              '/finance/emi-calculator/',
+              '/health/bmi-calculator/',
+              '/general/age-calculator/',
+              '/construction/steel-weight-calculator/',
+            ],
+          }),
+        });
+
+        const data = await res.json();
+        if (res.ok && data.results) {
+          if (warmResultsList) {
+            warmResultsList.innerHTML = data.results
+              .map(
+                (r) =>
+                  `<div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 font-mono text-[11px]">
+                    <span>${r.url}</span>
+                    <span class="${r.success ? 'text-emerald-600' : 'text-red-600'} font-bold">${r.timeMs}ms (${r.cfCacheStatus})</span>
+                  </div>`
+              )
+              .join('');
+          }
+        }
+      } catch {
+        if (warmResultsList) warmResultsList.innerHTML = '<div class="text-red-600">Failed to warm cache.</div>';
+      } finally {
+        btnSubmitWarm.disabled = false;
+      }
+    });
+
+    // Save Cloudflare Config
+    const btnSaveCf = document.getElementById('btn-save-cf');
+    const btnDisconnectCf = document.getElementById('btn-disconnect-cf');
+    const inputCfToken = document.getElementById('input-cf-token');
+    const inputCfZone = document.getElementById('input-cf-zone');
+    const cfStatusMsg = document.getElementById('cf-status-msg');
+
+    btnSaveCf?.addEventListener('click', async () => {
+      const apiToken = inputCfToken?.value?.trim() || '';
+      const zoneId = inputCfZone?.value?.trim() || '';
+
+      if (!apiToken || !zoneId) {
+        alert('Both Cloudflare API Token and Zone ID are required.');
+        return;
+      }
+
+      btnSaveCf.disabled = true;
+      cfStatusMsg?.classList.remove('hidden', 'bg-red-50', 'text-red-700', 'bg-emerald-50', 'text-emerald-700');
+      cfStatusMsg?.classList.add('bg-blue-50', 'text-blue-700');
+      if (cfStatusMsg) cfStatusMsg.textContent = 'Verifying credentials with Cloudflare API...';
+
+      try {
+        const res = await fetch('/api/admin/performance/cloudflare-config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ apiToken, zoneId }),
+        });
+
+        const data = await res.json();
+        if (res.ok && data.success) {
+          cfStatusMsg?.classList.remove('bg-blue-50', 'text-blue-700');
+          cfStatusMsg?.classList.add('bg-emerald-50', 'text-emerald-700');
+          if (cfStatusMsg) cfStatusMsg.textContent = '✓ Connected successfully! Reloading...';
+          setTimeout(() => window.location.reload(), 1200);
+        } else {
+          cfStatusMsg?.classList.remove('bg-blue-50', 'text-blue-700');
+          cfStatusMsg?.classList.add('bg-red-50', 'text-red-700');
+          if (cfStatusMsg) cfStatusMsg.textContent = data.error || 'Verification failed.';
+        }
+      } catch {
+        cfStatusMsg?.classList.remove('bg-blue-50', 'text-blue-700');
+        cfStatusMsg?.classList.add('bg-red-50', 'text-red-700');
+        if (cfStatusMsg) cfStatusMsg.textContent = 'Network error verifying credentials.';
+      } finally {
+        btnSaveCf.disabled = false;
+      }
+    });
+
+    btnDisconnectCf?.addEventListener('click', async () => {
+      if (!confirm('Are you sure you want to disconnect Cloudflare API credentials?')) return;
+      try {
+        await fetch('/api/admin/performance/cloudflare-config', { method: 'DELETE' });
+        window.location.reload();
+      } catch {
+        alert('Failed to disconnect.');
+      }
+    });
+  </script>
+</AdminLayout>

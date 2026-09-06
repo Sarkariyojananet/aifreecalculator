@@ -1,34 +1,171 @@
 ---
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { getRedirectRules } from '../../../lib/admin/content-store';
+import { calculators, categories } from '../../../data/calculators';
+import {
+  getRedirectSummaryKPIs,
+  get404Logs,
+  getRedirectHistory,
+} from '../../../lib/redirects/store';
+import { auditAllRedirectRules } from '../../../lib/redirects/validator';
 
+// 1. Fetch live metrics and data from D1
 const redirects = await getRedirectRules(Astro.locals);
+const chainReport = auditAllRedirectRules(redirects);
+const kpis = await getRedirectSummaryKPIs(Astro.locals);
+const active404Data = await get404Logs({ status: 'active', limit: 100 }, Astro.locals);
+const ignored404Data = await get404Logs({ status: 'ignored', limit: 50 }, Astro.locals);
+const redirectHistory = await getRedirectHistory(25, Astro.locals);
+
+// 2. Prepare target options for modal destination picker
+const allTargets = [
+  ...categories.map((c) => ({
+    path: `/${c.name.toLowerCase()}/`,
+    label: `[Category] ${c.name} Calculators`,
+    category: c.name,
+  })),
+  ...calculators.map((c) => ({
+    path: c.path.endsWith('/') ? c.path : `${c.path}/`,
+    label: `[${c.category}] ${c.name}`,
+    category: c.category,
+  })),
+  { path: '/', label: '[Home] Homepage', category: 'General' },
+  { path: '/all-calculators/', label: '[Directory] All Calculators', category: 'General' },
+  { path: '/about/', label: '[Page] About Us', category: 'General' },
+  { path: '/contact/', label: '[Page] Contact Us', category: 'General' },
+];
 ---
 
-<AdminLayout title="Redirects Manager (301/302) | Calculator CMS" sectionTitle="Redirects Manager" activeSection="redirects">
-  <div class="space-y-6 max-w-5xl mx-auto pb-12">
+<AdminLayout title="404 Monitor & Smart Redirects | Calculator CMS" sectionTitle="Redirects & 404 Monitor" activeSection="redirects">
+  <div class="space-y-6 max-w-6xl mx-auto pb-16">
     
-    <!-- Top Action Header -->
+    <!-- Top Header Banner -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
       <div>
-        <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-          URL Redirect Rules (301 &amp; 302)
-        </h2>
-        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Manage permanent SEO redirects to preserve backlink authority, prevent circular loops, and eliminate 404 dead links.
+        <div class="flex items-center gap-2.5">
+          <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-100 text-lg dark:bg-blue-900/60">
+            🧭
+          </span>
+          <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            404 Monitor &amp; Smart Redirects
+          </h2>
+        </div>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1.5 max-w-2xl">
+          Real-time 404 error detection, rule-based smart destination suggestions, loop-proof 301/302 redirection, and redirect chain optimization.
         </p>
       </div>
 
-      <button
-        type="button"
-        id="btn-toggle-add-redirect"
-        class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition cursor-pointer self-start sm:self-auto"
-      >
-        <span>➕</span> Add Redirect Rule
-      </button>
+      <div class="flex items-center gap-2 self-start sm:self-auto shrink-0">
+        <button
+          type="button"
+          id="btn-toggle-add-redirect"
+          class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition cursor-pointer"
+        >
+          <span>➕</span> Add Redirect Rule
+        </button>
+      </div>
     </div>
 
-    <!-- Add / Edit Redirect Form Card -->
+    <!-- 1. KPI Summary Cards (4 Cards) -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex items-center justify-between text-slate-400 dark:text-slate-500">
+          <span class="text-xs font-bold uppercase tracking-wider">Active 404 URLs</span>
+          <span class="text-base">🧭</span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            {kpis.totalActive404s}
+          </span>
+          {kpis.critical404s > 0 && (
+            <span class="rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-bold text-red-700 dark:bg-red-950 dark:text-red-300">
+              {kpis.critical404s} critical
+            </span>
+          )}
+        </div>
+        <p class="mt-1 text-[11px] text-slate-400">Unresolved 404 paths</p>
+      </div>
+
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex items-center justify-between text-slate-400 dark:text-slate-500">
+          <span class="text-xs font-bold uppercase tracking-wider">High Priority</span>
+          <span class="text-base">🚨</span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span class={`text-2xl font-black tracking-tight ${kpis.highPriority404s > 0 ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-white'}`}>
+            {kpis.highPriority404s}
+          </span>
+          <span class="text-[10px] text-slate-400">URLs</span>
+        </div>
+        <p class="mt-1 text-[11px] text-slate-400">Recurring traffic or GSC hits</p>
+      </div>
+
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex items-center justify-between text-slate-400 dark:text-slate-500">
+          <span class="text-xs font-bold uppercase tracking-wider">Total 404 Hits</span>
+          <span class="text-base">📈</span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            {kpis.total404Hits.toLocaleString()}
+          </span>
+          <span class="text-[10px] text-slate-400">hits</span>
+        </div>
+        <p class="mt-1 text-[11px] text-slate-400">Recorded across all 404s</p>
+      </div>
+
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex items-center justify-between text-slate-400 dark:text-slate-500">
+          <span class="text-xs font-bold uppercase tracking-wider">Redirected URLs</span>
+          <span class="text-base">🔀</span>
+        </div>
+        <div class="mt-2 flex items-baseline gap-2">
+          <span class="text-2xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">
+            {kpis.redirectedCount}
+          </span>
+          <span class="text-[10px] text-slate-400">({kpis.activeRulesCount} active rules)</span>
+        </div>
+        <p class="mt-1 text-[11px] text-slate-400">Resolved via 301/302</p>
+      </div>
+    </div>
+
+    <!-- Chains Alert Banner (if chains detected) -->
+    {chainReport.chains.length > 0 && (
+      <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/60 dark:bg-amber-950/30">
+        <div class="flex items-start justify-between gap-3">
+          <div class="flex items-start gap-2.5">
+            <span class="text-base shrink-0">⚠️</span>
+            <div>
+              <h4 class="text-xs font-bold text-amber-900 dark:text-amber-200">
+                {chainReport.chains.length} Redirect Chain(s) Detected
+              </h4>
+              <p class="text-[11px] text-amber-700 dark:text-amber-300 mt-0.5">
+                Redirect chains (A → B → C) slow down page loads and dilute SEO authority. Collapsing them directly to final destinations is recommended.
+              </p>
+              <div class="mt-2 space-y-1.5">
+                {chainReport.chains.slice(0, 3).map((ch) => (
+                  <div class="text-[11px] font-mono text-slate-800 dark:text-slate-200 bg-white/70 dark:bg-slate-900/70 rounded-lg px-2.5 py-1 flex items-center justify-between gap-2">
+                    <span class="truncate">
+                      <strong>{ch.source}</strong> → {ch.currentDestination} → <strong class="text-emerald-600 dark:text-emerald-400">{ch.finalDestination}</strong> ({ch.hopCount} hops)
+                    </span>
+                    <button
+                      type="button"
+                      class="btn-collapse-chain shrink-0 rounded-md bg-amber-600 px-2 py-0.5 text-[10px] font-bold text-white hover:bg-amber-700 cursor-pointer"
+                      data-source={ch.source}
+                      data-final={ch.finalDestination}
+                    >
+                      Collapse to Final
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
+    <!-- Add / Edit Manual Redirect Card (Collapsible) -->
     <div id="redirect-form-card" class="hidden rounded-3xl border border-blue-200 bg-blue-50/50 p-6 dark:border-blue-900/60 dark:bg-blue-950/30 space-y-4">
       <div class="flex items-center justify-between border-b border-blue-100 pb-3 dark:border-blue-900/40">
         <h3 id="redir-modal-title" class="text-sm font-bold text-blue-900 dark:text-blue-200 flex items-center gap-2">
@@ -64,7 +201,7 @@ const redirects = await getRedirectRules(Astro.locals);
               type="text"
               id="redir-dest"
               required
-              placeholder="/construction/rcc-slab-steel-calculator/"
+              placeholder="/finance/emi-calculator/"
               class="mt-1.5 w-full rounded-2xl border border-slate-300 bg-white py-2.5 px-3.5 text-xs font-mono font-semibold text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
             />
           </div>
@@ -97,8 +234,225 @@ const redirects = await getRedirectRules(Astro.locals);
       </form>
     </div>
 
-    <!-- Active Redirects List -->
-    <div class="space-y-4">
+    <!-- 2. Primary Tab Navigation (4 Tabs) -->
+    <div class="flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto">
+      <button
+        type="button"
+        id="tab-btn-404"
+        class="tab-nav-btn active flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl bg-blue-600 text-white cursor-pointer transition"
+      >
+        <span>🧭</span> 404 Monitor
+        <span class="rounded-full bg-blue-500/40 px-1.5 py-0.2 text-[10px]">
+          {active404Data.total}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        id="tab-btn-rules"
+        class="tab-nav-btn flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer transition"
+      >
+        <span>🔀</span> Active Redirects
+        <span class="rounded-full bg-slate-200 px-1.5 py-0.2 text-[10px] text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+          {redirects.length}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        id="tab-btn-ignored"
+        class="tab-nav-btn flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer transition"
+      >
+        <span>🔇</span> Ignored URLs
+        <span class="rounded-full bg-slate-200 px-1.5 py-0.2 text-[10px] text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+          {ignored404Data.total}
+        </span>
+      </button>
+
+      <button
+        type="button"
+        id="tab-btn-history"
+        class="tab-nav-btn flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-xl text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer transition"
+      >
+        <span>📜</span> History &amp; Audit
+        <span class="rounded-full bg-slate-200 px-1.5 py-0.2 text-[10px] text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+          {redirectHistory.length}
+        </span>
+      </button>
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- TAB PANEL 1: 404 MONITOR -->
+    <!-- ================================================================ -->
+    <div id="tab-panel-404" class="tab-panel space-y-4">
+      
+      <!-- Filters bar -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 rounded-2xl border border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+        <div class="flex flex-wrap items-center gap-1.5 text-xs font-bold">
+          <span class="text-slate-400 mr-1 text-[11px]">Priority:</span>
+          <button type="button" class="btn-filter-prio active px-2.5 py-1 rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400 cursor-pointer" data-prio="all">All</button>
+          <button type="button" class="btn-filter-prio px-2.5 py-1 rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 cursor-pointer" data-prio="critical">🔴 Critical</button>
+          <button type="button" class="btn-filter-prio px-2.5 py-1 rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 cursor-pointer" data-prio="high">🟠 High</button>
+          <button type="button" class="btn-filter-prio px-2.5 py-1 rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 cursor-pointer" data-prio="medium">🟡 Medium</button>
+          <button type="button" class="btn-filter-prio px-2.5 py-1 rounded-lg text-slate-600 hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 cursor-pointer" data-prio="low">🔵 Low</button>
+        </div>
+
+        <div class="w-full sm:w-64">
+          <input
+            type="text"
+            id="input-search-404"
+            placeholder="Search 404 URL or suggestion..."
+            class="w-full rounded-xl border border-slate-300 bg-slate-50 py-1.5 px-3 text-xs text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          />
+        </div>
+      </div>
+
+      <!-- 404 Logs Table / Card List -->
+      {active404Data.logs.length === 0 ? (
+        <div class="rounded-3xl border border-dashed border-slate-200 bg-white p-12 text-center text-xs text-slate-400 dark:border-slate-800 dark:bg-slate-900">
+          <p class="text-3xl mb-2">🎉</p>
+          <p class="font-bold text-base text-slate-700 dark:text-slate-200">Zero active 404 URLs detected!</p>
+          <p class="mt-1 text-slate-400">All requested paths correspond to existing pages or active redirects.</p>
+        </div>
+      ) : (
+        <div class="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:bg-slate-800/60 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                <tr>
+                  <th class="py-3 px-4">404 Path</th>
+                  <th class="py-3 px-3">Hits</th>
+                  <th class="py-3 px-3">Priority</th>
+                  <th class="py-3 px-3">Smart Suggestion</th>
+                  <th class="py-3 px-3">Last Seen</th>
+                  <th class="py-3 px-4 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-404-rows" class="divide-y divide-slate-100 dark:divide-slate-800">
+                {active404Data.logs.map((item) => (
+                  <tr class="item-row-404 hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition" data-prio={item.priority} data-path={item.path}>
+                    <!-- 404 Path -->
+                    <td class="py-3.5 px-4 font-mono font-semibold text-slate-900 dark:text-white">
+                      <div class="flex items-center gap-2">
+                        <span class="text-red-500">404</span>
+                        <span class="truncate max-w-xs sm:max-w-sm" title={item.path}>{item.path}</span>
+                      </div>
+                      {item.referrer && (
+                        <div class="mt-0.5 text-[10px] text-slate-400 font-sans truncate max-w-xs" title={`Referrer: ${item.referrer}`}>
+                          Ref: {item.referrer}
+                        </div>
+                      )}
+                    </td>
+
+                    <!-- Hits -->
+                    <td class="py-3.5 px-3">
+                      <div class="font-bold text-slate-900 dark:text-white">
+                        {item.hitCount} <span class="text-[10px] font-normal text-slate-400">total</span>
+                      </div>
+                      {item.recentHitCount > 1 && (
+                        <div class="text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                          +{item.recentHitCount} recent
+                        </div>
+                      )}
+                    </td>
+
+                    <!-- Priority Badge -->
+                    <td class="py-3.5 px-3">
+                      {item.priority === 'critical' && (
+                        <span class="inline-flex items-center gap-1 rounded-full bg-red-100 px-2.5 py-0.5 text-[10px] font-black text-red-700 dark:bg-red-950 dark:text-red-300">
+                          <span class="h-1.5 w-1.5 rounded-full bg-red-600 animate-pulse"></span> Critical
+                        </span>
+                      )}
+                      {item.priority === 'high' && (
+                        <span class="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-bold text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                          High
+                        </span>
+                      )}
+                      {item.priority === 'medium' && (
+                        <span class="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                          Medium
+                        </span>
+                      )}
+                      {item.priority === 'low' && (
+                        <span class="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2.5 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400">
+                          Low
+                        </span>
+                      )}
+                    </td>
+
+                    <!-- Smart Suggestion -->
+                    <td class="py-3.5 px-3">
+                      {item.suggestedDestination ? (
+                        <div>
+                          <div class="flex items-center gap-1.5">
+                            <span class="font-mono text-emerald-600 dark:text-emerald-400 font-semibold truncate max-w-xs" title={item.suggestedDestination}>
+                              → {item.suggestedDestination}
+                            </span>
+                            <span class="rounded-md bg-emerald-50 px-1.5 py-0.2 text-[9px] font-bold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                              {item.suggestionConfidence}% match
+                            </span>
+                          </div>
+                          {item.suggestionReason && (
+                            <p class="text-[10px] text-slate-400 truncate max-w-xs mt-0.5">
+                              {item.suggestionReason}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <span class="text-slate-400 text-[11px] italic">
+                          No safe suggestion
+                        </span>
+                      )}
+                    </td>
+
+                    <!-- Last Seen -->
+                    <td class="py-3.5 px-3 text-slate-500 dark:text-slate-400 text-[11px] whitespace-nowrap">
+                      {new Date(item.lastSeen).toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </td>
+
+                    <!-- Actions -->
+                    <td class="py-3.5 px-4 text-right whitespace-nowrap">
+                      <div class="flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          class="btn-review-404 rounded-lg bg-blue-600 px-3 py-1 text-[11px] font-bold text-white shadow-xs hover:bg-blue-700 cursor-pointer"
+                          data-path={item.path}
+                          data-hits={item.hitCount}
+                          data-recent={item.recentHitCount}
+                          data-first={item.firstSeen}
+                          data-last={item.lastSeen}
+                          data-dest={item.suggestedDestination || ''}
+                          data-confidence={item.suggestionConfidence || 0}
+                          data-reason={item.suggestionReason || ''}
+                          data-ref={item.referrer || ''}
+                          data-device={item.deviceCategory}
+                          data-impressions={item.gscImpressions || 0}
+                        >
+                          Review &amp; Redirect
+                        </button>
+                        <button
+                          type="button"
+                          class="btn-ignore-404 rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+                          data-path={item.path}
+                          title="Mute this 404 URL"
+                        >
+                          Ignore
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- TAB PANEL 2: ACTIVE REDIRECT RULES -->
+    <!-- ================================================================ -->
+    <div id="tab-panel-rules" class="tab-panel hidden space-y-4">
       <div class="flex items-center justify-between">
         <h3 class="text-sm font-bold text-slate-900 dark:text-white">
           Active Redirect Rules ({redirects.length})
@@ -123,14 +477,25 @@ const redirects = await getRedirectRules(Astro.locals);
                   <div class="font-mono text-xs font-bold text-slate-900 dark:text-white truncate">
                     {r.source} → <span class="text-blue-600 dark:text-blue-400">{r.destination}</span>
                   </div>
-                  <div class="text-[10px] text-slate-400">Created: {new Date(r.createdAt).toLocaleDateString()}</div>
+                  <div class="text-[10px] text-slate-400 mt-0.5 flex items-center gap-3">
+                    <span>Created: {new Date(r.createdAt).toLocaleDateString()}</span>
+                    {typeof r.hits === 'number' && r.hits > 0 && (
+                      <span class="text-emerald-600 dark:text-emerald-400 font-semibold">{r.hits} hits</span>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div class="flex items-center gap-2 self-start sm:self-auto">
-                <span class="rounded-full bg-emerald-50 px-2.5 py-0.5 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-                  Active
-                </span>
+              <div class="flex items-center gap-2 self-start sm:self-auto shrink-0">
+                <a
+                  href={r.source}
+                  target="_blank"
+                  rel="noreferrer"
+                  class="rounded-lg bg-slate-50 border border-slate-200 px-2.5 py-1 text-[11px] font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+                  title="Test redirect in new tab"
+                >
+                  ↗ Test
+                </a>
                 <button
                   type="button"
                   class="btn-edit-redir rounded-lg bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
@@ -156,24 +521,348 @@ const redirects = await getRedirectRules(Astro.locals);
       )}
     </div>
 
+    <!-- ================================================================ -->
+    <!-- TAB PANEL 3: IGNORED 404 URLS -->
+    <!-- ================================================================ -->
+    <div id="tab-panel-ignored" class="tab-panel hidden space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">
+            Ignored 404 URLs ({ignored404Data.total})
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Bot scans and low-value 404s muted from the active alert queue.
+          </p>
+        </div>
+      </div>
+
+      {ignored404Data.logs.length === 0 ? (
+        <div class="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center text-xs text-slate-400 dark:border-slate-800 dark:bg-slate-900">
+          <p class="text-2xl mb-1">🔇</p>
+          <p class="font-bold text-slate-600 dark:text-slate-300">No ignored URLs.</p>
+          <p class="mt-1">When you mute noisy 404s, they will appear here for archival reference.</p>
+        </div>
+      ) : (
+        <div class="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:bg-slate-800/60 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+              <tr>
+                <th class="py-3 px-4">Muted 404 Path</th>
+                <th class="py-3 px-3">Total Hits</th>
+                <th class="py-3 px-3">Last Seen</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              {ignored404Data.logs.map((item) => (
+                <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
+                  <td class="py-3.5 px-4 font-mono text-slate-700 dark:text-slate-300">
+                    {item.path}
+                  </td>
+                  <td class="py-3.5 px-3 text-slate-600 dark:text-slate-400 font-bold">
+                    {item.hitCount}
+                  </td>
+                  <td class="py-3.5 px-3 text-slate-400 text-[11px]">
+                    {new Date(item.lastSeen).toLocaleDateString()}
+                  </td>
+                  <td class="py-3.5 px-4 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        class="btn-restore-404 rounded-lg bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950 dark:text-emerald-300 cursor-pointer"
+                        data-path={item.path}
+                      >
+                        Restore
+                      </button>
+                      <button
+                        type="button"
+                        class="btn-delete-404 rounded-lg bg-red-50 px-2.5 py-1 text-[11px] font-bold text-red-600 hover:bg-red-100 dark:bg-red-950 dark:text-red-400 cursor-pointer"
+                        data-path={item.path}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+
+    <!-- ================================================================ -->
+    <!-- TAB PANEL 4: REDIRECT HISTORY & AUDIT LOG -->
+    <!-- ================================================================ -->
+    <div id="tab-panel-history" class="tab-panel hidden space-y-4">
+      <div class="flex items-center justify-between">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white">
+          Redirect Change History &amp; Audit Log
+        </h3>
+      </div>
+
+      {redirectHistory.length === 0 ? (
+        <div class="rounded-3xl border border-dashed border-slate-200 bg-white p-8 text-center text-xs text-slate-400 dark:border-slate-800 dark:bg-slate-900">
+          <p class="text-2xl mb-1">📜</p>
+          <p class="font-bold text-slate-600 dark:text-slate-300">No history records logged yet.</p>
+          <p class="mt-1">All additions, updates, and deletions will be recorded here.</p>
+        </div>
+      ) : (
+        <div class="rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:bg-slate-800/60 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+              <tr>
+                <th class="py-3 px-4">Action</th>
+                <th class="py-3 px-4">Rule Details</th>
+                <th class="py-3 px-3">Status</th>
+                <th class="py-3 px-3">Admin</th>
+                <th class="py-3 px-4 text-right">Timestamp</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono text-[11px]">
+              {redirectHistory.map((h) => (
+                <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition">
+                  <td class="py-3 px-4">
+                    <span class={`font-sans rounded-md px-2 py-0.5 text-[10px] font-black uppercase ${
+                      h.action === 'created' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' :
+                      h.action === 'updated' ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300' :
+                      'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300'
+                    }`}>
+                      {h.action}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-slate-900 dark:text-white">
+                    {h.source} → <span class="text-blue-600 dark:text-blue-400">{h.destination}</span>
+                    {h.note && (
+                      <p class="font-sans text-[10px] text-slate-400 mt-0.5">{h.note}</p>
+                    )}
+                  </td>
+                  <td class="py-3 px-3 text-slate-600 dark:text-slate-400">
+                    {h.statusCode}
+                  </td>
+                  <td class="py-3 px-3 font-sans text-slate-600 dark:text-slate-400">
+                    {h.adminUser}
+                  </td>
+                  <td class="py-3 px-4 font-sans text-right text-slate-400">
+                    {new Date(h.timestamp).toLocaleString()}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+
   </div>
+
+  <!-- ================================================================ -->
+  <!-- 404 REVIEW & SMART REDIRECT MODAL DRAWER -->
+  <!-- ================================================================ -->
+  <div id="modal-review-404" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-xs items-center justify-center p-4">
+    <div class="relative w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 space-y-5 animate-in fade-in zoom-in-95 duration-150">
+      
+      <!-- Modal Header -->
+      <div class="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="rounded-md bg-red-100 px-2 py-0.5 font-mono text-xs font-bold text-red-700 dark:bg-red-950 dark:text-red-300">
+              404 Review
+            </span>
+            <h3 class="text-base font-black text-slate-900 dark:text-white">
+              Resolve 404 URL
+            </h3>
+          </div>
+          <p id="modal-rev-path" class="mt-1 font-mono text-xs text-blue-600 dark:text-blue-400 break-all font-bold"></p>
+        </div>
+        <button type="button" id="btn-close-modal-review" class="rounded-xl p-1 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 cursor-pointer">
+          ✕
+        </button>
+      </div>
+
+      <!-- Traffic & Historical Stats -->
+      <div class="grid grid-cols-3 gap-3 bg-slate-50 p-3.5 rounded-2xl dark:bg-slate-800/60 text-xs">
+        <div>
+          <span class="text-[10px] text-slate-400 uppercase font-bold block">Total Hits</span>
+          <span id="modal-rev-hits" class="text-sm font-black text-slate-900 dark:text-white">0</span>
+        </div>
+        <div>
+          <span class="text-[10px] text-slate-400 uppercase font-bold block">Recent (24h)</span>
+          <span id="modal-rev-recent" class="text-sm font-black text-amber-600 dark:text-amber-400">0</span>
+        </div>
+        <div>
+          <span class="text-[10px] text-slate-400 uppercase font-bold block">Last Recorded</span>
+          <span id="modal-rev-last" class="text-xs font-semibold text-slate-700 dark:text-slate-300 block truncate">--</span>
+        </div>
+      </div>
+
+      <!-- GSC SEO Impact Warning (Conditional) -->
+      <div id="modal-gsc-alert" class="hidden rounded-2xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/60 dark:bg-amber-950/40 text-xs">
+        <div class="flex items-center gap-2 font-bold text-amber-900 dark:text-amber-200">
+          <span>⚠️</span> Possible SEO Impact
+        </div>
+        <p id="modal-gsc-text" class="text-[11px] text-amber-800 dark:text-amber-300 mt-0.5">
+          This URL has recorded Google Search impressions. A 301 redirect is strongly recommended.
+        </p>
+      </div>
+
+      <!-- Smart Suggestion Card -->
+      <div id="modal-suggestion-box" class="rounded-2xl border border-emerald-200 bg-emerald-50/70 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/30 space-y-2.5">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-emerald-900 dark:text-emerald-200 flex items-center gap-1.5">
+            <span>✨</span> Recommended Destination
+          </span>
+          <span id="modal-sugg-confidence" class="rounded-md bg-emerald-200 px-2 py-0.5 text-[10px] font-black text-emerald-900 dark:bg-emerald-900 dark:text-emerald-200">
+            95% match
+          </span>
+        </div>
+
+        <div class="font-mono text-xs font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>→</span>
+          <span id="modal-sugg-dest" class="text-emerald-700 dark:text-emerald-300"></span>
+        </div>
+
+        <p id="modal-sugg-reason" class="text-[11px] text-slate-500 dark:text-slate-400"></p>
+
+        <button
+          type="button"
+          id="btn-apply-smart-suggestion"
+          class="w-full rounded-xl bg-emerald-600 py-2.5 text-xs font-bold text-white shadow-sm hover:bg-emerald-700 transition cursor-pointer flex items-center justify-center gap-1.5"
+        >
+          <span>✓</span> Approve &amp; Create 301 Redirect to Suggestion
+        </button>
+      </div>
+
+      <!-- Manual Alternative Destination Picker -->
+      <div class="space-y-3 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+        <label class="block font-bold text-slate-700 dark:text-slate-300">
+          Or Choose Another Destination:
+        </label>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <select
+            id="modal-custom-dest-select"
+            class="sm:col-span-2 rounded-xl border border-slate-300 bg-white py-2 px-3 text-xs font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:outline-hidden"
+          >
+            <option value="">-- Select from existing calculator/page --</option>
+            {allTargets.map((t) => (
+              <option value={t.path}>{t.label}</option>
+            ))}
+          </select>
+
+          <select
+            id="modal-custom-type"
+            class="sm:col-span-1 rounded-xl border border-slate-300 bg-white py-2 px-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white focus:outline-hidden"
+          >
+            <option value="301">301 (Permanent)</option>
+            <option value="302">302 (Temporary)</option>
+          </select>
+        </div>
+
+        <button
+          type="button"
+          id="btn-apply-custom-redirect"
+          class="w-full rounded-xl border border-slate-300 bg-slate-100 py-2 text-xs font-bold text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 cursor-pointer"
+        >
+          Apply Custom Redirect
+        </button>
+      </div>
+
+      <!-- Modal Footer / Ignore Action -->
+      <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+        <button
+          type="button"
+          id="btn-modal-ignore"
+          class="text-slate-400 hover:text-red-500 font-semibold cursor-pointer"
+        >
+          🔇 Ignore this 404 URL
+        </button>
+
+        <button
+          type="button"
+          id="btn-modal-cancel"
+          class="rounded-xl px-4 py-1.5 font-bold text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+        >
+          Cancel
+        </button>
+      </div>
+
+    </div>
+  </div>
+
 </AdminLayout>
 
 <script is:inline>
+  // 1. Tab Navigation
+  const tabBtns = document.querySelectorAll('.tab-nav-btn');
+  const tabPanels = document.querySelectorAll('.tab-panel');
+
+  tabBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      tabBtns.forEach((b) => {
+        b.classList.remove('bg-blue-600', 'text-white');
+        b.classList.add('text-slate-600', 'dark:text-slate-300');
+      });
+      tabPanels.forEach((p) => p.classList.add('hidden'));
+
+      btn.classList.remove('text-slate-600', 'dark:text-slate-300');
+      btn.classList.add('bg-blue-600', 'text-white');
+
+      if (btn.id === 'tab-btn-404') document.getElementById('tab-panel-404')?.classList.remove('hidden');
+      if (btn.id === 'tab-btn-rules') document.getElementById('tab-panel-rules')?.classList.remove('hidden');
+      if (btn.id === 'tab-btn-ignored') document.getElementById('tab-panel-ignored')?.classList.remove('hidden');
+      if (btn.id === 'tab-btn-history') document.getElementById('tab-panel-history')?.classList.remove('hidden');
+    });
+  });
+
+  // 2. Priority & Search Filters on 404 Monitor Tab
+  const filterBtns = document.querySelectorAll('.btn-filter-prio');
+  const searchInput = document.getElementById('input-search-404');
+  let currentPrio = 'all';
+
+  function apply404Filters() {
+    const query = (searchInput?.value || '').toLowerCase().trim();
+    const rows = document.querySelectorAll('.item-row-404');
+
+    rows.forEach((row) => {
+      const prio = row.getAttribute('data-prio') || 'low';
+      const path = (row.getAttribute('data-path') || '').toLowerCase();
+
+      const matchesPrio = currentPrio === 'all' || prio === currentPrio;
+      const matchesSearch = !query || path.includes(query);
+
+      if (matchesPrio && matchesSearch) {
+        row.classList.remove('hidden');
+      } else {
+        row.classList.add('hidden');
+      }
+    });
+  }
+
+  filterBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      filterBtns.forEach((b) => {
+        b.classList.remove('bg-blue-50', 'text-blue-600', 'dark:bg-blue-950', 'dark:text-blue-400');
+        b.classList.add('text-slate-600', 'dark:text-slate-400');
+      });
+      btn.classList.remove('text-slate-600', 'dark:text-slate-400');
+      btn.classList.add('bg-blue-50', 'text-blue-600', 'dark:bg-blue-950', 'dark:text-blue-400');
+      currentPrio = btn.getAttribute('data-prio') || 'all';
+      apply404Filters();
+    });
+  });
+
+  searchInput?.addEventListener('input', apply404Filters);
+
+  // 3. Manual Redirect Card Toggle
   const formCard = document.getElementById('redirect-form-card');
   const btnToggle = document.getElementById('btn-toggle-add-redirect');
   const btnCancel = document.getElementById('btn-cancel-redirect');
-  const form = document.getElementById('redirect-editor-form');
   const editId = document.getElementById('redir-edit-id');
   const srcInput = document.getElementById('redir-source');
   const destInput = document.getElementById('redir-dest');
   const statusSelect = document.getElementById('redir-status');
   const modalTitle = document.getElementById('redir-modal-title');
   const statusMsg = document.getElementById('redir-status-msg');
-
-  function getAuthToken() {
-    return localStorage.getItem('admin_token') || '';
-  }
 
   btnToggle?.addEventListener('click', () => {
     if (editId) editId.value = '';
@@ -190,6 +879,252 @@ const redirects = await getRedirectRules(Astro.locals);
     formCard?.classList.add('hidden');
   });
 
+  // 4. Review 404 Modal Logic
+  const modalReview = document.getElementById('modal-review-404');
+  const revPathEl = document.getElementById('modal-rev-path');
+  const revHitsEl = document.getElementById('modal-rev-hits');
+  const revRecentEl = document.getElementById('modal-rev-recent');
+  const revLastEl = document.getElementById('modal-rev-last');
+  const gscAlertEl = document.getElementById('modal-gsc-alert');
+  const gscTextEl = document.getElementById('modal-gsc-text');
+  const suggBox = document.getElementById('modal-suggestion-box');
+  const suggDestEl = document.getElementById('modal-sugg-dest');
+  const suggConfEl = document.getElementById('modal-sugg-confidence');
+  const suggReasonEl = document.getElementById('modal-sugg-reason');
+  const btnApplySmart = document.getElementById('btn-apply-smart-suggestion');
+  const btnApplyCustom = document.getElementById('btn-apply-custom-redirect');
+  const customDestSelect = document.getElementById('modal-custom-dest-select');
+  const customTypeSelect = document.getElementById('modal-custom-type');
+  const btnModalIgnore = document.getElementById('btn-modal-ignore');
+  const btnCloseModal = document.getElementById('btn-close-modal-review');
+  const btnCancelModal = document.getElementById('btn-modal-cancel');
+
+  let activeReviewPath = '';
+  let activeReviewSuggestedDest = '';
+
+  function openReviewModal(data) {
+    activeReviewPath = data.path;
+    activeReviewSuggestedDest = data.dest;
+
+    if (revPathEl) revPathEl.textContent = data.path;
+    if (revHitsEl) revHitsEl.textContent = data.hits;
+    if (revRecentEl) revRecentEl.textContent = data.recent > 0 ? `+${data.recent}` : '0';
+    if (revLastEl) revLastEl.textContent = new Date(data.last).toLocaleDateString();
+
+    const imps = parseInt(data.impressions || '0', 10);
+    if (imps > 0) {
+      if (gscTextEl) gscTextEl.textContent = `This URL generated ${imps} search impressions in Google Search Console. 301 redirection is recommended.`;
+      gscAlertEl?.classList.remove('hidden');
+    } else {
+      gscAlertEl?.classList.add('hidden');
+    }
+
+    if (data.dest) {
+      if (suggDestEl) suggDestEl.textContent = data.dest;
+      if (suggConfEl) suggConfEl.textContent = `${data.confidence}% match`;
+      if (suggReasonEl) suggReasonEl.textContent = data.reason;
+      suggBox?.classList.remove('hidden');
+    } else {
+      suggBox?.classList.add('hidden');
+    }
+
+    if (customDestSelect) customDestSelect.value = '';
+    modalReview?.classList.remove('hidden');
+    modalReview?.classList.add('flex');
+  }
+
+  function closeReviewModal() {
+    modalReview?.classList.add('hidden');
+    modalReview?.classList.remove('flex');
+  }
+
+  document.querySelectorAll('.btn-review-404').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      openReviewModal({
+        path: btn.getAttribute('data-path') || '',
+        hits: btn.getAttribute('data-hits') || '1',
+        recent: btn.getAttribute('data-recent') || '1',
+        first: btn.getAttribute('data-first') || '',
+        last: btn.getAttribute('data-last') || '',
+        dest: btn.getAttribute('data-dest') || '',
+        confidence: btn.getAttribute('data-confidence') || '0',
+        reason: btn.getAttribute('data-reason') || '',
+        ref: btn.getAttribute('data-ref') || '',
+        device: btn.getAttribute('data-device') || '',
+        impressions: btn.getAttribute('data-impressions') || '0',
+      });
+    });
+  });
+
+  btnCloseModal?.addEventListener('click', closeReviewModal);
+  btnCancelModal?.addEventListener('click', closeReviewModal);
+
+  // Apply Smart Suggestion Action
+  btnApplySmart?.addEventListener('click', async () => {
+    if (!activeReviewPath || !activeReviewSuggestedDest) return;
+    btnApplySmart.textContent = 'Creating 301 redirect...';
+
+    try {
+      const res = await fetch('/api/admin/redirects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source: activeReviewPath,
+          destination: activeReviewSuggestedDest,
+          statusCode: 301,
+          note: 'Created via 404 Smart Suggestion review',
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        alert(`✓ Redirect created successfully:\n${activeReviewPath} ➔ ${activeReviewSuggestedDest}`);
+        window.location.reload();
+      } else {
+        alert(data.error || 'Failed to create redirect');
+        btnApplySmart.textContent = '✓ Approve & Create 301 Redirect to Suggestion';
+      }
+    } catch {
+      alert('Network error creating redirect');
+      btnApplySmart.textContent = '✓ Approve & Create 301 Redirect to Suggestion';
+    }
+  });
+
+  // Apply Custom Destination Action
+  btnApplyCustom?.addEventListener('click', async () => {
+    const dest = customDestSelect?.value.trim() || '';
+    const code = parseInt(customTypeSelect?.value || '301', 10);
+
+    if (!dest) {
+      alert('Please select a destination from the list');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/admin/redirects', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          source: activeReviewPath,
+          destination: dest,
+          statusCode: code,
+          note: 'Created via 404 manual destination review',
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        alert(`✓ Redirect created:\n${activeReviewPath} ➔ ${dest}`);
+        window.location.reload();
+      } else {
+        alert(data.error || 'Failed to create redirect');
+      }
+    } catch {
+      alert('Network error saving redirect');
+    }
+  });
+
+  // Ignore 404 Actions
+  async function ignore404(path) {
+    if (!confirm(`Ignore 404 alerts for "${path}"?`)) return;
+
+    try {
+      const res = await fetch('/api/admin/redirects/404s/action', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ path, action: 'ignore' }),
+      });
+      if (res.ok) {
+        window.location.reload();
+      } else {
+        alert('Failed to ignore URL');
+      }
+    } catch {
+      alert('Network error');
+    }
+  }
+
+  btnModalIgnore?.addEventListener('click', () => ignore404(activeReviewPath));
+  document.querySelectorAll('.btn-ignore-404').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const p = btn.getAttribute('data-path');
+      if (p) ignore404(p);
+    });
+  });
+
+  // Restore 404 Actions
+  document.querySelectorAll('.btn-restore-404').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const path = btn.getAttribute('data-path');
+      if (!path) return;
+
+      try {
+        const res = await fetch('/api/admin/redirects/404s/action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path, action: 'restore' }),
+        });
+        if (res.ok) {
+          window.location.reload();
+        }
+      } catch {
+        alert('Network error');
+      }
+    });
+  });
+
+  // Delete 404 Log Permanently
+  document.querySelectorAll('.btn-delete-404').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const path = btn.getAttribute('data-path');
+      if (!path || !confirm(`Permanently delete log for "${path}"?`)) return;
+
+      try {
+        const res = await fetch('/api/admin/redirects/404s/action', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ path, action: 'delete' }),
+        });
+        if (res.ok) {
+          window.location.reload();
+        }
+      } catch {
+        alert('Network error');
+      }
+    });
+  });
+
+  // Collapse Chain Button
+  document.querySelectorAll('.btn-collapse-chain').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const source = btn.getAttribute('data-source');
+      const finalDest = btn.getAttribute('data-final');
+      if (!source || !finalDest) return;
+
+      if (!confirm(`Update "${source}" directly to final destination "${finalDest}"?`)) return;
+
+      try {
+        const res = await fetch('/api/admin/redirects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            source,
+            destination: finalDest,
+            statusCode: 301,
+            collapseChain: true,
+          }),
+        });
+        if (res.ok) {
+          alert('✓ Chain collapsed directly to final destination!');
+          window.location.reload();
+        }
+      } catch {
+        alert('Network error');
+      }
+    });
+  });
+
+  // Edit Existing Redirect Rule
   document.querySelectorAll('.btn-edit-redir').forEach((btn) => {
     btn.addEventListener('click', () => {
       const id = btn.getAttribute('data-id') || '';
@@ -209,6 +1144,7 @@ const redirects = await getRedirectRules(Astro.locals);
     });
   });
 
+  // Delete Existing Redirect Rule
   document.querySelectorAll('.btn-delete-redir').forEach((btn) => {
     btn.addEventListener('click', async () => {
       const id = btn.getAttribute('data-id') || '';
@@ -219,12 +1155,9 @@ const redirects = await getRedirectRules(Astro.locals);
       }
 
       try {
-        const token = getAuthToken();
         const res = await fetch(`/api/admin/redirects?id=${encodeURIComponent(id)}`, {
           method: 'DELETE',
-          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
         });
-
         const data = await res.json();
         if (res.ok && data.success) {
           window.location.reload();
@@ -237,22 +1170,13 @@ const redirects = await getRedirectRules(Astro.locals);
     });
   });
 
-  form?.addEventListener('submit', async (e) => {
+  // Form Submit Handler (Loop and chain validation handled on server)
+  document.getElementById('redirect-editor-form')?.addEventListener('submit', async (e) => {
     e.preventDefault();
     const id = editId?.value || '';
     const source = srcInput?.value.trim() || '';
     const destination = destInput?.value.trim() || '';
     const statusCode = parseInt(statusSelect?.value || '301', 10);
-
-    // Client loop prevention checks
-    if (source.toLowerCase() === destination.toLowerCase()) {
-      if (statusMsg) {
-        statusMsg.className = 'rounded-xl p-3 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300';
-        statusMsg.textContent = 'Self-redirect error: Source and destination cannot be identical.';
-        statusMsg.classList.remove('hidden');
-      }
-      return;
-    }
 
     if (statusMsg) {
       statusMsg.className = 'rounded-xl p-3 text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300';
@@ -261,13 +1185,9 @@ const redirects = await getRedirectRules(Astro.locals);
     }
 
     try {
-      const token = getAuthToken();
       const res = await fetch('/api/admin/redirects', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, source, destination, statusCode }),
       });
 

@@ -1,17 +1,23 @@
 /**
  * Calculator Test Runner
- * Executes test cases and produces structured results.
+ * Executes predefined and custom test cases and produces structured results.
  * Imports and calls the same real formula functions used in production.
  */
 
 import type {
+  CalculatorTestCase,
   CalculatorTestSummary,
   FullTestRunResult,
   TestCaseResult,
   TestState,
+  CalculatorHealthScore,
 } from './types';
 import { runTestCase } from './result-validator';
 import { ALL_TEST_CASES, getTestCasesForSlug, getTestedSlugs } from './test-cases';
+import { getCustomTestCases, saveAllCalculatorHealthScores, saveTestRun } from './health-store';
+import { buildExecutableCustomTestCase } from './formula-dispatch';
+import { computeCalculatorHealthScore } from './health-scorer';
+import { calculators } from '../../data/calculators';
 
 /**
  * Compute per-calculator summary from individual test results.
@@ -46,14 +52,25 @@ function summarizeForSlug(slug: string, results: TestCaseResult[]): CalculatorTe
 }
 
 /**
- * Run tests for a single calculator slug.
+ * Run tests for a single calculator slug (both predefined and active custom tests).
  * Returns the calculator-level summary.
  */
-export async function runTestsForCalculator(slug: string): Promise<CalculatorTestSummary> {
-  const testCases = getTestCasesForSlug(slug);
+export async function runTestsForCalculator(
+  slug: string,
+  locals?: unknown
+): Promise<{ summary: CalculatorTestSummary; healthScore: CalculatorHealthScore }> {
+  const staticCases = getTestCasesForSlug(slug);
 
-  if (testCases.length === 0) {
-    return {
+  // Load custom tests from D1
+  const customDefs = await getCustomTestCases(locals, slug);
+  const activeCustomCases = customDefs
+    .filter((d) => d.active)
+    .map(buildExecutableCustomTestCase);
+
+  const allCases: CalculatorTestCase[] = [...staticCases, ...activeCustomCases];
+
+  if (allCases.length === 0) {
+    const emptySummary: CalculatorTestSummary = {
       slug,
       totalTests: 0,
       passed: 0,
@@ -63,26 +80,40 @@ export async function runTestsForCalculator(slug: string): Promise<CalculatorTes
       state: 'NOT_TESTED',
       results: [],
     };
+    const healthScore = computeCalculatorHealthScore(slug, { testSummary: emptySummary });
+    return { summary: emptySummary, healthScore };
   }
 
-  const results: TestCaseResult[] = testCases.map((tc) => runTestCase(tc));
-  return summarizeForSlug(slug, results);
+  const results: TestCaseResult[] = allCases.map((tc) => runTestCase(tc));
+  const summary = summarizeForSlug(slug, results);
+  const healthScore = computeCalculatorHealthScore(slug, { testSummary: summary });
+
+  return { summary, healthScore };
 }
 
 /**
  * Run all test cases across all calculators that have tests defined.
- * Returns a full test run result object.
+ * Returns full test run result and caches health scores in D1.
  */
-export async function runAllTests(triggeredBy = 'admin'): Promise<FullTestRunResult> {
+export async function runAllTests(
+  triggeredBy = 'admin',
+  locals?: unknown
+): Promise<{ runResult: FullTestRunResult; healthScores: Record<string, CalculatorHealthScore> }> {
   const startedAt = new Date().toISOString();
   const runId = `run_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 
-  // Execute all test cases
-  const allResults: TestCaseResult[] = ALL_TEST_CASES.map((tc) => runTestCase(tc));
+  // Load active custom test cases
+  const customDefs = await getCustomTestCases(locals);
+  const customCases = customDefs.filter((d) => d.active).map(buildExecutableCustomTestCase);
 
-  // Summarize per calculator
-  const testedSlugs = getTestedSlugs();
-  const byCalculator = testedSlugs.map((slug) => summarizeForSlug(slug, allResults));
+  const combinedCases: CalculatorTestCase[] = [...ALL_TEST_CASES, ...customCases];
+
+  // Execute all test cases
+  const allResults: TestCaseResult[] = combinedCases.map((tc) => runTestCase(tc));
+
+  // Collect all known slugs
+  const allSlugs = Array.from(new Set([...calculators.map((c) => c.slug), ...getTestedSlugs()]));
+  const byCalculator = allSlugs.map((slug) => summarizeForSlug(slug, allResults));
 
   const totalTests = allResults.length;
   const passed = allResults.filter((r) => r.state === 'PASS').length;
@@ -92,7 +123,7 @@ export async function runAllTests(triggeredBy = 'admin'): Promise<FullTestRunRes
 
   const completedAt = new Date().toISOString();
 
-  return {
+  const runResult: FullTestRunResult = {
     runId,
     startedAt,
     completedAt,
@@ -104,4 +135,20 @@ export async function runAllTests(triggeredBy = 'admin'): Promise<FullTestRunRes
     byCalculator,
     triggeredBy,
   };
+
+  // Compute 0-100 Health Scores for all calculators
+  const healthScores: Record<string, CalculatorHealthScore> = {};
+  for (const calc of calculators) {
+    const summary = byCalculator.find((b) => b.slug === calc.slug) || null;
+    healthScores[calc.slug] = computeCalculatorHealthScore(calc, {
+      testSummary: summary,
+      lastCheckedAt: completedAt,
+    });
+  }
+
+  // Persist to D1
+  await saveTestRun(runResult, locals);
+  await saveAllCalculatorHealthScores(healthScores, locals);
+
+  return { runResult, healthScores };
 }

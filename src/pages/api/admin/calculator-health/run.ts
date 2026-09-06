@@ -1,11 +1,10 @@
 /**
  * POST /api/admin/calculator-health/run
- * Runs all calculator tests and saves results to D1.
+ * Runs all calculator tests, computes 0-100 health scores, and saves results to D1.
  */
 import type { APIRoute } from 'astro';
 import { authenticateAdminRequest } from '../../../../lib/auth';
 import { runAllTests } from '../../../../lib/calculator-tests/test-runner';
-import { saveTestRun } from '../../../../lib/calculator-tests/health-store';
 
 export const prerender = false;
 
@@ -19,27 +18,29 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
   }
 
   try {
-    const result = await runAllTests(user.username || 'admin');
-    await saveTestRun(result, locals);
+    const { runResult, healthScores } = await runAllTests(user.username || 'admin', locals);
 
     return new Response(
       JSON.stringify({
         success: true,
-        runId: result.runId,
-        startedAt: result.startedAt,
-        completedAt: result.completedAt,
-        totalTests: result.totalTests,
-        passed: result.passed,
-        failed: result.failed,
-        errored: result.errored,
-        skipped: result.skipped,
-        byCalculator: result.byCalculator.map((s) => ({
+        runId: runResult.runId,
+        startedAt: runResult.startedAt,
+        completedAt: runResult.completedAt,
+        totalTests: runResult.totalTests,
+        passed: runResult.passed,
+        failed: runResult.failed,
+        errored: runResult.errored,
+        skipped: runResult.skipped,
+        healthScores,
+        byCalculator: runResult.byCalculator.map((s) => ({
           slug: s.slug,
           totalTests: s.totalTests,
           passed: s.passed,
           failed: s.failed,
           errored: s.errored,
           state: s.state,
+          healthScore: healthScores[s.slug]?.healthScore ?? null,
+          healthGrade: healthScores[s.slug]?.grade ?? null,
         })),
       }),
       { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } }

@@ -12,12 +12,18 @@ import type {
   TestRunRecord,
   CalculatorHealthSummary,
   CalculatorHealthStatus,
+  CalculatorHealthScore,
+  CustomTestCaseDefinition,
+  HealthGrade,
 } from './types';
 import { calculators } from '../../data/calculators';
 import { getTestedSlugs } from './test-cases';
+import { computeCalculatorHealthScore } from './health-scorer';
 
-// D1 key for storing latest test run results as JSON blob in site_settings
+// D1 keys for storing latest test run results, custom tests, and health scores in site_settings
 const TEST_RESULTS_KEY = 'cms_calc_test_results';
+const CUSTOM_TESTS_KEY = 'cms_custom_formula_tests';
+const HEALTH_SCORES_KEY = 'cms_calc_health_scores';
 
 // ─── Ensure Tables Exist ──────────────────────────────────────────────────────
 
@@ -423,6 +429,25 @@ export async function getCalculatorHealthSummaries(
     const testState = testData?.state;
     const { status, reason } = computeHealthStatus(testState, unreviewedErrors);
 
+    // Compute 0-100 Health Score
+    const scoreObj = computeCalculatorHealthScore(calc, {
+      testSummary: testData
+        ? {
+            slug,
+            totalTests: testData.total,
+            passed: testData.passed,
+            failed: testData.failed,
+            errored: testData.errored,
+            skipped: testData.skipped,
+            state: testData.state as any,
+            lastTestedAt: testData.lastTestedAt,
+            results: [],
+          }
+        : null,
+      unreviewedErrors,
+      lastCheckedAt: testData?.lastTestedAt,
+    });
+
     summaries.push({
       slug,
       name: calc.name,
@@ -436,6 +461,8 @@ export async function getCalculatorHealthSummaries(
       lastTestedAt: testData?.lastTestedAt,
       unreviewedErrors,
       healthStatus: status,
+      healthScore: scoreObj.healthScore,
+      healthGrade: scoreObj.grade,
       healthReason: reason,
     });
   }
@@ -448,4 +475,175 @@ export async function getCalculatorHealthSummaries(
   }
 
   return summaries;
+}
+
+// ─── Phase 2: Stored Calculator Health Scores ─────────────────────────────────
+
+/**
+ * Get all cached calculator health scores from site_settings.
+ */
+export async function getAllCalculatorHealthScores(
+  locals?: unknown
+): Promise<Record<string, CalculatorHealthScore>> {
+  await ensureTables(locals);
+  const db = getDb(locals);
+  try {
+    const row = await db
+      .prepare(`SELECT value FROM site_settings WHERE key = ?`)
+      .bind(HEALTH_SCORES_KEY)
+      .first<{ value: string }>();
+    if (!row?.value) return {};
+    return JSON.parse(row.value);
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Persist computed health scores for all calculators.
+ */
+export async function saveAllCalculatorHealthScores(
+  scores: Record<string, CalculatorHealthScore>,
+  locals?: unknown
+): Promise<void> {
+  await ensureTables(locals);
+  const db = getDb(locals);
+  try {
+    await db
+      .prepare(`INSERT OR REPLACE INTO site_settings (key, value) VALUES (?, ?)`)
+      .bind(HEALTH_SCORES_KEY, JSON.stringify(scores))
+      .run();
+  } catch {}
+}
+
+/**
+ * Retrieve health score for a specific calculator.
+ */
+export async function getCalculatorHealthScore(
+  slug: string,
+  locals?: unknown
+): Promise<CalculatorHealthScore | null> {
+  const allScores = await getAllCalculatorHealthScores(locals);
+  if (allScores[slug]) return allScores[slug];
+
+  // If not cached, compute on the fly
+  const testResults = await getLatestTestResults(locals);
+  const testData = testResults?.[slug] ?? null;
+  const unreviewedErrors = await getUnreviewedErrorCount(slug, locals);
+
+  return computeCalculatorHealthScore(slug, {
+    testSummary: testData
+      ? {
+          slug,
+          totalTests: testData.total,
+          passed: testData.passed,
+          failed: testData.failed,
+          errored: testData.errored,
+          skipped: testData.skipped,
+          state: testData.state as any,
+          lastTestedAt: testData.lastTestedAt,
+          results: [],
+        }
+      : null,
+    unreviewedErrors,
+    lastCheckedAt: testData?.lastTestedAt,
+  });
+}
+
+// ─── Phase 2: Custom Formula Test Case Management ────────────────────────────
+
+/**
+ * Get all custom test cases, optionally filtered by calculator slug.
+ */
+export async function getCustomTestCases(
+  locals?: unknown,
+  slug?: string
+): Promise<CustomTestCaseDefinition[]> {
+  await ensureTables(locals);
+  const db = getDb(locals);
+  try {
+    const row = await db
+      .prepare(`SELECT value FROM site_settings WHERE key = ?`)
+      .bind(CUSTOM_TESTS_KEY)
+      .first<{ value: string }>();
+
+    if (!row?.value) return [];
+    const allTests: CustomTestCaseDefinition[] = JSON.parse(row.value);
+    if (!slug) return allTests;
+    return allTests.filter((t) => t.slug === slug);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Save or update a custom test case in D1.
+ */
+export async function saveCustomTestCase(
+  testCase: CustomTestCaseDefinition,
+  locals?: unknown
+): Promise<void> {
+  await ensureTables(locals);
+  const db = getDb(locals);
+  try {
+    const existing = await getCustomTestCases(locals);
+    const index = existing.findIndex((t) => t.id === testCase.id);
+
+    if (index >= 0) {
+      existing[index] = { ...testCase, updatedAt: new Date().toISOString() };
+    } else {
+      existing.push({
+        ...testCase,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      });
+    }
+
+    await db
+      .prepare(`INSERT OR REPLACE INTO site_settings (key, value) VALUES (?, ?)`)
+      .bind(CUSTOM_TESTS_KEY, JSON.stringify(existing))
+      .run();
+  } catch {}
+}
+
+/**
+ * Delete a custom test case by ID.
+ */
+export async function deleteCustomTestCase(id: string, locals?: unknown): Promise<void> {
+  await ensureTables(locals);
+  const db = getDb(locals);
+  try {
+    const existing = await getCustomTestCases(locals);
+    const filtered = existing.filter((t) => t.id !== id);
+
+    await db
+      .prepare(`INSERT OR REPLACE INTO site_settings (key, value) VALUES (?, ?)`)
+      .bind(CUSTOM_TESTS_KEY, JSON.stringify(filtered))
+      .run();
+  } catch {}
+}
+
+/**
+ * Toggle active state of a custom test case.
+ */
+export async function toggleCustomTestCase(
+  id: string,
+  active: boolean,
+  locals?: unknown
+): Promise<void> {
+  await ensureTables(locals);
+  const db = getDb(locals);
+  try {
+    const existing = await getCustomTestCases(locals);
+    const target = existing.find((t) => t.id === id);
+    if (target) {
+      target.active = active;
+      target.updatedAt = new Date().toISOString();
+
+      await db
+        .prepare(`INSERT OR REPLACE INTO site_settings (key, value) VALUES (?, ?)`)
+        .bind(CUSTOM_TESTS_KEY, JSON.stringify(existing))
+        .run();
+    }
+  } catch {}
 }

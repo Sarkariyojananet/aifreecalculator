@@ -1,0 +1,644 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import AdminStatCard from '../../../components/admin/AdminStatCard.astro';
+import { calculators, categories } from '../../../data/calculators';
+import { getSearchAnalytics } from '../../../lib/admin/content-store';
+import {
+  getCalculatorsFunnelMetrics,
+  getGlobalAnalyticsKPIs,
+} from '../../../lib/analytics/store';
+import {
+  detectUnderperformingCalculators,
+  detectAnalyticsAnomalies,
+} from '../../../lib/analytics/scorer';
+import type { AnalyticsDateRange } from '../../../lib/analytics/types';
+
+// Read URL parameters
+const url = Astro.url;
+const range = (url.searchParams.get('range') || '28d') as AnalyticsDateRange;
+const selectedCategory = url.searchParams.get('cat') || 'all';
+
+// Fetch global KPIs & funnel metrics for current period
+const [kpis, currentMetrics, prevMetrics] = await Promise.all([
+  getGlobalAnalyticsKPIs(range, Astro.locals),
+  getCalculatorsFunnelMetrics(range, 'conversionScore', Astro.locals),
+  getCalculatorsFunnelMetrics(range, 'conversionScore', Astro.locals),
+]);
+
+// Detect underperforming calculators and trend regressions
+const underperformingAlerts = detectUnderperformingCalculators(currentMetrics);
+const trendAnomalies = detectAnalyticsAnomalies(currentMetrics, prevMetrics);
+const allAlerts = [...underperformingAlerts, ...trendAnomalies];
+
+// Search queries from content-store
+const searchLogs = await getSearchAnalytics(Astro.locals);
+const missingLogs = searchLogs.filter((s) => !s.hasResults);
+const foundLogs = searchLogs.filter((s) => s.hasResults);
+const totalSearchesCount = searchLogs.reduce((acc, s) => acc + (s.count || 1), 0);
+const missingSearchesCount = missingLogs.reduce((acc, s) => acc + (s.count || 1), 0);
+const unmetRate = totalSearchesCount > 0 ? Math.round((missingSearchesCount / totalSearchesCount) * 100) : 0;
+
+// Category calculation distribution
+const categoryStats = categories.map((cat) => {
+  const catCalcs = currentMetrics.filter((c: any) => c.category.toLowerCase() === cat.name.toLowerCase());
+  const catViews = catCalcs.reduce((sum: number, c: any) => sum + c.pageViews, 0);
+  const catCalcsCount = catCalcs.reduce((sum: number, c: any) => sum + c.successfulCalculations, 0);
+  const totalCalcs = kpis.totalCalculations.current;
+  const share = totalCalcs > 0 ? Math.round((catCalcsCount / totalCalcs) * 100) : 0;
+  return {
+    name: cat.name,
+    icon: cat.icon,
+    count: catCalcs.length,
+    views: catViews,
+    calculations: catCalcsCount,
+    share,
+  };
+}).sort((a, b) => b.calculations - a.calculations);
+
+const rangeLabels: Record<AnalyticsDateRange, string> = {
+  today: 'Today',
+  '7d': 'Last 7 Days',
+  '28d': 'Last 28 Days',
+  '3m': 'Last 3 Months',
+};
+
+function formatDelta(delta: { percentChange: number; isPositive: boolean }): string {
+  if (delta.percentChange === 0) return '0%';
+  const sign = delta.isPositive ? '+' : '';
+  return `${sign}${delta.percentChange}% vs prior period`;
+}
+---
+
+<AdminLayout title="Calculator Analytics & Funnels | Calculator CMS" sectionTitle="Analytics" activeSection="analytics">
+  <div class="space-y-8 max-w-7xl mx-auto pb-16">
+    
+    <!-- Top Header with Date Range Selector -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
+      <div>
+        <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
+          <span>📈</span> Calculator Performance &amp; Conversion Analytics
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Monitor user interaction funnels, activation rates, calculation reliability, and drop-offs across all 39 calculators.
+        </p>
+      </div>
+
+      <!-- Time Period Selector Pills -->
+      <div class="flex items-center gap-1.5 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900 shrink-0">
+        {(['today', '7d', '28d', '3m'] as AnalyticsDateRange[]).map((r) => (
+          <a
+            href={`/admin/analytics/?range=${r}${selectedCategory !== 'all' ? `&cat=${selectedCategory}` : ''}`}
+            class={`rounded-xl px-3 py-1.5 text-xs font-bold transition ${
+              range === r
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100 dark:text-slate-400 dark:hover:text-white dark:hover:bg-slate-800'
+            }`}
+          >
+            {rangeLabels[r]}
+          </a>
+        ))}
+      </div>
+    </div>
+
+    <!-- 1. Primary Global Funnel KPI Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <AdminStatCard
+        title="Total Page Views"
+        value={kpis.totalPageViews.current.toLocaleString()}
+        icon="👁️"
+        badge={formatDelta(kpis.totalPageViews)}
+        badgeType={kpis.totalPageViews.isPositive ? 'success' : 'info'}
+        subtitle={`Prior period: ${kpis.totalPageViews.previous.toLocaleString()}`}
+        iconBg="bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-400"
+      />
+
+      <AdminStatCard
+        title="Calculations Executed"
+        value={kpis.totalCalculations.current.toLocaleString()}
+        icon="⚡"
+        badge={formatDelta(kpis.totalCalculations)}
+        badgeType={kpis.totalCalculations.isPositive ? 'success' : 'info'}
+        subtitle={`Prior period: ${kpis.totalCalculations.previous.toLocaleString()}`}
+        iconBg="bg-emerald-50 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400"
+      />
+
+      <AdminStatCard
+        title="Form Activation Rate"
+        value={`${kpis.averageStartRate.current}%`}
+        icon="🎯"
+        badge={formatDelta(kpis.averageStartRate)}
+        badgeType={kpis.averageStartRate.isPositive ? 'success' : 'warning'}
+        subtitle="Visitors who interact with inputs"
+        iconBg="bg-indigo-50 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400"
+      />
+
+      <AdminStatCard
+        title="Calculation Success Rate"
+        value={`${kpis.averageSuccessRate.current}%`}
+        icon="🛡️"
+        badge={kpis.averageSuccessRate.current >= 98 ? 'Optimal' : 'Needs Review'}
+        badgeType={kpis.averageSuccessRate.current >= 98 ? 'success' : 'warning'}
+        subtitle="Executions without NaN or error"
+        iconBg="bg-purple-50 text-purple-600 dark:bg-purple-950 dark:text-purple-400"
+      />
+    </div>
+
+    <!-- 2. Conversion Opportunities & Anomaly Alerts Banner -->
+    {allAlerts.length > 0 && (
+      <div class="rounded-3xl border border-amber-200 bg-amber-50/50 p-5 sm:p-6 dark:border-amber-900/60 dark:bg-amber-950/20 space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2.5">
+            <span class="text-xl">⚠️</span>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">
+                Conversion Opportunities &amp; Anomaly Alerts ({allAlerts.length})
+              </h3>
+              <p class="text-xs text-slate-600 dark:text-slate-400">
+                Automated heuristics detected drop-offs, errors, or performance regressions requiring optimization.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pt-1">
+          {allAlerts.slice(0, 4).map((alert) => (
+            <div class="rounded-2xl border border-white/80 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between space-y-2.5">
+              <div class="space-y-1">
+                <div class="flex items-center justify-between gap-2">
+                  <span class={`rounded-md px-2 py-0.5 text-[10px] font-extrabold uppercase ${
+                    alert.severity === 'critical'
+                      ? 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300'
+                      : alert.severity === 'warning'
+                      ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'
+                      : 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
+                  }`}>
+                    {alert.severity} • {alert.category}
+                  </span>
+                  <span class="text-[11px] font-mono text-slate-500">
+                    {alert.currentValue}
+                  </span>
+                </div>
+                <h4 class="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">
+                  {alert.title}
+                </h4>
+                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                  {alert.message}
+                </p>
+              </div>
+
+              <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800 text-[11px]">
+                <span class="text-slate-500">
+                  Target: <strong class="text-slate-800 dark:text-slate-200">{alert.expectedValue}</strong>
+                </span>
+                <a
+                  href={`${alert.link}?range=${range}`}
+                  class="font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 hover:underline"
+                >
+                  Inspect Funnel →
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <!-- 3. Calculator Conversion Leaderboard & Funnel Explorer -->
+    <div class="space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🏆</span> Calculator Conversion Leaderboard
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Ranked by overall Conversion Score (0-100) combining activation, completion, accuracy, and engagement.
+          </p>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="flex flex-wrap items-center gap-2.5">
+          <input
+            type="text"
+            id="table-search-input"
+            placeholder="Search calculator..."
+            class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+          />
+
+          <select
+            id="category-filter-select"
+            class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+          >
+            <option value="all">All Categories ({calculators.length})</option>
+            {categories.map((cat) => (
+              <option value={cat.name.toLowerCase()}>{cat.name}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      <!-- Desktop Leaderboard Table -->
+      <div class="hidden md:block rounded-3xl border border-slate-200 bg-white overflow-hidden shadow-xs dark:border-slate-800 dark:bg-slate-900">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-50/80 dark:bg-slate-950/60 text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider border-b border-slate-100 dark:border-slate-800">
+            <tr>
+              <th class="py-3.5 px-4 w-12 text-center">#</th>
+              <th class="py-3.5 px-4">Calculator</th>
+              <th class="py-3.5 px-4 text-right">Views</th>
+              <th class="py-3.5 px-4 text-right">Started</th>
+              <th class="py-3.5 px-4 text-right">Calculations</th>
+              <th class="py-3.5 px-4 text-right">Success Rate</th>
+              <th class="py-3.5 px-4 text-center">Conversion Score</th>
+              <th class="py-3.5 px-4 text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody id="calc-table-body" class="divide-y divide-slate-100 dark:divide-slate-800 font-medium">
+            {currentMetrics.map((item: any, idx: number) => {
+              const gradeColors = {
+                optimal: 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 dark:border-emerald-800',
+                good: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950 dark:text-blue-300 dark:border-blue-800',
+                needs_attention: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950 dark:text-amber-300 dark:border-amber-800',
+                critical: 'bg-red-100 text-red-800 border-red-200 dark:bg-red-950 dark:text-red-300 dark:border-red-800',
+              };
+
+              return (
+                <tr
+                  class="calc-row hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition"
+                  data-category={item.category.toLowerCase()}
+                  data-name={item.name.toLowerCase()}
+                >
+                  <td class="py-3.5 px-4 text-center font-mono font-bold text-slate-400">
+                    #{idx + 1}
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <div class="space-y-0.5">
+                      <a
+                        href={`/admin/analytics/${item.slug}?range=${range}`}
+                        class="font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition flex items-center gap-1.5"
+                      >
+                        <span>{item.name}</span>
+                      </a>
+                      <span class="inline-block rounded bg-slate-100 px-1.5 py-0.2 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                        {item.category}
+                      </span>
+                    </div>
+                  </td>
+                  <td class="py-3.5 px-4 text-right font-mono font-semibold text-slate-700 dark:text-slate-300">
+                    {item.pageViews.toLocaleString()}
+                  </td>
+                  <td class="py-3.5 px-4 text-right font-mono text-slate-700 dark:text-slate-300">
+                    <span>{item.calculatorStarts.toLocaleString()}</span>
+                    <span class="text-[10px] text-slate-400 ml-1">({item.startRate}%)</span>
+                  </td>
+                  <td class="py-3.5 px-4 text-right font-mono font-bold text-slate-900 dark:text-white">
+                    {item.successfulCalculations.toLocaleString()}
+                  </td>
+                  <td class="py-3.5 px-4 text-right font-mono font-bold">
+                    <span class={item.successRate >= 98 ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}>
+                      {item.successRate}%
+                    </span>
+                  </td>
+                  <td class="py-3.5 px-4 text-center">
+                    <span class={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-black border ${(gradeColors as any)[item.conversionGrade]}`}>
+                      <span>{item.conversionScore}</span>
+                      <span class="text-[10px] font-semibold uppercase opacity-80">/ 100</span>
+                    </span>
+                  </td>
+                  <td class="py-3.5 px-4 text-right">
+                    <a
+                      href={`/admin/analytics/${item.slug}?range=${range}`}
+                      class="inline-flex items-center gap-1 rounded-xl border border-slate-200 bg-white px-3 py-1 text-xs font-bold text-blue-600 shadow-2xs hover:bg-blue-50 dark:border-slate-700 dark:bg-slate-800 dark:text-blue-400 dark:hover:bg-slate-700 transition"
+                    >
+                      <span>Funnel</span>
+                      <span>→</span>
+                    </a>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Mobile Stacked Cards View -->
+      <div class="md:hidden space-y-3" id="calc-mobile-list">
+        {currentMetrics.map((item: any, idx: number) => (
+          <div
+            class="calc-card rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-3"
+            data-category={item.category.toLowerCase()}
+            data-name={item.name.toLowerCase()}
+          >
+            <div class="flex items-start justify-between gap-2">
+              <div>
+                <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">#{idx + 1} • {item.category}</span>
+                <h4 class="font-bold text-sm text-slate-900 dark:text-white mt-0.5">{item.name}</h4>
+              </div>
+              <span class="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-black text-blue-700 dark:bg-blue-950 dark:text-blue-300 font-mono">
+                {item.conversionScore} / 100
+              </span>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 py-2 border-y border-slate-100 dark:border-slate-800 text-center text-xs font-mono">
+              <div>
+                <span class="block text-[10px] text-slate-400">Views</span>
+                <strong class="text-slate-800 dark:text-slate-200">{item.pageViews}</strong>
+              </div>
+              <div>
+                <span class="block text-[10px] text-slate-400">Starts</span>
+                <strong class="text-slate-800 dark:text-slate-200">{item.startRate}%</strong>
+              </div>
+              <div>
+                <span class="block text-[10px] text-slate-400">Calcs</span>
+                <strong class="text-emerald-600 dark:text-emerald-400">{item.successfulCalculations}</strong>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+              <span class="text-xs text-slate-500">
+                Success: <strong class="text-slate-800 dark:text-slate-200 font-mono">{item.successRate}%</strong>
+              </span>
+              <a
+                href={`/admin/analytics/${item.slug}?range=${range}`}
+                class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                View Funnel →
+              </a>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- 4. Category Volume Breakdown -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-5">
+      <div>
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>📊</span> Category Volume &amp; Calculation Share
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          Proportion of computations executed across each specialized calculation suite
+        </p>
+      </div>
+
+      <div class="space-y-4">
+        {categoryStats.map((cat) => (
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-xs font-bold">
+              <span class="text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                <span>{cat.icon}</span> <span>{cat.name} ({cat.count} tools)</span>
+              </span>
+              <span class="text-slate-500 font-mono">
+                {cat.calculations.toLocaleString()} calcs ({cat.share}%)
+              </span>
+            </div>
+            <div class="h-2.5 w-full rounded-full bg-slate-100 dark:bg-slate-800 overflow-hidden">
+              <div class="h-full bg-blue-600 rounded-full transition-all duration-500" style={`width: ${cat.share}%`}></div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+
+    <!-- 5. Search Demand Intelligence & Missing Calculator Opportunities (Preserved) -->
+    <div class="rounded-3xl border border-blue-200 bg-white p-6 sm:p-7 shadow-sm dark:border-blue-900/60 dark:bg-slate-900 space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 dark:border-slate-800">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🔍</span> Visitor Search Demand &amp; Missing Calculator Opportunities
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            What users are searching for on your site: identify popular tools and discover missing calculators to build next.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <a
+            href="/admin/calculators/new/"
+            class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition"
+          >
+            <span>➕</span> Build New Tool
+          </a>
+        </div>
+      </div>
+
+      <!-- Search Demand Toolbar -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0" id="search-filter-tabs">
+          <button
+            type="button"
+            data-filter="all"
+            class="search-tab active rounded-xl px-3.5 py-1.5 text-xs font-bold bg-blue-600 text-white cursor-pointer transition shadow-xs"
+          >
+            All Queries ({searchLogs.length})
+          </button>
+          <button
+            type="button"
+            data-filter="missing"
+            class="search-tab rounded-xl px-3.5 py-1.5 text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/50 dark:text-amber-300 cursor-pointer transition"
+          >
+            🚨 Missing Tools ({missingLogs.length})
+          </button>
+          <button
+            type="button"
+            data-filter="found"
+            class="search-tab rounded-xl px-3.5 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-300 cursor-pointer transition"
+          >
+            ✅ Found Tools ({foundLogs.length})
+          </button>
+        </div>
+
+        <div class="relative w-full sm:w-64">
+          <input
+            type="text"
+            id="filter-queries-input"
+            placeholder="Search keywords..."
+            class="w-full rounded-xl border border-slate-300 bg-slate-50 py-1.5 pl-8 pr-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:bg-white focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+          />
+          <span class="absolute left-2.5 top-2 text-xs text-slate-400">🔍</span>
+        </div>
+      </div>
+
+      <!-- Search Logs Grid -->
+      {searchLogs.length === 0 ? (
+        <div class="rounded-2xl border border-dashed border-slate-200 p-8 text-center text-xs text-slate-400 dark:border-slate-800">
+          <p class="text-3xl mb-1">🔍</p>
+          <p class="font-bold text-slate-600 dark:text-slate-300">No search logs recorded yet.</p>
+          <p class="mt-1">When visitors type in the search bar, queries will appear here automatically.</p>
+        </div>
+      ) : (
+        <div id="search-queries-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
+          {searchLogs.map((log) => {
+            const isMissing = !log.hasResults;
+            const timeAgo = log.lastSearched ? new Date(log.lastSearched).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Recent';
+
+            return (
+              <div
+                class="query-card rounded-2xl border transition p-4 flex flex-col justify-between space-y-3 bg-white dark:bg-slate-950 shadow-2xs hover:shadow-xs"
+                data-type={isMissing ? 'missing' : 'found'}
+                data-query={log.query.toLowerCase()}
+                class:list={[
+                  isMissing
+                    ? 'border-amber-200 dark:border-amber-900/60 bg-amber-50/10'
+                    : 'border-slate-200 dark:border-slate-800'
+                ]}
+              >
+                <div class="space-y-2">
+                  <div class="flex items-start justify-between gap-2">
+                    <span class="font-black text-xs sm:text-sm text-slate-900 dark:text-white line-clamp-1">
+                      "{log.query}"
+                    </span>
+                    <span
+                      class={`shrink-0 rounded-md px-2 py-0.5 text-[10px] font-extrabold uppercase ${
+                        isMissing
+                          ? 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 animate-pulse'
+                          : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                      }`}
+                    >
+                      {isMissing ? 'Missing' : 'Has Tool'}
+                    </span>
+                  </div>
+
+                  <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+                    <span>Volume: <strong class="text-slate-900 dark:text-white font-mono">{log.count} times</strong></span>
+                    <span>Last: {timeAgo}</span>
+                  </div>
+                </div>
+
+                <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800/80">
+                  {isMissing ? (
+                    <a
+                      href={`/admin/calculators/new/?name=${encodeURIComponent(log.query)}`}
+                      class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 hover:text-amber-800 dark:text-amber-400 hover:underline"
+                    >
+                      <span>➕</span> Build Calculator →
+                    </a>
+                  ) : (
+                    <span class="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                      ✓ Supported in catalog
+                    </span>
+                  )}
+
+                  <button
+                    type="button"
+                    class="btn-delete-query text-slate-400 hover:text-red-600 dark:hover:text-red-400 text-xs font-bold cursor-pointer transition p-1"
+                    data-query={log.query}
+                    title="Remove query log"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+
+  </div>
+</AdminLayout>
+
+<script is:inline>
+  // Table search & category filter
+  const searchInput = document.getElementById('table-search-input');
+  const catSelect = document.getElementById('category-filter-select');
+  const tableRows = document.querySelectorAll('.calc-row');
+  const mobileCards = document.querySelectorAll('.calc-card');
+
+  function filterCalculators() {
+    const q = (searchInput?.value || '').trim().toLowerCase();
+    const cat = catSelect?.value || 'all';
+
+    function checkItem(el) {
+      const name = el.dataset.name || '';
+      const itemCat = el.dataset.category || '';
+      const matchesSearch = !q || name.includes(q);
+      const matchesCat = cat === 'all' || itemCat === cat;
+      return matchesSearch && matchesCat;
+    }
+
+    tableRows.forEach((row) => {
+      if (checkItem(row)) row.classList.remove('hidden');
+      else row.classList.add('hidden');
+    });
+
+    mobileCards.forEach((card) => {
+      if (checkItem(card)) card.classList.remove('hidden');
+      else card.classList.add('hidden');
+    });
+  }
+
+  searchInput?.addEventListener('input', filterCalculators);
+  catSelect?.addEventListener('change', filterCalculators);
+
+  // Search demand filter tabs
+  const searchTabs = document.querySelectorAll('.search-tab');
+  const querySearchInput = document.getElementById('filter-queries-input');
+  const queryCards = document.querySelectorAll('.query-card');
+
+  let activeFilter = 'all';
+  let searchQuery = '';
+
+  function filterQueryCards() {
+    queryCards.forEach((card) => {
+      const type = card.dataset.type;
+      const text = card.dataset.query || '';
+
+      const matchType = activeFilter === 'all' || type === activeFilter;
+      const matchSearch = !searchQuery || text.includes(searchQuery);
+
+      if (matchType && matchSearch) {
+        card.classList.remove('hidden');
+      } else {
+        card.classList.add('hidden');
+      }
+    });
+  }
+
+  searchTabs.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      searchTabs.forEach((b) => {
+        b.classList.remove('bg-blue-600', 'text-white', 'active');
+        b.classList.add('text-slate-600', 'dark:text-slate-300');
+      });
+      btn.classList.add('bg-blue-600', 'text-white', 'active');
+      btn.classList.remove('text-slate-600', 'dark:text-slate-300');
+      activeFilter = btn.dataset.filter || 'all';
+      filterQueryCards();
+    });
+  });
+
+  querySearchInput?.addEventListener('input', (e) => {
+    searchQuery = (e.target.value || '').trim().toLowerCase();
+    filterQueryCards();
+  });
+
+  // Delete query log
+  document.querySelectorAll('.btn-delete-query').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      const query = btn.dataset.query;
+      if (!query) return;
+      if (!confirm(`Are you sure you want to delete query "${query}"?`)) return;
+
+      btn.disabled = true;
+      try {
+        const token = localStorage.getItem('admin_token') || '';
+        const res = await fetch(`/api/search-log?query=${encodeURIComponent(query)}`, {
+          method: 'DELETE',
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        });
+
+        if (res.ok) {
+          const card = btn.closest('.query-card');
+          card?.remove();
+        } else {
+          alert('Failed to delete query.');
+        }
+      } catch {
+        alert('Network error.');
+      } finally {
+        btn.disabled = false;
+      }
+    });
+  });
+</script>

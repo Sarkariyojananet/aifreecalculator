@@ -1,11 +1,16 @@
 /**
  * POST /api/admin/calculator-health/run/[slug]
- * Runs tests for a single calculator and saves results.
+ * Runs tests for a single calculator, computes its 0-100 health score, and saves results.
  */
 import type { APIRoute } from 'astro';
 import { authenticateAdminRequest } from '../../../../../lib/auth';
 import { runTestsForCalculator } from '../../../../../lib/calculator-tests/test-runner';
-import { getLatestTestResults, saveTestRun } from '../../../../../lib/calculator-tests/health-store';
+import {
+  getLatestTestResults,
+  saveTestRun,
+  getAllCalculatorHealthScores,
+  saveAllCalculatorHealthScores,
+} from '../../../../../lib/calculator-tests/health-store';
 import { getTestedSlugs } from '../../../../../lib/calculator-tests/test-cases';
 import type { FullTestRunResult } from '../../../../../lib/calculator-tests/types';
 
@@ -30,22 +35,8 @@ export const POST: APIRoute = async ({ request, cookies, locals, params }) => {
     });
   }
 
-  const testedSlugs = getTestedSlugs();
-  if (!testedSlugs.includes(slug)) {
-    return new Response(
-      JSON.stringify({
-        success: true,
-        slug,
-        message: 'No test cases are defined for this calculator slug.',
-        totalTests: 0,
-        state: 'NOT_TESTED',
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
-  }
-
   try {
-    const summary = await runTestsForCalculator(slug);
+    const { summary, healthScore } = await runTestsForCalculator(slug, locals);
 
     // Merge this single-calculator result into the full results blob
     const existing = (await getLatestTestResults(locals)) ?? {};
@@ -69,34 +60,45 @@ export const POST: APIRoute = async ({ request, cookies, locals, params }) => {
       })),
     };
 
-    // Build a synthetic FullTestRunResult for saveTestRun compatibility
-    const fullResult: FullTestRunResult = {
-      runId: existing[slug].runId,
-      startedAt: existing[slug].lastTestedAt,
-      completedAt: existing[slug].lastTestedAt,
+    // Update test runs record
+    const singleRun: FullTestRunResult = {
+      runId: `run_single_${slug}_${Date.now()}`,
+      startedAt: new Date().toISOString(),
+      completedAt: new Date().toISOString(),
       totalTests: summary.totalTests,
       passed: summary.passed,
       failed: summary.failed,
       errored: summary.errored,
       skipped: summary.skipped,
       byCalculator: [summary],
-      triggeredBy: user.username || 'admin',
+      triggeredBy: `admin:${user.username || 'admin'}`,
     };
 
-    await saveTestRun(fullResult, locals);
+    await saveTestRun(singleRun, locals);
+
+    // Update cached health score
+    const allScores = await getAllCalculatorHealthScores(locals);
+    allScores[slug] = healthScore;
+    await saveAllCalculatorHealthScores(allScores, locals);
 
     return new Response(
       JSON.stringify({
         success: true,
         slug,
-        totalTests: summary.totalTests,
-        passed: summary.passed,
-        failed: summary.failed,
-        errored: summary.errored,
-        state: summary.state,
-        results: summary.results,
+        summary: {
+          totalTests: summary.totalTests,
+          passed: summary.passed,
+          failed: summary.failed,
+          errored: summary.errored,
+          state: summary.state,
+          results: summary.results,
+        },
+        healthScore,
       }),
-      { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } }
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' },
+      }
     );
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Test run failed';

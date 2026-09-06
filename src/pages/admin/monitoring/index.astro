@@ -1,0 +1,689 @@
+---
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { authenticateAdminRequest } from '../../../lib/auth';
+import { getDeploymentRecords } from '../../../lib/monitoring/deployment-client';
+import {
+  getErrorGroups,
+  getIncidents,
+  getMonitoredRouteStatuses,
+  getAuthenticUptimePercentage,
+} from '../../../lib/monitoring/store';
+
+export const prerender = false;
+
+// 1. Enforce admin authentication
+const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
+if (!user) {
+  return Astro.redirect('/admin/login/');
+}
+
+// 2. Fetch authentic monitoring data
+const [deploymentsData, errorGroups, incidents, monitoredRoutes, uptimeData] = await Promise.all([
+  getDeploymentRecords(Astro.locals),
+  getErrorGroups(Astro.locals, { limit: 50 }),
+  getIncidents(Astro.locals, { limit: 20 }),
+  getMonitoredRouteStatuses(Astro.locals),
+  getAuthenticUptimePercentage(Astro.locals),
+]);
+
+const currentDeployment = deploymentsData.current;
+const openIncidents = incidents.filter((i) => i.status === 'open' || i.status === 'investigating');
+const resolvedIncidents = incidents.filter((i) => i.status === 'resolved' || i.status === 'ignored');
+const criticalErrors = errorGroups.filter((e) => e.severity === 'critical' && e.status === 'open');
+
+// 3. Compute overall operational status
+let overallStatus: 'healthy' | 'degraded' | 'outage' | 'unknown' = 'healthy';
+let overallStatusLabel = 'All Systems Operational';
+
+const hasRouteDown = monitoredRoutes.some((r) => r.status === 'down');
+const hasRouteDegraded = monitoredRoutes.some((r) => r.status === 'degraded');
+
+if (hasRouteDown || openIncidents.some((i) => i.severity === 'critical')) {
+  overallStatus = 'outage';
+  overallStatusLabel = 'Critical Incident Detected';
+} else if (hasRouteDegraded || openIncidents.length > 0 || criticalErrors.length > 0) {
+  overallStatus = 'degraded';
+  overallStatusLabel = 'Degraded Performance';
+}
+---
+
+<AdminLayout title="Deployment & Site Monitoring" activeSection="monitoring">
+  <div class="space-y-6">
+    <!-- Header with Operational Status Pill and Action Buttons -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-5 dark:border-slate-800">
+      <div>
+        <div class="flex items-center gap-3">
+          <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2.5">
+            <span>🛡️</span> Deployment, Error &amp; Site Monitoring
+          </h1>
+          <span
+            class={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold ${
+              overallStatus === 'healthy'
+                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-900/60'
+                : overallStatus === 'degraded'
+                ? 'bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/50 dark:text-amber-300 dark:border-amber-900/60'
+                : 'bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-900/60'
+            }`}
+          >
+            <span class="h-2 w-2 rounded-full animate-pulse bg-current"></span>
+            {overallStatusLabel}
+          </span>
+        </div>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+          Zero-simulation monitoring of Cloudflare Worker deployments, runtime errors, critical route uptime, and incidents.
+        </p>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          id="btn-run-uptime-check"
+          class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3.5 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition cursor-pointer"
+        >
+          <span>⚡</span> <span id="btn-uptime-text">Run Health Check Now</span>
+        </button>
+
+        <a
+          href="/api/health"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition"
+        >
+          <span>🔍</span> /api/health
+        </a>
+
+        <a
+          href="/admin/performance/"
+          class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition"
+        >
+          <span>⚡</span> CDN &amp; Cache
+        </a>
+      </div>
+    </div>
+
+    <!-- Notification Toast / Banner -->
+    <div id="monitoring-notification-banner" class="hidden rounded-2xl p-4 text-xs font-semibold"></div>
+
+    <!-- 1. Deployment & Runtime Version Information (Step 2, 3, 4) -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
+        <div>
+          <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🚀</span> Current Production Deployment
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Source: <strong class="text-slate-700 dark:text-slate-300">{currentDeployment.source}</strong> ({deploymentsData.dataSource === 'cloudflare_api' ? 'Cloudflare Workers API' : 'Git Repository Build Metadata'})
+          </p>
+        </div>
+        <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-700 border border-emerald-200 dark:bg-emerald-950/60 dark:text-emerald-300 dark:border-emerald-900/60">
+          🟢 Active Production
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-1">
+        <!-- Version / Short SHA -->
+        <div class="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/40 space-y-1">
+          <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Release Version</div>
+          <div class="font-mono text-base font-black text-blue-600 dark:text-blue-400 flex items-center gap-1.5">
+            <span>🏷️</span> {currentDeployment.version}
+          </div>
+          <div class="text-[11px] text-slate-400 truncate font-mono">SHA: {currentDeployment.commitSha?.slice(0, 10) || 'N/A'}</div>
+        </div>
+
+        <!-- Deployed At -->
+        <div class="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/40 space-y-1">
+          <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Deployment Time</div>
+          <div class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+            <span>🕒</span> {new Date(currentDeployment.deployedAt).toLocaleString()}
+          </div>
+          <div class="text-[11px] text-slate-400 truncate">Environment: {currentDeployment.environment}</div>
+        </div>
+
+        <!-- Commit Message -->
+        <div class="rounded-2xl border border-slate-100 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/40 space-y-1 sm:col-span-2">
+          <div class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Latest Commit / Build Summary</div>
+          <div class="text-xs font-bold text-slate-800 dark:text-slate-200 line-clamp-2">
+            "{currentDeployment.commitMessage || 'No commit message recorded'}"
+          </div>
+          <div class="text-[11px] text-slate-400 truncate">
+            Author: {currentDeployment.commitAuthor || 'System'} • Target Domain: aifreecalculator.com
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Active Incidents & Automated Alerts (Step 13, 14, 15) -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+        <div>
+          <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🚨</span> Incidents &amp; Reliability Alerts
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Automated alerts triggered by repeated 5xx errors or failed route health checks.
+          </p>
+        </div>
+        <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+          {openIncidents.length} Active
+        </span>
+      </div>
+
+      {openIncidents.length > 0 ? (
+        <div class="space-y-3">
+          {openIncidents.map((incident) => (
+            <div
+              class={`rounded-2xl p-4 border transition flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 ${
+                incident.severity === 'critical'
+                  ? 'bg-red-50/50 border-red-200 dark:bg-red-950/20 dark:border-red-900/40'
+                  : 'bg-amber-50/50 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900/40'
+              }`}
+            >
+              <div class="space-y-1">
+                <div class="flex items-center gap-2">
+                  <span
+                    class={`text-[10px] font-black uppercase px-2 py-0.5 rounded ${
+                      incident.severity === 'critical'
+                        ? 'bg-red-600 text-white'
+                        : 'bg-amber-600 text-white'
+                    }`}
+                  >
+                    {incident.severity}
+                  </span>
+                  <span class="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">
+                    {incident.title}
+                  </span>
+                  <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                    {incident.affectedRoute}
+                  </span>
+                </div>
+                <p class="text-xs text-slate-600 dark:text-slate-300">
+                  {incident.summary}
+                </p>
+                <div class="text-[10px] text-slate-400">
+                  Detected: {new Date(incident.detectedAt).toLocaleString()} • Occurrences: {incident.occurrenceCount} • Status: <strong class="capitalize">{incident.status}</strong>
+                </div>
+              </div>
+
+              <!-- Incident Action Buttons -->
+              <div class="flex items-center gap-2 shrink-0">
+                {incident.status === 'open' && (
+                  <button
+                    type="button"
+                    data-incident-action="investigate"
+                    data-incident-id={incident.id}
+                    class="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+                  >
+                    Investigating
+                  </button>
+                )}
+                <button
+                  type="button"
+                  data-incident-action="resolve"
+                  data-incident-id={incident.id}
+                  class="rounded-xl bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-2xs hover:bg-emerald-700 cursor-pointer"
+                >
+                  Mark Resolved
+                </button>
+                <button
+                  type="button"
+                  data-incident-action="ignore"
+                  data-incident-id={incident.id}
+                  class="rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 cursor-pointer"
+                >
+                  Ignore
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div class="rounded-2xl border border-dashed border-slate-200 p-8 text-center dark:border-slate-800">
+          <div class="text-2xl mb-1">🎉</div>
+          <div class="text-xs font-bold text-slate-900 dark:text-white">No Active Incidents Detected</div>
+          <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+            All server endpoints and background processes are operating within healthy tolerances.
+          </div>
+        </div>
+      )}
+
+      {resolvedIncidents.length > 0 && (
+        <details class="rounded-2xl border border-slate-200 bg-slate-50/40 p-4 dark:border-slate-800 dark:bg-slate-950/20">
+          <summary class="text-xs font-bold text-slate-600 dark:text-slate-400 cursor-pointer flex items-center justify-between">
+            <span>📋 Past Resolved Incidents ({resolvedIncidents.length})</span>
+            <button
+              type="button"
+              id="btn-clear-resolved-incidents"
+              class="text-[11px] font-semibold text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-400 cursor-pointer"
+            >
+              Clear History
+            </button>
+          </summary>
+          <div class="space-y-2.5 mt-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+            {resolvedIncidents.map((incident) => (
+              <div class="rounded-xl p-3 border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                <div class="space-y-0.5">
+                  <div class="flex items-center gap-2">
+                    <span class="text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
+                      {incident.status}
+                    </span>
+                    <span class="text-xs font-semibold text-slate-700 dark:text-slate-200">{incident.title}</span>
+                    <span class="text-[10px] font-mono text-slate-400">{incident.affectedRoute}</span>
+                  </div>
+                  <div class="text-[10px] text-slate-400">
+                    Detected: {new Date(incident.detectedAt).toLocaleString()} • {incident.summary}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  data-incident-action="delete"
+                  data-incident-id={incident.id}
+                  class="text-[10px] text-slate-400 hover:text-red-600 cursor-pointer font-semibold self-end sm:self-auto"
+                >
+                  Delete
+                </button>
+              </div>
+            ))}
+          </div>
+        </details>
+      )}
+    </div>
+
+    <!-- 3. Critical Route Health & Uptime Monitoring (Step 8, 9, 10, 11) -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
+        <div>
+          <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🌐</span> Critical Route Health &amp; Server Response Latency
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Real response latency checks across 5 core public pages and system health probes.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3">
+          <div class="text-right">
+            <div class="text-[10px] uppercase font-bold text-slate-400">Uptime Metric</div>
+            <div class="text-sm font-black text-slate-900 dark:text-white">
+              {uptimeData.percentage !== undefined ? `${uptimeData.percentage}%` : 'Collecting History'}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Monitored Routes Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs">
+          <thead>
+            <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-400 font-semibold uppercase text-[10px]">
+              <th class="py-2.5 px-3">Route &amp; Target</th>
+              <th class="py-2.5 px-3">Category</th>
+              <th class="py-2.5 px-3">Status</th>
+              <th class="py-2.5 px-3">HTTP Code</th>
+              <th class="py-2.5 px-3">Response Latency</th>
+              <th class="py-2.5 px-3">Last Checked</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            {monitoredRoutes.map((route) => (
+              <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
+                <td class="py-3 px-3">
+                  <div class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                    <a href={route.route} target="_blank" rel="noopener" class="hover:underline flex items-center gap-1">
+                      {route.label} ↗
+                    </a>
+                  </div>
+                  <div class="font-mono text-[10px] text-slate-400">{route.route}</div>
+                </td>
+                <td class="py-3 px-3">
+                  <span class="inline-block uppercase text-[9px] font-bold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                    {route.category}
+                  </span>
+                </td>
+                <td class="py-3 px-3">
+                  <span
+                    class={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                      route.status === 'healthy'
+                        ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300'
+                        : route.status === 'degraded'
+                        ? 'bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300'
+                        : route.status === 'down'
+                        ? 'bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300'
+                        : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                    }`}
+                  >
+                    {route.status === 'healthy' ? '🟢 Online' : route.status === 'degraded' ? '🟡 Slow' : route.status === 'down' ? '🔴 Offline' : '⚪ Not Checked'}
+                  </span>
+                </td>
+                <td class="py-3 px-3 font-mono font-bold text-slate-800 dark:text-slate-200">
+                  {route.statusCode || '--'}
+                </td>
+                <td class="py-3 px-3">
+                  {route.responseTimeMs !== undefined ? (
+                    <div class="flex items-center gap-2">
+                      <span
+                        class={`font-mono font-bold ${
+                          route.responseClassification === 'good'
+                            ? 'text-emerald-600 dark:text-emerald-400'
+                            : route.responseClassification === 'slow'
+                            ? 'text-amber-600 dark:text-amber-400'
+                            : 'text-red-600 dark:text-red-400'
+                        }`}
+                      >
+                        {route.responseTimeMs} ms
+                      </span>
+                      <span class="text-[10px] text-slate-400">
+                        ({route.responseClassification === 'good' ? 'Good' : route.responseClassification === 'slow' ? 'Moderate' : 'High latency'})
+                      </span>
+                    </div>
+                  ) : (
+                    <span class="text-slate-400 font-mono">--</span>
+                  )}
+                </td>
+                <td class="py-3 px-3 text-slate-500 dark:text-slate-400 text-[11px]">
+                  {route.lastCheckedAt ? new Date(route.lastCheckedAt).toLocaleTimeString() : 'Pending first check'}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="text-[11px] text-slate-400 pt-1">
+        ℹ️ Latency measures Cloudflare Worker round-trip execution. Thresholds: Good (&lt;500ms), Slow (500–1500ms), High (&gt;1500ms).
+      </p>
+    </div>
+
+    <!-- 4. Centralized Application Error Groups (Step 5, 6, 12) -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-100 pb-3 dark:border-slate-800">
+        <div>
+          <h3 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📋</span> Centralized Application Error Groups
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400">
+            Deduplicated errors across Cloudflare Workers, APIs, calculations, and client runtime.
+          </p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-slate-500">
+            {errorGroups.length} Grouped Fingerprints
+          </span>
+        </div>
+      </div>
+
+      {errorGroups.length > 0 ? (
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="border-b border-slate-200 dark:border-slate-800 text-slate-400 font-semibold uppercase text-[10px]">
+                <th class="py-2.5 px-3">Route &amp; Message</th>
+                <th class="py-2.5 px-3">Category</th>
+                <th class="py-2.5 px-3">Severity</th>
+                <th class="py-2.5 px-3">Occurrences</th>
+                <th class="py-2.5 px-3">Last Seen</th>
+                <th class="py-2.5 px-3">Status</th>
+                <th class="py-2.5 px-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              {errorGroups.map((err) => (
+                <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40 transition">
+                  <td class="py-3 px-3 max-w-sm">
+                    <div class="font-mono text-[11px] font-bold text-slate-900 dark:text-white truncate">
+                      {err.route}
+                    </div>
+                    <div class="text-slate-500 dark:text-slate-400 text-[11px] truncate" title={err.latestMessage}>
+                      {err.latestMessage}
+                    </div>
+                  </td>
+                  <td class="py-3 px-3">
+                    <span class="font-mono uppercase text-[9px] font-bold px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                      {err.category.replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td class="py-3 px-3">
+                    <span
+                      class={`uppercase text-[9px] font-black px-1.5 py-0.5 rounded ${
+                        err.severity === 'critical'
+                          ? 'bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300'
+                          : err.severity === 'error'
+                          ? 'bg-amber-100 text-amber-700 dark:bg-amber-950 dark:text-amber-300'
+                          : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                      }`}
+                    >
+                      {err.severity}
+                    </span>
+                  </td>
+                  <td class="py-3 px-3 font-mono font-black text-slate-900 dark:text-white">
+                    {err.occurrenceCount.toLocaleString()}
+                  </td>
+                  <td class="py-3 px-3 text-slate-500 dark:text-slate-400 text-[11px]">
+                    {new Date(err.lastSeen).toLocaleTimeString()}
+                  </td>
+                  <td class="py-3 px-3">
+                    <span
+                      class={`capitalize text-[11px] font-bold ${
+                        err.status === 'open'
+                          ? 'text-red-600 dark:text-red-400'
+                          : err.status === 'resolved'
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : 'text-slate-400'
+                      }`}
+                    >
+                      {err.status}
+                    </span>
+                  </td>
+                  <td class="py-3 px-3 text-right">
+                    {err.status !== 'resolved' ? (
+                      <button
+                        type="button"
+                        data-error-action="resolve"
+                        data-error-id={err.id}
+                        class="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+                      >
+                        Resolve
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        data-error-action="reopen"
+                        data-error-id={err.id}
+                        class="rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-bold text-slate-500 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400 cursor-pointer"
+                      >
+                        Re-open
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div class="rounded-2xl border border-dashed border-slate-200 p-8 text-center dark:border-slate-800">
+          <div class="text-2xl mb-1">✨</div>
+          <div class="text-xs font-bold text-slate-900 dark:text-white">Zero Logged Errors</div>
+          <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+            No server exceptions or runtime issues have been reported.
+          </div>
+        </div>
+      )}
+    </div>
+
+    <!-- 5. Cross-Phase Navigation & Observability Hub -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-2">
+        <div class="flex items-center gap-2 font-bold text-sm text-slate-900 dark:text-white">
+          <span>🧪</span> Calculator Health Tests
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          Inspect deterministic math formula verification and regression suites across all 39 calculators.
+        </p>
+        <a href="/admin/calculator-health/tests/" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline inline-block pt-1">
+          Run Formula Tests →
+        </a>
+      </div>
+
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-2">
+        <div class="flex items-center gap-2 font-bold text-sm text-slate-900 dark:text-white">
+          <span>🔀</span> 404 Monitor &amp; Redirects
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          Review broken URLs detected at the edge and create 301/302 smart redirects.
+        </p>
+        <a href="/admin/redirects/" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline inline-block pt-1">
+          View 404 Logs →
+        </a>
+      </div>
+
+      <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-2">
+        <div class="flex items-center gap-2 font-bold text-sm text-slate-900 dark:text-white">
+          <span>⚡</span> Edge CDN Cache Purge
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          Execute targeted cache purges, inspect edge rules, or warm critical calculator routes.
+        </p>
+        <a href="/admin/performance/" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline inline-block pt-1">
+          Cache Manager →
+        </a>
+      </div>
+    </div>
+  </div>
+</AdminLayout>
+
+<script is:inline>
+  (function () {
+    const btnUptime = document.getElementById('btn-run-uptime-check');
+    const btnUptimeText = document.getElementById('btn-uptime-text');
+    const banner = document.getElementById('monitoring-notification-banner');
+
+    // Run On-Demand Uptime Probe
+    btnUptime?.addEventListener('click', async () => {
+      if (!btnUptime || !btnUptimeText) return;
+      btnUptime.disabled = true;
+      btnUptimeText.textContent = 'Probing Routes...';
+
+      if (banner) {
+        banner.className = 'rounded-2xl p-4 text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 block';
+        banner.innerHTML = '<span>⏳ Probing critical endpoints across aifreecalculator.com...</span>';
+      }
+
+      try {
+        const res = await fetch('/api/admin/monitoring/uptime-check', { method: 'POST' });
+        const data = await res.json();
+
+        if (res.ok && data.success) {
+          if (banner) {
+            banner.className = 'rounded-2xl p-4 text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 block';
+            banner.innerHTML = '<span>✅ Health check probe completed successfully. Refreshing live view...</span>';
+          }
+          setTimeout(() => window.location.reload(), 800);
+        } else {
+          throw new Error(data.error || 'Check failed');
+        }
+      } catch (err) {
+        if (banner) {
+          banner.className = 'rounded-2xl p-4 text-xs font-semibold bg-red-50 text-red-700 border border-red-200 block';
+          banner.innerHTML = `<span>❌ Error running health check: ${err.message || 'Unknown error'}</span>`;
+        }
+        btnUptime.disabled = false;
+        btnUptimeText.textContent = 'Run Health Check Now';
+      }
+    });
+
+    // Incident Actions (Resolve / Ignore / Investigate)
+    document.querySelectorAll('[data-incident-action]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const action = btn.getAttribute('data-incident-action');
+        const id = btn.getAttribute('data-incident-id');
+        if (!id || !action) return;
+
+        let status = 'open';
+        if (action === 'resolve') status = 'resolved';
+        if (action === 'ignore') status = 'ignored';
+        if (action === 'investigate') status = 'investigating';
+
+        try {
+          btn.disabled = true;
+          if (action === 'delete') {
+            const res = await fetch(`/api/admin/monitoring/incidents?id=${encodeURIComponent(id)}`, {
+              method: 'DELETE',
+            });
+            if (res.ok) {
+              window.location.reload();
+            } else {
+              alert('Failed to delete incident.');
+              btn.disabled = false;
+            }
+            return;
+          }
+
+          const res = await fetch('/api/admin/monitoring/incidents', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, status }),
+          });
+
+          if (res.ok) {
+            window.location.reload();
+          } else {
+            alert('Failed to update incident status.');
+            btn.disabled = false;
+          }
+        } catch {
+          alert('Network error updating incident.');
+          btn.disabled = false;
+        }
+      });
+    });
+
+    // Clear All Resolved Incidents
+    document.getElementById('btn-clear-resolved-incidents')?.addEventListener('click', async (e) => {
+      e.preventDefault();
+      if (!confirm('Clear all resolved incident history?')) return;
+      try {
+        const res = await fetch('/api/admin/monitoring/incidents?clear_resolved=true', {
+          method: 'DELETE',
+        });
+        if (res.ok) {
+          window.location.reload();
+        } else {
+          alert('Failed to clear resolved incidents.');
+        }
+      } catch {
+        alert('Network error clearing incidents.');
+      }
+    });
+
+    // Error Group Actions (Resolve / Reopen)
+    document.querySelectorAll('[data-error-action]').forEach((btn) => {
+      btn.addEventListener('click', async () => {
+        const action = btn.getAttribute('data-error-action');
+        const id = btn.getAttribute('data-error-id');
+        if (!id || !action) return;
+
+        const status = action === 'resolve' ? 'resolved' : 'open';
+
+        try {
+          btn.disabled = true;
+          const res = await fetch('/api/admin/monitoring/errors', {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id, status }),
+          });
+
+          if (res.ok) {
+            window.location.reload();
+          } else {
+            alert('Failed to update error status.');
+            btn.disabled = false;
+          }
+        } catch {
+          alert('Network error updating error status.');
+          btn.disabled = false;
+        }
+      });
+    });
+  })();
+</script>

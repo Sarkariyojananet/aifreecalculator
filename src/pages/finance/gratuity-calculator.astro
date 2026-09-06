@@ -1,0 +1,1100 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="Gratuity Calculator – Simple & Advanced (Payment of Gratuity Act 1972)"
+  description="Calculate your gratuity payout using either the quick Simple Gratuity Calculator or the in-depth Advanced Gratuity Calculator with DA, service rounding rules, and eligibility checks."
+  category="Finance"
+  calculatorName="Gratuity Calculator"
+  slug="gratuity-calculator"
+  keywords={[
+    'gratuity calculator',
+    'simple gratuity calculator',
+    'advanced gratuity calculator',
+    'gratuity calculation formula',
+    'payment of gratuity act 1972',
+    'gratuity eligibility',
+    'gratuity rounding rules',
+    'gratuity calculator india',
+    'gratuity tax exemption limit'
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- TAB SWITCHER: SIMPLE VS ADVANCED -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-2.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs font-semibold scrollbar-thin">
+        <button
+          type="button"
+          id="tab-btn-simple"
+          class="btn-grat-mode active shrink-0 rounded-xl bg-blue-600 px-4 py-2 font-bold text-white shadow-xs cursor-pointer transition flex items-center gap-1.5"
+          data-mode="simple"
+        >
+          <span>⚡</span>
+          <span>Simple Calculator</span>
+          <span class="hidden sm:inline text-[10px] font-normal opacity-90">(Quick Salary & Tenure)</span>
+        </button>
+        <button
+          type="button"
+          id="tab-btn-adv"
+          class="btn-grat-mode shrink-0 rounded-xl border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition flex items-center gap-1.5"
+          data-mode="advanced"
+        >
+          <span>⚙️</span>
+          <span>Advanced Calculator</span>
+          <span class="hidden sm:inline text-[10px] font-normal opacity-90">(DA, Situation & Breakdown)</span>
+        </button>
+      </div>
+      <div id="mode-desc-text" class="mt-2 px-1 text-[11px] font-medium text-slate-500 dark:text-slate-400">
+        Quick calculation using salary and service period
+      </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- 1. SIMPLE GRATUITY CALCULATOR PANEL (Default)                     -->
+    <!-- ================================================================= -->
+    <div id="panel-simple-gratuity" class="space-y-6">
+      
+      <!-- SIMPLE QUICK PRESETS -->
+      <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex flex-wrap items-center gap-1.5 text-xs">
+          <span class="font-bold text-slate-600 dark:text-slate-400 mr-1 flex items-center gap-1">
+            <span>⚡</span> Quick Presets:
+          </span>
+          <button type="button" class="btn-preset-simple rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-salary="60000" data-years="5" data-months="0">💼 ₹60k Salary, 5 Yrs (₹1,73,077)</button>
+          <button type="button" class="btn-preset-simple rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-salary="50000" data-years="8" data-months="8">🚀 ₹50k Salary, 8y 8m (9 Yrs)</button>
+          <button type="button" class="btn-preset-simple rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-salary="40000" data-years="7" data-months="6">⚖️ 7y 6m (≤ 6m: 7 Yrs)</button>
+          <button type="button" class="btn-preset-simple rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-salary="40000" data-years="7" data-months="7">📈 7y 7m (&gt; 6m: 8 Yrs)</button>
+          <button type="button" class="btn-preset-simple rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-salary="50000" data-years="4" data-months="0">⚠️ 4 Yrs (Warning Check)</button>
+        </div>
+      </div>
+
+      <!-- SIMPLE FORM CONTAINER -->
+      <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-blue-50/30 p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/20 sm:p-7">
+        
+        <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+          <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <span>⚡</span> Simple Gratuity Calculator
+          </h2>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            Formula: <strong>Gratuity = (Monthly Salary × 15 × Eligible Years) ÷ 26</strong>
+          </p>
+        </div>
+
+        <form id="form-simple-grat" class="mt-5 space-y-4" novalidate onsubmit="return false;">
+          
+          <!-- Simple Input 1: Monthly Salary (Basic + DA) -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <label for="inp-sim-salary" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                1. Monthly Salary (Basic + DA) (₹) <span class="text-red-500">*</span>
+              </label>
+              <div class="relative w-36 sm:w-44">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-xs font-bold text-slate-400">₹</span>
+                <input
+                  type="number"
+                  id="inp-sim-salary"
+                  value="60000"
+                  step="1000"
+                  min="0"
+                  max="1000000"
+                  class="w-full rounded-xl border border-slate-300 bg-white py-1.5 pl-7 pr-3 text-right text-sm font-bold text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+            </div>
+            <input
+              type="range"
+              id="range-sim-salary"
+              value="60000"
+              min="1000"
+              max="300000"
+              step="1000"
+              class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:bg-slate-700 dark:accent-blue-500"
+              aria-label="Monthly Salary Range"
+            />
+            <div class="flex justify-between text-[11px] font-semibold text-slate-400">
+              <span>₹1,000</span>
+              <span>₹1,50,000</span>
+              <span>₹3,00,000+</span>
+            </div>
+          </div>
+
+          <!-- Simple Input 2: Years of Service -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <label for="inp-sim-years" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                2. Years of Service <span class="text-red-500">*</span>
+              </label>
+              <div class="relative w-28 sm:w-36">
+                <input
+                  type="number"
+                  id="inp-sim-years"
+                  value="5"
+                  step="1"
+                  min="0"
+                  max="50"
+                  class="w-full rounded-xl border border-slate-300 bg-white py-1.5 px-3 text-right text-sm font-bold text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+            </div>
+            <input
+              type="range"
+              id="range-sim-years"
+              value="5"
+              min="0"
+              max="40"
+              step="1"
+              class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:bg-slate-700 dark:accent-blue-500"
+              aria-label="Years of Service Range"
+            />
+            <div class="flex justify-between text-[11px] font-semibold text-slate-400">
+              <span>0 Years</span>
+              <span>20 Years</span>
+              <span>40 Years</span>
+            </div>
+          </div>
+
+          <!-- Simple Input 3: Additional Months of Service -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2.5">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <label for="inp-sim-months" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  3. Additional Months of Service
+                </label>
+                <div class="text-[11px] font-normal text-slate-500 dark:text-slate-400">
+                  &gt; 6 months rounds up to next full year; &le; 6 months does not round up
+                </div>
+              </div>
+              <div class="relative w-28 sm:w-36">
+                <input
+                  type="number"
+                  id="inp-sim-months"
+                  value="0"
+                  step="1"
+                  min="0"
+                  max="11"
+                  class="w-full rounded-xl border border-slate-300 bg-white py-1.5 px-3 text-right text-sm font-bold text-slate-900 focus:border-blue-600 focus:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+            </div>
+            <input
+              type="range"
+              id="range-sim-months"
+              value="0"
+              min="0"
+              max="11"
+              step="1"
+              class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:bg-slate-700 dark:accent-blue-500"
+              aria-label="Additional Months Range"
+            />
+            <div class="flex justify-between text-[11px] font-semibold text-slate-400">
+              <span>0 Months</span>
+              <span>6 Months</span>
+              <span>11 Months</span>
+            </div>
+          </div>
+
+          <!-- BUTTONS -->
+          <div class="flex items-center gap-2 pt-2">
+            <button
+              type="submit"
+              id="btn-calc-simple"
+              class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer text-center"
+            >
+              Calculate Gratuity →
+            </button>
+            <button
+              type="button"
+              id="btn-clear-simple"
+              class="rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer"
+            >
+              Clear (✕)
+            </button>
+          </div>
+
+          <p id="err-sim" class="hidden rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300" role="alert" aria-live="polite"></p>
+
+        </form>
+
+        <!-- SIMPLE RESULTS CONTAINER (Hidden until button is clicked) -->
+        <div id="sim-results-section" class="hidden mt-6 space-y-4">
+          
+          <!-- Highlight Card -->
+          <div class="overflow-hidden rounded-3xl border border-emerald-200 bg-linear-to-br from-white via-emerald-50/40 to-emerald-100/50 p-5 shadow-lg shadow-emerald-500/5 dark:border-emerald-900/60 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/30 sm:p-7">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-emerald-200/80 pb-4 dark:border-slate-800">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">Estimated Gratuity Amount</span>
+                <div id="res-sim-amount" class="mt-1 text-4xl sm:text-5xl font-black text-emerald-600 dark:text-emerald-400">
+                  ₹ 1,73,076.92
+                </div>
+              </div>
+              <div class="sm:text-right">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Eligible Years Used:</span>
+                <div id="res-sim-eligible-years" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                  5 Years
+                </div>
+              </div>
+            </div>
+
+            <!-- Eligibility Notice Banner if < 5 years -->
+            <div id="banner-sim-warning" class="hidden mt-4 rounded-xl p-3.5 text-xs font-semibold bg-amber-50 border border-amber-300 dark:bg-amber-950/40 dark:border-amber-900/60 text-amber-900 dark:text-amber-200">
+              <!-- Dynamically populated -->
+            </div>
+
+            <!-- 4 Required Metrics Row -->
+            <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3.5 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Monthly Salary</div>
+                <div id="res-sim-salary" class="mt-1 text-base font-bold text-slate-900 dark:text-white">₹ 60,000</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3.5 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Actual Service Duration</div>
+                <div id="res-sim-duration" class="mt-1 text-base font-bold text-slate-900 dark:text-white">5 Years 0 Months</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3.5 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">Formula Applied</div>
+                <div id="res-sim-formula" class="mt-1 text-xs font-mono font-bold text-blue-600 dark:text-blue-400">(60,000 × 15 × 5) ÷ 26</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- 2. ADVANCED GRATUITY CALCULATOR PANEL (Tab 2)                      -->
+    <!-- ================================================================= -->
+    <div id="panel-adv-gratuity" class="hidden space-y-6">
+      
+      <!-- ADVANCED QUICK PRESETS -->
+      <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex flex-wrap items-center gap-1.5 text-xs">
+          <span class="font-bold text-slate-600 dark:text-slate-400 mr-1 flex items-center gap-1">
+            <span>⚡</span> Presets:
+          </span>
+          <button type="button" class="btn-preset-adv rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-basic="50000" data-da="0" data-years="8" data-months="8" data-sit="resignation">💼 ₹50k Basic, 8y 8m (9 Yrs, ₹2,59,615)</button>
+          <button type="button" class="btn-preset-adv rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-basic="40000" data-da="5000" data-years="10" data-months="7" data-sit="retirement">🚀 ₹40k Basic + ₹5k DA, 10y 7m (11 Yrs)</button>
+          <button type="button" class="btn-preset-adv rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-basic="50000" data-da="0" data-years="4" data-months="0" data-sit="resignation">⚠️ 4 Yrs (Resignation Warning)</button>
+          <button type="button" class="btn-preset-adv rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-basic="50000" data-da="0" data-years="3" data-months="6" data-sit="disability">🕊️ 3.5 Yrs (Death/Disability Waiver)</button>
+        </div>
+      </div>
+
+      <!-- ADVANCED FORM CONTAINER -->
+      <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-blue-50/30 p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/20 sm:p-7">
+        
+        <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+          <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <span>⚙️</span> Advanced Gratuity Calculator
+          </h2>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            Comprehensive calculation with itemized Basic Salary, Dearness Allowance (DA), employment situation, daily wage basis, and tax status.
+          </p>
+        </div>
+
+        <form id="form-adv-grat" class="mt-5 space-y-4" novalidate onsubmit="return false;">
+          
+          <!-- ADV ROW 1: BASIC SALARY & DA -->
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <!-- 1. Basic Salary -->
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+              <div class="flex items-center justify-between">
+                <label for="inp-adv-basic" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  1. Basic Salary (₹ / mo) <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  id="inp-adv-basic"
+                  value="50000"
+                  step="1000"
+                  min="0"
+                  class="w-32 rounded-xl border border-slate-300 bg-white py-1.5 px-3 text-right text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+              <input
+                type="range"
+                id="range-adv-basic"
+                value="50000"
+                min="1000"
+                max="300000"
+                step="1000"
+                class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:bg-slate-700 dark:accent-blue-500"
+                aria-label="Basic Salary Range"
+              />
+            </div>
+
+            <!-- 2. Dearness Allowance (DA) -->
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+              <div class="flex items-center justify-between">
+                <label for="inp-adv-da" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  2. Dearness Allowance (DA) (₹ / mo)
+                </label>
+                <input
+                  type="number"
+                  id="inp-adv-da"
+                  value="0"
+                  step="500"
+                  min="0"
+                  class="w-32 rounded-xl border border-slate-300 bg-white py-1.5 px-3 text-right text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+              <input
+                type="range"
+                id="range-adv-da"
+                value="0"
+                min="0"
+                max="100000"
+                step="500"
+                class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:bg-slate-700 dark:accent-blue-500"
+                aria-label="Dearness Allowance Range"
+              />
+            </div>
+          </div>
+
+          <!-- ADV ROW 2: SERVICE DURATION -->
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <!-- 3. Years of Service -->
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+              <div class="flex items-center justify-between">
+                <label for="inp-adv-years" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  3. Years of Service <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="number"
+                  id="inp-adv-years"
+                  value="8"
+                  step="1"
+                  min="0"
+                  max="50"
+                  class="w-24 rounded-xl border border-slate-300 bg-white py-1.5 px-3 text-right text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+              <input
+                type="range"
+                id="range-adv-years"
+                value="8"
+                min="0"
+                max="40"
+                step="1"
+                class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:bg-slate-700 dark:accent-blue-500"
+                aria-label="Advanced Years of Service Range"
+              />
+            </div>
+
+            <!-- 4. Additional Months -->
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+              <div class="flex items-center justify-between">
+                <div>
+                  <label for="inp-adv-months" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                    4. Additional Months
+                  </label>
+                  <div class="text-[10px] text-slate-500">&gt; 6m rounds up; &le; 6m does not</div>
+                </div>
+                <input
+                  type="number"
+                  id="inp-adv-months"
+                  value="8"
+                  step="1"
+                  min="0"
+                  max="11"
+                  class="w-24 rounded-xl border border-slate-300 bg-white py-1.5 px-3 text-right text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+              </div>
+              <input
+                type="range"
+                id="range-adv-months"
+                value="8"
+                min="0"
+                max="11"
+                step="1"
+                class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600 dark:bg-slate-700 dark:accent-blue-500"
+                aria-label="Advanced Additional Months Range"
+              />
+            </div>
+          </div>
+
+          <!-- ADV ROW 3: 5. EMPLOYMENT SITUATION -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+            <label for="sel-adv-situation" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              5. Employment Situation / Reason for Exit <span class="text-red-500">*</span>
+            </label>
+            <select
+              id="sel-adv-situation"
+              class="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+            >
+              <option value="resignation" selected>Resignation (Standard 5-Year Rule applies)</option>
+              <option value="retirement">Retirement / Superannuation (Standard 5-Year Rule applies)</option>
+              <option value="termination">Termination (Standard 5-Year Rule applies)</option>
+              <option value="death">Death of Employee (5-Year Rule Waived)</option>
+              <option value="disability">Permanent Disability due to accident/disease (5-Year Rule Waived)</option>
+            </select>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+              Section 4(1) proviso: The 5-year continuous service rule is waived in case of death or permanent disablement.
+            </p>
+          </div>
+
+          <!-- ACTION BUTTON -->
+          <div class="flex items-center gap-2 pt-2">
+            <button
+              type="submit"
+              id="btn-calc-adv"
+              class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer text-center"
+            >
+              Calculate Advanced Gratuity →
+            </button>
+            <button
+              type="button"
+              id="btn-clear-adv"
+              class="rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer"
+            >
+              Clear (✕)
+            </button>
+          </div>
+
+          <p id="err-adv" class="hidden rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300" role="alert" aria-live="polite"></p>
+
+        </form>
+
+        <!-- ADVANCED RESULTS CONTAINER (Strictly Hidden until button is clicked) -->
+        <div id="adv-results-section" class="hidden mt-6 space-y-5">
+          
+          <!-- Highlight Result Card -->
+          <div class="overflow-hidden rounded-3xl border border-emerald-200 bg-linear-to-br from-white via-emerald-50/40 to-emerald-100/50 p-5 shadow-lg shadow-emerald-500/5 dark:border-emerald-900/60 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/30 sm:p-7">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-emerald-200/80 pb-4 dark:border-slate-800">
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">10. Estimated Gratuity Amount</span>
+                  <span id="badge-adv-eligibility" class="inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold">
+                    Statutorily Eligible
+                  </span>
+                </div>
+                <div id="res-adv-amount" class="mt-1 text-4xl sm:text-5xl font-black text-emerald-600 dark:text-emerald-400">
+                  ₹ 2,59,615.38
+                </div>
+              </div>
+              <div class="sm:text-right">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">6. Eligible Service Years:</span>
+                <div id="res-adv-eligible-years" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                  9 Years
+                </div>
+              </div>
+            </div>
+
+            <!-- 1. Eligibility Status Detail Banner -->
+            <div id="banner-adv-msg" class="mt-4 rounded-xl p-3.5 text-xs font-semibold border">
+              <!-- Dynamically populated -->
+            </div>
+
+            <!-- Salary and Duration Grid (Items 2, 3, 4, 5) -->
+            <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">2. Basic Salary</div>
+                <div id="res-adv-basic" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">₹ 50,000</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">3. Dearness Allowance (DA)</div>
+                <div id="res-adv-da" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">₹ 0</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">4. Total Salary Considered</div>
+                <div id="res-adv-total-salary" class="mt-1 text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">₹ 50,000</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">5. Actual Service Duration</div>
+                <div id="res-adv-duration" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">8 Years 8 Months</div>
+              </div>
+            </div>
+
+            <!-- Wage Math Breakdown Grid (Items 7, 8, 9) -->
+            <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">7. Daily Salary (Monthly ÷ 26)</div>
+                <div id="res-adv-daily-salary" class="mt-1 text-sm sm:text-base font-mono font-bold text-slate-900 dark:text-white">₹ 1,923.08</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">8. 15 Days Salary (Daily × 15)</div>
+                <div id="res-adv-15days-salary" class="mt-1 text-sm sm:text-base font-mono font-bold text-slate-900 dark:text-white">₹ 28,846.15</div>
+              </div>
+              <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+                <div class="text-slate-500 dark:text-slate-400 font-semibold">9. Final Calculation Formula</div>
+                <div id="res-adv-formula-step" class="mt-1 text-xs font-mono font-bold text-blue-600 dark:text-blue-400">(50k × 15 × 9) ÷ 26</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 11. Important Statutory/Tax Information Card -->
+          <div class="rounded-2xl border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-900/60 dark:bg-blue-950/20 text-xs text-blue-950 dark:text-blue-200 space-y-1.5">
+            <div class="font-bold flex items-center gap-1.5">
+              <span>🏛️</span> 11. Statutory Tax Exemption Limit (Section 10(10))
+            </div>
+            <p id="res-adv-tax-info">
+              Under Section 10(10) of the Income Tax Act, gratuity received is tax-exempt up to ₹20,00,000 (₹20 Lakhs). Any amount exceeding this limit is added to salary income and taxed as per applicable slab rates.
+            </p>
+          </div>
+
+          <!-- 12. Policy & Legal Disclaimer Card -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 text-xs text-slate-600 dark:text-slate-400 space-y-1">
+            <div class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+              <span>ℹ️</span> 12. Policy Disclaimer
+            </div>
+            <p id="res-adv-disclaimer">
+              This calculation is an estimate based on the Payment of Gratuity Act, 1972 and Section 10(10) of the Income Tax Act. Final gratuity payable may depend on applicable labor laws, employer gratuity trust rules, employment contracts, awards, or more beneficial service terms offered by the establishment.
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- EDUCATIONAL SEO ARTICLE CONTENT SLOT -->
+  <Fragment slot="content">
+    <section class="gratuity-content">
+      <h2>Complete Guide to Gratuity Calculation in India</h2>
+      <p>
+        Gratuity is a statutory terminal monetary benefit payable by employers in India under the <strong>Payment of Gratuity Act, 1972</strong>. It rewards long-term, continuous service rendered by an employee upon resignation, superannuation, retirement, termination, or unfortunate death/disability.
+      </p>
+
+      <h2>Simple vs Advanced Gratuity Calculation</h2>
+      <p>
+        Depending on your requirements, you can choose between two calculation approaches:
+      </p>
+      <ul>
+        <li><strong>Simple Gratuity Calculator:</strong> Designed for employees who already know their consolidated monthly wage (Basic + DA) and wish to quickly estimate their gratuity payout based on their years and months of service.</li>
+        <li><strong>Advanced Gratuity Calculator:</strong> Provides an itemized breakdown with separated Basic Salary, Dearness Allowance (DA), employment situation (Resignation, Retirement, Termination, Death, or Disability), daily wage basis, 15 days salary rate, and Section 10(10) tax exemption guidance.</li>
+      </ul>
+
+      <h2>The Statutory 15/26 Days Gratuity Formula</h2>
+      <p>
+        For all establishments covered under the Payment of Gratuity Act, 1972, gratuity is computed based on <strong>15 days of wages for every completed year of service</strong>, considering a 26-day working month:
+      </p>
+
+      <div class="my-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-900 text-xs sm:text-sm space-y-1.5 font-mono">
+        <div class="font-bold text-blue-600 dark:text-blue-400">Gratuity = (Monthly Salary × 15 × Eligible Years) ÷ 26</div>
+        <div class="text-slate-600 dark:text-slate-400">Or: (Basic Salary + DA) × 15 × Eligible Years ÷ 26</div>
+      </div>
+
+      <h2>Service Year Rounding Rules (The 6-Month Rule)</h2>
+      <p>
+        The Payment of Gratuity Act provides specific rounding rules for incomplete years of service:
+      </p>
+      <ul>
+        <li><strong>More than 6 additional months (&gt; 6 months, i.e. 7 to 11 months):</strong> The incomplete year is rounded <strong>UP</strong> to the next full year.
+          <ul>
+            <li><em>7 years 7 months = 8 eligible years</em></li>
+            <li><em>8 years 8 months = 9 eligible years</em></li>
+            <li><em>10 years 7 months = 11 eligible years</em></li>
+          </ul>
+        </li>
+        <li><strong>6 additional months or less (&le; 6 months, i.e. 0 to 6 months):</strong> The fractional months are discarded and not rounded up.
+          <ul>
+            <li><em>7 years 6 months = 7 eligible years</em></li>
+            <li><em>5 years 3 months = 5 eligible years</em></li>
+          </ul>
+        </li>
+      </ul>
+
+      <h2>The 5-Year Continuous Service Eligibility Rule &amp; Exceptions</h2>
+      <p>
+        Under Section 4(1) of the Act, gratuity is legally payable only if an employee has completed <strong>at least 5 years of continuous service</strong> in cases of:
+      </p>
+      <ol>
+        <li>Normal Resignation</li>
+        <li>Retirement or Superannuation</li>
+        <li>Termination of employment</li>
+      </ol>
+
+      <div class="my-4 rounded-2xl border border-amber-200 bg-amber-50/80 p-4 dark:border-amber-900/60 dark:bg-amber-950/20 text-xs sm:text-sm space-y-1 text-amber-950 dark:text-amber-200">
+        <strong>⚠️ Statutory Exception for Death or Permanent Disability:</strong>
+        <p>
+          The proviso to Section 4(1) of the Act explicitly mandates that the 5-year continuous service condition <strong>does NOT apply</strong> where the termination of employment is caused by <strong>death of the employee</strong> or <strong>disablement due to accident or disease</strong>. In such events, gratuity is payable immediately regardless of tenure.
+        </p>
+      </div>
+
+      <h2>Tax Exemption Limit (Section 10(10))</h2>
+      <p>
+        Under Section 10(10) of the Indian Income Tax Act, the statutory tax-free exemption limit for gratuity is <strong>₹20,00,000 (₹20 Lakhs)</strong>. Gratuity received up to ₹20 Lakhs is 100% tax-free for covered private sector employees. Any excess amount received from an employer above ₹20 Lakhs is treated as taxable salary income.
+      </p>
+
+      <h2>Frequently Asked Questions (FAQ)</h2>
+      <div class="space-y-4 my-6">
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">What is the difference between Simple and Advanced Gratuity Calculators?</h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            The Simple Calculator requires only your consolidated monthly salary and service period. The Advanced Calculator lets you itemize Basic Salary and DA, choose your specific separation reason (Resignation, Retirement, Termination, Death, Disability), and inspect daily wage and tax status breakdowns.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Why is monthly salary divided by 26 instead of 30?</h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            Under Indian labor law and Supreme Court precedents, a month contains 26 actual working days after excluding 4 weekly rest days (Sundays). Hence, daily wage is calculated as Monthly Wage ÷ 26.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Does service of 7 years and 6 months round up to 8 years?</h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            No. Under the Payment of Gratuity Act, only service exceeding 6 months in an incomplete year rounds up. Thus, 7 years 6 months equals 7 years, while 7 years 7 months rounds up to 8 years.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Is gratuity payable if service is under 5 years?</h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            For normal resignation, retirement, or termination, 5 years continuous service is mandatory. However, in the event of death or permanent disability, this 5-year requirement is waived by law.
+          </p>
+        </div>
+      </div>
+    </section>
+  </Fragment>
+</CalculatorLayout>
+
+<style>
+  .gratuity-content h2 {
+    margin-top: 2rem;
+    margin-bottom: 0.75rem;
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #0f172a;
+  }
+
+  .gratuity-content h2:first-child {
+    margin-top: 0;
+  }
+
+  .gratuity-content h3 {
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+
+  .gratuity-content p {
+    margin: 0 0 1rem;
+    line-height: 1.75;
+    color: #475569;
+  }
+
+  .gratuity-content ul,
+  .gratuity-content ol {
+    margin: 0.75rem 0 1.5rem;
+    padding-left: 1.5rem;
+  }
+
+  .gratuity-content ul {
+    list-style: disc;
+  }
+
+  .gratuity-content ol {
+    list-style: decimal;
+  }
+
+  .gratuity-content li + li {
+    margin-top: 0.5rem;
+  }
+
+  :global(.dark) .gratuity-content h2,
+  :global(.dark) .gratuity-content h3 {
+    color: #f8fafc;
+  }
+
+  :global(.dark) .gratuity-content p {
+    color: #cbd5e1;
+  }
+</style>
+
+<!-- FAQ Schema JSON-LD -->
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is the difference between Simple and Advanced Gratuity Calculators?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The Simple Calculator uses your consolidated monthly salary and service period. The Advanced Calculator itemizes Basic Salary and DA, checks specific employment situations, and provides daily wage and tax status breakdowns."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why is monthly salary divided by 26 instead of 30?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Under Indian labor law, a month contains 26 working days after excluding 4 weekly rest days (Sundays). Hence daily wage is Monthly Wage ÷ 26."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does service of 7 years and 6 months round up to 8 years?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Only service exceeding 6 months rounds up. 7 years 6 months remains 7 years, while 7 years 7 months rounds up to 8 years."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is gratuity payable if service is under 5 years?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "For normal resignation or retirement, 5 years is mandatory. However, in the event of death or permanent disability, this requirement is waived by law."
+      }
+    }
+  ]
+})} />
+
+<!-- CLIENT SIDE SCRIPT -->
+<script>
+  import { calculateSimpleGratuity, calculateAdvancedGratuity } from '../../lib/calculators/gratuity';
+
+  function formatINR(val: number): string {
+    return '₹ ' + val.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // TAB SWITCHING (Simple vs Advanced)
+  // ─────────────────────────────────────────────────────────────────────────
+  const tabBtnSimple = document.getElementById('tab-btn-simple') as HTMLButtonElement;
+  const tabBtnAdv = document.getElementById('tab-btn-adv') as HTMLButtonElement;
+  const panelSimple = document.getElementById('panel-simple-gratuity') as HTMLDivElement;
+  const panelAdv = document.getElementById('panel-adv-gratuity') as HTMLDivElement;
+  const modeDescText = document.getElementById('mode-desc-text') as HTMLDivElement;
+
+  function switchTab(mode: 'simple' | 'advanced') {
+    if (mode === 'simple') {
+      tabBtnSimple.className = 'btn-grat-mode active shrink-0 rounded-xl bg-blue-600 px-4 py-2 font-bold text-white shadow-xs cursor-pointer transition flex items-center gap-1.5';
+      tabBtnAdv.className = 'btn-grat-mode shrink-0 rounded-xl border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition flex items-center gap-1.5';
+      panelSimple.classList.remove('hidden');
+      panelAdv.classList.add('hidden');
+      modeDescText.textContent = 'Quick calculation using salary and service period';
+    } else {
+      tabBtnAdv.className = 'btn-grat-mode active shrink-0 rounded-xl bg-blue-600 px-4 py-2 font-bold text-white shadow-xs cursor-pointer transition flex items-center gap-1.5';
+      tabBtnSimple.className = 'btn-grat-mode shrink-0 rounded-xl border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition flex items-center gap-1.5';
+      panelAdv.classList.remove('hidden');
+      panelSimple.classList.add('hidden');
+      modeDescText.textContent = 'Detailed calculation with DA, service rules and eligibility';
+    }
+  }
+
+  tabBtnSimple.addEventListener('click', () => switchTab('simple'));
+  tabBtnAdv.addEventListener('click', () => switchTab('advanced'));
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 1. SIMPLE GRATUITY CALCULATOR LOGIC
+  // ─────────────────────────────────────────────────────────────────────────
+  const formSimple = document.getElementById('form-simple-grat') as HTMLFormElement;
+  const inpSimSalary = document.getElementById('inp-sim-salary') as HTMLInputElement;
+  const rangeSimSalary = document.getElementById('range-sim-salary') as HTMLInputElement;
+
+  const inpSimYears = document.getElementById('inp-sim-years') as HTMLInputElement;
+  const rangeSimYears = document.getElementById('range-sim-years') as HTMLInputElement;
+
+  const inpSimMonths = document.getElementById('inp-sim-months') as HTMLInputElement;
+  const rangeSimMonths = document.getElementById('range-sim-months') as HTMLInputElement;
+
+  const btnCalcSimple = document.getElementById('btn-calc-simple') as HTMLButtonElement;
+  const btnClearSimple = document.getElementById('btn-clear-simple') as HTMLButtonElement;
+  const errSim = document.getElementById('err-sim') as HTMLParagraphElement;
+
+  const simResultsSection = document.getElementById('sim-results-section') as HTMLDivElement;
+  const resSimAmount = document.getElementById('res-sim-amount') as HTMLDivElement;
+  const resSimEligibleYears = document.getElementById('res-sim-eligible-years') as HTMLDivElement;
+  const bannerSimWarning = document.getElementById('banner-sim-warning') as HTMLDivElement;
+  const resSimSalary = document.getElementById('res-sim-salary') as HTMLDivElement;
+  const resSimDuration = document.getElementById('res-sim-duration') as HTMLDivElement;
+  const resSimFormula = document.getElementById('res-sim-formula') as HTMLDivElement;
+
+  // IMPORTANT: Reset/hide results whenever user changes any input or slider in Simple mode
+  function handleSimpleInputModification() {
+    simResultsSection.classList.add('hidden');
+    errSim.classList.add('hidden');
+  }
+
+  function setupSliderSync(input: HTMLInputElement, range: HTMLInputElement, onMod: () => void) {
+    range.addEventListener('input', () => {
+      input.value = range.value;
+      onMod();
+    });
+    input.addEventListener('input', () => {
+      range.value = input.value;
+      onMod();
+    });
+  }
+
+  setupSliderSync(inpSimSalary, rangeSimSalary, handleSimpleInputModification);
+  setupSliderSync(inpSimYears, rangeSimYears, handleSimpleInputModification);
+  setupSliderSync(inpSimMonths, rangeSimMonths, handleSimpleInputModification);
+
+  function executeSimpleCalculation() {
+    errSim.classList.add('hidden');
+
+    const salary = parseFloat(inpSimSalary.value);
+    const years = parseInt(inpSimYears.value, 10);
+    const months = parseInt(inpSimMonths.value, 10) || 0;
+
+    if (isNaN(salary) || salary <= 0) {
+      errSim.textContent = 'Please enter a valid monthly salary.';
+      errSim.classList.remove('hidden');
+      return;
+    }
+
+    if (isNaN(years) || years < 0) {
+      errSim.textContent = 'Please enter valid completed years of service.';
+      errSim.classList.remove('hidden');
+      return;
+    }
+
+    if (isNaN(months) || months < 0 || months > 11) {
+      errSim.textContent = 'Additional months must be between 0 and 11.';
+      errSim.classList.remove('hidden');
+      return;
+    }
+
+    const res = calculateSimpleGratuity({
+      monthlySalary: salary,
+      yearsOfService: years,
+      monthsOfService: months
+    });
+
+    // Populate Simple Result Section
+    resSimAmount.textContent = formatINR(res.gratuityAmount);
+    resSimEligibleYears.textContent = `${res.eligibleYears} Year${res.eligibleYears === 1 ? '' : 's'}`;
+    resSimSalary.textContent = formatINR(res.monthlySalary);
+    resSimDuration.textContent = res.actualServiceDurationText;
+    resSimFormula.textContent = res.formulaUsed;
+
+    if (!res.isEligible && res.eligibilityWarning) {
+      bannerSimWarning.textContent = res.eligibilityWarning;
+      bannerSimWarning.classList.remove('hidden');
+    } else {
+      bannerSimWarning.classList.add('hidden');
+    }
+
+    simResultsSection.classList.remove('hidden');
+    simResultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  btnCalcSimple.addEventListener('click', executeSimpleCalculation);
+
+  btnClearSimple.addEventListener('click', () => {
+    inpSimSalary.value = '60000';
+    rangeSimSalary.value = '60000';
+    inpSimYears.value = '5';
+    rangeSimYears.value = '5';
+    inpSimMonths.value = '0';
+    rangeSimMonths.value = '0';
+    handleSimpleInputModification();
+  });
+
+  // Presets for Simple
+  document.querySelectorAll('.btn-preset-simple').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const s = btn.getAttribute('data-salary') || '60000';
+      const y = btn.getAttribute('data-years') || '5';
+      const m = btn.getAttribute('data-months') || '0';
+
+      inpSimSalary.value = s;
+      rangeSimSalary.value = s;
+      inpSimYears.value = y;
+      rangeSimYears.value = y;
+      inpSimMonths.value = m;
+      rangeSimMonths.value = m;
+
+      handleSimpleInputModification();
+      executeSimpleCalculation();
+    });
+  });
+
+  formSimple.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      executeSimpleCalculation();
+    }
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // 2. ADVANCED GRATUITY CALCULATOR LOGIC
+  // ─────────────────────────────────────────────────────────────────────────
+  const formAdv = document.getElementById('form-adv-grat') as HTMLFormElement;
+  const inpAdvBasic = document.getElementById('inp-adv-basic') as HTMLInputElement;
+  const rangeAdvBasic = document.getElementById('range-adv-basic') as HTMLInputElement;
+
+  const inpAdvDa = document.getElementById('inp-adv-da') as HTMLInputElement;
+  const rangeAdvDa = document.getElementById('range-adv-da') as HTMLInputElement;
+
+  const inpAdvYears = document.getElementById('inp-adv-years') as HTMLInputElement;
+  const rangeAdvYears = document.getElementById('range-adv-years') as HTMLInputElement;
+
+  const inpAdvMonths = document.getElementById('inp-adv-months') as HTMLInputElement;
+  const rangeAdvMonths = document.getElementById('range-adv-months') as HTMLInputElement;
+
+  const selAdvSituation = document.getElementById('sel-adv-situation') as HTMLSelectElement;
+
+  const btnCalcAdv = document.getElementById('btn-calc-adv') as HTMLButtonElement;
+  const btnClearAdv = document.getElementById('btn-clear-adv') as HTMLButtonElement;
+  const errAdv = document.getElementById('err-adv') as HTMLParagraphElement;
+
+  const advResultsSection = document.getElementById('adv-results-section') as HTMLDivElement;
+  const resAdvAmount = document.getElementById('res-adv-amount') as HTMLDivElement;
+  const resAdvEligibleYears = document.getElementById('res-adv-eligible-years') as HTMLDivElement;
+  const badgeAdvEligibility = document.getElementById('badge-adv-eligibility') as HTMLSpanElement;
+  const bannerAdvMsg = document.getElementById('banner-adv-msg') as HTMLDivElement;
+
+  const resAdvBasic = document.getElementById('res-adv-basic') as HTMLDivElement;
+  const resAdvDa = document.getElementById('res-adv-da') as HTMLDivElement;
+  const resAdvTotalSalary = document.getElementById('res-adv-total-salary') as HTMLDivElement;
+  const resAdvDuration = document.getElementById('res-adv-duration') as HTMLDivElement;
+
+  const resAdvDailySalary = document.getElementById('res-adv-daily-salary') as HTMLDivElement;
+  const resAdv15DaysSalary = document.getElementById('res-adv-15days-salary') as HTMLDivElement;
+  const resAdvFormulaStep = document.getElementById('res-adv-formula-step') as HTMLDivElement;
+  const resAdvTaxInfo = document.getElementById('res-adv-tax-info') as HTMLParagraphElement;
+  const resAdvDisclaimer = document.getElementById('res-adv-disclaimer') as HTMLParagraphElement;
+
+  // IMPORTANT: Reset/hide results whenever user changes any input or slider in Advanced mode
+  function handleAdvInputModification() {
+    advResultsSection.classList.add('hidden');
+    errAdv.classList.add('hidden');
+  }
+
+  setupSliderSync(inpAdvBasic, rangeAdvBasic, handleAdvInputModification);
+  setupSliderSync(inpAdvDa, rangeAdvDa, handleAdvInputModification);
+  setupSliderSync(inpAdvYears, rangeAdvYears, handleAdvInputModification);
+  setupSliderSync(inpAdvMonths, rangeAdvMonths, handleAdvInputModification);
+  selAdvSituation.addEventListener('change', handleAdvInputModification);
+
+  function executeAdvancedCalculation() {
+    errAdv.classList.add('hidden');
+
+    const basic = parseFloat(inpAdvBasic.value);
+    const da = parseFloat(inpAdvDa.value) || 0;
+    const years = parseInt(inpAdvYears.value, 10);
+    const months = parseInt(inpAdvMonths.value, 10) || 0;
+    const situation = selAdvSituation.value as any;
+
+    if (isNaN(basic) || basic < 0) {
+      errAdv.textContent = 'Please enter a valid Basic Salary.';
+      errAdv.classList.remove('hidden');
+      return;
+    }
+
+    if (isNaN(years) || years < 0) {
+      errAdv.textContent = 'Please enter valid completed years of service.';
+      errAdv.classList.remove('hidden');
+      return;
+    }
+
+    if (isNaN(months) || months < 0 || months > 11) {
+      errAdv.textContent = 'Additional months must be between 0 and 11.';
+      errAdv.classList.remove('hidden');
+      return;
+    }
+
+    const res = calculateAdvancedGratuity({
+      basicSalary: basic,
+      dearnessAllowance: da,
+      yearsOfService: years,
+      monthsOfService: months,
+      employmentSituation: situation
+    });
+
+    // Populate all 12 Advanced items:
+    // 1. Eligibility Status
+    if (!res.isEligible) {
+      badgeAdvEligibility.textContent = res.eligibilityStatus;
+      badgeAdvEligibility.className = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+      bannerAdvMsg.className = 'mt-4 rounded-xl p-3.5 text-xs font-semibold bg-amber-50 border border-amber-300 dark:bg-amber-950/40 dark:border-amber-900/60 text-amber-900 dark:text-amber-200';
+      bannerAdvMsg.textContent = res.eligibilityDetail;
+    } else if (res.isWaiverApplied) {
+      badgeAdvEligibility.textContent = res.eligibilityStatus;
+      badgeAdvEligibility.className = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300';
+      bannerAdvMsg.className = 'mt-4 rounded-xl p-3.5 text-xs font-semibold bg-blue-50 border border-blue-300 dark:bg-blue-950/40 dark:border-blue-900/60 text-blue-900 dark:text-blue-200';
+      bannerAdvMsg.textContent = res.eligibilityDetail;
+    } else {
+      badgeAdvEligibility.textContent = res.eligibilityStatus;
+      badgeAdvEligibility.className = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+      bannerAdvMsg.className = 'mt-4 rounded-xl p-3.5 text-xs font-semibold bg-emerald-50 border border-emerald-300 dark:bg-emerald-950/40 dark:border-emerald-900/60 text-emerald-900 dark:text-emerald-200';
+      bannerAdvMsg.textContent = res.eligibilityDetail;
+    }
+
+    // 2. Basic Salary
+    resAdvBasic.textContent = formatINR(res.basicSalary);
+    // 3. Dearness Allowance
+    resAdvDa.textContent = formatINR(res.dearnessAllowance);
+    // 4. Total Salary Considered
+    resAdvTotalSalary.textContent = formatINR(res.totalSalaryConsidered);
+    // 5. Actual Service Duration
+    resAdvDuration.textContent = res.actualServiceDurationText;
+    // 6. Eligible Service Years
+    resAdvEligibleYears.textContent = `${res.eligibleYears} Year${res.eligibleYears === 1 ? '' : 's'}`;
+    // 7. Daily Salary Calculation
+    resAdvDailySalary.textContent = `${formatINR(res.dailySalary)} (${formatINR(res.totalSalaryConsidered)} ÷ 26)`;
+    // 8. 15 Days Salary Calculation
+    resAdv15DaysSalary.textContent = `${formatINR(res.fifteenDaysSalary)} (${formatINR(res.dailySalary)} × 15)`;
+    // 9. Final Gratuity Calculation
+    resAdvFormulaStep.textContent = res.formulaCalculationText;
+    // 10. Estimated Gratuity Amount
+    resAdvAmount.textContent = formatINR(res.gratuityAmount);
+    // 11. Important Statutory/Tax Information
+    resAdvTaxInfo.textContent = res.statutoryTaxInfo;
+    // 12. Policy Disclaimer
+    resAdvDisclaimer.textContent = res.disclaimer;
+
+    advResultsSection.classList.remove('hidden');
+    advResultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  btnCalcAdv.addEventListener('click', executeAdvancedCalculation);
+
+  btnClearAdv.addEventListener('click', () => {
+    inpAdvBasic.value = '50000';
+    rangeAdvBasic.value = '50000';
+    inpAdvDa.value = '0';
+    rangeAdvDa.value = '0';
+    inpAdvYears.value = '8';
+    rangeAdvYears.value = '8';
+    inpAdvMonths.value = '8';
+    rangeAdvMonths.value = '8';
+    selAdvSituation.value = 'resignation';
+    handleAdvInputModification();
+  });
+
+  // Presets for Advanced
+  document.querySelectorAll('.btn-preset-adv').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const b = btn.getAttribute('data-basic') || '50000';
+      const d = btn.getAttribute('data-da') || '0';
+      const y = btn.getAttribute('data-years') || '8';
+      const m = btn.getAttribute('data-months') || '8';
+      const sit = btn.getAttribute('data-sit') || 'resignation';
+
+      inpAdvBasic.value = b;
+      rangeAdvBasic.value = b;
+      inpAdvDa.value = d;
+      rangeAdvDa.value = d;
+      inpAdvYears.value = y;
+      rangeAdvYears.value = y;
+      inpAdvMonths.value = m;
+      rangeAdvMonths.value = m;
+      selAdvSituation.value = sit;
+
+      handleAdvInputModification();
+      executeAdvancedCalculation();
+    });
+  });
+
+  formAdv.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      executeAdvancedCalculation();
+    }
+  });
+</script>
