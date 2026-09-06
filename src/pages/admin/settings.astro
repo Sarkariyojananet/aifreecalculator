@@ -40,6 +40,57 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       </div>
     </div>
 
+    <!-- 💾 CMS Data Backup & Disaster Recovery Card -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900/80 sm:p-8 space-y-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 dark:border-slate-800">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>💾</span> 1-Click CMS Data Backup &amp; Disaster Recovery
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Export a full JSON snapshot of all custom SEO meta overrides, internal links, 301 redirects, FAQs, categories, and settings.
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+          <a
+            href="/api/admin/backup/export"
+            id="btn-download-backup"
+            class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition cursor-pointer"
+          >
+            <span>📥</span> Download Full JSON Backup
+          </a>
+
+          <button
+            type="button"
+            id="btn-open-restore-modal"
+            class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
+          >
+            <span>🔄</span> Restore From Backup
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <div class="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-800 dark:bg-slate-950/40">
+          <span class="text-slate-500 text-[11px] block">Database Engine</span>
+          <strong class="text-slate-900 dark:text-white font-bold block mt-0.5">Cloudflare D1 &amp; KV</strong>
+        </div>
+        <div class="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-800 dark:bg-slate-950/40">
+          <span class="text-slate-500 text-[11px] block">Snapshot Format</span>
+          <strong class="text-slate-900 dark:text-white font-bold block mt-0.5">Portable JSON v1.0</strong>
+        </div>
+        <div class="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-800 dark:bg-slate-950/40">
+          <span class="text-slate-500 text-[11px] block">Coverage</span>
+          <strong class="text-emerald-600 dark:text-emerald-400 font-bold block mt-0.5">100% Config &amp; Meta</strong>
+        </div>
+        <div class="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-800 dark:bg-slate-950/40">
+          <span class="text-slate-500 text-[11px] block">Restore Speed</span>
+          <strong class="text-blue-600 dark:text-blue-400 font-bold block mt-0.5">Instant Atomic Sync</strong>
+        </div>
+      </div>
+    </div>
+
     <!-- Main Settings Form -->
     <form id="adsense-full-form" class="space-y-8" novalidate aria-label="Ad configuration form">
       
@@ -927,6 +978,64 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       </div>
     </div>
 
+    <!-- 🔄 Restore Backup Modal -->
+    <div id="modal-restore-backup" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+      <div class="w-full max-w-lg rounded-3xl bg-white p-6 dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🔄</span>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Restore CMS from JSON Backup</h3>
+          </div>
+          <button type="button" id="btn-close-restore-modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg cursor-pointer">✕</button>
+        </div>
+
+        <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+          Upload or paste an <code>aifreecalc-backup-*.json</code> file. This will safely restore custom SEO overrides, internal links, 301 redirects, FAQs, categories, and feature settings.
+        </p>
+
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Select Backup File (.json)</label>
+            <input
+              type="file"
+              id="input-backup-file"
+              accept=".json,application/json"
+              class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-950 dark:file:text-blue-300 cursor-pointer"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Or Paste JSON Content</label>
+            <textarea
+              id="input-backup-json"
+              rows="5"
+              placeholder="Paste JSON content here..."
+              class="w-full rounded-xl border border-slate-300 bg-white p-3 font-mono text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+            ></textarea>
+          </div>
+        </div>
+
+        <div id="restore-status-msg" class="hidden rounded-xl p-3 text-xs font-semibold"></div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+          <button
+            type="button"
+            id="btn-cancel-restore"
+            class="rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            id="btn-execute-restore"
+            class="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 transition cursor-pointer"
+          >
+            Execute Restore
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </AdminLayout>
 
@@ -1749,6 +1858,110 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     if (copyBtnText) {
       copyBtnText.textContent = success ? 'Copied! ✅' : 'Failed to copy';
       setTimeout(() => { copyBtnText.textContent = 'Copy Complete ads.txt'; }, 2000);
+    }
+  });
+
+  // ─── CMS Backup Restore Controller ───────────────────────────────────────────
+  const modalRestore = document.getElementById('modal-restore-backup');
+  const btnOpenRestore = document.getElementById('btn-open-restore-modal');
+  const btnCloseRestore = document.getElementById('btn-close-restore-modal');
+  const btnCancelRestore = document.getElementById('btn-cancel-restore');
+  const btnExecuteRestore = document.getElementById('btn-execute-restore');
+  const inputBackupFile = document.getElementById('input-backup-file');
+  const inputBackupJson = document.getElementById('input-backup-json');
+  const restoreStatusMsg = document.getElementById('restore-status-msg');
+
+  function openRestoreModal() {
+    if (!modalRestore) return;
+    modalRestore.classList.remove('hidden');
+    modalRestore.classList.add('flex');
+    if (restoreStatusMsg) {
+      restoreStatusMsg.classList.add('hidden');
+      restoreStatusMsg.textContent = '';
+    }
+  }
+
+  function closeRestoreModal() {
+    if (!modalRestore) return;
+    modalRestore.classList.add('hidden');
+    modalRestore.classList.remove('flex');
+  }
+
+  btnOpenRestore?.addEventListener('click', openRestoreModal);
+  btnCloseRestore?.addEventListener('click', closeRestoreModal);
+  btnCancelRestore?.addEventListener('click', closeRestoreModal);
+
+  // File upload reader
+  inputBackupFile?.addEventListener('change', (e) => {
+    const file = e.target?.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      if (inputBackupJson) {
+        inputBackupJson.value = evt.target?.result || '';
+      }
+    };
+    reader.readAsText(file);
+  });
+
+  // Execute restore
+  btnExecuteRestore?.addEventListener('click', async () => {
+    const rawJson = inputBackupJson?.value?.trim();
+    if (!rawJson) {
+      if (restoreStatusMsg) {
+        restoreStatusMsg.className = 'rounded-xl p-3 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300';
+        restoreStatusMsg.textContent = 'Please select a backup file or paste JSON content.';
+        restoreStatusMsg.classList.remove('hidden');
+      }
+      return;
+    }
+
+    let parsedPayload;
+    try {
+      parsedPayload = JSON.parse(rawJson);
+    } catch {
+      if (restoreStatusMsg) {
+        restoreStatusMsg.className = 'rounded-xl p-3 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300';
+        restoreStatusMsg.textContent = 'Invalid JSON format. Please verify the backup file.';
+        restoreStatusMsg.classList.remove('hidden');
+      }
+      return;
+    }
+
+    if (btnExecuteRestore) {
+      btnExecuteRestore.disabled = true;
+      btnExecuteRestore.textContent = 'Restoring...';
+    }
+
+    try {
+      const res = await fetch('/api/admin/backup/import', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(parsedPayload),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        if (restoreStatusMsg) {
+          restoreStatusMsg.className = 'rounded-xl p-3 text-xs font-semibold bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300';
+          restoreStatusMsg.textContent = '✅ Backup restored successfully! Refreshing...';
+          restoreStatusMsg.classList.remove('hidden');
+        }
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        throw new Error(data.error || 'Failed to restore backup.');
+      }
+    } catch (err) {
+      if (restoreStatusMsg) {
+        restoreStatusMsg.className = 'rounded-xl p-3 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300';
+        restoreStatusMsg.textContent = '❌ ' + (err.message || 'Error executing restore.');
+        restoreStatusMsg.classList.remove('hidden');
+      }
+      if (btnExecuteRestore) {
+        btnExecuteRestore.disabled = false;
+        btnExecuteRestore.textContent = 'Execute Restore';
+      }
     }
   });
 

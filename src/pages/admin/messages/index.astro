@@ -2,6 +2,7 @@
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { getContactMessages, getContactNotificationEmail, getDb } from '../../../lib/db';
 import { authenticateAdminRequest } from '../../../lib/auth';
+import { calculators } from '../../../data/calculators';
 
 export const prerender = false;
 
@@ -167,14 +168,28 @@ const totalCount = messages.length;
         </button>
       </div>
 
-      <div class="relative min-w-60">
-        <input
-          type="text"
-          id="search-messages"
-          placeholder="Search by name, email, subject..."
-          class="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-        />
-        <span class="absolute left-3 top-2.5 text-xs text-slate-400">🔍</span>
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+        <select
+          id="filter-calc-slug"
+          class="rounded-xl border border-slate-300 bg-white py-2 px-3 text-xs font-bold text-slate-700 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 cursor-pointer shadow-2xs"
+          title="Filter messages by specific calculator tool"
+        >
+          <option value="all">All Inquiries &amp; Tools</option>
+          <option value="general_only">General Inquiries Only</option>
+          {calculators.map((c) => (
+            <option value={c.slug}>🧮 {c.name}</option>
+          ))}
+        </select>
+
+        <div class="relative min-w-56">
+          <input
+            type="text"
+            id="search-messages"
+            placeholder="Search by name, email, subject..."
+            class="w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white shadow-2xs"
+          />
+          <span class="absolute left-3 top-2.5 text-xs text-slate-400">🔍</span>
+        </div>
       </div>
     </div>
 
@@ -198,7 +213,8 @@ const totalCount = messages.length;
               class="message-card group rounded-2xl border transition-all duration-200 bg-white dark:bg-slate-900 p-5 shadow-2xs hover:shadow-md"
               data-id={msg.id}
               data-status={msg.status}
-              data-search={`${msg.name} ${msg.email} ${msg.subject} ${msg.category} ${msg.message}`.toLowerCase()}
+              data-calculator={msg.calculator_slug || ''}
+              data-search={`${msg.name} ${msg.email} ${msg.subject} ${msg.category} ${msg.calculator_name || ''} ${msg.message}`.toLowerCase()}
               class:list={[
                 isNew ? 'border-blue-200 dark:border-blue-900/60 bg-blue-50/10' : 'border-slate-200 dark:border-slate-800'
               ]}
@@ -220,6 +236,19 @@ const totalCount = messages.length;
                     <span class="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                       {msg.category || 'General'}
                     </span>
+
+                    <!-- Calculator Tool Tag Pill -->
+                    {msg.calculator_name && (
+                      <a
+                        href={msg.calculator_slug ? `/${msg.calculator_slug}/` : '#'}
+                        target="_blank"
+                        rel="noopener"
+                        class="rounded-md bg-indigo-50 border border-indigo-200/80 px-2 py-0.5 text-[10px] font-bold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-900/60 dark:bg-indigo-950/80 dark:text-indigo-300 flex items-center gap-1 transition"
+                        title="View Calculator in new tab"
+                      >
+                        <span>🧮</span> {msg.calculator_name}
+                      </a>
+                    )}
 
                     <!-- Status Badge -->
                     {isNew && (
@@ -345,24 +374,34 @@ const totalCount = messages.length;
       // Filter Tabs & Search Filtering
       const filterBtns = document.querySelectorAll('.filter-btn');
       const searchInput = document.getElementById('search-messages');
+      const calcSelect = document.getElementById('filter-calc-slug');
       const messageCards = document.querySelectorAll('.message-card');
       const noFilterMatches = document.getElementById('no-filter-matches');
       const statCards = document.querySelectorAll('.stat-card');
 
       let currentFilter = 'all';
+      let selectedCalc = 'all';
       let searchQuery = '';
+
+      calcSelect?.addEventListener('change', () => {
+        selectedCalc = calcSelect.value;
+        applyFilters();
+      });
 
       function applyFilters() {
         const currentCards = document.querySelectorAll('.message-card');
         let visibleCount = 0;
         currentCards.forEach((card) => {
           const status = card.getAttribute('data-status') || '';
+          const cardCalc = card.getAttribute('data-calculator') || '';
           const searchData = card.getAttribute('data-search') || '';
 
           const matchesStatus = currentFilter === 'all' || status === currentFilter;
+          const matchesCalc = selectedCalc === 'all' || 
+            (selectedCalc === 'general_only' ? !cardCalc : cardCalc === selectedCalc);
           const matchesSearch = !searchQuery || searchData.includes(searchQuery);
 
-          if (matchesStatus && matchesSearch) {
+          if (matchesStatus && matchesCalc && matchesSearch) {
             card.style.display = '';
             visibleCount++;
           } else {

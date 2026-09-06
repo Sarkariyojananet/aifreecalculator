@@ -436,3 +436,11 @@ export async function saveInternalLinks(
   return { success: true, relatedSlugs: validation.cleanSlugs };
 }
 
+export async function saveAllCalculatorOverrides(overrides: Record<string, any>, locals?: any): Promise<void> {
+  await writeSetting('cms_calculator_overrides', overrides, locals);
+}
+
+export async function saveAllInternalLinks(links: Record<string, string[]>, locals?: any): Promise<void> {
+  await writeSetting('cms_internal_links', links, locals);
+}
+

@@ -253,6 +253,8 @@ export interface ContactMessage {
   message: string;
   status: 'new' | 'read' | 'replied' | 'archived';
   created_at: string;
+  calculator_slug?: string;
+  calculator_name?: string;
 }
 
 /**
@@ -288,13 +290,31 @@ export async function saveContactMessage(db: D1Database, msg: ContactMessage): P
   // 1. Write to contact_messages table in Cloudflare D1
   try {
     await db.exec(
-      "CREATE TABLE IF NOT EXISTS contact_messages (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, category TEXT, subject TEXT NOT NULL, message TEXT NOT NULL, status TEXT DEFAULT 'new', created_at TEXT NOT NULL)"
+      "CREATE TABLE IF NOT EXISTS contact_messages (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, category TEXT, subject TEXT NOT NULL, message TEXT NOT NULL, status TEXT DEFAULT 'new', created_at TEXT NOT NULL, calculator_slug TEXT, calculator_name TEXT)"
     );
+    try {
+      await db.exec("ALTER TABLE contact_messages ADD COLUMN calculator_slug TEXT");
+    } catch {}
+    try {
+      await db.exec("ALTER TABLE contact_messages ADD COLUMN calculator_name TEXT");
+    } catch {}
+
     await db
       .prepare(
-        'INSERT OR REPLACE INTO contact_messages (id, name, email, category, subject, message, status, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+        'INSERT OR REPLACE INTO contact_messages (id, name, email, category, subject, message, status, created_at, calculator_slug, calculator_name) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
       )
-      .bind(msg.id, msg.name, msg.email, msg.category, msg.subject, msg.message, msg.status || 'new', msg.created_at)
+      .bind(
+        msg.id,
+        msg.name,
+        msg.email,
+        msg.category,
+        msg.subject,
+        msg.message,
+        msg.status || 'new',
+        msg.created_at,
+        msg.calculator_slug || null,
+        msg.calculator_name || null
+      )
       .run();
   } catch (tableErr) {
     console.error('[Contact DB Table Write Error]:', tableErr);

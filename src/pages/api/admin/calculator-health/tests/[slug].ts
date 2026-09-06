@@ -144,3 +144,30 @@ export const POST: APIRoute = async ({ request, cookies, locals, params }) => {
     return new Response(JSON.stringify({ error: msg }), { status: 500 });
   }
 };
+
+export const DELETE: APIRoute = async ({ request, cookies, locals }) => {
+  const user = await authenticateAdminRequest(request, cookies);
+  if (!user) {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
+  try {
+    const url = new URL(request.url);
+    const testId = url.searchParams.get('id');
+    if (!testId) {
+      return new Response(JSON.stringify({ error: 'Test ID is required' }), { status: 400 });
+    }
+    const { deleteCustomTestCase } = await import('../../../../../lib/calculator-tests/health-store');
+    await deleteCustomTestCase(testId, locals);
+    return new Response(JSON.stringify({ success: true, message: 'Test case deleted' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Failed to delete test case';
+    return new Response(JSON.stringify({ error: msg }), { status: 500 });
+  }
+};

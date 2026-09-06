@@ -13,8 +13,13 @@ const runHistory = await getTestRunHistory(Astro.locals);
 const latestRun = runHistory[0] || null;
 
 const allTestsCombined = [
-  ...ALL_TEST_CASES,
+  ...ALL_TEST_CASES.map((tc) => ({
+    ...tc,
+    id: `static_${tc.slug}_${tc.name.replace(/\s+/g, '_')}`,
+    isCustom: false,
+  })),
   ...customTestCases.map((c) => ({
+    id: c.id,
     slug: c.slug,
     name: c.name,
     category: c.category,
@@ -24,6 +29,7 @@ const allTestsCombined = [
     tolerance: c.tolerance,
     run: () => {},
     description: c.description,
+    isCustom: true,
   })),
 ];
 
@@ -72,7 +78,14 @@ const enrichedTests = allTestsCombined.map((tc) => {
         </p>
       </div>
 
-      <div class="flex items-center gap-3">
+      <div class="flex flex-wrap items-center gap-3">
+        <button
+          id="btn-open-test-modal"
+          type="button"
+          class="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
+        >
+          <span>➕</span> Add Custom Test Case
+        </button>
         <button
           id="run-tests-btn"
           type="button"
@@ -244,13 +257,157 @@ const enrichedTests = allTestsCombined.map((tc) => {
                 )}
               </td>
 
-              <td class="py-3 px-4 text-right font-mono text-slate-400">
-                {t.durationMs !== undefined ? `${t.durationMs.toFixed(1)}ms` : '-'}
+              <td class="py-3 px-4 text-right">
+                <div class="flex items-center justify-end gap-2">
+                  <span class="font-mono text-slate-400">
+                    {t.durationMs !== undefined ? `${t.durationMs.toFixed(1)}ms` : '-'}
+                  </span>
+                  {t.isCustom && (
+                    <button
+                      type="button"
+                      class="btn-delete-custom-test p-1 text-slate-400 hover:text-red-600 dark:hover:text-red-400 transition cursor-pointer"
+                      data-slug={t.slug}
+                      data-id={t.id}
+                      title="Delete custom test case"
+                    >
+                      🗑️
+                    </button>
+                  )}
+                </div>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
+    </div>
+
+    <!-- ➕ Add Custom Test Case Modal -->
+    <div id="modal-add-custom-test" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
+      <div class="w-full max-w-lg rounded-3xl bg-white p-6 dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
+          <div class="flex items-center gap-2">
+            <span class="text-xl">🧪</span>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Add Custom Formula Test Case</h3>
+          </div>
+          <button type="button" id="btn-close-test-modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg cursor-pointer">✕</button>
+        </div>
+
+        <form id="form-add-test" class="space-y-3.5 text-xs">
+          <div>
+            <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Target Calculator <span class="text-red-500">*</span></label>
+            <select
+              id="test-calc-slug"
+              name="slug"
+              required
+              class="w-full rounded-xl border border-slate-300 bg-white p-2.5 font-semibold text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white cursor-pointer"
+            >
+              {calculators.map((c) => (
+                <option value={c.slug}>🧮 {c.name} (/{c.slug}/)</option>
+              ))}
+            </select>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Test Name <span class="text-red-500">*</span></label>
+              <input
+                type="text"
+                id="test-name"
+                name="name"
+                placeholder="e.g. Standard 10m x 5m pool"
+                required
+                class="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Category</label>
+              <select
+                id="test-category"
+                name="category"
+                class="w-full rounded-xl border border-slate-300 bg-white p-2.5 font-semibold text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white cursor-pointer"
+              >
+                <option value="Normal">Normal Baseline</option>
+                <option value="Boundary">Boundary Condition</option>
+                <option value="Edge Case">Edge Case</option>
+                <option value="Invalid Input">Invalid Input Guard</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Expected Key</label>
+              <input
+                type="text"
+                id="test-expected-key"
+                placeholder="e.g. volumeM3"
+                class="w-full rounded-xl border border-slate-300 bg-white p-2.5 font-mono text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Expected Value</label>
+              <input
+                type="text"
+                id="test-expected-val"
+                placeholder="e.g. 75"
+                class="w-full rounded-xl border border-slate-300 bg-white p-2.5 font-mono text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+              />
+            </div>
+
+            <div>
+              <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Tolerance (±)</label>
+              <input
+                type="number"
+                id="test-tolerance"
+                step="any"
+                value="0.01"
+                class="w-full rounded-xl border border-slate-300 bg-white p-2.5 font-mono text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Input Parameters (JSON)</label>
+            <textarea
+              id="test-inputs-json"
+              rows="3"
+              placeholder='e.g. {"length": 10, "width": 5, "depth": 1.5}'
+              class="w-full rounded-xl border border-slate-300 bg-white p-2.5 font-mono text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+            ></textarea>
+          </div>
+
+          <div>
+            <label class="block font-bold text-slate-700 dark:text-slate-300 mb-1">Notes / Description</label>
+            <input
+              type="text"
+              id="test-description"
+              placeholder="e.g. Verifies swimming pool rectangular volume formula"
+              class="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+            />
+          </div>
+
+          <div id="test-form-status" class="hidden rounded-xl p-3 text-xs font-semibold"></div>
+
+          <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <button
+              type="button"
+              id="btn-cancel-test-modal"
+              class="rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              id="btn-save-custom-test"
+              class="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 transition cursor-pointer"
+            >
+              Save Test Case
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
 
   </div>
@@ -342,4 +499,142 @@ const enrichedTests = allTestsCombined.map((tc) => {
       applyFilters();
     });
   }
+
+  // ─── Custom Test Case Modal Controller ─────────────────────────────────────────
+  const modalTest = document.getElementById('modal-add-custom-test');
+  const btnOpenTestModal = document.getElementById('btn-open-test-modal');
+  const btnCloseTestModal = document.getElementById('btn-close-test-modal');
+  const btnCancelTestModal = document.getElementById('btn-cancel-test-modal');
+  const formAddTest = document.getElementById('form-add-test') as HTMLFormElement | null;
+  const testFormStatus = document.getElementById('test-form-status');
+  const btnSaveCustomTest = document.getElementById('btn-save-custom-test') as HTMLButtonElement | null;
+
+  function openTestModal() {
+    if (!modalTest) return;
+    modalTest.classList.remove('hidden');
+    modalTest.classList.add('flex');
+    if (testFormStatus) {
+      testFormStatus.classList.add('hidden');
+      testFormStatus.textContent = '';
+    }
+  }
+
+  function closeTestModal() {
+    if (!modalTest) return;
+    modalTest.classList.add('hidden');
+    modalTest.classList.remove('flex');
+  }
+
+  btnOpenTestModal?.addEventListener('click', openTestModal);
+  btnCloseTestModal?.addEventListener('click', closeTestModal);
+  btnCancelTestModal?.addEventListener('click', closeTestModal);
+
+  formAddTest?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const slugEl = document.getElementById('test-calc-slug') as HTMLSelectElement | null;
+    const nameEl = document.getElementById('test-name') as HTMLInputElement | null;
+    const catEl = document.getElementById('test-category') as HTMLSelectElement | null;
+    const keyEl = document.getElementById('test-expected-key') as HTMLInputElement | null;
+    const valEl = document.getElementById('test-expected-val') as HTMLInputElement | null;
+    const tolEl = document.getElementById('test-tolerance') as HTMLInputElement | null;
+    const descEl = document.getElementById('test-description') as HTMLInputElement | null;
+    const inputsJsonEl = document.getElementById('test-inputs-json') as HTMLTextAreaElement | null;
+
+    const slug = slugEl?.value || '';
+    const name = nameEl?.value.trim() || '';
+    if (!slug || !name) return;
+
+    let inputValues = {};
+    const rawJson = inputsJsonEl?.value.trim() || '';
+    if (rawJson) {
+      try {
+        inputValues = JSON.parse(rawJson);
+      } catch {
+        if (testFormStatus) {
+          testFormStatus.className = 'rounded-xl p-3 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300';
+          testFormStatus.textContent = 'Input parameters must be valid JSON.';
+          testFormStatus.classList.remove('hidden');
+        }
+        return;
+      }
+    }
+
+    if (btnSaveCustomTest) {
+      btnSaveCustomTest.disabled = true;
+      btnSaveCustomTest.textContent = 'Saving...';
+    }
+
+    try {
+      const token = localStorage.getItem('admin_token') || '';
+      const res = await fetch(`/api/admin/calculator-health/tests/${slug}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          name,
+          category: catEl?.value || 'Normal',
+          expectedBehavior: 'result',
+          expectedResultKey: keyEl?.value.trim() || undefined,
+          expectedValue: valEl?.value !== '' ? Number(valEl?.value) || valEl?.value : undefined,
+          tolerance: Number(tolEl?.value) || 0,
+          description: descEl?.value.trim() || undefined,
+          inputValues,
+          active: true,
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data.success) {
+        if (testFormStatus) {
+          testFormStatus.className = 'rounded-xl p-3 text-xs font-semibold bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300';
+          testFormStatus.textContent = '✅ Test case saved successfully!';
+          testFormStatus.classList.remove('hidden');
+        }
+        setTimeout(() => {
+          window.location.reload();
+        }, 800);
+      } else {
+        throw new Error(data.error || 'Failed to save test case.');
+      }
+    } catch (err: any) {
+      if (testFormStatus) {
+        testFormStatus.className = 'rounded-xl p-3 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300';
+        testFormStatus.textContent = '❌ ' + (err.message || 'Error saving test case.');
+        testFormStatus.classList.remove('hidden');
+      }
+      if (btnSaveCustomTest) {
+        btnSaveCustomTest.disabled = false;
+        btnSaveCustomTest.textContent = 'Save Test Case';
+      }
+    }
+  });
+
+  // Delete custom test case listener
+  document.querySelectorAll('.btn-delete-custom-test').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const slug = btn.getAttribute('data-slug');
+      const testId = btn.getAttribute('data-id');
+      if (!slug || !testId) return;
+
+      if (!confirm('Are you sure you want to delete this custom test case?')) return;
+
+      try {
+        const token = localStorage.getItem('admin_token') || '';
+        const res = await fetch(`/api/admin/calculator-health/tests/${slug}?id=${encodeURIComponent(testId)}`, {
+          method: 'DELETE',
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+        });
+        if (res.ok) {
+          window.location.reload();
+        } else {
+          alert('Failed to delete test case.');
+        }
+      } catch {
+        alert('Network error deleting test case.');
+      }
+    });
+  });
 </script>

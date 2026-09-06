@@ -53,6 +53,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const subject = String(body.subject || '').trim();
     const message = String(body.message || '').trim();
     const honeypot = String(body.website_url_check || '').trim();
+    const calculatorSlug = String(body.calculatorSlug || body.calculator_slug || '').trim();
+    const calculatorName = String(body.calculatorName || body.calculator_name || '').trim();
 
     // 1. Anti-spam honeypot detection: silently drop bot submissions
     if (honeypot) {
@@ -107,6 +109,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
       message,
       status: 'new',
       created_at: createdAt,
+      calculator_slug: calculatorSlug || undefined,
+      calculator_name: calculatorName || undefined,
     };
 
     // 3. Save message to D1 Database for persistent audit trail & admin review
