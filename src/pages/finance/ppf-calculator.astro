@@ -1,0 +1,1158 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="PPF Calculator – Public Provident Fund Interest & Maturity Calculator"
+  description="Calculate exact PPF maturity amount, interest earned, and year-wise growth for annual or monthly investments with our free Public Provident Fund calculator."
+  category="Finance"
+  calculatorName="PPF Calculator"
+  slug="ppf-calculator"
+  keywords={[
+    'ppf calculator',
+    'public provident fund calculator',
+    'ppf interest calculator',
+    'ppf maturity calculator',
+    'ppf calculator india',
+    'ppf calculator monthly',
+    'ppf investment calculator',
+    'ppf scheme interest',
+    'ppf return calculator',
+    'ppf maturity amount'
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- MODE SELECTION TABS -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-2.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-semibold scrollbar-thin">
+        <button
+          type="button"
+          id="tab-btn-simple"
+          class="btn-ppf-tab active shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 font-bold text-white shadow-xs cursor-pointer transition flex items-center gap-1.5"
+          data-mode="simple"
+        >
+          <span>🌱</span>
+          <span>Simple PPF Calculator</span>
+        </button>
+        <button
+          type="button"
+          id="tab-btn-advanced"
+          class="btn-ppf-tab shrink-0 rounded-lg border border-slate-300 bg-white px-4 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition flex items-center gap-1.5"
+          data-mode="advanced"
+        >
+          <span>⚙️</span>
+          <span>Advanced PPF Calculator (Extensions &amp; Withdrawals)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- QUICK PRESETS BAR -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-center gap-1.5 text-xs">
+        <span class="font-bold text-slate-600 dark:text-slate-400 mr-1 flex items-center gap-1">
+          <span>⚡</span> Quick Presets:
+        </span>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-amt="10000" data-years="15" data-timing="beginning_of_year">
+          ₹10k / Year (15 Yrs)
+        </button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-amt="50000" data-years="15" data-timing="beginning_of_year">
+          ₹50k / Year (15 Yrs)
+        </button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-amt="150000" data-years="15" data-timing="beginning_of_year">
+          ⭐ Max ₹1.5L / Year (15 Yrs)
+        </button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-amt="150000" data-years="20" data-timing="beginning_of_year">
+          🚀 ₹1.5L / Year Extended (20 Yrs)
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN CALCULATOR FORM CONTAINER -->
+    <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-blue-50/30 p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/20 sm:p-7">
+      
+      <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+        <h2 id="ppf-panel-title" class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+          <span>🏦</span> Public Provident Fund (PPF) Calculator
+        </h2>
+        <p id="ppf-panel-desc" class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+          Calculate interest and projected maturity wealth under Indian PPF guidelines with flexible contribution frequencies and deposit timing assumptions.
+        </p>
+      </div>
+
+      <form id="form-ppf" class="mt-4 space-y-4" novalidate onsubmit="return false;">
+
+        <!-- Advanced Mode: Contribution Frequency Toggle -->
+        <div id="row-adv-freq" class="hidden rounded-2xl border border-blue-200 bg-white p-3.5 dark:border-blue-900/60 dark:bg-slate-900">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-2">Contribution Frequency</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button type="button" id="btn-freq-yearly" class="btn-freq-toggle active rounded-xl bg-blue-600 py-2 text-xs font-bold text-white transition cursor-pointer" data-freq="yearly">
+              Yearly Deposit (Once a year)
+            </button>
+            <button type="button" id="btn-freq-monthly" class="btn-freq-toggle rounded-xl border border-slate-300 bg-white py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer" data-freq="monthly">
+              Monthly Contribution (12 times/yr)
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          
+          <!-- Investment Amount -->
+          <div>
+            <div class="flex items-center justify-between">
+              <label for="inp-investment-amt" id="lbl-investment-amt" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Yearly Investment (₹)
+              </label>
+              <span class="text-[10px] text-slate-500 font-semibold">Max ₹1,50,000/yr</span>
+            </div>
+            <div class="relative mt-1.5">
+              <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-sm font-bold text-slate-400">₹</span>
+              <input
+                type="number"
+                id="inp-investment-amt"
+                value="10000"
+                step="500"
+                min="500"
+                max="150000"
+                class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pl-7 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="10,000"
+              />
+            </div>
+            <div class="flex items-center gap-1 mt-1.5">
+              <button type="button" class="btn-amt-quick text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-600 dark:bg-slate-800 dark:text-slate-300" data-amt="10000">₹10K</button>
+              <button type="button" class="btn-amt-quick text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-600 dark:bg-slate-800 dark:text-slate-300" data-amt="50000">₹50K</button>
+              <button type="button" class="btn-amt-quick text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-600 dark:bg-slate-800 dark:text-slate-300" data-amt="100000">₹1L</button>
+              <button type="button" class="btn-amt-quick text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 hover:bg-blue-50 text-slate-600 hover:text-blue-600 dark:bg-slate-800 dark:text-slate-300" data-amt="150000">Max ₹1.5L</button>
+            </div>
+          </div>
+
+          <!-- Time Horizon / Duration -->
+          <div>
+            <div class="flex items-center justify-between">
+              <label for="sel-tenure-years" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Investment Period
+              </label>
+              <span class="text-[10px] text-slate-500 font-semibold">Min 15 Years</span>
+            </div>
+            <select
+              id="sel-tenure-years"
+              class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+            >
+              <option value="15" selected>15 Years (Standard Lock-in)</option>
+              <option value="20">20 Years (1 Block Extension)</option>
+              <option value="25">25 Years (2 Block Extensions)</option>
+              <option value="30">30 Years (3 Block Extensions)</option>
+            </select>
+            <p class="mt-1.5 text-[10px] text-slate-400">
+              PPF accounts mature in 15 full financial years, extendable in 5-year tranches.
+            </p>
+          </div>
+
+          <!-- Assumed Annual Interest Rate -->
+          <div>
+            <div class="flex items-center justify-between">
+              <label for="inp-interest-rate" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Assumed Interest Rate
+              </label>
+              <span class="text-[10px] text-blue-600 dark:text-blue-400 font-bold">Current: 7.1%</span>
+            </div>
+            <div class="relative mt-1.5">
+              <input
+                type="number"
+                id="inp-interest-rate"
+                value="7.1"
+                step="0.05"
+                min="1"
+                max="20"
+                class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-8 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                placeholder="7.1"
+              />
+              <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-xs font-bold text-slate-400">% p.a.</span>
+            </div>
+            <p class="mt-1.5 text-[10px] text-slate-400">
+              * Rates set quarterly by Govt. of India. Not permanently fixed.
+            </p>
+          </div>
+
+        </div>
+
+        <!-- Deposit Timing Option -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900 space-y-1">
+          <label for="sel-deposit-timing" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            Deposit Timing Assumption
+          </label>
+          <select
+            id="sel-deposit-timing"
+            class="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs sm:text-sm font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+          >
+            <option value="beginning_of_year" selected>
+              ⭐ Beginning of Financial Year (On or before April 5) — Highest Interest Returns
+            </option>
+            <option value="end_of_year">
+              End of Financial Year (Deposited at Year End) — Conservative Estimate
+            </option>
+            <option value="monthly_before_5th">
+              Monthly Contribution (On or before 5th of every month)
+            </option>
+            <option value="monthly_after_5th">
+              Monthly Contribution (Deposited after 5th of every month)
+            </option>
+          </select>
+          <p id="hint-timing-desc" class="text-[11px] text-slate-500 dark:text-slate-400 pt-1">
+            Depositing between April 1 and April 5 earns compounding interest for all 12 months in the financial year.
+          </p>
+        </div>
+
+        <!-- Advanced Mode Only: Existing Balance & Partial Withdrawal -->
+        <div id="row-adv-options" class="hidden rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900/60 space-y-3">
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+            <span>⚙️</span> Ongoing Account &amp; Partial Withdrawal Parameters
+          </span>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label for="inp-existing-bal" class="block text-xs font-semibold text-slate-600 dark:text-slate-400">
+                Current Existing PPF Balance (Optional)
+              </label>
+              <div class="relative mt-1">
+                <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-xs font-bold text-slate-400">₹</span>
+                <input
+                  type="number"
+                  id="inp-existing-bal"
+                  value="0"
+                  step="1000"
+                  min="0"
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2 pl-7 text-xs sm:text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  placeholder="0"
+                />
+              </div>
+              <span class="text-[10px] text-slate-400">If continuing an active account from past years</span>
+            </div>
+
+            <div>
+              <label for="inp-withdrawal-amt" class="block text-xs font-semibold text-slate-600 dark:text-slate-400">
+                Planned Partial Withdrawal (Optional)
+              </label>
+              <div class="flex items-center gap-2 mt-1">
+                <div class="relative flex-1">
+                  <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-xs font-bold text-slate-400">₹</span>
+                  <input
+                    type="number"
+                    id="inp-withdrawal-amt"
+                    value="0"
+                    step="5000"
+                    min="0"
+                    class="w-full rounded-xl border border-slate-300 bg-white p-2 pl-7 text-xs sm:text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                    placeholder="0"
+                  />
+                </div>
+                <select
+                  id="sel-withdrawal-year"
+                  class="w-32 rounded-xl border border-slate-300 bg-white p-2 text-xs font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+                >
+                  <option value="7">In Year 7</option>
+                  <option value="8">In Year 8</option>
+                  <option value="9">In Year 9</option>
+                  <option value="10">In Year 10</option>
+                  <option value="12">In Year 12</option>
+                </select>
+              </div>
+              <span class="text-[10px] text-slate-400">PPF permits 1 partial withdrawal per FY starting from Year 7</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit & Clear Buttons -->
+        <div class="flex items-center gap-2 pt-2">
+          <button
+            type="submit"
+            id="btn-calc-ppf"
+            class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer"
+          >
+            Calculate PPF Maturity →
+          </button>
+          <button
+            type="button"
+            id="btn-clear-ppf"
+            class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer"
+          >
+            Reset (✕)
+          </button>
+        </div>
+
+        <!-- Error Notification Banner -->
+        <p
+          id="err-ppf"
+          class="hidden rounded-xl border border-red-200 bg-red-50 p-2.5 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
+          role="alert"
+          aria-live="polite"
+        ></p>
+
+      </form>
+
+      <!-- RESULTS SECTION (Displayed on Demand) -->
+      <div id="ppf-results-section" class="hidden mt-6 space-y-6">
+
+        <!-- Highlight Card: Maturity & Multiplier -->
+        <div class="overflow-hidden rounded-3xl border border-emerald-200 bg-linear-to-br from-white via-emerald-50/40 to-emerald-100/50 p-5 shadow-lg shadow-emerald-500/5 dark:border-emerald-900/60 dark:from-slate-950 dark:via-slate-900 dark:to-emerald-950/30 sm:p-7">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-emerald-200/80 pb-4 dark:border-slate-800">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+                Estimated PPF Maturity Amount (Tax-Free)
+              </span>
+              <div id="res-maturity-amt" class="mt-1 text-3xl sm:text-5xl font-black text-emerald-600 dark:text-emerald-400">
+                ₹ 2,71,214
+              </div>
+            </div>
+            <div class="sm:text-right">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Wealth Multiplier:
+              </span>
+              <div id="res-wealth-multiplier" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                1.81x
+              </div>
+              <span class="text-[10px] text-slate-400">EEE Tax Exempt Status</span>
+            </div>
+          </div>
+
+          <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Total Investment</div>
+              <div id="res-total-invested" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">₹ 1,50,000</div>
+            </div>
+            <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Total Interest Earned</div>
+              <div id="res-total-interest" class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">₹ 1,21,214</div>
+            </div>
+            <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Duration Period</div>
+              <div id="res-tenure-display" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">15 Years</div>
+            </div>
+            <div class="rounded-xl border border-emerald-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Assumed Rate &amp; Timing</div>
+              <div id="res-rate-display" class="mt-1 text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">7.1% p.a.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VISUAL SPLIT & INTERACTIVE TIMELINE CHARTS -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+          <!-- DONUT SPLIT CHART -->
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+            <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <span>📊</span> Capital vs Interest Split
+            </h3>
+
+            <div class="relative w-40 h-40 mx-auto flex items-center justify-center">
+              <svg viewBox="0 0 36 36" class="w-full h-full transform -rotate-90">
+                <!-- Invested Circle (Blue) -->
+                <circle cx="18" cy="18" r="15.91549430918954" fill="transparent" stroke="#3b82f6" stroke-width="4"></circle>
+                <!-- Interest Circle (Emerald) -->
+                <circle id="svg-donut-interest" cx="18" cy="18" r="15.91549430918954" fill="transparent" stroke="#10b981" stroke-width="4" stroke-dasharray="44.7 55.3" stroke-dashoffset="0"></circle>
+              </svg>
+              <div class="absolute text-center">
+                <span class="text-[10px] font-bold text-slate-400 block uppercase">Returns</span>
+                <span id="donut-center-pct" class="text-sm font-black text-emerald-600 dark:text-emerald-400">44.7%</span>
+              </div>
+            </div>
+
+            <div class="space-y-2 text-xs pt-1">
+              <div class="flex items-center justify-between p-2.5 rounded-xl bg-blue-50/60 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40">
+                <span class="flex items-center gap-2 font-bold text-blue-700 dark:text-blue-300">
+                  <span class="w-2.5 h-2.5 rounded-full bg-blue-600 inline-block"></span> Total Invested:
+                </span>
+                <span id="txt-legend-invested" class="font-bold text-slate-900 dark:text-white font-mono">₹ 1,50,000 (55.3%)</span>
+              </div>
+              <div class="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40">
+                <span class="flex items-center gap-2 font-bold text-emerald-700 dark:text-emerald-300">
+                  <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Interest Earned:
+                </span>
+                <span id="txt-legend-interest" class="font-bold text-slate-900 dark:text-white font-mono">₹ 1,21,214 (44.7%)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- INTERACTIVE TIMELINE WEALTH GROWTH (SVG) -->
+          <div class="lg:col-span-2 rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 border-b border-slate-100 pb-2 dark:border-slate-800">
+              <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <span>📈</span> PPF Wealth Accumulation Timeline
+              </h3>
+              <span class="text-[11px] text-slate-400">Hover over points to inspect year-by-year corpus</span>
+            </div>
+
+            <!-- SVG Container with dynamic tooltips -->
+            <div class="relative w-full overflow-hidden">
+              <svg id="svg-ppf-chart" viewBox="0 0 700 280" class="w-full h-56 sm:h-64 select-none cursor-crosshair">
+                <!-- Dynamically populated -->
+              </svg>
+
+              <!-- Floating Tooltip Box -->
+              <div id="chart-tooltip" class="hidden pointer-events-none absolute z-20 rounded-xl border border-slate-700 bg-slate-900/95 p-2.5 text-xs text-white shadow-xl backdrop-blur-xs transition-all space-y-1">
+                <!-- Injected by JavaScript -->
+              </div>
+            </div>
+
+            <!-- Graph Legends -->
+            <div class="flex flex-wrap items-center justify-center gap-4 text-xs font-semibold text-slate-600 dark:text-slate-400 pt-1">
+              <div class="flex items-center gap-1.5">
+                <span class="w-3 h-0.5 bg-blue-500 inline-block rounded-full"></span>
+                <span>Cumulative Invested Capital</span>
+              </div>
+              <div class="flex items-center gap-1.5">
+                <span class="w-3 h-0.5 bg-emerald-500 inline-block rounded-full"></span>
+                <span>Total PPF Corpus (Maturity Value)</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- DETAILED YEAR-WISE SCHEDULE TABLE & PDF EXPORT -->
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-3 dark:border-slate-800">
+            <div>
+              <h3 class="text-xs sm:text-sm font-black uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-2">
+                <span>📅</span> Year-Wise PPF Growth Schedule
+              </h3>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                Opening Balance + Deposit + Interest - Withdrawal = Closing Balance
+              </p>
+            </div>
+            <button
+              type="button"
+              id="btn-download-pdf"
+              class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs transition active:scale-[0.98] cursor-pointer shrink-0"
+            >
+              <span>📄</span> Download Schedule PDF
+            </button>
+          </div>
+
+          <div class="overflow-x-auto max-h-96 scrollbar-thin">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold sticky top-0">
+                <tr>
+                  <th class="p-2.5 rounded-l-lg">Year</th>
+                  <th class="p-2.5 text-right">Opening Balance</th>
+                  <th class="p-2.5 text-right text-blue-600 dark:text-blue-400">Deposit</th>
+                  <th class="p-2.5 text-right text-emerald-600 dark:text-emerald-400">Interest Earned</th>
+                  <th class="p-2.5 text-right text-amber-600 dark:text-amber-400">Withdrawal</th>
+                  <th class="p-2.5 text-right rounded-r-lg font-black text-slate-900 dark:text-white">Closing Balance</th>
+                </tr>
+              </thead>
+              <tbody id="tbody-ppf-schedule" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono">
+                <!-- Dynamically rendered rows -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- EDUCATIONAL SEO ARTICLE CONTENT -->
+  <Fragment slot="content">
+    <div class="space-y-8 text-slate-700 dark:text-slate-300">
+
+      <section>
+        <h2 class="text-xl font-bold text-slate-900 dark:text-white">What is a PPF Calculator?</h2>
+        <p class="mt-2 text-sm leading-relaxed">
+          A <strong>Public Provident Fund (PPF) Calculator</strong> is a specialized financial planning tool designed to estimate how your savings compound over a 15-year statutory lock-in period and subsequent 5-year extension tranches. By specifying your contribution frequency (yearly or monthly), deposit amount, deposit timing, and the prevailing or assumed annual interest rate, the calculator accurately generates the total principal invested, accumulated interest, and the final tax-free maturity corpus.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-xl font-bold text-slate-900 dark:text-white">What is Public Provident Fund (PPF)?</h2>
+        <p class="mt-2 text-sm leading-relaxed">
+          The <strong>Public Provident Fund (PPF)</strong> is a government-backed long-term savings and retirement scheme introduced in India by the National Savings Institute under the Ministry of Finance. It offers a sovereign guarantee on capital safety and interest payments.
+        </p>
+        <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-900">
+            <div class="font-bold text-slate-900 dark:text-white">⭐ EEE Tax Benefit</div>
+            <p class="mt-1 text-slate-500">Exempt at investment (Section 80C up to ₹1.5L/yr), Exempt on interest accrual, and Exempt on maturity.</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-900">
+            <div class="font-bold text-slate-900 dark:text-white">🔒 Sovereign Guarantee</div>
+            <p class="mt-1 text-slate-500">Backed directly by the Government of India, making it completely immune to market volatility and credit risks.</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-900">
+            <div class="font-bold text-slate-900 dark:text-white">🛡️ Court Attachment Immunity</div>
+            <p class="mt-1 text-slate-500">Under the PPF Act, the account balance cannot be attached by any court decree or creditor claims.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="text-xl font-bold text-slate-900 dark:text-white">How Does a PPF Calculator Work?</h2>
+        <p class="mt-2 text-sm leading-relaxed">
+          The calculation follows a strict annual recursive model based on official Indian Post Office and banking rules:
+        </p>
+        <div class="mt-3 rounded-2xl bg-slate-100 p-4 font-mono text-xs dark:bg-slate-800/80 text-slate-800 dark:text-slate-200">
+          Opening Balance + Current Year Deposit + Annual Interest - Withdrawals = Closing Balance
+        </div>
+        <p class="mt-2 text-sm leading-relaxed">
+          For each financial year, the closing balance of the previous year serves as the opening balance of the next year. Because interest is compounded annually and added to the principal, the interest earned in subsequent years grows exponentially.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-xl font-bold text-slate-900 dark:text-white">PPF Interest Calculation Formula and Timing Nuance</h2>
+        <p class="mt-2 text-sm leading-relaxed">
+          The Ministry of Finance sets PPF interest rates quarterly. By law, interest is calculated <strong>monthly</strong> on the <strong>lowest balance between the close of the 5th day and the last day of each calendar month</strong>, and then credited annually on March 31.
+        </p>
+
+        <div class="my-4 rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-3">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            The Golden Rule: Deposit On or Before the 5th of the Month
+          </h3>
+          <ul class="list-disc pl-5 space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
+            <li>
+              <strong>Lump Sum Investors:</strong> Depositing on or before <strong>April 5</strong> ensures your deposit earns interest for the entire 12 months of the financial year. Depositing after April 5 means that installment forfeits interest for April.
+            </li>
+            <li>
+              <strong>Monthly SIP Investors:</strong> Depositing on or before the <strong>5th of every month</strong> ensures that installment earns interest for that calendar month. Depositing after the 5th earns interest only starting from the subsequent month.
+            </li>
+          </ul>
+        </div>
+
+        <p class="text-sm leading-relaxed">
+          For equal annual deposits at the beginning of each year, the future value <var>F</var> can be represented by the annuity future value equation:
+        </p>
+        <div class="my-2 rounded-2xl bg-slate-100 p-3 font-mono text-xs text-center dark:bg-slate-800 text-slate-900 dark:text-white">
+          F = P &times; [((1 + <var>i</var>)<sup><var>n</var></sup> - 1) / <var>i</var>] &times; (1 + <var>i</var>)
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] text-slate-500 dark:text-slate-400 mt-2">
+          <div><strong>F:</strong> Maturity Value</div>
+          <div><strong>P:</strong> Periodic Deposit</div>
+          <div><strong>i:</strong> Annual Interest Rate (<var>r</var> / 100)</div>
+          <div><strong>n:</strong> Number of Years (15 to 30)</div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="text-xl font-bold text-slate-900 dark:text-white">Comprehensive PPF Calculation Examples</h2>
+
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <!-- Example 1 -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4.5 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+            <span class="font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider text-[11px]">Example 1: Moderate Saver</span>
+            <h4 class="font-black text-sm text-slate-900 dark:text-white">₹10,000 / Year for 15 Years @ 7.1%</h4>
+            <div class="space-y-1 pt-1 text-slate-600 dark:text-slate-300">
+              <div class="flex justify-between"><span>Total Invested Capital:</span> <strong>₹1,50,000</strong></div>
+              <div class="flex justify-between"><span>Total Interest Accumulated:</span> <strong class="text-emerald-600 dark:text-emerald-400">₹1,21,214</strong></div>
+              <div class="flex justify-between border-t border-slate-100 dark:border-slate-800 pt-1 font-bold text-slate-900 dark:text-white">
+                <span>Estimated Maturity:</span> <span>₹2,71,214</span>
+              </div>
+            </div>
+            <p class="text-[11px] text-slate-400 italic pt-1">
+              * Assuming deposit executed on or before April 5 in each financial year.
+            </p>
+          </div>
+
+          <!-- Example 2 -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4.5 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+            <span class="font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider text-[11px]">Example 2: Maximum Section 80C Cap</span>
+            <h4 class="font-black text-sm text-slate-900 dark:text-white">₹1,50,000 / Year for 15 Years @ 7.1%</h4>
+            <div class="space-y-1 pt-1 text-slate-600 dark:text-slate-300">
+              <div class="flex justify-between"><span>Total Invested Capital:</span> <strong>₹22,50,000</strong></div>
+              <div class="flex justify-between"><span>Total Interest Accumulated:</span> <strong class="text-emerald-600 dark:text-emerald-400">₹18,18,209</strong></div>
+              <div class="flex justify-between border-t border-slate-100 dark:border-slate-800 pt-1 font-bold text-slate-900 dark:text-white">
+                <span>Estimated Maturity:</span> <span>₹40,68,209</span>
+              </div>
+            </div>
+            <p class="text-[11px] text-slate-400 italic pt-1">
+              * Yields over ₹18.18 Lakhs in 100% tax-exempt interest income.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="text-xl font-bold text-slate-900 dark:text-white">Key PPF Rules, Extensions, and Partial Withdrawals</h2>
+        <div class="mt-3 space-y-2.5 text-xs sm:text-sm">
+          <p>
+            <strong>Deposit Limits:</strong> Minimum deposit is ₹500 per financial year, while the maximum ceiling is ₹1,50,000 across all PPF accounts held in an individual's name. Excess amounts do not earn any interest.
+          </p>
+          <p>
+            <strong>15-Year Maturity &amp; Extension Options:</strong> Upon completing 15 financial years, you have three options:
+          </p>
+          <ol class="list-decimal pl-5 space-y-1 text-xs text-slate-600 dark:text-slate-400">
+            <li><strong>Complete Withdrawal:</strong> Close the account and withdraw the entire tax-free maturity corpus.</li>
+            <li><strong>Extension with Contributions:</strong> Extend in blocks of 5 years with continued yearly investments, subject to submitting Form H within 1 year of maturity.</li>
+            <li><strong>Extension without Contributions:</strong> Keep the corpus in the account without new deposits. The existing balance continues to earn the applicable interest rate indefinitely.</li>
+          </ol>
+          <p>
+            <strong>Partial Withdrawal Rules:</strong> Starting from the 7th financial year, one partial withdrawal per year is permissible, capped at 50% of the account balance at the end of the 4th preceding year or the preceding year, whichever is lower.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <h2 class="text-xl font-bold text-slate-900 dark:text-white">Frequently Asked Questions (FAQ)</h2>
+        <div class="mt-4 divide-y divide-slate-200 dark:divide-slate-800">
+          
+          <div class="py-3.5 space-y-1">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">What is the current PPF interest rate in India?</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400">
+              The Government of India revises small savings scheme interest rates quarterly. The benchmark rate is currently 7.1% per annum, compounded annually.
+            </p>
+          </div>
+
+          <div class="py-3.5 space-y-1">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Can I invest monthly instead of once a year in PPF?</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400">
+              Yes, you can deposit in monthly installments up to 12 times a year (or any number of irregular installments as long as the total does not exceed ₹1,50,000 per financial year).
+            </p>
+          </div>
+
+          <div class="py-3.5 space-y-1">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Why is depositing before the 5th of the month important?</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400">
+              Under PPF rules, interest is calculated on the minimum balance between the 5th day and the end of the month. Depositing by the 5th qualifies your new money for interest during that calendar month.
+            </p>
+          </div>
+
+          <div class="py-3.5 space-y-1">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Is the entire PPF maturity amount tax-free?</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400">
+              Yes. PPF falls under the Exempt-Exempt-Exempt (EEE) tax status under the Indian Income Tax Act. Contributions are deductible under Section 80C, interest earned is tax-free, and the final maturity amount is completely exempt from income tax.
+            </p>
+          </div>
+
+          <div class="py-3.5 space-y-1">
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Can I extend my PPF account after 15 years?</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400">
+              Yes, you can extend your PPF account indefinitely in blocks of 5 years at a time, either with additional contributions (requiring Form H) or without additional contributions.
+            </p>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+  </Fragment>
+
+</CalculatorLayout>
+
+<script>
+  import { calculatePpf, formatPpfINR, type PpfDepositTiming, type PpfContributionMode, type PpfCalculationResult } from '../../lib/calculators/ppf';
+
+  // Mode Tabs
+  const tabBtnSimple = document.getElementById('tab-btn-simple') as HTMLButtonElement;
+  const tabBtnAdvanced = document.getElementById('tab-btn-advanced') as HTMLButtonElement;
+  const rowAdvFreq = document.getElementById('row-adv-freq') as HTMLDivElement;
+  const rowAdvOptions = document.getElementById('row-adv-options') as HTMLDivElement;
+  const ppfPanelTitle = document.getElementById('ppf-panel-title') as HTMLHeadingElement;
+  const ppfPanelDesc = document.getElementById('ppf-panel-desc') as HTMLParagraphElement;
+
+  // Form Inputs
+  const formPpf = document.getElementById('form-ppf') as HTMLFormElement;
+  const lblInvestmentAmt = document.getElementById('lbl-investment-amt') as HTMLLabelElement;
+  const inpInvestmentAmt = document.getElementById('inp-investment-amt') as HTMLInputElement;
+  const selTenureYears = document.getElementById('sel-tenure-years') as HTMLSelectElement;
+  const inpInterestRate = document.getElementById('inp-interest-rate') as HTMLInputElement;
+  const selDepositTiming = document.getElementById('sel-deposit-timing') as HTMLSelectElement;
+  const hintTimingDesc = document.getElementById('hint-timing-desc') as HTMLParagraphElement;
+
+  // Advanced Inputs
+  const btnFreqYearly = document.getElementById('btn-freq-yearly') as HTMLButtonElement;
+  const btnFreqMonthly = document.getElementById('btn-freq-monthly') as HTMLButtonElement;
+  const inpExistingBal = document.getElementById('inp-existing-bal') as HTMLInputElement;
+  const inpWithdrawalAmt = document.getElementById('inp-withdrawal-amt') as HTMLInputElement;
+  const selWithdrawalYear = document.getElementById('sel-withdrawal-year') as HTMLSelectElement;
+
+  // Actions & Alerts
+  const btnCalcPpf = document.getElementById('btn-calc-ppf') as HTMLButtonElement;
+  const btnClearPpf = document.getElementById('btn-clear-ppf') as HTMLButtonElement;
+  const errPpf = document.getElementById('err-ppf') as HTMLParagraphElement;
+
+  // Result Section Elements
+  const ppfResultsSection = document.getElementById('ppf-results-section') as HTMLDivElement;
+  const resMaturityAmt = document.getElementById('res-maturity-amt') as HTMLDivElement;
+  const resWealthMultiplier = document.getElementById('res-wealth-multiplier') as HTMLDivElement;
+  const resTotalInvested = document.getElementById('res-total-invested') as HTMLDivElement;
+  const resTotalInterest = document.getElementById('res-total-interest') as HTMLDivElement;
+  const resTenureDisplay = document.getElementById('res-tenure-display') as HTMLDivElement;
+  const resRateDisplay = document.getElementById('res-rate-display') as HTMLDivElement;
+
+  // Donut & Chart Elements
+  const svgDonutInterest = document.getElementById('svg-donut-interest') as unknown as SVGCircleElement;
+  const donutCenterPct = document.getElementById('donut-center-pct') as HTMLSpanElement;
+  const txtLegendInvested = document.getElementById('txt-legend-invested') as HTMLSpanElement;
+  const txtLegendInterest = document.getElementById('txt-legend-interest') as HTMLSpanElement;
+
+  const svgPpfChart = document.getElementById('svg-ppf-chart') as unknown as SVGSVGElement;
+  const chartTooltip = document.getElementById('chart-tooltip') as HTMLDivElement;
+  const tbodyPpfSchedule = document.getElementById('tbody-ppf-schedule') as HTMLTableSectionElement;
+  const btnDownloadPdf = document.getElementById('btn-download-pdf') as HTMLButtonElement;
+
+  let activeMode: 'simple' | 'advanced' = 'simple';
+  let contributionMode: PpfContributionMode = 'yearly';
+  let latestResult: PpfCalculationResult | null = null;
+
+  // Mode Switch Handler
+  function switchMode(mode: 'simple' | 'advanced') {
+    activeMode = mode;
+    if (mode === 'simple') {
+      tabBtnSimple.className = 'btn-ppf-tab active shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 font-bold text-white shadow-xs cursor-pointer transition flex items-center gap-1.5';
+      tabBtnAdvanced.className = 'btn-ppf-tab shrink-0 rounded-lg border border-slate-300 bg-white px-4 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition flex items-center gap-1.5';
+      rowAdvFreq.classList.add('hidden');
+      rowAdvOptions.classList.add('hidden');
+      ppfPanelTitle.innerHTML = '<span>🌱</span> Simple Public Provident Fund (PPF) Calculator';
+      ppfPanelDesc.textContent = 'Calculate interest and projected maturity wealth under Indian PPF guidelines with standard yearly or monthly deposit timing assumptions.';
+      setContributionFrequency('yearly');
+    } else {
+      tabBtnAdvanced.className = 'btn-ppf-tab active shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 font-bold text-white shadow-xs cursor-pointer transition flex items-center gap-1.5';
+      tabBtnSimple.className = 'btn-ppf-tab shrink-0 rounded-lg border border-slate-300 bg-white px-4 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition flex items-center gap-1.5';
+      rowAdvFreq.classList.remove('hidden');
+      rowAdvOptions.classList.remove('hidden');
+      ppfPanelTitle.innerHTML = '<span>⚙️</span> Advanced PPF Calculator (Extensions &amp; Partial Withdrawals)';
+      ppfPanelDesc.textContent = 'Model ongoing accounts with existing balances, 5-year block extensions, monthly SIP contributions, and planned partial withdrawals.';
+    }
+    handleInputChanged();
+  }
+
+  tabBtnSimple.addEventListener('click', () => switchMode('simple'));
+  tabBtnAdvanced.addEventListener('click', () => switchMode('advanced'));
+
+  // Frequency Toggle (Yearly vs Monthly)
+  function setContributionFrequency(freq: PpfContributionMode) {
+    contributionMode = freq;
+    if (freq === 'yearly') {
+      btnFreqYearly.className = 'btn-freq-toggle active rounded-xl bg-blue-600 py-2 text-xs font-bold text-white transition cursor-pointer';
+      btnFreqMonthly.className = 'btn-freq-toggle rounded-xl border border-slate-300 bg-white py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer';
+      lblInvestmentAmt.textContent = 'Yearly Investment (₹)';
+      if (parseFloat(inpInvestmentAmt.value) <= 12500) {
+        inpInvestmentAmt.value = '10000';
+      }
+      inpInvestmentAmt.max = '150000';
+      if (selDepositTiming.value.startsWith('monthly')) {
+        selDepositTiming.value = 'beginning_of_year';
+      }
+    } else {
+      btnFreqMonthly.className = 'btn-freq-toggle active rounded-xl bg-blue-600 py-2 text-xs font-bold text-white transition cursor-pointer';
+      btnFreqYearly.className = 'btn-freq-toggle rounded-xl border border-slate-300 bg-white py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer';
+      lblInvestmentAmt.textContent = 'Monthly Investment (₹)';
+      if (parseFloat(inpInvestmentAmt.value) > 12500) {
+        inpInvestmentAmt.value = '5000';
+      }
+      inpInvestmentAmt.max = '12500';
+      if (!selDepositTiming.value.startsWith('monthly')) {
+        selDepositTiming.value = 'monthly_before_5th';
+      }
+    }
+    updateTimingDescription();
+    handleInputChanged();
+  }
+
+  btnFreqYearly.addEventListener('click', () => setContributionFrequency('yearly'));
+  btnFreqMonthly.addEventListener('click', () => setContributionFrequency('monthly'));
+
+  // Timing description updater
+  function updateTimingDescription() {
+    const val = selDepositTiming.value;
+    if (val === 'beginning_of_year') {
+      hintTimingDesc.textContent = 'Depositing between April 1 and April 5 earns compounding interest for all 12 months in the financial year.';
+    } else if (val === 'end_of_year') {
+      hintTimingDesc.textContent = 'Depositing at year-end provides 0 interest on that deposit during the current year; only previous balance earns interest.';
+    } else if (val === 'monthly_before_5th') {
+      hintTimingDesc.textContent = 'Depositing on or before 5th of each month qualifies that installment for interest in that calendar month.';
+    } else {
+      hintTimingDesc.textContent = 'Depositing after the 5th earns interest starting from the following calendar month.';
+    }
+  }
+
+  selDepositTiming.addEventListener('change', () => {
+    updateTimingDescription();
+    handleInputChanged();
+  });
+
+  // Presets Handlers
+  document.querySelectorAll('.btn-preset').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const amt = btn.getAttribute('data-amt');
+      const years = btn.getAttribute('data-years');
+      const timing = btn.getAttribute('data-timing');
+      if (amt) inpInvestmentAmt.value = amt;
+      if (years) selTenureYears.value = years;
+      if (timing) {
+        selDepositTiming.value = timing;
+        updateTimingDescription();
+      }
+      setContributionFrequency('yearly');
+      executeCalculation();
+    });
+  });
+
+  // Quick Amount Buttons
+  document.querySelectorAll('.btn-amt-quick').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const amt = btn.getAttribute('data-amt');
+      if (amt) {
+        inpInvestmentAmt.value = amt;
+        handleInputChanged();
+      }
+    });
+  });
+
+  function handleInputChanged() {
+    errPpf.classList.add('hidden');
+    // Live update chart preview if results already rendered
+    if (latestResult && !ppfResultsSection.classList.contains('hidden')) {
+      renderLivePpfGraph();
+    }
+  }
+
+  inpInvestmentAmt.addEventListener('input', handleInputChanged);
+  selTenureYears.addEventListener('change', handleInputChanged);
+  inpInterestRate.addEventListener('input', handleInputChanged);
+  inpExistingBal?.addEventListener('input', handleInputChanged);
+  inpWithdrawalAmt?.addEventListener('input', handleInputChanged);
+  selWithdrawalYear?.addEventListener('change', handleInputChanged);
+
+  // Core Execution Function
+  function executeCalculation() {
+    errPpf.classList.add('hidden');
+
+    const amt = parseFloat(inpInvestmentAmt.value);
+    const tenure = parseInt(selTenureYears.value, 10) || 15;
+    const rate = parseFloat(inpInterestRate.value);
+    const timing = selDepositTiming.value as PpfDepositTiming;
+
+    const existingBal = activeMode === 'advanced' ? (parseFloat(inpExistingBal.value) || 0) : 0;
+    const withdrawalAmt = activeMode === 'advanced' ? (parseFloat(inpWithdrawalAmt.value) || 0) : 0;
+    const withdrawalYear = activeMode === 'advanced' ? parseInt(selWithdrawalYear.value, 10) : 7;
+
+    // Validation
+    if (isNaN(amt) || amt < 500) {
+      errPpf.textContent = 'Minimum deposit in PPF is ₹500 per year.';
+      errPpf.classList.remove('hidden');
+      return;
+    }
+
+    if (contributionMode === 'yearly' && amt > 150000) {
+      errPpf.textContent = 'Maximum allowable PPF investment is ₹1,50,000 per financial year.';
+      errPpf.classList.remove('hidden');
+      return;
+    }
+
+    if (contributionMode === 'monthly' && amt > 12500) {
+      errPpf.textContent = 'Monthly PPF deposit cannot exceed ₹12,500 (annual cap of ₹1,50,000).';
+      errPpf.classList.remove('hidden');
+      return;
+    }
+
+    if (isNaN(rate) || rate <= 0 || rate > 25) {
+      errPpf.textContent = 'Please enter a valid assumed annual interest rate (e.g. 7.1%).';
+      errPpf.classList.remove('hidden');
+      return;
+    }
+
+    const res = calculatePpf({
+      contributionMode,
+      yearlyInvestment: contributionMode === 'yearly' ? amt : undefined,
+      monthlyInvestment: contributionMode === 'monthly' ? amt : undefined,
+      tenureYears: tenure,
+      annualInterestRate: rate,
+      depositTiming: timing,
+      existingBalance: existingBal,
+      partialWithdrawal: withdrawalAmt > 0 ? { afterYear: withdrawalYear, amount: withdrawalAmt } : undefined,
+    });
+
+    latestResult = res;
+
+    // Populate Metrics
+    resMaturityAmt.textContent = formatPpfINR(res.maturityAmount);
+    resWealthMultiplier.textContent = `${res.wealthGainMultiplier.toFixed(2)}x`;
+    resTotalInvested.textContent = formatPpfINR(res.totalInvestment);
+    resTotalInterest.textContent = formatPpfINR(res.totalInterestEarned);
+    resTenureDisplay.textContent = `${res.tenureYears} Years`;
+    resRateDisplay.textContent = `${res.annualInterestRate}% p.a.`;
+
+    // Update Donut Split
+    const interestPct = res.interestPercentage;
+    const investedPct = res.investedPercentage;
+    svgDonutInterest.setAttribute('stroke-dasharray', `${interestPct.toFixed(1)} ${investedPct.toFixed(1)}`);
+    donutCenterPct.textContent = `${interestPct.toFixed(1)}%`;
+    txtLegendInvested.textContent = `${formatPpfINR(res.totalInvestment - res.totalWithdrawals)} (${investedPct.toFixed(1)}%)`;
+    txtLegendInterest.textContent = `${formatPpfINR(res.totalInterestEarned)} (${interestPct.toFixed(1)}%)`;
+
+    // Populate Year-Wise Schedule Table
+    tbodyPpfSchedule.innerHTML = res.schedule.map((item) => `
+      <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+        <td class="p-2.5 font-bold text-slate-800 dark:text-slate-200">Year ${item.year}</td>
+        <td class="p-2.5 text-right">${formatPpfINR(item.openingBalance)}</td>
+        <td class="p-2.5 text-right text-blue-600 dark:text-blue-400 font-semibold">${formatPpfINR(item.deposit)}</td>
+        <td class="p-2.5 text-right text-emerald-600 dark:text-emerald-400 font-semibold">+${formatPpfINR(item.interestEarned)}</td>
+        <td class="p-2.5 text-right text-amber-600 dark:text-amber-400">${item.withdrawal > 0 ? '-' + formatPpfINR(item.withdrawal) : '₹ 0'}</td>
+        <td class="p-2.5 text-right font-black text-slate-900 dark:text-white">${formatPpfINR(item.closingBalance)}</td>
+      </tr>
+    `).join('');
+
+    // Render Timeline Graph
+    renderLivePpfGraph();
+
+    // Reveal results and scroll smoothly
+    ppfResultsSection.classList.remove('hidden');
+    ppfResultsSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  // Form Submit Listener
+  formPpf.addEventListener('submit', (e) => {
+    e.preventDefault();
+    executeCalculation();
+  });
+
+  btnClearPpf.addEventListener('click', () => {
+    inpInvestmentAmt.value = '10000';
+    selTenureYears.value = '15';
+    inpInterestRate.value = '7.1';
+    selDepositTiming.value = 'beginning_of_year';
+    if (inpExistingBal) inpExistingBal.value = '0';
+    if (inpWithdrawalAmt) inpWithdrawalAmt.value = '0';
+    ppfResultsSection.classList.add('hidden');
+    errPpf.classList.add('hidden');
+    latestResult = null;
+  });
+
+  // SVG Timeline Growth Chart
+  interface PpfChartPoint {
+    year: number;
+    invested: number;
+    closing: number;
+    interest: number;
+    x: number;
+    yInvested: number;
+    yClosing: number;
+  }
+
+  let chartPoints: PpfChartPoint[] = [];
+
+  function renderLivePpfGraph() {
+    if (!latestResult) return;
+
+    const schedule = latestResult.schedule;
+    const maxVal = Math.max(...schedule.map((s) => s.closingBalance)) * 1.12;
+    const minVal = 0;
+
+    const W = 700;
+    const H = 280;
+    const padL = 70;
+    const padR = 40;
+    const padT = 30;
+    const padB = 40;
+    const chartW = W - padL - padR;
+    const chartH = H - padT - padB;
+
+    const getX = (year: number) => {
+      const progress = (year - 1) / (schedule.length - 1);
+      return padL + progress * chartW;
+    };
+
+    const getY = (val: number) => {
+      const ratio = Math.min(1, Math.max(0, (val - minVal) / (maxVal - minVal)));
+      return padT + chartH - ratio * chartH;
+    };
+
+    chartPoints = schedule.map((item) => ({
+      year: item.year,
+      invested: item.cumulativeInvestment,
+      closing: item.closingBalance,
+      interest: item.cumulativeInterest,
+      x: getX(item.year),
+      yInvested: getY(item.cumulativeInvestment),
+      yClosing: getY(item.closingBalance),
+    }));
+
+    // Area & Line paths for Closing Balance (Emerald)
+    let closingAreaD = `M ${chartPoints[0].x} ${padT + chartH} L ${chartPoints[0].x} ${chartPoints[0].yClosing}`;
+    let closingLineD = `M ${chartPoints[0].x} ${chartPoints[0].yClosing}`;
+
+    // Area & Line paths for Cumulative Investment (Blue)
+    let investedAreaD = `M ${chartPoints[0].x} ${padT + chartH} L ${chartPoints[0].x} ${chartPoints[0].yInvested}`;
+    let investedLineD = `M ${chartPoints[0].x} ${chartPoints[0].yInvested}`;
+
+    for (let i = 1; i < chartPoints.length; i++) {
+      closingAreaD += ` L ${chartPoints[i].x} ${chartPoints[i].yClosing}`;
+      closingLineD += ` L ${chartPoints[i].x} ${chartPoints[i].yClosing}`;
+      investedAreaD += ` L ${chartPoints[i].x} ${chartPoints[i].yInvested}`;
+      investedLineD += ` L ${chartPoints[i].x} ${chartPoints[i].yInvested}`;
+    }
+
+    closingAreaD += ` L ${chartPoints[chartPoints.length - 1].x} ${padT + chartH} Z`;
+    investedAreaD += ` L ${chartPoints[chartPoints.length - 1].x} ${padT + chartH} Z`;
+
+    // 4 Horizontal Grid Lines
+    let gridLinesSvg = '';
+    for (let i = 0; i <= 4; i++) {
+      const val = (maxVal / 4) * i;
+      const y = getY(val);
+      gridLinesSvg += `
+        <line x1="${padL}" y1="${y}" x2="${W - padR}" y2="${y}" stroke="currentColor" class="text-slate-100 dark:text-slate-800/80" stroke-width="1" stroke-dasharray="3 3"></line>
+        <text x="${padL - 8}" y="${y + 3}" fill="#94a3b8" font-size="9" font-weight="600" text-anchor="end">${formatPpfINR(val)}</text>
+      `;
+    }
+
+    // X Axis Labels (Every 3-5 years)
+    let xLabelsSvg = '';
+    const step = schedule.length > 20 ? 5 : schedule.length > 10 ? 3 : 1;
+    for (let i = 0; i < schedule.length; i += step) {
+      const pt = chartPoints[i];
+      xLabelsSvg += `
+        <text x="${pt.x}" y="${H - 12}" fill="#64748b" font-size="9" font-weight="700" text-anchor="middle">Yr ${pt.year}</text>
+      `;
+    }
+    // Ensure final year label
+    const lastPt = chartPoints[chartPoints.length - 1];
+    xLabelsSvg += `
+      <text x="${lastPt.x}" y="${H - 12}" fill="#10b981" font-size="10" font-weight="900" text-anchor="middle">Yr ${lastPt.year}</text>
+    `;
+
+    // Dots on curves
+    const dotsSvg = chartPoints.map((p) => `
+      <circle cx="${p.x}" cy="${p.yClosing}" r="3.5" fill="#10b981" stroke="#ffffff" stroke-width="1.5"></circle>
+      <circle cx="${p.x}" cy="${p.yInvested}" r="3" fill="#3b82f6" stroke="#ffffff" stroke-width="1"></circle>
+    `).join('');
+
+    svgPpfChart.innerHTML = `
+      <defs>
+        <linearGradient id="ppfGreenGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#10b981" stop-opacity="0.3"></stop>
+          <stop offset="100%" stop-color="#10b981" stop-opacity="0.02"></stop>
+        </linearGradient>
+        <linearGradient id="ppfBlueGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.2"></stop>
+          <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.01"></stop>
+        </linearGradient>
+      </defs>
+      ${gridLinesSvg}
+      <path d="${closingAreaD}" fill="url(#ppfGreenGrad)"></path>
+      <path d="${investedAreaD}" fill="url(#ppfBlueGrad)"></path>
+      <path d="${closingLineD}" fill="none" stroke="#10b981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"></path>
+      <path d="${investedLineD}" fill="none" stroke="#3b82f6" stroke-width="2" stroke-dasharray="4 2" stroke-linecap="round"></path>
+      ${dotsSvg}
+      ${xLabelsSvg}
+      <line id="ppf-hover-line" x1="0" y1="${padT}" x2="0" y2="${padT + chartH}" stroke="#64748b" stroke-width="1" stroke-dasharray="2 2" class="hidden"></line>
+    `;
+  }
+
+  // Interactive Hover Tooltips on Chart
+  svgPpfChart.addEventListener('mousemove', (e) => {
+    if (chartPoints.length === 0) return;
+
+    const rect = svgPpfChart.getBoundingClientRect();
+    const svgX = ((e.clientX - rect.left) / rect.width) * 700;
+
+    // Find closest year point
+    let closest = chartPoints[0];
+    let minDist = Math.abs(chartPoints[0].x - svgX);
+
+    for (let i = 1; i < chartPoints.length; i++) {
+      const dist = Math.abs(chartPoints[i].x - svgX);
+      if (dist < minDist) {
+        minDist = dist;
+        closest = chartPoints[i];
+      }
+    }
+
+    const hoverLine = document.getElementById('ppf-hover-line');
+    if (hoverLine) {
+      hoverLine.setAttribute('x1', String(closest.x));
+      hoverLine.setAttribute('x2', String(closest.x));
+      hoverLine.classList.remove('hidden');
+    }
+
+    // Position and content
+    const tooltipX = (closest.x / 700) * rect.width;
+    const tooltipY = Math.max(10, (closest.yClosing / 280) * rect.height - 85);
+
+    chartTooltip.style.left = `${Math.min(rect.width - 160, Math.max(10, tooltipX - 70))}px`;
+    chartTooltip.style.top = `${tooltipY}px`;
+    chartTooltip.innerHTML = `
+      <div class="font-bold text-slate-300">Year ${closest.year} Summary</div>
+      <div class="font-black text-emerald-400">Total Corpus: ${formatPpfINR(closest.closing)}</div>
+      <div class="text-[10px] text-blue-300">Cumulative Invested: ${formatPpfINR(closest.invested)}</div>
+      <div class="text-[10px] text-slate-400">Total Interest to Date: ${formatPpfINR(closest.interest)}</div>
+    `;
+    chartTooltip.classList.remove('hidden');
+  });
+
+  svgPpfChart.addEventListener('mouseleave', () => {
+    chartTooltip.classList.add('hidden');
+    const hoverLine = document.getElementById('ppf-hover-line');
+    if (hoverLine) hoverLine.classList.add('hidden');
+  });
+
+  // PDF Download Handler
+  btnDownloadPdf.addEventListener('click', () => {
+    window.print();
+  });
+
+  // Initial Calculation on Page Load
+  executeCalculation();
+</script>
+
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "PPF Calculator",
+  "operatingSystem": "All",
+  "applicationCategory": "FinanceApplication",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "description": "Calculate exact Public Provident Fund (PPF) interest, maturity corpus, and year-wise compounding schedule based on official Indian Post Office rules."
+})}></script>
+
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is the current PPF interest rate in India?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The benchmark PPF interest rate in India is 7.1% per annum, compounded annually and set quarterly by the Ministry of Finance."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I invest monthly instead of once a year in PPF?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, you can deposit monthly up to 12 installments per financial year, provided the total cumulative deposit across all payments is between ₹500 and ₹1,50,000 per year."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why is depositing before the 5th of the month important?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Under statutory PPF rules, monthly interest is calculated on the minimum balance between the 5th day and the end of the month. Depositing on or before the 5th ensures that the newly deposited funds earn interest for that month."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is PPF interest completely tax-free?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. PPF enjoys complete Exempt-Exempt-Exempt (EEE) status under the Income Tax Act. Contributions qualify for Section 80C deductions, annual interest accrual is tax-exempt, and the final maturity amount is 100% tax-free."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I extend my PPF account after 15 years?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Upon completing 15 years, a PPF account can be extended indefinitely in 5-year blocks, either with continued contributions or without additional contributions."
+      }
+    }
+  ]
+})}></script>

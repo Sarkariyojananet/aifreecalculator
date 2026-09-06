@@ -30,3 +30,6 @@ export const GET: APIRoute = async ({ request, cookies, locals }) => {
     });
   }
 };
+
+export const POST: APIRoute = GET;
+

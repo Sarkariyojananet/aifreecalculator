@@ -38,6 +38,7 @@ const CALCULATOR_ALIASES: Record<string, string[]> = {
   'sip-calculator': ['mutual fund sip', 'sip returns', 'step up sip', 'wealth calculator', 'crorepati calculator'],
   'swp-calculator': ['swp calculator', 'systematic withdrawal plan', 'swp with inflation', 'mutual fund swp', 'sbi swp calculator', 'swp planner', 'monthly withdrawal'],
   'xirr-calculator': ['xirr calculator', 'extended internal rate of return', 'sip xirr', 'mutual fund xirr', 'annualized return', 'irregular cash flow return', 'cagr vs xirr'],
+  'ppf-calculator': ['ppf calculator', 'public provident fund', 'ppf interest', 'ppf maturity', 'ppf account', 'ppf scheme', 'ppf return', 'ppf 15 years', 'ppf tax free'],
   'income-tax-calculator': ['tax calculator', 'new tax regime', 'old tax regime', 'itr calculator', 'income tax india', 'salary tax'],
   'gratuity-calculator': ['gratuity calc', 'gratuity act 1972', 'gratuity calculation', 'retirement gratuity', 'service gratuity', 'gratuity rules', 'gratuity formula'],
   'gst-calculator': ['gst tax', 'gst add remove', 'reverse gst', 'cgst sgst igst', 'gst 18%'],
@@ -48,6 +49,7 @@ const CALCULATOR_ALIASES: Record<string, string[]> = {
   'compound-interest-calculator': ['ci calculator', 'chakravriddhi byaj', 'compounding calculator', 'annual interest'],
   'calorie-calculator': ['tdee calculator', 'daily calories', 'calorie intake', 'weight loss calories'],
   'bmr-calculator': ['basal metabolic rate', 'resting metabolism', 'mifflin st jeor'],
+  'volume-calculator': ['volume calculator', 'tank volume', 'cylinder volume', 'pipe volume', 'pool volume', 'sphere volume', 'cone volume', 'prostate volume', 'water capacity', 'liters calculator', 'gallons to liters'],
 };
 
 export const calculators: Calculator[] = (rawCalculators as Calculator[]).map((c) => {

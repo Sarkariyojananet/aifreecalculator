@@ -395,6 +395,7 @@ const categoryPath = `/${category.toLowerCase()}/`;
       (function initAutoScrollAndTelemetry() {
         var resultSelectors = [
           '#pm-results-section:not(.hidden)',
+          '#hero-volume-card:not(.hidden)',
           '#results-section:not(.hidden)',
           '#results-card:not(.hidden)',
           '[id*="-results-section"]:not(.hidden)',
@@ -426,26 +427,38 @@ const categoryPath = `/${category.toLowerCase()}/`;
           // 2. Selectors for results container across all calculator types
           var foundResult = false;
           for (var j = 0; j < resultSelectors.length; j++) {
-            var resultEl = document.querySelector(resultSelectors[j]);
-            if (resultEl && resultEl.offsetParent !== null) {
-              var text = (resultEl.textContent || '').trim();
-              if (text.length > 0) {
-                if (text.includes('NaN') || text.includes('Infinity')) {
-                  trackAnalytics('calculation_error');
-                } else {
-                  trackAnalytics('calculation_success');
+            var candidateEls = document.querySelectorAll(resultSelectors[j]);
+            for (var c = 0; c < candidateEls.length; c++) {
+              var resultEl = candidateEls[c];
+              if (
+                resultEl &&
+                resultEl.offsetParent !== null &&
+                !resultEl.closest('#calc-action-bar-container, button, a, nav, header, dialog, [role="dialog"]')
+              ) {
+                var text = (resultEl.textContent || '').trim();
+                if (text.length > 0) {
+                  if (text.includes('NaN') || text.includes('Infinity')) {
+                    trackAnalytics('calculation_error');
+                  } else {
+                    trackAnalytics('calculation_success');
+                  }
+                  foundResult = true;
+
+                  var rect = resultEl.getBoundingClientRect();
+                  // If the top of the result container is already comfortably visible in the viewport, do not scroll
+                  if (rect.top >= 70 && rect.top <= window.innerHeight * 0.45) {
+                    return;
+                  }
+
+                  var headerOffset = 80;
+                  var targetY = window.pageYOffset + rect.top - headerOffset;
+
+                  window.scrollTo({
+                    top: Math.max(0, targetY),
+                    behavior: 'smooth'
+                  });
+                  return;
                 }
-                foundResult = true;
-
-                var rect = resultEl.getBoundingClientRect();
-                var headerOffset = 85;
-                var targetY = window.pageYOffset + rect.top - headerOffset;
-
-                window.scrollTo({
-                  top: Math.max(0, targetY),
-                  behavior: 'smooth'
-                });
-                return;
               }
             }
           }

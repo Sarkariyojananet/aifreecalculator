@@ -8,6 +8,7 @@ import { calculateEmi } from '../calculators/emi';
 import { calculateSipComprehensive } from '../calculators/sip';
 import { calculateSwp } from '../calculators/swp';
 import { calculateRecurringXirr, calculateCustomXirr } from '../calculators/xirr';
+import { calculatePpf } from '../calculators/ppf';
 import { calculateGstComprehensive } from '../calculators/gst';
 import { calculateBmi } from '../calculators/bmi';
 import { calculateSimpleInterestComprehensive } from '../calculators/simple-interest';
@@ -50,6 +51,7 @@ import { calculateCourseGpa } from '../calculators/gpa';
 import { factorial } from '../calculators/scientific';
 import { calculateFractionOperation } from '../calculators/fraction';
 import { generateMultipleRandomNumbers } from '../calculators/random-number-generator';
+import { calculateVolumeComprehensive } from '../calculators/volume';
 import type { CalculatorTestCase, CustomTestCaseDefinition } from './types';
 
 /**
@@ -80,6 +82,17 @@ export function executeCalculatorFormula(slug: string, inputs: Record<string, an
         maturityDate: inputs.maturityDate,
         recurringAmount: inputs.recurringAmount || inputs.investmentAmount || 0,
         maturityAmount: inputs.maturityAmount || 0,
+      });
+    case 'ppf-calculator':
+      return calculatePpf({
+        contributionMode: inputs.contributionMode || 'yearly',
+        yearlyInvestment: inputs.yearlyInvestment || inputs.investmentAmount || inputs.annualDeposit || 10000,
+        monthlyInvestment: inputs.monthlyInvestment,
+        tenureYears: inputs.tenureYears || inputs.tenure || inputs.years || 15,
+        annualInterestRate: inputs.annualInterestRate || inputs.rate || 7.1,
+        depositTiming: inputs.depositTiming || 'beginning_of_year',
+        existingBalance: inputs.existingBalance,
+        partialWithdrawal: inputs.partialWithdrawal,
       });
     case 'gst-calculator':
       return calculateGstComprehensive(inputs as any);
@@ -171,6 +184,8 @@ export function executeCalculatorFormula(slug: string, inputs: Record<string, an
         allowDuplicates: inputs.allowDuplicates ?? false,
         type: inputs.type || 'integer',
       });
+    case 'volume-calculator':
+      return calculateVolumeComprehensive(inputs as any);
     default:
       throw new Error(`No formula runner registered for calculator slug: ${slug}`);
   }

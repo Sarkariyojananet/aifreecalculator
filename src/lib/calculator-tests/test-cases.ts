@@ -12,6 +12,7 @@ import { calculateEmi } from '../calculators/emi';
 import { calculateSipComprehensive } from '../calculators/sip';
 import { calculateSwp } from '../calculators/swp';
 import { calculateRecurringXirr, calculateCustomXirr } from '../calculators/xirr';
+import { calculatePpf } from '../calculators/ppf';
 import { calculateGstComprehensive } from '../calculators/gst';
 import { calculateBmi } from '../calculators/bmi';
 import { calculateSimpleInterestComprehensive } from '../calculators/simple-interest';
@@ -66,6 +67,15 @@ import { calculateCourseGpa } from '../calculators/gpa';
 import { factorial, nCr } from '../calculators/scientific';
 import { calculateFractionOperation } from '../calculators/fraction';
 import { generateMultipleRandomNumbers } from '../calculators/random-number-generator';
+import {
+  calculateRectangularVolume,
+  calculateCylinderVolume,
+  calculatePipeVolume,
+  calculatePoolVolume,
+  calculateSphereVolume,
+  calculateConeVolume,
+  calculateProstateVolume,
+} from '../calculators/volume';
 
 // ─── EMI Calculator Tests ──────────────────────────────────────────────────────
 // Formula: EMI = P * r * (1+r)^n / ((1+r)^n - 1)
@@ -498,6 +508,55 @@ const xirrTests: CalculatorTestCase[] = [
       });
       return { isPositive: res.isPositive ? 1 : 0 };
     },
+  },
+];
+
+// ─── PPF Calculator Tests ──────────────────────────────────────────────────────
+
+const ppfTests: CalculatorTestCase[] = [
+  {
+    slug: 'ppf-calculator',
+    name: 'Standard PPF (₹10,000/yr, 15yr @ 7.1%)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'maturityAmount',
+    expectedValue: 271214,
+    tolerance: 5,
+    description: '₹10,000 yearly for 15 years @ 7.1% beginning of year yields ₹2,71,214.',
+    run: () => calculatePpf({ yearlyInvestment: 10000, tenureYears: 15, annualInterestRate: 7.1, depositTiming: 'beginning_of_year' }),
+  },
+  {
+    slug: 'ppf-calculator',
+    name: 'Maximum 80C PPF (₹1,50,000/yr, 15yr @ 7.1%)',
+    category: 'Maximum',
+    expectedBehavior: 'result',
+    expectedResultKey: 'maturityAmount',
+    expectedValue: 4068209,
+    tolerance: 10,
+    description: '₹1,50,000 yearly for 15 years @ 7.1% beginning of year yields ₹40,68,209.',
+    run: () => calculatePpf({ yearlyInvestment: 150000, tenureYears: 15, annualInterestRate: 7.1, depositTiming: 'beginning_of_year' }),
+  },
+  {
+    slug: 'ppf-calculator',
+    name: 'PPF Mathematical Balance Identity Check',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'totalInvestment',
+    expectedValue: 150000,
+    tolerance: 1,
+    description: 'Sum of 15 deposits of ₹10,000 equals exactly ₹1,50,000.',
+    run: () => calculatePpf({ yearlyInvestment: 10000, tenureYears: 15, annualInterestRate: 7.1, depositTiming: 'beginning_of_year' }),
+  },
+  {
+    slug: 'ppf-calculator',
+    name: 'Monthly PPF (₹1,000/mo, 15yr @ 7.1% before 5th)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'totalInvestment',
+    expectedValue: 180000,
+    tolerance: 1,
+    description: '15 years of ₹1,000 monthly equals ₹1,80,000 total investment.',
+    run: () => calculatePpf({ contributionMode: 'monthly', monthlyInvestment: 1000, tenureYears: 15, annualInterestRate: 7.1, depositTiming: 'monthly_before_5th' }),
   },
 ];
 
@@ -2532,13 +2591,114 @@ const rngTests: CalculatorTestCase[] = [
   },
 ];
 
-// ─── Consolidated Test Suite ──────────────────────────────────────────────────
+// ─── Volume Calculator Tests ────────────────────────────────────────────────
+const volumeTests: CalculatorTestCase[] = [
+  {
+    slug: 'volume-calculator',
+    name: 'Rectangular Tank (5m × 2m × 1.5m = 15 m³)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'volumeM3',
+    expectedValue: 15,
+    tolerance: 0.0001,
+    inputValues: {
+      mode: 'rectangular',
+      rectangular: { length: 5, lengthUnit: 'm', width: 2, widthUnit: 'm', height: 1.5, heightUnit: 'm' },
+    },
+    run: () => calculateRectangularVolume({ length: 5, lengthUnit: 'm', width: 2, widthUnit: 'm', height: 1.5, heightUnit: 'm', outputUnit: 'm3' }),
+  },
+  {
+    slug: 'volume-calculator',
+    name: 'Cylinder Tank (r=2m, h=5m ≈ 62.831853 m³)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'volumeM3',
+    expectedValue: 62.831853,
+    tolerance: 0.001,
+    inputValues: {
+      mode: 'cylinder',
+      cylinder: { dimensionType: 'radius', dimensionValue: 2, dimensionUnit: 'm', height: 5, heightUnit: 'm' },
+    },
+    run: () => calculateCylinderVolume({ dimensionType: 'radius', dimensionValue: 2, dimensionUnit: 'm', height: 5, heightUnit: 'm', outputUnit: 'm3' }),
+  },
+  {
+    slug: 'volume-calculator',
+    name: 'Pipe Internal Capacity (ID=100mm, L=10m ≈ 0.07854 m³)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'internalVolumeM3',
+    expectedValue: 0.0785398,
+    tolerance: 0.0001,
+    inputValues: {
+      mode: 'pipe',
+      pipe: { inputMode: 'inner_diameter', innerDiameter: 100, innerDiameterUnit: 'mm', length: 10, lengthUnit: 'm' },
+    },
+    run: () => calculatePipeVolume({ inputMode: 'inner_diameter', innerDiameter: 100, innerDiameterUnit: 'mm', length: 10, lengthUnit: 'm', outputUnit: 'L' }),
+  },
+  {
+    slug: 'volume-calculator',
+    name: 'Sphere (r=5cm ≈ 523.5988 cm³)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'primaryVolume',
+    expectedValue: 523.598775,
+    tolerance: 0.01,
+    inputValues: {
+      mode: 'sphere',
+      sphere: { dimensionType: 'radius', dimensionValue: 5, dimensionUnit: 'cm', outputUnit: 'cm3' },
+    },
+    run: () => calculateSphereVolume({ dimensionType: 'radius', dimensionValue: 5, dimensionUnit: 'cm', outputUnit: 'cm3' }),
+  },
+  {
+    slug: 'volume-calculator',
+    name: 'Cone (r=3m, h=6m ≈ 56.5487 m³)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'volumeM3',
+    expectedValue: 56.548667,
+    tolerance: 0.001,
+    inputValues: {
+      mode: 'cone',
+      cone: { dimensionType: 'radius', dimensionValue: 3, dimensionUnit: 'm', height: 6, heightUnit: 'm' },
+    },
+    run: () => calculateConeVolume({ dimensionType: 'radius', dimensionValue: 3, dimensionUnit: 'm', height: 6, heightUnit: 'm', outputUnit: 'm3' }),
+  },
+  {
+    slug: 'volume-calculator',
+    name: 'Swimming Pool (10m × 5m × 2m = 100 m³)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'volumeM3',
+    expectedValue: 100,
+    tolerance: 0.0001,
+    inputValues: {
+      mode: 'pool',
+      pool: { shape: 'rectangular', length: 10, lengthUnit: 'm', width: 5, widthUnit: 'm', depthMode: 'average', averageDepth: 2, averageDepthUnit: 'm' },
+    },
+    run: () => calculatePoolVolume({ shape: 'rectangular', length: 10, lengthUnit: 'm', width: 5, widthUnit: 'm', depthMode: 'average', averageDepth: 2, averageDepthUnit: 'm' }),
+  },
+  {
+    slug: 'volume-calculator',
+    name: 'Prostate Volume (4cm × 3cm × 4cm × 0.52 = 24.96 mL)',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'volumeML',
+    expectedValue: 24.96,
+    tolerance: 0.01,
+    inputValues: {
+      mode: 'prostate',
+      prostate: { length: 4, lengthUnit: 'cm', width: 3, widthUnit: 'cm', height: 4, heightUnit: 'cm' },
+    },
+    run: () => calculateProstateVolume({ length: 4, lengthUnit: 'cm', width: 3, widthUnit: 'cm', height: 4, heightUnit: 'cm' }),
+  },
+];
 
 export const ALL_TEST_CASES: CalculatorTestCase[] = [
   ...emiTests,
   ...sipTests,
   ...swpTests,
   ...xirrTests,
+  ...ppfTests,
   ...gstTests,
   ...bmiTests,
   ...simpleInterestTests,
@@ -2577,6 +2737,7 @@ export const ALL_TEST_CASES: CalculatorTestCase[] = [
   ...scientificTests,
   ...fractionTests,
   ...rngTests,
+  ...volumeTests,
 ];
 
 /**

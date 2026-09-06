@@ -87,6 +87,7 @@ const needsAttentionPages = (gscData?.topPages || [])
         <button
           type="button"
           id="btn-trigger-audit"
+          onclick="window.triggerSeoAudit && window.triggerSeoAudit()"
           class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition cursor-pointer"
         >
           <span id="btn-trigger-icon">⚡</span>
@@ -953,6 +954,66 @@ const needsAttentionPages = (gscData?.topPages || [])
             row.style.display = text.includes(q) ? '' : 'none';
           });
         });
+      }
+
+      // Re-run SEO Technical Audit
+      window.triggerSeoAudit = async function () {
+        const btnTriggerAudit = document.getElementById('btn-trigger-audit');
+        const btnTriggerIcon = document.getElementById('btn-trigger-icon');
+        const btnTriggerText = document.getElementById('btn-trigger-text');
+        const liveAuditStatus = document.getElementById('live-audit-status');
+
+        if (btnTriggerAudit && btnTriggerAudit.disabled) return;
+        if (btnTriggerAudit) btnTriggerAudit.disabled = true;
+        if (btnTriggerIcon) {
+          btnTriggerIcon.textContent = '⏳';
+          btnTriggerIcon.classList.add('animate-spin');
+        }
+        if (btnTriggerText) btnTriggerText.textContent = 'Auditing Routes...';
+
+        if (liveAuditStatus) {
+          liveAuditStatus.className = 'rounded-2xl p-4 text-xs font-bold block bg-blue-50 text-blue-800 dark:bg-blue-950/60 dark:text-blue-300 border border-blue-200 dark:border-blue-900/60 shadow-xs flex items-center gap-2';
+          liveAuditStatus.innerHTML = '<span class="text-base animate-spin">⏳</span><span>Running comprehensive SEO health audit across all pages and calculators...</span>';
+        }
+
+        try {
+          const res = await fetch('/api/admin/seo/audit', {
+            method: 'GET',
+            headers: { 'Accept': 'application/json' },
+            cache: 'no-store'
+          });
+
+          const data = await res.json();
+          if (res.ok && data.success) {
+            if (liveAuditStatus) {
+              liveAuditStatus.className = 'rounded-2xl p-4 text-xs font-bold block bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-900/60 shadow-xs flex items-center gap-2';
+              liveAuditStatus.innerHTML = '<span class="text-base">✅</span><span>SEO audit completed successfully! Refreshing dashboard...</span>';
+            }
+            setTimeout(() => {
+              const currentUrl = new URL(window.location.href);
+              currentUrl.searchParams.set('audited', '1');
+              window.location.href = currentUrl.toString();
+            }, 700);
+          } else {
+            throw new Error(data.error || 'Audit execution failed');
+          }
+        } catch (err) {
+          if (liveAuditStatus) {
+            liveAuditStatus.className = 'rounded-2xl p-4 text-xs font-bold block bg-red-50 text-red-800 dark:bg-red-950/60 dark:text-red-300 border border-red-200 dark:border-red-900/60 shadow-xs flex items-center gap-2';
+            liveAuditStatus.innerHTML = '<span class="text-base">❌</span><span>Error running audit: ' + (err && err.message ? err.message : 'Unknown error') + '</span>';
+          }
+          if (btnTriggerAudit) btnTriggerAudit.disabled = false;
+          if (btnTriggerIcon) {
+            btnTriggerIcon.textContent = '⚡';
+            btnTriggerIcon.classList.remove('animate-spin');
+          }
+          if (btnTriggerText) btnTriggerText.textContent = 'Re-run Audit';
+        }
+      };
+
+      const btnTriggerAudit = document.getElementById('btn-trigger-audit');
+      if (btnTriggerAudit) {
+        btnTriggerAudit.addEventListener('click', window.triggerSeoAudit);
       }
 
       // 3. Manual Sync Button
