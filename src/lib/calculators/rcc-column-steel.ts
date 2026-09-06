@@ -77,6 +77,8 @@ export const CONCRETE_MIX_SPECS: Record<
   M15: { label: 'M15 (1 : 2 : 4) - Lean / Low Load', cement: 1, sand: 2, aggregate: 4 },
 };
 
+export const CONCRETE_MIX_PROPORTIONS = CONCRETE_MIX_SPECS;
+
 export function calculateConcreteMixBreakup(
   volume: number,
   grade: ConcreteMixGrade = 'M20',

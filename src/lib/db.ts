@@ -59,7 +59,7 @@ async function getLocalFileStorage(): Promise<Record<string, string>> {
   } catch (err) {
     console.error('Failed to read .site-settings.json:', err);
   }
-  return localFileCache;
+  return localFileCache ?? {};
 }
 
 async function writeLocalFileStorage(key: string, value: string): Promise<void> {

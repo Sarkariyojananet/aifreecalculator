@@ -43,7 +43,7 @@ function base64UrlDecode(str: string): string {
 async function getCryptoKey(): Promise<CryptoKey> {
   return await crypto.subtle.importKey(
     'raw',
-    strToUint8Array(SECRET_KEY),
+    strToUint8Array(SECRET_KEY) as BufferSource,
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign', 'verify']
@@ -66,7 +66,7 @@ export async function createAdminToken(username: string, expiresInHours = 4): Pr
   const dataToSign = `${encodedHeader}.${encodedPayload}`;
 
   const key = await getCryptoKey();
-  const signature = await crypto.subtle.sign('HMAC', key, strToUint8Array(dataToSign));
+  const signature = await crypto.subtle.sign('HMAC', key, strToUint8Array(dataToSign) as BufferSource);
   const encodedSignature = base64UrlEncode(signature);
 
   return `${dataToSign}.${encodedSignature}`;
@@ -86,7 +86,7 @@ export async function verifyAdminToken(token: string | null | undefined): Promis
   try {
     const key = await getCryptoKey();
     const signatureBytes = Uint8Array.from(base64UrlDecode(encodedSignature), (c) => c.charCodeAt(0));
-    const isValid = await crypto.subtle.verify('HMAC', key, signatureBytes, strToUint8Array(dataToSign));
+    const isValid = await crypto.subtle.verify('HMAC', key, signatureBytes as BufferSource, strToUint8Array(dataToSign) as BufferSource);
 
     if (!isValid) return null;
 

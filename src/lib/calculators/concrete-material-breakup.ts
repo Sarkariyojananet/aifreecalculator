@@ -641,7 +641,7 @@ export function calculateConcreteMaterial(input: ConcreteMaterialCalculationInpu
       {
         item: 'Sand (Fine Aggregate)',
         unitPrice: sandRate,
-        rateUnit: `per ${sandUnit.toUpperCase()}`,
+        rateUnit: sandRateLabel,
         quantity: Number(sandQtyForCost.toFixed(2)),
         quantityDisplay: `${sandQtyForCost.toFixed(1)} ${sandUnit.toUpperCase()}`,
         cost: Number(sandCost.toFixed(2)),
@@ -651,7 +651,7 @@ export function calculateConcreteMaterial(input: ConcreteMaterialCalculationInpu
       {
         item: 'Coarse Aggregate',
         unitPrice: aggRate,
-        rateUnit: `per ${aggUnit.toUpperCase()}`,
+        rateUnit: aggRateLabel,
         quantity: Number(aggQtyForCost.toFixed(2)),
         quantityDisplay: `${aggQtyForCost.toFixed(1)} ${aggUnit.toUpperCase()}`,
         cost: Number(aggCost.toFixed(2)),

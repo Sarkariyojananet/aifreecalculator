@@ -231,7 +231,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
             `--${boundary}--`,
           ].join('\r\n');
 
-          const { EmailMessage } = await import('cloudflare:email').catch(() => ({ EmailMessage: null as any }));
+          // @ts-ignore - cloudflare:email is provided by Cloudflare Workers runtime
+          const { EmailMessage } = await (import('cloudflare:email' as string) as Promise<any>).catch(() => ({ EmailMessage: null as any }));
           if (EmailMessage) {
             const msg = new EmailMessage(senderEmail, destinationEmail, rawMime);
             await emailBinding.send(msg);

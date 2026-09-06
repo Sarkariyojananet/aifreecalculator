@@ -1220,7 +1220,6 @@ const rccSlabSteelTests: CalculatorTestCase[] = [
       mainBarDiaMm: 10,
       mainBarSpacing: 150,
       mainSpacingUnit: 'mm',
-      mainDirection: 'short_span',
       distBarDiaMm: 8,
       distBarSpacing: 150,
       distSpacingUnit: 'mm',
@@ -1445,7 +1444,7 @@ const concreteMaterialTests: CalculatorTestCase[] = [
   {
     slug: 'concrete-material-breakup-calculator',
     name: 'Negative Dimension Validation Rejection',
-    category: 'Error',
+    category: 'Invalid Input',
     expectedBehavior: 'throw',
     description: 'Rejects negative slab thickness.',
     run: () => calculateConcreteMaterial({
@@ -1643,7 +1642,7 @@ const brickworkTests: CalculatorTestCase[] = [
   {
     slug: 'brickwork-calculator',
     name: 'Negative Dimension Validation Rejection',
-    category: 'Error',
+    category: 'Invalid Input',
     expectedBehavior: 'throw',
     description: 'Rejects negative wall length.',
     run: () => calculateWallBrickwork({
@@ -1815,7 +1814,7 @@ const plasterTests: CalculatorTestCase[] = [
   {
     slug: 'plaster-calculator',
     name: 'Negative Dimension Validation Rejection',
-    category: 'Error',
+    category: 'Invalid Input',
     expectedBehavior: 'throw',
     description: 'Rejects negative wall length.',
     run: () => calculateWallPlaster({
@@ -1844,9 +1843,8 @@ const incomeTaxTests: CalculatorTestCase[] = [
     description: 'Taxable income below ₹7 Lakh receives Section 87A full rebate (₹0 tax).',
     run: () => calculateIndiaTax({
       assessmentYear: 'AY 2026-27',
-      taxRegime: 'new',
-      grossIncome: 700000,
-      standardDeduction: 75000,
+      regime: 'new',
+      salaryIncome: 700000,
     }),
   },
 ];
