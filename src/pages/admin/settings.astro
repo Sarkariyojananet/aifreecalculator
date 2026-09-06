@@ -1,8 +1,14 @@
 ---
 import AdminLayout from '../../layouts/AdminLayout.astro';
+import BackupRollbackCard from '../../components/admin/settings/BackupRollbackCard.astro';
+import MasterAdsCard from '../../components/admin/settings/MasterAdsCard.astro';
+import AdSlotEditor from '../../components/admin/settings/AdSlotEditor.astro';
+import SmartThrottlingCard from '../../components/admin/settings/SmartThrottlingCard.astro';
+import AdsTxtManager from '../../components/admin/settings/AdsTxtManager.astro';
+import AuditLogCard from '../../components/admin/settings/AuditLogCard.astro';
 ---
 
-<AdminLayout title="AdSense & AdX Settings | Calculator CMS" sectionTitle="Ad Monetization" activeSection="settings">
+<AdminLayout title="AdSense & Ad Monetization Settings | Calculator CMS" sectionTitle="Ad Monetization" activeSection="settings">
   <div class="space-y-8 max-w-6xl mx-auto">
     
     <!-- Top Header Banner -->
@@ -14,10 +20,10 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
           </span>
           <div>
             <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
-              Ad Setup &amp; Monetization (AdSense, AdX &amp; 3rd-Party)
+              Monetization &amp; Ad Control Center
             </h2>
             <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Manage Google AdSense, Google Ad Manager (AdX), 3rd-party ad networks, global scripts, and authorized <code class="font-mono text-blue-600 dark:text-blue-400">/ads.txt</code> sellers.
+              Manage Google AdSense, AdX, Direct Sponsor banners, Affiliate partnerships, Smart Throttling, and IAB <code class="font-mono text-blue-600 dark:text-blue-400">/ads.txt</code> sellers.
             </p>
           </div>
         </div>
@@ -29,7 +35,7 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
           href="/admin/monetization/"
           class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-1 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition"
         >
-          <span>💰</span> View Revenue Analytics →
+          <span>💰</span> Revenue Analytics →
         </a>
         <span id="badge-global-status" class="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300">
           <span class="h-2 w-2 rounded-full bg-slate-400" aria-hidden="true"></span> Loading...
@@ -40,875 +46,39 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       </div>
     </div>
 
-    <!-- 💾 CMS Data Backup & Disaster Recovery Card -->
-    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900/80 sm:p-8 space-y-5">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 dark:border-slate-800">
-        <div>
-          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <span>💾</span> 1-Click CMS Data Backup &amp; Disaster Recovery
-          </h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Export a full JSON snapshot of all custom SEO meta overrides, internal links, 301 redirects, FAQs, categories, and settings.
-          </p>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2.5">
-          <a
-            href="/api/admin/backup/export"
-            id="btn-download-backup"
-            class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition cursor-pointer"
-          >
-            <span>📥</span> Download Full JSON Backup
-          </a>
-
-          <button
-            type="button"
-            id="btn-open-restore-modal"
-            class="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
-          >
-            <span>🔄</span> Restore From Backup
-          </button>
-        </div>
-      </div>
-
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-        <div class="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-800 dark:bg-slate-950/40">
-          <span class="text-slate-500 text-[11px] block">Database Engine</span>
-          <strong class="text-slate-900 dark:text-white font-bold block mt-0.5">Cloudflare D1 &amp; KV</strong>
-        </div>
-        <div class="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-800 dark:bg-slate-950/40">
-          <span class="text-slate-500 text-[11px] block">Snapshot Format</span>
-          <strong class="text-slate-900 dark:text-white font-bold block mt-0.5">Portable JSON v1.0</strong>
-        </div>
-        <div class="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-800 dark:bg-slate-950/40">
-          <span class="text-slate-500 text-[11px] block">Coverage</span>
-          <strong class="text-emerald-600 dark:text-emerald-400 font-bold block mt-0.5">100% Config &amp; Meta</strong>
-        </div>
-        <div class="rounded-xl border border-slate-200/80 bg-slate-50/60 p-3 dark:border-slate-800 dark:bg-slate-950/40">
-          <span class="text-slate-500 text-[11px] block">Restore Speed</span>
-          <strong class="text-blue-600 dark:text-blue-400 font-bold block mt-0.5">Instant Atomic Sync</strong>
-        </div>
-      </div>
-    </div>
+    <!-- 1. 💾 CMS Data Backup, Restore & 1-Click Rollback Card -->
+    <BackupRollbackCard />
 
     <!-- Main Settings Form -->
     <form id="adsense-full-form" class="space-y-8" novalidate aria-label="Ad configuration form">
       
-      <!-- 1. Master Ad Network Setup -->
-      <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900/80 sm:p-8 space-y-6">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
-          <div>
-            <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <span aria-hidden="true">🌐</span> Master Ad Network Controls
-            </h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Control global advertisement display, preview mode, and Google AdSense credentials.
-            </p>
-          </div>
-        </div>
+      <!-- 2. Master Ad Network Controls (AdSense, Auto Ads, GA4, Header Script) -->
+      <MasterAdsCard />
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          
-          <!-- Master Ads Toggle Switch -->
-          <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/40">
-            <div>
-              <label for="field-enabled" class="block text-xs font-bold text-slate-900 dark:text-white cursor-pointer select-none">
-                Enable Ads Site-Wide
-              </label>
-              <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Toggle all advertisements on/off with one switch</div>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                id="field-enabled"
-                role="switch"
-                class="sr-only peer"
-                aria-checked="false"
-              />
-              <div
-                class="w-11 h-6 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600 dark:bg-slate-700 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 peer-focus-visible:ring-offset-2 dark:peer-focus-visible:ring-offset-slate-900"
-                aria-hidden="true"
-              ></div>
-            </label>
-          </div>
+      <!-- 3. Ad Slots & Monetization Switcher (AdSense, AdX, Direct Sponsor, Affiliate) -->
+      <AdSlotEditor />
 
-          <!-- Test / Mockup Mode Switch -->
-          <div class="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/40">
-            <div>
-              <label for="field-test-mode" class="block text-xs font-bold text-slate-900 dark:text-white cursor-pointer select-none">
-                Test / Preview Mode
-                <span class="ml-1 rounded bg-amber-200 px-1.5 py-0.5 text-[9px] font-extrabold text-amber-900 dark:bg-amber-900/60 dark:text-amber-200">SAFE</span>
-              </label>
-              <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">Show visual test placeholders without requesting live ads</div>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                id="field-test-mode"
-                role="switch"
-                class="sr-only peer"
-                aria-checked="false"
-              />
-              <div
-                class="w-11 h-6 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500 dark:bg-slate-700 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 peer-focus-visible:ring-offset-2 dark:peer-focus-visible:ring-offset-slate-900"
-                aria-hidden="true"
-              ></div>
-            </label>
-          </div>
+      <!-- 4. Smart Ads Throttling & Core Web Vitals Protection -->
+      <SmartThrottlingCard />
 
-        </div>
+      <!-- 5. Authorized Digital Sellers (ads.txt) -->
+      <AdsTxtManager />
 
-        <!-- Publisher Client ID Field (AdSense) -->
-        <div class="space-y-2">
-          <div class="flex items-center justify-between">
-            <label for="field-client-id" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
-              Google AdSense Publisher ID (<span class="font-mono text-blue-600 dark:text-blue-400">ca-pub-XXXXXXXXXXXXXXXX</span>)
-            </label>
-            <span class="text-[11px] text-slate-400 font-medium">Leave blank if only using 3rd-party ad networks</span>
-          </div>
-          <div class="relative flex items-center">
-            <span class="pointer-events-none absolute left-3.5 text-slate-400 text-sm" aria-hidden="true">🆔</span>
-            <input
-              type="text"
-              id="field-client-id"
-              placeholder="ca-pub-1234567890123456"
-              autocomplete="off"
-              spellcheck="false"
-              class="w-full rounded-2xl border border-slate-300 bg-white py-3 pl-10 pr-4 text-sm font-mono font-semibold text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-              aria-describedby="client-id-hint client-id-error"
-            />
-          </div>
-          <p id="client-id-hint" class="text-[11px] text-slate-500 dark:text-slate-400">
-            Found in AdSense under <strong>Account → Settings → Account information → Publisher ID</strong>.
-          </p>
-          <p id="client-id-error" class="hidden text-[11px] font-semibold text-red-600 dark:text-red-400" role="alert" aria-live="polite"></p>
-        </div>
-
-        <!-- Auto Ads Option -->
-        <div class="flex items-center justify-between rounded-xl border border-slate-100 bg-slate-50/40 p-3.5 dark:border-slate-800/80 dark:bg-slate-950/20">
-          <div class="flex items-center gap-3">
-            <span class="text-lg" aria-hidden="true">🤖</span>
-            <div>
-              <label for="field-auto-ads" class="block text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer select-none">
-                Enable Google Auto Ads
-              </label>
-              <div class="text-[10px] text-slate-500 dark:text-slate-400">Allows Google AdSense Auto ads to automatically place eligible ads based on your AdSense dashboard setup.</div>
-            </div>
-          </div>
-          <label class="relative inline-flex items-center cursor-pointer">
-            <input
-              type="checkbox"
-              id="field-auto-ads"
-              role="switch"
-              class="sr-only peer"
-              aria-checked="false"
-            />
-            <div
-              class="w-9 h-5 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600 dark:bg-slate-700 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 peer-focus-visible:ring-offset-2 dark:peer-focus-visible:ring-offset-slate-900"
-              aria-hidden="true"
-            ></div>
-          </label>
-        </div>
-
-        <!-- Global Header Script / 3rd-Party Head Tag -->
-        <div class="space-y-2 border-t border-slate-100 pt-4 dark:border-slate-800">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
-            <label for="field-header-script" class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-              <span>⚡</span> Global Header Script / 3rd-Party Ad Network Tag (<code class="text-indigo-600 dark:text-indigo-400">&lt;head&gt;</code>)
-            </label>
-            <div class="flex items-center gap-2">
-              <button
-                type="button"
-                id="btn-insert-gpt-header"
-                class="text-[10px] font-bold text-indigo-600 hover:underline dark:text-indigo-400 cursor-pointer"
-              >
-                + Insert Google GPT Head Tag
-              </button>
-              <button
-                type="button"
-                id="btn-insert-prebid-header"
-                class="text-[10px] font-bold text-purple-600 hover:underline dark:text-purple-400 cursor-pointer"
-              >
-                + Insert Prebid Tag
-              </button>
-            </div>
-          </div>
-          <textarea
-            id="field-header-script"
-            rows="3"
-            placeholder="<!-- Global Ad Tag / Prebid / GPT Head Tag -->&#10;&lt;script async src=&quot;https://securepubads.g.doubleclick.net/tag/js/gpt.js&quot;&gt;&lt;/script&gt;"
-            autocomplete="off"
-            spellcheck="false"
-            class="w-full rounded-2xl border border-slate-300 bg-white p-3 font-mono text-xs text-slate-900 placeholder:text-slate-400 focus:border-indigo-600 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-          ></textarea>
-          <p class="text-[11px] text-slate-500 dark:text-slate-400">
-            Optional script injected into the page <code class="font-mono text-indigo-600 dark:text-indigo-400">&lt;head&gt;</code> for Google Ad Manager GPT, Prebid.js, Media.net, or other 3rd-party ad tags.
-          </p>
-        </div>
-
-      </div>
-
-      <!-- 2. Google Analytics 4 (GA4) Tracking Card -->
-      <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900/80 sm:p-8 space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-4 dark:border-slate-800">
-          <div>
-            <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <span aria-hidden="true">📈</span> Google Analytics 4 (GA4) Setup
-            </h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Set your Google Analytics Measurement ID to track site visits, calculator events, and user engagement across the entire website.
-            </p>
-          </div>
-          <span class="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
-            Real-time Sync
-          </span>
-        </div>
-
-        <div class="space-y-2">
-          <label for="field-ga-id" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
-            Google Analytics Measurement ID (<span class="font-mono text-emerald-600 dark:text-emerald-400">G-XXXXXXXXXX</span>)
-          </label>
-          <div class="relative flex items-center">
-            <span class="pointer-events-none absolute left-3.5 text-slate-400 text-sm" aria-hidden="true">📊</span>
-            <input
-              type="text"
-              id="field-ga-id"
-              placeholder="e.g. G-6LRLPH95P7"
-              autocomplete="off"
-              spellcheck="false"
-              class="w-full rounded-2xl border border-slate-300 bg-white py-3 pl-10 pr-4 text-sm font-mono font-semibold text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-              aria-describedby="ga-id-hint ga-id-error"
-            />
-          </div>
-          <p id="ga-id-hint" class="text-[11px] text-slate-500 dark:text-slate-400">
-            Found in Google Analytics under <strong>Admin → Data collection and modification → Data streams → Measurement ID</strong>. Leave empty if you do not want to track with Google Analytics.
-          </p>
-          <p id="ga-id-error" class="hidden text-[11px] font-semibold text-red-600 dark:text-red-400" role="alert" aria-live="polite"></p>
-        </div>
-      </div>
-
-      <!-- 3. Multi-Location Ad Slots Management (4 Locations) -->
-      <div class="space-y-4">
-        <div>
-          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <span aria-hidden="true">📐</span> Website Ad Placement Locations
-          </h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Configure each ad unit using standard Google AdSense (Slot ID) OR manually enter Google AdX / 3rd-party ad script code.
-          </p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-          
-          <!-- Slot 1: Top Banner -->
-          <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900/80 flex flex-col justify-between space-y-4" data-slot-card="top">
-            <div class="space-y-3">
-              <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
-                <div class="flex items-center gap-2.5">
-                  <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-50 text-sm text-blue-600 dark:bg-blue-950 dark:text-blue-400 font-bold" aria-hidden="true">1</span>
-                  <div>
-                    <h4 class="text-sm font-bold text-slate-900 dark:text-white">Top Leaderboard Banner</h4>
-                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Horizontal (728x90)</span>
-                  </div>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    id="slot-top-enabled"
-                    role="switch"
-                    checked
-                    class="sr-only peer"
-                    aria-label="Enable Top Banner slot"
-                    aria-checked="true"
-                  />
-                  <div
-                    class="w-9 h-5 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600 dark:bg-slate-700 peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 peer-focus-visible:ring-offset-2 dark:peer-focus-visible:ring-offset-slate-900"
-                    aria-hidden="true"
-                  ></div>
-                </label>
-              </div>
-
-              <!-- Network Mode Toggle -->
-              <div class="flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800/80 text-[11px] font-bold">
-                <button
-                  type="button"
-                  data-network-btn="top"
-                  data-network-val="adsense"
-                  class="flex-1 rounded-lg py-1.5 text-center transition bg-white text-blue-600 shadow-xs dark:bg-slate-900 dark:text-blue-400 cursor-pointer"
-                >
-                  Google AdSense
-                </button>
-                <button
-                  type="button"
-                  data-network-btn="top"
-                  data-network-val="adx"
-                  class="flex-1 rounded-lg py-1.5 text-center text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition cursor-pointer"
-                >
-                  Google AdX / 3rd-Party Code
-                </button>
-              </div>
-
-              <!-- AdSense Slot ID Input Box -->
-              <div id="slot-top-adsense-box" class="space-y-1">
-                <label for="slot-top-id" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                  AdSense Slot ID (Numeric)
-                </label>
-                <input
-                  type="text"
-                  id="slot-top-id"
-                  placeholder="e.g. 1234567890"
-                  autocomplete="off"
-                  inputmode="numeric"
-                  class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-mono font-bold text-slate-900 focus:border-blue-600 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-                  aria-describedby="slot-top-error"
-                />
-                <p id="slot-top-error" class="hidden mt-1 text-[11px] font-semibold text-red-600 dark:text-red-400" role="alert" aria-live="polite"></p>
-              </div>
-
-              <!-- Google AdX / Custom Code Textarea Box -->
-              <div id="slot-top-adx-box" class="hidden space-y-1">
-                <div class="flex items-center justify-between">
-                  <label for="slot-top-code" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Manual AdX / 3rd-Party Ad Script Code
-                  </label>
-                  <span class="text-[10px] text-slate-400 font-mono">HTML / JS / GPT tag</span>
-                </div>
-                <textarea
-                  id="slot-top-code"
-                  rows="3"
-                  placeholder="&lt;div id=&quot;div-gpt-ad-top&quot;&gt;&#10;  &lt;!-- Manual AdX / Custom ad script --&gt;&#10;&lt;/div&gt;"
-                  autocomplete="off"
-                  spellcheck="false"
-                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 font-mono text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-                ></textarea>
-                <p id="slot-top-code-error" class="hidden text-[11px] font-semibold text-red-600 dark:text-red-400" role="alert" aria-live="polite"></p>
-              </div>
-            </div>
-
-            <div class="rounded-xl bg-slate-50 p-2.5 text-[10px] text-slate-500 dark:bg-slate-950/60 dark:text-slate-400 flex items-center justify-between">
-              <span>Location: <code>data-ad-slot-location="top"</code></span>
-              <span class="font-semibold text-blue-600 dark:text-blue-400">Header Leaderboard</span>
-            </div>
-          </div>
-
-          <!-- Slot 2: In-Content Inline -->
-          <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900/80 flex flex-col justify-between space-y-4" data-slot-card="inline">
-            <div class="space-y-3">
-              <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
-                <div class="flex items-center gap-2.5">
-                  <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-50 text-sm text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 font-bold" aria-hidden="true">2</span>
-                  <div>
-                    <h4 class="text-sm font-bold text-slate-900 dark:text-white">In-Content Result Ad</h4>
-                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Rectangle (336x280 / 300x250)</span>
-                  </div>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    id="slot-inline-enabled"
-                    role="switch"
-                    checked
-                    class="sr-only peer"
-                    aria-label="Enable In-Content slot"
-                    aria-checked="true"
-                  />
-                  <div
-                    class="w-9 h-5 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600 dark:bg-slate-700 peer-focus-visible:ring-2 peer-focus-visible:ring-emerald-500 peer-focus-visible:ring-offset-2 dark:peer-focus-visible:ring-offset-slate-900"
-                    aria-hidden="true"
-                  ></div>
-                </label>
-              </div>
-
-              <!-- Network Mode Toggle -->
-              <div class="flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800/80 text-[11px] font-bold">
-                <button
-                  type="button"
-                  data-network-btn="inline"
-                  data-network-val="adsense"
-                  class="flex-1 rounded-lg py-1.5 text-center transition bg-white text-emerald-600 shadow-xs dark:bg-slate-900 dark:text-emerald-400 cursor-pointer"
-                >
-                  Google AdSense
-                </button>
-                <button
-                  type="button"
-                  data-network-btn="inline"
-                  data-network-val="adx"
-                  class="flex-1 rounded-lg py-1.5 text-center text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition cursor-pointer"
-                >
-                  Google AdX / 3rd-Party Code
-                </button>
-              </div>
-
-              <!-- AdSense Slot ID Input Box -->
-              <div id="slot-inline-adsense-box" class="space-y-1">
-                <label for="slot-inline-id" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                  AdSense Slot ID (Numeric)
-                </label>
-                <input
-                  type="text"
-                  id="slot-inline-id"
-                  placeholder="e.g. 2345678901"
-                  autocomplete="off"
-                  inputmode="numeric"
-                  class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-mono font-bold text-slate-900 focus:border-emerald-600 focus:outline-hidden focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-                  aria-describedby="slot-inline-error"
-                />
-                <p id="slot-inline-error" class="hidden mt-1 text-[11px] font-semibold text-red-600 dark:text-red-400" role="alert" aria-live="polite"></p>
-              </div>
-
-              <!-- Google AdX / Custom Code Textarea Box -->
-              <div id="slot-inline-adx-box" class="hidden space-y-1">
-                <div class="flex items-center justify-between">
-                  <label for="slot-inline-code" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Manual AdX / 3rd-Party Ad Script Code
-                  </label>
-                  <span class="text-[10px] text-slate-400 font-mono">HTML / JS / GPT tag</span>
-                </div>
-                <textarea
-                  id="slot-inline-code"
-                  rows="3"
-                  placeholder="&lt;div id=&quot;div-gpt-ad-inline&quot;&gt;&#10;  &lt;!-- Manual In-Content Ad Code --&gt;&#10;&lt;/div&gt;"
-                  autocomplete="off"
-                  spellcheck="false"
-                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 font-mono text-xs text-slate-900 placeholder:text-slate-400 focus:border-emerald-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-                ></textarea>
-                <p id="slot-inline-code-error" class="hidden text-[11px] font-semibold text-red-600 dark:text-red-400" role="alert" aria-live="polite"></p>
-              </div>
-            </div>
-
-            <div class="rounded-xl bg-slate-50 p-2.5 text-[10px] text-slate-500 dark:bg-slate-950/60 dark:text-slate-400 flex items-center justify-between">
-              <span>Location: <code>data-ad-slot-location="inline"</code></span>
-              <span class="font-semibold text-emerald-600 dark:text-emerald-400">High Viewability Result</span>
-            </div>
-          </div>
-
-          <!-- Slot 3: Sticky Sidebar -->
-          <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900/80 flex flex-col justify-between space-y-4" data-slot-card="sidebar">
-            <div class="space-y-3">
-              <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
-                <div class="flex items-center gap-2.5">
-                  <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-50 text-sm text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400 font-bold" aria-hidden="true">3</span>
-                  <div>
-                    <h4 class="text-sm font-bold text-slate-900 dark:text-white">Sticky Sidebar Ad</h4>
-                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Vertical (300x600)</span>
-                  </div>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    id="slot-sidebar-enabled"
-                    role="switch"
-                    checked
-                    class="sr-only peer"
-                    aria-label="Enable Sticky Sidebar slot"
-                    aria-checked="true"
-                  />
-                  <div
-                    class="w-9 h-5 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-indigo-600 dark:bg-slate-700 peer-focus-visible:ring-2 peer-focus-visible:ring-indigo-500 peer-focus-visible:ring-offset-2 dark:peer-focus-visible:ring-offset-slate-900"
-                    aria-hidden="true"
-                  ></div>
-                </label>
-              </div>
-
-              <!-- Network Mode Toggle -->
-              <div class="flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800/80 text-[11px] font-bold">
-                <button
-                  type="button"
-                  data-network-btn="sidebar"
-                  data-network-val="adsense"
-                  class="flex-1 rounded-lg py-1.5 text-center transition bg-white text-indigo-600 shadow-xs dark:bg-slate-900 dark:text-indigo-400 cursor-pointer"
-                >
-                  Google AdSense
-                </button>
-                <button
-                  type="button"
-                  data-network-btn="sidebar"
-                  data-network-val="adx"
-                  class="flex-1 rounded-lg py-1.5 text-center text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition cursor-pointer"
-                >
-                  Google AdX / 3rd-Party Code
-                </button>
-              </div>
-
-              <!-- AdSense Slot ID Input Box -->
-              <div id="slot-sidebar-adsense-box" class="space-y-1">
-                <label for="slot-sidebar-id" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                  AdSense Slot ID (Numeric)
-                </label>
-                <input
-                  type="text"
-                  id="slot-sidebar-id"
-                  placeholder="e.g. 3456789012"
-                  autocomplete="off"
-                  inputmode="numeric"
-                  class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-mono font-bold text-slate-900 focus:border-indigo-600 focus:outline-hidden focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-                  aria-describedby="slot-sidebar-error"
-                />
-                <p id="slot-sidebar-error" class="hidden mt-1 text-[11px] font-semibold text-red-600 dark:text-red-400" role="alert" aria-live="polite"></p>
-              </div>
-
-              <!-- Google AdX / Custom Code Textarea Box -->
-              <div id="slot-sidebar-adx-box" class="hidden space-y-1">
-                <div class="flex items-center justify-between">
-                  <label for="slot-sidebar-code" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Manual AdX / 3rd-Party Ad Script Code
-                  </label>
-                  <span class="text-[10px] text-slate-400 font-mono">HTML / JS / GPT tag</span>
-                </div>
-                <textarea
-                  id="slot-sidebar-code"
-                  rows="3"
-                  placeholder="&lt;div id=&quot;div-gpt-ad-sidebar&quot;&gt;&#10;  &lt;!-- Manual Sticky Sidebar Code --&gt;&#10;&lt;/div&gt;"
-                  autocomplete="off"
-                  spellcheck="false"
-                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 font-mono text-xs text-slate-900 placeholder:text-slate-400 focus:border-indigo-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-                ></textarea>
-                <p id="slot-sidebar-code-error" class="hidden text-[11px] font-semibold text-red-600 dark:text-red-400" role="alert" aria-live="polite"></p>
-              </div>
-            </div>
-
-            <div class="rounded-xl bg-slate-50 p-2.5 text-[10px] text-slate-500 dark:bg-slate-950/60 dark:text-slate-400 flex items-center justify-between">
-              <span>Location: <code>data-ad-slot-location="sidebar"</code></span>
-              <span class="font-semibold text-indigo-600 dark:text-indigo-400">Desktop Sticky Skyscraper</span>
-            </div>
-          </div>
-
-          <!-- Slot 4: Footer Banner -->
-          <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900/80 flex flex-col justify-between space-y-4" data-slot-card="footer">
-            <div class="space-y-3">
-              <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
-                <div class="flex items-center gap-2.5">
-                  <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-amber-50 text-sm text-amber-600 dark:bg-amber-950 dark:text-amber-400 font-bold" aria-hidden="true">4</span>
-                  <div>
-                    <h4 class="text-sm font-bold text-slate-900 dark:text-white">Bottom Footer Banner</h4>
-                    <span class="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">Horizontal (728x90)</span>
-                  </div>
-                </div>
-                <label class="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    id="slot-footer-enabled"
-                    role="switch"
-                    checked
-                    class="sr-only peer"
-                    aria-label="Enable Footer Banner slot"
-                    aria-checked="true"
-                  />
-                  <div
-                    class="w-9 h-5 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-amber-600 dark:bg-slate-700 peer-focus-visible:ring-2 peer-focus-visible:ring-amber-500 peer-focus-visible:ring-offset-2 dark:peer-focus-visible:ring-offset-slate-900"
-                    aria-hidden="true"
-                  ></div>
-                </label>
-              </div>
-
-              <!-- Network Mode Toggle -->
-              <div class="flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800/80 text-[11px] font-bold">
-                <button
-                  type="button"
-                  data-network-btn="footer"
-                  data-network-val="adsense"
-                  class="flex-1 rounded-lg py-1.5 text-center transition bg-white text-amber-600 shadow-xs dark:bg-slate-900 dark:text-amber-400 cursor-pointer"
-                >
-                  Google AdSense
-                </button>
-                <button
-                  type="button"
-                  data-network-btn="footer"
-                  data-network-val="adx"
-                  class="flex-1 rounded-lg py-1.5 text-center text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition cursor-pointer"
-                >
-                  Google AdX / 3rd-Party Code
-                </button>
-              </div>
-
-              <!-- AdSense Slot ID Input Box -->
-              <div id="slot-footer-adsense-box" class="space-y-1">
-                <label for="slot-footer-id" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                  AdSense Slot ID (Numeric)
-                </label>
-                <input
-                  type="text"
-                  id="slot-footer-id"
-                  placeholder="e.g. 4567890123"
-                  autocomplete="off"
-                  inputmode="numeric"
-                  class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-xs font-mono font-bold text-slate-900 focus:border-amber-600 focus:outline-hidden focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-                  aria-describedby="slot-footer-error"
-                />
-                <p id="slot-footer-error" class="hidden mt-1 text-[11px] font-semibold text-red-600 dark:text-red-400" role="alert" aria-live="polite"></p>
-              </div>
-
-              <!-- Google AdX / Custom Code Textarea Box -->
-              <div id="slot-footer-adx-box" class="hidden space-y-1">
-                <div class="flex items-center justify-between">
-                  <label for="slot-footer-code" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                    Manual AdX / 3rd-Party Ad Script Code
-                  </label>
-                  <span class="text-[10px] text-slate-400 font-mono">HTML / JS / GPT tag</span>
-                </div>
-                <textarea
-                  id="slot-footer-code"
-                  rows="3"
-                  placeholder="&lt;div id=&quot;div-gpt-ad-footer&quot;&gt;&#10;  &lt;!-- Manual Footer Banner Code --&gt;&#10;&lt;/div&gt;"
-                  autocomplete="off"
-                  spellcheck="false"
-                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 font-mono text-xs text-slate-900 placeholder:text-slate-400 focus:border-amber-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-                ></textarea>
-                <p id="slot-footer-code-error" class="hidden text-[11px] font-semibold text-red-600 dark:text-red-400" role="alert" aria-live="polite"></p>
-              </div>
-            </div>
-
-            <div class="rounded-xl bg-slate-50 p-2.5 text-[10px] text-slate-500 dark:bg-slate-950/60 dark:text-slate-400 flex items-center justify-between">
-              <span>Location: <code>data-ad-slot-location="footer"</code></span>
-              <span class="font-semibold text-amber-600 dark:text-amber-400">Site-Wide Footer</span>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- 4. Google ads.txt & 3rd-Party Partner Sellers Authorization Card -->
-      <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900/80 space-y-6">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-slate-100 pb-4 dark:border-slate-800">
-          <div>
-            <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <span aria-hidden="true">📄</span> ads.txt &amp; 3rd-Party Partner Authorization
-            </h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              Authorize Google AdSense and separate 3rd-party ad networks, SSPs, DSPs, and resellers at <code class="font-mono text-blue-600 dark:text-blue-400">/ads.txt</code>.
-            </p>
-          </div>
-          <div class="flex items-center gap-3">
-            <a
-              href="/ads.txt"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-blue-600 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-blue-400"
-            >
-              <span>View Live /ads.txt</span> ↗
-            </a>
-          </div>
-        </div>
-
-        <!-- Section 4A: Google AdSense Direct Line Control -->
-        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/40 space-y-3">
-          <div class="flex items-center justify-between">
-            <div class="flex items-center gap-2">
-              <span class="text-sm">🔵</span>
-              <label for="field-include-google-ads-txt" class="text-xs font-bold text-slate-800 dark:text-slate-200 cursor-pointer select-none">
-                Include Google AdSense Direct Line in ads.txt
-              </label>
-            </div>
-            <label class="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                id="field-include-google-ads-txt"
-                role="switch"
-                checked
-                class="sr-only peer"
-                aria-checked="true"
-              />
-              <div
-                class="w-9 h-5 bg-slate-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-600 dark:bg-slate-700"
-                aria-hidden="true"
-              ></div>
-            </label>
-          </div>
-
-          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
-            <code id="ads-txt-snippet" class="text-xs font-mono font-bold text-slate-800 dark:text-slate-200 select-all">
-              google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0
-            </code>
-            <span class="rounded bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300 shrink-0">
-              Primary Direct
-            </span>
-          </div>
-          <p id="ads-txt-warning" class="hidden text-[11px] font-semibold text-amber-700 dark:text-amber-400" role="alert">
-            ⚠️ Enter your Publisher ID (ca-pub-XXXXXXXXXXXXXXXX) above to activate your Google direct line.
-          </p>
-        </div>
-
-        <!-- Section 4B: 3rd-Party Ad Networks & Partner Lines -->
-        <div class="space-y-3 border-t border-slate-100 pt-4 dark:border-slate-800">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div>
-              <label for="field-third-party-ads-txt" class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                <span>🌐</span> 3rd-Party Ad Networks &amp; Partner ads.txt Lines
-              </label>
-              <div class="text-[10px] text-slate-500 dark:text-slate-400">
-                Paste lines provided by Google Ad Manager / AdX, Media.net, Ezoic, AppNexus, PubMatic, OpenX, Taboola, etc.
-              </div>
-            </div>
-            
-            <!-- File Import & Utilities -->
-            <div class="flex items-center gap-2">
-              <label class="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer shadow-2xs">
-                <span>📂</span> Import .txt
-                <input type="file" id="file-import-ads-txt" accept=".txt,text/plain" class="hidden" />
-              </label>
-              <button
-                type="button"
-                id="btn-dedup-ads-txt"
-                title="Remove duplicate lines"
-                class="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer shadow-2xs"
-              >
-                <span>🧹</span> Clean / Dedup
-              </button>
-              <button
-                type="button"
-                id="btn-validate-ads-txt"
-                title="Validate line formats"
-                class="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer shadow-2xs"
-              >
-                <span>🔍</span> Validate
-              </button>
-            </div>
-          </div>
-
-          <!-- Quick-Add Partner Presets Toolbar -->
-          <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-3 dark:border-slate-800 dark:bg-slate-950/40 space-y-2">
-            <div class="flex items-center justify-between text-[11px] font-bold text-slate-600 dark:text-slate-400">
-              <span>⚡ Quick-Add Partner Templates:</span>
-              <span class="text-[10px] text-slate-400 font-normal">Click to append verified template lines</span>
-            </div>
-            <div class="flex flex-wrap gap-1.5">
-              <button
-                type="button"
-                data-preset="adx"
-                class="preset-btn rounded-lg bg-white px-2.5 py-1 text-[10px] font-bold text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300 cursor-pointer shadow-2xs"
-              >
-                + Google AdX Resellers
-              </button>
-              <button
-                type="button"
-                data-preset="medianet"
-                class="preset-btn rounded-lg bg-white px-2.5 py-1 text-[10px] font-bold text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300 cursor-pointer shadow-2xs"
-              >
-                + Media.net
-              </button>
-              <button
-                type="button"
-                data-preset="ezoic"
-                class="preset-btn rounded-lg bg-white px-2.5 py-1 text-[10px] font-bold text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300 cursor-pointer shadow-2xs"
-              >
-                + Ezoic
-              </button>
-              <button
-                type="button"
-                data-preset="appnexus"
-                class="preset-btn rounded-lg bg-white px-2.5 py-1 text-[10px] font-bold text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300 cursor-pointer shadow-2xs"
-              >
-                + AppNexus / Xandr
-              </button>
-              <button
-                type="button"
-                data-preset="pubmatic"
-                class="preset-btn rounded-lg bg-white px-2.5 py-1 text-[10px] font-bold text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300 cursor-pointer shadow-2xs"
-              >
-                + PubMatic
-              </button>
-              <button
-                type="button"
-                data-preset="rubicon"
-                class="preset-btn rounded-lg bg-white px-2.5 py-1 text-[10px] font-bold text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300 cursor-pointer shadow-2xs"
-              >
-                + Rubicon / Magnite
-              </button>
-              <button
-                type="button"
-                data-preset="amazon"
-                class="preset-btn rounded-lg bg-white px-2.5 py-1 text-[10px] font-bold text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300 cursor-pointer shadow-2xs"
-              >
-                + Amazon TAM / APS
-              </button>
-              <button
-                type="button"
-                data-preset="taboola"
-                class="preset-btn rounded-lg bg-white px-2.5 py-1 text-[10px] font-bold text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300 cursor-pointer shadow-2xs"
-              >
-                + Taboola
-              </button>
-              <button
-                type="button"
-                data-preset="outbrain"
-                class="preset-btn rounded-lg bg-white px-2.5 py-1 text-[10px] font-bold text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300 cursor-pointer shadow-2xs"
-              >
-                + Outbrain
-              </button>
-              <button
-                type="button"
-                data-preset="criteo"
-                class="preset-btn rounded-lg bg-white px-2.5 py-1 text-[10px] font-bold text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300 cursor-pointer shadow-2xs"
-              >
-                + Criteo
-              </button>
-              <button
-                type="button"
-                data-preset="infolinks"
-                class="preset-btn rounded-lg bg-white px-2.5 py-1 text-[10px] font-bold text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300 cursor-pointer shadow-2xs"
-              >
-                + Infolinks
-              </button>
-              <button
-                type="button"
-                data-preset="propeller"
-                class="preset-btn rounded-lg bg-white px-2.5 py-1 text-[10px] font-bold text-slate-700 border border-slate-200 hover:border-blue-400 hover:text-blue-600 dark:bg-slate-900 dark:border-slate-700 dark:text-slate-300 cursor-pointer shadow-2xs"
-              >
-                + PropellerAds
-              </button>
-            </div>
-          </div>
-
-          <!-- 3rd Party Ads.txt Textarea -->
-          <textarea
-            id="field-third-party-ads-txt"
-            rows="6"
-            placeholder="# Google Ad Manager / AdX Partners&#10;google.com, pub-1234567890123456, RESELLER, f08c47fec0942fa0&#10;rubiconproject.com, 1234, RESELLER, 0bfd66d529a55803&#10;appnexus.com, 5678, RESELLER, f5ab79cb980f11d1&#10;pubmatic.com, 9012, RESELLER, 5d6247e0f4457746"
-            autocomplete="off"
-            spellcheck="false"
-            class="w-full rounded-2xl border border-slate-300 bg-white p-3 font-mono text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-hidden focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-          ></textarea>
-
-          <div class="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
-            <span id="ads-txt-line-count">0 seller lines detected</span>
-            <span id="ads-txt-validation-msg" class="font-semibold"></span>
-          </div>
-        </div>
-
-        <!-- Section 4C: Combined Live Preview & Copy -->
-        <div class="space-y-2 border-t border-slate-100 pt-4 dark:border-slate-800">
-          <div class="flex items-center justify-between">
-            <span class="text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-              <span>📋</span> Combined Live /ads.txt Output Preview
-            </span>
-            <button
-              type="button"
-              id="btn-copy-ads-txt"
-              aria-label="Copy full ads.txt to clipboard"
-              class="inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-100 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
-            >
-              <span aria-hidden="true">📋</span> <span id="copy-btn-text">Copy Complete ads.txt</span>
-            </button>
-          </div>
-          <pre id="full-ads-txt-preview" class="max-h-40 overflow-y-auto rounded-2xl border border-slate-200 bg-slate-50 p-3 text-[11px] font-mono font-semibold text-slate-800 dark:border-slate-800 dark:bg-slate-950/80 dark:text-slate-300 select-all"></pre>
-        </div>
-      </div>
-
-      <!-- Action & Submit Footer Bar -->
-      <div class="sticky bottom-4 z-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200/90 bg-white/95 p-4 shadow-xl backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95">
+      <!-- Sticky Action & Submit Footer Bar -->
+      <div class="sticky bottom-4 z-20 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200/90 bg-white/95 p-4 shadow-xl backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/95">
         <div class="flex items-center gap-3">
           <button
             type="submit"
             id="btn-save-adsense"
-            class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 active:scale-[0.98] transition cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 focus-visible:outline-none disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100"
+            class="inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-xs font-bold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 active:scale-[0.98] transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <span id="btn-save-icon" aria-hidden="true">💾</span>
-            <span id="btn-save-text">Save &amp; Apply Ad Settings</span>
+            <span id="btn-save-text">Save &amp; Apply All Settings</span>
           </button>
           <button
             type="button"
             id="btn-reload-adsense"
-            class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none disabled:opacity-60 disabled:cursor-not-allowed"
+            class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition"
           >
             <span id="btn-reload-text">↻ Reload</span>
           </button>
@@ -919,395 +89,428 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
 
     </form>
 
-    <!-- 5. Interactive Live Previewer -->
-    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900/80 space-y-4">
-      <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
-        <div>
-          <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <span aria-hidden="true">👁️</span> Ad Placement Preview
-          </h3>
-          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            Visual mockup of each configured ad unit — no real live ads are loaded here.
-          </p>
-        </div>
-      </div>
+    <!-- 6. 🛡️ Security, Activity & Audit Trail Card -->
+    <AuditLogCard />
 
-      <!-- Preview Tabs -->
-      <div class="flex flex-wrap items-center gap-2 border-b border-slate-100 pb-3 dark:border-slate-800" role="tablist" aria-label="Ad placement preview tabs">
-        <button
-          type="button"
-          role="tab"
-          data-preview-tab="top"
-          aria-selected="true"
-          class="preview-tab active rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white transition focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none cursor-pointer"
-        >
-          Top Banner (728x90)
-        </button>
-        <button
-          type="button"
-          role="tab"
-          data-preview-tab="inline"
-          aria-selected="false"
-          class="preview-tab rounded-xl bg-slate-100 px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none cursor-pointer"
-        >
-          In-Content (336x280)
-        </button>
-        <button
-          type="button"
-          role="tab"
-          data-preview-tab="sidebar"
-          aria-selected="false"
-          class="preview-tab rounded-xl bg-slate-100 px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none cursor-pointer"
-        >
-          Sticky Sidebar (300x600)
-        </button>
-        <button
-          type="button"
-          role="tab"
-          data-preview-tab="footer"
-          aria-selected="false"
-          class="preview-tab rounded-xl bg-slate-100 px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none cursor-pointer"
-        >
-          Footer Banner (728x90)
-        </button>
-      </div>
-
-      <!-- Preview Box -->
-      <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50/70 p-6 dark:border-slate-800 dark:bg-slate-950/40 flex items-center justify-center min-h-45">
-        <div id="preview-render-box" class="w-full text-center"></div>
-      </div>
-    </div>
-
-    <!-- 🔄 Restore Backup Modal -->
-    <div id="modal-restore-backup" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
-      <div class="w-full max-w-lg rounded-3xl bg-white p-6 dark:bg-slate-900 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
+    <!-- 7. Restore From Backup Modal Dialog -->
+    <dialog
+      id="modal-restore-backup"
+      class="rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl backdrop:bg-slate-900/60 dark:border-slate-800 dark:bg-slate-900 dark:text-white max-w-lg w-full fixed inset-0 m-auto"
+    >
+      <div class="space-y-4">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
-          <div class="flex items-center gap-2">
-            <span class="text-xl">🔄</span>
-            <h3 class="text-base font-bold text-slate-900 dark:text-white">Restore CMS from JSON Backup</h3>
-          </div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🔄</span> Restore CMS &amp; Monetization Backup
+          </h3>
           <button type="button" id="btn-close-restore-modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg cursor-pointer">✕</button>
         </div>
 
-        <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-          Upload or paste an <code>aifreecalc-backup-*.json</code> file. This will safely restore custom SEO overrides, internal links, 301 redirects, FAQs, categories, and feature settings.
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          Select an exported JSON backup file. All configurations (SEO overrides, ads, redirects, categories, and FAQs) will be restored safely.
         </p>
 
-        <div class="space-y-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Select Backup File (.json)</label>
-            <input
-              type="file"
-              id="input-backup-file"
-              accept=".json,application/json"
-              class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-950 dark:file:text-blue-300 cursor-pointer"
-            />
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Or Paste JSON Content</label>
-            <textarea
-              id="input-backup-json"
-              rows="5"
-              placeholder="Paste JSON content here..."
-              class="w-full rounded-xl border border-slate-300 bg-white p-3 font-mono text-xs text-slate-900 placeholder:text-slate-400 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-            ></textarea>
-          </div>
+        <div class="space-y-2">
+          <input
+            type="file"
+            id="file-restore-input"
+            accept=".json,application/json"
+            class="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-blue-50 file:text-blue-700 dark:file:bg-blue-950 dark:file:text-blue-300 hover:file:bg-blue-100 cursor-pointer"
+          />
         </div>
 
-        <div id="restore-status-msg" class="hidden rounded-xl p-3 text-xs font-semibold"></div>
+        <div class="space-y-1">
+          <label for="input-backup-json" class="block text-[11px] font-bold text-slate-700 dark:text-slate-300">Or Paste JSON Content Directly:</label>
+          <textarea
+            id="input-backup-json"
+            rows="5"
+            placeholder="{ &quot;schemaVersion&quot;: &quot;1.1&quot;, ... }"
+            class="w-full rounded-2xl border border-slate-300 bg-white p-3 font-mono text-xs text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+          ></textarea>
+        </div>
+
+        <div id="restore-status-msg" class="hidden text-xs font-semibold p-3 rounded-xl"></div>
 
         <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
           <button
             type="button"
             id="btn-cancel-restore"
-            class="rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 cursor-pointer"
+            class="rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
           >
             Cancel
           </button>
           <button
             type="button"
             id="btn-execute-restore"
-            class="rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white hover:bg-blue-700 transition cursor-pointer"
+            class="rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition"
           >
             Execute Restore
           </button>
         </div>
       </div>
-    </div>
+    </dialog>
 
   </div>
 </AdminLayout>
 
-<script is:inline>
-  // ─── Constants & Presets ──────────────────────────────────────────────────────
-  const PUB_ID_PATTERN  = /^ca-pub-\d+$/;
-  const SLOT_ID_PATTERN = /^\d+$/;
+<script>
+  // ─── DOM References ────────────────────────────────────────────────────────
+  const badgeGlobalStatus = document.getElementById('badge-global-status');
+  const badgeTestMode = document.getElementById('badge-test-mode');
 
-  const PRESETS = {
-    adx: `# Google Ad Manager / AdX Authorized Resellers\ngoogle.com, pub-1234567890123456, RESELLER, f08c47fec0942fa0\nrubiconproject.com, 1234, RESELLER, 0bfd66d529a55803\nappnexus.com, 5678, RESELLER, f5ab79cb980f11d1\npubmatic.com, 9012, RESELLER, 5d6247e0f4457746`,
-    medianet: `# Media.net (Yahoo! Bing Network)\nmedianet.com, 8CUX12345, DIRECT\ncontextweb.com, 123456, RESELLER, 89ff14713cb38e68`,
-    ezoic: `# Ezoic Partner Network\nezoic.com, 12345, DIRECT\ngoogle.com, pub-1234567890123456, RESELLER, f08c47fec0942fa0`,
-    appnexus: `# AppNexus (Xandr / Microsoft Advertising)\nappnexus.com, 12345, DIRECT, f5ab79cb980f11d1`,
-    pubmatic: `# PubMatic SSP\npubmatic.com, 123456, DIRECT, 5d6247e0f4457746`,
-    rubicon: `# Rubicon Project (Magnite)\nrubiconproject.com, 12345, DIRECT, 0bfd66d529a55803`,
-    amazon: `# Amazon Publisher Services (TAM / APS)\namazon.com, 1234, DIRECT`,
-    taboola: `# Taboola Native Ads\ntaboola.com, 1234567, DIRECT`,
-    outbrain: `# Outbrain Native Ads\noutbrain.com, 12345, DIRECT`,
-    criteo: `# Criteo Advertising\ncriteo.com, 12345, DIRECT, b349c882414704e7`,
-    infolinks: `# Infolinks In-Text & Overlay Ads\ninfolinks.com, 12345, DIRECT`,
-    propeller: `# PropellerAds Network\npropellerads.com, 12345, DIRECT`,
-  };
+  // Master Inputs
+  const fieldEnabled = document.getElementById('field-enabled') as HTMLInputElement | null;
+  const fieldTestMode = document.getElementById('field-test-mode') as HTMLInputElement | null;
+  const fieldClientId = document.getElementById('field-client-id') as HTMLInputElement | null;
+  const fieldAutoAds = document.getElementById('field-auto-ads') as HTMLInputElement | null;
+  const fieldGaId = document.getElementById('field-ga-id') as HTMLInputElement | null;
+  const fieldHeaderScript = document.getElementById('field-header-script') as HTMLTextAreaElement | null;
 
-  // ─── Element References ───────────────────────────────────────────────────────
-  const form            = document.getElementById('adsense-full-form');
-  const statusMsg       = document.getElementById('form-status-msg');
-  const btnSave         = document.getElementById('btn-save-adsense');
-  const btnSaveText     = document.getElementById('btn-save-text');
-  const btnSaveIcon     = document.getElementById('btn-save-icon');
-  const btnReload       = document.getElementById('btn-reload-adsense');
-  const btnReloadText   = document.getElementById('btn-reload-text');
+  // Smart Throttling Inputs
+  const fieldThrottlingEnabled = document.getElementById('field-throttling-enabled') as HTMLInputElement | null;
+  const fieldThrottleSlowConn = document.getElementById('field-throttle-slow-conn') as HTMLInputElement | null;
+  const fieldThrottleLazy = document.getElementById('field-throttle-lazy') as HTMLInputElement | null;
+  const fieldThrottleMobileMax = document.getElementById('field-throttle-mobile-max') as HTMLSelectElement | null;
+  const fieldThrottleCls = document.getElementById('field-throttle-cls') as HTMLInputElement | null;
 
-  const fieldEnabled    = document.getElementById('field-enabled');
-  const fieldTestMode   = document.getElementById('field-test-mode');
-  const fieldAutoAds    = document.getElementById('field-auto-ads');
-  const fieldClientId   = document.getElementById('field-client-id');
-  const fieldGaId       = document.getElementById('field-ga-id');
-  const fieldHeaderScript = document.getElementById('field-header-script');
-  const clientIdError   = document.getElementById('client-id-error');
-  const gaIdError       = document.getElementById('ga-id-error');
+  // Ads.txt Inputs
+  const fieldIncludeGoogleAdsTxt = document.getElementById('field-include-google-adstxt') as HTMLInputElement | null;
+  const fieldThirdPartyAdsTxt = document.getElementById('field-third-party-adstxt') as HTMLTextAreaElement | null;
+  const btnValidateAdsTxt = document.getElementById('btn-validate-adstxt');
+  const adsTxtValidationMsg = document.getElementById('adstxt-validation-msg');
 
-  const slotTopEnabled     = document.getElementById('slot-top-enabled');
-  const slotTopId          = document.getElementById('slot-top-id');
-  const slotTopCode        = document.getElementById('slot-top-code');
-  const slotTopError       = document.getElementById('slot-top-error');
-  const slotTopCodeError   = document.getElementById('slot-top-code-error');
+  // Form & Actions
+  const form = document.getElementById('adsense-full-form') as HTMLFormElement | null;
+  const btnSave = document.getElementById('btn-save-adsense') as HTMLButtonElement | null;
+  const btnSaveText = document.getElementById('btn-save-text');
+  const btnReload = document.getElementById('btn-reload-adsense') as HTMLButtonElement | null;
+  const formStatusMsg = document.getElementById('form-status-msg');
 
-  const slotInlineEnabled  = document.getElementById('slot-inline-enabled');
-  const slotInlineId       = document.getElementById('slot-inline-id');
-  const slotInlineCode     = document.getElementById('slot-inline-code');
-  const slotInlineError    = document.getElementById('slot-inline-error');
-  const slotInlineCodeError = document.getElementById('slot-inline-code-error');
+  // Rollback & Backup
+  const btnQuickRollback = document.getElementById('btn-quick-rollback') as HTMLButtonElement | null;
+  const labelSnapshotDate = document.getElementById('label-snapshot-date');
+  const modalRestore = document.getElementById('modal-restore-backup') as HTMLDialogElement | null;
+  const btnOpenRestore = document.getElementById('btn-open-restore-modal');
+  const btnCloseRestore = document.getElementById('btn-close-restore-modal');
+  const btnCancelRestore = document.getElementById('btn-cancel-restore');
+  const btnExecuteRestore = document.getElementById('btn-execute-restore') as HTMLButtonElement | null;
+  const fileRestoreInput = document.getElementById('file-restore-input') as HTMLInputElement | null;
+  const inputBackupJson = document.getElementById('input-backup-json') as HTMLTextAreaElement | null;
+  const restoreStatusMsg = document.getElementById('restore-status-msg');
 
-  const slotSidebarEnabled = document.getElementById('slot-sidebar-enabled');
-  const slotSidebarId      = document.getElementById('slot-sidebar-id');
-  const slotSidebarCode    = document.getElementById('slot-sidebar-code');
-  const slotSidebarError   = document.getElementById('slot-sidebar-error');
-  const slotSidebarCodeError = document.getElementById('slot-sidebar-code-error');
+  // Audit Logs
+  const auditLogTbody = document.getElementById('audit-log-tbody');
+  const btnRefreshAuditLogs = document.getElementById('btn-refresh-audit-logs');
 
-  const slotFooterEnabled  = document.getElementById('slot-footer-enabled');
-  const slotFooterId       = document.getElementById('slot-footer-id');
-  const slotFooterCode     = document.getElementById('slot-footer-code');
-  const slotFooterError    = document.getElementById('slot-footer-error');
-  const slotFooterCodeError = document.getElementById('slot-footer-code-error');
+  const slotKeys = ['top', 'inline', 'sidebar', 'footer'] as const;
 
-  const badgeGlobalStatus  = document.getElementById('badge-global-status');
-  const badgeTestMode      = document.getElementById('badge-test-mode');
-  
-  const fieldIncludeGoogleAdsTxt = document.getElementById('field-include-google-ads-txt');
-  const fieldThirdPartyAdsTxt   = document.getElementById('field-third-party-ads-txt');
-  const adsTxtSnippet           = document.getElementById('ads-txt-snippet');
-  const adsTxtWarning           = document.getElementById('ads-txt-warning');
-  const adsTxtLineCount         = document.getElementById('ads-txt-line-count');
-  const adsTxtValidationMsg     = document.getElementById('ads-txt-validation-msg');
-  const fullAdsTxtPreview       = document.getElementById('full-ads-txt-preview');
-  const btnCopyAdsTxt           = document.getElementById('btn-copy-ads-txt');
-  const copyBtnText             = document.getElementById('copy-btn-text');
-  const fileImportAdsTxt        = document.getElementById('file-import-ads-txt');
-  const btnDedupAdsTxt          = document.getElementById('btn-dedup-ads-txt');
-  const btnValidateAdsTxt       = document.getElementById('btn-validate-ads-txt');
+  // ─── Slot Tab Navigation ───────────────────────────────────────────────────
+  const tabButtons = document.querySelectorAll('.slot-tab-btn');
+  const slotPanels = document.querySelectorAll('.slot-panel');
 
-  const previewRenderBox   = document.getElementById('preview-render-box');
-  const previewTabs        = document.querySelectorAll('.preview-tab');
-
-  const btnInsertGptHeader = document.getElementById('btn-insert-gpt-header');
-  const btnInsertPrebidHeader = document.getElementById('btn-insert-prebid-header');
-
-  // Track active network choice for each slot: 'adsense' | 'adx'
-  const slotNetworks = {
-    top: 'adsense',
-    inline: 'adsense',
-    sidebar: 'adsense',
-    footer: 'adsense',
-  };
-
-  let activePreviewTab = 'top';
-  let isSaving         = false;
-  let isReloading      = false;
-
-  // ─── Helpers ─────────────────────────────────────────────────────────────────
-  function setFieldError(el, msg) {
-    if (!el) return;
-    if (msg) { el.textContent = msg; el.classList.remove('hidden'); }
-    else     { el.textContent = '';  el.classList.add('hidden');    }
-  }
-
-  function setStatus(msg, type) {
-    const cls = {
-      neutral: 'text-xs font-semibold text-slate-600 dark:text-slate-400',
-      success: 'text-xs font-semibold text-emerald-600 dark:text-emerald-400',
-      error:   'text-xs font-semibold text-red-600 dark:text-red-400',
-      loading: 'text-xs font-semibold text-blue-600 dark:text-blue-400',
-    };
-    if (statusMsg) {
-      statusMsg.className = cls[type] || cls.neutral;
-      statusMsg.textContent = msg || '';
-    }
-  }
-
-  function setSlotNetwork(slotKey, network) {
-    slotNetworks[slotKey] = network;
-
-    const adsenseBox = document.getElementById(`slot-${slotKey}-adsense-box`);
-    const adxBox = document.getElementById(`slot-${slotKey}-adx-box`);
-    const buttons = document.querySelectorAll(`[data-network-btn="${slotKey}"]`);
-
-    if (network === 'adx') {
-      adsenseBox?.classList.add('hidden');
-      adxBox?.classList.remove('hidden');
-    } else {
-      adsenseBox?.classList.remove('hidden');
-      adxBox?.classList.add('hidden');
-    }
-
-    const themeColors = {
-      top: 'text-blue-600 dark:text-blue-400',
-      inline: 'text-emerald-600 dark:text-emerald-400',
-      sidebar: 'text-indigo-600 dark:text-indigo-400',
-      footer: 'text-amber-600 dark:text-amber-400',
-    };
-
-    buttons.forEach((btn) => {
-      const val = btn.getAttribute('data-network-val');
-      const isSelected = val === network;
-      if (isSelected) {
-        btn.className = `flex-1 rounded-lg py-1.5 text-center transition bg-white shadow-xs dark:bg-slate-900 font-bold ${themeColors[slotKey] || 'text-blue-600'}`;
-      } else {
-        btn.className = 'flex-1 rounded-lg py-1.5 text-center text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition font-medium cursor-pointer';
-      }
-    });
-
-    renderPreview();
-  }
-
-  // Bind slot network switcher buttons
-  document.querySelectorAll('[data-network-btn]').forEach((btn) => {
+  tabButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
-      const slotKey = btn.getAttribute('data-network-btn');
-      const network = btn.getAttribute('data-network-val');
-      if (slotKey && network) {
-        setSlotNetwork(slotKey, network);
-      }
-    });
-  });
+      const targetSlot = btn.getAttribute('data-slot-tab');
+      tabButtons.forEach((b) => {
+        b.classList.remove('active', 'bg-white', 'dark:bg-slate-900', 'text-blue-600', 'dark:text-blue-400', 'shadow-2xs');
+        b.classList.add('text-slate-600', 'dark:text-slate-400');
+      });
+      btn.classList.add('active', 'bg-white', 'dark:bg-slate-900', 'text-blue-600', 'dark:text-blue-400', 'shadow-2xs');
+      btn.classList.remove('text-slate-600', 'dark:text-slate-400');
 
-  // ─── Preset Insertion ────────────────────────────────────────────────────────
-  document.querySelectorAll('.preset-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const presetKey = btn.getAttribute('data-preset');
-      const textToAppend = PRESETS[presetKey];
-      if (textToAppend && fieldThirdPartyAdsTxt) {
-        const current = fieldThirdPartyAdsTxt.value.trim();
-        if (current) {
-          fieldThirdPartyAdsTxt.value = current + '\n\n' + textToAppend;
+      slotPanels.forEach((panel) => {
+        if (panel.id === `panel-slot-${targetSlot}`) {
+          panel.classList.remove('hidden');
         } else {
-          fieldThirdPartyAdsTxt.value = textToAppend;
+          panel.classList.add('hidden');
         }
-        updateAdsTxtSnippet();
-        if (adsTxtValidationMsg) {
-          adsTxtValidationMsg.textContent = `✓ Added ${btn.textContent.replace('+', '').trim()} preset`;
-          adsTxtValidationMsg.className = 'font-semibold text-emerald-600 dark:text-emerald-400';
-          setTimeout(() => { if (adsTxtValidationMsg) adsTxtValidationMsg.textContent = ''; }, 3000);
-        }
-      }
+      });
     });
   });
 
-  btnInsertGptHeader?.addEventListener('click', () => {
-    const gptTag = '<script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"><' + '/script>\n<script>\n  window.googletag = window.googletag || {cmd: []};\n<' + '/script>';
-    if (fieldHeaderScript) {
-      const current = fieldHeaderScript.value.trim();
-      fieldHeaderScript.value = current ? current + '\n' + gptTag : gptTag;
+  // ─── Network Mode Toggle Handler (AdSense vs AdX vs Sponsor vs Affiliate) ───
+  function setupNetworkRadioListeners(slot: string) {
+    const radios = document.querySelectorAll(`input[name="${slot}-network"]`);
+    const panel = document.getElementById(`panel-slot-${slot}`);
+    if (!panel) return;
+
+    radios.forEach((radio) => {
+      radio.addEventListener('change', () => {
+        const val = (radio as HTMLInputElement).value;
+        const modeAdsense = panel.querySelector('.mode-adsense');
+        const modeAdx = panel.querySelector('.mode-adx');
+        const modeSponsor = panel.querySelector('.mode-sponsor');
+
+        if (modeAdsense) modeAdsense.classList.toggle('hidden', val !== 'adsense');
+        if (modeAdx) modeAdx.classList.toggle('hidden', val !== 'adx');
+        if (modeSponsor) modeSponsor.classList.toggle('hidden', val !== 'direct_sponsor' && val !== 'affiliate');
+      });
+    });
+  }
+
+  slotKeys.forEach(setupNetworkRadioListeners);
+
+  // ─── Load Settings from API ────────────────────────────────────────────────
+  async function loadSettings() {
+    try {
+      if (badgeGlobalStatus) {
+        badgeGlobalStatus.innerHTML = '<span class="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span> Loading settings...';
+      }
+
+      const res = await fetch('/api/adsense-config/?t=' + Date.now());
+      if (!res.ok) throw new Error('Failed to load settings');
+      const config = await res.json();
+
+      // Populate Master Controls
+      if (fieldEnabled) fieldEnabled.checked = Boolean(config.enabled);
+      if (fieldTestMode) fieldTestMode.checked = Boolean(config.testMode);
+      if (fieldClientId) fieldClientId.value = config.clientId || '';
+      if (fieldAutoAds) fieldAutoAds.checked = Boolean(config.autoAds);
+      if (fieldGaId) fieldGaId.value = config.gaMeasurementId || '';
+      if (fieldHeaderScript) fieldHeaderScript.value = config.headerScript || '';
+
+      // Populate Smart Throttling
+      const throttling = config.smartThrottling || {};
+      if (fieldThrottlingEnabled) fieldThrottlingEnabled.checked = throttling.enabled !== false;
+      if (fieldThrottleSlowConn) fieldThrottleSlowConn.checked = throttling.disableOnSlowConnection !== false;
+      if (fieldThrottleLazy) fieldThrottleLazy.checked = throttling.lazyLoadWithMargin !== false;
+      if (fieldThrottleMobileMax) fieldThrottleMobileMax.value = String(throttling.maxMobileAds ?? 2);
+      if (fieldThrottleCls) fieldThrottleCls.checked = throttling.preventClsPlaceholders !== false;
+
+      // Populate Ads.txt
+      if (fieldIncludeGoogleAdsTxt) fieldIncludeGoogleAdsTxt.checked = config.includeGoogleAdsTxt !== false;
+      if (fieldThirdPartyAdsTxt) fieldThirdPartyAdsTxt.value = config.thirdPartyAdsTxt || '';
+
+      // Populate Slots
+      for (const slot of slotKeys) {
+        const slotData = config.slots?.[slot] || {};
+        const enabledEl = document.getElementById(`field-slot-${slot}-enabled`) as HTMLInputElement | null;
+        if (enabledEl) enabledEl.checked = slotData.enabled !== false;
+
+        const net = slotData.adNetwork || 'adsense';
+        const radio = document.querySelector(`input[name="${slot}-network"][value="${net}"]`) as HTMLInputElement | null;
+        if (radio) {
+          radio.checked = true;
+          radio.dispatchEvent(new Event('change'));
+        }
+
+        const idEl = document.getElementById(`field-slot-${slot}-id`) as HTMLInputElement | null;
+        if (idEl) idEl.value = slotData.slotId || '';
+
+        const codeEl = document.getElementById(`field-slot-${slot}-code`) as HTMLTextAreaElement | null;
+        if (codeEl) codeEl.value = slotData.customCode || '';
+
+        const targetEl = document.getElementById(`field-slot-${slot}-sponsor-target`) as HTMLInputElement | null;
+        if (targetEl) targetEl.value = slotData.sponsorTargetUrl || '';
+
+        const bannerEl = document.getElementById(`field-slot-${slot}-sponsor-banner`) as HTMLInputElement | null;
+        if (bannerEl) bannerEl.value = slotData.sponsorBannerUrl || '';
+
+        const altEl = document.getElementById(`field-slot-${slot}-sponsor-alt`) as HTMLInputElement | null;
+        if (altEl) altEl.value = slotData.sponsorAltText || '';
+
+        const badgeEl = document.getElementById(`field-slot-${slot}-sponsor-badge`) as HTMLInputElement | null;
+        if (badgeEl) badgeEl.value = slotData.sponsorBadgeText || (net === 'affiliate' ? 'Partner' : 'Sponsored');
+      }
+
+      // Update Badges
+      updateStatusBadges(config);
+      await loadAuditLogs();
+    } catch (err: any) {
+      if (badgeGlobalStatus) {
+        badgeGlobalStatus.innerHTML = '<span class="h-2 w-2 rounded-full bg-red-500"></span> Load Error';
+      }
+      if (formStatusMsg) {
+        formStatusMsg.textContent = 'Failed to load settings. Please refresh.';
+        formStatusMsg.className = 'text-xs font-semibold text-red-600 dark:text-red-400';
+      }
+    }
+  }
+
+  function updateStatusBadges(config: any) {
+    if (badgeGlobalStatus) {
+      if (config.enabled) {
+        badgeGlobalStatus.innerHTML = '<span class="h-2 w-2 rounded-full bg-emerald-500"></span> Live Active';
+        badgeGlobalStatus.className = 'inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300';
+      } else {
+        badgeGlobalStatus.innerHTML = '<span class="h-2 w-2 rounded-full bg-slate-400"></span> Disabled';
+        badgeGlobalStatus.className = 'inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300';
+      }
+    }
+
+    if (badgeTestMode) {
+      badgeTestMode.style.display = config.testMode ? 'inline-flex' : 'none';
+    }
+  }
+
+  // ─── Save Settings ──────────────────────────────────────────────────────────
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    if (btnSave) {
+      btnSave.disabled = true;
+      if (btnSaveText) btnSaveText.textContent = 'Saving Changes...';
+    }
+
+    const payload: any = {
+      enabled: Boolean(fieldEnabled?.checked),
+      testMode: Boolean(fieldTestMode?.checked),
+      clientId: fieldClientId?.value?.trim() || '',
+      autoAds: Boolean(fieldAutoAds?.checked),
+      gaMeasurementId: fieldGaId?.value?.trim() || '',
+      headerScript: fieldHeaderScript?.value?.trim() || '',
+      includeGoogleAdsTxt: Boolean(fieldIncludeGoogleAdsTxt?.checked),
+      thirdPartyAdsTxt: fieldThirdPartyAdsTxt?.value?.trim() || '',
+      smartThrottling: {
+        enabled: Boolean(fieldThrottlingEnabled?.checked),
+        disableOnSlowConnection: Boolean(fieldThrottleSlowConn?.checked),
+        lazyLoadWithMargin: Boolean(fieldThrottleLazy?.checked),
+        lazyLoadMarginPx: 300,
+        delayUntilInteraction: false,
+        maxMobileAds: Number(fieldThrottleMobileMax?.value || 2),
+        preventClsPlaceholders: Boolean(fieldThrottleCls?.checked),
+      },
+      slots: {},
+    };
+
+    for (const slot of slotKeys) {
+      const enabled = (document.getElementById(`field-slot-${slot}-enabled`) as HTMLInputElement | null)?.checked ?? true;
+      const activeRadio = document.querySelector(`input[name="${slot}-network"]:checked`) as HTMLInputElement | null;
+      const adNetwork = activeRadio?.value || 'adsense';
+
+      payload.slots[slot] = {
+        enabled,
+        adNetwork,
+        slotId: (document.getElementById(`field-slot-${slot}-id`) as HTMLInputElement | null)?.value?.trim() || '',
+        customCode: (document.getElementById(`field-slot-${slot}-code`) as HTMLTextAreaElement | null)?.value?.trim() || '',
+        sponsorTargetUrl: (document.getElementById(`field-slot-${slot}-sponsor-target`) as HTMLInputElement | null)?.value?.trim() || '',
+        sponsorBannerUrl: (document.getElementById(`field-slot-${slot}-sponsor-banner`) as HTMLInputElement | null)?.value?.trim() || '',
+        sponsorAltText: (document.getElementById(`field-slot-${slot}-sponsor-alt`) as HTMLInputElement | null)?.value?.trim() || '',
+        sponsorBadgeText: (document.getElementById(`field-slot-${slot}-sponsor-badge`) as HTMLInputElement | null)?.value?.trim() || 'Sponsored',
+        sponsorOpenInNewTab: true,
+        sponsorRel: 'sponsored nofollow noopener',
+      };
+    }
+
+    try {
+      const res = await fetch('/api/adsense-config/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to save settings');
+
+      if (formStatusMsg) {
+        formStatusMsg.textContent = '✓ All settings, sponsor units, and throttling rules published successfully!';
+        formStatusMsg.className = 'text-xs font-semibold text-emerald-600 dark:text-emerald-400';
+      }
+
+      updateStatusBadges(data.settings || payload);
+      await loadAuditLogs();
+    } catch (err: any) {
+      if (formStatusMsg) {
+        formStatusMsg.textContent = '❌ ' + (err.message || 'Error saving settings.');
+        formStatusMsg.className = 'text-xs font-semibold text-red-600 dark:text-red-400';
+      }
+    } finally {
+      if (btnSave) {
+        btnSave.disabled = false;
+        if (btnSaveText) btnSaveText.textContent = 'Save & Apply All Settings';
+      }
     }
   });
 
-  btnInsertPrebidHeader?.addEventListener('click', () => {
-    const prebidTag = '<script async src="https://cdn.jsdelivr.net/npm/prebid.js@latest/dist/not-for-prod/prebid.js"><' + '/script>\n<script>\n  var pbjs = pbjs || {};\n  pbjs.que = pbjs.que || [];\n<' + '/script>';
-    if (fieldHeaderScript) {
-      const current = fieldHeaderScript.value.trim();
-      fieldHeaderScript.value = current ? current + '\n' + prebidTag : prebidTag;
-    }
-  });
+  btnReload?.addEventListener('click', loadSettings);
 
-  // ─── File Import ─────────────────────────────────────────────────────────────
-  fileImportAdsTxt?.addEventListener('change', (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const content = event.target?.result;
-      if (typeof content === 'string' && fieldThirdPartyAdsTxt) {
-        const cur = fieldThirdPartyAdsTxt.value.trim();
-        fieldThirdPartyAdsTxt.value = cur ? cur + '\n\n# Imported from ' + file.name + '\n' + content.trim() : content.trim();
-        updateAdsTxtSnippet();
-        if (adsTxtValidationMsg) {
-          adsTxtValidationMsg.textContent = `✓ Imported ${file.name} successfully`;
-          adsTxtValidationMsg.className = 'font-semibold text-emerald-600 dark:text-emerald-400';
+  // ─── Audit Trail & Snapshot Rollback ───────────────────────────────────────
+  async function loadAuditLogs() {
+    if (!auditLogTbody) return;
+    try {
+      const res = await fetch('/api/admin/audit-logs');
+      if (!res.ok) return;
+      const data = await res.json();
+
+      if (btnQuickRollback && labelSnapshotDate) {
+        if (data.hasSnapshot && data.snapshotSavedAt) {
+          btnQuickRollback.disabled = false;
+          const dt = new Date(data.snapshotSavedAt);
+          labelSnapshotDate.textContent = dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' (' + dt.toLocaleDateString() + ')';
+        } else {
+          btnQuickRollback.disabled = true;
+          labelSnapshotDate.textContent = 'No snapshot';
         }
       }
-    };
-    reader.readAsText(file);
-    e.target.value = '';
+
+      const logs = data.logs || [];
+      if (!logs.length) {
+        auditLogTbody.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-slate-400">No activity recorded yet.</td></tr>`;
+        return;
+      }
+
+      auditLogTbody.innerHTML = logs.map((log: any) => {
+        let actionBadgeClass = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300';
+        if (log.action.includes('SETTINGS')) actionBadgeClass = 'bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300';
+        if (log.action.includes('SPONSOR')) actionBadgeClass = 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300';
+        if (log.action.includes('BACKUP')) actionBadgeClass = 'bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300';
+
+        const timeStr = new Date(log.timestamp).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' });
+        return `
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-900/40 transition-colors">
+            <td class="px-4 py-2.5 font-mono text-[11px] text-slate-500 dark:text-slate-400">${timeStr}</td>
+            <td class="px-4 py-2.5 font-bold text-slate-900 dark:text-white">${log.user || 'admin'}</td>
+            <td class="px-4 py-2.5">
+              <span class="inline-block px-2 py-0.5 rounded-md text-[10px] font-bold ${actionBadgeClass}">
+                ${log.action}
+              </span>
+            </td>
+            <td class="px-4 py-2.5 text-slate-700 dark:text-slate-300">${log.summary || ''}</td>
+            <td class="px-4 py-2.5 text-right uppercase text-[10px] font-bold text-slate-400">${log.category || 'general'}</td>
+          </tr>
+        `;
+      }).join('');
+    } catch (err) {
+      console.error('Failed to load audit logs:', err);
+    }
+  }
+
+  btnRefreshAuditLogs?.addEventListener('click', loadAuditLogs);
+
+  // Rollback Action
+  btnQuickRollback?.addEventListener('click', async () => {
+    if (!confirm('Are you sure you want to revert to the previous configuration snapshot?')) return;
+
+    if (btnQuickRollback) btnQuickRollback.disabled = true;
+
+    try {
+      const res = await fetch('/api/admin/audit-logs', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'ROLLBACK' }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Rollback failed');
+
+      alert('✓ Successfully rolled back settings! Reloading configuration...');
+      await loadSettings();
+    } catch (err: any) {
+      alert('❌ Rollback Error: ' + err.message);
+    } finally {
+      if (btnQuickRollback) btnQuickRollback.disabled = false;
+    }
   });
 
-  // ─── Deduplication ───────────────────────────────────────────────────────────
-  btnDedupAdsTxt?.addEventListener('click', () => {
-    if (!fieldThirdPartyAdsTxt) return;
-    const lines = fieldThirdPartyAdsTxt.value.split('\n');
-    const seen = new Set();
-    const result = [];
-    let dupCount = 0;
-
-    for (let rawLine of lines) {
-      const line = rawLine.trim();
-      if (!line) {
-        result.push('');
-        continue;
-      }
-      if (line.startsWith('#')) {
-        result.push(rawLine);
-        continue;
-      }
-      const normalized = line.toLowerCase();
-      if (seen.has(normalized)) {
-        dupCount++;
-      } else {
-        seen.add(normalized);
-        result.push(line);
-      }
-    }
-
-    fieldThirdPartyAdsTxt.value = result.join('\n').replace(/\n{3,}/g, '\n\n').trim();
-    updateAdsTxtSnippet();
-    if (adsTxtValidationMsg) {
-      adsTxtValidationMsg.textContent = dupCount > 0 ? `✓ Cleaned & removed ${dupCount} duplicate line(s)` : '✓ No duplicates found';
-      adsTxtValidationMsg.className = 'font-semibold text-blue-600 dark:text-blue-400';
-      setTimeout(() => { if (adsTxtValidationMsg) adsTxtValidationMsg.textContent = ''; }, 3000);
-    }
-  });
-
-  // ─── Validation ──────────────────────────────────────────────────────────────
+  // ─── Ads.txt IAB Validator ─────────────────────────────────────────────────
   btnValidateAdsTxt?.addEventListener('click', () => {
-    if (!fieldThirdPartyAdsTxt) return;
+    if (!fieldThirdPartyAdsTxt || !adsTxtValidationMsg) return;
     const lines = fieldThirdPartyAdsTxt.value.split('\n');
     let validCount = 0;
     let invalidCount = 0;
-    const invalidLines = [];
 
-    lines.forEach((rawLine, idx) => {
-      const line = rawLine.trim();
+    lines.forEach((raw) => {
+      const line = raw.trim();
       if (!line || line.startsWith('#')) return;
-      // Standard ads.txt format: domain, publisher_id, type (DIRECT/RESELLER), [certification_id]
       const parts = line.split(',').map((p) => p.trim());
       if (parts.length >= 3) {
         const domain = parts[0];
@@ -1317,612 +520,54 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
           validCount++;
         } else {
           invalidCount++;
-          invalidLines.push(idx + 1);
         }
       } else {
         invalidCount++;
-        invalidLines.push(idx + 1);
       }
     });
 
-    if (adsTxtValidationMsg) {
-      if (invalidCount === 0) {
-        adsTxtValidationMsg.textContent = `✓ All ${validCount} partner seller lines are valid IAB format`;
-        adsTxtValidationMsg.className = 'font-semibold text-emerald-600 dark:text-emerald-400';
-      } else {
-        adsTxtValidationMsg.textContent = `⚠️ Found ${invalidCount} irregular line(s) on line(s): ${invalidLines.slice(0, 5).join(', ')}${invalidLines.length > 5 ? '...' : ''}`;
-        adsTxtValidationMsg.className = 'font-semibold text-amber-600 dark:text-amber-400';
-      }
-    }
-  });
-
-  // ─── Form Validation ─────────────────────────────────────────────────────────
-  function validateForm() {
-    let valid = true;
-
-    setFieldError(clientIdError, '');
-    setFieldError(gaIdError, '');
-    [
-      slotTopError, slotTopCodeError,
-      slotInlineError, slotInlineCodeError,
-      slotSidebarError, slotSidebarCodeError,
-      slotFooterError, slotFooterCodeError,
-    ].forEach((err) => setFieldError(err, ''));
-
-    const clientId = fieldClientId.value.trim();
-    const gaId = fieldGaId?.value.trim() || '';
-
-    // Validate Google Analytics Measurement ID if provided
-    if (gaId) {
-      if (!/^G-[A-Za-z0-9]+$/i.test(gaId)) {
-        setFieldError(gaIdError, 'Measurement ID must start with "G-" followed by alphanumeric characters (e.g. G-6LRLPH95P7).');
-        valid = false;
-      }
-    }
-
-    // Validate Publisher ID if entered
-    if (clientId && !PUB_ID_PATTERN.test(clientId)) {
-      setFieldError(clientIdError, 'Format must be: ca-pub-1234567890123456 (digits only after ca-pub-)');
-      valid = false;
-    }
-
-    return valid;
-  }
-
-  // ─── ads.txt Snippet & Full Generator ────────────────────────────────────────
-  function updateAdsTxtSnippet() {
-    const clientId = (fieldClientId?.value || '').trim();
-    const includeGoogle = fieldIncludeGoogleAdsTxt?.checked !== false;
-    const hasValidGoogleId = PUB_ID_PATTERN.test(clientId) && !clientId.includes('XXXX');
-
-    let googleLine = '';
-    if (hasValidGoogleId) {
-      const pubOnly = clientId.replace('ca-', '');
-      googleLine = `google.com, ${pubOnly}, DIRECT, f08c47fec0942fa0`;
-      adsTxtWarning?.classList.add('hidden');
+    if (invalidCount === 0) {
+      adsTxtValidationMsg.textContent = `✓ All ${validCount} partner seller lines conform to IAB OpenRTB specification.`;
+      adsTxtValidationMsg.className = 'font-semibold text-emerald-600 dark:text-emerald-400';
     } else {
-      googleLine = 'google.com, pub-XXXXXXXXXXXXXXXX, DIRECT, f08c47fec0942fa0';
-      if (includeGoogle && clientId) {
-        adsTxtWarning?.classList.remove('hidden');
-      } else {
-        adsTxtWarning?.classList.add('hidden');
-      }
-    }
-
-    if (adsTxtSnippet) {
-      adsTxtSnippet.textContent = googleLine;
-      adsTxtSnippet.parentElement.style.opacity = includeGoogle ? '1' : '0.4';
-    }
-
-    const thirdPartyLines = (fieldThirdPartyAdsTxt?.value || '').trim();
-
-    const fullLines = [];
-
-    if (includeGoogle && hasValidGoogleId) {
-      fullLines.push(googleLine);
-    }
-
-    if (thirdPartyLines) {
-      fullLines.push(thirdPartyLines);
-    }
-
-    if (fullAdsTxtPreview) {
-      fullAdsTxtPreview.textContent = fullLines.join('\n').trim();
-    }
-
-    // Update Line Count
-    if (adsTxtLineCount && fieldThirdPartyAdsTxt) {
-      const raw = fieldThirdPartyAdsTxt.value.split('\n');
-      const partnerLines = raw.filter((l) => l.trim() && !l.trim().startsWith('#')).length;
-      const totalLines = partnerLines + (includeGoogle && hasValidGoogleId ? 1 : 0);
-      adsTxtLineCount.textContent = `${totalLines} total seller record(s) (${partnerLines} 3rd-party partner lines)`;
-    }
-  }
-
-  // ─── Status Badges ───────────────────────────────────────────────────────────
-  function updateStatusBadges(config) {
-    if (!config) return;
-    const clientId  = (config.clientId || '').trim();
-    const isEnabled = Boolean(config.enabled);
-    const hasValidId = PUB_ID_PATTERN.test(clientId) && !clientId.includes('XXXX');
-
-    const anyAdxActive = ['top', 'inline', 'sidebar', 'footer'].some((k) => {
-      const slot = config.slots?.[k];
-      return slot?.enabled !== false && (slot?.adNetwork === 'adx' || Boolean(slot?.customCode));
-    });
-
-    const hasThirdParty = Boolean((config.thirdPartyAdsTxt || '').trim());
-
-    let badgeClass, dotClass, label;
-    if (!isEnabled) {
-      badgeClass = 'inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-bold text-slate-600 dark:bg-slate-800 dark:text-slate-400';
-      dotClass   = 'h-2 w-2 rounded-full bg-slate-400';
-      label      = 'Ads Disabled';
-    } else if (config.testMode === true) {
-      badgeClass = 'inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800 dark:bg-amber-950/60 dark:text-amber-300';
-      dotClass   = 'h-2 w-2 rounded-full bg-amber-500';
-      label      = 'Test Mode Active';
-    } else if (hasValidId && anyAdxActive) {
-      badgeClass = 'inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300';
-      dotClass   = 'h-2 w-2 rounded-full bg-emerald-500';
-      label      = 'AdSense & 3rd-Party Active';
-    } else if (hasValidId) {
-      badgeClass = 'inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300';
-      dotClass   = 'h-2 w-2 rounded-full bg-emerald-500';
-      label      = 'AdSense Live';
-    } else if (anyAdxActive || hasThirdParty) {
-      badgeClass = 'inline-flex items-center gap-1.5 rounded-full bg-purple-100 px-3 py-1 text-xs font-bold text-purple-800 dark:bg-purple-950/60 dark:text-purple-300';
-      dotClass   = 'h-2 w-2 rounded-full bg-purple-500';
-      label      = '3rd-Party / AdX Active';
-    } else {
-      badgeClass = 'inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 text-xs font-bold text-amber-800 dark:bg-amber-950/60 dark:text-amber-300';
-      dotClass   = 'h-2 w-2 rounded-full bg-amber-500';
-      label      = 'Pending Configuration';
-    }
-
-    if (badgeGlobalStatus) {
-      badgeGlobalStatus.className = badgeClass;
-      badgeGlobalStatus.textContent = '';
-      const dot = document.createElement('span');
-      dot.className = dotClass;
-      dot.setAttribute('aria-hidden', 'true');
-      badgeGlobalStatus.appendChild(dot);
-      badgeGlobalStatus.appendChild(document.createTextNode(' ' + label));
-    }
-
-    if (badgeTestMode) {
-      badgeTestMode.style.display = config.testMode === true ? 'inline-flex' : 'none';
-    }
-
-    // Sync aria-checked
-    [fieldEnabled, fieldTestMode, fieldAutoAds, slotTopEnabled, slotInlineEnabled, slotSidebarEnabled, slotFooterEnabled, fieldIncludeGoogleAdsTxt]
-      .forEach(el => { if (el) el.setAttribute('aria-checked', el.checked ? 'true' : 'false'); });
-
-    updateAdsTxtSnippet();
-  }
-
-  // ─── Preview Renderer ─────────────────────────────────────────────────────────
-  function renderPreview() {
-    if (!previewRenderBox) return;
-    const pubId  = fieldClientId?.value.trim() || 'ca-pub-XXXXXXXXXXXXXXXX';
-    const isTest = fieldTestMode?.checked;
-    const isSiteEnabled = fieldEnabled?.checked;
-    const net    = slotNetworks[activePreviewTab] || 'adsense';
-    const isAdx  = net === 'adx';
-
-    let slotIdRaw = '', customCode = '', label = '', dims = '', minH = '90px', maxW = '728px', isSlotEnabled = true;
-
-    if (activePreviewTab === 'top') {
-      slotIdRaw = slotTopId?.value.trim() || '1234567890';
-      customCode = slotTopCode?.value.trim() || '';
-      isSlotEnabled = slotTopEnabled?.checked !== false;
-      label = 'Top Leaderboard Banner'; dims = '728 × 90 (Leaderboard)';
-    } else if (activePreviewTab === 'inline') {
-      slotIdRaw = slotInlineId?.value.trim() || '2345678901';
-      customCode = slotInlineCode?.value.trim() || '';
-      isSlotEnabled = slotInlineEnabled?.checked !== false;
-      label = 'In-Content Result Ad'; dims = '336 × 280 (Medium Rectangle)';
-      minH = '250px'; maxW = '336px';
-    } else if (activePreviewTab === 'sidebar') {
-      slotIdRaw = slotSidebarId?.value.trim() || '3456789012';
-      customCode = slotSidebarCode?.value.trim() || '';
-      isSlotEnabled = slotSidebarEnabled?.checked !== false;
-      label = 'Sticky Sidebar Ad'; dims = '300 × 600 (Half-Page Skyscraper)';
-      minH = '350px'; maxW = '300px';
-    } else if (activePreviewTab === 'footer') {
-      slotIdRaw = slotFooterId?.value.trim() || '4567890123';
-      customCode = slotFooterCode?.value.trim() || '';
-      isSlotEnabled = slotFooterEnabled?.checked !== false;
-      label = 'Bottom Footer Banner'; dims = '728 × 90 (Leaderboard)';
-    }
-
-    previewRenderBox.textContent = '';
-    const wrap = document.createElement('div');
-    wrap.className = 'mx-auto rounded-2xl border-2 border-dashed p-4 text-center transition shadow-xs';
-    wrap.style.cssText = `max-width:${maxW};min-height:${minH};display:flex;flex-direction:column;justify-content:center;align-items:center;`;
-    
-    if (!isSiteEnabled || !isSlotEnabled) {
-      wrap.classList.add('border-slate-300', 'bg-slate-100/60', 'dark:border-slate-700', 'dark:bg-slate-900/40');
-    } else if (isTest) {
-      wrap.classList.add('border-amber-400','bg-amber-50/60','dark:border-amber-700','dark:bg-amber-950/30');
-    } else if (isAdx) {
-      wrap.classList.add('border-indigo-400','bg-indigo-50/50','dark:border-indigo-700','dark:bg-indigo-950/30');
-    } else {
-      wrap.classList.add('border-blue-400','bg-blue-50/50','dark:border-blue-700','dark:bg-blue-950/30');
-    }
-
-    const tagLine = document.createElement('div');
-    tagLine.className = 'text-[10px] font-extrabold uppercase tracking-widest flex items-center gap-1.5';
-    
-    if (!isSiteEnabled || !isSlotEnabled) {
-      tagLine.classList.add('text-slate-500', 'dark:text-slate-400');
-    } else if (isTest) {
-      tagLine.classList.add('text-amber-700', 'dark:text-amber-400');
-    } else if (isAdx) {
-      tagLine.classList.add('text-indigo-700', 'dark:text-indigo-400');
-    } else {
-      tagLine.classList.add('text-blue-600', 'dark:text-blue-400');
-    }
-
-    const tagIcon = document.createElement('span');
-    tagIcon.textContent = (!isSiteEnabled || !isSlotEnabled) ? '⏸️' : (isTest ? '🛠️' : (isAdx ? '⚡' : '📐'));
-    tagIcon.setAttribute('aria-hidden','true');
-
-    const tagText = document.createElement('span');
-    if (!isSiteEnabled) {
-      tagText.textContent = 'SLOT INACTIVE (SITE-WIDE ADS DISABLED)';
-    } else if (!isSlotEnabled) {
-      tagText.textContent = 'SLOT DISABLED';
-    } else if (isTest) {
-      tagText.textContent = 'TEST MODE — SAFE VISUAL MOCKUP';
-    } else if (isAdx) {
-      tagText.textContent = 'GOOGLE ADX / 3RD-PARTY CUSTOM TAG';
-    } else {
-      tagText.textContent = 'GOOGLE ADSENSE UNIT';
-    }
-
-    tagLine.appendChild(tagIcon);
-    tagLine.appendChild(tagText);
-
-    const labelEl = document.createElement('div');
-    labelEl.className = 'mt-2 text-sm font-bold text-slate-800 dark:text-slate-100';
-    labelEl.textContent = label;
-
-    const metaRow = document.createElement('div');
-    metaRow.className = 'mt-1.5 flex flex-wrap items-center justify-center gap-2 text-[11px] font-mono text-slate-500 dark:text-slate-400';
-
-    if (isAdx) {
-      const adxBadge = document.createElement('span');
-      adxBadge.className = 'bg-white/80 dark:bg-slate-900 px-2.5 py-0.5 rounded border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 font-semibold';
-      adxBadge.textContent = customCode ? `Custom Tag Configured (${customCode.length} chars)` : 'No custom script entered yet';
-      metaRow.appendChild(adxBadge);
-    } else {
-      const clientBadge = document.createElement('span');
-      clientBadge.className = 'bg-white/80 dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800';
-      clientBadge.textContent = 'Publisher: ' + (pubId || 'ca-pub-demo');
-      const slotBadge = document.createElement('span');
-      slotBadge.className = 'bg-white/80 dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800';
-      slotBadge.textContent = 'Slot ID: ' + (slotIdRaw || '1234567890');
-      metaRow.appendChild(clientBadge);
-      metaRow.appendChild(slotBadge);
-    }
-
-    const dimsEl = document.createElement('div');
-    dimsEl.className = 'mt-2 text-[10px] font-semibold text-slate-400';
-    dimsEl.textContent = dims;
-
-    wrap.appendChild(tagLine);
-    wrap.appendChild(labelEl);
-    wrap.appendChild(metaRow);
-    wrap.appendChild(dimsEl);
-    previewRenderBox.appendChild(wrap);
-  }
-
-  // ─── Load / Reload Settings ───────────────────────────────────────────────────
-  async function loadSettings() {
-    if (isReloading) return;
-    isReloading = true;
-    if (btnReload)     { btnReload.disabled = true; }
-    if (btnReloadText) { btnReloadText.textContent = '↻ Reloading...'; }
-    setStatus('Loading settings...', 'neutral');
-
-    try {
-      const res = await fetch('/api/adsense-config/?t=' + Date.now(), {
-        cache: 'no-store',
-        headers: { 'Cache-Control': 'no-cache' },
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
-      let data;
-      try { data = await res.json(); }
-      catch { throw new Error('Invalid response from server.'); }
-
-      if (fieldEnabled) fieldEnabled.checked = Boolean(data.enabled);
-      if (fieldTestMode) fieldTestMode.checked = data.testMode === true;
-      if (fieldAutoAds) fieldAutoAds.checked = Boolean(data.autoAds);
-      if (fieldClientId) fieldClientId.value = data.clientId || '';
-      if (fieldGaId) fieldGaId.value = data.gaMeasurementId || '';
-      if (fieldHeaderScript) fieldHeaderScript.value = data.headerScript || '';
-
-      if (fieldIncludeGoogleAdsTxt) {
-        fieldIncludeGoogleAdsTxt.checked = data.includeGoogleAdsTxt !== false;
-      }
-      if (fieldThirdPartyAdsTxt) {
-        fieldThirdPartyAdsTxt.value = data.thirdPartyAdsTxt || data.customAdsTxt || '';
-      }
-
-      if (slotTopEnabled) slotTopEnabled.checked = data.slots?.top?.enabled !== false;
-      if (slotTopId) slotTopId.value = data.slots?.top?.slotId || '';
-      if (slotTopCode) slotTopCode.value = data.slots?.top?.customCode || '';
-      setSlotNetwork('top', data.slots?.top?.adNetwork === 'adx' ? 'adx' : 'adsense');
-
-      if (slotInlineEnabled) slotInlineEnabled.checked = data.slots?.inline?.enabled !== false;
-      if (slotInlineId) slotInlineId.value = data.slots?.inline?.slotId || '';
-      if (slotInlineCode) slotInlineCode.value = data.slots?.inline?.customCode || '';
-      setSlotNetwork('inline', data.slots?.inline?.adNetwork === 'adx' ? 'adx' : 'adsense');
-
-      if (slotSidebarEnabled) slotSidebarEnabled.checked = data.slots?.sidebar?.enabled !== false;
-      if (slotSidebarId) slotSidebarId.value = data.slots?.sidebar?.slotId || '';
-      if (slotSidebarCode) slotSidebarCode.value = data.slots?.sidebar?.customCode || '';
-      setSlotNetwork('sidebar', data.slots?.sidebar?.adNetwork === 'adx' ? 'adx' : 'adsense');
-
-      if (slotFooterEnabled) slotFooterEnabled.checked = data.slots?.footer?.enabled !== false;
-      if (slotFooterId) slotFooterId.value = data.slots?.footer?.slotId || '';
-      if (slotFooterCode) slotFooterCode.value = data.slots?.footer?.customCode || '';
-      setSlotNetwork('footer', data.slots?.footer?.adNetwork === 'adx' ? 'adx' : 'adsense');
-
-      updateStatusBadges(data);
-      renderPreview();
-      setStatus('', 'neutral');
-    } catch (err) {
-      console.error('[Ad Settings] Load error:', err);
-      setStatus('Could not load settings. Check connection and try again.', 'error');
-    } finally {
-      isReloading = false;
-      if (btnReload)     { btnReload.disabled = false; }
-      if (btnReloadText) { btnReloadText.textContent = '↻ Reload'; }
-    }
-  }
-
-  // ─── Save Form ────────────────────────────────────────────────────────────────
-  form?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    if (isSaving) return;
-
-    if (!validateForm()) {
-      setStatus('Please fix validation errors before saving.', 'error');
-      return;
-    }
-
-    isSaving = true;
-    if (btnSave) btnSave.disabled = true;
-    if (btnSaveText) btnSaveText.textContent = 'Saving...';
-    if (btnSaveIcon) btnSaveIcon.textContent = '⏳';
-    setStatus('Saving ad & ads.txt settings...', 'loading');
-
-    const payload = {
-      enabled:             fieldEnabled?.checked || false,
-      testMode:            fieldTestMode?.checked || false,
-      autoAds:             fieldAutoAds?.checked || false,
-      clientId:            fieldClientId?.value.trim() || '',
-      gaMeasurementId:     fieldGaId?.value.trim() || '',
-      headerScript:        fieldHeaderScript?.value.trim() || '',
-      includeGoogleAdsTxt: fieldIncludeGoogleAdsTxt?.checked !== false,
-      thirdPartyAdsTxt:    fieldThirdPartyAdsTxt?.value.trim() || '',
-      customAdsTxt:        fieldThirdPartyAdsTxt?.value.trim() || '',
-      slots: {
-        top: {
-          slotId:     slotTopId?.value.trim() || '',
-          enabled:    slotTopEnabled?.checked !== false,
-          adNetwork:  slotNetworks.top,
-          customCode: slotTopCode?.value.trim() || '',
-        },
-        inline: {
-          slotId:     slotInlineId?.value.trim() || '',
-          enabled:    slotInlineEnabled?.checked !== false,
-          adNetwork:  slotNetworks.inline,
-          customCode: slotInlineCode?.value.trim() || '',
-        },
-        sidebar: {
-          slotId:     slotSidebarId?.value.trim() || '',
-          enabled:    slotSidebarEnabled?.checked !== false,
-          adNetwork:  slotNetworks.sidebar,
-          customCode: slotSidebarCode?.value.trim() || '',
-        },
-        footer: {
-          slotId:     slotFooterId?.value.trim() || '',
-          enabled:    slotFooterEnabled?.checked !== false,
-          adNetwork:  slotNetworks.footer,
-          customCode: slotFooterCode?.value.trim() || '',
-        },
-      },
-    };
-
-    try {
-      const token = localStorage.getItem('admin_token') || '';
-      const headers = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
-      const res = await fetch('/api/adsense-config/', {
-        method: 'POST',
-        credentials: 'include',
-        headers,
-        body: JSON.stringify(payload),
-      });
-
-      let data = {};
-      try { data = await res.json(); } catch { /* non-JSON */ }
-
-      if (res.ok) {
-        setStatus('✓ Settings & ads.txt saved and published successfully!', 'success');
-        updateStatusBadges(payload);
-        renderPreview();
-      } else if (res.status === 401) {
-        if (statusMsg) {
-          statusMsg.className = 'text-xs font-semibold text-red-600';
-          statusMsg.textContent = '❌ Session expired. ';
-          const link = document.createElement('a');
-          link.href = `/admin/barwalaoffice/?redirect=${encodeURIComponent(window.location.pathname)}`;
-          link.className = 'underline font-bold';
-          link.textContent = 'Click here to Sign In';
-          statusMsg.appendChild(link);
-        }
-      } else {
-        const msg = typeof data.error === 'string' ? data.error : 'Failed to save settings.';
-        setStatus('❌ ' + msg, 'error');
-      }
-    } catch (err) {
-      console.error('[Ad Settings] Save error:', err);
-      setStatus('❌ Network error. Please try again.', 'error');
-    } finally {
-      isSaving = false;
-      if (btnSave) btnSave.disabled = false;
-      if (btnSaveText) btnSaveText.textContent = 'Save & Apply Ad Settings';
-      if (btnSaveIcon) btnSaveIcon.textContent = '💾';
+      adsTxtValidationMsg.textContent = `⚠️ Found ${invalidCount} irregular line(s). Please verify (domain, pubId, DIRECT/RESELLER).`;
+      adsTxtValidationMsg.className = 'font-semibold text-amber-600 dark:text-amber-400';
     }
   });
 
-  // ─── Reload Button ────────────────────────────────────────────────────────────
-  btnReload?.addEventListener('click', loadSettings);
+  // ─── Backup & Restore Modal ────────────────────────────────────────────────
+  btnOpenRestore?.addEventListener('click', () => modalRestore?.showModal());
+  btnCloseRestore?.addEventListener('click', () => modalRestore?.close());
+  btnCancelRestore?.addEventListener('click', () => modalRestore?.close());
 
-  // ─── Real-time Listeners ──────────────────────────────────────────────────────
-  [fieldEnabled, fieldTestMode, fieldAutoAds, fieldIncludeGoogleAdsTxt].forEach((toggle) => {
-    toggle?.addEventListener('change', () => {
-      toggle.setAttribute('aria-checked', toggle.checked ? 'true' : 'false');
-      updateStatusBadges({
-        enabled: fieldEnabled?.checked,
-        testMode: fieldTestMode?.checked,
-        clientId: fieldClientId?.value.trim(),
-        includeGoogleAdsTxt: fieldIncludeGoogleAdsTxt?.checked !== false,
-        thirdPartyAdsTxt: fieldThirdPartyAdsTxt?.value.trim(),
-        slots: {
-          top: { enabled: slotTopEnabled?.checked, adNetwork: slotNetworks.top, customCode: slotTopCode?.value },
-          inline: { enabled: slotInlineEnabled?.checked, adNetwork: slotNetworks.inline, customCode: slotInlineCode?.value },
-          sidebar: { enabled: slotSidebarEnabled?.checked, adNetwork: slotNetworks.sidebar, customCode: slotSidebarCode?.value },
-          footer: { enabled: slotFooterEnabled?.checked, adNetwork: slotNetworks.footer, customCode: slotFooterCode?.value },
-        }
-      });
-      renderPreview();
-    });
-  });
-
-  [slotTopEnabled, slotInlineEnabled, slotSidebarEnabled, slotFooterEnabled].forEach((toggle) => {
-    toggle?.addEventListener('change', () => {
-      toggle.setAttribute('aria-checked', toggle.checked ? 'true' : 'false');
-      renderPreview();
-    });
-  });
-
-  [fieldClientId, slotTopId, slotInlineId, slotSidebarId, slotFooterId].forEach((input) => {
-    input?.addEventListener('input', () => {
-      renderPreview();
-      updateAdsTxtSnippet();
-    });
-  });
-
-  fieldGaId?.addEventListener('input', () => {
-    setFieldError(gaIdError, '');
-  });
-
-  fieldThirdPartyAdsTxt?.addEventListener('input', () => {
-    updateAdsTxtSnippet();
-  });
-
-  [slotTopCode, slotInlineCode, slotSidebarCode, slotFooterCode].forEach((textarea) => {
-    textarea?.addEventListener('input', () => {
-      renderPreview();
-    });
-  });
-
-  // ─── Preview Tab Switching ────────────────────────────────────────────────────
-  previewTabs.forEach((tab) => {
-    tab.addEventListener('click', () => {
-      previewTabs.forEach((t) => {
-        t.className = 'preview-tab rounded-xl bg-slate-100 px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 transition focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none cursor-pointer';
-        t.setAttribute('aria-selected', 'false');
-      });
-      tab.className = 'preview-tab active rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white transition focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none cursor-pointer';
-      tab.setAttribute('aria-selected', 'true');
-      activePreviewTab = tab.getAttribute('data-preview-tab') || 'top';
-      renderPreview();
-    });
-  });
-
-  // ─── Copy ads.txt (with Fallback) ─────────────────────────────────────────────
-  btnCopyAdsTxt?.addEventListener('click', async () => {
-    const textToCopy = fullAdsTxtPreview?.textContent.trim() || '';
-    if (!textToCopy) return;
-
-    let success = false;
-    if (navigator.clipboard && navigator.clipboard.writeText) {
-      try {
-        await navigator.clipboard.writeText(textToCopy);
-        success = true;
-      } catch {}
-    }
-
-    if (!success) {
-      const tempArea = document.createElement('textarea');
-      tempArea.value = textToCopy;
-      tempArea.style.position = 'fixed';
-      tempArea.style.opacity = '0';
-      document.body.appendChild(tempArea);
-      tempArea.focus();
-      tempArea.select();
-      try {
-        success = document.execCommand('copy');
-      } catch {}
-      document.body.removeChild(tempArea);
-    }
-
-    if (copyBtnText) {
-      copyBtnText.textContent = success ? 'Copied! ✅' : 'Failed to copy';
-      setTimeout(() => { copyBtnText.textContent = 'Copy Complete ads.txt'; }, 2000);
-    }
-  });
-
-  // ─── CMS Backup Restore Controller ───────────────────────────────────────────
-  const modalRestore = document.getElementById('modal-restore-backup');
-  const btnOpenRestore = document.getElementById('btn-open-restore-modal');
-  const btnCloseRestore = document.getElementById('btn-close-restore-modal');
-  const btnCancelRestore = document.getElementById('btn-cancel-restore');
-  const btnExecuteRestore = document.getElementById('btn-execute-restore');
-  const inputBackupFile = document.getElementById('input-backup-file');
-  const inputBackupJson = document.getElementById('input-backup-json');
-  const restoreStatusMsg = document.getElementById('restore-status-msg');
-
-  function openRestoreModal() {
-    if (!modalRestore) return;
-    modalRestore.classList.remove('hidden');
-    modalRestore.classList.add('flex');
-    if (restoreStatusMsg) {
-      restoreStatusMsg.classList.add('hidden');
-      restoreStatusMsg.textContent = '';
-    }
-  }
-
-  function closeRestoreModal() {
-    if (!modalRestore) return;
-    modalRestore.classList.add('hidden');
-    modalRestore.classList.remove('flex');
-  }
-
-  btnOpenRestore?.addEventListener('click', openRestoreModal);
-  btnCloseRestore?.addEventListener('click', closeRestoreModal);
-  btnCancelRestore?.addEventListener('click', closeRestoreModal);
-
-  // File upload reader
-  inputBackupFile?.addEventListener('change', (e) => {
+  fileRestoreInput?.addEventListener('change', (e: any) => {
     const file = e.target?.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (evt) => {
-      if (inputBackupJson) {
-        inputBackupJson.value = evt.target?.result || '';
-      }
+      if (inputBackupJson) inputBackupJson.value = (evt.target?.result as string) || '';
     };
     reader.readAsText(file);
   });
 
-  // Execute restore
   btnExecuteRestore?.addEventListener('click', async () => {
-    const rawJson = inputBackupJson?.value?.trim();
-    if (!rawJson) {
+    const raw = inputBackupJson?.value?.trim();
+    if (!raw) {
       if (restoreStatusMsg) {
         restoreStatusMsg.className = 'rounded-xl p-3 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300';
-        restoreStatusMsg.textContent = 'Please select a backup file or paste JSON content.';
+        restoreStatusMsg.textContent = 'Please choose a backup JSON file or paste content.';
         restoreStatusMsg.classList.remove('hidden');
       }
       return;
     }
 
-    let parsedPayload;
+    let parsed;
     try {
-      parsedPayload = JSON.parse(rawJson);
+      parsed = JSON.parse(raw);
     } catch {
       if (restoreStatusMsg) {
         restoreStatusMsg.className = 'rounded-xl p-3 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300';
-        restoreStatusMsg.textContent = 'Invalid JSON format. Please verify the backup file.';
+        restoreStatusMsg.textContent = 'Invalid JSON syntax. Please verify the backup file.';
         restoreStatusMsg.classList.remove('hidden');
       }
       return;
@@ -1937,22 +582,20 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
       const res = await fetch('/api/admin/backup/import', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(parsedPayload),
+        body: JSON.stringify(parsed),
       });
-      const data = await res.json().catch(() => ({}));
-      if (res.ok && data.success) {
-        if (restoreStatusMsg) {
-          restoreStatusMsg.className = 'rounded-xl p-3 text-xs font-semibold bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300';
-          restoreStatusMsg.textContent = '✅ Backup restored successfully! Refreshing...';
-          restoreStatusMsg.classList.remove('hidden');
-        }
-        setTimeout(() => {
-          window.location.reload();
-        }, 1500);
-      } else {
-        throw new Error(data.error || 'Failed to restore backup.');
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Restore failed');
+
+      if (restoreStatusMsg) {
+        restoreStatusMsg.className = 'rounded-xl p-3 text-xs font-semibold bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300';
+        restoreStatusMsg.textContent = '✅ Backup restored successfully! Refreshing...';
+        restoreStatusMsg.classList.remove('hidden');
       }
-    } catch (err) {
+
+      setTimeout(() => window.location.reload(), 1200);
+    } catch (err: any) {
       if (restoreStatusMsg) {
         restoreStatusMsg.className = 'rounded-xl p-3 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950/50 dark:text-red-300';
         restoreStatusMsg.textContent = '❌ ' + (err.message || 'Error executing restore.');
@@ -1965,6 +608,6 @@ import AdminLayout from '../../layouts/AdminLayout.astro';
     }
   });
 
-  // ─── Initial Load ─────────────────────────────────────────────────────────────
+  // ─── Initial Load ──────────────────────────────────────────────────────────
   loadSettings();
 </script>

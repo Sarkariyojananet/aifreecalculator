@@ -37,6 +37,7 @@ export const GET: APIRoute = async ({ request, cookies, locals }) => {
       featureFlags,
       messages,
       customTests,
+      adsenseRow,
     ] = await Promise.all([
       getCalculatorOverrides(locals).catch(() => ({})),
       getInternalLinks(locals).catch(() => ({})),
@@ -47,10 +48,18 @@ export const GET: APIRoute = async ({ request, cookies, locals }) => {
       getFeatureFlags(locals).catch(() => ({})),
       getContactMessages(db).catch(() => []),
       getCustomTestCases(locals).catch(() => []),
+      db.prepare('SELECT value FROM site_settings WHERE key = ?').bind('adsense_config').first<{ value: string }>().catch(() => null),
     ]);
 
+    let monetizationConfig = null;
+    if (adsenseRow?.value) {
+      try {
+        monetizationConfig = JSON.parse(adsenseRow.value);
+      } catch {}
+    }
+
     const backupData = {
-      schemaVersion: '1.0',
+      schemaVersion: '1.1',
       exportedAt: new Date().toISOString(),
       exportedBy: user.username || 'admin',
       platform: 'aifreecalculator.com CMS',
@@ -62,6 +71,7 @@ export const GET: APIRoute = async ({ request, cookies, locals }) => {
         categoriesCount: categories.length,
         messagesCount: messages.length,
         customTestsCount: customTests.length,
+        monetizationConfigured: Boolean(monetizationConfig),
       },
       data: {
         seoOverrides: overrides,
@@ -73,6 +83,7 @@ export const GET: APIRoute = async ({ request, cookies, locals }) => {
         featureFlags,
         contactMessages: messages,
         customFormulaTests: customTests,
+        monetizationConfig,
       },
     };
 

@@ -100,6 +100,27 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
       restoredSummary.contactMessages = msgCount;
     }
 
+    // 10. Restore Monetization & Ad Configuration
+    if (data.monetizationConfig && typeof data.monetizationConfig === 'object') {
+      const db = getDb(locals);
+      await db.exec('CREATE TABLE IF NOT EXISTS site_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
+      await db
+        .prepare('INSERT OR REPLACE INTO site_settings (key, value) VALUES (?, ?)')
+        .bind('adsense_config', JSON.stringify(data.monetizationConfig))
+        .run();
+      restoredSummary.monetization = 1;
+    }
+
+    // Log audit event
+    const { logAuditEvent } = await import('../../../../lib/admin/audit-store');
+    await logAuditEvent(locals, {
+      action: 'BACKUP_RESTORE',
+      category: 'backup',
+      user: user.username,
+      summary: `Restored full CMS backup (Items: ${Object.keys(restoredSummary).length})`,
+      details: { restoredSummary },
+    });
+
     return new Response(
       JSON.stringify({
         success: true,

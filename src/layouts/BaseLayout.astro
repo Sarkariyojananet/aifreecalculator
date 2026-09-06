@@ -215,6 +215,16 @@ const resolvedOgImage = ogImage.startsWith('http')
           gtag('config', gaId);
         }
 
+        function escapeText(str) {
+          if (!str) return '';
+          return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+        }
+
         async function renderAdSlots() {
           const config = await fetchAdConfig();
 
@@ -240,6 +250,20 @@ const resolvedOgImage = ogImage.startsWith('http')
             return;
           }
 
+          // ─── Smart Ads Throttling ──────────────────────────────────────────
+          const throttling = config.smartThrottling || {};
+          if (throttling.enabled) {
+            // 1. Connection-aware throttling (2G / Save-Data)
+            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+            if (throttling.disableOnSlowConnection && conn) {
+              if (conn.saveData || conn.effectiveType === '2g' || conn.effectiveType === 'slow-2g') {
+                console.info('[Smart Ads] Suppressed ads due to slow connection / Save-Data mode.');
+                slotElements.forEach(hideSlot);
+                return;
+              }
+            }
+          }
+
           // 1. If TEST MODE is explicitly TRUE
           if (config.testMode === true) {
             slotElements.forEach((el) => {
@@ -248,7 +272,7 @@ const resolvedOgImage = ogImage.startsWith('http')
               const slotId = el.getAttribute('data-prop-slot-id') || slotConfig.slotId || '1234567890';
               const label = slotConfig.label || `${location.toUpperCase()} Ad Slot`;
               const isEnabled = slotConfig.enabled !== false;
-              const isAdx = slotConfig.adNetwork === 'adx';
+              const net = slotConfig.adNetwork || 'adsense';
 
               if (!isEnabled) {
                 hideSlot(el);
@@ -257,16 +281,35 @@ const resolvedOgImage = ogImage.startsWith('http')
 
               showSlot(el);
               const container = el.querySelector('.ad-content-slot') || el;
+
+              let networkLabel = 'GOOGLE ADSENSE';
+              let networkDetails = `Ad Unit Slot ID: <strong>${escapeText(slotId)}</strong>`;
+              let badgeColor = 'border-amber-400 bg-amber-50/80 text-amber-800 dark:border-amber-600 dark:bg-amber-950/40 dark:text-amber-300';
+
+              if (net === 'adx') {
+                networkLabel = 'GOOGLE ADX / CUSTOM SCRIPT';
+                networkDetails = `Custom Ad Tag Configured | Placement: <code>${escapeText(location)}</code>`;
+                badgeColor = 'border-purple-400 bg-purple-50/80 text-purple-800 dark:border-purple-600 dark:bg-purple-950/40 dark:text-purple-300';
+              } else if (net === 'direct_sponsor') {
+                networkLabel = 'DIRECT SPONSOR BANNER';
+                networkDetails = `Target: <span class="font-mono text-xs">${escapeText(slotConfig.sponsorTargetUrl || 'https://sponsor-link.com')}</span>`;
+                badgeColor = 'border-emerald-400 bg-emerald-50/80 text-emerald-800 dark:border-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300';
+              } else if (net === 'affiliate') {
+                networkLabel = 'AFFILIATE CREATIVE';
+                networkDetails = `Affiliate URL: <span class="font-mono text-xs">${escapeText(slotConfig.sponsorTargetUrl || 'https://affiliate-link.com')}</span>`;
+                badgeColor = 'border-blue-400 bg-blue-50/80 text-blue-800 dark:border-blue-600 dark:bg-blue-950/40 dark:text-blue-300';
+              }
+
               container.innerHTML = `
-                <div class="w-full rounded-2xl border-2 border-dashed border-amber-400 bg-amber-50/80 p-4 text-center dark:border-amber-600 dark:bg-amber-950/40 shadow-xs select-none">
-                  <div class="text-[10px] font-black uppercase tracking-widest text-amber-800 dark:text-amber-300 flex items-center justify-center gap-1.5">
-                    <span>🛠️</span> ${isAdx ? 'GOOGLE ADX / CUSTOM SCRIPT' : 'GOOGLE ADSENSE'} TEST MODE • ${label}
+                <div class="w-full rounded-2xl border-2 border-dashed ${badgeColor} p-4 text-center shadow-xs select-none">
+                  <div class="text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5">
+                    <span>🛠️</span> ${networkLabel} TEST MODE • ${escapeText(label)}
                   </div>
-                  <div class="mt-1.5 text-xs font-bold text-slate-800 dark:text-slate-200">
-                    Network: <span class="font-mono text-amber-700 dark:text-amber-400">${isAdx ? 'Google AdX / Manual Tag' : (config.clientId || 'ca-pub-demo')}</span>
+                  <div class="mt-1 text-xs font-bold">
+                    Placement: <code>${escapeText(location)}</code>
                   </div>
-                  <div class="mt-1 text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                    ${isAdx ? `Custom Ad Tag Configured | Placement: <code>${location}</code>` : `Ad Unit Slot ID: <strong>${slotId}</strong> | Placement: <code>${location}</code>`}
+                  <div class="mt-1 text-[11px] font-mono">
+                    ${networkDetails}
                   </div>
                 </div>
               `;
@@ -276,8 +319,9 @@ const resolvedOgImage = ogImage.startsWith('http')
 
           // 2. Real Live Mode (enabled = true, testMode = false)
           if (config.enabled) {
-            // Load Google AdSense library if publisher client ID is present
-            if (config.clientId && config.clientId.startsWith('ca-pub-')) {
+            // Load Google AdSense library if publisher client ID is present and adsense is used
+            const hasAdsenseSlot = Object.values(config.slots || {}).some((s) => !s.adNetwork || s.adNetwork === 'adsense');
+            if (hasAdsenseSlot && config.clientId && config.clientId.startsWith('ca-pub-')) {
               loadGoogleScript(config.clientId);
             }
 
@@ -286,11 +330,15 @@ const resolvedOgImage = ogImage.startsWith('http')
               loadHeaderScript(config.headerScript);
             }
 
-            slotElements.forEach((el) => {
+            const isMobile = window.innerWidth < 768;
+            const maxMobile = (throttling.enabled && typeof throttling.maxMobileAds === 'number') ? throttling.maxMobileAds : 0;
+            let mobileRenderedCount = 0;
+
+            function renderSlotElement(el) {
               const location = el.getAttribute('data-ad-slot-location');
               const slotConfig = config.slots?.[location] || {};
               const isEnabled = slotConfig.enabled !== false;
-              const isAdx = slotConfig.adNetwork === 'adx';
+              const net = slotConfig.adNetwork || 'adsense';
               const customCode = (slotConfig.customCode || '').trim();
               const slotId = el.getAttribute('data-prop-slot-id') || slotConfig.slotId;
 
@@ -299,9 +347,44 @@ const resolvedOgImage = ogImage.startsWith('http')
                 return;
               }
 
-              // Mode A: Google AdX / Custom Script (Manual Code)
-              if (isAdx && customCode) {
+              // Apply mobile throttle limit
+              if (isMobile && maxMobile > 0 && mobileRenderedCount >= maxMobile) {
+                hideSlot(el);
+                return;
+              }
+
+              // Mode A: Direct Sponsor or Affiliate Link
+              if (net === 'direct_sponsor' || net === 'affiliate') {
                 showSlot(el);
+                mobileRenderedCount++;
+                const container = el.querySelector('.ad-content-slot') || el;
+                if (container.getAttribute('data-ad-rendered') === net) return;
+
+                const targetUrl = slotConfig.sponsorTargetUrl || '#';
+                const bannerUrl = slotConfig.sponsorBannerUrl || '';
+                const altText = slotConfig.sponsorAltText || (net === 'affiliate' ? 'Recommended Partner' : 'Sponsored');
+                const badge = slotConfig.sponsorBadgeText || (net === 'affiliate' ? 'Partner' : 'Sponsored');
+                const openInNew = slotConfig.sponsorOpenInNewTab !== false;
+                const rel = slotConfig.sponsorRel || 'sponsored nofollow noopener';
+
+                container.innerHTML = `
+                  <div class="relative w-full rounded-2xl border border-slate-200/80 bg-slate-50/70 p-3 text-center dark:border-slate-800/80 dark:bg-slate-900/60 shadow-xs transition hover:shadow-md group">
+                    <span class="inline-block mb-1.5 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+                      ${escapeText(badge)}
+                    </span>
+                    <a href="${escapeText(targetUrl)}" ${openInNew ? 'target="_blank"' : ''} rel="${escapeText(rel)}" class="block max-w-full overflow-hidden rounded-xl">
+                      ${bannerUrl ? `<img src="${escapeText(bannerUrl)}" alt="${escapeText(altText)}" class="mx-auto max-h-36 max-w-full rounded-xl object-contain group-hover:scale-[1.01] transition-transform" loading="lazy" />` : `<div class="p-4 text-xs font-bold text-blue-600 dark:text-blue-400 group-hover:underline">${escapeText(altText)} →</div>`}
+                    </a>
+                  </div>
+                `;
+                container.setAttribute('data-ad-rendered', net);
+                return;
+              }
+
+              // Mode B: Google AdX / Custom Script (Manual Code)
+              if (net === 'adx' && customCode) {
+                showSlot(el);
+                mobileRenderedCount++;
                 const container = el.querySelector('.ad-content-slot') || el;
                 if (container.getAttribute('data-ad-rendered') === 'adx') return;
                 container.innerHTML = '';
@@ -310,9 +393,10 @@ const resolvedOgImage = ogImage.startsWith('http')
                 return;
               }
 
-              // Mode B: Google AdSense standard unit
+              // Mode C: Google AdSense standard unit
               if (config.clientId && config.clientId.startsWith('ca-pub-') && slotId) {
                 showSlot(el);
+                mobileRenderedCount++;
                 const container = el.querySelector('.ad-content-slot') || el;
                 if (container.querySelector('.adsbygoogle')) return; // Already initialized
 
@@ -333,12 +417,28 @@ const resolvedOgImage = ogImage.startsWith('http')
               }
 
               hideSlot(el);
-            });
+            }
+
+            // Lazy loading via IntersectionObserver if enabled
+            if (throttling.enabled && throttling.lazyLoadWithMargin && 'IntersectionObserver' in window) {
+              const margin = typeof throttling.lazyLoadMarginPx === 'number' ? throttling.lazyLoadMarginPx : 300;
+              const observer = new IntersectionObserver((entries, obs) => {
+                entries.forEach((entry) => {
+                  if (entry.isIntersecting) {
+                    renderSlotElement(entry.target);
+                    obs.unobserve(entry.target);
+                  }
+                });
+              }, { rootMargin: `${margin}px` });
+
+              slotElements.forEach((el) => observer.observe(el));
+            } else {
+              slotElements.forEach(renderSlotElement);
+            }
           } else {
             slotElements.forEach(hideSlot);
           }
         }
-
 
         if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', renderAdSlots);

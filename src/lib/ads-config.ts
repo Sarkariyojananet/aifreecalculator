@@ -5,7 +5,7 @@
 
 export type AdSlotKey = 'top' | 'inline' | 'sidebar' | 'footer';
 
-export type AdNetworkType = 'adsense' | 'adx';
+export type AdNetworkType = 'adsense' | 'adx' | 'direct_sponsor' | 'affiliate';
 
 export interface AdSlotConfig {
   slotId: string;
@@ -17,7 +17,34 @@ export interface AdSlotConfig {
   description: string;
   adNetwork?: AdNetworkType;
   customCode?: string;
+  // Direct Sponsor & Affiliate Configuration
+  sponsorBannerUrl?: string;
+  sponsorTargetUrl?: string;
+  sponsorAltText?: string;
+  sponsorBadgeText?: string;
+  sponsorOpenInNewTab?: boolean;
+  sponsorRel?: string;
 }
+
+export interface SmartThrottlingConfig {
+  enabled: boolean;
+  disableOnSlowConnection: boolean;
+  lazyLoadWithMargin: boolean;
+  lazyLoadMarginPx: number;
+  delayUntilInteraction: boolean;
+  maxMobileAds: number; // 0 = unlimited, 1 = max 1 ad, 2 = max 2 ads
+  preventClsPlaceholders: boolean;
+}
+
+export const DEFAULT_SMART_THROTTLING: SmartThrottlingConfig = {
+  enabled: true,
+  disableOnSlowConnection: true,
+  lazyLoadWithMargin: true,
+  lazyLoadMarginPx: 300,
+  delayUntilInteraction: false,
+  maxMobileAds: 2,
+  preventClsPlaceholders: true,
+};
 
 export interface AdsConfig {
   enabled: boolean;
@@ -30,6 +57,7 @@ export interface AdsConfig {
   thirdPartyAdsTxt?: string;
   customAdsTxt?: string;
   headerScript?: string;
+  smartThrottling?: SmartThrottlingConfig;
   slots: Record<AdSlotKey, AdSlotConfig>;
 }
 
@@ -53,6 +81,7 @@ export const DEFAULT_ADS_CONFIG: AdsConfig = {
   thirdPartyAdsTxt: '',
   customAdsTxt: '',
   headerScript: '',
+  smartThrottling: { ...DEFAULT_SMART_THROTTLING },
   slots: {
     top: {
       slotId: '1234567890',
@@ -64,6 +93,12 @@ export const DEFAULT_ADS_CONFIG: AdsConfig = {
       description: 'Appears directly below header on Homepage, Category pages & all 42+ Calculator tools.',
       adNetwork: 'adsense',
       customCode: '',
+      sponsorBannerUrl: '',
+      sponsorTargetUrl: '',
+      sponsorAltText: '',
+      sponsorBadgeText: 'Sponsored',
+      sponsorOpenInNewTab: true,
+      sponsorRel: 'sponsored nofollow noopener',
     },
     inline: {
       slotId: '2345678901',
@@ -75,6 +110,12 @@ export const DEFAULT_ADS_CONFIG: AdsConfig = {
       description: 'Appears after the calculation widget and result panels inside calculator pages.',
       adNetwork: 'adsense',
       customCode: '',
+      sponsorBannerUrl: '',
+      sponsorTargetUrl: '',
+      sponsorAltText: '',
+      sponsorBadgeText: 'Sponsored',
+      sponsorOpenInNewTab: true,
+      sponsorRel: 'sponsored nofollow noopener',
     },
     sidebar: {
       slotId: '3456789012',
@@ -86,6 +127,12 @@ export const DEFAULT_ADS_CONFIG: AdsConfig = {
       description: 'Appears in desktop right sidebar column next to calculation tools.',
       adNetwork: 'adsense',
       customCode: '',
+      sponsorBannerUrl: '',
+      sponsorTargetUrl: '',
+      sponsorAltText: '',
+      sponsorBadgeText: 'Sponsored',
+      sponsorOpenInNewTab: true,
+      sponsorRel: 'sponsored nofollow noopener',
     },
     footer: {
       slotId: '4567890123',
@@ -97,6 +144,12 @@ export const DEFAULT_ADS_CONFIG: AdsConfig = {
       description: 'Appears above the website footer across all pages.',
       adNetwork: 'adsense',
       customCode: '',
+      sponsorBannerUrl: '',
+      sponsorTargetUrl: '',
+      sponsorAltText: '',
+      sponsorBadgeText: 'Sponsored',
+      sponsorOpenInNewTab: true,
+      sponsorRel: 'sponsored nofollow noopener',
     },
   },
 };
