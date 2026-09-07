@@ -1,0 +1,268 @@
+---
+// NavigationProgressBar.astro
+// Global, lightweight, high-performance page navigation loading bar.
+// Automatically activates on internal page navigations, Astro client-side routing,
+// and browser navigation while guaranteeing zero layout shift (CLS = 0) and zero stuck states.
+---
+
+<div
+  id="global-nav-progress"
+  class="fixed top-0 left-0 right-0 h-0.75 pointer-events-none opacity-0 z-999999 transition-opacity duration-300"
+  style="contain: paint;"
+  aria-hidden="true"
+  role="progressbar"
+  aria-valuemin="0"
+  aria-valuemax="100"
+  aria-valuenow="0"
+>
+  <div
+    id="global-nav-progress-bar"
+    class="relative h-full w-0 bg-linear-to-r from-blue-600 via-indigo-600 to-cyan-400 dark:from-blue-500 dark:via-indigo-500 dark:to-cyan-300 transition-[width] duration-200 ease-out will-change-[width]"
+    style="box-shadow: 0 0 10px rgba(59, 130, 246, 0.7), 0 0 4px rgba(99, 102, 241, 0.5);"
+  >
+    <!-- Trailing Leading Edge Glow Peg -->
+    <div
+      class="progress-peg absolute right-0 top-0 bottom-0 w-24 h-full pointer-events-none"
+      style="box-shadow: 0 0 12px 2px rgba(59, 130, 246, 0.9), 0 0 6px 1px rgba(99, 102, 241, 0.7); transform: rotate(2deg) translate(0px, -2px); opacity: 0.9;"
+    ></div>
+  </div>
+</div>
+
+<style>
+  @keyframes nav-shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  #global-nav-progress-bar {
+    background-size: 200% 100%;
+    animation: nav-shimmer 2.2s linear infinite;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #global-nav-progress,
+    #global-nav-progress-bar {
+      transition: none !important;
+      animation: none !important;
+    }
+    .progress-peg {
+      display: none !important;
+    }
+  }
+</style>
+
+<script is:inline>
+  (function initGlobalProgressBar() {
+    if (typeof window === 'undefined') return;
+
+    var container = null;
+    var bar = null;
+    var currentProgress = 0;
+    var trickleTimer = null;
+    var safetyTimeout = null;
+    var isRunning = false;
+    var STORAGE_KEY = '__global_nav_active';
+
+    function getElements() {
+      if (!container || !bar) {
+        container = document.getElementById('global-nav-progress');
+        bar = document.getElementById('global-nav-progress-bar');
+      }
+      return Boolean(container && bar);
+    }
+
+    function setProgress(val) {
+      if (!getElements()) return;
+      currentProgress = Math.min(100, Math.max(0, val));
+      bar.style.width = currentProgress + '%';
+      container.setAttribute('aria-valuenow', Math.round(currentProgress));
+    }
+
+    function start() {
+      if (!getElements()) return;
+      if (isRunning) return;
+      isRunning = true;
+
+      clearTimers();
+      container.classList.remove('opacity-0');
+      container.classList.add('opacity-100');
+
+      // Immediate jump to indicate responsive feedback
+      setProgress(18);
+
+      // Trickle engine: decaying increments toward ~88%
+      trickleTimer = setInterval(function () {
+        if (currentProgress < 45) {
+          setProgress(currentProgress + (Math.random() * 5 + 3));
+        } else if (currentProgress < 70) {
+          setProgress(currentProgress + (Math.random() * 3 + 1.5));
+        } else if (currentProgress < 85) {
+          setProgress(currentProgress + (Math.random() * 1 + 0.4));
+        } else if (currentProgress < 89) {
+          setProgress(currentProgress + 0.2);
+        }
+      }, 180);
+
+      // Safety timeout (8s max) to guarantee the bar never stays stuck
+      safetyTimeout = setTimeout(function () {
+        finish();
+      }, 8000);
+    }
+
+    function finish() {
+      if (!getElements()) return;
+      clearTimers();
+      setProgress(100);
+
+      try {
+        sessionStorage.removeItem(STORAGE_KEY);
+      } catch (e) {}
+
+      // Allow bar to animate to 100%, then fade out
+      setTimeout(function () {
+        if (!container) return;
+        container.classList.remove('opacity-100');
+        container.classList.add('opacity-0');
+
+        setTimeout(function () {
+          reset();
+        }, 300);
+      }, 200);
+    }
+
+    function reset() {
+      clearTimers();
+      isRunning = false;
+      if (getElements()) {
+        container.classList.remove('opacity-100');
+        container.classList.add('opacity-0');
+        bar.style.width = '0%';
+        container.setAttribute('aria-valuenow', '0');
+      }
+      currentProgress = 0;
+      try {
+        sessionStorage.removeItem(STORAGE_KEY);
+      } catch (e) {}
+    }
+
+    function clearTimers() {
+      if (trickleTimer) {
+        clearInterval(trickleTimer);
+        trickleTimer = null;
+      }
+      if (safetyTimeout) {
+        clearTimeout(safetyTimeout);
+        safetyTimeout = null;
+      }
+    }
+
+    // Expose programmatic hooks
+    window.__showProgressBar = start;
+    window.__hideProgressBar = finish;
+    window.__resetProgressBar = reset;
+
+    // Check if previous page initiated a navigation
+    try {
+      var navTimestamp = sessionStorage.getItem(STORAGE_KEY);
+      if (navTimestamp && Date.now() - parseInt(navTimestamp, 10) < 10000) {
+        sessionStorage.removeItem(STORAGE_KEY);
+        // Seamless transition into completion on destination page
+        if (getElements()) {
+          setProgress(75);
+          container.classList.remove('opacity-0');
+          container.classList.add('opacity-100');
+          setTimeout(function () {
+            finish();
+          }, 80);
+        }
+      }
+    } catch (e) {}
+
+    // Avoid attaching duplicate event listeners
+    if (window.__globalProgressBarListenersAttached) return;
+    window.__globalProgressBarListenersAttached = true;
+
+    // Delegated click handler for internal links
+    document.addEventListener('click', function (evt) {
+      if (evt.defaultPrevented) return;
+      if (evt.button !== 0) return; // Only primary mouse clicks
+      if (evt.metaKey || evt.ctrlKey || evt.shiftKey || evt.altKey) return; // Ignore modifier clicks
+
+      var target = evt.target;
+      var link = target && target.closest ? target.closest('a') : null;
+      if (!link) return;
+
+      var rawHref = link.getAttribute('href');
+      if (!rawHref) return;
+
+      // Ignore anchor jumps on current page
+      if (rawHref.startsWith('#')) return;
+
+      // Ignore javascript:, mailto:, tel:, callto:
+      if (/^(javascript|mailto|tel|callto|sms):/i.test(rawHref)) return;
+
+      // Ignore downloads
+      if (link.hasAttribute('download')) return;
+
+      // Ignore new tabs/windows
+      var targetAttr = link.getAttribute('target');
+      if (targetAttr && targetAttr.toLowerCase() !== '_self') return;
+
+      // Parse absolute URL
+      var destinationUrl;
+      try {
+        destinationUrl = new URL(link.href, window.location.href);
+      } catch (e) {
+        return;
+      }
+
+      // Ignore external domains
+      if (destinationUrl.origin !== window.location.origin) return;
+
+      // Ignore same-page anchor variations (same path, same query, only hash differs)
+      if (
+        destinationUrl.pathname === window.location.pathname &&
+        destinationUrl.search === window.location.search &&
+        destinationUrl.hash
+      ) {
+        return;
+      }
+
+      // Ignore identical URL
+      if (destinationUrl.href === window.location.href) return;
+
+      // Record active navigation in sessionStorage for seamless arrival completion
+      try {
+        sessionStorage.setItem(STORAGE_KEY, Date.now().toString());
+      } catch (e) {}
+
+      start();
+    }, true);
+
+    // Astro client-side lifecycle support (Astro View Transitions / ClientRouter)
+    document.addEventListener('astro:before-preparation', function () {
+      start();
+    });
+    document.addEventListener('astro:page-load', function () {
+      finish();
+    });
+
+    // Browser back/forward cache (bfcache) restore: reset immediately to prevent stuck state
+    window.addEventListener('pageshow', function (evt) {
+      if (evt.persisted) {
+        reset();
+      }
+    });
+
+    // Clean up if user cancels navigation with Escape key
+    window.addEventListener('keydown', function (evt) {
+      if (evt.key === 'Escape') {
+        reset();
+      }
+    });
+  })();
+</script>
