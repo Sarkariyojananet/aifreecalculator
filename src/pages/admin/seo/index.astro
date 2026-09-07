@@ -4,15 +4,27 @@ export const prerender = false;
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { runFullSEOAudit } from '../../../lib/seo/audit-engine';
 import { authenticateAdminRequest } from '../../../lib/auth';
-import { syncGscPerformanceData, getGscCredentials } from '../../../lib/seo/gsc-store';
-import type { GscDateRange } from '../../../lib/seo/gsc-types';
+import { getGoogleAccountStatus, getGoogleOAuthConfig } from '../../../lib/auth/google-oauth';
 
 const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
 if (!user) {
   return Astro.redirect('/admin/barwalaoffice/');
 }
 
-// 1. Run static rules audit (existing)
+// Google OAuth & Search Console status
+const googleAccount = await getGoogleAccountStatus(Astro.locals);
+const googleOAuthConfig = await getGoogleOAuthConfig(Astro.locals);
+const isOAuthAppConfigured = !!googleOAuthConfig;
+const oauthOrigin = Astro.url.origin;
+const oauthRedirectUri = `${oauthOrigin}/api/auth/google/callback`;
+
+// Feedback query params
+const googleSetupRequired = Astro.url.searchParams.get('google_setup') === 'required';
+const googleConnectedSuccess = Astro.url.searchParams.get('google_connected') === 'success';
+const connectedAccountEmail = Astro.url.searchParams.get('account') || googleAccount.email || '';
+const googleErrorMessage = Astro.url.searchParams.get('google_error');
+
+// Run comprehensive rule-based technical SEO audit
 const report = await runFullSEOAudit(Astro.locals);
 const auditGeneratedAt = new Date(report.timestamp).toLocaleString('en-IN', {
   dateStyle: 'medium',
@@ -27,63 +39,59 @@ const linkCount = report.issues.filter((i) => i.category === 'links').length;
 const canonicalCount = report.issues.filter((i) => i.category === 'canonical').length;
 
 const auditSuccess = Astro.url.searchParams.get('audited');
-
-// 2. Fetch GSC Snapshot
-const requestedRange = (Astro.url.searchParams.get('range') || '28d') as GscDateRange;
-const range: GscDateRange = requestedRange === '7d' || requestedRange === '3m' ? requestedRange : '28d';
-
-const gscSnapshot = await syncGscPerformanceData(Astro.locals, range, false);
-const isGscConnected = gscSnapshot.status === 'connected';
-const gscData = gscSnapshot.data?.[range];
-
-const lastGscSyncFormatted = gscSnapshot.lastSyncedAt
-  ? new Date(gscSnapshot.lastSyncedAt).toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short' })
-  : 'Never';
-
-// Top growing pages
-const topGrowingPages = (gscData?.topPages || [])
-  .filter((p) => p.clickChangePercent > 10 && p.clicks >= 5)
-  .sort((a, b) => b.clickChangePercent - a.clickChangePercent)
-  .slice(0, 4);
-
-// Needs attention pages (high impressions, low CTR, or dropped rank)
-const needsAttentionPages = (gscData?.topPages || [])
-  .filter((p) => (p.impressions > 200 && p.ctr < 2.5) || p.positionChange > 2)
-  .slice(0, 4);
 ---
 
 <AdminLayout title="SEO Intelligence & Health Dashboard | Calculator CMS" sectionTitle="SEO Intelligence" activeSection="seo" badge={`${report.criticalCount + report.highCount} Action Items`}>
   <div class="space-y-8 max-w-7xl mx-auto pb-16">
     
-    
+    <!-- OAuth Status Banners -->
+    {googleConnectedSuccess && (
+      <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-semibold text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-300 flex items-center justify-between gap-3 shadow-xs">
+        <div class="flex items-center gap-2.5">
+          <span class="text-base">✅</span>
+          <span>
+            Successfully connected Google Account <strong>{connectedAccountEmail}</strong>! Google Search Console access is active.
+          </span>
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" class="text-emerald-600 hover:text-emerald-800 text-sm cursor-pointer">✕</button>
+      </div>
+    )}
+
+    {googleErrorMessage && (
+      <div class="rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-800 dark:border-red-900/60 dark:bg-red-950/60 dark:text-red-300 flex items-center justify-between gap-3 shadow-xs">
+        <div class="flex items-center gap-2.5">
+          <span class="text-base">❌</span>
+          <span>
+            Google OAuth error: <strong>{googleErrorMessage}</strong>.
+          </span>
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" class="text-red-600 hover:text-red-800 text-sm cursor-pointer">✕</button>
+      </div>
+    )}
+
+    {googleSetupRequired && (
+      <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/60 dark:text-amber-300 flex items-center justify-between gap-3 shadow-xs">
+        <div class="flex items-center gap-2.5">
+          <span class="text-base">⚠️</span>
+          <span>
+            Google OAuth Credentials required before connecting. Please configure your Client ID and Client Secret below or in Cloudflare Worker secrets.
+          </span>
+        </div>
+        <button type="button" onclick="document.getElementById('gsc-credentials-details')?.setAttribute('open', 'true')" class="underline cursor-pointer">View Setup</button>
+      </div>
+    )}
+
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
       <div>
         <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
           <span>🩺</span> SEO Intelligence Dashboard
         </h2>
         <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Google Search Console performance metrics, opportunity finder, content decay detection, and technical health audit.
+          Automated technical SEO health audit, metadata verification, orphan detection, and Google Search Console integration.
         </p>
       </div>
 
       <div class="flex flex-wrap items-center gap-2 shrink-0">
-        <button
-          type="button"
-          id="btn-sync-gsc"
-          class="inline-flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm shadow-emerald-500/20 hover:bg-emerald-700 transition cursor-pointer"
-        >
-          <span id="btn-sync-gsc-icon">🔄</span>
-          <span id="btn-sync-gsc-text">Sync GSC Data</span>
-        </button>
-
-        <button
-          type="button"
-          id="btn-open-gsc-modal"
-          class="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition shadow-2xs cursor-pointer"
-        >
-          <span>⚙️</span> GSC Setup
-        </button>
-
         <button
           type="button"
           id="btn-trigger-audit"
@@ -103,7 +111,6 @@ const needsAttentionPages = (gscData?.topPages || [])
       </div>
     </div>
 
-    
     <div id="live-audit-status" class="hidden rounded-2xl p-4 text-xs font-bold shadow-xs"></div>
 
     {auditSuccess && (
@@ -116,19 +123,13 @@ const needsAttentionPages = (gscData?.topPages || [])
       </div>
     )}
 
-    
+    <!-- Navigation Tabs -->
     <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 dark:border-slate-800">
-      <a href="#gsc-performance" class="rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs shrink-0">
-        📈 GSC Performance &amp; Ops
-      </a>
-      <a href="#technical-audit" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+      <a href="#technical-audit" class="rounded-xl bg-blue-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs shrink-0">
         🩺 Technical Health Audit ({report.issues.length})
       </a>
       <a href="/admin/seo/bulk/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
         📝 Bulk Meta Editor
-      </a>
-      <a href="/admin/seo/indexing/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-purple-600 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/60 dark:text-purple-300 shrink-0 transition flex items-center gap-1">
-        <span>⚡</span> Instant Indexing
       </a>
       <a href="/admin/seo/duplicates/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
         👯 Duplicate Content ({report.duplicates.length})
@@ -144,622 +145,184 @@ const needsAttentionPages = (gscData?.topPages || [])
       </a>
     </div>
 
-    
-    
-    
-    <div id="gsc-performance" class="space-y-6">
-      
-      
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-        <div class="flex items-center gap-3">
-          <div class={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-lg ${
-            isGscConnected ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400' : 'bg-slate-100 text-slate-400 dark:bg-slate-800'
-          }`}>
-            {isGscConnected ? '🟢' : '⚪'}
+    <!-- Google Search Console Connection Card -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="flex items-center gap-3.5">
+          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-950/60">
+            <svg class="h-6 w-6" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+            </svg>
           </div>
           <div>
             <div class="flex items-center gap-2">
-              <span class="text-sm font-bold text-slate-900 dark:text-white">
-                Google Search Console
-              </span>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">
+                Google Search Console OAuth Integration
+              </h3>
               <span class={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                isGscConnected ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
+                googleAccount.connected
+                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                  : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
               }`}>
-                {isGscConnected ? 'Connected' : 'Not Connected'}
+                {googleAccount.connected ? 'Connected' : 'Not Connected'}
               </span>
             </div>
-            <p class="text-xs text-slate-500 dark:text-slate-400">
-              Property: <strong class="text-slate-700 dark:text-slate-300">{gscSnapshot.propertyUrl}</strong> • Last Synced: <strong class="text-slate-700 dark:text-slate-300">{lastGscSyncFormatted}</strong>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              {googleAccount.connected
+                ? `Authorized as ${googleAccount.email} • Search Console read access is active`
+                : '1-Click Gmail sign-in with owner or viewer access to your Search Console property'}
             </p>
           </div>
         </div>
 
-        
-        <div class="flex items-center gap-2 self-start md:self-center">
-          <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Range:</span>
-          <div class="inline-flex rounded-xl bg-slate-100 p-1 dark:bg-slate-800">
+        <div class="flex items-center gap-2 shrink-0">
+          {googleAccount.connected ? (
+            <>
+              <a
+                href="/api/auth/google/login?returnTo=/admin/seo/&scope=gsc"
+                class="rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition"
+              >
+                🔄 Switch Account
+              </a>
+              <button
+                type="button"
+                id="btn-disconnect-google"
+                class="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-bold text-red-600 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-950/50 dark:text-red-400 transition cursor-pointer"
+              >
+                Disconnect
+              </button>
+            </>
+          ) : (
             <a
-              href="?range=7d"
-              class={`rounded-lg px-3 py-1 text-xs font-bold transition ${
-                range === '7d'
-                  ? 'bg-white text-blue-600 shadow-xs dark:bg-slate-900 dark:text-blue-400'
-                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
-              }`}
+              href="/api/auth/google/login?returnTo=/admin/seo/&scope=gsc"
+              id="btn-connect-google"
+              class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-500/25 hover:bg-blue-700 transition cursor-pointer"
             >
-              7 Days
+              <span>Connect with Google Account (Gmail)</span> →
             </a>
-            <a
-              href="?range=28d"
-              class={`rounded-lg px-3 py-1 text-xs font-bold transition ${
-                range === '28d'
-                  ? 'bg-white text-blue-600 shadow-xs dark:bg-slate-900 dark:text-blue-400'
-                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
-              }`}
-            >
-              28 Days
-            </a>
-            <a
-              href="?range=3m"
-              class={`rounded-lg px-3 py-1 text-xs font-bold transition ${
-                range === '3m'
-                  ? 'bg-white text-blue-600 shadow-xs dark:bg-slate-900 dark:text-blue-400'
-                  : 'text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white'
-              }`}
-            >
-              3 Months
-            </a>
-          </div>
+          )}
         </div>
       </div>
 
-      {!isGscConnected && (
-        <div class="rounded-3xl border border-dashed border-slate-300 bg-slate-50/60 p-8 sm:p-12 text-center dark:border-slate-800 dark:bg-slate-900/30 space-y-4">
-          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-2xl dark:bg-blue-950/60">
-            📈
-          </div>
-          <div class="max-w-xl mx-auto">
-            <h3 class="text-lg font-extrabold text-slate-900 dark:text-white">
-              Connect Google Search Console Property
-            </h3>
-            <p class="text-xs text-slate-600 dark:text-slate-400 mt-1.5 leading-relaxed">
-              Choose your preferred connection method: 1-Click Direct Google (Gmail) Login or Manual Service Account API keys.
+      <!-- OAuth App Credentials Setup Details -->
+      {!googleAccount.connected && (
+        <details
+          id="gsc-credentials-details"
+          class="mt-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 p-4 text-left"
+          open={!isOAuthAppConfigured || googleSetupRequired}
+        >
+          <summary class="cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between select-none">
+            <span class="flex items-center gap-2">
+              <span>🛠️</span>
+              <span>OAuth 2.0 Credentials Status:</span>
+              {isOAuthAppConfigured ? (
+                <span class="rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
+                  Configured — existing secure credentials will be used
+                </span>
+              ) : (
+                <span class="rounded-full bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-400">
+                  Configuration Required
+                </span>
+              )}
+            </span>
+            <span class="text-[11px] text-blue-600 dark:text-blue-400">Configure</span>
+          </summary>
+
+          <div class="mt-3 space-y-3 text-xs border-t border-slate-200 dark:border-slate-800 pt-3">
+            <p class="text-[11px] text-slate-500 dark:text-slate-400">
+              To allow signing in with Google, add these URIs into your Google Cloud Console OAuth 2.0 Web Client:
             </p>
-          </div>
-          <div class="pt-2 flex flex-wrap justify-center gap-3">
-            <a
-              href="/api/auth/google/login?returnTo=/admin/seo/"
-              class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-500/25 hover:bg-blue-700 transition cursor-pointer"
-            >
-              <svg class="h-4 w-4 bg-white rounded-full p-0.5" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-              </svg>
-              <span>Method 1: Direct Google (Gmail) Login</span>
-            </a>
-            <button
-              type="button"
-              onclick="document.getElementById('modal-gsc-config')?.classList.remove('hidden')"
-              class="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition shadow-2xs cursor-pointer"
-            >
-              <span>🔑</span> Method 2: Manual Service Account API Key
-            </button>
-          </div>
-        </div>
-      )}
 
-      {isGscConnected && (
-        <div class="space-y-8">
-          
-          
-          {gscData?.performance && (
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              
-              
-              <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                <div class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Search Clicks</div>
-                <div class="mt-2 flex items-baseline gap-2">
-                  <span class="text-3xl font-black text-slate-900 dark:text-white font-mono">
-                    {gscData.performance.currentPeriod.summary.clicks.toLocaleString()}
-                  </span>
-                  <span class={`text-xs font-bold ${gscData.performance.deltas.clicks.isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
-                    {gscData.performance.deltas.clicks.isPositive ? '↑' : '↓'} {Math.abs(gscData.performance.deltas.clicks.percentageChange)}%
-                  </span>
-                </div>
-                <div class="mt-1 text-[11px] text-slate-400">
-                  Prev: {gscData.performance.previousPeriod.summary.clicks.toLocaleString()} clicks
-                </div>
-              </div>
-
-              
-              <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                <div class="text-xs font-bold uppercase tracking-wider text-slate-500">Total Impressions</div>
-                <div class="mt-2 flex items-baseline gap-2">
-                  <span class="text-3xl font-black text-slate-900 dark:text-white font-mono">
-                    {gscData.performance.currentPeriod.summary.impressions.toLocaleString()}
-                  </span>
-                  <span class={`text-xs font-bold ${gscData.performance.deltas.impressions.isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
-                    {gscData.performance.deltas.impressions.isPositive ? '↑' : '↓'} {Math.abs(gscData.performance.deltas.impressions.percentageChange)}%
-                  </span>
-                </div>
-                <div class="mt-1 text-[11px] text-slate-400">
-                  Prev: {gscData.performance.previousPeriod.summary.impressions.toLocaleString()} impressions
-                </div>
-              </div>
-
-              
-              <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                <div class="text-xs font-bold uppercase tracking-wider text-slate-500">Average CTR</div>
-                <div class="mt-2 flex items-baseline gap-2">
-                  <span class="text-3xl font-black text-slate-900 dark:text-white font-mono">
-                    {gscData.performance.currentPeriod.summary.ctr}%
-                  </span>
-                  <span class={`text-xs font-bold ${gscData.performance.deltas.ctr.isPositive ? 'text-emerald-600' : 'text-amber-600'}`}>
-                    {gscData.performance.deltas.ctr.isPositive ? '↑' : '↓'} {Math.abs(gscData.performance.deltas.ctr.delta)}%
-                  </span>
-                </div>
-                <div class="mt-1 text-[11px] text-slate-400">
-                  Prev: {gscData.performance.previousPeriod.summary.ctr}%
-                </div>
-              </div>
-
-              
-              <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-                <div class="text-xs font-bold uppercase tracking-wider text-slate-500">Average Position</div>
-                <div class="mt-2 flex items-baseline gap-2">
-                  <span class="text-3xl font-black text-slate-900 dark:text-white font-mono">
-                    {gscData.performance.currentPeriod.summary.position.toFixed(1)}
-                  </span>
-                  <span class={`text-xs font-bold ${gscData.performance.deltas.position.isPositive ? 'text-emerald-600' : 'text-red-600'}`}>
-                    {gscData.performance.deltas.position.isPositive ? '↑' : '↓'} {Math.abs(gscData.performance.deltas.position.delta).toFixed(1)} spots
-                  </span>
-                </div>
-                <div class="mt-1 text-[11px] text-slate-400">
-                  Prev: {gscData.performance.previousPeriod.summary.position.toFixed(1)}
-                </div>
-              </div>
-
-            </div>
-          )}
-
-          
-          <div class="space-y-4">
-            <div class="flex items-center justify-between">
+            <div class="space-y-2 font-mono text-[11px]">
               <div>
-                <h3 class="text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>🚀</span> Top SEO Opportunities ({gscData?.opportunities?.length || 0})
-                </h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Actionable striking-distance keywords, low-CTR page 1 queries, and high-impression pages.
-                </p>
-              </div>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {(!gscData?.opportunities || gscData.opportunities.length === 0) ? (
-                <div class="col-span-full rounded-3xl border border-slate-200 bg-white p-8 text-center text-xs text-slate-400 dark:border-slate-800 dark:bg-slate-900">
-                  No high-confidence opportunities detected in this timeframe. Check back as search impressions accumulate.
+                <label class="block font-sans font-semibold text-slate-700 dark:text-slate-300 text-[11px]">Authorized JavaScript Origin:</label>
+                <div class="mt-1 flex items-center gap-2">
+                  <input
+                    type="text"
+                    readonly
+                    value={oauthOrigin}
+                    class="w-full rounded-lg border border-slate-300 bg-white p-2 text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 text-[11px]"
+                  />
+                  <button
+                    type="button"
+                    class="btn-copy-val shrink-0 rounded-lg border border-slate-300 bg-white px-2.5 py-2 font-sans text-[11px] font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+                    data-copy={oauthOrigin}
+                  >
+                    Copy
+                  </button>
                 </div>
-              ) : (
-                gscData.opportunities.slice(0, 6).map((opp) => (
-                  <div class="rounded-3xl border border-blue-200/70 bg-white p-5 shadow-xs dark:border-blue-950 dark:bg-slate-900 flex flex-col justify-between hover:shadow-md transition">
-                    <div>
-                      <div class="flex items-center justify-between gap-2">
-                        <span class="rounded-full bg-blue-50 px-2.5 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300 border border-blue-200/50 dark:border-blue-900">
-                          {opp.type === 'position' ? 'Striking Distance' : opp.type === 'ctr' ? 'Low CTR' : 'Page 1 Potential'}
-                        </span>
-                        <span class="font-mono text-xs font-bold text-emerald-600">
-                          Score: {opp.opportunityScore}/100
-                        </span>
-                      </div>
+              </div>
 
-                      <div class="mt-3 flex items-center gap-2">
-                        <span class="text-lg">{opp.icon || '🧮'}</span>
-                        <h4 class="text-xs font-extrabold text-slate-900 dark:text-white truncate">
-                          {opp.calculatorName}
-                        </h4>
-                      </div>
-
-                      {opp.query && (
-                        <div class="mt-1 text-xs font-bold text-blue-600 dark:text-blue-400 font-mono">
-                          "{opp.query}"
-                        </div>
-                      )}
-
-                      <div class="mt-3 grid grid-cols-3 gap-2 text-center rounded-2xl bg-slate-50 p-2 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300 text-[11px] font-mono">
-                        <div>
-                          <span class="text-[9px] block text-slate-400 uppercase">Pos</span>
-                          <strong>#{opp.currentPosition.toFixed(1)}</strong>
-                        </div>
-                        <div>
-                          <span class="text-[9px] block text-slate-400 uppercase">Impr</span>
-                          <strong>{opp.impressions.toLocaleString()}</strong>
-                        </div>
-                        <div>
-                          <span class="text-[9px] block text-slate-400 uppercase">CTR</span>
-                          <strong>{opp.ctr}%</strong>
-                        </div>
-                      </div>
-
-                      <p class="mt-3 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-                        {opp.reason}
-                      </p>
-                    </div>
-
-                    <div class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-                      <span class="text-[11px] text-slate-400 font-medium truncate max-w-45">
-                        {opp.recommendedAction}
-                      </span>
-                      {opp.calculatorSlug ? (
-                        <a
-                          href={`/admin/seo/${opp.calculatorSlug}/?range=${range}`}
-                          class="rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300 shrink-0 transition"
-                        >
-                          View Details →
-                        </a>
-                      ) : (
-                        <a
-                          href={opp.pageUrl}
-                          target="_blank"
-                          class="text-xs text-blue-600 hover:underline shrink-0"
-                        >
-                          Visit ↗
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-
-          
-          <div class="space-y-4">
-            <div class="flex items-center justify-between">
               <div>
-                <h3 class="text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>📉</span> Content Decay Detection ({gscData?.decayAlerts?.length || 0})
-                </h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Pages with meaningful traffic decline or ranking drops requiring immediate content refreshment.
-                </p>
-              </div>
-            </div>
-
-            {(!gscData?.decayAlerts || gscData.decayAlerts.length === 0) ? (
-              <div class="rounded-3xl border border-emerald-200 bg-emerald-50/50 p-6 text-center text-xs font-semibold text-emerald-800 dark:border-emerald-900/40 dark:bg-emerald-950/20 dark:text-emerald-300">
-                ✅ Zero content decay alerts detected! All active pages maintained or grew traffic across comparison periods.
-              </div>
-            ) : (
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {gscData.decayAlerts.map((decay) => (
-                  <div class="rounded-3xl border border-red-200 bg-red-50/40 p-5 shadow-xs dark:border-red-900/50 dark:bg-red-950/20 flex flex-col justify-between">
-                    <div>
-                      <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                          <span class="text-lg">{decay.icon || '🧮'}</span>
-                          <h4 class="text-sm font-extrabold text-slate-900 dark:text-white">
-                            {decay.calculatorName}
-                          </h4>
-                        </div>
-                        <span class={`rounded-full px-2.5 py-0.5 text-[10px] font-black uppercase ${
-                          decay.priority === 'critical' ? 'bg-red-600 text-white animate-pulse' :
-                          decay.priority === 'high' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-                          'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200'
-                        }`}>
-                          {decay.priority}
-                        </span>
-                      </div>
-
-                      <div class="mt-3 flex items-center gap-4 text-xs font-mono">
-                        <div>
-                          <span class="text-slate-400 block text-[10px] uppercase">Traffic Drop</span>
-                          <strong class="text-red-600 text-sm">↓ {decay.trafficDeclinePercent}%</strong>
-                        </div>
-                        <div>
-                          <span class="text-slate-400 block text-[10px] uppercase">Clicks Shift</span>
-                          <span class="text-slate-700 dark:text-slate-300">{decay.previousClicks} → {decay.currentClicks}</span>
-                        </div>
-                        <div>
-                          <span class="text-slate-400 block text-[10px] uppercase">Position</span>
-                          <span class="text-slate-700 dark:text-slate-300">#{decay.previousPosition.toFixed(1)} → #{decay.currentPosition.toFixed(1)}</span>
-                        </div>
-                      </div>
-
-                      <p class="mt-3 text-xs text-slate-600 dark:text-slate-400">
-                        {decay.explanation}
-                      </p>
-                    </div>
-
-                    <div class="mt-4 pt-3 border-t border-red-100 dark:border-red-950 flex items-center justify-between">
-                      <span class="text-[11px] text-slate-500 truncate max-w-60">
-                        • {decay.recommendedFixes[0]}
-                      </span>
-                      {decay.calculatorSlug && (
-                        <a
-                          href={`/admin/seo/${decay.calculatorSlug}/?range=${range}`}
-                          class="rounded-lg bg-red-100 px-3 py-1 text-xs font-bold text-red-800 hover:bg-red-200 dark:bg-red-950 dark:text-red-200 transition"
-                        >
-                          Review &amp; Fix →
-                        </a>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-
-          
-          <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            
-            
-            <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-3">
-              <h4 class="text-xs font-black uppercase tracking-wider text-emerald-600 flex items-center gap-1.5">
-                <span>🔥</span> Top Growing Calculators
-              </h4>
-              {topGrowingPages.length === 0 ? (
-                <p class="text-xs text-slate-400 py-3">No significant growth outliers in this timeframe.</p>
-              ) : (
-                <div class="space-y-2">
-                  {topGrowingPages.map((p) => (
-                    <div class="flex items-center justify-between p-2 rounded-2xl bg-slate-50 dark:bg-slate-800/50 text-xs">
-                      <div class="flex items-center gap-2 truncate">
-                        <span>{p.icon || '🧮'}</span>
-                        <strong class="text-slate-800 dark:text-slate-200 truncate">{p.calculatorName || p.path}</strong>
-                      </div>
-                      <div class="flex items-center gap-3 shrink-0 font-mono">
-                        <span class="text-slate-500">{p.clicks} clicks</span>
-                        <span class="font-bold text-emerald-600">+{p.clickChangePercent}%</span>
-                      </div>
-                    </div>
-                  ))}
+                <label class="block font-sans font-semibold text-slate-700 dark:text-slate-300 text-[11px]">Authorized Redirect URI:</label>
+                <div class="mt-1 flex items-center gap-2">
+                  <input
+                    type="text"
+                    readonly
+                    value={oauthRedirectUri}
+                    class="w-full rounded-lg border border-slate-300 bg-white p-2 text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 text-[11px]"
+                  />
+                  <button
+                    type="button"
+                    class="btn-copy-val shrink-0 rounded-lg border border-slate-300 bg-white px-2.5 py-2 font-sans text-[11px] font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+                    data-copy={oauthRedirectUri}
+                  >
+                    Copy
+                  </button>
                 </div>
-              )}
+              </div>
             </div>
 
-            
-            <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-3">
-              <h4 class="text-xs font-black uppercase tracking-wider text-amber-600 flex items-center gap-1.5">
-                <span>⚠️</span> Needs Attention (Low CTR / Slipped)
-              </h4>
-              {needsAttentionPages.length === 0 ? (
-                <p class="text-xs text-slate-400 py-3">All top landing pages meet baseline CTR and ranking benchmarks.</p>
-              ) : (
-                <div class="space-y-2">
-                  {needsAttentionPages.map((p) => (
-                    <div class="flex items-center justify-between p-2 rounded-2xl bg-slate-50 dark:bg-slate-800/50 text-xs">
-                      <div class="flex items-center gap-2 truncate">
-                        <span>{p.icon || '🧮'}</span>
-                        <strong class="text-slate-800 dark:text-slate-200 truncate">{p.calculatorName || p.path}</strong>
-                      </div>
-                      <div class="flex items-center gap-3 shrink-0 font-mono">
-                        <span class="text-slate-500">{p.impressions.toLocaleString()} impr</span>
-                        <span class="font-bold text-amber-600">{p.ctr}% CTR</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-          </div>
-
-          
-          <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div class="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-3">
               <div>
-                <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>📄</span> Top Pages Performance
-                </h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Organic performance breakdown for public URLs on https://aifreecalculator.com/.
-                </p>
-              </div>
-
-              
-              <div class="flex flex-wrap items-center gap-2">
+                <label class="block font-semibold text-slate-700 dark:text-slate-300">Client ID</label>
                 <input
                   type="text"
-                  id="search-gsc-pages"
-                  placeholder="Filter pages..."
-                  class="rounded-xl border border-slate-300 bg-white py-1.5 px-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                  id="inp-oauth-client-id"
+                  placeholder={isOAuthAppConfigured ? 'Configured — existing secure value active' : '123456789-xxxx.apps.googleusercontent.com'}
+                  class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
               </div>
-            </div>
 
-            <div class="overflow-x-auto">
-              <table id="table-gsc-pages" class="w-full text-left text-xs">
-                <thead>
-                  <tr class="border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                    <th class="pb-3 pr-4">Page / Calculator</th>
-                    <th class="pb-3 px-3 text-right">Clicks</th>
-                    <th class="pb-3 px-3 text-right">Impressions</th>
-                    <th class="pb-3 px-3 text-right">CTR</th>
-                    <th class="pb-3 px-3 text-right">Avg Position</th>
-                    <th class="pb-3 px-3 text-right">Growth %</th>
-                    <th class="pb-3 pl-3 text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
-                  {(!gscData?.topPages || gscData.topPages.length === 0) ? (
-                    <tr>
-                      <td colspan="7" class="py-8 text-center text-slate-400">
-                        No page-level performance data recorded for this date range.
-                      </td>
-                    </tr>
-                  ) : (
-                    gscData.topPages.map((page) => (
-                      <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition page-table-row">
-                        <td class="py-3 pr-4">
-                          <div class="flex items-center gap-2">
-                            <span class="text-base">{page.icon || '📄'}</span>
-                            <div>
-                              <div class="font-bold text-slate-800 dark:text-slate-200 page-row-title">
-                                {page.calculatorName || page.path}
-                              </div>
-                              <div class="font-mono text-[10px] text-slate-400 truncate max-w-xs">
-                                {page.path}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td class="py-3 px-3 text-right font-mono font-bold text-slate-900 dark:text-white">
-                          {page.clicks.toLocaleString()}
-                        </td>
-                        <td class="py-3 px-3 text-right font-mono text-slate-600 dark:text-slate-300">
-                          {page.impressions.toLocaleString()}
-                        </td>
-                        <td class="py-3 px-3 text-right font-mono text-slate-600 dark:text-slate-300">
-                          {page.ctr}%
-                        </td>
-                        <td class="py-3 px-3 text-right font-mono font-semibold text-slate-800 dark:text-slate-200">
-                          #{page.position.toFixed(1)}
-                        </td>
-                        <td class="py-3 px-3 text-right font-mono font-bold">
-                          {page.clickChangePercent > 0 ? (
-                            <span class="text-emerald-600">+{page.clickChangePercent}%</span>
-                          ) : page.clickChangePercent < 0 ? (
-                            <span class="text-red-600">{page.clickChangePercent}%</span>
-                          ) : (
-                            <span class="text-slate-400">0%</span>
-                          )}
-                        </td>
-                        <td class="py-3 pl-3 text-right">
-                          {page.calculatorSlug ? (
-                            <a
-                              href={`/admin/seo/${page.calculatorSlug}/?range=${range}`}
-                              class="rounded-lg bg-blue-50 px-2.5 py-1 text-xs font-bold text-blue-700 hover:bg-blue-100 dark:bg-blue-950 dark:text-blue-300 transition"
-                            >
-                              Details →
-                            </a>
-                          ) : (
-                            <a
-                              href={page.url}
-                              target="_blank"
-                              class="text-xs text-blue-600 hover:underline"
-                            >
-                              Visit ↗
-                            </a>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          
-          <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div>
-                <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>🔍</span> Top Search Queries
-                </h3>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Organic queries sending impressions and clicks from Google Search.
-                </p>
+                <label class="block font-semibold text-slate-700 dark:text-slate-300">Client Secret</label>
+                <input
+                  type="password"
+                  id="inp-oauth-client-secret"
+                  placeholder={isOAuthAppConfigured ? '••••••••••••••••' : 'Enter Client Secret'}
+                  class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
               </div>
 
-              <input
-                type="text"
-                id="search-gsc-queries"
-                placeholder="Filter queries..."
-                class="rounded-xl border border-slate-300 bg-white py-1.5 px-3 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white"
-              />
-            </div>
+              <div id="oauth-creds-status" class="hidden rounded-xl p-2.5 text-xs font-bold"></div>
 
-            <div class="overflow-x-auto">
-              <table id="table-gsc-queries" class="w-full text-left text-xs">
-                <thead>
-                  <tr class="border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                    <th class="pb-3 pr-4">Search Query</th>
-                    <th class="pb-3 px-3 text-right">Clicks</th>
-                    <th class="pb-3 px-3 text-right">Impressions</th>
-                    <th class="pb-3 px-3 text-right">CTR</th>
-                    <th class="pb-3 px-3 text-right">Avg Position</th>
-                    <th class="pb-3 px-3 text-right">Trend</th>
-                    <th class="pb-3 pl-3 text-right">Landing Page</th>
-                  </tr>
-                </thead>
-                <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
-                  {(!gscData?.topQueries || gscData.topQueries.length === 0) ? (
-                    <tr>
-                      <td colspan="7" class="py-8 text-center text-slate-400">
-                        No query-level performance data recorded for this date range.
-                      </td>
-                    </tr>
-                  ) : (
-                    gscData.topQueries.slice(0, 50).map((q) => (
-                      <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40 transition query-table-row">
-                        <td class="py-2.5 pr-4 font-bold text-slate-800 dark:text-slate-200 query-row-text">
-                          {q.query}
-                        </td>
-                        <td class="py-2.5 px-3 text-right font-mono font-bold text-slate-900 dark:text-white">
-                          {q.clicks.toLocaleString()}
-                        </td>
-                        <td class="py-2.5 px-3 text-right font-mono text-slate-600 dark:text-slate-300">
-                          {q.impressions.toLocaleString()}
-                        </td>
-                        <td class="py-2.5 px-3 text-right font-mono text-slate-600 dark:text-slate-300">
-                          {q.ctr}%
-                        </td>
-                        <td class="py-2.5 px-3 text-right font-mono font-semibold text-slate-800 dark:text-slate-200">
-                          #{q.position.toFixed(1)}
-                        </td>
-                        <td class="py-2.5 px-3 text-right font-mono text-[11px]">
-                          {q.clickChangePercent > 0 ? (
-                            <span class="text-emerald-600 font-bold">+{q.clickChangePercent}%</span>
-                          ) : q.clickChangePercent < 0 ? (
-                            <span class="text-red-600 font-bold">{q.clickChangePercent}%</span>
-                          ) : (
-                            <span class="text-slate-400">--</span>
-                          )}
-                        </td>
-                        <td class="py-2.5 pl-3 text-right">
-                          {q.topCalculatorSlug ? (
-                            <a
-                              href={`/admin/seo/${q.topCalculatorSlug}/?range=${range}`}
-                              class="text-blue-600 hover:underline font-medium text-[11px]"
-                            >
-                              View Calculator →
-                            </a>
-                          ) : q.topPageUrl ? (
-                            <a
-                              href={q.topPageUrl}
-                              target="_blank"
-                              class="text-slate-400 hover:text-blue-600 text-[11px] truncate max-w-xs inline-block"
-                            >
-                              {q.topPageUrl.replace('https://aifreecalculator.com', '')}
-                            </a>
-                          ) : (
-                            <span class="text-slate-400">--</span>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+              <div class="flex items-center justify-between pt-1">
+                <span class="text-[11px] text-slate-400">
+                  Note: You can also configure via Cloudflare Worker secrets (<code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code>).
+                </span>
+                <button
+                  type="button"
+                  id="btn-save-oauth-creds"
+                  class="rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700 transition cursor-pointer"
+                >
+                  Save Credentials
+                </button>
+              </div>
             </div>
           </div>
-
-        </div>
+        </details>
       )}
-
     </div>
 
-    
-    
-    
-    <div id="technical-audit" class="space-y-6 pt-6 border-t border-slate-200 dark:border-slate-800">
+    <!-- Technical Health & Metadata Audit Section -->
+    <div id="technical-audit" class="space-y-6">
       
       <div class="flex items-center justify-between">
         <div>
-          <h3 class="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2">
+          <h3 class="text-xl font-black text-slate-900 dark:text-white flex items-center gap-2.5">
             <span>🩺</span> Technical Health &amp; Metadata Audit
           </h3>
           <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
@@ -768,7 +331,7 @@ const needsAttentionPages = (gscData?.topPages || [])
         </div>
       </div>
 
-      
+      <!-- KPI Summary Cards -->
       <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 sm:gap-4">
         <div data-kpi-filter="all" class="cursor-pointer rounded-3xl border border-slate-200 bg-white p-4 shadow-2xs hover:shadow-md hover:border-blue-400 transition-all dark:border-slate-800 dark:bg-slate-900" title="Click to show all issues">
           <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Pages Audited</div>
@@ -813,7 +376,7 @@ const needsAttentionPages = (gscData?.topPages || [])
         </div>
       </div>
 
-      
+      <!-- Issues List Container -->
       <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div class="flex flex-wrap items-center gap-2">
@@ -835,7 +398,6 @@ const needsAttentionPages = (gscData?.topPages || [])
           </div>
         </div>
 
-        
         <div id="issues-container" class="space-y-3 pt-2">
           {report.issues.map((issue) => (
             <div class="issue-card rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-950/40" data-severity={issue.severity} data-category={issue.category}>
@@ -867,159 +429,103 @@ const needsAttentionPages = (gscData?.topPages || [])
 
     </div>
 
-    
-    
-    
-    <div id="modal-gsc-config" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-950/60 p-4 backdrop-blur-xs">
-      <div class="min-h-full flex items-center justify-center">
-        <div class="w-full max-w-xl rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 space-y-5">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
-          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <span>⚙️</span> Connect Google Search Console
-          </h3>
-          <button
-            type="button"
-            onclick="document.getElementById('modal-gsc-config')?.classList.add('hidden')"
-            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm cursor-pointer"
-          >
-            ✕
-          </button>
-        </div>
-
-        <!-- Connection Method Tabs -->
-        <div class="flex items-center gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl text-xs font-bold">
-          <button
-            type="button"
-            id="tab-btn-gsc-oauth"
-            class="flex-1 py-2 px-3 rounded-xl bg-white text-blue-600 shadow-xs dark:bg-slate-900 dark:text-blue-400 text-center transition cursor-pointer"
-          >
-            ⚡ Method 1: Direct Google Login
-          </button>
-          <button
-            type="button"
-            id="tab-btn-gsc-manual"
-            class="flex-1 py-2 px-3 rounded-xl text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white text-center transition cursor-pointer"
-          >
-            🔑 Method 2: Manual API Setup
-          </button>
-        </div>
-
-        <!-- Tab 1: Direct Google Login Panel -->
-        <div id="panel-gsc-oauth" class="space-y-4 py-2 text-center">
-          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-2xl dark:bg-blue-950/60">
-            <svg class="h-8 w-8" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-            </svg>
-          </div>
-          <div>
-            <h4 class="text-sm font-black text-slate-900 dark:text-white">
-              1-Click Direct Google Authorization
-            </h4>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">
-              Sign in directly with the Gmail account having owner or viewer access to your Search Console property. No private keys or JSON files needed.
-            </p>
-          </div>
-          <div class="pt-2">
-            <a
-              href="/api/auth/google/login?returnTo=/admin/seo/"
-              class="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-6 py-3 text-xs font-bold text-white shadow-md shadow-blue-500/20 hover:bg-blue-700 transition"
-            >
-              <span>Connect with Google Account (Gmail)</span> →
-            </a>
-          </div>
-        </div>
-
-        <!-- Tab 2: Manual API Setup Panel -->
-        <div id="panel-gsc-manual" class="hidden space-y-4">
-        <form id="form-gsc-credentials" class="space-y-4 text-xs">
-          <div>
-            <label class="block font-semibold text-slate-700 dark:text-slate-300">Property URL or Domain Property</label>
-            <input
-              type="text"
-              id="inp-gsc-property"
-              value={gscSnapshot.propertyUrl || 'https://aifreecalculator.com/'}
-              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              placeholder="https://aifreecalculator.com/ or sc-domain:aifreecalculator.com"
-            />
-          </div>
-
-          <div>
-            <label class="block font-semibold text-slate-700 dark:text-slate-300">Service Account Client Email</label>
-            <input
-              type="email"
-              id="inp-gsc-email"
-              value={gscSnapshot.clientEmail || ''}
-              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              placeholder="gsc-bot@your-project.iam.gserviceaccount.com"
-            />
-          </div>
-
-          <div>
-            <label class="block font-semibold text-slate-700 dark:text-slate-300">
-              Private Key (PEM format with -----BEGIN PRIVATE KEY-----)
-            </label>
-            <textarea
-              id="inp-gsc-key"
-              rows="4"
-              class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 font-mono text-[11px] text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-              placeholder="-----BEGIN PRIVATE KEY-----&#10;MIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC...&#10;-----END PRIVATE KEY-----"
-            ></textarea>
-            <p class="text-[11px] text-slate-400 mt-1">
-              Tip: You can also paste your entire Google Cloud service account JSON file into either field, and it will be auto-parsed.
-            </p>
-          </div>
-
-          <div id="gsc-config-status" class="hidden rounded-xl p-3 text-xs font-bold"></div>
-
-          <div class="flex items-center justify-end gap-2 pt-2">
-            <button
-              type="button"
-              onclick="document.getElementById('modal-gsc-config')?.classList.add('hidden')"
-              class="rounded-xl border border-slate-300 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-300 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              id="btn-save-gsc"
-              class="rounded-xl bg-blue-600 px-5 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700 transition cursor-pointer"
-            >
-              Validate &amp; Connect
-            </button>
-          </div>
-        </form>
-        </div>
-      </div>
-    </div>
   </div>
 
-  </div>
-
-  
   <script is:inline>
-    function initGscDashboard() {
-      // Tab switcher in GSC Config Modal
-      const tabOauth = document.getElementById('tab-btn-gsc-oauth');
-      const tabManual = document.getElementById('tab-btn-gsc-manual');
-      const panelOauth = document.getElementById('panel-gsc-oauth');
-      const panelManual = document.getElementById('panel-gsc-manual');
-
-      if (tabOauth && tabManual && panelOauth && panelManual) {
-        tabOauth.addEventListener('click', () => {
-          tabOauth.className = 'flex-1 py-2 px-3 rounded-xl bg-white text-blue-600 shadow-xs dark:bg-slate-900 dark:text-blue-400 text-center transition cursor-pointer';
-          tabManual.className = 'flex-1 py-2 px-3 rounded-xl text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white text-center transition cursor-pointer';
-          panelOauth.classList.remove('hidden');
-          panelManual.classList.add('hidden');
+    function initSeoDashboard() {
+      // Copy values (origin & redirect URI)
+      document.querySelectorAll('.btn-copy-val').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const val = btn.getAttribute('data-copy');
+          if (val) {
+            navigator.clipboard.writeText(val);
+            const orig = btn.textContent;
+            btn.textContent = 'Copied!';
+            setTimeout(() => { btn.textContent = orig; }, 1500);
+          }
         });
+      });
 
-        tabManual.addEventListener('click', () => {
-          tabManual.className = 'flex-1 py-2 px-3 rounded-xl bg-white text-blue-600 shadow-xs dark:bg-slate-900 dark:text-blue-400 text-center transition cursor-pointer';
-          tabOauth.className = 'flex-1 py-2 px-3 rounded-xl text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white text-center transition cursor-pointer';
-          panelManual.classList.remove('hidden');
-          panelOauth.classList.add('hidden');
+      // Save OAuth credentials in details section
+      const btnSaveCreds = document.getElementById('btn-save-oauth-creds');
+      const inpClientId = document.getElementById('inp-oauth-client-id');
+      const inpClientSecret = document.getElementById('inp-oauth-client-secret');
+      const credsStatus = document.getElementById('oauth-creds-status');
+
+      if (btnSaveCreds) {
+        btnSaveCreds.addEventListener('click', async () => {
+          const clientId = inpClientId?.value?.trim() || '';
+          const clientSecret = inpClientSecret?.value?.trim() || '';
+
+          if (!clientId || !clientSecret) {
+            if (credsStatus) {
+              credsStatus.className = 'rounded-xl p-2.5 text-xs font-bold block bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300';
+              credsStatus.textContent = 'Please enter both Client ID and Client Secret.';
+            }
+            return;
+          }
+
+          btnSaveCreds.disabled = true;
+          btnSaveCreds.textContent = 'Saving...';
+
+          try {
+            const res = await fetch('/api/auth/google/config', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ clientId, clientSecret }),
+            });
+
+            const data = await res.json();
+            if (res.ok && data.success) {
+              if (credsStatus) {
+                credsStatus.className = 'rounded-xl p-2.5 text-xs font-bold block bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300';
+                credsStatus.textContent = '✅ OAuth credentials saved! You can now click Connect.';
+              }
+              setTimeout(() => {
+                const currentUrl = new URL(window.location.href);
+                currentUrl.searchParams.delete('google_setup');
+                window.location.href = currentUrl.toString();
+              }, 1000);
+            } else {
+              if (credsStatus) {
+                credsStatus.className = 'rounded-xl p-2.5 text-xs font-bold block bg-red-50 text-red-800 dark:bg-red-950/60 dark:text-red-300';
+                credsStatus.textContent = `❌ ${data.error || 'Failed to save credentials'}`;
+              }
+              btnSaveCreds.disabled = false;
+              btnSaveCreds.textContent = 'Save Credentials';
+            }
+          } catch (err) {
+            if (credsStatus) {
+              credsStatus.className = 'rounded-xl p-2.5 text-xs font-bold block bg-red-50 text-red-800 dark:bg-red-950/60 dark:text-red-300';
+              credsStatus.textContent = '❌ Network error saving credentials.';
+            }
+            btnSaveCreds.disabled = false;
+            btnSaveCreds.textContent = 'Save Credentials';
+          }
+        });
+      }
+
+      // Disconnect Google Account
+      const btnDisconnect = document.getElementById('btn-disconnect-google');
+      if (btnDisconnect) {
+        btnDisconnect.addEventListener('click', async () => {
+          if (!confirm('Disconnect this Google account from Search Console?')) return;
+          btnDisconnect.disabled = true;
+          btnDisconnect.textContent = 'Disconnecting...';
+          try {
+            const res = await fetch('/api/auth/google/disconnect', { method: 'POST' });
+            if (res.ok) {
+              window.location.reload();
+            } else {
+              alert('Failed to disconnect Google account.');
+              btnDisconnect.disabled = false;
+              btnDisconnect.textContent = 'Disconnect';
+            }
+          } catch {
+            alert('Network error disconnecting account.');
+            btnDisconnect.disabled = false;
+            btnDisconnect.textContent = 'Disconnect';
+          }
         });
       }
 
@@ -1034,31 +540,6 @@ const needsAttentionPages = (gscData?.topPages || [])
           }
         });
       });
-
-      // 1. Search Filter for Top Pages Table
-      const searchPages = document.getElementById('search-gsc-pages');
-      if (searchPages) {
-        searchPages.addEventListener('input', (e) => {
-          const q = (e.target.value || '').toLowerCase().trim();
-          document.querySelectorAll('.page-table-row').forEach((row) => {
-            const text = row.querySelector('.page-row-title')?.textContent?.toLowerCase() || '';
-            const path = row.querySelector('.font-mono')?.textContent?.toLowerCase() || '';
-            row.style.display = (text.includes(q) || path.includes(q)) ? '' : 'none';
-          });
-        });
-      }
-
-      // 2. Search Filter for Top Queries Table
-      const searchQueries = document.getElementById('search-gsc-queries');
-      if (searchQueries) {
-        searchQueries.addEventListener('input', (e) => {
-          const q = (e.target.value || '').toLowerCase().trim();
-          document.querySelectorAll('.query-table-row').forEach((row) => {
-            const text = row.querySelector('.query-row-text')?.textContent?.toLowerCase() || '';
-            row.style.display = text.includes(q) ? '' : 'none';
-          });
-        });
-      }
 
       // Re-run SEO Technical Audit
       window.triggerSeoAudit = async function () {
@@ -1120,136 +601,7 @@ const needsAttentionPages = (gscData?.topPages || [])
         btnTriggerAudit.addEventListener('click', window.triggerSeoAudit);
       }
 
-      // 3. Manual Sync Button
-      const btnSync = document.getElementById('btn-sync-gsc');
-      const btnSyncIcon = document.getElementById('btn-sync-gsc-icon');
-      const btnSyncText = document.getElementById('btn-sync-gsc-text');
-
-      if (btnSync) {
-        btnSync.addEventListener('click', async () => {
-          if (btnSync.disabled) return;
-          btnSync.disabled = true;
-          if (btnSyncIcon) btnSyncIcon.textContent = '⏳';
-          if (btnSyncText) btnSyncText.textContent = 'Syncing GSC...';
-
-          try {
-            const urlParams = new URLSearchParams(window.location.search);
-            const range = urlParams.get('range') || '28d';
-            const res = await fetch('/api/admin/seo/gsc/sync', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ range }),
-            });
-
-            const data = await res.json();
-            if (res.ok && data.success) {
-              if (btnSyncIcon) btnSyncIcon.textContent = '✓';
-              if (btnSyncText) btnSyncText.textContent = 'Synced!';
-              setTimeout(() => window.location.reload(), 600);
-            } else {
-              alert(data.error || 'Failed to sync with Search Console. Please verify credentials.');
-              btnSync.disabled = false;
-              if (btnSyncIcon) btnSyncIcon.textContent = '🔄';
-              if (btnSyncText) btnSyncText.textContent = 'Sync GSC Data';
-            }
-          } catch (err) {
-            alert('Network error while syncing Google Search Console data.');
-            btnSync.disabled = false;
-            if (btnSyncIcon) btnSyncIcon.textContent = '🔄';
-            if (btnSyncText) btnSyncText.textContent = 'Sync GSC Data';
-          }
-        });
-      }
-
-      // 4. GSC Credentials Form Submission
-      const formGsc = document.getElementById('form-gsc-credentials');
-      const statusBox = document.getElementById('gsc-config-status');
-      const btnSaveGsc = document.getElementById('btn-save-gsc');
-
-      if (formGsc) {
-        // Auto-parse if JSON pasted into email or key field
-        const inpEmail = document.getElementById('inp-gsc-email');
-        const inpKey = document.getElementById('inp-gsc-key');
-        const inpProperty = document.getElementById('inp-gsc-property');
-
-        const tryParseJson = (text) => {
-          try {
-            const parsed = JSON.parse(text);
-            if (parsed.client_email && parsed.private_key) {
-              if (inpEmail) inpEmail.value = parsed.client_email;
-              if (inpKey) inpKey.value = parsed.private_key;
-              return true;
-            }
-          } catch {}
-          return false;
-        };
-
-        inpKey?.addEventListener('paste', (e) => {
-          setTimeout(() => {
-            if (inpKey.value.includes('{') && tryParseJson(inpKey.value)) {
-              statusBox.className = 'rounded-xl p-3 text-xs font-bold block bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-300';
-              statusBox.textContent = '✓ Service Account JSON detected and auto-parsed successfully.';
-            }
-          }, 50);
-        });
-
-        formGsc.addEventListener('submit', async (e) => {
-          e.preventDefault();
-          if (btnSaveGsc.disabled) return;
-          btnSaveGsc.disabled = true;
-          btnSaveGsc.textContent = 'Connecting...';
-
-          statusBox.className = 'rounded-xl p-3 text-xs font-bold block bg-blue-50 text-blue-800 dark:bg-blue-950 dark:text-blue-300';
-          statusBox.textContent = '⚡ Authenticating with Google Search Console API...';
-
-          try {
-            const clientEmail = inpEmail?.value?.trim() || '';
-            let privateKey = inpKey?.value?.trim() || '';
-            const propertyUrl = inpProperty?.value?.trim() || 'https://aifreecalculator.com/';
-
-            // If user pasted raw JSON
-            if (privateKey.includes('{')) {
-              try {
-                const parsed = JSON.parse(privateKey);
-                if (parsed.private_key) privateKey = parsed.private_key;
-              } catch {}
-            }
-
-            const res = await fetch('/api/admin/seo/gsc', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ clientEmail, privateKey, propertyUrl }),
-            });
-
-            const result = await res.json();
-
-            if (res.ok && result.success) {
-              statusBox.className = 'rounded-xl p-3 text-xs font-bold block bg-emerald-50 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
-              statusBox.textContent = '✅ Google Search Console connected successfully! Reloading...';
-              setTimeout(() => window.location.reload(), 1000);
-            } else {
-              statusBox.className = 'rounded-xl p-3 text-xs font-bold block bg-red-50 text-red-800 dark:bg-red-950 dark:text-red-300';
-              statusBox.textContent = `❌ ${result.error || 'Authentication failed'}`;
-              btnSaveGsc.disabled = false;
-              btnSaveGsc.textContent = 'Validate & Connect';
-            }
-          } catch (err) {
-            statusBox.className = 'rounded-xl p-3 text-xs font-bold block bg-red-50 text-red-800 dark:bg-red-950 dark:text-red-300';
-            statusBox.textContent = '❌ Network error communicating with server.';
-            btnSaveGsc.disabled = false;
-            btnSaveGsc.textContent = 'Validate & Connect';
-          }
-        });
-      }
-
-      // 5. Open GSC Modal Button
-      const btnOpenModal = document.getElementById('btn-open-gsc-modal');
-      const modal = document.getElementById('modal-gsc-config');
-      if (btnOpenModal && modal) {
-        btnOpenModal.addEventListener('click', () => modal.classList.remove('hidden'));
-      }
-
-      // 6. Filter issue cards in technical audit
+      // Filter issue cards in technical audit
       const sevButtons = document.querySelectorAll('.sev-btn');
       const searchAudit = document.getElementById('search-audit-issues');
       let currentSeverity = 'all';
@@ -1278,9 +630,9 @@ const needsAttentionPages = (gscData?.topPages || [])
     }
 
     if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', initGscDashboard);
+      document.addEventListener('DOMContentLoaded', initSeoDashboard);
     } else {
-      initGscDashboard();
+      initSeoDashboard();
     }
   </script>
 </AdminLayout>

@@ -142,6 +142,41 @@ export function getDb(locals?: any): D1Database {
               return { results: [] as T[], success: true };
             }
           }
+          if (query.includes('cms_uptime_checks')) {
+            const store = await getLocalFileStorage();
+            const raw = store['_cms_uptime_checks_list'] || '[]';
+            try {
+              const list: any[] = JSON.parse(raw);
+              return { results: list as T[], success: true };
+            } catch {
+              return { results: [] as T[], success: true };
+            }
+          }
+          if (query.includes('cms_incidents')) {
+            const store = await getLocalFileStorage();
+            const raw = store['_cms_incidents_list'] || '[]';
+            try {
+              let list: any[] = JSON.parse(raw);
+              if (query.includes('affected_route = ?') && boundValues[0]) {
+                list = list.filter((i) => i.affected_route === boundValues[0]);
+              }
+              if (boundValues[0] && typeof boundValues[0] === 'string' && (boundValues[0] === 'open' || boundValues[0] === 'resolved')) {
+                list = list.filter((i) => i.status === boundValues[0]);
+              }
+              return { results: list as T[], success: true };
+            } catch {
+              return { results: [] as T[], success: true };
+            }
+          }
+          if (query.includes('cms_error_groups')) {
+            const store = await getLocalFileStorage();
+            const raw = store['_cms_error_groups_list'] || '[]';
+            try {
+              return { results: JSON.parse(raw) as T[], success: true };
+            } catch {
+              return { results: [] as T[], success: true };
+            }
+          }
           if (query.includes('SELECT * FROM calculator_stats') || query.includes('stats')) {
             const results = Object.entries(inMemoryStats).map(([slug, views]) => ({
               slug,
@@ -153,6 +188,40 @@ export function getDb(locals?: any): D1Database {
           return { results: [], success: true };
         },
         async first<T = Record<string, unknown>>() {
+          if (query.includes('1 as alive')) {
+            return { alive: 1 } as unknown as T;
+          }
+          if (query.includes('cms_uptime_checks')) {
+            const store = await getLocalFileStorage();
+            const raw = store['_cms_uptime_checks_list'] || '[]';
+            try {
+              const list: any[] = JSON.parse(raw);
+              if (query.includes('COUNT(*)')) {
+                const validChecks = list.filter((c) => c.failure_layer !== 'monitoring_layer');
+                const healthy = validChecks.filter((c) => c.status === 'healthy').length;
+                return { total: validChecks.length, healthy } as unknown as T;
+              }
+              if (query.includes('WHERE route = ?')) {
+                const route = boundValues[0] as string;
+                const match = list.find((c) => c.route === route);
+                return match ? (match as unknown as T) : null;
+              }
+            } catch {}
+            return null;
+          }
+          if (query.includes('cms_incidents')) {
+            const store = await getLocalFileStorage();
+            const raw = store['_cms_incidents_list'] || '[]';
+            try {
+              const list: any[] = JSON.parse(raw);
+              if (query.includes('affected_route = ?')) {
+                const route = boundValues[0] as string;
+                const match = list.find((i) => i.affected_route === route && (i.status === 'open' || i.status === 'investigating'));
+                return match ? (match as unknown as T) : null;
+              }
+            } catch {}
+            return null;
+          }
           if (query.includes('site_settings')) {
             const key = (boundValues[0] as string) || '';
             const localStore = await getLocalFileStorage();
@@ -167,6 +236,80 @@ export function getDb(locals?: any): D1Database {
           return null;
         },
         async run() {
+          if (query.includes('cms_uptime_checks')) {
+            if (query.includes('INSERT')) {
+              const checkObj = {
+                id: String(boundValues[0] || ''),
+                route: String(boundValues[1] || ''),
+                checked_at: String(boundValues[2] || new Date().toISOString()),
+                status_code: Number(boundValues[3] || 0),
+                response_time_ms: Number(boundValues[4] || 0),
+                status: String(boundValues[5] || 'healthy'),
+                error_message: boundValues[6] ? String(boundValues[6]) : null,
+                failure_layer: boundValues[7] ? String(boundValues[7]) : 'none',
+                failure_type: boundValues[8] ? String(boundValues[8]) : 'none',
+                source: boundValues[9] ? String(boundValues[9]) : 'server',
+              };
+              const store = await getLocalFileStorage();
+              const raw = store['_cms_uptime_checks_list'] || '[]';
+              let list: any[] = [];
+              try { list = JSON.parse(raw); } catch {}
+              list.unshift(checkObj);
+              if (list.length > 500) list = list.slice(0, 500);
+              await writeLocalFileStorage('_cms_uptime_checks_list', JSON.stringify(list));
+              return { success: true, meta: { changes: 1, duration: 1 } };
+            }
+            if (query.includes('DELETE')) {
+              return { success: true, meta: { changes: 0, duration: 1 } };
+            }
+          }
+          if (query.includes('cms_incidents')) {
+            const store = await getLocalFileStorage();
+            const raw = store['_cms_incidents_list'] || '[]';
+            let list: any[] = [];
+            try { list = JSON.parse(raw); } catch {}
+
+            if (query.includes('INSERT')) {
+              const incObj = {
+                id: String(boundValues[0] || ''),
+                title: String(boundValues[1] || ''),
+                severity: String(boundValues[2] || 'critical'),
+                affected_route: String(boundValues[3] || ''),
+                detected_at: String(boundValues[4] || new Date().toISOString()),
+                updated_at: String(boundValues[5] || new Date().toISOString()),
+                summary: String(boundValues[6] || ''),
+                occurrence_count: 1,
+                status: String(boundValues[7] || 'open'),
+              };
+              list.unshift(incObj);
+              await writeLocalFileStorage('_cms_incidents_list', JSON.stringify(list));
+              return { success: true, meta: { changes: 1, duration: 1 } };
+            }
+            if (query.includes('UPDATE cms_incidents SET status =')) {
+              const newStatus = String(boundValues[0] || 'resolved');
+              const updatedAt = String(boundValues[1] || new Date().toISOString());
+              const summaryOrId = boundValues[2];
+              const id = String(boundValues[3] || boundValues[2] || '');
+              const item = list.find((i) => i.id === id);
+              if (item) {
+                item.status = newStatus;
+                item.updated_at = updatedAt;
+                if (boundValues.length > 3) item.summary = String(summaryOrId);
+                await writeLocalFileStorage('_cms_incidents_list', JSON.stringify(list));
+              }
+              return { success: true, meta: { changes: 1, duration: 1 } };
+            }
+            if (query.includes('DELETE')) {
+              if (query.includes('WHERE id = ?')) {
+                const id = String(boundValues[0] || '');
+                list = list.filter((i) => i.id !== id);
+              } else if (query.includes("status IN ('resolved', 'ignored')")) {
+                list = list.filter((i) => i.status === 'open' || i.status === 'investigating');
+              }
+              await writeLocalFileStorage('_cms_incidents_list', JSON.stringify(list));
+              return { success: true, meta: { changes: 1, duration: 1 } };
+            }
+          }
           if (query.includes('contact_messages')) {
             if (query.includes('INSERT')) {
               const msg: ContactMessage = {

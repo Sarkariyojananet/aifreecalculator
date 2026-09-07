@@ -28,14 +28,20 @@ export interface GoogleConnectionData {
 const SETTINGS_KEY = 'google_oauth_connection';
 const CONFIG_KEY = 'google_oauth_config';
 
-const DEFAULT_SCOPES = [
+export const GSC_SCOPES = [
   'openid',
   'https://www.googleapis.com/auth/userinfo.email',
   'https://www.googleapis.com/auth/userinfo.profile',
   'https://www.googleapis.com/auth/webmasters.readonly',
+];
+
+export const ALL_SCOPES = [
+  ...GSC_SCOPES,
   'https://www.googleapis.com/auth/adsense.readonly',
   'https://www.googleapis.com/auth/indexing',
 ];
+
+export const DEFAULT_SCOPES = ALL_SCOPES;
 
 /**
  * Resolves Google OAuth Client credentials from environment or D1 settings.
@@ -100,13 +106,19 @@ export async function saveGoogleOAuthConfig(
 /**
  * Builds Google OAuth 2.0 consent authorization URL
  */
-export async function getGoogleAuthUrl(origin: string, locals?: any, state = 'admin'): Promise<string> {
+export async function getGoogleAuthUrl(
+  origin: string,
+  locals?: any,
+  state = 'admin',
+  scopeType: 'gsc' | 'all' = 'all'
+): Promise<string> {
   const config = await getGoogleOAuthConfig(locals);
   if (!config) {
     throw new Error('Google OAuth credentials not configured. Please set Client ID and Client Secret.');
   }
 
   const redirectUri = config.redirectUri || `${origin.replace(/\/$/, '')}/api/auth/google/callback`;
+  const scopes = scopeType === 'gsc' ? GSC_SCOPES : ALL_SCOPES;
 
   const params = new URLSearchParams({
     client_id: config.clientId,
@@ -114,7 +126,7 @@ export async function getGoogleAuthUrl(origin: string, locals?: any, state = 'ad
     response_type: 'code',
     access_type: 'offline',
     prompt: 'consent', // Ensures refresh token is always returned
-    scope: DEFAULT_SCOPES.join(' '),
+    scope: scopes.join(' '),
     state,
     include_granted_scopes: 'true',
   });

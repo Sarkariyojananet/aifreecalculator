@@ -22,6 +22,9 @@ export interface ErrorGroup {
 
 export type UptimeHealthStatus = 'healthy' | 'degraded' | 'down';
 
+export type FailureLayer = 'public_website' | 'monitoring_layer' | 'none';
+export type FailureReasonType = 'dns' | 'connection' | 'timeout' | 'http_5xx' | 'http_4xx' | 'cf_origin_loop' | 'none';
+
 export interface UptimeCheck {
   id: string;
   route: string;
@@ -30,6 +33,19 @@ export interface UptimeCheck {
   responseTimeMs: number;
   status: UptimeHealthStatus;
   errorMessage?: string;
+  failureLayer?: FailureLayer;
+  failureReasonType?: FailureReasonType;
+  source?: 'client' | 'server';
+}
+
+export interface ClientProbeResult {
+  route: string;
+  statusCode: number;
+  responseTimeMs: number;
+  status: UptimeHealthStatus;
+  errorMessage?: string;
+  failureLayer?: FailureLayer;
+  failureReasonType?: FailureReasonType;
 }
 
 export interface MonitoredRouteStatus {
@@ -42,6 +58,11 @@ export interface MonitoredRouteStatus {
   lastCheckedAt?: string;
   responseClassification?: 'good' | 'slow' | 'very_slow' | 'down' | 'unknown';
   recentFailureCount?: number;
+  failureLayer?: FailureLayer;
+  failureReasonType?: FailureReasonType;
+  failureReasonDescription?: string;
+  errorMessage?: string;
+  source?: 'client' | 'server';
 }
 
 export type IncidentSeverity = 'critical' | 'warning' | 'info';

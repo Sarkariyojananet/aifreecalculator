@@ -14,28 +14,32 @@ export const GET: APIRoute = async ({ request, cookies, locals, url }) => {
   }
 
   const returnTo = url.searchParams.get('returnTo') || '/admin/settings/';
+  const sep = returnTo.includes('?') ? '&' : '?';
+  const scopeParam = url.searchParams.get('scope');
+  const scopeType = scopeParam === 'gsc' || returnTo.includes('/seo/') ? 'gsc' : 'all';
+
   const config = await getGoogleOAuthConfig(locals);
 
   if (!config) {
     // If Client ID/Secret are not configured yet, redirect with helpful prompt
     return new Response(null, {
       status: 302,
-      headers: { Location: `${returnTo}?google_setup=required` },
+      headers: { Location: `${returnTo}${sep}google_setup=required` },
     });
   }
 
   try {
     const origin = url.origin;
-    const authUrl = await getGoogleAuthUrl(origin, locals, encodeURIComponent(returnTo));
+    const authUrl = await getGoogleAuthUrl(origin, locals, encodeURIComponent(returnTo), scopeType);
     return new Response(null, {
       status: 302,
       headers: { Location: authUrl },
     });
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Failed to generate Google auth URL';
-    return new Response(JSON.stringify({ error: msg }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json' },
+    return new Response(null, {
+      status: 302,
+      headers: { Location: `${returnTo}${sep}google_error=${encodeURIComponent(msg)}` },
     });
   }
 };

@@ -16,6 +16,8 @@ import type {
   IncidentStatus,
   IncidentSeverity,
   MonitoredRouteStatus,
+  FailureLayer,
+  FailureReasonType,
 } from './types';
 
 export const MONITORED_ROUTES: Array<{ route: string; label: string; category: 'core' | 'calculator' | 'api' }> = [
@@ -57,8 +59,16 @@ export async function initMonitoringTables(locals?: any): Promise<void> {
       status_code INTEGER NOT NULL,
       response_time_ms INTEGER NOT NULL,
       status TEXT NOT NULL,
-      error_message TEXT
+      error_message TEXT,
+      failure_layer TEXT,
+      failure_type TEXT,
+      source TEXT
     )`).run();
+
+    // Safely add columns for existing databases
+    try { await db.exec('ALTER TABLE cms_uptime_checks ADD COLUMN failure_layer TEXT'); } catch {}
+    try { await db.exec('ALTER TABLE cms_uptime_checks ADD COLUMN failure_type TEXT'); } catch {}
+    try { await db.exec('ALTER TABLE cms_uptime_checks ADD COLUMN source TEXT'); } catch {}
 
     await db.prepare(`CREATE INDEX IF NOT EXISTS idx_uptime_route_checked ON cms_uptime_checks(route, checked_at)`).run();
 
@@ -245,6 +255,9 @@ export async function recordUptimeCheck(
     responseTimeMs: number;
     status: UptimeHealthStatus;
     errorMessage?: string;
+    failureLayer?: FailureLayer;
+    failureReasonType?: FailureReasonType;
+    source?: 'client' | 'server';
   }
 ): Promise<void> {
   try {
@@ -257,20 +270,36 @@ export async function recordUptimeCheck(
     await db
       .prepare(`
         INSERT INTO cms_uptime_checks (
-          id, route, checked_at, status_code, response_time_ms, status, error_message
-        ) VALUES (?, ?, ?, ?, ?, ?, ?)
+          id, route, checked_at, status_code, response_time_ms, status, error_message, failure_layer, failure_type, source
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
-      .bind(id, check.route, now, check.statusCode, check.responseTimeMs, check.status, check.errorMessage || null)
+      .bind(
+        id,
+        check.route,
+        now,
+        check.statusCode,
+        check.responseTimeMs,
+        check.status,
+        check.errorMessage || null,
+        check.failureLayer || 'none',
+        check.failureReasonType || 'none',
+        check.source || 'server'
+      )
       .run();
 
-    // Trigger incident if health check failed
-    if (check.status === 'down') {
+    // Trigger incident ONLY if health check failed on public website (never for monitoring infrastructure limitations)
+    if (check.status === 'down' && check.failureLayer !== 'monitoring_layer') {
       await checkAndTriggerIncident(locals, {
         title: `Endpoint Down: ${check.route}`,
         severity: 'critical',
         affectedRoute: check.route,
         summary: check.errorMessage || `HTTP status ${check.statusCode} response`,
       });
+    }
+
+    // When the route is confirmed healthy (200 OK), auto-resolve any previous false 522/monitoring-loop incidents
+    if (check.status === 'healthy') {
+      await autoResolveFalseIncidents(locals, check.route);
     }
 
     // Clean up old checks older than 30 days (non-blocking cleanup)
@@ -281,6 +310,53 @@ export async function recordUptimeCheck(
       .run();
   } catch (err) {
     console.error('Failed to record uptime check:', err);
+  }
+}
+
+/**
+ * Automatically resolves previous false incidents triggered by Cloudflare 522 or monitoring loop limitations
+ */
+async function autoResolveFalseIncidents(locals: any, route: string): Promise<void> {
+  try {
+    const db = getDb(locals);
+    const now = new Date().toISOString();
+
+    // Find any open or investigating incidents for this route that mention 522 or probe timeout
+    const incidents = await db
+      .prepare(`
+        SELECT id, summary FROM cms_incidents
+        WHERE affected_route = ? AND status IN ('open', 'investigating')
+      `)
+      .bind(route)
+      .all<{ id: string; summary: string }>();
+
+    const rows = incidents.results || [];
+    for (const row of rows) {
+      if (
+        row.summary.includes('522') ||
+        row.summary.includes('loop') ||
+        row.summary.includes('Probe timed out') ||
+        row.summary.includes('monitoring infrastructure') ||
+        row.summary.includes('self-probe')
+      ) {
+        await db
+          .prepare(`
+            UPDATE cms_incidents
+            SET status = 'resolved',
+                updated_at = ?,
+                summary = ?
+            WHERE id = ?
+          `)
+          .bind(
+            now,
+            `${row.summary} [Resolved: Public route verified operational via authentic HTTP probe]`,
+            row.id
+          )
+          .run();
+      }
+    }
+  } catch (err) {
+    console.error('Failed to auto-resolve false incidents:', err);
   }
 }
 
@@ -457,7 +533,7 @@ export async function getMonitoredRouteStatuses(locals: any): Promise<MonitoredR
     for (const item of MONITORED_ROUTES) {
       const latest = await db
         .prepare(`
-          SELECT status_code, response_time_ms, status, checked_at
+          SELECT status_code, response_time_ms, status, checked_at, error_message, failure_layer, failure_type, source
           FROM cms_uptime_checks
           WHERE route = ?
           ORDER BY checked_at DESC LIMIT 1
@@ -474,8 +550,12 @@ export async function getMonitoredRouteStatuses(locals: any): Promise<MonitoredR
           responseClassification: 'unknown',
         });
       } else {
+        const failureLayer = (latest.failure_layer as FailureLayer) || 'none';
+        const failureType = (latest.failure_type as FailureReasonType) || 'none';
+        const isDown = latest.status === 'down' && failureLayer !== 'monitoring_layer';
+
         let classification: 'good' | 'slow' | 'very_slow' | 'down' = 'good';
-        if (latest.status === 'down' || latest.status_code >= 400) {
+        if (isDown || (latest.status_code >= 400 && failureLayer !== 'monitoring_layer')) {
           classification = 'down';
         } else if (latest.response_time_ms > 1500) {
           classification = 'very_slow';
@@ -483,15 +563,21 @@ export async function getMonitoredRouteStatuses(locals: any): Promise<MonitoredR
           classification = 'slow';
         }
 
+        const effectiveStatus: UptimeHealthStatus = failureLayer === 'monitoring_layer' ? 'healthy' : (latest.status as UptimeHealthStatus);
+
         statuses.push({
           route: item.route,
           label: item.label,
           category: item.category,
-          status: latest.status as UptimeHealthStatus,
+          status: effectiveStatus,
           statusCode: latest.status_code,
           responseTimeMs: latest.response_time_ms,
           lastCheckedAt: latest.checked_at,
           responseClassification: classification,
+          failureLayer,
+          failureReasonType: failureType,
+          errorMessage: latest.error_message || undefined,
+          source: latest.source || 'server',
         });
       }
     }
@@ -522,10 +608,11 @@ export async function getAuthenticUptimePercentage(locals: any): Promise<{ perce
           COUNT(*) as total,
           SUM(CASE WHEN status = 'healthy' THEN 1 ELSE 0 END) as healthy
         FROM cms_uptime_checks
+        WHERE failure_layer != 'monitoring_layer' OR failure_layer IS NULL
       `)
       .first<{ total: number; healthy: number }>();
 
-    if (!row || row.total < 5) {
+    if (!row || row.total < 1) {
       return { totalChecks: row?.total || 0 };
     }
 
