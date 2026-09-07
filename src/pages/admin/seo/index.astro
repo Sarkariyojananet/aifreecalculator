@@ -4,25 +4,11 @@ export const prerender = false;
 import AdminLayout from '../../../layouts/AdminLayout.astro';
 import { runFullSEOAudit } from '../../../lib/seo/audit-engine';
 import { authenticateAdminRequest } from '../../../lib/auth';
-import { getGoogleAccountStatus, getGoogleOAuthConfig } from '../../../lib/auth/google-oauth';
 
 const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
 if (!user) {
   return Astro.redirect('/admin/barwalaoffice/');
 }
-
-// Google OAuth & Search Console status
-const googleAccount = await getGoogleAccountStatus(Astro.locals);
-const googleOAuthConfig = await getGoogleOAuthConfig(Astro.locals);
-const isOAuthAppConfigured = !!googleOAuthConfig;
-const oauthOrigin = Astro.url.origin;
-const oauthRedirectUri = `${oauthOrigin}/api/auth/google/callback`;
-
-// Feedback query params
-const googleSetupRequired = Astro.url.searchParams.get('google_setup') === 'required';
-const googleConnectedSuccess = Astro.url.searchParams.get('google_connected') === 'success';
-const connectedAccountEmail = Astro.url.searchParams.get('account') || googleAccount.email || '';
-const googleErrorMessage = Astro.url.searchParams.get('google_error');
 
 // Run comprehensive rule-based technical SEO audit
 const report = await runFullSEOAudit(Astro.locals);
@@ -44,50 +30,13 @@ const auditSuccess = Astro.url.searchParams.get('audited');
 <AdminLayout title="SEO Intelligence & Health Dashboard | Calculator CMS" sectionTitle="SEO Intelligence" activeSection="seo" badge={`${report.criticalCount + report.highCount} Action Items`}>
   <div class="space-y-8 max-w-7xl mx-auto pb-16">
     
-    <!-- OAuth Status Banners -->
-    {googleConnectedSuccess && (
-      <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-semibold text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/60 dark:text-emerald-300 flex items-center justify-between gap-3 shadow-xs">
-        <div class="flex items-center gap-2.5">
-          <span class="text-base">✅</span>
-          <span>
-            Successfully connected Google Account <strong>{connectedAccountEmail}</strong>! Google Search Console access is active.
-          </span>
-        </div>
-        <button type="button" onclick="this.parentElement.remove()" class="text-emerald-600 hover:text-emerald-800 text-sm cursor-pointer">✕</button>
-      </div>
-    )}
-
-    {googleErrorMessage && (
-      <div class="rounded-2xl border border-red-200 bg-red-50 p-4 text-xs font-semibold text-red-800 dark:border-red-900/60 dark:bg-red-950/60 dark:text-red-300 flex items-center justify-between gap-3 shadow-xs">
-        <div class="flex items-center gap-2.5">
-          <span class="text-base">❌</span>
-          <span>
-            Google OAuth error: <strong>{googleErrorMessage}</strong>.
-          </span>
-        </div>
-        <button type="button" onclick="this.parentElement.remove()" class="text-red-600 hover:text-red-800 text-sm cursor-pointer">✕</button>
-      </div>
-    )}
-
-    {googleSetupRequired && (
-      <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-xs font-semibold text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/60 dark:text-amber-300 flex items-center justify-between gap-3 shadow-xs">
-        <div class="flex items-center gap-2.5">
-          <span class="text-base">⚠️</span>
-          <span>
-            Google OAuth Credentials required before connecting. Please configure your Client ID and Client Secret below or in Cloudflare Worker secrets.
-          </span>
-        </div>
-        <button type="button" onclick="document.getElementById('gsc-credentials-details')?.setAttribute('open', 'true')" class="underline cursor-pointer">View Setup</button>
-      </div>
-    )}
-
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
       <div>
         <h2 class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2.5">
           <span>🩺</span> SEO Intelligence Dashboard
         </h2>
         <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Automated technical SEO health audit, metadata verification, orphan detection, and Google Search Console integration.
+          Automated technical SEO health audit, metadata verification, and orphan link detection.
         </p>
       </div>
 
@@ -145,177 +94,6 @@ const auditSuccess = Astro.url.searchParams.get('audited');
       </a>
     </div>
 
-    <!-- Google Search Console Connection Card -->
-    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
-      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div class="flex items-center gap-3.5">
-          <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-950/60">
-            <svg class="h-6 w-6" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-            </svg>
-          </div>
-          <div>
-            <div class="flex items-center gap-2">
-              <h3 class="text-sm font-bold text-slate-900 dark:text-white">
-                Google Search Console OAuth Integration
-              </h3>
-              <span class={`rounded-full px-2.5 py-0.5 text-[10px] font-bold ${
-                googleAccount.connected
-                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                  : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400'
-              }`}>
-                {googleAccount.connected ? 'Connected' : 'Not Connected'}
-              </span>
-            </div>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-              {googleAccount.connected
-                ? `Authorized as ${googleAccount.email} • Search Console read access is active`
-                : '1-Click Gmail sign-in with owner or viewer access to your Search Console property'}
-            </p>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2 shrink-0">
-          {googleAccount.connected ? (
-            <>
-              <a
-                href="/api/auth/google/login?returnTo=/admin/seo/&scope=gsc"
-                class="rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition"
-              >
-                🔄 Switch Account
-              </a>
-              <button
-                type="button"
-                id="btn-disconnect-google"
-                class="rounded-xl border border-red-200 bg-red-50 px-3.5 py-2 text-xs font-bold text-red-600 hover:bg-red-100 dark:border-red-900/50 dark:bg-red-950/50 dark:text-red-400 transition cursor-pointer"
-              >
-                Disconnect
-              </button>
-            </>
-          ) : (
-            <a
-              href="/api/auth/google/login?returnTo=/admin/seo/&scope=gsc"
-              id="btn-connect-google"
-              class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm shadow-blue-500/25 hover:bg-blue-700 transition cursor-pointer"
-            >
-              <span>Connect with Google Account (Gmail)</span> →
-            </a>
-          )}
-        </div>
-      </div>
-
-      <!-- OAuth App Credentials Setup Details -->
-      {!googleAccount.connected && (
-        <details
-          id="gsc-credentials-details"
-          class="mt-2 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 p-4 text-left"
-          open={!isOAuthAppConfigured || googleSetupRequired}
-        >
-          <summary class="cursor-pointer text-xs font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between select-none">
-            <span class="flex items-center gap-2">
-              <span>🛠️</span>
-              <span>OAuth 2.0 Credentials Status:</span>
-              {isOAuthAppConfigured ? (
-                <span class="rounded-full bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
-                  Configured — existing secure credentials will be used
-                </span>
-              ) : (
-                <span class="rounded-full bg-amber-100 dark:bg-amber-950/60 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-400">
-                  Configuration Required
-                </span>
-              )}
-            </span>
-            <span class="text-[11px] text-blue-600 dark:text-blue-400">Configure</span>
-          </summary>
-
-          <div class="mt-3 space-y-3 text-xs border-t border-slate-200 dark:border-slate-800 pt-3">
-            <p class="text-[11px] text-slate-500 dark:text-slate-400">
-              To allow signing in with Google, add these URIs into your Google Cloud Console OAuth 2.0 Web Client:
-            </p>
-
-            <div class="space-y-2 font-mono text-[11px]">
-              <div>
-                <label class="block font-sans font-semibold text-slate-700 dark:text-slate-300 text-[11px]">Authorized JavaScript Origin:</label>
-                <div class="mt-1 flex items-center gap-2">
-                  <input
-                    type="text"
-                    readonly
-                    value={oauthOrigin}
-                    class="w-full rounded-lg border border-slate-300 bg-white p-2 text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 text-[11px]"
-                  />
-                  <button
-                    type="button"
-                    class="btn-copy-val shrink-0 rounded-lg border border-slate-300 bg-white px-2.5 py-2 font-sans text-[11px] font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
-                    data-copy={oauthOrigin}
-                  >
-                    Copy
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label class="block font-sans font-semibold text-slate-700 dark:text-slate-300 text-[11px]">Authorized Redirect URI:</label>
-                <div class="mt-1 flex items-center gap-2">
-                  <input
-                    type="text"
-                    readonly
-                    value={oauthRedirectUri}
-                    class="w-full rounded-lg border border-slate-300 bg-white p-2 text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 text-[11px]"
-                  />
-                  <button
-                    type="button"
-                    class="btn-copy-val shrink-0 rounded-lg border border-slate-300 bg-white px-2.5 py-2 font-sans text-[11px] font-bold text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
-                    data-copy={oauthRedirectUri}
-                  >
-                    Copy
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            <div class="pt-2 border-t border-slate-200 dark:border-slate-800 space-y-3">
-              <div>
-                <label class="block font-semibold text-slate-700 dark:text-slate-300">Client ID</label>
-                <input
-                  type="text"
-                  id="inp-oauth-client-id"
-                  placeholder={isOAuthAppConfigured ? 'Configured — existing secure value active' : '123456789-xxxx.apps.googleusercontent.com'}
-                  class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                />
-              </div>
-
-              <div>
-                <label class="block font-semibold text-slate-700 dark:text-slate-300">Client Secret</label>
-                <input
-                  type="password"
-                  id="inp-oauth-client-secret"
-                  placeholder={isOAuthAppConfigured ? '••••••••••••••••' : 'Enter Client Secret'}
-                  class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-xs text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
-                />
-              </div>
-
-              <div id="oauth-creds-status" class="hidden rounded-xl p-2.5 text-xs font-bold"></div>
-
-              <div class="flex items-center justify-between pt-1">
-                <span class="text-[11px] text-slate-400">
-                  Note: You can also configure via Cloudflare Worker secrets (<code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code>).
-                </span>
-                <button
-                  type="button"
-                  id="btn-save-oauth-creds"
-                  class="rounded-xl bg-slate-900 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-slate-800 dark:bg-blue-600 dark:hover:bg-blue-700 transition cursor-pointer"
-                >
-                  Save Credentials
-                </button>
-              </div>
-            </div>
-          </div>
-        </details>
-      )}
-    </div>
 
     <!-- Technical Health & Metadata Audit Section -->
     <div id="technical-audit" class="space-y-6">
@@ -433,101 +211,6 @@ const auditSuccess = Astro.url.searchParams.get('audited');
 
   <script is:inline>
     function initSeoDashboard() {
-      // Copy values (origin & redirect URI)
-      document.querySelectorAll('.btn-copy-val').forEach((btn) => {
-        btn.addEventListener('click', () => {
-          const val = btn.getAttribute('data-copy');
-          if (val) {
-            navigator.clipboard.writeText(val);
-            const orig = btn.textContent;
-            btn.textContent = 'Copied!';
-            setTimeout(() => { btn.textContent = orig; }, 1500);
-          }
-        });
-      });
-
-      // Save OAuth credentials in details section
-      const btnSaveCreds = document.getElementById('btn-save-oauth-creds');
-      const inpClientId = document.getElementById('inp-oauth-client-id');
-      const inpClientSecret = document.getElementById('inp-oauth-client-secret');
-      const credsStatus = document.getElementById('oauth-creds-status');
-
-      if (btnSaveCreds) {
-        btnSaveCreds.addEventListener('click', async () => {
-          const clientId = inpClientId?.value?.trim() || '';
-          const clientSecret = inpClientSecret?.value?.trim() || '';
-
-          if (!clientId || !clientSecret) {
-            if (credsStatus) {
-              credsStatus.className = 'rounded-xl p-2.5 text-xs font-bold block bg-amber-50 text-amber-800 dark:bg-amber-950/60 dark:text-amber-300';
-              credsStatus.textContent = 'Please enter both Client ID and Client Secret.';
-            }
-            return;
-          }
-
-          btnSaveCreds.disabled = true;
-          btnSaveCreds.textContent = 'Saving...';
-
-          try {
-            const res = await fetch('/api/auth/google/config', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ clientId, clientSecret }),
-            });
-
-            const data = await res.json();
-            if (res.ok && data.success) {
-              if (credsStatus) {
-                credsStatus.className = 'rounded-xl p-2.5 text-xs font-bold block bg-emerald-50 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300';
-                credsStatus.textContent = '✅ OAuth credentials saved! You can now click Connect.';
-              }
-              setTimeout(() => {
-                const currentUrl = new URL(window.location.href);
-                currentUrl.searchParams.delete('google_setup');
-                window.location.href = currentUrl.toString();
-              }, 1000);
-            } else {
-              if (credsStatus) {
-                credsStatus.className = 'rounded-xl p-2.5 text-xs font-bold block bg-red-50 text-red-800 dark:bg-red-950/60 dark:text-red-300';
-                credsStatus.textContent = `❌ ${data.error || 'Failed to save credentials'}`;
-              }
-              btnSaveCreds.disabled = false;
-              btnSaveCreds.textContent = 'Save Credentials';
-            }
-          } catch (err) {
-            if (credsStatus) {
-              credsStatus.className = 'rounded-xl p-2.5 text-xs font-bold block bg-red-50 text-red-800 dark:bg-red-950/60 dark:text-red-300';
-              credsStatus.textContent = '❌ Network error saving credentials.';
-            }
-            btnSaveCreds.disabled = false;
-            btnSaveCreds.textContent = 'Save Credentials';
-          }
-        });
-      }
-
-      // Disconnect Google Account
-      const btnDisconnect = document.getElementById('btn-disconnect-google');
-      if (btnDisconnect) {
-        btnDisconnect.addEventListener('click', async () => {
-          if (!confirm('Disconnect this Google account from Search Console?')) return;
-          btnDisconnect.disabled = true;
-          btnDisconnect.textContent = 'Disconnecting...';
-          try {
-            const res = await fetch('/api/auth/google/disconnect', { method: 'POST' });
-            if (res.ok) {
-              window.location.reload();
-            } else {
-              alert('Failed to disconnect Google account.');
-              btnDisconnect.disabled = false;
-              btnDisconnect.textContent = 'Disconnect';
-            }
-          } catch {
-            alert('Network error disconnecting account.');
-            btnDisconnect.disabled = false;
-            btnDisconnect.textContent = 'Disconnect';
-          }
-        });
-      }
 
       // KPI Card Click Filter
       document.querySelectorAll('[data-kpi-filter]').forEach((kpi) => {
