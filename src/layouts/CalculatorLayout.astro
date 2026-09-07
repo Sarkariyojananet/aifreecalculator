@@ -7,6 +7,7 @@ import AdSlotSidebar from '../components/ads/AdSlotSidebar.astro';
 import AdSlotFooter from '../components/ads/AdSlotFooter.astro';
 import { calculators, type CalculatorCategory } from '../data/calculators';
 import { getInternalLinks, getCalculatorOverrides } from '../lib/admin/content-store';
+import { buildCalculatorGraphSchema } from '../lib/seo/schema-builder';
 
 interface Props {
   title: string;
@@ -64,6 +65,14 @@ const popularCrossCategory = calculators
   .slice(0, 5);
 
 const categoryPath = `/${category.toLowerCase()}/`;
+
+// Build interconnected Schema.org @graph (WebApplication + BreadcrumbList + HowTo)
+const graphSchema = buildCalculatorGraphSchema({
+  name: effectiveName,
+  description: effectiveDescription,
+  url: Astro.url.href,
+  category,
+});
 ---
 
 <BaseLayout
@@ -75,22 +84,8 @@ const categoryPath = `/${category.toLowerCase()}/`;
   ogImage={resolvedOgImage}
 >
   <Fragment slot="head">
-    <!-- JSON-LD WebApplication / SoftwareApplication Schema -->
-    <script type="application/ld+json" set:html={JSON.stringify({
-      "@context": "https://schema.org",
-      "@type": "WebApplication",
-      "name": effectiveName,
-      "applicationCategory": `${category}Application`,
-      "operatingSystem": "All",
-      "browserRequirements": "Requires JavaScript. Requires HTML5.",
-      "description": effectiveDescription,
-      "url": Astro.url.href,
-      "offers": {
-        "@type": "Offer",
-        "price": "0",
-        "priceCurrency": "USD"
-      }
-    })} />
+    <!-- JSON-LD Multi-Schema @graph (WebApplication + BreadcrumbList + HowTo) -->
+    <script type="application/ld+json" set:html={JSON.stringify(graphSchema)} />
   </Fragment>
 
   <!-- Breadcrumbs & Hero Header -->

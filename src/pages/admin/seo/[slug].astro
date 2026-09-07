@@ -6,6 +6,9 @@ import { calculators } from '../../../data/calculators';
 import { authenticateAdminRequest } from '../../../lib/auth';
 import { syncGscPerformanceData } from '../../../lib/seo/gsc-store';
 import type { GscDateRange } from '../../../lib/seo/gsc-types';
+import { analyzeFocusKeyword } from '../../../lib/seo/focus-keyword';
+import { getCalculatorOverrides, getInternalLinks } from '../../../lib/admin/content-store';
+import { getLivePageMeta } from '../../../lib/seo/page-metadata';
 
 const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
 if (!user) {
@@ -18,6 +21,26 @@ const calc = calculators.find((c) => c.slug === slug);
 if (!calc) {
   return Astro.redirect('/admin/seo/');
 }
+
+const overrides = await getCalculatorOverrides(Astro.locals);
+const override = overrides[calc.slug] || {};
+const liveMeta = getLivePageMeta(calc.slug, calc.name, calc.description);
+const internalLinks = await getInternalLinks(Astro.locals);
+const relatedSlugs = internalLinks[calc.slug] || [];
+
+const initialFocusKeyword = (override.focusKeyword || calc.name.toLowerCase()).trim();
+const effectiveTitle = override.metaTitle || liveMeta.title;
+const effectiveDescription = override.metaDescription || override.description || liveMeta.description;
+
+const focusAudit = analyzeFocusKeyword({
+  keyword: initialFocusKeyword,
+  title: effectiveTitle,
+  description: effectiveDescription,
+  slug: calc.slug,
+  content: calc.description,
+  internalLinksCount: relatedSlugs.length || 3,
+  hasSchema: true,
+});
 
 const requestedRange = (Astro.url.searchParams.get('range') || '28d') as GscDateRange;
 const range: GscDateRange = requestedRange === '7d' || requestedRange === '3m' ? requestedRange : '28d';
@@ -124,6 +147,14 @@ const lastSyncFormatted = snapshot.lastSyncedAt
           >
             <span>🛡️</span> Health Diagnostics
           </a>
+          <button
+            type="button"
+            id="btn-instant-index-single"
+            data-url={calc.path}
+            class="inline-flex items-center gap-1.5 rounded-xl bg-purple-600 px-3.5 py-2 text-xs font-bold text-white shadow-sm shadow-purple-500/20 hover:bg-purple-700 transition cursor-pointer"
+          >
+            <span>⚡</span> Instant Index
+          </button>
           <a
             href={`/admin/seo/bulk/?category=${encodeURIComponent(calc.category)}`}
             class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm shadow-blue-500/20 hover:bg-blue-700 transition cursor-pointer"
@@ -134,7 +165,124 @@ const lastSyncFormatted = snapshot.lastSyncedAt
       </div>
     </div>
 
-    
+    <!-- Rank Math Pro Focus Keyword Analyzer & 100-Point Scorecard -->
+    <div class="rounded-3xl border border-purple-200/80 bg-white p-6 shadow-xl shadow-purple-900/5 dark:border-purple-900/50 dark:bg-slate-900 space-y-6">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-5">
+        <div class="flex items-center gap-3">
+          <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-purple-100 text-xl dark:bg-purple-950/80 dark:text-purple-300">
+            🎯
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <h2 class="text-base font-black text-slate-900 dark:text-white">
+                Rank Math Pro Focus Keyword Scorecard
+              </h2>
+              <span class="rounded-md bg-purple-50 px-2 py-0.5 text-[10px] font-bold text-purple-700 dark:bg-purple-950 dark:text-purple-300">
+                100-Point Checklist
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Live on-page SEO analyzer scoring Title, Meta, Density, URL slug, and Readability.
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 self-start md:self-auto">
+          <div class="text-right">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">SEO Score</span>
+            <div class="flex items-baseline gap-1 justify-end">
+              <span id="live-score-val" class={`text-3xl font-black font-mono ${
+                focusAudit.score >= 80 ? 'text-emerald-600 dark:text-emerald-400' :
+                focusAudit.score >= 50 ? 'text-amber-600 dark:text-amber-400' :
+                'text-rose-600 dark:text-rose-400'
+              }`}>
+                {focusAudit.score}
+              </span>
+              <span class="text-xs font-bold text-slate-400">/ 100</span>
+            </div>
+          </div>
+
+          <div class={`flex h-12 w-12 items-center justify-center rounded-2xl font-black text-white text-xs ${
+            focusAudit.score >= 80 ? 'bg-emerald-500 shadow-emerald-500/20' :
+            focusAudit.score >= 50 ? 'bg-amber-500 shadow-amber-500/20' :
+            'bg-rose-500 shadow-rose-500/20'
+          } shadow-lg`}>
+            {focusAudit.score >= 80 ? 'GREAT' : focusAudit.score >= 50 ? 'FAIR' : 'POOR'}
+          </div>
+        </div>
+      </div>
+
+      <!-- Keyword Input & Fast Metric Badges -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="md:col-span-2">
+          <label for="focus-kw-input" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+            Focus Keyword (Target Search Query):
+          </label>
+          <div class="flex items-center gap-2">
+            <input
+              type="text"
+              id="focus-kw-input"
+              value={initialFocusKeyword}
+              placeholder="e.g. concrete material calculator"
+              class="flex-1 rounded-2xl border border-slate-300 bg-white py-2.5 px-3.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white focus:border-purple-600 focus:outline-hidden"
+            />
+            <button
+              type="button"
+              id="btn-recalc-kw"
+              class="rounded-2xl bg-slate-900 text-white dark:bg-purple-600 px-4 py-2.5 text-xs font-bold hover:opacity-90 transition cursor-pointer shrink-0"
+            >
+              Analyze
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 text-center p-3 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-100 dark:border-slate-800">
+          <div>
+            <div class="text-[10px] font-bold text-slate-400 uppercase">Words</div>
+            <div id="kw-stat-words" class="text-sm font-black text-slate-800 dark:text-slate-200 mt-0.5">{focusAudit.wordCount}</div>
+          </div>
+          <div>
+            <div class="text-[10px] font-bold text-slate-400 uppercase">Mentions</div>
+            <div id="kw-stat-count" class="text-sm font-black text-purple-600 dark:text-purple-400 mt-0.5">{focusAudit.keywordCount}x</div>
+          </div>
+          <div>
+            <div class="text-[10px] font-bold text-slate-400 uppercase">Density</div>
+            <div id="kw-stat-density" class="text-sm font-black text-slate-800 dark:text-slate-200 mt-0.5">{focusAudit.keywordDensity}%</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Test Breakdown Checklist -->
+      <div class="space-y-2 pt-2" id="checklist-container">
+        <div class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">
+          Diagnostic Checklist ({focusAudit.summary.passedCount} Passed, {focusAudit.summary.failedCount} Needs Attention):
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {focusAudit.tests.map((test) => (
+            <div class={`rounded-2xl p-3.5 border text-xs transition ${
+              test.passed
+                ? 'bg-emerald-50/40 border-emerald-200/80 dark:bg-emerald-950/20 dark:border-emerald-900/40'
+                : 'bg-amber-50/40 border-amber-200/80 dark:bg-amber-950/20 dark:border-amber-900/40'
+            }`}>
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2 font-bold text-slate-900 dark:text-white">
+                  <span>{test.passed ? '✅' : '⚠️'}</span>
+                  <span>{test.title}</span>
+                </div>
+                <span class={`text-[11px] font-mono font-bold ${test.passed ? 'text-emerald-700 dark:text-emerald-400' : 'text-amber-700 dark:text-amber-400'}`}>
+                  {test.scoreEarned} / {test.maxScore} pts
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 pl-6">
+                {test.recommendation}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+
     <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
       <div class="flex items-center gap-2">
         <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Date Comparison:</span>
@@ -518,4 +666,104 @@ const lastSyncFormatted = snapshot.lastSyncedAt
     )}
 
   </div>
+
+  <script is:inline>
+    // 1. Instant Indexing handler
+    const btnIndex = document.getElementById('btn-instant-index-single');
+    if (btnIndex) {
+      btnIndex.addEventListener('click', async () => {
+        const url = btnIndex.getAttribute('data-url');
+        if (!url) return;
+        btnIndex.disabled = true;
+        btnIndex.innerHTML = '<span>⏳</span> Indexing...';
+
+        try {
+          const res = await fetch('/api/admin/seo/instant-index', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            alert('✅ Instant Indexing Dispatched!\n' + (data.result?.responseMessage || 'Submitted to Google & IndexNow.'));
+            btnIndex.innerHTML = '<span>✅</span> Dispatched';
+          } else {
+            alert('⚠️ ' + (data.error || 'Failed to dispatch indexing.'));
+            btnIndex.innerHTML = '<span>⚡</span> Instant Index';
+            btnIndex.disabled = false;
+          }
+        } catch {
+          alert('Network error while requesting instant indexing.');
+          btnIndex.innerHTML = '<span>⚡</span> Instant Index';
+          btnIndex.disabled = false;
+        }
+      });
+    }
+
+    // 2. Dynamic Focus Keyword Analyzer
+    const kwInput = document.getElementById('focus-kw-input');
+    const btnRecalc = document.getElementById('btn-recalc-kw');
+
+    async function evaluateKeyword() {
+      const kw = kwInput ? kwInput.value.trim() : '';
+      if (!kw) return;
+      if (btnRecalc) {
+        btnRecalc.disabled = true;
+        btnRecalc.innerText = 'Analyzing...';
+      }
+
+      try {
+        const res = await fetch('/api/admin/seo/focus-keyword', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            keyword: kw,
+            title: document.title,
+            description: '',
+            slug: window.location.pathname.split('/').filter(Boolean).pop() || '',
+          }),
+        });
+        const data = await res.json();
+        if (data.success && data.result) {
+          const r = data.result;
+          const scoreEl = document.getElementById('live-score-val');
+          if (scoreEl) {
+            scoreEl.innerText = r.score;
+            scoreEl.className = 'text-3xl font-black font-mono ' + (
+              r.score >= 80 ? 'text-emerald-600 dark:text-emerald-400' :
+              r.score >= 50 ? 'text-amber-600 dark:text-amber-400' :
+              'text-rose-600 dark:text-rose-400'
+            );
+          }
+
+          const wordsEl = document.getElementById('kw-stat-words');
+          if (wordsEl) wordsEl.innerText = r.wordCount;
+
+          const countEl = document.getElementById('kw-stat-count');
+          if (countEl) countEl.innerText = r.keywordCount + 'x';
+
+          const densityEl = document.getElementById('kw-stat-density');
+          if (densityEl) densityEl.innerText = r.keywordDensity + '%';
+        }
+      } catch {}
+      finally {
+        if (btnRecalc) {
+          btnRecalc.disabled = false;
+          btnRecalc.innerText = 'Analyze';
+        }
+      }
+    }
+
+    if (btnRecalc) {
+      btnRecalc.addEventListener('click', evaluateKeyword);
+    }
+    if (kwInput) {
+      kwInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          evaluateKeyword();
+        }
+      });
+    }
+  </script>
 </AdminLayout>

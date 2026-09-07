@@ -609,13 +609,13 @@ export async function runFullSEOAudit(locals?: any): Promise<SEOAuditReport> {
   const lowCount = allIssues.filter((i) => i.severity === 'low').length;
   const infoCount = allIssues.filter((i) => i.severity === 'info').length;
 
-  const healthyPages = allPageList.filter((p) => {
-    const hasCritOrHigh = p.issues.some((i) => i.severity === 'critical' || i.severity === 'high');
-    return !hasCritOrHigh;
-  }).length;
+  // Truly healthy pages must have ZERO issues (no critical, high, medium, or low)
+  const healthyPages = allPageList.filter((p) => p.issues.length === 0).length;
 
   const totalScore = allPageList.reduce((sum, p) => sum + p.score, 0);
-  const overallScore = Math.round(totalScore / (allPageList.length || 1));
+  // Accurate overall score without rounding up to false 100% when issues exist
+  const rawAvg = totalScore / (allPageList.length || 1);
+  const overallScore = allIssues.length > 0 ? Math.min(99, Math.floor(rawAvg)) : 100;
 
   const orphanPages = allPageList.filter((p) => p.isOrphan);
   const sitemapIssues = allIssues.filter((i) => i.category === 'sitemap');

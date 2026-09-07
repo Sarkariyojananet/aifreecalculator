@@ -5,9 +5,10 @@
 export type GscDateRange = '7d' | '28d' | '3m';
 
 export interface GscCredentials {
-  clientEmail: string;
-  privateKey: string;
+  clientEmail?: string;
+  privateKey?: string;
   propertyUrl: string; // e.g., 'https://aifreecalculator.com/' or 'sc-domain:aifreecalculator.com'
+  accessToken?: string; // Direct Google OAuth Bearer access token
 }
 
 export interface GscMetricSummary {

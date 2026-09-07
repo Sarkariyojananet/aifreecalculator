@@ -428,6 +428,7 @@ function formatDelta(delta: { percentChange: number; isPositive: boolean }): str
           <button
             type="button"
             data-filter="all"
+            onclick="window.filterSearchDemand('all')"
             class="search-tab active rounded-xl px-3.5 py-1.5 text-xs font-bold bg-blue-600 text-white cursor-pointer transition shadow-xs"
           >
             All Queries ({searchLogs.length})
@@ -435,6 +436,7 @@ function formatDelta(delta: { percentChange: number; isPositive: boolean }): str
           <button
             type="button"
             data-filter="missing"
+            onclick="window.filterSearchDemand('missing')"
             class="search-tab rounded-xl px-3.5 py-1.5 text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/50 dark:text-amber-300 cursor-pointer transition"
           >
             🚨 Missing Tools ({missingLogs.length})
@@ -442,6 +444,7 @@ function formatDelta(delta: { percentChange: number; isPositive: boolean }): str
           <button
             type="button"
             data-filter="found"
+            onclick="window.filterSearchDemand('found')"
             class="search-tab rounded-xl px-3.5 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-300 cursor-pointer transition"
           >
             ✅ Found Tools ({foundLogs.length})
@@ -468,6 +471,10 @@ function formatDelta(delta: { percentChange: number; isPositive: boolean }): str
         </div>
       ) : (
         <div id="search-queries-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
+          <div id="no-matching-queries" style="display: none;" class="col-span-full rounded-2xl border border-dashed border-slate-200 p-8 text-center text-xs text-slate-400 dark:border-slate-800">
+            <p class="text-2xl mb-1">🔎</p>
+            <p class="font-bold text-slate-600 dark:text-slate-300">No queries match your current filter.</p>
+          </div>
           {searchLogs.map((log) => {
             const isMissing = !log.hasResults;
             const timeAgo = log.lastSearched ? new Date(log.lastSearched).toLocaleDateString([], { month: 'short', day: 'numeric' }) : 'Recent';
@@ -523,6 +530,7 @@ function formatDelta(delta: { percentChange: number; isPositive: boolean }): str
                     type="button"
                     class="btn-delete-query text-slate-400 hover:text-red-600 dark:hover:text-red-400 text-xs font-bold cursor-pointer transition p-1"
                     data-query={log.query}
+                    onclick="window.deleteSearchQueryLog(this)"
                     title="Remove query log"
                   >
                     🗑️
@@ -536,17 +544,16 @@ function formatDelta(delta: { percentChange: number; isPositive: boolean }): str
     </div>
 
   </div>
-</AdminLayout>
 
-<script is:inline>
+  <script is:inline>
   // Table search & category filter
-  const searchInput = document.getElementById('table-search-input');
+  const tableSearchInput = document.getElementById('table-search-input');
   const catSelect = document.getElementById('category-filter-select');
   const tableRows = document.querySelectorAll('.calc-row');
   const mobileCards = document.querySelectorAll('.calc-card');
 
   function filterCalculators() {
-    const q = (searchInput?.value || '').trim().toLowerCase();
+    const q = (tableSearchInput?.value || '').trim().toLowerCase();
     const cat = catSelect?.value || 'all';
 
     function checkItem(el) {
@@ -568,77 +575,150 @@ function formatDelta(delta: { percentChange: number; isPositive: boolean }): str
     });
   }
 
-  searchInput?.addEventListener('input', filterCalculators);
+  tableSearchInput?.addEventListener('input', filterCalculators);
   catSelect?.addEventListener('change', filterCalculators);
 
-  // Search demand filter tabs
-  const searchTabs = document.querySelectorAll('.search-tab');
-  const querySearchInput = document.getElementById('filter-queries-input');
-  const queryCards = document.querySelectorAll('.query-card');
-
+  // Global Search demand controller
   let activeFilter = 'all';
   let searchQuery = '';
 
-  function filterQueryCards() {
-    queryCards.forEach((card) => {
-      const type = card.dataset.type;
-      const text = card.dataset.query || '';
+  window.updateSearchTabCounts = function() {
+    const cards = document.querySelectorAll('.query-card');
+    let missing = 0;
+    let found = 0;
+
+    cards.forEach((c) => {
+      const t = c.getAttribute('data-type');
+      if (t === 'missing') missing++;
+      else if (t === 'found') found++;
+    });
+
+    const allTab = document.querySelector('.search-tab[data-filter="all"]');
+    const missingTab = document.querySelector('.search-tab[data-filter="missing"]');
+    const foundTab = document.querySelector('.search-tab[data-filter="found"]');
+
+    if (allTab) allTab.textContent = `All Queries (${cards.length})`;
+    if (missingTab) missingTab.textContent = `🚨 Missing Tools (${missing})`;
+    if (foundTab) foundTab.textContent = `✅ Found Tools (${found})`;
+  };
+
+  window.filterSearchDemand = function(filter) {
+    activeFilter = filter || 'all';
+
+    // 1. Update tab styles
+    const tabs = document.querySelectorAll('.search-tab');
+    tabs.forEach((btn) => {
+      const f = btn.getAttribute('data-filter');
+      const isActive = f === activeFilter;
+      btn.classList.toggle('active', isActive);
+
+      if (f === 'all') {
+        if (isActive) {
+          btn.className = 'search-tab active rounded-xl px-3.5 py-1.5 text-xs font-bold bg-blue-600 text-white cursor-pointer transition shadow-xs';
+        } else {
+          btn.className = 'search-tab rounded-xl px-3.5 py-1.5 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300 cursor-pointer transition';
+        }
+      } else if (f === 'missing') {
+        if (isActive) {
+          btn.className = 'search-tab active rounded-xl px-3.5 py-1.5 text-xs font-bold bg-amber-600 text-white cursor-pointer transition shadow-xs';
+        } else {
+          btn.className = 'search-tab rounded-xl px-3.5 py-1.5 text-xs font-bold text-amber-700 bg-amber-50 hover:bg-amber-100 dark:bg-amber-950/50 dark:text-amber-300 cursor-pointer transition';
+        }
+      } else if (f === 'found') {
+        if (isActive) {
+          btn.className = 'search-tab active rounded-xl px-3.5 py-1.5 text-xs font-bold bg-emerald-600 text-white cursor-pointer transition shadow-xs';
+        } else {
+          btn.className = 'search-tab rounded-xl px-3.5 py-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 dark:bg-emerald-950/50 dark:text-emerald-300 cursor-pointer transition';
+        }
+      }
+    });
+
+    // 2. Filter the cards with !important inline display
+    const currentCards = document.querySelectorAll('.query-card');
+    let visibleCount = 0;
+
+    currentCards.forEach((card) => {
+      const type = card.getAttribute('data-type') || '';
+      const text = (card.getAttribute('data-query') || '').toLowerCase();
 
       const matchType = activeFilter === 'all' || type === activeFilter;
       const matchSearch = !searchQuery || text.includes(searchQuery);
 
       if (matchType && matchSearch) {
-        card.classList.remove('hidden');
+        card.style.setProperty('display', 'flex', 'important');
+        visibleCount++;
       } else {
-        card.classList.add('hidden');
+        card.style.setProperty('display', 'none', 'important');
       }
     });
-  }
 
-  searchTabs.forEach((btn) => {
-    btn.addEventListener('click', () => {
-      searchTabs.forEach((b) => {
-        b.classList.remove('bg-blue-600', 'text-white', 'active');
-        b.classList.add('text-slate-600', 'dark:text-slate-300');
-      });
-      btn.classList.add('bg-blue-600', 'text-white', 'active');
-      btn.classList.remove('text-slate-600', 'dark:text-slate-300');
-      activeFilter = btn.dataset.filter || 'all';
-      filterQueryCards();
-    });
-  });
+    const noMatchNotice = document.getElementById('no-matching-queries');
+    if (noMatchNotice) {
+      noMatchNotice.style.setProperty('display', (visibleCount === 0 && currentCards.length > 0) ? 'block' : 'none', 'important');
+    }
+  };
 
+  // Search input filter
+  const querySearchInput = document.getElementById('filter-queries-input');
   querySearchInput?.addEventListener('input', (e) => {
     searchQuery = (e.target.value || '').trim().toLowerCase();
-    filterQueryCards();
+    window.filterSearchDemand(activeFilter);
   });
 
-  // Delete query log
-  document.querySelectorAll('.btn-delete-query').forEach((btn) => {
-    btn.addEventListener('click', async (e) => {
-      const query = btn.dataset.query;
-      if (!query) return;
-      if (!confirm(`Are you sure you want to delete query "${query}"?`)) return;
+  // Delete query log with dual DELETE + POST fallback
+  window.deleteSearchQueryLog = async function(btn, query) {
+    const q = (query || btn?.getAttribute('data-query') || '').trim();
+    if (!q) return;
+    if (!confirm(`Are you sure you want to delete query "${q}"?`)) return;
 
-      btn.disabled = true;
-      try {
-        const token = localStorage.getItem('admin_token') || '';
-        const res = await fetch(`/api/search-log?query=${encodeURIComponent(query)}`, {
-          method: 'DELETE',
-          headers: token ? { 'Authorization': `Bearer ${token}` } : {},
-        });
+    const originalText = btn.textContent;
+    btn.textContent = '⏳';
+    btn.style.pointerEvents = 'none';
 
-        if (res.ok) {
-          const card = btn.closest('.query-card');
-          card?.remove();
-        } else {
-          alert('Failed to delete query.');
-        }
-      } catch {
-        alert('Network error.');
-      } finally {
-        btn.disabled = false;
+    try {
+      const token = localStorage.getItem('admin_token') || '';
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
+      // 1. Try DELETE request
+      let res = await fetch(`/api/search-log?query=${encodeURIComponent(q)}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers,
+      }).catch(() => null);
+
+      // 2. Fallback to POST with action: 'delete' if DELETE method is blocked
+      if (!res || !res.ok) {
+        res = await fetch('/api/search-log', {
+          method: 'POST',
+          credentials: 'include',
+          headers,
+          body: JSON.stringify({ action: 'delete', query: q }),
+        }).catch(() => null);
       }
-    });
-  });
+
+      if (res && res.ok) {
+        const card = btn.closest('.query-card');
+        if (card) {
+          card.style.opacity = '0';
+          card.style.transform = 'scale(0.95)';
+          card.style.transition = 'all 0.2s ease-out';
+          setTimeout(() => {
+            card.remove();
+            window.updateSearchTabCounts();
+            window.filterSearchDemand(activeFilter);
+          }, 200);
+        }
+      } else {
+        alert('Failed to delete query. Please check your admin session.');
+        btn.textContent = originalText;
+        btn.style.pointerEvents = 'auto';
+      }
+    } catch {
+      alert('Network error while deleting query.');
+      btn.textContent = originalText;
+      btn.style.pointerEvents = 'auto';
+    }
+  };
 </script>
+</AdminLayout>

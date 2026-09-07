@@ -15,6 +15,8 @@ import { detectSeoOpportunities } from './opportunity-engine';
 import { detectContentDecay } from './decay-detector';
 import { computeCalculatorSeoScores } from './calculator-score';
 
+import { getValidGoogleAccessToken } from '../auth/google-oauth';
+
 const DEFAULT_PROPERTY_URL = 'https://aifreecalculator.com/';
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours cache TTL
 
@@ -23,8 +25,20 @@ const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 hours cache TTL
  */
 export async function getGscCredentials(locals?: any): Promise<GscCredentials | null> {
   const env = getRuntimeEnvSync(locals);
+  const propertyUrl = env.GSC_PROPERTY_URL || DEFAULT_PROPERTY_URL;
 
-  // 1. Check direct environment variables / secrets
+  // 1. Direct Google OAuth / Gmail Authorized Token (Priority #1)
+  try {
+    const oauthToken = await getValidGoogleAccessToken(locals);
+    if (oauthToken) {
+      return {
+        accessToken: oauthToken,
+        propertyUrl,
+      };
+    }
+  } catch {}
+
+  // 2. Check direct environment variables / secrets
   if (env.GSC_SERVICE_ACCOUNT_KEY) {
     try {
       const parsed = typeof env.GSC_SERVICE_ACCOUNT_KEY === 'string'

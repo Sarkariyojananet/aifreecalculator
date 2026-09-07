@@ -25,6 +25,7 @@ export default defineConfig({
     },
     optimizeDeps: {
       include: ['astro/assets/services/noop', 'astro/app/manifest'],
+      exclude: ['@astrojs/cloudflare'],
     },
   },
 

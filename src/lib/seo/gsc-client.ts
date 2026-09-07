@@ -61,6 +61,15 @@ function createServiceAccountJwt(clientEmail: string, privateKey: string, scope:
  * Exchanges signed JWT for Google OAuth2 Bearer Access Token
  */
 export async function getGscAccessToken(credentials: GscCredentials): Promise<string> {
+  // If direct OAuth access token is provided from Gmail login, return it immediately
+  if (credentials.accessToken) {
+    return credentials.accessToken;
+  }
+
+  if (!credentials.clientEmail || !credentials.privateKey) {
+    throw new Error('No valid Google credentials available. Please connect with Google (Gmail) or provide service account keys.');
+  }
+
   const now = Date.now();
   if (cachedAccessToken && cachedAccessToken.expiresAt > now + 60000) {
     return cachedAccessToken.token;

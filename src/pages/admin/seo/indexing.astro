@@ -1,0 +1,343 @@
+---
+export const prerender = false;
+
+import AdminLayout from '../../../layouts/AdminLayout.astro';
+import { authenticateAdminRequest } from '../../../lib/auth';
+import { calculators } from '../../../data/calculators';
+import { getOrCreateIndexNowKey, getIndexingHistory } from '../../../lib/seo/indexing-service';
+import { getGoogleAccountStatus } from '../../../lib/auth/google-oauth';
+
+const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
+if (!user) {
+  return Astro.redirect('/admin/barwalaoffice/');
+}
+
+const indexNowKey = await getOrCreateIndexNowKey(Astro.locals);
+const googleStatus = await getGoogleAccountStatus(Astro.locals);
+const history = await getIndexingHistory(Astro.locals);
+---
+
+<AdminLayout title="Instant Indexing | Calculator CMS" sectionTitle="Instant Indexing Suite" activeSection="seo">
+  <div class="space-y-6 max-w-6xl mx-auto pb-16">
+    
+    <!-- Top Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200/80 pb-6 dark:border-slate-800/80">
+      <div>
+        <div class="flex items-center gap-2.5">
+          <span class="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-100 text-lg dark:bg-purple-900/60">
+            ⚡
+          </span>
+          <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+            Instant Indexing (Rank Math Pro Suite)
+          </h2>
+        </div>
+        <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1.5 max-w-2xl">
+          Instantly notify Google (via Indexing API) and Bing, Yandex, Naver (via IndexNow) whenever you add or update calculator pages.
+        </p>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a
+          href="/admin/seo/"
+          class="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 shadow-2xs"
+        >
+          ← Back to SEO Overview
+        </a>
+      </div>
+    </div>
+
+    <!-- Sub-navigation Tabs -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200 dark:border-slate-800">
+      <a href="/admin/seo/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        📈 GSC Performance
+      </a>
+      <a href="/admin/seo/bulk/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        📝 Bulk Meta Editor
+      </a>
+      <a href="/admin/seo/indexing/" class="rounded-xl bg-purple-600 px-3.5 py-1.5 text-xs font-bold text-white shadow-xs shrink-0">
+        ⚡ Instant Indexing (Google &amp; IndexNow)
+      </a>
+      <a href="/admin/schema/" class="rounded-xl px-3.5 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 shrink-0 transition">
+        🏷️ Schema &amp; Rich Snippets
+      </a>
+    </div>
+
+    <!-- Status Overview Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <!-- IndexNow Protocol Card -->
+      <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">🌐</span>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">IndexNow Protocol</h3>
+            </div>
+            <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">
+              <span class="h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400"></span>
+              Active &amp; Verified
+            </span>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">
+            Auto-pings Bing, Yandex, Seznam, and Naver instantly without individual API keys.
+          </p>
+          <div class="mt-4 p-3 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200/60 dark:border-slate-800 text-[11px] font-mono text-slate-700 dark:text-slate-300 break-all">
+            Key: <span class="font-bold text-purple-600 dark:text-purple-400">{indexNowKey}</span>
+            <div class="mt-1 text-[10px] text-slate-400">
+              Hosted at: <a href={`/${indexNowKey}.txt`} target="_blank" class="underline hover:text-blue-500">/{indexNowKey}.txt</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Google Indexing API Card -->
+      <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-xl">🔴</span>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">Google Indexing API</h3>
+            </div>
+            {googleStatus.connected ? (
+              <span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400"></span>
+                Gmail Authorized
+              </span>
+            ) : (
+              <span class="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-bold text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">
+                Setup Required
+              </span>
+            )}
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-2">
+            Direct crawler dispatch to Googlebot for instant crawls.
+          </p>
+          <div class="mt-4 p-3 bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200/60 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300">
+            {googleStatus.connected ? (
+              <div class="flex items-center justify-between">
+                <div>
+                  Connected as: <span class="font-bold text-blue-600 dark:text-blue-400">{googleStatus.email}</span>
+                </div>
+                <span class="text-[10px] text-slate-400">OAuth Active</span>
+              </div>
+            ) : (
+              <div class="flex items-center justify-between">
+                <span>Google account not linked yet.</span>
+                <a href="/admin/settings/#google-auth" class="text-blue-600 dark:text-blue-400 font-bold hover:underline">
+                  Connect Gmail →
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Instant Submission Form -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-5">
+      <div>
+        <h3 class="text-base font-bold text-slate-900 dark:text-white">
+          Submit URLs for Instant Crawling
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          Select individual calculators, enter custom paths, or broadcast all {calculators.length} calculators to Google &amp; Bing at once.
+        </p>
+      </div>
+
+      <div class="space-y-3">
+        <label for="instant-url-input" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+          Target URL or Calculator Path:
+        </label>
+        <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+          <input
+            id="instant-url-input"
+            type="text"
+            placeholder="e.g. /construction/concrete-material-breakup-calculator/ or full URL"
+            class="flex-1 rounded-2xl border border-slate-300 bg-white py-2.5 px-3.5 text-xs font-medium text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white focus:border-purple-600 focus:outline-hidden"
+          />
+          <button
+            type="button"
+            id="btn-submit-single"
+            class="rounded-2xl bg-purple-600 px-5 py-2.5 text-xs font-bold text-white hover:bg-purple-700 transition shadow-sm cursor-pointer shrink-0"
+          >
+            ⚡ Submit URL
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Preset Buttons -->
+      <div class="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
+        <span class="text-xs font-bold text-slate-500 dark:text-slate-400 mr-1">Batch Actions:</span>
+        <button
+          type="button"
+          id="btn-submit-all"
+          class="inline-flex items-center gap-1.5 rounded-xl border border-purple-200 bg-purple-50 px-3 py-1.5 text-xs font-bold text-purple-700 hover:bg-purple-100 dark:border-purple-900/60 dark:bg-purple-950/60 dark:text-purple-300 transition cursor-pointer"
+        >
+          🚀 Submit All {calculators.length} Calculators
+        </button>
+        <button
+          type="button"
+          id="btn-submit-home"
+          class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer"
+        >
+          🏠 Submit Homepage &amp; Core Pages
+        </button>
+      </div>
+
+      <!-- Live Submission Status Output Banner -->
+      <div id="instant-status-box" class="hidden rounded-2xl p-4 text-xs font-bold transition"></div>
+    </div>
+
+    <!-- Recent Submissions History -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white">
+            Submission History &amp; Logs
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Log of recently dispatched crawl notifications.
+          </p>
+        </div>
+        <span class="text-xs text-slate-400">{history.length} events</span>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="border-b border-slate-200 dark:border-slate-800 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+              <th class="py-3 px-3">Target URL</th>
+              <th class="py-3 px-3">Action</th>
+              <th class="py-3 px-3">Status</th>
+              <th class="py-3 px-3">Response</th>
+              <th class="py-3 px-3">Timestamp</th>
+            </tr>
+          </thead>
+          <tbody id="history-tbody" class="divide-y divide-slate-100 dark:divide-slate-800/60">
+            {history.length === 0 ? (
+              <tr>
+                <td colspan="5" class="py-8 text-center text-slate-400">
+                  No instant indexing requests dispatched yet. Submit a URL above to start!
+                </td>
+              </tr>
+            ) : (
+              history.map((h) => (
+                <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/30">
+                  <td class="py-3 px-3 font-medium text-slate-900 dark:text-slate-100 truncate max-w-xs">
+                    {h.url}
+                  </td>
+                  <td class="py-3 px-3">
+                    <span class="rounded-md bg-blue-50 px-2 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+                      {h.action}
+                    </span>
+                  </td>
+                  <td class="py-3 px-3">
+                    {h.status === 'success' ? (
+                      <span class="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-bold">
+                        <span>●</span> Success
+                      </span>
+                    ) : h.status === 'partial' ? (
+                      <span class="inline-flex items-center gap-1 text-amber-600 dark:text-amber-400 font-bold">
+                        <span>●</span> Partial
+                      </span>
+                    ) : (
+                      <span class="inline-flex items-center gap-1 text-rose-600 dark:text-rose-400 font-bold">
+                        <span>●</span> Failed
+                      </span>
+                    )}
+                  </td>
+                  <td class="py-3 px-3 text-slate-500 dark:text-slate-400 text-[11px] max-w-sm truncate">
+                    {h.responseMessage || 'OK'}
+                  </td>
+                  <td class="py-3 px-3 text-slate-400 text-[10px]">
+                    {new Date(h.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script is:inline>
+    const urlInput = document.getElementById('instant-url-input');
+    const btnSingle = document.getElementById('btn-submit-single');
+    const btnAll = document.getElementById('btn-submit-all');
+    const btnHome = document.getElementById('btn-submit-home');
+    const statusBox = document.getElementById('instant-status-box');
+
+    function showStatus(message, isSuccess = true) {
+      if (!statusBox) return;
+      statusBox.classList.remove('hidden', 'bg-emerald-50', 'text-emerald-800', 'border-emerald-200', 'bg-rose-50', 'text-rose-800', 'border-rose-200', 'dark:bg-emerald-950/60', 'dark:text-emerald-300', 'dark:bg-rose-950/60', 'dark:text-rose-300');
+      statusBox.classList.add('border');
+
+      if (isSuccess) {
+        statusBox.classList.add('bg-emerald-50', 'text-emerald-800', 'border-emerald-200', 'dark:bg-emerald-950/60', 'dark:text-emerald-300');
+        statusBox.innerHTML = `✅ ${message}`;
+      } else {
+        statusBox.classList.add('bg-rose-50', 'text-rose-800', 'border-rose-200', 'dark:bg-rose-950/60', 'dark:text-rose-300');
+        statusBox.innerHTML = `⚠️ ${message}`;
+      }
+    }
+
+    async function sendIndexingRequest(payload) {
+      try {
+        const res = await fetch('/api/admin/seo/instant-index', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (data.success && data.result) {
+          showStatus(`${data.result.responseMessage || 'Dispatched successfully!'} (${data.result.status})`, data.result.status !== 'failed');
+          setTimeout(() => window.location.reload(), 2000);
+        } else {
+          showStatus(data.error || 'Failed to dispatch indexing request.', false);
+        }
+      } catch (err) {
+        showStatus('Network error while requesting indexing.', false);
+      }
+    }
+
+    if (btnSingle && urlInput) {
+      btnSingle.addEventListener('click', () => {
+        const val = urlInput.value.trim();
+        if (!val) {
+          showStatus('Please enter a calculator path or URL.', false);
+          return;
+        }
+        btnSingle.disabled = true;
+        btnSingle.innerText = 'Submitting...';
+        sendIndexingRequest({ url: val }).finally(() => {
+          btnSingle.disabled = false;
+          btnSingle.innerText = '⚡ Submit URL';
+        });
+      });
+    }
+
+    if (btnAll) {
+      btnAll.addEventListener('click', () => {
+        if (!confirm('This will broadcast all calculators to IndexNow & Google. Proceed?')) return;
+        btnAll.disabled = true;
+        btnAll.innerText = 'Submitting All...';
+        sendIndexingRequest({ allCalculators: true }).finally(() => {
+          btnAll.disabled = false;
+          btnAll.innerText = '🚀 Submit All Calculators';
+        });
+      });
+    }
+
+    if (btnHome) {
+      btnHome.addEventListener('click', () => {
+        btnHome.disabled = true;
+        btnHome.innerText = 'Submitting...';
+        sendIndexingRequest({ urls: ['/', '/all-calculators/', '/about/', '/contact/'] }).finally(() => {
+          btnHome.disabled = false;
+          btnHome.innerText = '🏠 Submit Homepage & Core Pages';
+        });
+      });
+    }
+  </script>
+</AdminLayout>

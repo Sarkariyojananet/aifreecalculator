@@ -4,11 +4,43 @@ import { authenticateAdminRequest } from '../../lib/auth';
 
 export const prerender = false;
 
-// Public logging of user search queries from search modal & hero search bar
-export const POST: APIRoute = async ({ request, locals }) => {
+// Public logging of user search queries & Admin deletion fallback
+export const POST: APIRoute = async ({ request, cookies, locals }) => {
   try {
     const body = await request.json().catch(() => ({}));
-    const { query, hasResults } = body;
+    const { action, query, hasResults, clearAll } = body;
+
+    // Support deletion via POST for environments where HTTP DELETE is restricted
+    if (action === 'delete') {
+      const user = await authenticateAdminRequest(request, cookies);
+      if (!user) {
+        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+          status: 401,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (clearAll) {
+        await clearAllSearchQueries(locals);
+        return new Response(JSON.stringify({ success: true, logs: [] }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      if (!query || typeof query !== 'string') {
+        return new Response(JSON.stringify({ error: 'Query parameter is required' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+
+      const updated = await deleteSearchQuery(query, locals);
+      return new Response(JSON.stringify({ success: true, logs: updated }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
 
     if (typeof query !== 'string') {
       return new Response(JSON.stringify({ error: 'Query is required' }), {
