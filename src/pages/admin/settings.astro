@@ -204,6 +204,15 @@ import AuditLogCard from '../../components/admin/settings/AuditLogCard.astro';
 
   const slotKeys = ['top', 'inline', 'sidebar', 'footer'] as const;
 
+  // ─── Centralized Auth Headers Helper ────────────────────────────────────────
+  function getAuthHeaders(includeContentType = true): Record<string, string> {
+    const token = localStorage.getItem('admin_token') || '';
+    const headers: Record<string, string> = {};
+    if (includeContentType) headers['Content-Type'] = 'application/json';
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return headers;
+  }
+
   // ─── Network Mode Toggle Handler (AdSense vs AdX vs Sponsor vs Affiliate) ───
   function setupNetworkRadioListeners(slot: string) {
     const radios = document.querySelectorAll(`input[name="${slot}-network"]`);
@@ -233,12 +242,8 @@ import AuditLogCard from '../../components/admin/settings/AuditLogCard.astro';
         badgeGlobalStatus.innerHTML = '<span class="h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span> Loading settings...';
       }
 
-      const token = localStorage.getItem('admin_token') || '';
-      const headers: Record<string, string> = {};
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
       const res = await fetch('/api/adsense-config/?t=' + Date.now(), {
-        headers,
+        headers: getAuthHeaders(false),
         cache: 'no-store',
       });
       if (!res.ok) throw new Error('Failed to load settings');
@@ -294,6 +299,12 @@ import AuditLogCard from '../../components/admin/settings/AuditLogCard.astro';
 
         const badgeEl = document.getElementById(`field-slot-${slot}-sponsor-badge`) as HTMLInputElement | null;
         if (badgeEl) badgeEl.value = slotData.sponsorBadgeText || (net === 'affiliate' ? 'Partner' : 'Sponsored');
+
+        const newtabEl = document.getElementById(`field-slot-${slot}-sponsor-newtab`) as HTMLInputElement | null;
+        if (newtabEl) newtabEl.checked = slotData.sponsorOpenInNewTab !== false;
+
+        const nofollowEl = document.getElementById(`field-slot-${slot}-sponsor-nofollow`) as HTMLInputElement | null;
+        if (nofollowEl) nofollowEl.checked = !slotData.sponsorRel || slotData.sponsorRel.includes('nofollow');
       }
 
       // Update Badges
@@ -360,6 +371,28 @@ import AuditLogCard from '../../components/admin/settings/AuditLogCard.astro';
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
+    // Auto-normalize Publisher ID if user pasted pub- instead of ca-pub-
+    let clientId = fieldClientId?.value?.trim() || '';
+    if (clientId && clientId.startsWith('pub-')) {
+      clientId = 'ca-' + clientId;
+      if (fieldClientId) fieldClientId.value = clientId;
+    }
+
+    const clientIdError = document.getElementById('client-id-error');
+    if (clientIdError) clientIdError.classList.add('hidden');
+
+    if (fieldEnabled?.checked && clientId && !/^ca-pub-\d{10,}$/.test(clientId)) {
+      if (clientIdError) {
+        clientIdError.textContent = 'AdSense Publisher ID must be in format ca-pub-XXXXXXXXXXXXXXXX (minimum 10 digits).';
+        clientIdError.classList.remove('hidden');
+      }
+      if (formStatusMsg) {
+        formStatusMsg.textContent = '❌ Invalid AdSense Publisher ID format.';
+        formStatusMsg.className = 'text-xs font-semibold text-red-600 dark:text-red-400';
+      }
+      return;
+    }
+
     if (btnSave) {
       btnSave.disabled = true;
       if (btnSaveText) btnSaveText.textContent = 'Saving Changes...';
@@ -368,7 +401,7 @@ import AuditLogCard from '../../components/admin/settings/AuditLogCard.astro';
     const payload: any = {
       enabled: Boolean(fieldEnabled?.checked),
       testMode: Boolean(fieldTestMode?.checked),
-      clientId: fieldClientId?.value?.trim() || '',
+      clientId,
       autoAds: Boolean(fieldAutoAds?.checked),
       gaMeasurementId: fieldGaId?.value?.trim() || '',
       headerScript: fieldHeaderScript?.value?.trim() || '',
@@ -391,6 +424,12 @@ import AuditLogCard from '../../components/admin/settings/AuditLogCard.astro';
       const activeRadio = document.querySelector(`input[name="${slot}-network"]:checked`) as HTMLInputElement | null;
       const adNetwork = activeRadio?.value || 'adsense';
 
+      const newtabEl = document.getElementById(`field-slot-${slot}-sponsor-newtab`) as HTMLInputElement | null;
+      const nofollowEl = document.getElementById(`field-slot-${slot}-sponsor-nofollow`) as HTMLInputElement | null;
+      const openInNewTab = newtabEl ? newtabEl.checked : true;
+      const isNofollow = nofollowEl ? nofollowEl.checked : true;
+      const sponsorRel = `sponsored${isNofollow ? ' nofollow' : ''} noopener`;
+
       payload.slots[slot] = {
         enabled,
         adNetwork,
@@ -399,20 +438,16 @@ import AuditLogCard from '../../components/admin/settings/AuditLogCard.astro';
         sponsorTargetUrl: (document.getElementById(`field-slot-${slot}-sponsor-target`) as HTMLInputElement | null)?.value?.trim() || '',
         sponsorBannerUrl: (document.getElementById(`field-slot-${slot}-sponsor-banner`) as HTMLInputElement | null)?.value?.trim() || '',
         sponsorAltText: (document.getElementById(`field-slot-${slot}-sponsor-alt`) as HTMLInputElement | null)?.value?.trim() || '',
-        sponsorBadgeText: (document.getElementById(`field-slot-${slot}-sponsor-badge`) as HTMLInputElement | null)?.value?.trim() || 'Sponsored',
-        sponsorOpenInNewTab: true,
-        sponsorRel: 'sponsored nofollow noopener',
+        sponsorBadgeText: (document.getElementById(`field-slot-${slot}-sponsor-badge`) as HTMLInputElement | null)?.value?.trim() || (adNetwork === 'affiliate' ? 'Partner' : 'Sponsored'),
+        sponsorOpenInNewTab: openInNewTab,
+        sponsorRel,
       };
     }
 
     try {
-      const token = localStorage.getItem('admin_token') || '';
-      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-
       const res = await fetch('/api/adsense-config/', {
         method: 'POST',
-        headers,
+        headers: getAuthHeaders(true),
         body: JSON.stringify(payload),
       });
 
@@ -450,8 +485,13 @@ import AuditLogCard from '../../components/admin/settings/AuditLogCard.astro';
   async function loadAuditLogs() {
     if (!auditLogTbody) return;
     try {
-      const res = await fetch('/api/admin/audit-logs');
-      if (!res.ok) return;
+      const res = await fetch('/api/admin/audit-logs?t=' + Date.now(), {
+        headers: getAuthHeaders(false),
+      });
+      if (!res.ok) {
+        auditLogTbody.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-amber-600 dark:text-amber-400">Failed to load audit logs (${res.status}). Please check admin session.</td></tr>`;
+        return;
+      }
       const data = await res.json();
 
       if (btnQuickRollback && labelSnapshotDate) {
@@ -494,6 +534,7 @@ import AuditLogCard from '../../components/admin/settings/AuditLogCard.astro';
       }).join('');
     } catch (err) {
       console.error('Failed to load audit logs:', err);
+      auditLogTbody.innerHTML = `<tr><td colspan="5" class="px-4 py-4 text-center text-red-500">Failed to load audit logs.</td></tr>`;
     }
   }
 
@@ -508,7 +549,7 @@ import AuditLogCard from '../../components/admin/settings/AuditLogCard.astro';
     try {
       const res = await fetch('/api/admin/audit-logs', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(true),
         body: JSON.stringify({ action: 'ROLLBACK' }),
       });
 
@@ -521,6 +562,39 @@ import AuditLogCard from '../../components/admin/settings/AuditLogCard.astro';
       alert('❌ Rollback Error: ' + err.message);
     } finally {
       if (btnQuickRollback) btnQuickRollback.disabled = false;
+    }
+  });
+
+  // ─── Download Full JSON Backup (Authenticated) ────────────────────────────
+  const btnDownloadBackup = document.getElementById('btn-download-backup');
+  btnDownloadBackup?.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const origHtml = btnDownloadBackup.innerHTML;
+    btnDownloadBackup.innerHTML = '<span>⏳</span> Exporting...';
+    try {
+      const res = await fetch('/api/admin/backup/export', {
+        headers: getAuthHeaders(false),
+      });
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || `Export failed with status ${res.status}`);
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const disposition = res.headers.get('Content-Disposition');
+      const filenameMatch = disposition?.match(/filename="([^"]+)"/);
+      a.download = filenameMatch ? filenameMatch[1] : `aifreecalc-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      alert('❌ Failed to download backup: ' + (err.message || 'Unknown error'));
+    } finally {
+      btnDownloadBackup.innerHTML = origHtml;
     }
   });
 
@@ -550,8 +624,13 @@ import AuditLogCard from '../../components/admin/settings/AuditLogCard.astro';
     });
 
     if (invalidCount === 0) {
-      adsTxtValidationMsg.textContent = `✓ All ${validCount} partner seller lines conform to IAB OpenRTB specification.`;
-      adsTxtValidationMsg.className = 'font-semibold text-emerald-600 dark:text-emerald-400';
+      if (validCount === 0) {
+        adsTxtValidationMsg.textContent = 'ℹ️ No partner records entered. Only Google AdSense line will be published if enabled.';
+        adsTxtValidationMsg.className = 'font-semibold text-blue-600 dark:text-blue-400';
+      } else {
+        adsTxtValidationMsg.textContent = `✓ All ${validCount} partner seller lines conform to IAB OpenRTB specification.`;
+        adsTxtValidationMsg.className = 'font-semibold text-emerald-600 dark:text-emerald-400';
+      }
     } else {
       adsTxtValidationMsg.textContent = `⚠️ Found ${invalidCount} irregular line(s). Please verify (domain, pubId, DIRECT/RESELLER).`;
       adsTxtValidationMsg.className = 'font-semibold text-amber-600 dark:text-amber-400';
@@ -604,7 +683,7 @@ import AuditLogCard from '../../components/admin/settings/AuditLogCard.astro';
     try {
       const res = await fetch('/api/admin/backup/import', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getAuthHeaders(true),
         body: JSON.stringify(parsed),
       });
 

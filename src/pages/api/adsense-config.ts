@@ -21,7 +21,10 @@ function normalizeSettings(stored: any): AdsConfig {
     return defaults;
   }
 
-  const clientId = typeof stored.clientId === 'string' ? stored.clientId.trim() : defaults.clientId;
+  let clientId = typeof stored.clientId === 'string' ? stored.clientId.trim() : defaults.clientId;
+  if (clientId && clientId.startsWith('pub-')) {
+    clientId = 'ca-' + clientId;
+  }
   const isConfigured = Boolean(clientId && clientId.startsWith('ca-pub-') && clientId.length > 10);
   const enabled = typeof stored.enabled === 'boolean' ? stored.enabled : (isConfigured && stored.enabled !== false);
   const testMode = stored.testMode === true;
