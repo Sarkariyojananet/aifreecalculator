@@ -42,7 +42,7 @@ async function getLocalFileStorage(): Promise<Record<string, string>> {
   localFileCache = { ...inMemorySettings };
   try {
     const p = typeof globalThis !== 'undefined' ? (globalThis as any).process : null;
-    if (p?.cwd) {
+    if (p?.versions?.node && p?.cwd) {
       const fsMod = 'node:fs';
       const pathMod = 'node:path';
       const fsImport = await import(/* @vite-ignore */ fsMod);
@@ -56,8 +56,8 @@ async function getLocalFileStorage(): Promise<Record<string, string>> {
         localFileCache = { ...localFileCache, ...parsed };
       }
     }
-  } catch (err) {
-    console.error('Failed to read .site-settings.json:', err);
+  } catch {
+    // Non-Node/Edge fallback - settings are stored in D1 / inMemorySettings
   }
   return localFileCache ?? {};
 }
@@ -69,7 +69,7 @@ async function writeLocalFileStorage(key: string, value: string): Promise<void> 
   inMemorySettings[key] = value;
   try {
     const p = typeof globalThis !== 'undefined' ? (globalThis as any).process : null;
-    if (p?.cwd) {
+    if (p?.versions?.node && p?.cwd) {
       const fsMod = 'node:fs';
       const pathMod = 'node:path';
       const fsImport = await import(/* @vite-ignore */ fsMod);
@@ -79,8 +79,8 @@ async function writeLocalFileStorage(key: string, value: string): Promise<void> 
       const filePath = path.join(p.cwd(), '.site-settings.json');
       fs.writeFileSync(filePath, JSON.stringify(current, null, 2), 'utf-8');
     }
-  } catch (err) {
-    console.error('Failed to write .site-settings.json:', err);
+  } catch {
+    // Non-Node/Edge fallback
   }
 }
 

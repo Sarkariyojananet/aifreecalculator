@@ -626,6 +626,13 @@ const publicUrl = `/${calc.category.toLowerCase()}/${calc.slug}/`;
       const btnIcon = document.getElementById('btn-icon');
       const btnText = document.getElementById('btn-text');
 
+      function getAuthHeaders() {
+        const token = localStorage.getItem('admin_token');
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        return headers;
+      }
+
       // 1. Run all tests for this calculator
       runCalcBtn?.addEventListener('click', async () => {
         runCalcBtn.disabled = true;
@@ -633,7 +640,10 @@ const publicUrl = `/${calc.category.toLowerCase()}/${calc.slug}/`;
         if (btnText) btnText.textContent = 'Testing Formula...';
 
         try {
-          const res = await fetch(`/api/admin/calculator-health/run/${currentSlug}`, { method: 'POST' });
+          const res = await fetch(`/api/admin/calculator-health/run/${currentSlug}`, {
+            method: 'POST',
+            headers: getAuthHeaders(),
+          });
           const data = await res.json();
 
           if (!res.ok || !data.success) {
@@ -661,7 +671,10 @@ const publicUrl = `/${calc.category.toLowerCase()}/${calc.slug}/`;
           btn.disabled = true;
 
           try {
-            const res = await fetch(`/api/admin/calculator-health/tests/${slug}/${testId}/run`, { method: 'POST' });
+            const res = await fetch(`/api/admin/calculator-health/tests/${slug}/${testId}/run`, {
+              method: 'POST',
+              headers: getAuthHeaders(),
+            });
             const data = await res.json();
 
             if (res.ok && data.success) {
@@ -689,7 +702,10 @@ const publicUrl = `/${calc.category.toLowerCase()}/${calc.slug}/`;
           if (!confirm('Are you sure you want to delete this custom test case?')) return;
 
           try {
-            const res = await fetch(`/api/admin/calculator-health/tests/${slug}/${testId}`, { method: 'DELETE' });
+            const res = await fetch(`/api/admin/calculator-health/tests/${slug}/${testId}`, {
+              method: 'DELETE',
+              headers: getAuthHeaders(),
+            });
             if (res.ok) {
               window.location.reload();
             } else {
@@ -751,7 +767,7 @@ const publicUrl = `/${calc.category.toLowerCase()}/${calc.slug}/`;
         try {
           const res = await fetch(`/api/admin/calculator-health/tests/${currentSlug}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify(payload),
           });
 

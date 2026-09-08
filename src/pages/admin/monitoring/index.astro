@@ -14,7 +14,7 @@ export const prerender = false;
 // 1. Enforce admin authentication
 const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
 if (!user) {
-  return Astro.redirect('/admin/login/');
+  return Astro.redirect(`/admin/barwalaoffice/?redirect=${encodeURIComponent(Astro.url.pathname + Astro.url.search)}`);
 }
 
 // 2. Fetch authentic monitoring data
@@ -597,6 +597,13 @@ if (hasRouteDown || realOpenCriticalIncidents.length > 0) {
     const btnUptimeText = document.getElementById('btn-uptime-text');
     const banner = document.getElementById('monitoring-notification-banner');
 
+    function getAuthHeaders() {
+      const token = localStorage.getItem('admin_token');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      return headers;
+    }
+
     const routesToProbe = [
       { route: '/', label: 'Homepage' },
       { route: '/finance/emi-calculator/', label: 'Loan EMI Calculator' },
@@ -662,7 +669,7 @@ if (hasRouteDown || realOpenCriticalIncidents.length > 0) {
       try {
         const res = await fetch('/api/admin/monitoring/uptime-check', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ probes: clientProbes }),
         });
         const data = await res.json();
@@ -706,6 +713,7 @@ if (hasRouteDown || realOpenCriticalIncidents.length > 0) {
           if (action === 'delete') {
             const res = await fetch(`/api/admin/monitoring/incidents?id=${encodeURIComponent(id)}`, {
               method: 'DELETE',
+              headers: getAuthHeaders(),
             });
             if (res.ok) {
               window.location.reload();
@@ -718,7 +726,7 @@ if (hasRouteDown || realOpenCriticalIncidents.length > 0) {
 
           const res = await fetch('/api/admin/monitoring/incidents', {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify({ id, status }),
           });
 
@@ -742,6 +750,7 @@ if (hasRouteDown || realOpenCriticalIncidents.length > 0) {
       try {
         const res = await fetch('/api/admin/monitoring/incidents?clear_resolved=true', {
           method: 'DELETE',
+          headers: getAuthHeaders(),
         });
         if (res.ok) {
           window.location.reload();
@@ -766,7 +775,7 @@ if (hasRouteDown || realOpenCriticalIncidents.length > 0) {
           btn.disabled = true;
           const res = await fetch('/api/admin/monitoring/errors', {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify({ id, status }),
           });
 

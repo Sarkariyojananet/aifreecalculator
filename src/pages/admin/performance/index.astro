@@ -692,6 +692,13 @@ const rangeLabels = {
     const modalWarm = document.getElementById('modal-warm');
     const modalCf = document.getElementById('modal-cf');
 
+    function getAuthHeaders() {
+      const token = localStorage.getItem('admin_token');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      return headers;
+    }
+
     function openModal(modal) {
       if (!modal) return;
       modal.classList.remove('hidden');
@@ -790,7 +797,7 @@ const rangeLabels = {
       try {
         const res = await fetch('/api/admin/performance/purge', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ target, value, confirmEverything }),
         });
 
@@ -848,7 +855,7 @@ const rangeLabels = {
         try {
           const res = await fetch('/api/admin/performance/purge', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify({ target: 'url', value: url }),
           });
           const data = await res.json();
@@ -871,7 +878,7 @@ const rangeLabels = {
         try {
           const res = await fetch('/api/admin/performance/warm', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify({ urls: [url] }),
           });
           const data = await res.json();
@@ -902,12 +909,12 @@ const rangeLabels = {
       try {
         const res = await fetch('/api/admin/performance/warm', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             urls: [
               '/',
               '/finance/emi-calculator/',
-              '/health/bmi-calculator/',
+              '/general/bmi-calculator/',
               '/general/age-calculator/',
               '/construction/steel-weight-calculator/',
             ],
@@ -959,7 +966,7 @@ const rangeLabels = {
       try {
         const res = await fetch('/api/admin/performance/cloudflare-config', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ apiToken, zoneId }),
         });
 
@@ -986,7 +993,10 @@ const rangeLabels = {
     btnDisconnectCf?.addEventListener('click', async () => {
       if (!confirm('Are you sure you want to disconnect Cloudflare API credentials?')) return;
       try {
-        await fetch('/api/admin/performance/cloudflare-config', { method: 'DELETE' });
+        await fetch('/api/admin/performance/cloudflare-config', {
+          method: 'DELETE',
+          headers: getAuthHeaders(),
+        });
         window.location.reload();
       } catch {
         alert('Failed to disconnect.');

@@ -21,7 +21,15 @@ import {
 
 export const prerender = false;
 
-export const GET: APIRoute = async ({ locals }) => {
+export const GET: APIRoute = async ({ request, cookies, locals }) => {
+  const user = await authenticateAdminRequest(request, cookies);
+  if (!user) {
+    return new Response(JSON.stringify({ error: 'Unauthorized: Admin authentication required' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   const rules = await getRedirectRules(locals);
   const audit = auditAllRedirectRules(rules);
   const kpis = await getRedirectSummaryKPIs(locals);

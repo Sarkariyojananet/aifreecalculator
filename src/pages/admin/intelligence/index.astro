@@ -12,7 +12,7 @@ export const prerender = false;
 // 1. Enforce admin authentication
 const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
 if (!user) {
-  return Astro.redirect('/admin/login/');
+  return Astro.redirect(`/admin/barwalaoffice/?redirect=${encodeURIComponent(Astro.url.pathname + Astro.url.search)}`);
 }
 
 // 2. Fetch comprehensive real snapshot & evaluate intelligence
@@ -705,6 +705,13 @@ const aiConfig = await getAiConfig(Astro.locals);
 
   <!-- Client-side Interactive Script -->
   <script is:inline>
+    function getAuthHeaders() {
+      const token = localStorage.getItem('admin_token');
+      const headers = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      return headers;
+    }
+
     // 1. Refresh Analysis Action
     const refreshBtn = document.getElementById('btn-refresh-intel');
     const refreshSpinner = document.getElementById('refresh-spinner');
@@ -717,7 +724,10 @@ const aiConfig = await getAiConfig(Astro.locals);
         refreshIcon?.classList.add('hidden');
 
         try {
-          const res = await fetch('/api/admin/intelligence/refresh', { method: 'POST' });
+          const res = await fetch('/api/admin/intelligence/refresh', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+          });
           if (res.ok) {
             window.location.reload();
           } else {
@@ -790,7 +800,7 @@ const aiConfig = await getAiConfig(Astro.locals);
           btn.disabled = true;
           const res = await fetch('/api/admin/intelligence/insights', {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
+            headers: getAuthHeaders(),
             body: JSON.stringify({ id, status }),
           });
 
@@ -851,7 +861,7 @@ const aiConfig = await getAiConfig(Astro.locals);
       try {
         const res = await fetch('/api/admin/intelligence/ai-config', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({ provider, apiKey, model, enabled }),
         });
 
@@ -882,7 +892,10 @@ const aiConfig = await getAiConfig(Astro.locals);
       if (!confirm('Remove AI provider API keys and revert to deterministic rule-based analysis?')) return;
 
       try {
-        const res = await fetch('/api/admin/intelligence/ai-config', { method: 'DELETE' });
+        const res = await fetch('/api/admin/intelligence/ai-config', {
+          method: 'DELETE',
+          headers: getAuthHeaders(),
+        });
         if (res.ok) {
           window.location.reload();
         }
