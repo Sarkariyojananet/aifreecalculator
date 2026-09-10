@@ -1,0 +1,555 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="FD Calculator – Fixed Deposit Maturity & Interest Calculator"
+  description="Calculate Fixed Deposit maturity amount, total interest earned, effective yield, and quarterly/monthly compounding for SBI, HDFC, ICICI, and all banks."
+  category="Finance"
+  calculatorName="FD Calculator"
+  slug="fd-calculator"
+  keywords={[
+    'fd calculator',
+    'fixed deposit calculator',
+    'fd calculator india',
+    'fd interest calculator',
+    'fd maturity calculator',
+    'sbi fd calculator',
+    'hdfc fd calculator',
+    'fd calculator monthly',
+    'fixed deposit interest rate',
+    'fd calculator online'
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- MODE TABS -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-2.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-semibold scrollbar-thin">
+        <button type="button" class="btn-fd-tab active shrink-0 rounded-lg bg-blue-600 px-3.5 py-1.5 font-bold text-white shadow-xs cursor-pointer" data-tab="simple">Simple / Cumulative FD</button>
+        <button type="button" class="btn-fd-tab shrink-0 rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-tab="compare">Compare 3 Banks ⚖️</button>
+        <button type="button" class="btn-fd-tab shrink-0 rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-tab="senior">Senior Citizen FD 👴</button>
+        <button type="button" class="btn-fd-tab shrink-0 rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-tab="tax">Tax on FD Interest 💰</button>
+      </div>
+    </div>
+
+    <!-- QUICK PRESETS -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-center gap-1.5 text-xs">
+        <span class="font-bold text-slate-600 dark:text-slate-400 mr-1 flex items-center gap-1"><span>⚡</span> Presets:</span>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-p="100000" data-r="7.1" data-t="1" data-c="quarterly">🏦 SBI 1Yr ₹1L @ 7.1%</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-p="500000" data-r="7.5" data-t="3" data-c="quarterly">💎 ₹5L @ 7.5%, 3 Yrs</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-p="1000000" data-r="7.25" data-t="5" data-c="quarterly">🔒 Tax Saver ₹10L @ 7.25%, 5Y</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-p="250000" data-r="8.0" data-t="2" data-c="quarterly">🌟 Small Finance @ 8%, 2Y</button>
+      </div>
+    </div>
+
+    <!-- MAIN PANEL -->
+    <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-blue-50/30 p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/20 sm:p-7">
+
+      <!-- SIMPLE FD PANEL -->
+      <div id="panel-simple" class="fd-panel space-y-5">
+        <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+          <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2"><span>🏦</span> Fixed Deposit Calculator</h2>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">Enter principal, interest rate, and tenure to calculate FD maturity amount and total interest earned.</p>
+        </div>
+
+        <form id="form-fd-simple" class="space-y-4" novalidate onsubmit="return false;">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label for="fd-principal" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Principal Amount (₹)</label>
+              <input type="number" id="fd-principal" value="100000" step="1000" min="1000" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+            <div>
+              <label for="fd-rate" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Annual Interest Rate (%)</label>
+              <input type="number" id="fd-rate" value="7.1" step="0.05" min="0.1" max="20" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+            <div>
+              <label for="fd-tenure" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Tenure</label>
+              <div class="flex gap-2 mt-1.5">
+                <input type="number" id="fd-tenure" value="1" step="1" min="1" class="flex-1 rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                <select id="fd-tenure-unit" class="w-28 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer">
+                  <option value="years" selected>Years</option>
+                  <option value="months">Months</option>
+                  <option value="days">Days</option>
+                </select>
+              </div>
+            </div>
+            <div>
+              <label for="fd-compound" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Compounding Frequency</label>
+              <select id="fd-compound" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                <option value="quarterly" selected>Quarterly (Most Banks)</option>
+                <option value="monthly">Monthly</option>
+                <option value="annually">Annually</option>
+                <option value="simple">Simple Interest (No Compounding)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 pt-2">
+            <button type="submit" id="btn-fd-calc" class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer">Calculate FD Maturity →</button>
+            <button type="button" id="btn-fd-clear" class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer">Clear (✕)</button>
+          </div>
+          <p id="err-fd" class="hidden rounded-xl border border-red-200 bg-red-50 p-2.5 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300" role="alert"></p>
+        </form>
+      </div>
+
+      <!-- COMPARE BANKS PANEL -->
+      <div id="panel-compare" class="fd-panel hidden space-y-5">
+        <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+          <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2"><span>⚖️</span> Compare FD Rates Across 3 Banks</h2>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">Enter the same principal with different bank interest rates to find the best FD offer.</p>
+        </div>
+        <form id="form-fd-compare" class="space-y-4" novalidate onsubmit="return false;">
+          <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 space-y-2">
+              <span class="text-xs font-bold text-blue-600 dark:text-blue-400">🏦 Bank A</span>
+              <input type="number" id="cmp-a-p" value="100000" class="w-full rounded-xl border border-slate-300 p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800" placeholder="Principal ₹" />
+              <input type="number" id="cmp-a-r" value="7.1" step="0.1" class="w-full rounded-xl border border-slate-300 p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800" placeholder="Rate % (e.g. SBI 7.1)" />
+              <input type="number" id="cmp-a-t" value="1" class="w-full rounded-xl border border-slate-300 p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800" placeholder="Tenure (Years)" />
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 space-y-2">
+              <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400">🏦 Bank B</span>
+              <input type="number" id="cmp-b-p" value="100000" class="w-full rounded-xl border border-slate-300 p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800" placeholder="Principal ₹" />
+              <input type="number" id="cmp-b-r" value="7.5" step="0.1" class="w-full rounded-xl border border-slate-300 p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800" placeholder="Rate %" />
+              <input type="number" id="cmp-b-t" value="1" class="w-full rounded-xl border border-slate-300 p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800" placeholder="Tenure (Years)" />
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 space-y-2">
+              <span class="text-xs font-bold text-purple-600 dark:text-purple-400">🏦 Bank C</span>
+              <input type="number" id="cmp-c-p" value="100000" class="w-full rounded-xl border border-slate-300 p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800" placeholder="Principal ₹" />
+              <input type="number" id="cmp-c-r" value="8.0" step="0.1" class="w-full rounded-xl border border-slate-300 p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800" placeholder="Rate %" />
+              <input type="number" id="cmp-c-t" value="1" class="w-full rounded-xl border border-slate-300 p-2 text-xs font-bold dark:border-slate-700 dark:bg-slate-800" placeholder="Tenure (Years)" />
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="submit" id="btn-compare-calc" class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer">Compare Banks →</button>
+            <button type="button" id="btn-compare-clear" class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer">Clear (✕)</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- SENIOR CITIZEN PANEL -->
+      <div id="panel-senior" class="fd-panel hidden space-y-5">
+        <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+          <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2"><span>👴</span> Senior Citizen FD Calculator</h2>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">Senior citizens (60+ years) get an additional 0.25%–0.50% interest rate on most bank FDs. Calculate your extra benefit here.</p>
+        </div>
+        <form id="form-fd-senior" class="space-y-4" novalidate onsubmit="return false;">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div><label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Principal Amount (₹)</label><input type="number" id="sr-principal" value="500000" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" /></div>
+            <div><label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Regular Rate (%)</label><input type="number" id="sr-rate" value="7.1" step="0.05" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" /></div>
+            <div><label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Senior Citizen Extra Rate (%)</label><input type="number" id="sr-extra" value="0.50" step="0.05" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" /></div>
+            <div><label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Tenure (Years)</label><input type="number" id="sr-tenure" value="3" step="1" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" /></div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="submit" id="btn-senior-calc" class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer">Calculate Senior FD →</button>
+            <button type="button" id="btn-senior-clear" class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer">Clear (✕)</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- TAX ON FD PANEL -->
+      <div id="panel-tax" class="fd-panel hidden space-y-5">
+        <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+          <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2"><span>💰</span> Tax on FD Interest Calculator</h2>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">FD interest is taxable as per your income tax slab. TDS is deducted at 10% if annual interest exceeds ₹40,000 (₹50,000 for senior citizens).</p>
+        </div>
+        <form id="form-fd-tax" class="space-y-4" novalidate onsubmit="return false;">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div><label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Annual FD Interest Earned (₹)</label><input type="number" id="tax-interest" value="75000" step="1000" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" /></div>
+            <div><label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Your Tax Slab</label>
+              <select id="tax-slab" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-semibold dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                <option value="0">0% – No Tax (&lt; ₹3L)</option>
+                <option value="5">5% – (₹3L – ₹7L)</option>
+                <option value="10">10% – (₹7L – ₹10L)</option>
+                <option value="15">15% – (₹10L – ₹12L)</option>
+                <option value="20">20% – (₹12L – ₹15L)</option>
+                <option value="30" selected>30% – (&gt; ₹15L)</option>
+              </select>
+            </div>
+            <div><label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Senior Citizen (60+)?</label>
+              <select id="tax-senior" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-semibold dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                <option value="no" selected>No (TDS limit: ₹40,000)</option>
+                <option value="yes">Yes (TDS limit: ₹50,000)</option>
+              </select>
+            </div>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="submit" id="btn-tax-calc" class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer">Calculate Tax on FD →</button>
+            <button type="button" id="btn-tax-clear" class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer">Clear (✕)</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- RESULTS SECTION -->
+      <div id="fd-results" class="hidden mt-6 space-y-5">
+        <!-- Hero Card -->
+        <div class="overflow-hidden rounded-3xl border border-blue-200 bg-linear-to-br from-white via-blue-50/40 to-blue-100/50 p-5 shadow-lg shadow-blue-500/5 dark:border-blue-900/60 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/30 sm:p-7">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-blue-200/80 pb-4 dark:border-slate-800">
+            <div>
+              <span id="res-fd-badge" class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">Maturity Amount</span>
+              <div id="res-fd-maturity" class="mt-1 text-4xl sm:text-5xl font-black text-blue-600 dark:text-blue-400">₹1,07,271</div>
+            </div>
+            <div class="sm:text-right">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Interest Earned:</span>
+              <div id="res-fd-interest" class="text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400">₹7,271</div>
+            </div>
+          </div>
+          <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Principal</div>
+              <div id="res-fd-principal" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">₹1,00,000</div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Rate / Compounding</div>
+              <div id="res-fd-rate-info" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">7.1% / Quarterly</div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Effective Yield</div>
+              <div id="res-fd-yield" class="mt-1 text-sm font-bold text-purple-600 dark:text-purple-400">7.27%</div>
+            </div>
+            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 dark:text-slate-400 font-semibold">Tenure</div>
+              <div id="res-fd-tenure" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">1 Year</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Visual Breakdown -->
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-4 flex items-center gap-1.5"><span>📊</span> Principal vs Interest Breakdown</h3>
+          <div class="flex flex-col sm:flex-row items-center justify-around gap-6">
+            <div class="relative w-40 h-40 flex items-center justify-center">
+              <svg viewBox="0 0 36 36" class="w-full h-full transform -rotate-90">
+                <circle cx="18" cy="18" r="15.91549430918954" fill="transparent" stroke="#3b82f6" stroke-width="3.8"></circle>
+                <circle id="fd-donut-interest" cx="18" cy="18" r="15.91549430918954" fill="transparent" stroke="#10b981" stroke-width="3.8" stroke-dasharray="7 93" stroke-dashoffset="0"></circle>
+              </svg>
+              <div class="absolute text-center">
+                <span class="text-[11px] font-bold text-slate-400 block">RETURN</span>
+                <span id="fd-donut-center" class="text-xs font-black text-slate-800 dark:text-slate-200">7.3%</span>
+              </div>
+            </div>
+            <div class="space-y-3 text-xs w-full sm:w-auto">
+              <div class="flex items-center justify-between gap-6 p-2 rounded-xl bg-blue-50/50 dark:bg-blue-950/20 border border-blue-100 dark:border-blue-900/40">
+                <span class="flex items-center gap-2 font-bold text-blue-700 dark:text-blue-300"><span class="w-3 h-3 rounded-full bg-blue-600 inline-block"></span> Principal:</span>
+                <span id="fd-legend-principal" class="font-bold text-slate-900 dark:text-white font-mono">₹1,00,000</span>
+              </div>
+              <div class="flex items-center justify-between gap-6 p-2 rounded-xl bg-emerald-50/50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/40">
+                <span class="flex items-center gap-2 font-bold text-emerald-700 dark:text-emerald-300"><span class="w-3 h-3 rounded-full bg-emerald-500 inline-block"></span> Interest:</span>
+                <span id="fd-legend-interest" class="font-bold text-slate-900 dark:text-white font-mono">₹7,271</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Year-wise Growth Table -->
+        <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5"><span>📅</span> Year-wise Growth Schedule</h3>
+          <div class="overflow-x-auto max-h-72 scrollbar-thin">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold sticky top-0">
+                <tr>
+                  <th class="p-2.5 rounded-l-lg">Year</th>
+                  <th class="p-2.5 text-right">Opening Balance</th>
+                  <th class="p-2.5 text-right text-emerald-600 dark:text-emerald-400">Interest Earned</th>
+                  <th class="p-2.5 text-right rounded-r-lg">Closing Balance</th>
+                </tr>
+              </thead>
+              <tbody id="fd-schedule-tbody" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Compare Results Table (hidden by default) -->
+        <div id="fd-compare-result" class="hidden rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3">Bank Comparison Results</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100 dark:bg-slate-800 font-bold">
+                <tr>
+                  <th class="p-2.5">Bank</th>
+                  <th class="p-2.5 text-right">Rate</th>
+                  <th class="p-2.5 text-right">Interest</th>
+                  <th class="p-2.5 text-right">Maturity</th>
+                  <th class="p-2.5 text-center">Best?</th>
+                </tr>
+              </thead>
+              <tbody id="compare-tbody" class="divide-y divide-slate-100 dark:divide-slate-800 font-mono"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SEO CONTENT -->
+  <Fragment slot="content">
+    <section class="fd-content">
+      <h2>FD Calculator – Fixed Deposit Maturity & Interest Calculator</h2>
+      <p>
+        A <strong>Fixed Deposit (FD) Calculator</strong> is an essential financial planning tool that helps you calculate the exact maturity amount, total interest earned, and effective yield on your fixed deposit investment. Whether you are investing in SBI, HDFC, ICICI, Axis, or any other bank, our FD calculator instantly computes your returns with quarterly, monthly, or annual compounding options.
+      </p>
+
+      <h2>What Is a Fixed Deposit (FD)?</h2>
+      <p>
+        A <strong>Fixed Deposit</strong> is one of India's most popular and safest investment instruments offered by banks, post offices, and non-banking financial companies (NBFCs). You deposit a lump sum for a fixed tenure at a predetermined interest rate, and at maturity, you receive the principal plus accumulated interest. FDs are risk-free (DICGC insured up to ₹5 lakhs per depositor per bank), making them ideal for conservative investors seeking guaranteed returns.
+      </p>
+
+      <h2>FD Maturity Formula</h2>
+      <p>For <strong>compound interest FD</strong> (most banks use quarterly compounding):</p>
+      <div class="my-4 rounded-2xl border border-slate-200 bg-slate-100/80 p-4 font-mono text-sm dark:border-slate-800 dark:bg-slate-900">
+        <div>M = P × (1 + r/n)^(n×t)</div>
+        <div class="mt-2 text-slate-600 dark:text-slate-400">Where: P = Principal | r = Annual Rate | n = Compounding periods per year | t = Time in years</div>
+      </div>
+      <p>For <strong>simple interest FD</strong>: <code>Interest = P × r × t / 100</code></p>
+
+      <h2>FD Interest Rates in India (2025)</h2>
+      <p>Leading bank FD rates for general public (regular FDs, 1-year tenure):</p>
+      <ul>
+        <li><strong>SBI:</strong> 6.80% – 7.10% (1–3 years)</li>
+        <li><strong>HDFC Bank:</strong> 6.60% – 7.35%</li>
+        <li><strong>ICICI Bank:</strong> 6.70% – 7.25%</li>
+        <li><strong>Axis Bank:</strong> 6.70% – 7.25%</li>
+        <li><strong>Small Finance Banks:</strong> 7.50% – 9.00% (higher risk)</li>
+        <li><strong>Senior Citizens:</strong> 0.25%–0.50% extra on all above rates</li>
+      </ul>
+
+      <h2>Senior Citizen FD Benefits</h2>
+      <p>Indian banks offer an additional <strong>0.25% to 0.50% per annum</strong> interest rate to depositors aged 60 years and above. The TDS threshold for senior citizens is also higher at ₹50,000 per year (vs ₹40,000 for regular depositors), meaning less TDS deduction on FD interest income.</p>
+
+      <h2>Tax on FD Interest</h2>
+      <p>FD interest is fully taxable as <strong>"Income from Other Sources"</strong> under the Income Tax Act, 1961. Key tax rules:</p>
+      <ul>
+        <li><strong>TDS Rate:</strong> 10% is deducted if annual interest exceeds ₹40,000 (₹50,000 for senior citizens)</li>
+        <li><strong>Tax Slab:</strong> You pay tax as per your income tax bracket (0% to 30%)</li>
+        <li><strong>Form 15G/15H:</strong> Submit to avoid TDS if your total income is below the taxable limit</li>
+        <li><strong>Tax-Saver FD:</strong> 5-year FD qualifies for ₹1.5 lakh deduction under Section 80C</li>
+      </ul>
+
+      <h2>Cumulative vs Non-Cumulative FD</h2>
+      <ul>
+        <li><strong>Cumulative FD:</strong> Interest compounds and is paid at maturity. Best for wealth accumulation. Higher effective returns.</li>
+        <li><strong>Non-Cumulative FD:</strong> Interest paid monthly, quarterly, or annually. Ideal for regular income (pensioners, retirees).</li>
+      </ul>
+
+      <h2>Tips to Maximize FD Returns</h2>
+      <ol>
+        <li><strong>Laddering Strategy:</strong> Split large deposits into multiple FDs with staggered maturities to maintain liquidity and capture better rates.</li>
+        <li><strong>Compare Banks:</strong> Small finance banks and NBFCs offer 1%–2% higher rates, though with slightly more risk.</li>
+        <li><strong>Choose Quarterly Compounding:</strong> Always prefer quarterly over annual compounding — it gives a higher effective annual yield.</li>
+        <li><strong>Submit 15G/15H:</strong> Submit Form 15G (or 15H for seniors) to your bank to prevent TDS deduction if eligible.</li>
+        <li><strong>Joint Account:</strong> Open FD jointly with a family member in a lower tax bracket to reduce the overall tax burden.</li>
+      </ol>
+    </section>
+  </Fragment>
+
+  <!-- FAQ -->
+  <Fragment slot="faq">
+    <div class="space-y-4 text-xs sm:text-sm">
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open>
+        <summary class="cursor-pointer list-none"><h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">1. How does an FD calculator work?<span class="group-open:rotate-180 transition-transform">▼</span></h3></summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">An FD calculator uses the compound interest formula M = P × (1 + r/n)^(nt) to calculate maturity amount. You enter the principal, annual interest rate, tenure, and compounding frequency. The calculator then shows you the maturity amount and total interest earned instantly.</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none"><h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">2. What is the FD interest rate in India in 2025?<span class="group-open:rotate-180 transition-transform">▼</span></h3></summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">In 2025, major bank FD rates range from 6.5% to 7.5% for regular depositors. Small Finance Banks like AU, ESAF, and Jana offer 7.5%–9.0%. Senior citizens get an additional 0.25%–0.50% on top of regular rates.</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none"><h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">3. Is FD interest taxable in India?<span class="group-open:rotate-180 transition-transform">▼</span></h3></summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">Yes, FD interest is fully taxable as "Income from Other Sources." TDS at 10% is deducted if annual interest exceeds ₹40,000 (₹50,000 for senior citizens). You pay additional tax as per your income tax slab when filing ITR.</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none"><h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">4. What is the difference between cumulative and non-cumulative FD?<span class="group-open:rotate-180 transition-transform">▼</span></h3></summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">Cumulative FD reinvests the interest (compounds it), so you receive higher maturity amount. Non-cumulative FD pays interest periodically (monthly/quarterly) — suitable for regular income. Cumulative FD gives better overall returns due to compounding.</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none"><h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">5. What is the minimum and maximum FD investment?<span class="group-open:rotate-180 transition-transform">▼</span></h3></summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">The minimum FD amount varies by bank — usually ₹1,000 to ₹10,000. There is typically no maximum limit for regular FDs. However, DICGC insurance covers only up to ₹5 lakhs per depositor per bank, so consider spreading large deposits.</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none"><h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">6. Can I break my FD before maturity?<span class="group-open:rotate-180 transition-transform">▼</span></h3></summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">Yes, most banks allow premature FD withdrawal, but they charge a penalty of 0.5%–1% less than the applicable rate. Tax-Saver FDs (5-year, 80C) cannot be broken before 5 years. Some banks offer auto-sweep FDs with zero penalty.</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none"><h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">7. What is effective yield in FD, and why does it matter?<span class="group-open:rotate-180 transition-transform">▼</span></h3></summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">Effective yield is the actual annual return when compounding is applied. For example, a 7.1% rate compounded quarterly gives an effective yield of approximately 7.27%. The more frequent the compounding, the higher the effective yield — even at the same nominal rate.</p>
+      </details>
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<style>
+  .fd-content h2 { margin-top: 2.5rem; margin-bottom: 1rem; font-size: 1.5rem; font-weight: 800; line-height: 1.3; color: #0f172a; }
+  .fd-content h2:first-child { margin-top: 0; }
+  .fd-content p { margin: 0 0 1rem; line-height: 1.75; color: #475569; }
+  .fd-content ul, .fd-content ol { margin: 0.75rem 0 1.5rem; padding-left: 1.5rem; }
+  .fd-content ul { list-style: disc; }
+  .fd-content ol { list-style: decimal; }
+  .fd-content li + li { margin-top: 0.5rem; }
+  :global(.dark) .fd-content h2 { color: #f8fafc; }
+  :global(.dark) .fd-content p, :global(.dark) .fd-content li { color: #cbd5e1; }
+</style>
+
+<script is:inline>
+  const tabs = document.querySelectorAll('.btn-fd-tab');
+  const panels = document.querySelectorAll('.fd-panel');
+  const results = document.getElementById('fd-results');
+
+  function fmt(n) { return '₹' + Math.round(n).toLocaleString('en-IN'); }
+  function fmtPct(n) { return n.toFixed(2) + '%'; }
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => { t.classList.remove('bg-blue-600','text-white','shadow-xs'); t.classList.add('border','border-slate-300','bg-white','text-slate-700','dark:border-slate-700','dark:bg-slate-800','dark:text-slate-200'); });
+      tab.classList.add('bg-blue-600','text-white','shadow-xs');
+      tab.classList.remove('border','border-slate-300','bg-white','text-slate-700');
+      const t = tab.dataset.tab;
+      panels.forEach(p => p.classList.add('hidden'));
+      document.getElementById('panel-' + t)?.classList.remove('hidden');
+      if(results) results.classList.add('hidden');
+    });
+  });
+
+  document.querySelectorAll('.btn-preset').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('fd-principal').value = btn.dataset.p;
+      document.getElementById('fd-rate').value = btn.dataset.r;
+      document.getElementById('fd-tenure').value = btn.dataset.t;
+      document.getElementById('fd-tenure-unit').value = 'years';
+      document.getElementById('fd-compound').value = btn.dataset.c || 'quarterly';
+    });
+  });
+
+  function calcFD(P, r, t_years, comp) {
+    let n = comp === 'quarterly' ? 4 : comp === 'monthly' ? 12 : comp === 'annually' ? 1 : 0;
+    if (n === 0) { // simple interest
+      let interest = P * r / 100 * t_years;
+      return { maturity: P + interest, interest };
+    }
+    let maturity = P * Math.pow(1 + r / (100 * n), n * t_years);
+    return { maturity, interest: maturity - P };
+  }
+
+  function showResults(P, r, t_years, comp, badge) {
+    const { maturity, interest } = calcFD(P, r, t_years, comp);
+    document.getElementById('res-fd-maturity').textContent = fmt(maturity);
+    document.getElementById('res-fd-interest').textContent = fmt(interest);
+    document.getElementById('res-fd-principal').textContent = fmt(P);
+    const compLabel = { quarterly:'Quarterly', monthly:'Monthly', annually:'Annually', simple:'Simple Interest' }[comp];
+    document.getElementById('res-fd-rate-info').textContent = r + '% / ' + compLabel;
+    const effYield = Math.pow(maturity / P, 1 / t_years) - 1;
+    document.getElementById('res-fd-yield').textContent = fmtPct(effYield * 100);
+    document.getElementById('res-fd-tenure').textContent = t_years + ' Year' + (t_years > 1 ? 's' : '');
+    if(badge) document.getElementById('res-fd-badge').textContent = badge;
+
+    const intPct = (interest / maturity) * 100;
+    document.getElementById('fd-donut-interest').setAttribute('stroke-dasharray', intPct.toFixed(1) + ' ' + (100 - intPct).toFixed(1));
+    document.getElementById('fd-donut-center').textContent = fmtPct(interest / P * 100 / t_years);
+    document.getElementById('fd-legend-principal').textContent = fmt(P);
+    document.getElementById('fd-legend-interest').textContent = fmt(interest);
+
+    // Year-wise schedule
+    const tbody = document.getElementById('fd-schedule-tbody');
+    tbody.innerHTML = '';
+    let bal = P;
+    for (let yr = 1; yr <= Math.ceil(t_years); yr++) {
+      const yFrac = Math.min(yr, t_years) - (yr - 1);
+      const { maturity: end } = calcFD(bal, r, yFrac, comp);
+      const int = end - bal;
+      tbody.innerHTML += `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50"><td class="p-2.5">${yr}</td><td class="p-2.5 text-right">${fmt(bal)}</td><td class="p-2.5 text-right text-emerald-600 dark:text-emerald-400">${fmt(int)}</td><td class="p-2.5 text-right font-bold">${fmt(end)}</td></tr>`;
+      bal = end;
+    }
+
+    document.getElementById('fd-compare-result').classList.add('hidden');
+    results.classList.remove('hidden');
+    results.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  document.getElementById('form-fd-simple')?.addEventListener('submit', () => {
+    const P = parseFloat(document.getElementById('fd-principal').value);
+    const r = parseFloat(document.getElementById('fd-rate').value);
+    let t = parseFloat(document.getElementById('fd-tenure').value);
+    const unit = document.getElementById('fd-tenure-unit').value;
+    const comp = document.getElementById('fd-compound').value;
+    if(!P || !r || !t) { document.getElementById('err-fd').textContent='Please fill all fields.'; document.getElementById('err-fd').classList.remove('hidden'); return; }
+    document.getElementById('err-fd').classList.add('hidden');
+    const t_years = unit === 'months' ? t/12 : unit === 'days' ? t/365 : t;
+    showResults(P, r, t_years, comp, 'Maturity Amount');
+  });
+
+  document.getElementById('btn-fd-clear')?.addEventListener('click', () => {
+    document.getElementById('fd-principal').value = '100000';
+    document.getElementById('fd-rate').value = '7.1';
+    document.getElementById('fd-tenure').value = '1';
+    results?.classList.add('hidden');
+  });
+
+  document.getElementById('form-fd-compare')?.addEventListener('submit', () => {
+    const banks = [
+      { id: 'A', p: parseFloat(document.getElementById('cmp-a-p').value), r: parseFloat(document.getElementById('cmp-a-r').value), t: parseFloat(document.getElementById('cmp-a-t').value) },
+      { id: 'B', p: parseFloat(document.getElementById('cmp-b-p').value), r: parseFloat(document.getElementById('cmp-b-r').value), t: parseFloat(document.getElementById('cmp-b-t').value) },
+      { id: 'C', p: parseFloat(document.getElementById('cmp-c-p').value), r: parseFloat(document.getElementById('cmp-c-r').value), t: parseFloat(document.getElementById('cmp-c-t').value) },
+    ];
+    const results_arr = banks.map(b => { const { maturity, interest } = calcFD(b.p, b.r, b.t, 'quarterly'); return { ...b, maturity, interest }; });
+    const best = Math.max(...results_arr.map(b => b.maturity));
+    const tbody = document.getElementById('compare-tbody');
+    tbody.innerHTML = '';
+    results_arr.forEach(b => {
+      const isBest = b.maturity === best;
+      tbody.innerHTML += `<tr class="${isBest ? 'bg-emerald-50 dark:bg-emerald-950/20 font-bold' : ''}"><td class="p-2.5">Bank ${b.id}</td><td class="p-2.5 text-right">${b.r}%</td><td class="p-2.5 text-right text-emerald-600">${fmt(b.interest)}</td><td class="p-2.5 text-right">${fmt(b.maturity)}</td><td class="p-2.5 text-center">${isBest ? '✅ Best' : ''}</td></tr>`;
+    });
+    // Show best in hero
+    const bestBank = results_arr.find(b => b.maturity === best);
+    showResults(bestBank.p, bestBank.r, bestBank.t, 'quarterly', 'Best Maturity Amount');
+    document.getElementById('fd-compare-result').classList.remove('hidden');
+  });
+
+  document.getElementById('btn-compare-clear')?.addEventListener('click', () => { results?.classList.add('hidden'); });
+
+  document.getElementById('form-fd-senior')?.addEventListener('submit', () => {
+    const P = parseFloat(document.getElementById('sr-principal').value);
+    const r = parseFloat(document.getElementById('sr-rate').value);
+    const extra = parseFloat(document.getElementById('sr-extra').value);
+    const t = parseFloat(document.getElementById('sr-tenure').value);
+    const srRate = r + extra;
+    showResults(P, srRate, t, 'quarterly', 'Senior Citizen Maturity');
+  });
+  document.getElementById('btn-senior-clear')?.addEventListener('click', () => { results?.classList.add('hidden'); });
+
+  document.getElementById('form-fd-tax')?.addEventListener('submit', () => {
+    const interest = parseFloat(document.getElementById('tax-interest').value);
+    const slab = parseFloat(document.getElementById('tax-slab').value);
+    const isSenior = document.getElementById('tax-senior').value === 'yes';
+    const tdsThreshold = isSenior ? 50000 : 40000;
+    const tdsApplicable = interest > tdsThreshold;
+    const tds = tdsApplicable ? interest * 0.10 : 0;
+    const additionalTax = Math.max(0, interest * slab / 100 - tds);
+    const totalTax = interest * slab / 100;
+    const netInterest = interest - totalTax;
+
+    document.getElementById('res-fd-badge').textContent = 'Net Interest After Tax';
+    document.getElementById('res-fd-maturity').textContent = fmt(netInterest);
+    document.getElementById('res-fd-interest').textContent = fmt(totalTax);
+    document.getElementById('res-fd-principal').textContent = fmt(interest);
+    document.getElementById('res-fd-rate-info').textContent = slab + '% Tax Slab';
+    document.getElementById('res-fd-yield').textContent = tdsApplicable ? fmt(tds) + ' TDS' : 'No TDS';
+    document.getElementById('res-fd-tenure').textContent = additionalTax > 0 ? fmt(additionalTax) + ' Extra Tax' : 'No Extra Tax';
+    results?.classList.remove('hidden');
+  });
+  document.getElementById('btn-tax-clear')?.addEventListener('click', () => { results?.classList.add('hidden'); });
+</script>
+
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "How does an FD calculator work?", "acceptedAnswer": { "@type": "Answer", "text": "An FD calculator uses the compound interest formula M = P × (1 + r/n)^(nt) to calculate maturity amount." } },
+    { "@type": "Question", "name": "What is the FD interest rate in India in 2025?", "acceptedAnswer": { "@type": "Answer", "text": "Major bank FD rates range from 6.5% to 7.5%. Small Finance Banks offer 7.5%–9.0%. Senior citizens get an additional 0.25%–0.50%." } },
+    { "@type": "Question", "name": "Is FD interest taxable in India?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, FD interest is fully taxable. TDS at 10% is deducted if annual interest exceeds ₹40,000 (₹50,000 for senior citizens)." } },
+    { "@type": "Question", "name": "What is the difference between cumulative and non-cumulative FD?", "acceptedAnswer": { "@type": "Answer", "text": "Cumulative FD reinvests interest for higher maturity. Non-cumulative FD pays interest periodically for regular income." } },
+    { "@type": "Question", "name": "What is the minimum FD investment?", "acceptedAnswer": { "@type": "Answer", "text": "Minimum FD is typically ₹1,000 to ₹10,000. DICGC insurance covers up to ₹5 lakhs per depositor per bank." } },
+    { "@type": "Question", "name": "Can I break my FD before maturity?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, but banks charge 0.5%–1% penalty. Tax-Saver FDs cannot be broken before 5 years." } },
+    { "@type": "Question", "name": "What is effective yield in FD?", "acceptedAnswer": { "@type": "Answer", "text": "Effective yield is the actual annual return after compounding. A 7.1% rate with quarterly compounding gives ~7.27% effective yield." } }
+  ]
+})} />

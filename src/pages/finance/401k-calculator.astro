@@ -1,0 +1,535 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="401(k) Calculator – 2025 Retirement Growth & Employer Match Calculator"
+  description="Calculate your 401(k) balance at retirement with employer match, compound investment growth, 2025 IRS contribution limits ($23,500), and projected monthly retirement income."
+  category="Finance"
+  calculatorName="401(k) Calculator"
+  slug="401k-calculator"
+  keywords={[
+    '401k calculator',
+    '401k retirement calculator',
+    '401k employer match calculator',
+    '401k growth calculator',
+    '401k contribution calculator',
+    'roth 401k vs traditional 401k',
+    '401k limits 2025',
+    '401k compound interest calculator'
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- TABS -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-2.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-semibold scrollbar-thin">
+        <button type="button" class="btn-401k-tab active shrink-0 rounded-lg bg-blue-700 px-3.5 py-1.5 font-bold text-white shadow-xs cursor-pointer" data-tab="growth">401(k) Growth & Match</button>
+        <button type="button" class="btn-401k-tab shrink-0 rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-tab="compare">Traditional vs Roth 401(k) ⚖️</button>
+        <button type="button" class="btn-401k-tab shrink-0 rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-tab="limits">2025 IRS Limits 📋</button>
+      </div>
+    </div>
+
+    <!-- PRESETS -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-center gap-1.5 text-xs">
+        <span class="font-bold text-slate-600 dark:text-slate-400 mr-1">⚡ Quick Scenarios:</span>
+        <button type="button" class="btn-401k-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-age="25" data-ret="65" data-bal="5000" data-sal="55000" data-cont="6" data-match="50" data-cap="6" data-retn="8">💼 Early Career: 25 yo, $55k, 6%</button>
+        <button type="button" class="btn-401k-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-age="35" data-ret="65" data-bal="65000" data-sal="95000" data-cont="10" data-match="100" data-cap="4" data-retn="7.5">📈 Mid Career: 35 yo, $95k, 10%</button>
+        <button type="button" class="btn-401k-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-age="45" data-ret="65" data-bal="250000" data-sal="150000" data-cont="15.6" data-match="50" data-cap="6" data-retn="7">🎯 Max Contrib: 45 yo, $150k, Max</button>
+        <button type="button" class="btn-401k-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-age="52" data-ret="67" data-bal="400000" data-sal="130000" data-cont="23.8" data-match="50" data-cap="5" data-retn="6.5">👴 Catch-up 50+: 52 yo, $31k Max</button>
+      </div>
+    </div>
+
+    <!-- MAIN PANEL -->
+    <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-blue-50/20 to-indigo-50/20 p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/10 sm:p-7">
+
+      <!-- TAB 1: GROWTH -->
+      <div id="panel-401k-growth" class="tab-401k-panel space-y-5">
+        <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+          <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🇺🇸</span> 401(k) Retirement Growth & Employer Match
+          </h2>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            See how your personal salary contributions, employer matching ("free money"), and compound market returns build your retirement nest egg.
+          </p>
+        </div>
+
+        <form id="form-401k" class="space-y-4" novalidate onsubmit="return false;">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <label for="k-cur-age" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Current Age</label>
+              <input type="number" id="k-cur-age" value="30" min="18" max="75" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+            <div>
+              <label for="k-ret-age" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Retirement Age</label>
+              <input type="number" id="k-ret-age" value="65" min="40" max="85" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+            <div>
+              <label for="k-cur-bal" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Current 401(k) Balance ($)</label>
+              <input type="number" id="k-cur-bal" value="25000" step="1000" min="0" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+            <div>
+              <label for="k-salary" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Annual Salary ($)</label>
+              <input type="number" id="k-salary" value="80000" step="1000" min="10000" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+            <div>
+              <label for="k-contrib-pct" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Your Contribution (% of Salary)</label>
+              <div class="flex items-center gap-2 mt-1.5">
+                <input type="number" id="k-contrib-pct" value="8" step="0.5" min="0" max="80" class="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                <span id="k-contrib-dollars" class="text-xs font-semibold text-slate-500 whitespace-nowrap dark:text-slate-400">($6,400/yr)</span>
+              </div>
+            </div>
+            <div>
+              <label for="k-return" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Expected Annual Return (%)</label>
+              <input type="number" id="k-return" value="7.5" step="0.1" min="1" max="15" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+            </div>
+          </div>
+
+          <!-- Employer Match Section -->
+          <div class="rounded-2xl border border-emerald-200/80 bg-emerald-50/40 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5 mb-3">
+              <span>🎁</span> Employer Match Settings (Free Money)
+            </h3>
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div>
+                <label for="k-match-pct" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Employer Matches (% of your contrib)</label>
+                <input type="number" id="k-match-pct" value="50" step="5" min="0" max="200" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-sm font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                <span class="text-[11px] text-slate-500 dark:text-slate-400">Typical: 50% or 100%</span>
+              </div>
+              <div>
+                <label for="k-match-cap" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Up to % of Your Salary</label>
+                <input type="number" id="k-match-cap" value="6" step="0.5" min="0" max="20" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-sm font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                <span class="text-[11px] text-slate-500 dark:text-slate-400">Typical: 4% to 6%</span>
+              </div>
+              <div>
+                <label for="k-sal-growth" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Annual Salary Raise (%)</label>
+                <input type="number" id="k-sal-growth" value="2.5" step="0.5" min="0" max="10" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2 text-sm font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                <span class="text-[11px] text-slate-500 dark:text-slate-400">Annual merit increase</span>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <!-- RESULTS GRID -->
+        <div class="grid grid-cols-1 gap-4 lg:grid-cols-12 pt-2">
+          <!-- Main Big Card (7 cols) -->
+          <div class="rounded-3xl bg-linear-to-br from-blue-700 via-indigo-700 to-slate-900 p-6 text-white shadow-xl lg:col-span-7">
+            <div class="text-xs font-bold uppercase tracking-wider text-blue-200">Projected 401(k) Balance at Retirement</div>
+            <div id="k-res-total" class="mt-2 text-3xl sm:text-4xl font-black tracking-tight text-white">$1,482,920</div>
+            <div id="k-res-sub" class="mt-1 text-xs text-blue-100">At age 65 after 35 years of compounding</div>
+
+            <div class="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 border-t border-white/15 pt-4 text-xs">
+              <div>
+                <div class="text-blue-200 font-medium">Your Principal</div>
+                <div id="k-res-principal" class="mt-1 text-sm font-bold text-white">$325,400</div>
+              </div>
+              <div>
+                <div class="text-emerald-300 font-medium">Employer Match</div>
+                <div id="k-res-match" class="mt-1 text-sm font-bold text-emerald-300">$122,025</div>
+              </div>
+              <div>
+                <div class="text-amber-300 font-medium">Interest & Gains</div>
+                <div id="k-res-growth" class="mt-1 text-sm font-bold text-amber-300">$1,035,495</div>
+              </div>
+              <div>
+                <div class="text-blue-200 font-medium">Monthly Income</div>
+                <div id="k-res-monthly" class="mt-1 text-sm font-bold text-white">$4,943/mo</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Summary Breakdown Box (5 cols) -->
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 lg:col-span-5 space-y-3 text-xs">
+            <h3 class="font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center justify-between">
+              <span>📊 Wealth Breakdown</span>
+              <span id="k-res-growth-ratio" class="text-blue-600 dark:text-blue-400 font-bold">70% from Growth</span>
+            </h3>
+
+            <!-- Progress Bar -->
+            <div class="h-4 w-full rounded-full overflow-hidden bg-slate-100 dark:bg-slate-800 flex">
+              <div id="k-bar-prin" class="bg-blue-600 h-full" style="width: 25%" title="Your Principal"></div>
+              <div id="k-bar-match" class="bg-emerald-500 h-full" style="width: 10%" title="Employer Match"></div>
+              <div id="k-bar-growth" class="bg-amber-400 h-full" style="width: 65%" title="Market Growth"></div>
+            </div>
+
+            <div class="space-y-2 pt-2 divide-y divide-slate-100 dark:divide-slate-800">
+              <div class="flex justify-between py-1">
+                <span class="text-slate-600 dark:text-slate-400 flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span> Your Contributions</span>
+                <span id="k-summary-cont" class="font-bold text-slate-900 dark:text-white">$325,400</span>
+              </div>
+              <div class="flex justify-between py-1">
+                <span class="text-slate-600 dark:text-slate-400 flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span> Employer Match</span>
+                <span id="k-summary-match" class="font-bold text-emerald-600 dark:text-emerald-400">$122,025</span>
+              </div>
+              <div class="flex justify-between py-1">
+                <span class="text-slate-600 dark:text-slate-400 flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-amber-400"></span> Total Compound Growth</span>
+                <span id="k-summary-growth" class="font-bold text-amber-600 dark:text-amber-400">$1,035,495</span>
+              </div>
+              <div class="flex justify-between py-1 font-semibold text-slate-700 dark:text-slate-300">
+                <span>Safe Withdrawal Rate (4% Rule)</span>
+                <span id="k-summary-4pct" class="font-bold text-blue-700 dark:text-blue-400">$59,317 / yr</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: TRADITIONAL VS ROTH 401(k) -->
+      <div id="panel-401k-compare" class="tab-401k-panel hidden space-y-5">
+        <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+          <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <span>⚖️</span> Traditional 401(k) vs Roth 401(k)
+          </h2>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            Compare tax advantages today vs tax freedom in retirement to find out which account type puts more money in your pocket.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <!-- Traditional 401(k) -->
+          <div class="rounded-3xl border-2 border-blue-200 bg-white p-5 dark:border-blue-900/50 dark:bg-slate-900">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-black text-blue-700 dark:text-blue-400 uppercase tracking-wider">Traditional 401(k)</h3>
+              <span class="rounded-full bg-blue-100 px-2.5 py-0.5 text-[11px] font-bold text-blue-800 dark:bg-blue-900/60 dark:text-blue-200">Pre-Tax</span>
+            </div>
+            <ul class="mt-4 space-y-2.5 text-xs text-slate-600 dark:text-slate-300">
+              <li class="flex items-start gap-2">✅ <strong>Immediate Tax Break:</strong> Contributions reduce your taxable income for the current year.</li>
+              <li class="flex items-start gap-2">✅ <strong>Higher Take-Home Pay:</strong> Save on income taxes today (Federal + State).</li>
+              <li class="flex items-start gap-2">⚠️ <strong>Taxes in Retirement:</strong> Every dollar withdrawn is taxed as ordinary income at your future tax rate.</li>
+              <li class="flex items-start gap-2">⚠️ <strong>RMDs:</strong> Required Minimum Distributions begin at age 73 (SECURE 2.0).</li>
+              <li class="flex items-start gap-2">🎯 <strong>Best For:</strong> High earners today who expect to be in a lower tax bracket during retirement.</li>
+            </ul>
+          </div>
+
+          <!-- Roth 401(k) -->
+          <div class="rounded-3xl border-2 border-emerald-200 bg-white p-5 dark:border-emerald-900/50 dark:bg-slate-900">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-wider">Roth 401(k)</h3>
+              <span class="rounded-full bg-emerald-100 px-2.5 py-0.5 text-[11px] font-bold text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-200">After-Tax</span>
+            </div>
+            <ul class="mt-4 space-y-2.5 text-xs text-slate-600 dark:text-slate-300">
+              <li class="flex items-start gap-2">⚠️ <strong>No Tax Break Today:</strong> Contributions are made with after-tax earnings.</li>
+              <li class="flex items-start gap-2">✅ <strong>100% Tax-Free Retirement:</strong> All contributions AND compound earnings are tax-free upon withdrawal after age 59½.</li>
+              <li class="flex items-start gap-2">✅ <strong>No RMDs:</strong> SECURE 2.0 eliminated RMDs for Roth 401(k) accounts starting in 2024.</li>
+              <li class="flex items-start gap-2">✅ <strong>No Income Limit:</strong> Anyone can contribute up to the max $23,500 regardless of income (unlike Roth IRA).</li>
+              <li class="flex items-start gap-2">🎯 <strong>Best For:</strong> Younger workers, people in lower/mid tax brackets, or those anticipating higher tax rates in the future.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: 2025 IRS LIMITS -->
+      <div id="panel-401k-limits" class="tab-401k-panel hidden space-y-5">
+        <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+          <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📋</span> Official 2025 IRS 401(k) Contribution Limits
+          </h2>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            IRS Notice 2024-80 established higher contribution thresholds and new SECURE Act 2.0 catch-up provisions for tax year 2025.
+          </p>
+        </div>
+
+        <div class="overflow-x-auto rounded-2xl border border-slate-200 dark:border-slate-800">
+          <table class="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+            <thead class="bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold">
+              <tr>
+                <th class="p-3">Category</th>
+                <th class="p-3">2024 Limit</th>
+                <th class="p-3">2025 Limit</th>
+                <th class="p-3">Who Qualifies</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+              <tr>
+                <td class="p-3 font-bold">Employee Elective Deferral</td>
+                <td class="p-3">$23,000</td>
+                <td class="p-3 font-bold text-blue-700 dark:text-blue-400">$23,500</td>
+                <td class="p-3">All employees under age 50</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold">Age 50+ Catch-Up Contribution</td>
+                <td class="p-3">$7,500</td>
+                <td class="p-3 font-bold text-blue-700 dark:text-blue-400">$7,500</td>
+                <td class="p-3">Age 50 to 59, or 64+</td>
+              </tr>
+              <tr class="bg-blue-50/60 dark:bg-blue-950/20">
+                <td class="p-3 font-bold text-blue-900 dark:text-blue-200">SECURE 2.0 Special Catch-Up (Ages 60–63)</td>
+                <td class="p-3">—</td>
+                <td class="p-3 font-black text-emerald-600 dark:text-emerald-400">$11,250</td>
+                <td class="p-3">Employees turning 60, 61, 62, or 63 in 2025</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold">Total Max Contribution (Employee + Employer)</td>
+                <td class="p-3">$69,000</td>
+                <td class="p-3 font-bold text-blue-700 dark:text-blue-400">$70,000</td>
+                <td class="p-3">Under age 50 combined limit</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold">Total Max with Catch-Up (Age 50+)</td>
+                <td class="p-3">$76,500</td>
+                <td class="p-3 font-bold text-blue-700 dark:text-blue-400">$77,500</td>
+                <td class="p-3">Age 50+ combined limit</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- CONTENT SECTION (SEO 800+ Words) -->
+  <Fragment slot="content">
+    <article class="prose prose-slate max-w-none dark:prose-invert k-content">
+      <h2>Complete Guide to 401(k) Retirement Plans: Compounding, Match, and Strategies</h2>
+      <p>
+        A <strong>401(k) plan</strong> is an employer-sponsored, tax-advantaged defined-contribution retirement account named after subsection 401(k) of the United States Internal Revenue Code. For decades, it has served as the cornerstone of American retirement planning, enabling millions of working professionals to automatically deduct a percentage of their pre-tax or post-tax salary and invest it directly into low-cost index funds, mutual funds, and target-date retirement funds.
+      </p>
+      <p>
+        According to Vanguard's <em>How America Saves</em> report, consistent contributors who leverage compound market returns and take full advantage of their employer matching dollars can build substantial wealth over a 30 to 40 year career. This free <strong>401(k) Calculator</strong> models your wealth growth, the power of compound interest, employer contributions, salary raises, and sustainable monthly retirement income.
+      </p>
+
+      <h2>How Employer 401(k) Match Works: The 100% Instant Return</h2>
+      <p>
+        An employer 401(k) match is the single most valuable perk in modern employee benefits packages. In financial circles, financial advisors universally refer to it as <strong>free money</strong> that nobody should ever pass up. Common company match structures include:
+      </p>
+      <ul>
+        <li><strong>50% Match up to 6% of Salary:</strong> If you earn $80,000 and contribute 6% ($4,800), your company contributes an additional 3% ($2,400). That is an immediate 50% guaranteed return on your investment before the stock market even opens!</li>
+        <li><strong>100% Dollar-for-Dollar Match up to 4%:</strong> If you contribute 4% ($3,200), your company adds another $3,200, giving you an immediate 100% return.</li>
+        <li><strong>Dollar-for-Dollar up to 3% plus 50% on next 2% (Safe Harbor Match):</strong> Standard formula used by many tech and corporate employers.</li>
+      </ul>
+      <p>
+        <strong>Golden Rule of Personal Finance:</strong> Always contribute at least enough to capture your full employer match before allocating money to other financial goals (such as an IRA, HSA, or taxable brokerage account).
+      </p>
+
+      <h2>The Power of Compound Interest in a 401(k)</h2>
+      <p>
+        Albert Einstein famously called compound interest the eighth wonder of the world. In a 401(k), the returns generated by your investments are reinvested back into more shares without being diminished by annual capital gains taxes or dividend taxes. Over several decades, the compounding effect accelerates dramatically:
+      </p>
+      <ul>
+        <li><strong>Years 1 to 10:</strong> The vast majority of your account balance is composed of your own principal contributions. Progress feels slow.</li>
+        <li><strong>Years 11 to 20:</strong> Investment earnings start matching and then exceeding your annual contributions.</li>
+        <li><strong>Years 21 to 35:</strong> Compounding takes over completely. Typically, 70% to 80% or more of your ultimate retirement nest egg comes from compound growth rather than out-of-pocket savings.</li>
+      </ul>
+
+      <h2>Traditional 401(k) vs Roth 401(k): Which is Better?</h2>
+      <p>
+        Many employers offer both options, allowing you to split your contributions between Traditional and Roth accounts:
+      </p>
+      <div class="overflow-x-auto my-4">
+        <table class="w-full text-xs text-left border border-slate-200 dark:border-slate-800">
+          <thead class="bg-slate-100 dark:bg-slate-800 font-bold">
+            <tr>
+              <th class="p-2 border">Feature</th>
+              <th class="p-2 border">Traditional 401(k)</th>
+              <th class="p-2 border">Roth 401(k)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="p-2 border font-semibold">Tax Timing</td><td class="p-2 border">Pre-tax (tax deductible today)</td><td class="p-2 border">After-tax (paid now)</td></tr>
+            <tr><td class="p-2 border font-semibold">Withdrawal Taxes</td><td class="p-2 border">Taxed as regular income in retirement</td><td class="p-2 border">100% Tax-Free (principal + gains)</td></tr>
+            <tr><td class="p-2 border font-semibold">Employer Match Location</td><td class="p-2 border">Traditional account (pre-tax)</td><td class="p-2 border">Traditional account (or optional Roth under SECURE 2.0)</td></tr>
+            <tr><td class="p-2 border font-semibold">Early Withdrawal Rules</td><td class="p-2 border">10% penalty + taxes before 59½</td><td class="p-2 border">Contributions penalty-free; earnings penalized before 59½</td></tr>
+            <tr><td class="p-2 border font-semibold">Required Minimum Distributions (RMDs)</td><td class="p-2 border">Yes, starting at age 73</td><td class="p-2 border">No RMDs (eliminated in 2024)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>2025 401(k) Contribution Limits and SECURE 2.0 Changes</h2>
+      <p>
+        For the tax year 2025, the IRS increased the standard employee elective deferral limit to <strong>$23,500</strong> (up $500 from 2024). In addition, employees aged 50 and older can contribute a catch-up amount of <strong>$7,500</strong>, bringing their total personal contribution limit to <strong>$31,000</strong>.
+      </p>
+      <p>
+        Under the SECURE 2.0 Act, an unprecedented "super catch-up" provision takes effect in 2025 for employees aged 60, 61, 62, and 63. Eligible workers in this age bracket can contribute a catch-up of up to <strong>$11,250</strong> (or 150% of the standard catch-up), enabling a maximum personal deferral of <strong>$34,750</strong> in a single year.
+      </p>
+
+      <h2>How Much Money Do You Need in Your 401(k) to Retire?</h2>
+      <p>
+        A widely accepted benchmark is William Bengen's <strong>4% Safe Withdrawal Rule</strong>. It suggests that if you withdraw 4% of your portfolio in your first year of retirement and adjust for inflation each year thereafter, your money has a 95% probability of lasting at least 30 years:
+      </p>
+      <ul>
+        <li>To generate <strong>$40,000/year</strong> ($3,333/month), you need a 401(k) balance of <strong>$1,000,000</strong>.</li>
+        <li>To generate <strong>$60,000/year</strong> ($5,000/month), you need a 401(k) balance of <strong>$1,500,000</strong>.</li>
+        <li>To generate <strong>$80,000/year</strong> ($6,666/month), you need a 401(k) balance of <strong>$2,000,000</strong>.</li>
+        <li>To generate <strong>$100,000/year</strong> ($8,333/month), you need a 401(k) balance of <strong>$2,500,000</strong>.</li>
+      </ul>
+      <p>
+        Combine your 401(k) retirement balance with anticipated Social Security benefits and any pension plans to calculate your total retirement paycheck.
+      </p>
+    </article>
+  </Fragment>
+
+  <!-- FAQ SECTION -->
+  <Fragment slot="faq">
+    <div class="space-y-3">
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open>
+        <summary class="cursor-pointer list-none"><h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">1. What is the maximum 401(k) contribution limit for 2025?<span class="group-open:rotate-180 transition-transform">▼</span></h3></summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">For 2025, the employee elective deferral limit is $23,500. Workers aged 50 and older can contribute an additional $7,500 catch-up ($31,000 total). For employees aged 60 to 63, SECURE 2.0 allows a super catch-up of $11,250 ($34,750 total). The total combined employee and employer contribution limit is $70,000 ($77,500 with catch-up).</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none"><h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">2. What happens to my 401(k) if I switch or leave my job?<span class="group-open:rotate-180 transition-transform">▼</span></h3></summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">When leaving an employer, you have four main options: (1) Leave the funds in the existing 401(k) if your balance exceeds $7,000; (2) Direct rollover into your new employer's 401(k); (3) Rollover into a personal Traditional or Roth IRA at a brokerage like Vanguard, Fidelity, or Schwab; or (4) Cash out (strongly discouraged due to ordinary income taxes plus a 10% IRS early withdrawal penalty if under 59½).</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none"><h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">3. What is vesting and how does it affect the employer match?<span class="group-open:rotate-180 transition-transform">▼</span></h3></summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">Your own contributions to your 401(k) are always 100% vested immediately (they belong to you forever). However, employer matching contributions may follow a vesting schedule (e.g., cliff vesting after 3 years, or graded vesting where you own 20% more per year over 5 years). If you leave before fully vesting, you forfeit the unvested portion of company matching funds.</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none"><h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">4. Can I withdraw money from my 401(k) before age 59½ without penalty?<span class="group-open:rotate-180 transition-transform">▼</span></h3></summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">Generally, withdrawals before age 59½ incur ordinary income tax plus a 10% early withdrawal penalty. However, IRS exceptions include: the Rule of 55 (if you leave your employer in or after the year you turn 55), total permanent disability, unreimbursed medical expenses exceeding 7.5% of AGI, birth or adoption expenses up to $5,000, or a 401(k) loan that you repay over 5 years.</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none"><h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">5. What rate of return should I expect for my 401(k)?<span class="group-open:rotate-180 transition-transform">▼</span></h3></summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300">Historically, the S&P 500 has delivered an average nominal return of approximately 10% annually before inflation (or ~7% after inflation). Financial advisors typically recommend modeling between 6% and 8% for a well-diversified equity portfolio, or 5% to 6% for more conservative bond-heavy allocations as you approach retirement.</p>
+      </details>
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<style>
+  .k-content h2 { margin-top: 2.25rem; margin-bottom: 0.75rem; font-size: 1.4rem; font-weight: 800; color: #0f172a; }
+  .k-content h2:first-child { margin-top: 0; }
+  .k-content p { margin: 0 0 1rem; line-height: 1.75; color: #475569; }
+  .k-content ul { margin: 0.75rem 0 1.5rem; padding-left: 1.5rem; list-style: disc; }
+  .k-content li { margin-bottom: 0.4rem; line-height: 1.6; }
+  :global(.dark) .k-content h2 { color: #f8fafc; }
+  :global(.dark) .k-content p, :global(.dark) .k-content li { color: #cbd5e1; }
+</style>
+
+<script is:inline>
+  function fmt401k(n) {
+    return '$' + Math.round(n).toLocaleString('en-US');
+  }
+
+  function calc401k() {
+    const curAge = parseInt(document.getElementById('k-cur-age').value) || 30;
+    const retAge = parseInt(document.getElementById('k-ret-age').value) || 65;
+    const curBal = parseFloat(document.getElementById('k-cur-bal').value) || 0;
+    let salary = parseFloat(document.getElementById('k-salary').value) || 80000;
+    const contribPct = (parseFloat(document.getElementById('k-contrib-pct').value) || 8) / 100;
+    const returnRate = (parseFloat(document.getElementById('k-return').value) || 7.5) / 100;
+    const matchPct = (parseFloat(document.getElementById('k-match-pct').value) || 50) / 100;
+    const matchCap = (parseFloat(document.getElementById('k-match-cap').value) || 6) / 100;
+    const salGrowth = (parseFloat(document.getElementById('k-sal-growth').value) || 2.5) / 100;
+
+    const years = Math.max(1, retAge - curAge);
+    const months = years * 12;
+    const monthlyRate = returnRate / 12;
+
+    // Update annual contribution preview text
+    const initAnnualCont = salary * contribPct;
+    document.getElementById('k-contrib-dollars').textContent = `(${fmt401k(initAnnualCont)}/yr)`;
+
+    let balance = curBal;
+    let totalEmployeePrincipal = 0;
+    let totalEmployerMatch = 0;
+
+    for (let yr = 0; yr < years; yr++) {
+      const ageNow = curAge + yr;
+      // 2025 IRS Deferral limit: $23,500 under 50, $31,000 age 50+
+      const irsLimit = ageNow >= 50 ? 31000 : 23500;
+
+      // Employee annual contribution
+      let empAnnual = salary * contribPct;
+      if (empAnnual > irsLimit) empAnnual = irsLimit;
+
+      // Employer match
+      // Matches matchPct of employee contribution up to matchCap of salary
+      const eligibleSalary = Math.min(salary * matchCap, empAnnual);
+      const matchAnnual = eligibleSalary * matchPct;
+
+      const monthlyEmp = empAnnual / 12;
+      const monthlyMatch = matchAnnual / 12;
+      const monthlyTotal = monthlyEmp + monthlyMatch;
+
+      for (let m = 0; m < 12; m++) {
+        balance = balance * (1 + monthlyRate) + monthlyTotal;
+      }
+
+      totalEmployeePrincipal += empAnnual;
+      totalEmployerMatch += matchAnnual;
+      salary *= (1 + salGrowth);
+    }
+
+    const totalContributions = curBal + totalEmployeePrincipal + totalEmployerMatch;
+    const totalGrowth = Math.max(0, balance - totalContributions);
+    const monthlyRetirementIncome = (balance * 0.04) / 12; // 4% rule monthly
+    const annual4pct = balance * 0.04;
+
+    // Update Hero UI
+    document.getElementById('k-res-total').textContent = fmt401k(balance);
+    document.getElementById('k-res-sub').textContent = `At age ${retAge} after ${years} years of compounding`;
+    document.getElementById('k-res-principal').textContent = fmt401k(curBal + totalEmployeePrincipal);
+    document.getElementById('k-res-match').textContent = fmt401k(totalEmployerMatch);
+    document.getElementById('k-res-growth').textContent = fmt401k(totalGrowth);
+    document.getElementById('k-res-monthly').textContent = fmt401k(monthlyRetirementIncome) + '/mo';
+
+    // Summary breakdown
+    document.getElementById('k-summary-cont').textContent = fmt401k(curBal + totalEmployeePrincipal);
+    document.getElementById('k-summary-match').textContent = fmt401k(totalEmployerMatch);
+    document.getElementById('k-summary-growth').textContent = fmt401k(totalGrowth);
+    document.getElementById('k-summary-4pct').textContent = fmt401k(annual4pct) + ' / yr';
+
+    const growthRatio = Math.round((totalGrowth / balance) * 100) || 0;
+    document.getElementById('k-res-growth-ratio').textContent = `${growthRatio}% from Growth`;
+
+    // Bar ratios
+    const pPct = Math.max(5, Math.round(((curBal + totalEmployeePrincipal) / balance) * 100));
+    const mPct = Math.max(3, Math.round((totalEmployerMatch / balance) * 100));
+    const gPct = Math.max(5, 100 - pPct - mPct);
+    document.getElementById('k-bar-prin').style.width = pPct + '%';
+    document.getElementById('k-bar-match').style.width = mPct + '%';
+    document.getElementById('k-bar-growth').style.width = gPct + '%';
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    calc401k();
+
+    // Inputs
+    ['k-cur-age', 'k-ret-age', 'k-cur-bal', 'k-salary', 'k-contrib-pct', 'k-return', 'k-match-pct', 'k-match-cap', 'k-sal-growth'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('input', calc401k);
+      }
+    });
+
+    // Preset buttons
+    document.querySelectorAll('.btn-401k-preset').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('k-cur-age').value = btn.dataset.age;
+        document.getElementById('k-ret-age').value = btn.dataset.ret;
+        document.getElementById('k-cur-bal').value = btn.dataset.bal;
+        document.getElementById('k-salary').value = btn.dataset.sal;
+        document.getElementById('k-contrib-pct').value = btn.dataset.cont;
+        document.getElementById('k-match-pct').value = btn.dataset.match;
+        document.getElementById('k-match-cap').value = btn.dataset.cap;
+        document.getElementById('k-return').value = btn.dataset.retn;
+        calc401k();
+      });
+    });
+
+    // Tab buttons
+    document.querySelectorAll('.btn-401k-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetTab = btn.dataset.tab;
+        document.querySelectorAll('.btn-401k-tab').forEach(b => {
+          if (b === btn) {
+            b.className = 'btn-401k-tab active shrink-0 rounded-lg bg-blue-700 px-3.5 py-1.5 font-bold text-white shadow-xs cursor-pointer';
+          } else {
+            b.className = 'btn-401k-tab shrink-0 rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer';
+          }
+        });
+
+        document.querySelectorAll('.tab-401k-panel').forEach(p => {
+          if (p.id === 'panel-401k-' + targetTab) {
+            p.classList.remove('hidden');
+          } else {
+            p.classList.add('hidden');
+          }
+        });
+      });
+    });
+  });
+</script>
