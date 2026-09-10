@@ -497,7 +497,8 @@ export async function getCalculatorTimeline(
   try {
     const rows = await db
       .prepare(`
-        SELECT * FROM cms_calc_daily_analytics
+        SELECT id, calculator_slug, date, page_views, calculator_starts, calculate_clicks, successful_calculations, calculation_errors, result_copies, result_shares, resets, mobile_count, desktop_count, tablet_count, organic_count, direct_count, referral_count, social_count, updated_at
+        FROM cms_calc_daily_analytics
         WHERE calculator_slug = ? AND date >= ? AND date <= ?
         ORDER BY date ASC
       `)

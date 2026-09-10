@@ -52,14 +52,16 @@ const CALCULATOR_ALIASES: Record<string, string[]> = {
   'volume-calculator': ['volume calculator', 'tank volume', 'cylinder volume', 'pipe volume', 'pool volume', 'sphere volume', 'cone volume', 'prostate volume', 'water capacity', 'liters calculator', 'gallons to liters'],
 };
 
-export const calculators: Calculator[] = (rawCalculators as Calculator[]).map((c) => {
-  const aliases = CALCULATOR_ALIASES[c.slug] || [];
-  return {
-    ...c,
-    aliases,
-    isPopular: Boolean(c.tags?.includes('Popular') || c.featured),
-  };
-});
+export const calculators: Calculator[] = (rawCalculators as Calculator[])
+  .filter((c, index, self) => index === self.findIndex((t) => t.slug === c.slug))
+  .map((c) => {
+    const aliases = CALCULATOR_ALIASES[c.slug] || [];
+    return {
+      ...c,
+      aliases,
+      isPopular: Boolean(c.tags?.includes('Popular') || c.featured),
+    };
+  });
 
 export const categories: { name: CalculatorCategory; icon: string; description: string; path: string }[] = [
   {

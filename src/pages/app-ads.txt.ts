@@ -1,22 +1,21 @@
 import type { APIRoute } from 'astro';
-import { DEFAULT_ADS_CONFIG, type AdsConfig } from '../lib/ads-config';
-import { getDb } from '../lib/db';
+import { type AdsConfig } from '../lib/ads-config';
+import { readSettings } from './api/adsense-config';
 
 export const prerender = false;
 
-const SETTINGS_KEY = 'adsense_config';
+export const GET: APIRoute = async ({ request, locals }) => {
+  const cache = typeof caches !== 'undefined' && (caches as any).default ? ((caches as any).default as Cache) : null;
+  const cacheKey = request.url;
 
-export const GET: APIRoute = async ({ locals }) => {
-  let config: AdsConfig = DEFAULT_ADS_CONFIG;
+  if (cache) {
+    try {
+      const cached = await cache.match(cacheKey);
+      if (cached) return cached;
+    } catch {}
+  }
 
-  try {
-    const db = getDb(locals);
-    const row = await db.prepare('SELECT value FROM site_settings WHERE key = ?').bind(SETTINGS_KEY).first<{ value: string }>();
-    if (row?.value) {
-      config = JSON.parse(row.value);
-    }
-  } catch {}
-
+  const config: AdsConfig = await readSettings(locals);
   const lines: string[] = [];
 
   const clientId = (config.clientId || '').trim();
@@ -38,11 +37,22 @@ export const GET: APIRoute = async ({ locals }) => {
 
   const output = lines.join('\n').trim();
 
-  return new Response(output ? output + '\n' : '', {
+  const response = new Response(output ? output + '\n' : '', {
     status: 200,
     headers: {
       'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': 'public, max-age=1800, s-maxage=3600',
+      'Cache-Control': 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400',
+      'Cloudflare-CDN-Cache-Control': 'max-age=604800, stale-while-revalidate=86400',
     },
   });
+
+  if (cache) {
+    try {
+      if (typeof (locals as any)?.runtime?.ctx?.waitUntil === 'function') {
+        (locals as any).runtime.ctx.waitUntil(cache.put(cacheKey, response.clone()));
+      }
+    } catch {}
+  }
+
+  return response;
 };

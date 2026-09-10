@@ -446,18 +446,18 @@ export async function getMonetizationSummary(
 
   try {
     const curRes = await db
-      .prepare(`SELECT * FROM cms_adsense_daily_metrics WHERE date >= ? AND date <= ? ORDER BY date ASC`)
+      .prepare(`SELECT id, date, account_id, estimated_earnings, currency, impressions, page_views, clicks, page_views_rpm, impressions_rpm, synced_at FROM cms_adsense_daily_metrics WHERE date >= ? AND date <= ? ORDER BY date ASC`)
       .bind(startDate, endDate)
       .all<DailyAdSenseMetric>();
     currentRows = curRes.results || [];
 
     const prevRes = await db
-      .prepare(`SELECT * FROM cms_adsense_daily_metrics WHERE date >= ? AND date <= ? ORDER BY date ASC`)
+      .prepare(`SELECT id, date, account_id, estimated_earnings, currency, impressions, page_views, clicks, page_views_rpm, impressions_rpm, synced_at FROM cms_adsense_daily_metrics WHERE date >= ? AND date <= ? ORDER BY date ASC`)
       .bind(prevStartDate, prevEndDate)
       .all<DailyAdSenseMetric>();
     prevRows = prevRes.results || [];
   } catch (err) {
-    console.error('Error fetching daily AdSense metrics:', err);
+    if (import.meta.env.DEV) console.error('Error fetching daily AdSense metrics:', err);
   }
 
   const currency = currentRows[0]?.currency || config?.currency || 'INR';

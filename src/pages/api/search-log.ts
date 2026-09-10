@@ -51,7 +51,12 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
 
     const cleanQuery = query.trim();
     if (cleanQuery.length >= 2 && cleanQuery.length <= 100) {
-      await recordSearchQuery(cleanQuery, Boolean(hasResults), locals);
+      const recordPromise = recordSearchQuery(cleanQuery, Boolean(hasResults), locals).catch(() => {});
+      if (typeof (locals as any)?.runtime?.ctx?.waitUntil === 'function') {
+        (locals as any).runtime.ctx.waitUntil(recordPromise);
+      } else if (typeof (locals as any)?.cfContext?.waitUntil === 'function') {
+        (locals as any).cfContext.waitUntil(recordPromise);
+      }
     }
 
     return new Response(JSON.stringify({ success: true }), {

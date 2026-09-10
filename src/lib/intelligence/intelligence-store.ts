@@ -208,7 +208,8 @@ export async function getStoredInsights(
     const db = getDb(locals);
     await initIntelligenceTables(locals);
 
-    let query = 'SELECT * FROM cms_intelligence_insights WHERE 1=1';
+    let query =
+      'SELECT id, title, priority, priority_reason, category, affected_entity, why_detected, supporting_metrics, recommended_action, data_sources, detected_at, confidence, status, correlation_type FROM cms_intelligence_insights WHERE 1=1';
     const bindings: any[] = [];
 
     if (options?.status) {

@@ -188,7 +188,8 @@ export async function getErrorGroups(
     await initMonitoringTables(locals);
     const db = getDb(locals);
 
-    let query = 'SELECT * FROM cms_error_groups';
+    let query =
+      'SELECT id, fingerprint, route, category, severity, first_seen, last_seen, occurrence_count, latest_message, status FROM cms_error_groups';
     const bindings: any[] = [];
 
     if (options?.status) {
@@ -425,7 +426,8 @@ export async function getIncidents(
     await initMonitoringTables(locals);
     const db = getDb(locals);
 
-    let query = 'SELECT * FROM cms_incidents';
+    let query =
+      'SELECT id, title, severity, affected_route, detected_at, updated_at, summary, occurrence_count, status, auto_mitigated, resolved_at FROM cms_incidents';
     const bindings: any[] = [];
 
     if (options?.status) {

@@ -100,33 +100,64 @@ function normalizeSettings(stored: any): AdsConfig {
   };
 }
 
-async function readSettings(locals: App.Locals): Promise<AdsConfig> {
+let inMemoryAdsConfig: { data: AdsConfig; expiry: number } | null = null;
+const ADS_CONFIG_TTL = 300_000; // 5 minutes
+
+export function invalidateAdsConfigCache(): void {
+  inMemoryAdsConfig = null;
+}
+
+export async function readSettings(locals: App.Locals): Promise<AdsConfig> {
+  const now = Date.now();
+  if (inMemoryAdsConfig && inMemoryAdsConfig.expiry > now) {
+    return inMemoryAdsConfig.data;
+  }
   const db = getDb(locals);
   try {
-    await db.exec('CREATE TABLE IF NOT EXISTS site_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
     const row = await db.prepare('SELECT value FROM site_settings WHERE key = ?').bind(SETTINGS_KEY).first<{ value: string }>();
     if (row?.value) {
       const parsed = JSON.parse(row.value);
-      return normalizeSettings(parsed);
+      const normalized = normalizeSettings(parsed);
+      inMemoryAdsConfig = { data: normalized, expiry: now + ADS_CONFIG_TTL };
+      return normalized;
     }
   } catch {
     // Database fallback
   }
+  inMemoryAdsConfig = { data: DEFAULT_ADS_CONFIG, expiry: now + ADS_CONFIG_TTL };
   return DEFAULT_ADS_CONFIG;
 }
 
-export const GET: APIRoute = async ({ locals }) => {
+export const GET: APIRoute = async ({ request, locals }) => {
+  const cache = typeof caches !== 'undefined' && (caches as any).default ? ((caches as any).default as Cache) : null;
+  const cacheKey = request.url;
+
+  if (cache) {
+    try {
+      const cached = await cache.match(cacheKey);
+      if (cached) return cached;
+    } catch {}
+  }
+
   const config = await readSettings(locals);
-  return new Response(JSON.stringify(config), {
+  const response = new Response(JSON.stringify(config), {
     status: 200,
     headers: {
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-cache, no-store, must-revalidate',
-      'Cloudflare-CDN-Cache-Control': 'no-store',
-      'Pragma': 'no-cache',
-      'Expires': '0',
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400',
+      'Cloudflare-CDN-Cache-Control': 'max-age=3600, stale-while-revalidate=86400',
     },
   });
+
+  if (cache) {
+    try {
+      if (typeof (locals as any)?.runtime?.ctx?.waitUntil === 'function') {
+        (locals as any).runtime.ctx.waitUntil(cache.put(cacheKey, response.clone()));
+      }
+    } catch {}
+  }
+
+  return response;
 };
 
 
@@ -176,6 +207,9 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
       .prepare('INSERT INTO site_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
       .bind(SETTINGS_KEY, JSON.stringify(normalized))
       .run();
+
+    // Invalidate in-memory cache
+    invalidateAdsConfigCache();
 
     // Log audit event
     const activeNetworks = Object.entries(normalized.slots).map(([slot, cfg]) => `${slot}:${cfg.adNetwork}`);

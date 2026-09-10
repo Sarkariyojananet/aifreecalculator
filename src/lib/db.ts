@@ -509,7 +509,9 @@ export async function getContactMessages(db?: D1Database): Promise<ContactMessag
       await db.exec(
         "CREATE TABLE IF NOT EXISTS contact_messages (id TEXT PRIMARY KEY, name TEXT NOT NULL, email TEXT NOT NULL, category TEXT, subject TEXT NOT NULL, message TEXT NOT NULL, status TEXT DEFAULT 'new', created_at TEXT NOT NULL)"
       );
-      const res = await db.prepare('SELECT * FROM contact_messages ORDER BY created_at DESC').all<ContactMessage>();
+      const res = await db
+        .prepare('SELECT id, name, email, category, subject, message, status, created_at FROM contact_messages ORDER BY created_at DESC')
+        .all<ContactMessage>();
       if (res?.results && Array.isArray(res.results)) {
         for (const m of res.results) {
           if (m?.id) messageMap.set(m.id, m);
@@ -517,7 +519,7 @@ export async function getContactMessages(db?: D1Database): Promise<ContactMessag
       }
     }
   } catch (tableErr) {
-    console.warn('[D1 Table Read Notice]:', tableErr);
+    if (import.meta.env.DEV) console.warn('[D1 Table Read Notice]:', tableErr);
   }
 
   // 2. Also check site_settings backup in D1

@@ -154,8 +154,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const origin = request.headers.get('origin');
     const source = parseTrafficSource(referer, origin);
 
-    // Record event asynchronously in D1
-    await recordCalculatorAnalyticsEvent(
+    // Record event asynchronously in D1 via Cloudflare waitUntil to minimize CPU latency
+    const eventPromise = recordCalculatorAnalyticsEvent(
       {
         slug,
         eventType: event,
@@ -163,7 +163,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
         source,
       },
       locals
-    );
+    ).catch(() => {});
+
+    if (typeof (locals as any)?.runtime?.ctx?.waitUntil === 'function') {
+      (locals as any).runtime.ctx.waitUntil(eventPromise);
+    } else if (typeof (locals as any)?.cfContext?.waitUntil === 'function') {
+      (locals as any).cfContext.waitUntil(eventPromise);
+    }
 
     return silent204;
   } catch {

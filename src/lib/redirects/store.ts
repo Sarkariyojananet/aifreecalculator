@@ -229,7 +229,7 @@ export async function get404Logs(
     const total = countRow?.total || 0;
 
     const rows = await db
-      .prepare(`SELECT * FROM cms_404_logs ${whereSql} ${orderSql} LIMIT ? OFFSET ?`)
+      .prepare(`SELECT path, first_seen, last_seen, hit_count, recent_hit_count, recent_window_start, referrer, device_category, suggested_destination, priority, status, redirect_id FROM cms_404_logs ${whereSql} ${orderSql} LIMIT ? OFFSET ?`)
       .bind(...bindings, limit, offset)
       .all<any>();
 
@@ -399,7 +399,7 @@ export async function getRedirectHistory(limit = 30, locals?: any): Promise<Redi
 
   try {
     const rows = await db
-      .prepare('SELECT * FROM cms_redirect_history ORDER BY timestamp DESC LIMIT ?')
+      .prepare('SELECT id, rule_id, action, source, destination, status_code, admin_user, timestamp, note FROM cms_redirect_history ORDER BY timestamp DESC LIMIT ?')
       .bind(limit)
       .all<any>();
 

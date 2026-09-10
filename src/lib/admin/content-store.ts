@@ -136,18 +136,42 @@ const DEFAULT_FAQS: FAQItem[] = [
 
 const DEFAULT_NO_RESULT_SEARCHES: SearchQueryLog[] = [];
 
+// In-memory cache for D1 site_settings (5 minutes TTL) to eliminate repetitive DB queries
+const inMemorySettingsCache = new Map<string, { value: any; expiry: number }>();
+const SETTINGS_CACHE_TTL = 300_000; // 5 minutes
+
+export function invalidateSettingCache(key?: string): void {
+  if (key) {
+    inMemorySettingsCache.delete(key);
+  } else {
+    inMemorySettingsCache.clear();
+  }
+}
+
 async function readSetting<T>(key: string, defaultValue: T, locals?: any): Promise<T> {
+  const now = Date.now();
+  const cached = inMemorySettingsCache.get(key);
+  if (cached && cached.expiry > now) {
+    return cached.value as T;
+  }
+
   const db = getDb(locals);
   try {
     const row = await db.prepare('SELECT value FROM site_settings WHERE key = ?').bind(key).first<{ value: string }>();
     if (row?.value) {
-      return JSON.parse(row.value) as T;
+      const parsed = JSON.parse(row.value) as T;
+      inMemorySettingsCache.set(key, { value: parsed, expiry: now + SETTINGS_CACHE_TTL });
+      return parsed;
     }
   } catch {}
+
+  // Cache default as well to avoid repeating queries for unset keys
+  inMemorySettingsCache.set(key, { value: defaultValue, expiry: now + SETTINGS_CACHE_TTL });
   return defaultValue;
 }
 
 async function writeSetting<T>(key: string, value: T, locals?: any): Promise<void> {
+  inMemorySettingsCache.delete(key);
   const db = getDb(locals);
   try {
     await db.exec('CREATE TABLE IF NOT EXISTS site_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
@@ -236,24 +260,12 @@ export async function deleteFAQ(id: string, locals?: any): Promise<FAQItem[]> {
   return filtered;
 }
 
-// In-memory cache with 60-second TTL to avoid D1 queries on every page request
-let inMemoryRedirectsCache: { data: RedirectRule[]; expiry: number } | null = null;
-
 export async function getRedirectRules(locals?: any): Promise<RedirectRule[]> {
-  const now = Date.now();
-  if (inMemoryRedirectsCache && inMemoryRedirectsCache.expiry > now) {
-    return inMemoryRedirectsCache.data;
-  }
-  const rules = await readSetting<RedirectRule[]>('cms_redirects', [], locals);
-  inMemoryRedirectsCache = {
-    data: rules,
-    expiry: now + 60_000, // 60-second TTL
-  };
-  return rules;
+  return await readSetting<RedirectRule[]>('cms_redirects', [], locals);
 }
 
 export async function saveRedirectRules(rules: RedirectRule[], locals?: any): Promise<void> {
-  inMemoryRedirectsCache = null; // Invalidate cache immediately on save
+  invalidateSettingCache('cms_redirects');
   await writeSetting('cms_redirects', rules, locals);
 }
 

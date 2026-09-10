@@ -76,6 +76,25 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const isAstroInternal = pathname.startsWith('/_astro/');
   const hasAdminCookie = Boolean(context.cookies.get('admin_session')?.value);
 
+  // Fast-path: Content-hashed immutable static assets (_astro bundle chunks, CSS, JS)
+  if (isAstroInternal && isGetOrHead) {
+    const assetResponse = await next();
+    assetResponse.headers.set('Cache-Control', 'public, max-age=31536000, s-maxage=31536000, immutable');
+    assetResponse.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=31536000');
+    return assetResponse;
+  }
+
+  // Fast-path: Public static files (images, icons, fonts, robots.txt, sitemaps)
+  const isStaticFile = !isAstroInternal && !isApiRoute && /\.(css|js|mjs|png|jpg|jpeg|gif|webp|svg|ico|woff|woff2|ttf|eot|xml|txt|json)$/i.test(pathname);
+  if (isStaticFile && isGetOrHead && !isAdminRoute) {
+    const staticResponse = await next();
+    if (staticResponse.status === 200) {
+      staticResponse.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400');
+      staticResponse.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=604800, stale-while-revalidate=86400');
+    }
+    return staticResponse;
+  }
+
   // 1. Check Cloudflare Worker Cache API for public GET requests
   // Strips tracking query parameters so social/campaign traffic immediately hits cache
   const cache = typeof caches !== 'undefined' && (caches as any).default ? ((caches as any).default as Cache) : null;
@@ -180,8 +199,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // Public HTML & Pages: Maximize Cloudflare Edge Cache Hit Rate with SWR
   if (isCacheablePage && response.status === 200) {
-    // Browser checks with Edge (max-age=0) while Cloudflare CDN Edge caches for 7 days with SWR
-    response.headers.set('Cache-Control', 'public, max-age=0, s-maxage=86400, stale-while-revalidate=604800');
+    // Both browser and Cloudflare CDN Edge cache aggressively with SWR
+    response.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400');
     response.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=604800, stale-while-revalidate=86400');
     response.headers.set('CDN-Cache-Control', 'max-age=604800, stale-while-revalidate=86400');
     response.headers.set('Vary', 'Accept-Encoding');

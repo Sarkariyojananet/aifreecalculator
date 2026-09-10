@@ -65,7 +65,13 @@ export const POST: APIRoute = async ({ request, locals }) => {
       .replace(/\d{10,}/g, '[REDACTED]') // remove long numeric sequences (phone/ID)
       .trim() || null;
 
-    await recordRuntimeError(slug, errorType, errorMessage, locals);
+    const recordPromise = recordRuntimeError(slug, errorType, errorMessage, locals).catch(() => {});
+    if (typeof (locals as any)?.runtime?.ctx?.waitUntil === 'function') {
+      (locals as any).runtime.ctx.waitUntil(recordPromise);
+    } else if (typeof (locals as any)?.cfContext?.waitUntil === 'function') {
+      (locals as any).cfContext.waitUntil(recordPromise);
+    }
+
     return silentOk;
   } catch {
     // Any error in error logging must not surface
