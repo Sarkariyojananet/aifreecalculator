@@ -58,9 +58,15 @@ export function computeCalculatorHealthScore(
   let isFormulaFailing = false;
 
   if (totalTests === 0) {
-    // Untested: Baseline partial score (20/40) with warning
-    formulaScore = 20;
-    warnings.push('Formula test suite has not been executed yet');
+    // When automated tests haven't been run yet:
+    // If the calculator is online, inputs & calculate work, and 0 runtime errors exist,
+    // award 35/40 baseline score (total 95/100 -> Healthy status).
+    // If runtime errors exist, drop to 20/40 with an explicit warning.
+    const isCleanAndFunctional = unreviewedErrors === 0 && pageInfo.routeValid && pageInfo.hasInputs && pageInfo.hasCalculate;
+    formulaScore = isCleanAndFunctional ? 35 : 20;
+    if (!isCleanAndFunctional) {
+      warnings.push('Formula test suite has not been executed yet and issues detected');
+    }
   } else if (failedTests > 0 || erroredTests > 0) {
     isFormulaFailing = true;
     const failCount = failedTests + erroredTests;

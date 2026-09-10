@@ -84,6 +84,10 @@ export async function initMonitoringTables(locals?: any): Promise<void> {
       status TEXT NOT NULL DEFAULT 'open'
     )`).run();
 
+    // Safely add optional columns for existing databases
+    try { await db.exec('ALTER TABLE cms_incidents ADD COLUMN auto_mitigated INTEGER DEFAULT 0'); } catch {}
+    try { await db.exec('ALTER TABLE cms_incidents ADD COLUMN resolved_at TEXT'); } catch {}
+
     tablesInitialized = true;
   } catch (err) {
     console.error('Failed to initialize monitoring tables:', err);
@@ -427,7 +431,7 @@ export async function getIncidents(
     const db = getDb(locals);
 
     let query =
-      'SELECT id, title, severity, affected_route, detected_at, updated_at, summary, occurrence_count, status, auto_mitigated, resolved_at FROM cms_incidents';
+      'SELECT id, title, severity, affected_route, detected_at, updated_at, summary, occurrence_count, status FROM cms_incidents';
     const bindings: any[] = [];
 
     if (options?.status) {
