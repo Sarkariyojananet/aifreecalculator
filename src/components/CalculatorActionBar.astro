@@ -846,34 +846,85 @@ const { calculatorName, slug, category } = Astro.props;
               results.push({ label: lText, value: vText, isHero: false });
             }
           });
+        }
 
-          // D. Breakdown Tables
-          var tblElements = resContainer.querySelectorAll('table');
-          tblElements.forEach(function (tbl) {
-            var headers = [];
-            var ths = tbl.querySelectorAll('thead th, th');
-            ths.forEach(function (th) {
-              headers.push(th.textContent.trim().replace(/\s+/g, ' '));
-            });
-
-            var rows = [];
-            var trs = tbl.querySelectorAll('tbody tr');
-            trs.forEach(function (tr) {
-              var rowData = [];
-              var tds = tr.querySelectorAll('td');
-              tds.forEach(function (td) {
-                rowData.push(td.textContent.trim().replace(/\s+/g, ' '));
-              });
-              if (rowData.length > 0) {
-                rows.push(rowData);
-              }
-            });
-
-            if (headers.length > 0 && rows.length > 0) {
-              tables.push({ headers: headers, rows: rows });
-            }
+        // D. Breakdown Tables (from resContainer or entire calculator container like #schedule-section)
+        var tblElements = [];
+        if (resContainer) {
+          resContainer.querySelectorAll('table').forEach(function (tbl) {
+            tblElements.push(tbl);
           });
         }
+
+        // Also search across the active calculator container for schedule & breakdown tables
+        var candidateTables = container.querySelectorAll('table:not(#modal-preview-table)');
+        candidateTables.forEach(function (tbl) {
+          if (tblElements.indexOf(tbl) !== -1) return;
+          if (barContainer.contains(tbl) || tbl.closest('#calc-action-bar-container') || tbl.closest('[role="dialog"]') || tbl.closest('#print-sheet-strict')) return;
+
+          // Check if table is in a hidden container (ignoring closed <details> accordions)
+          var isHidden = false;
+          var cur = tbl.parentElement;
+          while (cur && cur !== container && cur !== document.body) {
+            if (cur.tagName !== 'DETAILS' && cur.classList && cur.classList.contains('hidden')) {
+              isHidden = true;
+              break;
+            }
+            cur = cur.parentElement;
+          }
+
+          if (!isHidden) {
+            tblElements.push(tbl);
+          }
+        });
+
+        tblElements.forEach(function (tbl) {
+          var headers = [];
+          var ths = tbl.querySelectorAll('thead th, th');
+          ths.forEach(function (th) {
+            headers.push(th.textContent.trim().replace(/\s+/g, ' '));
+          });
+
+          var rows = [];
+          var trs = tbl.querySelectorAll('tbody tr');
+          trs.forEach(function (tr) {
+            var rowData = [];
+            var tds = tr.querySelectorAll('td');
+            tds.forEach(function (td) {
+              rowData.push(td.textContent.trim().replace(/\s+/g, ' '));
+            });
+            if (rowData.length > 0) {
+              rows.push(rowData);
+            }
+          });
+
+          var title = '';
+          var detailsParent = tbl.closest('details');
+          if (detailsParent) {
+            var summaryEl = detailsParent.querySelector('summary');
+            if (summaryEl) {
+              title = summaryEl.textContent.replace(/[▼▲►\n]/g, '').trim().replace(/\s+/g, ' ');
+              title = title.replace(/(Click to View|Click to Expand|View Complete)/i, '').trim();
+              if (title.startsWith('-') || title.startsWith(':')) title = title.substring(1).trim();
+            }
+          }
+          if (!title) {
+            var pCard = tbl.closest('[id*="section"], [class*="rounded"], div');
+            if (pCard) {
+              var hEl = pCard.querySelector('h3, h4, [class*="font-bold"]');
+              if (hEl && hEl !== tbl && !tbl.contains(hEl)) {
+                title = hEl.textContent.replace(/[▼▲►\n]/g, '').trim().replace(/\s+/g, ' ');
+              }
+            }
+          }
+          if (!title) {
+            title = 'Growth & Schedule Breakdown Table';
+          }
+
+          if (headers.length > 0 && rows.length > 0) {
+            tables.push({ headers: headers, rows: rows, title: title });
+          }
+        });
 
         // E. Visual Detailing Diagrams (SVG & Canvas elements)
         var diagrams = [];
@@ -1001,8 +1052,9 @@ const { calculatorName, slug, category } = Astro.props;
           // 3. Breakdown Tables (if any)
           if (data.tables.length > 0) {
             data.tables.forEach(function (tbl, tIdx) {
+              var tblTitle = tbl.title || ('BREAKDOWN TABLE ' + (data.tables.length > 1 ? (tIdx + 1) : ''));
               lines.push('--------------------------------------------------');
-              lines.push('3. BREAKDOWN TABLE ' + (data.tables.length > 1 ? (tIdx + 1) : ''));
+              lines.push('3. ' + tblTitle.toUpperCase());
               lines.push('--------------------------------------------------');
               lines.push(tbl.headers.join(' | '));
               tbl.rows.forEach(function (row) {
@@ -1012,10 +1064,17 @@ const { calculatorName, slug, category } = Astro.props;
             });
           }
 
-          lines.push('==================================================');
-          lines.push('Calculated at https://aifreecalculator.com');
-          lines.push('Free online tools & civil engineering estimators');
-          lines.push('==================================================');
+          var catDesc = calcCategory === 'Finance' ? 'Financial Planning & Investment Calculators' :
+                        calcCategory === 'Construction' ? 'Civil Engineering & Construction Estimators' :
+                        calcCategory === 'Health' ? 'Fitness, Health & Nutrition Calculators' :
+                        calcCategory === 'Math' ? 'Mathematics & Statistical Calculators' :
+                        'Free Online Calculators & Smart Web Estimators';
+
+          lines.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+          lines.push('✨ Calculated via AI Free Calculator');
+          lines.push('🔗 https://aifreecalculator.com');
+          lines.push('AI Free Calculator • ' + catDesc);
+          lines.push('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
           var fullText = lines.join('\n');
 
@@ -1086,7 +1145,8 @@ const { calculatorName, slug, category } = Astro.props;
           // Section 3: Tables
           if (data.tables.length > 0) {
             data.tables.forEach(function (tbl, idx) {
-              csvLines.push([escapeCsv('--- 3. DETAILED BREAKDOWN TABLE ' + (idx + 1) + ' ---')].join(','));
+              var tblTitle = tbl.title || ('DETAILED BREAKDOWN TABLE ' + (data.tables.length > 1 ? (idx + 1) : ''));
+              csvLines.push([escapeCsv('--- 3. ' + tblTitle.toUpperCase() + ' ---')].join(','));
               csvLines.push(tbl.headers.map(escapeCsv).join(','));
               tbl.rows.forEach(function (row) {
                 csvLines.push(row.map(escapeCsv).join(','));
@@ -1330,9 +1390,10 @@ const { calculatorName, slug, category } = Astro.props;
               return '<tr style="background:' + bg + ';">' + cells + '</tr>';
             }).join('');
 
+            var tblTitle = tbl.title || ('Detailed Schedule & Material Breakdown ' + (data.tables.length > 1 ? ('(' + (idx + 1) + ')') : ''));
             tablesHtml += '<div style="margin-top:16px;">' +
               '<div style="font-size:11.5px;font-weight:800;text-transform:uppercase;color:#475569;margin-bottom:6px;letter-spacing:0.4px;display:flex;align-items:center;gap:5px;">' +
-              '<span>📊</span> ' + (data.diagrams && data.diagrams.length > 0 ? '5.' : '4.') + ' Detailed Schedule &amp; Material Breakdown ' + (data.tables.length > 1 ? ('(' + (idx + 1) + ')') : '') +
+              '<span>📊</span> ' + (data.diagrams && data.diagrams.length > 0 ? '5.' : '4.') + ' ' + escapeHtml(tblTitle) +
               '</div>' +
               '<div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,0.02);">' +
               '<table style="width:100%;border-collapse:collapse;font-size:11.5px;">' +
@@ -1589,7 +1650,8 @@ const { calculatorName, slug, category } = Astro.props;
             var headersHtml = tbl.headers.map(function(h) {
               return '<th style="padding:6px 8px;border:1px solid #cbd5e1;background:#f1f5f9;color:#334155;font-weight:700;text-align:left;font-size:10px;">' + escapeHtml(h) + '</th>';
             }).join('');
-            var rowsHtml = tbl.rows.slice(0, 30).map(function(r, rIdx) {
+            var maxPrintRows = 120;
+            var rowsHtml = tbl.rows.slice(0, maxPrintRows).map(function(r, rIdx) {
               var bg = rIdx % 2 === 0 ? '#ffffff' : '#f8fafc';
               var cells = r.map(function(c) {
                 return '<td style="padding:5px 8px;border:1px solid #cbd5e1;font-size:10px;font-family:monospace;">' + escapeHtml(c) + '</td>';
@@ -1597,13 +1659,15 @@ const { calculatorName, slug, category } = Astro.props;
               return '<tr style="background:' + bg + ';">' + cells + '</tr>';
             }).join('');
 
+            var tblHeading = tbl.title || ('Detailed Breakdown Table ' + (data.tables.length > 1 ? (idx + 1) : ''));
+
             tablesHtml += '<div style="margin-top:16px;">' +
-              '<div style="font-weight:700;font-size:11px;text-transform:uppercase;color:#334155;margin-bottom:6px;">Detailed Breakdown Table ' + (data.tables.length > 1 ? (idx + 1) : '') + '</div>' +
+              '<div style="font-weight:700;font-size:11px;text-transform:uppercase;color:#334155;margin-bottom:6px;">' + escapeHtml(tblHeading) + '</div>' +
               '<table style="width:100%;border-collapse:collapse;border:1px solid #cbd5e1;font-size:10px;">' +
               '<thead><tr>' + headersHtml + '</tr></thead>' +
               '<tbody>' + rowsHtml + '</tbody>' +
               '</table>' +
-              (tbl.rows.length > 30 ? '<div style="font-size:9px;color:#64748b;margin-top:4px;font-style:italic;">Showing first 30 rows of ' + tbl.rows.length + ' total rows.</div>' : '') +
+              (tbl.rows.length > maxPrintRows ? '<div style="font-size:9px;color:#64748b;margin-top:4px;font-style:italic;">Showing first ' + maxPrintRows + ' rows of ' + tbl.rows.length + ' total rows.</div>' : '') +
               '</div>';
           });
         }

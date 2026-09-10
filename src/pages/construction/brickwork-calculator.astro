@@ -2260,50 +2260,55 @@ const faqs = [
       const sqmToSqft = 10.7639;
       const sqftToSqm = 1 / sqmToSqft;
 
+      const safeNum = (val: string, fallback: number = 0) => {
+        const p = parseFloat(val);
+        return isNaN(p) ? fallback : p;
+      };
+
       if (newUnit === "imperial") {
-        wbLength.value = (parseFloat(wbLength.value) * mToFt).toFixed(2);
-        wbHeight.value = (parseFloat(wbHeight.value) * mToFt).toFixed(2);
-        wbOpenings.value = (parseFloat(wbOpenings.value) * sqmToSqft).toFixed(
+        wbLength.value = (safeNum(wbLength.value, 10) * mToFt).toFixed(2);
+        wbHeight.value = (safeNum(wbHeight.value, 3) * mToFt).toFixed(2);
+        wbOpenings.value = (safeNum(wbOpenings.value, 0) * sqmToSqft).toFixed(
           2,
         );
 
-        bmLength.value = (parseFloat(bmLength.value) * mToFt).toFixed(2);
-        bmHeight.value = (parseFloat(bmHeight.value) * mToFt).toFixed(2);
-        bmOpenings.value = (parseFloat(bmOpenings.value) * sqmToSqft).toFixed(
+        bmLength.value = (safeNum(bmLength.value, 10) * mToFt).toFixed(2);
+        bmHeight.value = (safeNum(bmHeight.value, 3) * mToFt).toFixed(2);
+        bmOpenings.value = (safeNum(bmOpenings.value, 0) * sqmToSqft).toFixed(
           2,
         );
 
-        pbArea.value = (parseFloat(pbArea.value) * sqmToSqft).toFixed(2);
+        pbArea.value = (safeNum(pbArea.value, 50) * sqmToSqft).toFixed(2);
       } else {
         wbLength.value = Math.max(
           0.1,
-          parseFloat((parseFloat(wbLength.value) * ftToM).toFixed(2)),
+          parseFloat((safeNum(wbLength.value, 32.81) * ftToM).toFixed(2)),
         ).toString();
         wbHeight.value = Math.max(
           0.1,
-          parseFloat((parseFloat(wbHeight.value) * ftToM).toFixed(2)),
+          parseFloat((safeNum(wbHeight.value, 9.84) * ftToM).toFixed(2)),
         ).toString();
         wbOpenings.value = Math.max(
           0,
-          parseFloat((parseFloat(wbOpenings.value) * sqftToSqm).toFixed(2)),
+          parseFloat((safeNum(wbOpenings.value, 0) * sqftToSqm).toFixed(2)),
         ).toString();
 
         bmLength.value = Math.max(
           0.1,
-          parseFloat((parseFloat(bmLength.value) * ftToM).toFixed(2)),
+          parseFloat((safeNum(bmLength.value, 32.81) * ftToM).toFixed(2)),
         ).toString();
         bmHeight.value = Math.max(
           0.1,
-          parseFloat((parseFloat(bmHeight.value) * ftToM).toFixed(2)),
+          parseFloat((safeNum(bmHeight.value, 9.84) * ftToM).toFixed(2)),
         ).toString();
         bmOpenings.value = Math.max(
           0,
-          parseFloat((parseFloat(bmOpenings.value) * sqftToSqm).toFixed(2)),
+          parseFloat((safeNum(bmOpenings.value, 0) * sqftToSqm).toFixed(2)),
         ).toString();
 
         pbArea.value = Math.max(
           1,
-          parseFloat((parseFloat(pbArea.value) * sqftToSqm).toFixed(2)),
+          parseFloat((safeNum(pbArea.value, 538.2) * sqftToSqm).toFixed(2)),
         ).toString();
       }
 
@@ -2322,7 +2327,11 @@ const faqs = [
         .forEach((el) => (el.textContent = areaStr));
 
       renderDynamicVisual();
-      markResultsStale();
+      if (lastResultData) {
+        performCalculation(false);
+      } else {
+        markResultsStale();
+      }
     }
 
     btnUnitMetric.addEventListener("click", () =>
@@ -2331,6 +2340,34 @@ const faqs = [
     btnUnitImperial.addEventListener("click", () =>
       setGlobalUnitSystem("imperial"),
     );
+
+    if (wbUnit) {
+      wbUnit.addEventListener("change", () => {
+        setGlobalUnitSystem(wbUnit.value as "metric" | "imperial");
+      });
+    }
+
+    if (bmUnit) {
+      bmUnit.addEventListener("change", () => {
+        setGlobalUnitSystem(bmUnit.value as "metric" | "imperial");
+      });
+    }
+
+    if (pbUnit) {
+      pbUnit.addEventListener("change", () => {
+        const u = pbUnit.value;
+        const areaStr = u === "sqft" ? "sq.ft" : u === "sqyd" ? "sq.yd" : "m²";
+        document
+          .querySelectorAll(".unit-pb-area-label")
+          .forEach((el) => (el.textContent = areaStr));
+        renderDynamicVisual();
+        if (lastResultData) {
+          performCalculation(false);
+        } else {
+          markResultsStale();
+        }
+      });
+    }
 
     // Set Global Currency
     function setGlobalCurrency(newCurr: Currency) {
@@ -2369,7 +2406,11 @@ const faqs = [
         .querySelectorAll(".unit-currency-name")
         .forEach((el) => (el.textContent = currName));
 
-      markResultsStale();
+      if (lastResultData) {
+        performCalculation(false);
+      } else {
+        markResultsStale();
+      }
     }
 
     btnCurrInr.addEventListener("click", () => setGlobalCurrency("INR"));
@@ -2462,6 +2503,9 @@ const faqs = [
 
         hideError();
         renderDynamicVisual();
+        if (lastResultData) {
+          performCalculation(false);
+        }
       });
     });
 
@@ -2867,7 +2911,7 @@ const faqs = [
     // =========================================================
     // CALCULATION ROUTINE (Rule 8: Triggered ONLY on button click)
     // =========================================================
-    function performCalculation() {
+    function performCalculation(autoScroll: boolean = true) {
       hideError();
       const enableCost = chkEnableCost ? chkEnableCost.checked : false;
       const bRate = parseFloat(inpRateBrick.value) || 0;
@@ -2889,6 +2933,17 @@ const faqs = [
           if (isNaN(len) || len <= 0 || isNaN(ht) || ht <= 0 || walls <= 0) {
             return showError(
               "Please enter valid positive Wall Length, Height, and Wall Count.",
+            );
+          }
+
+          const grossWallArea =
+            unit === "imperial"
+              ? (len * ht * walls) / 10.7639
+              : len * ht * walls;
+          const openArea = unit === "imperial" ? openDed / 10.7639 : openDed;
+          if (openDed > 0 && openArea >= grossWallArea) {
+            return showError(
+              `Total openings area (${openDed} ${unit === "imperial" ? "sq.ft" : "m²"}) cannot exceed or equal gross wall area (${(unit === "imperial" ? len * ht * walls : grossWallArea).toFixed(1)} ${unit === "imperial" ? "sq.ft" : "m²"}).`,
             );
           }
 
@@ -3091,6 +3146,15 @@ const faqs = [
           ) {
             return showError(
               "Please enter valid positive Wall Length, Height, and Thickness.",
+            );
+          }
+
+          const bmGrossArea =
+            unit === "imperial" ? (len * ht) / 10.7639 : len * ht;
+          const bmOpenArea = unit === "imperial" ? openDed / 10.7639 : openDed;
+          if (openDed > 0 && bmOpenArea >= bmGrossArea) {
+            return showError(
+              `Total openings area (${openDed} ${unit === "imperial" ? "sq.ft" : "m²"}) cannot exceed or equal gross wall area (${(unit === "imperial" ? len * ht : bmGrossArea).toFixed(1)} ${unit === "imperial" ? "sq.ft" : "m²"}).`,
             );
           }
 
@@ -3482,7 +3546,9 @@ const faqs = [
         if (staleWarning) staleWarning.classList.add("hidden");
         if (resultsPlaceholder) resultsPlaceholder.classList.add("hidden");
         resultsSection.classList.remove("hidden");
-        resultsSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        if (autoScroll) {
+          resultsSection.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
       } catch (err: any) {
         showError(
           err?.message ||
@@ -3507,7 +3573,7 @@ const faqs = [
         rowsHtml += `
           <tr class="hover:bg-emerald-50/50 dark:hover:bg-emerald-950/40">
             <td class="py-2.5 px-3 font-semibold text-slate-800 dark:text-slate-200">Bricks</td>
-            <td class="py-2.5 px-3 text-slate-600 dark:text-slate-400">${lastResultData.finalEstimatedBricks || lastResultData.finalBricks || 0} Pcs</td>
+            <td class="py-2.5 px-3 text-slate-600 dark:text-slate-400">${lastResultData.finalEstimatedBricks || lastResultData.finalBricks || lastResultData.totalBricksCount || 0} Pcs</td>
             <td class="py-2.5 px-3 text-slate-600 dark:text-slate-400">${sym} ${inpRateBrick.value} / pc</td>
             <td class="py-2.5 px-3 font-bold text-slate-900 dark:text-white text-right">${formatCurrency(costSummary.brickCost, costSummary.currency)}</td>
           </tr>
@@ -3637,13 +3703,14 @@ const faqs = [
       renderDynamicVisual();
     }
 
-    btnCalculate.addEventListener("click", performCalculation);
+    btnCalculate.addEventListener("click", () => performCalculation(true));
     if (btnRecalculateStale)
-      btnRecalculateStale.addEventListener("click", performCalculation);
+      btnRecalculateStale.addEventListener("click", () => performCalculation(true));
     btnClearAll.addEventListener("click", performClearAll);
 
-    // Initial Visual Render
+    // Initial Visual Render & Immediate Calculation
     renderDynamicVisual();
+    performCalculation(false);
 
     // PDF Export Generation
     if (btnDownloadPdf) {

@@ -1,0 +1,712 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="Credit Card Payoff Calculator – Calculate Debt Free Date & Interest Saved"
+  description="Free credit card payoff calculator. Find out how long it will take to pay off your credit cards with fixed payments vs minimum payments and calculate total interest savings."
+  category="Finance"
+  calculatorName="Credit Card Payoff Calculator"
+  slug="credit-card-payoff-calculator"
+  keywords={[
+    'credit card payoff calculator',
+    'credit card debt payoff calculator',
+    'debt payoff calculator',
+    'credit card interest calculator',
+    'credit card payoff time',
+    'credit card minimum payment calculator',
+    'debt snowball calculator',
+    'credit card payment planner'
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- MODE TABS -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-2.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-semibold scrollbar-thin">
+        <button
+          type="button"
+          id="tab-btn-fixed"
+          class="btn-cc-tab active shrink-0 rounded-lg bg-blue-600 px-4 py-1.5 font-bold text-white shadow-xs cursor-pointer transition flex items-center gap-1.5"
+          data-mode="fixed_payment"
+        >
+          <span>💵</span>
+          <span>Fixed Monthly Payment</span>
+        </button>
+        <button
+          type="button"
+          id="tab-btn-target"
+          class="btn-cc-tab shrink-0 rounded-lg border border-slate-300 bg-white px-4 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition flex items-center gap-1.5"
+          data-mode="target_months"
+        >
+          <span>🎯</span>
+          <span>Target Payoff Date</span>
+        </button>
+        <button
+          type="button"
+          id="tab-btn-min"
+          class="btn-cc-tab shrink-0 rounded-lg border border-slate-300 bg-white px-4 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition flex items-center gap-1.5"
+          data-mode="minimum_payment"
+        >
+          <span>⚠️</span>
+          <span>Minimum Payment Trap</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- PRESETS BAR -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-center gap-1.5 text-xs">
+        <span class="font-bold text-slate-600 dark:text-slate-400 mr-1 flex items-center gap-1">
+          <span>⚡</span> Quick Scenarios:
+        </span>
+        <button type="button" class="btn-cc-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-bal="2500" data-apr="18.9" data-pay="120">
+          $2.5k @ 18.9% ($120/mo)
+        </button>
+        <button type="button" class="btn-cc-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-bal="5000" data-apr="21.5" data-pay="200">
+          $5k @ 21.5% ($200/mo)
+        </button>
+        <button type="button" class="btn-cc-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-bal="10000" data-apr="24.9" data-pay="350">
+          $10k @ 24.9% ($350/mo)
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN CALCULATOR GRID -->
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      
+      <!-- INPUT PANEL (7 cols) -->
+      <div class="lg:col-span-7 space-y-5 rounded-3xl border border-slate-200/90 bg-white p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 sm:p-7">
+        <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>💳</span> Credit Card Details
+        </h2>
+
+        <!-- Current Balance -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+            <label for="cc-balance">Current Balance ($)</label>
+            <span class="font-mono text-blue-600 dark:text-blue-400 font-bold" id="display-cc-balance">$5,000</span>
+          </div>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-sm">$</span>
+            <input
+              type="number"
+              id="cc-balance"
+              min="100"
+              max="200000"
+              step="50"
+              value="5000"
+              class="w-full rounded-xl border border-slate-300 bg-slate-50 py-2.5 pl-8 pr-3 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            />
+          </div>
+          <input type="range" id="slider-cc-balance" min="500" max="30000" step="100" value="5000" class="w-full accent-blue-600 cursor-pointer" />
+        </div>
+
+        <!-- Interest Rate (APR) -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+            <label for="cc-apr">Interest Rate (Annual APR %)</label>
+            <span class="font-mono text-blue-600 dark:text-blue-400 font-bold" id="display-cc-apr">21.5%</span>
+          </div>
+          <div class="relative">
+            <input
+              type="number"
+              id="cc-apr"
+              min="0"
+              max="45"
+              step="0.1"
+              value="21.5"
+              class="w-full rounded-xl border border-slate-300 bg-slate-50 py-2.5 pl-3 pr-8 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            />
+            <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 text-sm">%</span>
+          </div>
+          <input type="range" id="slider-cc-apr" min="5" max="36" step="0.25" value="21.5" class="w-full accent-blue-600 cursor-pointer" />
+        </div>
+
+        <!-- Mode Specific: Fixed Monthly Payment -->
+        <div id="wrapper-fixed-payment" class="space-y-1.5">
+          <div class="flex items-center justify-between text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+            <label for="cc-monthly-pay">Monthly Payment You Can Afford ($)</label>
+            <span class="font-mono text-blue-600 dark:text-blue-400 font-bold" id="display-cc-monthly-pay">$200</span>
+          </div>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-sm">$</span>
+            <input
+              type="number"
+              id="cc-monthly-pay"
+              min="25"
+              max="10000"
+              step="10"
+              value="200"
+              class="w-full rounded-xl border border-slate-300 bg-slate-50 py-2.5 pl-8 pr-3 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            />
+          </div>
+          <input type="range" id="slider-cc-monthly-pay" min="50" max="1500" step="10" value="200" class="w-full accent-blue-600 cursor-pointer" />
+          <p class="text-[11px] text-slate-500">Tip: Paying even $25 extra per month dramatically cuts interest fees.</p>
+        </div>
+
+        <!-- Mode Specific: Target Months -->
+        <div id="wrapper-target-months" class="space-y-1.5 hidden">
+          <div class="flex items-center justify-between text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+            <label for="cc-target-months">Pay Off Debt Within (Months)</label>
+            <span class="font-mono text-blue-600 dark:text-blue-400 font-bold" id="display-cc-target-months">24 Months</span>
+          </div>
+          <input
+            type="number"
+            id="cc-target-months"
+            min="3"
+            max="120"
+            value="24"
+            class="w-full rounded-xl border border-slate-300 bg-slate-50 py-2.5 px-3 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+          />
+          <input type="range" id="slider-cc-target-months" min="6" max="60" step="1" value="24" class="w-full accent-blue-600 cursor-pointer" />
+        </div>
+
+        <!-- Mode Specific: Minimum Payment Rule -->
+        <div id="wrapper-minimum-payment" class="space-y-1.5 hidden">
+          <div class="flex items-center justify-between text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+            <label for="cc-min-percent">Bank Minimum Payment Rate</label>
+            <span class="font-mono text-amber-600 dark:text-amber-400 font-bold" id="display-cc-min-percent">2.5% or $25</span>
+          </div>
+          <select id="cc-min-percent" class="w-full rounded-xl border border-slate-300 bg-slate-50 py-2.5 px-3 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white">
+            <option value="2.0">2.0% of balance (or $25 minimum)</option>
+            <option value="2.5" selected>2.5% of balance (or $25 minimum - Standard)</option>
+            <option value="3.0">3.0% of balance (or $35 minimum)</option>
+          </select>
+          <p class="text-[11px] text-amber-600 dark:text-amber-400">⚠️ Paying only the minimum causes debt to compound for 15–25+ years!</p>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+          <button
+            type="button"
+            id="btn-calc-cc"
+            class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3.5 text-center text-sm font-black text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer"
+          >
+            Calculate Payoff →
+          </button>
+          <button
+            type="button"
+            id="btn-clear-cc"
+            class="rounded-xl border border-slate-300 bg-white px-5 py-3.5 text-center text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+          >
+            Clear (✕)
+          </button>
+        </div>
+
+      </div>
+
+      <!-- RESULTS PLACEHOLDER (Visible until Calculate is clicked) -->
+      <div id="results-placeholder" class="lg:col-span-5 flex flex-col items-center justify-center p-8 text-center rounded-3xl border border-dashed border-slate-300 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 min-h-85">
+        <span class="text-4xl mb-3">💳</span>
+        <h4 class="text-base font-bold text-slate-800 dark:text-slate-200">Ready to Calculate</h4>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs">Enter your card balance, interest rate (APR), and payment preference, then click <strong>Calculate Payoff</strong> to see your debt-free timeline and interest savings.</p>
+      </div>
+
+      <!-- RESULTS PANEL (Hidden until Calculate is clicked) -->
+      <div id="results-section" class="hidden lg:col-span-5 flex-col justify-between space-y-4 rounded-3xl border border-blue-200/80 bg-linear-to-b from-blue-50/60 to-white p-5 shadow-xl shadow-slate-900/5 dark:border-blue-900/40 dark:from-slate-900 dark:to-slate-950 sm:p-7">
+        
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Payoff Estimate</div>
+          <div class="mt-2">
+            <div class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white font-mono" id="res-time-to-payoff">
+              34 Months
+            </div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 mt-1" id="res-years-label">
+              (~2.8 years to be completely debt-free)
+            </div>
+          </div>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-200/80 dark:border-slate-800">
+          <div class="rounded-xl border border-slate-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/80">
+            <div class="text-[11px] font-medium text-slate-500">Monthly Payment</div>
+            <div class="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-mono" id="res-monthly-payment">$200.00</div>
+          </div>
+          <div class="rounded-xl border border-slate-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/80">
+            <div class="text-[11px] font-medium text-slate-500">Total Interest</div>
+            <div class="text-base sm:text-lg font-bold text-rose-600 dark:rose-400 font-mono" id="res-total-interest">$1,722.50</div>
+          </div>
+          <div class="col-span-2 rounded-xl border border-slate-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/80">
+            <div class="text-[11px] font-medium text-slate-500">Total Amount Paid (Principal + Interest)</div>
+            <div class="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400 font-mono" id="res-total-paid">$6,722.50</div>
+          </div>
+        </div>
+
+        <!-- Comparison Badge vs Minimum Payment -->
+        <div id="res-savings-box" class="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/40">
+          <div class="flex items-start gap-2.5">
+            <span class="text-lg">🎉</span>
+            <div class="text-xs space-y-1">
+              <div class="font-bold text-emerald-800 dark:text-emerald-300">Fast Payoff Advantage:</div>
+              <div class="text-emerald-700 dark:text-emerald-400" id="res-savings-text">
+                By paying fixed $200/mo, you save <strong class="font-bold font-mono">$4,850 in interest</strong> and become debt-free <strong class="font-bold">14 years earlier</strong> than minimum payments!
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Warning Box for Never-Ending Debt -->
+        <div id="res-warning-box" class="hidden rounded-2xl border border-rose-200 bg-rose-50 p-4 text-xs text-rose-700 dark:border-rose-900/60 dark:bg-rose-950/50 dark:text-rose-300">
+          ⚠️ <strong>Warning:</strong> Your monthly payment is too low to cover the monthly finance charge. Your balance will keep increasing. Increase your monthly payment to at least <span id="res-min-required" class="font-bold">$105</span>.
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- SCHEDULE ACCORDION -->
+    <div id="schedule-section" class="hidden rounded-3xl border border-slate-200/90 bg-white p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 sm:p-7">
+      <details class="group">
+        <summary class="flex cursor-pointer items-center justify-between font-bold text-slate-900 dark:text-white">
+          <span class="flex items-center gap-2">
+            <span>📅</span> View Month-by-Month Amortization Schedule
+          </span>
+          <span class="text-blue-600 text-xs font-semibold group-open:rotate-180 transition-transform">▼ Click to Expand</span>
+        </summary>
+        <div class="mt-4 overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold">
+                <th class="p-2.5">Month</th>
+                <th class="p-2.5">Starting Balance</th>
+                <th class="p-2.5">Payment</th>
+                <th class="p-2.5">Principal</th>
+                <th class="p-2.5">Interest Paid</th>
+                <th class="p-2.5">Ending Balance</th>
+              </tr>
+            </thead>
+            <tbody id="schedule-tbody" class="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono">
+              <!-- Filled via JS -->
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </div>
+
+  </div>
+
+  <!-- EDUCATIONAL CONTENT -->
+  <Fragment slot="content">
+    <article class="prose prose-slate dark:prose-invert max-w-none text-sm leading-relaxed space-y-5 pt-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Understanding Credit Card Payoff & How Daily Compounding Interest Works</h2>
+      <p>
+        Credit cards are among the most convenient financial tools, but carrying an unpaid balance makes them one of the most expensive forms of consumer debt. Unlike standard installment loans (such as auto loans or fixed mortgages) that calculate interest on a simple monthly amortization schedule, credit card issuers calculate finance charges on a <strong>Daily Periodic Rate (DPR)</strong> compounded continuously across your billing cycle.
+      </p>
+      <p>
+        To compute your daily rate, credit card companies divide your Annual Percentage Rate (APR) by 365 (or sometimes 360 days):
+      </p>
+      <div class="p-3.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl font-mono text-xs text-center border border-slate-200 dark:border-slate-700">
+        Daily Periodic Rate (DPR) = Annual Percentage Rate (APR) ÷ 365
+      </div>
+      <p>
+        Each day, the DPR is multiplied by your <strong>Average Daily Balance</strong>. This newly accrued interest is added to your running balance, meaning on day two, you are charged interest on yesterday's interest. Over months and years, this continuous daily compounding causes balances to balloon rapidly if payments barely exceed the finance charge.
+      </p>
+
+      <h3 class="text-base font-bold text-slate-900 dark:text-white">The Hidden Danger of the "Minimum Payment Trap"</h3>
+      <p>
+        Federal regulations require card issuers to display a minimum payment warning on monthly statements, yet millions of cardholders fall into the minimum payment trap. Card issuers typically set the required minimum payment using one of two formulas:
+      </p>
+      <ul class="list-disc pl-5 space-y-1 text-slate-700 dark:text-slate-300">
+        <li><strong>Percentage Method:</strong> A flat <strong>2% to 3%</strong> of your total statement balance.</li>
+        <li><strong>Fee Plus Percentage Method:</strong> All monthly interest charges and late fees plus <strong>1% of the principal balance</strong>.</li>
+        <li><strong>Absolute Floor:</strong> A minimum dollar threshold, usually between <strong>$25 and $35</strong>, whenever the calculated percentage falls below this floor.</li>
+      </ul>
+      <p>
+        Because roughly 70% to 85% of each minimum payment goes directly toward covering finance charges, your principal balance decreases at an excruciatingly slow pace. 
+      </p>
+
+      <div class="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-xs dark:border-amber-900/50 dark:bg-amber-950/30">
+        <h4 class="font-bold text-amber-900 dark:text-amber-200 text-sm mb-1">Real-World Case Study: $5,000 Credit Card Debt at 22% APR</h4>
+        <p class="text-amber-800 dark:text-amber-300">
+          If you carry a $5,000 balance at 22% APR and make only the minimum payment (starting around $125/month and tapering down), it will take <strong>19 years and 8 months</strong> to clear the balance. During that period, you will pay over <strong>$6,940 in interest charges alone</strong>—more than 138% of what you originally borrowed! Conversely, switching to a fixed payment of $200 per month pays off the card in just <strong>33 months</strong>, slashing total interest to $1,595 and saving you over $5,345.
+        </p>
+      </div>
+
+      <h3 class="text-base font-bold text-slate-900 dark:text-white">Mathematical Credit Card Payoff Formula</h3>
+      <p>
+        To determine how many months ($N$) it takes to completely pay off a credit card balance with a fixed monthly payment, financial analysts use the logarithmic debt amortization formula:
+      </p>
+      <div class="p-3.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl font-mono text-xs text-center border border-slate-200 dark:border-slate-700">
+        N = - [ ln( 1 - (B × r) / P ) ] ÷ [ ln( 1 + r ) ]
+      </div>
+      <p>Where:</p>
+      <ul class="list-disc pl-5 space-y-1 text-slate-700 dark:text-slate-300">
+        <li><strong>B</strong> = Current total credit card balance ($)</li>
+        <li><strong>r</strong> = Monthly interest rate (APR in decimal divided by 12, e.g., 0.21 / 12 = 0.0175)</li>
+        <li><strong>P</strong> = Fixed monthly payment amount ($)</li>
+        <li><strong>ln</strong> = Natural logarithm function</li>
+      </ul>
+      <p>
+        <strong>Crucial Condition:</strong> The monthly payment $P$ must be strictly greater than $(B \times r)$, which represents the monthly interest charge. If $P \le (B \times r)$, the denominator becomes zero or negative, resulting in infinite debt where the balance perpetually increases.
+      </p>
+
+      <h3 class="text-base font-bold text-slate-900 dark:text-white">Debt Payoff Strategies Compared: Avalanche vs. Snowball vs. Consolidation</h3>
+      <p>
+        When dealing with multiple credit cards or high-interest balances, choosing the right structured repayment methodology is critical for psychological momentum and financial efficiency:
+      </p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse border border-slate-200 dark:border-slate-800">
+          <thead>
+            <tr class="bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200">
+              <th class="p-2.5 font-bold">Repayment Method</th>
+              <th class="p-2.5 font-bold">Core Strategy</th>
+              <th class="p-2.5 font-bold">Primary Advantage</th>
+              <th class="p-2.5 font-bold">Potential Drawback</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-600 dark:text-slate-300">
+            <tr>
+              <td class="p-2.5 font-semibold text-slate-900 dark:text-white">Debt Avalanche</td>
+              <td class="p-2.5">Pay minimums on all cards; allocate all excess funds to the card with the highest APR.</td>
+              <td class="p-2.5 font-bold text-emerald-600 dark:text-emerald-400">Mathematically optimal: saves the most total interest and clears debt fastest.</td>
+              <td class="p-2.5">Requires patience; high-APR card may take longer to see the first zero balance.</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-semibold text-slate-900 dark:text-white">Debt Snowball</td>
+              <td class="p-2.5">Pay minimums on all cards; allocate all surplus funds to the card with the smallest balance.</td>
+              <td class="p-2.5 font-bold text-blue-600 dark:text-blue-400">High psychological motivation: quick wins eliminate accounts one by one.</td>
+              <td class="p-2.5">Costs slightly more in total interest compared to the avalanche approach.</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-semibold text-slate-900 dark:text-white">0% APR Balance Transfer</td>
+              <td class="p-2.5">Transfer existing balances to a promotional card with 0% interest for 12 to 21 months.</td>
+              <td class="p-2.5">100% of every payment directly reduces principal without interest friction.</td>
+              <td class="p-2.5">Requires good-to-excellent credit (690+ FICO); 3% to 5% upfront transfer fee applies.</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-semibold text-slate-900 dark:text-white">Debt Consolidation Loan</td>
+              <td class="p-2.5">Take an unsecured personal loan at 8%–14% APR to pay off cards charging 20%–28% APR.</td>
+              <td class="p-2.5">Replaces multiple variable cards with a single fixed monthly payment and end date.</td>
+              <td class="p-2.5">Danger of running up credit card balances again if spending habits do not change.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="text-base font-bold text-slate-900 dark:text-white">Step-by-Step Guide: How to Accelerate Your Debt Payoff</h3>
+      <ol class="list-decimal pl-5 space-y-2 text-slate-700 dark:text-slate-300">
+        <li><strong>Commit to Fixed Payments:</strong> Even if your statement says your minimum due dropped from $180 to $150, keep paying the original $180. Fixed payments accelerate payoff exponentially as your balance falls.</li>
+        <li><strong>Adopt Bi-Weekly Payment Scheduling:</strong> Instead of making one monthly payment, make half your monthly payment every two weeks. Because there are 52 weeks in a year, you will make 26 half-payments—equivalent to 13 full monthly payments every year. This single change eliminates months of debt.</li>
+        <li><strong>Call Your Card Issuer to Request an APR Reduction:</strong> If you have an on-time payment history of 12+ months, call customer service and request a rate reduction. Studies reveal over 65% of cardholders who request an interest rate reduction receive an average 2% to 5% reduction.</li>
+        <li><strong>Apply Financial Windfalls:</strong> Channel tax refunds, work bonuses, or cashback rewards straight into your highest-interest credit card principal rather than discretionary spending.</li>
+        <li><strong>Monitor Your Credit Utilization Ratio:</strong> Revolving credit utilization makes up 30% of your FICO score. Paying down cards below 30%, and subsequently below 10% of your credit limit, rapidly boosts your credit score, qualifying you for better refinancing terms.</li>
+      </ol>
+    </article>
+  </Fragment>
+
+  <!-- FAQS -->
+  <Fragment slot="faq">
+    <div class="space-y-3">
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900" open>
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white">What is APR on a credit card and how does it differ from the interest rate?</summary>
+        <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">APR stands for Annual Percentage Rate. For most credit cards, the nominal interest rate and APR are virtually identical because upfront transaction fees are separate. APR represents the annual cost of borrowing expressed as a percentage, which card issuers divide by 365 to assess daily compounding interest on revolving balances.</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white">What happens if I only pay the minimum payment each month?</summary>
+        <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">Paying only the minimum keeps your account in good standing and avoids late fees, but it traps you in high-interest debt for decades. Because the minimum payment drops as your balance drops, the principal reduction slows down significantly, resulting in paying several times your original borrowed amount in accumulated interest.</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white">How much money will I save by paying an extra $50 or $100 per month?</summary>
+        <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">On an average $6,000 credit card balance at 22% APR, paying an extra $100 per month above a baseline $150 payment shortens your debt payoff time by nearly 4 years and saves over $2,400 in finance charges. Extra payments go 100% toward principal reduction.</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white">Does paying off credit card balances immediately improve my credit score?</summary>
+        <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">Yes. Credit utilization accounts for roughly 30% of your credit score. Once your credit card issuer reports your reduced or zero balance to credit bureaus (Equifax, Experian, TransUnion), your credit score usually sees a noticeable upward jump within 30 to 45 days.</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white">Which is better: Debt Snowball or Debt Avalanche?</summary>
+        <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">If your priority is saving the maximum amount of money, the Debt Avalanche (targeting highest APR first) is mathematically superior. If you struggle with motivation and need psychological wins to stay committed, the Debt Snowball (paying off lowest balance first) has proven higher behavioral success rates.</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white">Is a 0% APR balance transfer credit card a good idea?</summary>
+        <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">A 0% balance transfer is advantageous if you have a clear plan to pay off the entire balance before the promotional period ends (usually 12 to 21 months). However, you must factor in the 3% to 5% transfer fee, avoid making new purchases on the card, and prepare for APRs spiking up to 25%+ if any balance remains after the promo expires.</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white">Why does my credit card balance increase even when I make payments?</summary>
+        <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">Your balance increases if your monthly payment is lower than the finance charges accrued during the billing cycle (called negative amortization), or if new purchases, annual card fees, late charges, or cash advance interest are added to the balance faster than your payment offsets them.</p>
+      </details>
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<script is:inline>
+(function initCreditCardPayoff() {
+  let mode = 'fixed_payment';
+
+  const balanceInput = document.getElementById('cc-balance');
+  const aprInput = document.getElementById('cc-apr');
+  const monthlyPayInput = document.getElementById('cc-monthly-pay');
+  const targetMonthsInput = document.getElementById('cc-target-months');
+  const minPercentSelect = document.getElementById('cc-min-percent');
+
+  const sliderBalance = document.getElementById('slider-cc-balance');
+  const sliderApr = document.getElementById('slider-cc-apr');
+  const sliderMonthlyPay = document.getElementById('slider-cc-monthly-pay');
+  const sliderTargetMonths = document.getElementById('slider-cc-target-months');
+
+  const displayBalance = document.getElementById('display-cc-balance');
+  const displayApr = document.getElementById('display-cc-apr');
+  const displayMonthlyPay = document.getElementById('display-cc-monthly-pay');
+  const displayTargetMonths = document.getElementById('display-cc-target-months');
+
+  const wrapperFixed = document.getElementById('wrapper-fixed-payment');
+  const wrapperTarget = document.getElementById('wrapper-target-months');
+  const wrapperMin = document.getElementById('wrapper-minimum-payment');
+
+  const resTime = document.getElementById('res-time-to-payoff');
+  const resYears = document.getElementById('res-years-label');
+  const resMonthlyPay = document.getElementById('res-monthly-payment');
+  const resTotalInterest = document.getElementById('res-total-interest');
+  const resTotalPaid = document.getElementById('res-total-paid');
+  const resSavingsBox = document.getElementById('res-savings-box');
+  const resSavingsText = document.getElementById('res-savings-text');
+  const resWarningBox = document.getElementById('res-warning-box');
+  const resMinReq = document.getElementById('res-min-required');
+  const scheduleTbody = document.getElementById('schedule-tbody');
+
+  function syncInputs(numEl, sliderEl, displayEl, prefix = '$', suffix = '') {
+    if (!numEl || !sliderEl) return;
+    sliderEl.value = numEl.value;
+    if (displayEl) {
+      const val = parseFloat(numEl.value) || 0;
+      displayEl.textContent = `${prefix}${val.toLocaleString('en-US')}${suffix}`;
+    }
+  }
+
+  function calculate() {
+    const balance = parseFloat(balanceInput?.value) || 0;
+    const apr = parseFloat(aprInput?.value) || 0;
+    const monthlyRate = apr / 100 / 12;
+    const minPercent = parseFloat(minPercentSelect?.value) || 2.5;
+
+    syncInputs(balanceInput, sliderBalance, displayBalance, '$');
+    syncInputs(aprInput, sliderApr, displayApr, '', '%');
+    syncInputs(monthlyPayInput, sliderMonthlyPay, displayMonthlyPay, '$');
+    syncInputs(targetMonthsInput, sliderTargetMonths, displayTargetMonths, '', ' Months');
+
+    let schedule = [];
+    let totalInterest = 0;
+    let paymentUsed = 0;
+    let months = 0;
+    let isNeverEnding = false;
+
+    if (mode === 'target_months') {
+      months = parseInt(targetMonthsInput?.value) || 12;
+      if (monthlyRate === 0) {
+        paymentUsed = balance / months;
+      } else {
+        paymentUsed = (monthlyRate * balance) / (1 - Math.pow(1 + monthlyRate, -months));
+      }
+    } else if (mode === 'fixed_payment') {
+      paymentUsed = parseFloat(monthlyPayInput?.value) || 100;
+      const minInterestFirstMonth = balance * monthlyRate;
+      if (paymentUsed <= minInterestFirstMonth) {
+        isNeverEnding = true;
+      }
+    }
+
+    if (isNeverEnding) {
+      if (resWarningBox) resWarningBox.classList.remove('hidden');
+      if (resMinReq) resMinReq.textContent = `$${Math.ceil(balance * monthlyRate + 10)}`;
+      if (resSavingsBox) resSavingsBox.classList.add('hidden');
+      if (resTime) resTime.textContent = 'Never';
+      if (resYears) resYears.textContent = '(Payment is less than monthly interest)';
+      return;
+    } else {
+      if (resWarningBox) resWarningBox.classList.add('hidden');
+    }
+
+    // Simulate payoff
+    let currBal = balance;
+    let m = 0;
+    const maxMonths = 600;
+
+    while (currBal > 0.01 && m < maxMonths) {
+      m++;
+      const interest = currBal * monthlyRate;
+      let p = paymentUsed;
+
+      if (mode === 'minimum_payment') {
+        p = Math.max(currBal * (minPercent / 100), 25);
+      }
+
+      if (currBal + interest < p) {
+        p = currBal + interest;
+      }
+
+      const principal = p - interest;
+      currBal = Math.max(0, currBal + interest - p);
+      totalInterest += interest;
+
+      if (m <= 120) {
+        schedule.push({
+          month: m,
+          start: currBal + p - interest,
+          payment: p,
+          principal,
+          interest,
+          end: currBal,
+        });
+      }
+    }
+
+    months = m;
+    const years = (months / 12).toFixed(1);
+
+    if (resTime) resTime.textContent = `${months} ${months === 1 ? 'Month' : 'Months'}`;
+    if (resYears) resYears.textContent = `(~${years} years to be debt-free)`;
+    if (resMonthlyPay) resMonthlyPay.textContent = `$${(mode === 'minimum_payment' ? schedule[0]?.payment || 25 : paymentUsed).toFixed(2)}`;
+    if (resTotalInterest) resTotalInterest.textContent = `$${Math.round(totalInterest).toLocaleString('en-US')}`;
+    if (resTotalPaid) resTotalPaid.textContent = `$${Math.round(balance + totalInterest).toLocaleString('en-US')}`;
+
+    // Comparison vs minimum payment
+    if (mode === 'fixed_payment' && resSavingsBox && resSavingsText) {
+      // Calculate min payment payoff for comparison
+      let minBal = balance;
+      let minM = 0;
+      let minInt = 0;
+      while (minBal > 0.01 && minM < 600) {
+        minM++;
+        const intr = minBal * monthlyRate;
+        const pmt = Math.max(minBal * (minPercent / 100), 25);
+        minBal = Math.max(0, minBal + intr - pmt);
+        minInt += intr;
+      }
+      const savedInt = Math.max(0, minInt - totalInterest);
+      const savedYears = Math.max(0, ((minM - months) / 12).toFixed(1));
+      if (savedInt > 50 && savedYears > 0.5) {
+        resSavingsBox.classList.remove('hidden');
+        resSavingsText.innerHTML = `By paying <strong>$${paymentUsed.toFixed(0)}/mo</strong>, you save <strong class="text-emerald-700 dark:text-emerald-300 font-mono">$${Math.round(savedInt).toLocaleString()}</strong> in interest and finish <strong class="text-emerald-700 dark:text-emerald-300">${savedYears} years earlier</strong> than minimum payments!`;
+      } else {
+        resSavingsBox.classList.add('hidden');
+      }
+    } else if (resSavingsBox) {
+      resSavingsBox.classList.add('hidden');
+    }
+
+    // Render table
+    if (scheduleTbody) {
+      scheduleTbody.innerHTML = schedule.map(row => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+          <td class="p-2.5 font-bold">${row.month}</td>
+          <td class="p-2.5">$${Math.round(row.start).toLocaleString()}</td>
+          <td class="p-2.5 text-blue-600 dark:text-blue-400 font-semibold">$${row.payment.toFixed(2)}</td>
+          <td class="p-2.5 text-emerald-600 dark:text-emerald-400">$${row.principal.toFixed(2)}</td>
+          <td class="p-2.5 text-rose-500">$${row.interest.toFixed(2)}</td>
+          <td class="p-2.5 font-bold">$${Math.round(row.end).toLocaleString()}</td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  let hasCalculated = false;
+  const btnCalc = document.getElementById('btn-calc-cc');
+  const btnClear = document.getElementById('btn-clear-cc');
+  const resultsPlaceholder = document.getElementById('results-placeholder');
+  const resultsSection = document.getElementById('results-section');
+  const scheduleSection = document.getElementById('schedule-section');
+
+  function showResults() {
+    hasCalculated = true;
+    calculate();
+    resultsPlaceholder?.classList.add('hidden');
+    resultsSection?.classList.remove('hidden');
+    resultsSection?.classList.add('flex');
+    scheduleSection?.classList.remove('hidden');
+    // Reveal action bar right below calculation
+    const bar = document.getElementById('calc-action-bar-container');
+    if (bar) bar.classList.remove('hidden');
+    resultsSection?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function clearCalculator() {
+    hasCalculated = false;
+    if (balanceInput) balanceInput.value = '5000';
+    if (aprInput) aprInput.value = '21.5';
+    if (monthlyPayInput) monthlyPayInput.value = '200';
+    if (targetMonthsInput) targetMonthsInput.value = '24';
+    if (minPercentSelect) minPercentSelect.value = '2.5';
+
+    syncInputs(balanceInput, sliderBalance, displayBalance, '$');
+    syncInputs(aprInput, sliderApr, displayApr, '', '%');
+    syncInputs(monthlyPayInput, sliderMonthlyPay, displayMonthlyPay, '$');
+    syncInputs(targetMonthsInput, sliderTargetMonths, displayTargetMonths, '', ' Months');
+
+    resultsPlaceholder?.classList.remove('hidden');
+    resultsSection?.classList.add('hidden');
+    resultsSection?.classList.remove('flex');
+    scheduleSection?.classList.add('hidden');
+    const bar = document.getElementById('calc-action-bar-container');
+    if (bar) bar.classList.add('hidden');
+  }
+
+  btnCalc?.addEventListener('click', showResults);
+  btnClear?.addEventListener('click', clearCalculator);
+
+  // Bind input changes to update values live if already calculated
+  [balanceInput, aprInput, monthlyPayInput, targetMonthsInput, minPercentSelect].forEach(el => {
+    el?.addEventListener('input', () => { if (hasCalculated) calculate(); });
+  });
+  sliderBalance?.addEventListener('input', (e) => { 
+    if (balanceInput) balanceInput.value = e.target.value; 
+    syncInputs(balanceInput, sliderBalance, displayBalance, '$');
+    if (hasCalculated) calculate(); 
+  });
+  sliderApr?.addEventListener('input', (e) => { 
+    if (aprInput) aprInput.value = e.target.value; 
+    syncInputs(aprInput, sliderApr, displayApr, '', '%');
+    if (hasCalculated) calculate(); 
+  });
+  sliderMonthlyPay?.addEventListener('input', (e) => { 
+    if (monthlyPayInput) monthlyPayInput.value = e.target.value; 
+    syncInputs(monthlyPayInput, sliderMonthlyPay, displayMonthlyPay, '$');
+    if (hasCalculated) calculate(); 
+  });
+  sliderTargetMonths?.addEventListener('input', (e) => { 
+    if (targetMonthsInput) targetMonthsInput.value = e.target.value; 
+    syncInputs(targetMonthsInput, sliderTargetMonths, displayTargetMonths, '', ' Months');
+    if (hasCalculated) calculate(); 
+  });
+
+  // Tab buttons
+  document.querySelectorAll('.btn-cc-tab').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      document.querySelectorAll('.btn-cc-tab').forEach(b => {
+        b.classList.remove('active', 'bg-blue-600', 'text-white');
+        b.classList.add('border', 'border-slate-300', 'bg-white', 'text-slate-700');
+      });
+      btn.classList.add('active', 'bg-blue-600', 'text-white');
+      btn.classList.remove('border', 'border-slate-300', 'bg-white', 'text-slate-700');
+      mode = btn.dataset.mode;
+
+      if (wrapperFixed) wrapperFixed.classList.toggle('hidden', mode !== 'fixed_payment');
+      if (wrapperTarget) wrapperTarget.classList.toggle('hidden', mode !== 'target_months');
+      if (wrapperMin) wrapperMin.classList.toggle('hidden', mode !== 'minimum_payment');
+
+      if (hasCalculated) calculate();
+    });
+  });
+
+  // Presets
+  document.querySelectorAll('.btn-cc-preset').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (balanceInput) balanceInput.value = btn.dataset.bal;
+      if (aprInput) aprInput.value = btn.dataset.apr;
+      if (monthlyPayInput) monthlyPayInput.value = btn.dataset.pay;
+      syncInputs(balanceInput, sliderBalance, displayBalance, '$');
+      syncInputs(aprInput, sliderApr, displayApr, '', '%');
+      syncInputs(monthlyPayInput, sliderMonthlyPay, displayMonthlyPay, '$');
+      document.getElementById('tab-btn-fixed')?.click();
+      showResults();
+    });
+  });
+
+  // Initialize display labels without showing results
+  syncInputs(balanceInput, sliderBalance, displayBalance, '$');
+  syncInputs(aprInput, sliderApr, displayApr, '', '%');
+  syncInputs(monthlyPayInput, sliderMonthlyPay, displayMonthlyPay, '$');
+  syncInputs(targetMonthsInput, sliderTargetMonths, displayTargetMonths, '', ' Months');
+})();
+</script>

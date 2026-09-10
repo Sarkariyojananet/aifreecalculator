@@ -12,6 +12,11 @@ export default defineConfig({
     imageService: 'passthrough',
   }),
 
+  redirects: {
+    '/finance/sukanya-samriddhi-calculator': '/finance/sukanya-samriddhi-yojana-calculator',
+    '/brickwork-calculator': '/construction/brickwork-calculator',
+  },
+
   cache: {
     provider: cacheCloudflare(),
   },
@@ -36,7 +41,8 @@ export default defineConfig({
         !page.includes('/api') &&
         !page.includes('/sitemap') &&
         !page.includes('/404') &&
-        !page.includes('/500'),
+        !page.includes('/500') &&
+        !page.includes('/brickwork-calculator'),
       changefreq: 'weekly',
       priority: 0.8,
       lastmod: new Date(),

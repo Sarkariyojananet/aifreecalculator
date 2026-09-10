@@ -11,6 +11,7 @@ export interface Calculator {
   slug: string;
   name: string;
   category: CalculatorCategory;
+  additionalCategories?: CalculatorCategory[];
   description: string;
   icon: string;
   keywords: string[];
@@ -34,7 +35,7 @@ const CALCULATOR_ALIASES: Record<string, string[]> = {
   'concrete-material-breakup-calculator': ['concrete ratio', 'cement sand aggregate', 'm20 concrete', 'm25 mix', 'concrete bags', 'mortar mix', '1.54 multiplier'],
   'brickwork-calculator': ['brick calculator', 'number of bricks', 'eent calculator', 'wall bricks', 'masonry estimator'],
   'plaster-calculator': ['plaster cement sand', 'plaster ratio', 'plastering estimator', 'wall plaster'],
-  'emi-calculator': ['loan emi', 'home loan emi', 'car loan emi', 'kist calculator', 'monthly payment', 'installment calculator'],
+  'emi-calculator': ['loan emi', 'home loan emi', 'car loan emi', 'personal loan calculator', 'personal loan emi', 'personal loan', 'kist calculator', 'monthly payment', 'installment calculator'],
   'sip-calculator': ['mutual fund sip', 'sip returns', 'step up sip', 'wealth calculator', 'crorepati calculator'],
   'swp-calculator': ['swp calculator', 'systematic withdrawal plan', 'swp with inflation', 'mutual fund swp', 'sbi swp calculator', 'swp planner', 'monthly withdrawal'],
   'xirr-calculator': ['xirr calculator', 'extended internal rate of return', 'sip xirr', 'mutual fund xirr', 'annualized return', 'irregular cash flow return', 'cagr vs xirr'],
@@ -50,6 +51,25 @@ const CALCULATOR_ALIASES: Record<string, string[]> = {
   'calorie-calculator': ['tdee calculator', 'daily calories', 'calorie intake', 'weight loss calories'],
   'bmr-calculator': ['basal metabolic rate', 'resting metabolism', 'mifflin st jeor'],
   'volume-calculator': ['volume calculator', 'tank volume', 'cylinder volume', 'pipe volume', 'pool volume', 'sphere volume', 'cone volume', 'prostate volume', 'water capacity', 'liters calculator', 'gallons to liters'],
+  'credit-card-payoff-calculator': ['credit card payoff', 'credit card debt', 'debt snowball', 'pay off credit card', 'credit card interest', 'minimum payment calculator'],
+  'land-area-converter': ['land area converter', 'bigha to sq ft', 'gaj to sq ft', 'bigha in acre', 'guntha to sq ft', 'jameen napne ka calculator', 'cent to sq ft', 'plot size converter', 'biswa to sq ft'],
+  'sukanya-samriddhi-yojana-calculator': [
+    'ssy calculator',
+    'sukanya samriddhi yojana calculator',
+    'sbi sukanya samriddhi yojana calculator',
+    'post office sukanya samriddhi yojana calculator',
+    'sukanya samriddhi yojana calculator sbi',
+    'sukanya samriddhi yojana calculator post office',
+    'sukanya samriddhi',
+    'sukanya yojana',
+    'ssy maturity',
+    'ssy interest 8.2',
+    'post office ssy',
+    'beti bachao beti padhao yojana'
+  ],
+  'epf-calculator': ['epf calculator', 'pf calculator', 'provident fund calculator', 'epfo interest', 'pf balance', 'epf corpus', 'vpf calculator'],
+  'rd-calculator': ['rd calculator', 'recurring deposit', 'post office rd', 'sbi rd', 'quarterly compounding rd', 'bank rd interest'],
+  'macro-calculator': ['macro calculator', 'iifym calculator', 'protein calculator', 'macronutrient calculator', 'keto macros', 'bodybuilding macros', 'macros for fat loss'],
 };
 
 export const calculators: Calculator[] = (rawCalculators as Calculator[])
@@ -103,7 +123,13 @@ export function getCalculatorBySlug(slug: string): Calculator | undefined {
 }
 
 export function getCalculatorsByCategory(category: CalculatorCategory): Calculator[] {
-  return calculators.filter((c) => c.category.toLowerCase() === category.toLowerCase());
+  const catLower = category.toLowerCase();
+  return calculators.filter(
+    (c) =>
+      c.category.toLowerCase() === catLower ||
+      (c.additionalCategories &&
+        c.additionalCategories.some((ac) => ac.toLowerCase() === catLower))
+  );
 }
 
 export function getFeaturedCalculators(): Calculator[] {

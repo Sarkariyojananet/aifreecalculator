@@ -71,7 +71,10 @@ const effectiveRobots = override.robots;
           All ({totalCount})
         </button>
         {categories.map((cat) => {
-          const count = calculators.filter((c) => c.category.toLowerCase() === cat.name.toLowerCase()).length;
+          const count = calculators.filter((c) =>
+            c.category.toLowerCase() === cat.name.toLowerCase() ||
+            (c.additionalCategories && c.additionalCategories.some(ac => ac.toLowerCase() === cat.name.toLowerCase()))
+          ).length;
           return (
             <button
               type="button"
@@ -99,6 +102,7 @@ const effectiveRobots = override.robots;
           class="dir-calc-item"
           data-name={calc.name.toLowerCase()}
           data-category={calc.category.toLowerCase()}
+          data-categories={[calc.category, ...(calc.additionalCategories || [])].map(c => c.toLowerCase()).join(' ')}
           data-keywords={(calc.keywords || []).join(' ').toLowerCase()}
           data-desc={calc.description.toLowerCase()}
         >
@@ -133,11 +137,12 @@ const effectiveRobots = override.robots;
         let visibleCount = 0;
         items.forEach((el) => {
           const itemCat = el.getAttribute('data-category') || '';
+          const itemCategories = (el.getAttribute('data-categories') || itemCat).split(' ');
           const itemName = el.getAttribute('data-name') || '';
           const itemKw = el.getAttribute('data-keywords') || '';
           const itemDesc = el.getAttribute('data-desc') || '';
 
-          const matchCat = activeCategory === 'all' || itemCat === activeCategory;
+          const matchCat = activeCategory === 'all' || itemCategories.includes(activeCategory);
           const matchSearch =
             !searchQuery ||
             itemName.includes(searchQuery) ||

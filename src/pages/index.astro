@@ -7,9 +7,26 @@ import HomeFAQ, { homeFaqs } from '../components/home/HomeFAQ.astro';
 import CalculatorCard from '../components/CalculatorCard.astro';
 import AdSlotTop from '../components/ads/AdSlotTop.astro';
 import AdSlotFooter from '../components/ads/AdSlotFooter.astro';
-import { calculators } from '../data/calculators';
+import { calculators, categories } from '../data/calculators';
 import { getCalculatorOverrides } from '../lib/admin/content-store';
 import { getLivePageMeta } from '../lib/seo/page-metadata';
+
+// Category pills with live dynamic counts
+const preferredCategoryOrder = ['Finance', 'Construction', 'Health', 'Math', 'General'];
+const categoryPills = [...categories]
+  .sort((a, b) => {
+    const idxA = preferredCategoryOrder.indexOf(a.name);
+    const idxB = preferredCategoryOrder.indexOf(b.name);
+    return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
+  })
+  .map((cat) => ({
+    name: cat.name,
+    path: cat.path,
+    count: calculators.filter((c) =>
+      c.category.toLowerCase() === cat.name.toLowerCase() ||
+      (c.additionalCategories && c.additionalCategories.some(ac => ac.toLowerCase() === cat.name.toLowerCase()))
+    ).length,
+  }));
 
 // Focused 8 popular calculators across core categories
 const popularSlugs = [
@@ -170,7 +187,7 @@ const searchDataJson = JSON.stringify(
         More Calculators for Everyday Tasks
       </h2>
       <p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400 max-w-xl mx-auto">
-        Explore 42+ calculators for finance, civil construction, health biometrics, mathematics, and everyday calculations.
+        Explore {calculators.length}+ calculators for finance, civil construction, health biometrics, mathematics, and everyday calculations.
       </p>
 
       <div class="pt-2">
@@ -185,21 +202,14 @@ const searchDataJson = JSON.stringify(
 
       <!-- Category Quick Filter Pills -->
       <div class="pt-3 flex flex-wrap items-center justify-center gap-2 text-xs">
-        <a href="/finance/" class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-600 hover:text-blue-600 hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 transition">
-          Finance (12)
-        </a>
-        <a href="/construction/" class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-600 hover:text-blue-600 hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 transition">
-          Construction (9)
-        </a>
-        <a href="/health/" class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-600 hover:text-blue-600 hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 transition">
-          Health (4)
-        </a>
-        <a href="/math/" class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-600 hover:text-blue-600 hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 transition">
-          Math (5)
-        </a>
-        <a href="/general/" class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-600 hover:text-blue-600 hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 transition">
-          General (6)
-        </a>
+        {categoryPills.map((cat) => (
+          <a
+            href={cat.path}
+            class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 font-medium text-slate-600 hover:text-blue-600 hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 transition"
+          >
+            {cat.name} ({cat.count})
+          </a>
+        ))}
       </div>
     </div>
   </section>

@@ -1,0 +1,617 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+import { LAND_UNITS } from '../../lib/calculators/land-area';
+---
+
+<CalculatorLayout
+  title="Land Area Converter – Bigha, Gaj, Acre, Guntha & Sq Ft (जमीन नापने का कैलकुलेटर)"
+  description="Free online Indian land area converter. Convert Bigha, Biswa, Gaj, Guntha, Acre, Cent, Ground, Square Feet, and Square Meters with state-specific accurate formulas."
+  category="General"
+  calculatorName="Land Area Converter"
+  slug="land-area-converter"
+  keywords={[
+    'land area converter',
+    'bigha to sq ft',
+    'gaj to sq ft',
+    'guntha to sq ft',
+    'acre to bigha',
+    'bigha to acre converter',
+    'jameen napne ka calculator',
+    'cent to sq ft',
+    'plot area converter',
+    'biswa to sq ft',
+    'ground to sq ft'
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- QUICK PRESETS BAR -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-center gap-1.5 text-xs">
+        <span class="font-bold text-slate-600 dark:text-slate-400 mr-1 flex items-center gap-1">
+          <span>⚡</span> Quick Conversions:
+        </span>
+        <button type="button" class="btn-land-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-val="1" data-unit="bigha_up">
+          1 Bigha (UP)
+        </button>
+        <button type="button" class="btn-land-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-val="100" data-unit="gaj">
+          100 Gaj (Plot)
+        </button>
+        <button type="button" class="btn-land-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-val="1" data-unit="acre">
+          1 Acre
+        </button>
+        <button type="button" class="btn-land-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-val="1" data-unit="guntha">
+          1 Guntha (MH)
+        </button>
+        <button type="button" class="btn-land-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-val="10" data-unit="cent">
+          10 Cent (South)
+        </button>
+        <button type="button" class="btn-land-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-val="1000" data-unit="sqft">
+          1000 Sq Ft
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN CONVERTER SECTION -->
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      
+      <!-- INPUT PANEL (7 cols) -->
+      <div class="lg:col-span-7 space-y-5 rounded-3xl border border-slate-200/90 bg-white p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 sm:p-7">
+        
+        <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>🗺️</span> Enter Land Area Value
+        </h2>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Area Value -->
+          <div class="space-y-1.5">
+            <label for="land-val-input" class="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+              Area Value
+            </label>
+            <input
+              type="number"
+              id="land-val-input"
+              value="1"
+              min="0.0001"
+              step="any"
+              class="w-full rounded-xl border border-slate-300 bg-slate-50 py-3 px-3.5 text-base font-bold text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            />
+          </div>
+
+          <!-- Unit Selector -->
+          <div class="space-y-1.5">
+            <label for="land-unit-select" class="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+              Select Unit (इकाई)
+            </label>
+            <select
+              id="land-unit-select"
+              class="w-full rounded-xl border border-slate-300 bg-slate-50 py-3 px-3.5 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            >
+              {LAND_UNITS.map(u => (
+                <option value={u.id} selected={u.id === 'bigha_up'}>
+                  {u.name} — {u.hindiName}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <!-- Optional Plot Dimension Helper -->
+        <div class="rounded-2xl border border-dashed border-slate-200 p-4 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-800/40">
+          <div class="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center justify-between">
+            <span class="flex items-center gap-1.5">
+              <span>📐</span> Or Calculate from Plot Dimensions (Length × Width)
+            </span>
+            <button type="button" id="btn-apply-plot" class="text-blue-600 hover:underline text-[11px] font-semibold">Apply to Converter →</button>
+          </div>
+          <div class="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <label class="text-slate-500 font-medium">Length (Feet)</label>
+              <input type="number" id="plot-length" placeholder="e.g. 50" class="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2 text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+            </div>
+            <div>
+              <label class="text-slate-500 font-medium">Width (Feet)</label>
+              <input type="number" id="plot-width" placeholder="e.g. 30" class="mt-1 w-full rounded-lg border border-slate-300 bg-white p-2 text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+            </div>
+          </div>
+          <div class="mt-2 text-[11px] text-slate-500" id="plot-calc-summary">
+            Plot Area: <strong>0 Sq Ft</strong> (0 Gaj)
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+          <button
+            type="button"
+            id="btn-calc-land"
+            class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3.5 text-center text-sm font-black text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer"
+          >
+            Convert Land Area →
+          </button>
+          <button
+            type="button"
+            id="btn-clear-land"
+            class="rounded-xl border border-slate-300 bg-white px-5 py-3.5 text-center text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+          >
+            Clear (✕)
+          </button>
+        </div>
+
+      </div>
+
+      <!-- RESULTS PLACEHOLDER (Visible until Calculate is clicked) -->
+      <div id="land-results-placeholder" class="lg:col-span-5 flex flex-col items-center justify-center p-8 text-center rounded-3xl border border-dashed border-slate-300 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 min-h-85">
+        <span class="text-4xl mb-3">📐</span>
+        <h4 class="text-base font-bold text-slate-800 dark:text-slate-200">Ready to Convert</h4>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs">Enter your land or plot area, pick your source measurement unit, then click <strong>Convert Land Area</strong> to see exact equivalents across all national and regional units.</p>
+      </div>
+
+      <!-- HIGHLIGHT SUMMARY CARD (Hidden until Calculate is clicked) -->
+      <div id="results-section" class="hidden lg:col-span-5 flex-col justify-between space-y-4 rounded-3xl border border-blue-200/80 bg-linear-to-b from-blue-50/60 to-white p-5 shadow-xl shadow-slate-900/5 dark:border-blue-900/40 dark:from-slate-900 dark:to-slate-950 sm:p-7">
+        
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Total Standard Area</div>
+          <div class="mt-2">
+            <div class="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white font-mono" id="res-total-sqft">
+              27,225 Sq Ft
+            </div>
+            <div class="text-sm font-semibold text-slate-600 dark:text-slate-300 mt-1" id="res-source-summary">
+              = 1 Bigha (UP, Rajasthan, Bihar)
+            </div>
+          </div>
+        </div>
+
+        <!-- Common Equivalents Grid -->
+        <div class="grid grid-cols-2 gap-2.5 pt-2 border-t border-slate-200/80 dark:border-slate-800">
+          <div class="rounded-xl border border-slate-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/80">
+            <div class="text-[11px] font-medium text-slate-500">Gaj / Sq Yards</div>
+            <div class="text-base font-bold text-blue-600 dark:text-blue-400 font-mono" id="res-quick-gaj">3,025 Gaj</div>
+          </div>
+          <div class="rounded-xl border border-slate-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/80">
+            <div class="text-[11px] font-medium text-slate-500">Acres (एकड़)</div>
+            <div class="text-base font-bold text-slate-900 dark:text-white font-mono" id="res-quick-acre">0.625 Acre</div>
+          </div>
+          <div class="rounded-xl border border-slate-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/80">
+            <div class="text-[11px] font-medium text-slate-500">Guntha (गुंठा)</div>
+            <div class="text-base font-bold text-slate-900 dark:text-white font-mono" id="res-quick-guntha">25 Guntha</div>
+          </div>
+          <div class="rounded-xl border border-slate-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/80">
+            <div class="text-[11px] font-medium text-slate-500">Biswa (बिस्वा)</div>
+            <div class="text-base font-bold text-slate-900 dark:text-white font-mono" id="res-quick-biswa">20 Biswa</div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white/80 p-3 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-400">
+          💡 <strong>Tip:</strong> In India, Bigha measurement varies by state. Standard "Pucca Bigha" equals 27,225 sq ft (3,025 sq yd).
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ALL-UNIT CONVERSION MATRIX -->
+    <div id="land-matrix-section" class="hidden rounded-3xl border border-slate-200/90 bg-white p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 sm:p-7 space-y-4">
+      
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-4">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📊</span> Complete All-Units Land Conversion Matrix
+          </h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            Equivalent area in all national and regional land units simultaneously.
+          </p>
+        </div>
+
+        <!-- Filter tabs -->
+        <div class="flex items-center gap-1 overflow-x-auto text-xs font-semibold">
+          <button type="button" class="btn-matrix-filter active rounded-lg bg-blue-50 px-2.5 py-1 text-blue-700 dark:bg-blue-950 dark:text-blue-300" data-filter="all">All</button>
+          <button type="button" class="btn-matrix-filter rounded-lg bg-slate-100 px-2.5 py-1 text-slate-600 dark:bg-slate-800 dark:text-slate-300" data-filter="Universal">Universal</button>
+          <button type="button" class="btn-matrix-filter rounded-lg bg-slate-100 px-2.5 py-1 text-slate-600 dark:bg-slate-800 dark:text-slate-300" data-filter="North India">North</button>
+          <button type="button" class="btn-matrix-filter rounded-lg bg-slate-100 px-2.5 py-1 text-slate-600 dark:bg-slate-800 dark:text-slate-300" data-filter="South & West">South & West</button>
+          <button type="button" class="btn-matrix-filter rounded-lg bg-slate-100 px-2.5 py-1 text-slate-600 dark:bg-slate-800 dark:text-slate-300" data-filter="East India">East</button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" id="matrix-container">
+        <!-- Rendered via JS -->
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- EDUCATIONAL CONTENT -->
+  <Fragment slot="content">
+    <article class="prose prose-slate dark:prose-invert max-w-none text-sm leading-relaxed space-y-5 pt-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Complete Guide to Land Measurement Units & Conversions in India</h2>
+      <p>
+        In India, property registries, land records (Khatauni, Jamabandi, 7/12 extract), and municipal plot layouts use a diverse blend of measurement systems. While official government records are gradually transitioning toward standardized metric units (such as <strong>Square Meters</strong> and <strong>Hectares</strong>) and international imperial units (such as <strong>Square Feet</strong> and <strong>Acres</strong>), traditional regional units such as <strong>Bigha, Gaj, Biswa, Guntha, Cent, Ground, Kanal, and Marla</strong> remain deeply entrenched across rural and urban property transactions.
+      </p>
+      <p>
+        Because traditional units were originally measured using local physical instruments (such as wooden chains, canes, or ropes like <em>Jarib</em>), their exact numerical dimensions vary significantly from one state—or even one revenue district—to another. Understanding these localized variations is critical for property buyers, agricultural investors, civil engineers, and legal professionals to avoid title discrepancies and calculate exact registry stamp duties.
+      </p>
+
+      <h3 class="text-base font-bold text-slate-900 dark:text-white">State-by-State Bigha Variations: Pucca vs. Kaccha vs. Pahari Bigha</h3>
+      <p>
+        One of the most frequent sources of confusion in Indian real estate is the term <strong>Bigha</strong>. A Bigha does not have a single uniform value across India:
+      </p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse border border-slate-200 dark:border-slate-800">
+          <thead>
+            <tr class="bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200">
+              <th class="p-2.5 font-bold">State / Region</th>
+              <th class="p-2.5 font-bold">Bigha Type</th>
+              <th class="p-2.5 font-bold">Square Feet (sq ft)</th>
+              <th class="p-2.5 font-bold">Square Yards (Gaj)</th>
+              <th class="p-2.5 font-bold">Acre Equivalent</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-600 dark:text-slate-300">
+            <tr>
+              <td class="p-2.5 font-semibold text-slate-900 dark:text-white">Uttar Pradesh, Bihar, Rajasthan (Standard)</td>
+              <td class="p-2.5">Pucca Bigha</td>
+              <td class="p-2.5 font-mono font-bold text-blue-600">27,225 sq ft</td>
+              <td class="p-2.5 font-mono">3,025 Gaj</td>
+              <td class="p-2.5">1 Acre = 1.60 Bigha</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-semibold text-slate-900 dark:text-white">Punjab & Haryana (Parts) / Western UP</td>
+              <td class="p-2.5">Kaccha Bigha</td>
+              <td class="p-2.5 font-mono font-bold text-blue-600">12,100 sq ft</td>
+              <td class="p-2.5 font-mono">1,344.4 Gaj</td>
+              <td class="p-2.5">1 Acre = 3.60 Bigha</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-semibold text-slate-900 dark:text-white">Himachal Pradesh & Uttarakhand</td>
+              <td class="p-2.5">Pahari Bigha</td>
+              <td class="p-2.5 font-mono font-bold text-blue-600">8,712 sq ft</td>
+              <td class="p-2.5 font-mono">968 Gaj</td>
+              <td class="p-2.5">1 Acre = 5.00 Bigha</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-semibold text-slate-900 dark:text-white">West Bengal, Assam, Tripura</td>
+              <td class="p-2.5">Standard Eastern Bigha</td>
+              <td class="p-2.5 font-mono font-bold text-blue-600">14,400 sq ft</td>
+              <td class="p-2.5 font-mono">1,600 Gaj</td>
+              <td class="p-2.5">1 Acre = 3.025 Bigha</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-semibold text-slate-900 dark:text-white">Madhya Pradesh</td>
+              <td class="p-2.5">Standard MP Bigha</td>
+              <td class="p-2.5 font-mono font-bold text-blue-600">13,340 sq ft</td>
+              <td class="p-2.5 font-mono">~1,482 Gaj</td>
+              <td class="p-2.5">1 Acre = ~3.26 Bigha</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="text-base font-bold text-slate-900 dark:text-white">Master Indian Land Units Conversion Chart</h3>
+      <p>
+        The table below provides precise conversions for the primary units used across North, South, East, and West India against international standards:
+      </p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse border border-slate-200 dark:border-slate-800">
+          <thead>
+            <tr class="bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200">
+              <th class="p-2.5 font-bold">Unit Name</th>
+              <th class="p-2.5 font-bold">Primary Region</th>
+              <th class="p-2.5 font-bold">Square Feet (sq ft)</th>
+              <th class="p-2.5 font-bold">Gaj (Sq Yards)</th>
+              <th class="p-2.5 font-bold">Internal Sub-Divisions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-600 dark:text-slate-300">
+            <tr>
+              <td class="p-2.5 font-semibold text-slate-900 dark:text-white">Gaj (Square Yard)</td>
+              <td class="p-2.5">All India (Residential plots)</td>
+              <td class="p-2.5 font-mono font-bold text-emerald-600">9.00 sq ft</td>
+              <td class="p-2.5 font-mono">1.00 Gaj</td>
+              <td class="p-2.5">3 ft length × 3 ft width</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-semibold text-slate-900 dark:text-white">Guntha</td>
+              <td class="p-2.5">Maharashtra, Gujarat, Karnataka</td>
+              <td class="p-2.5 font-mono font-bold text-emerald-600">1,089.00 sq ft</td>
+              <td class="p-2.5 font-mono">121.00 Gaj</td>
+              <td class="p-2.5">40 Gunthas = 1 Acre</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-semibold text-slate-900 dark:text-white">Cent</td>
+              <td class="p-2.5">Tamil Nadu, Kerala, Andhra, Telangana</td>
+              <td class="p-2.5 font-mono font-bold text-emerald-600">435.60 sq ft</td>
+              <td class="p-2.5 font-mono">48.40 Gaj</td>
+              <td class="p-2.5">100 Cents = 1 Acre</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-semibold text-slate-900 dark:text-white">Ground</td>
+              <td class="p-2.5">Tamil Nadu (Urban Chennai)</td>
+              <td class="p-2.5 font-mono font-bold text-emerald-600">2,400.00 sq ft</td>
+              <td class="p-2.5 font-mono">266.67 Gaj</td>
+              <td class="p-2.5">1 Ground ≈ 5.51 Cents</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-semibold text-slate-900 dark:text-white">Kanal</td>
+              <td class="p-2.5">Punjab, Haryana, J&K, Himachal</td>
+              <td class="p-2.5 font-mono font-bold text-emerald-600">5,445.00 sq ft</td>
+              <td class="p-2.5 font-mono">605.00 Gaj</td>
+              <td class="p-2.5">8 Kanals = 1 Acre; 1 Kanal = 20 Marlas</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-semibold text-slate-900 dark:text-white">Marla</td>
+              <td class="p-2.5">Punjab, Haryana, J&K</td>
+              <td class="p-2.5 font-mono font-bold text-emerald-600">272.25 sq ft</td>
+              <td class="p-2.5 font-mono">30.25 Gaj</td>
+              <td class="p-2.5">1 Marla = 9 Sarsahi</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-semibold text-slate-900 dark:text-white">Biswa (Pucca)</td>
+              <td class="p-2.5">UP, Rajasthan, Delhi</td>
+              <td class="p-2.5 font-mono font-bold text-emerald-600">1,361.25 sq ft</td>
+              <td class="p-2.5 font-mono">151.25 Gaj</td>
+              <td class="p-2.5">20 Biswa = 1 Pucca Bigha</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-semibold text-slate-900 dark:text-white">Acre</td>
+              <td class="p-2.5">Universal (Agricultural standard)</td>
+              <td class="p-2.5 font-mono font-bold text-emerald-600">43,560.00 sq ft</td>
+              <td class="p-2.5 font-mono">4,840.00 Gaj</td>
+              <td class="p-2.5">4,046.86 m²; 0.4047 Hectares</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-semibold text-slate-900 dark:text-white">Hectare</td>
+              <td class="p-2.5">Universal (Official Government records)</td>
+              <td class="p-2.5 font-mono font-bold text-emerald-600">107,639.10 sq ft</td>
+              <td class="p-2.5 font-mono">11,959.90 Gaj</td>
+              <td class="p-2.5">1 Hectare = 10,000 m² = 2.471 Acres</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="text-base font-bold text-slate-900 dark:text-white">Step-by-Step Conversion Formulas for Real Estate Buyers</h3>
+      <p>
+        When reviewing registry papers or sale deeds, use these straightforward formulas to convert any land measurement into standard square feet or square yards:
+      </p>
+      <ul class="list-disc pl-5 space-y-1.5 text-slate-700 dark:text-slate-300">
+        <li><strong>Convert Gaj to Square Feet:</strong> Multiply total Gaj by 9 (e.g., 150 Gaj × 9 = 1,350 sq ft).</li>
+        <li><strong>Convert Square Feet to Gaj:</strong> Divide total Square Feet by 9 (e.g., 2,700 sq ft ÷ 9 = 300 Gaj).</li>
+        <li><strong>Convert Guntha to Square Feet:</strong> Multiply Gunthas by 1,089 (e.g., 5 Gunthas × 1,089 = 5,445 sq ft = 605 Gaj).</li>
+        <li><strong>Convert Cent to Square Feet:</strong> Multiply Cents by 435.6 (e.g., 10 Cents × 435.6 = 4,356 sq ft = 0.1 Acre).</li>
+        <li><strong>Convert Kanal and Marla to Square Feet:</strong> Multiply Kanals by 5,445 and Marlas by 272.25, then sum together.</li>
+      </ul>
+
+      <h3 class="text-base font-bold text-slate-900 dark:text-white">Legal & Revenue Tips for Property Verification</h3>
+      <p>
+        Before executing property agreements or paying stamp duty:
+      </p>
+      <ol class="list-decimal pl-5 space-y-1.5 text-slate-700 dark:text-slate-300">
+        <li><strong>Check the Revenue Circle Notation:</strong> Always verify whether your state's Bhulekh portal (e.g., UP Bhulekh, MahaBhulekh, Dharani, Banglarbhumi) records land in Hectares, Pucca Bigha, or Kaccha Bigha to avoid paying for phantom land area.</li>
+        <li><strong>Differentiate Super Built-Up vs. Carpet Area:</strong> In residential apartments, land share is designated as UDS (Undivided Share of Land) in Square Feet, which differs substantially from carpet or super built-up area.</li>
+        <li><strong>Confirm Road Dedication & Setbacks:</strong> Municipal town planning authorities often mandate that a percentage of raw plot area be surrendered for road widening before approval. Verify net constructible area versus gross registry area.</li>
+      </ol>
+    </article>
+  </Fragment>
+
+  <!-- FAQS -->
+  <Fragment slot="faq">
+    <div class="space-y-3">
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900" open>
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white">1 Gaj me kitne square feet hote hain? (How many sq ft in 1 Gaj?)</summary>
+        <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">1 Gaj (Square Yard) me exactly <strong>9 Square Feet</strong> hote hain (3 feet length × 3 feet width = 9 sq ft). For example, 100 Gaj ka plot = 900 sq ft, aur 200 Gaj ka plot = 1,800 sq ft hota hai.</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white">1 Acre me kitne Bigha, Gaj aur Square Feet hote hain?</summary>
+        <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">1 Acre me standard <strong>43,560 Square Feet</strong> (4,840 Gaj / Square Yards) hote hain. UP, Bihar aur Rajasthan ke standard Pucca Bigha (27,225 sq ft) ke hisaab se 1 Acre me <strong>1.60 Bigha</strong> hote hain. Wahi Haryana/Punjab ke Kaccha Bigha (12,100 sq ft) me 1 Acre = <strong>3.60 Bigha</strong> hota hai.</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white">1 Guntha kitne square feet aur Gaj ke barabar hota hai?</summary>
+        <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">Maharashtra, Gujarat aur Karnataka me 1 Guntha exactly <strong>1,089 Square Feet</strong> (121 Gaj / Square Yards) ke barabar hota hai. Exactly <strong>40 Gunthas make 1 Acre</strong> (40 × 1,089 = 43,560 sq ft).</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white">1 Cent kitne square feet hota hai South India me?</summary>
+        <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">Tamil Nadu, Kerala, Andhra Pradesh aur Telangana me 1 Cent exactly <strong>435.60 Square Feet</strong> (48.4 Gaj) ke barabar hota hai. Exactly <strong>100 Cents make 1 Acre</strong> (100 × 435.6 = 43,560 sq ft).</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white">Punjab aur Haryana me Kanal aur Marla ka kya conversion rate hai?</summary>
+        <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">Punjab, Haryana aur Jammu & Kashmir me standard revenue system ke anusaar: 1 Marla = <strong>272.25 Square Feet</strong> (30.25 Gaj), 1 Kanal = 20 Marlas = <strong>5,445 Square Feet</strong> (605 Gaj), aur 8 Kanals make 1 standard Acre (43,560 sq ft).</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white">1 Hectare me kitne Acre aur Square Feet hote hain?</summary>
+        <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">1 Hectare me exactly <strong>10,000 Square Meters</strong> hote hain. Imperial units me convert karein to 1 Hectare = <strong>2.471 Acres</strong> ya <strong>1,07,639 Square Feet</strong> (11,960 Gaj) hota hai. Sabhi central government bhulekh records me land area hectare me darj hota hai.</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white">What is the difference between Pucca Bigha and Kaccha Bigha?</summary>
+        <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">Pucca Bigha is the standard revenue unit used in formal land registry deeds across Uttar Pradesh, Bihar, and Rajasthan, measuring exactly 27,225 sq ft (3,025 Gaj). Kaccha Bigha is an informal localized agricultural unit used in parts of Western UP, Punjab, and Haryana, measuring approximately one-third to one-half of a Pucca Bigha (commonly 12,100 sq ft or 9,075 sq ft).</p>
+      </details>
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<script is:inline>
+(function initLandConverter() {
+  const unitsData = [
+    { id: 'sqft', name: 'Square Feet (sq ft)', hindi: 'वर्ग फुट', factor: 1, region: 'Universal', desc: '144 sq inches' },
+    { id: 'gaj', name: 'Gaj / Sq Yard', hindi: 'गज / वर्ग गज', factor: 9, region: 'Universal', desc: '1 Gaj = 9 sq ft' },
+    { id: 'sqm', name: 'Square Meter (m²)', hindi: 'वर्ग मीटर', factor: 10.7639104, region: 'Universal', desc: '1 m × 1 m' },
+    { id: 'acre', name: 'Acre', hindi: 'एकड़', factor: 43560, region: 'Universal', desc: '43,560 sq ft (4,840 Gaj)' },
+    { id: 'hectare', name: 'Hectare', hindi: 'हेक्टेयर', factor: 107639.104, region: 'Universal', desc: '10,000 m² (~2.471 Acres)' },
+    { id: 'are', name: 'Are', hindi: 'आर', factor: 1076.39104, region: 'Universal', desc: '100 m²' },
+    { id: 'bigha_up', name: 'Bigha (UP, Rajasthan, Bihar)', hindi: 'पक्का बीघा', factor: 27225, region: 'North India', desc: '3,025 Gaj (165 ft × 165 ft)' },
+    { id: 'bigha_hr', name: 'Bigha (Haryana, Punjab)', hindi: 'कच्चा बीघा', factor: 12100, region: 'North India', desc: '1,344 Gaj' },
+    { id: 'biswa', name: 'Biswa (UP, Delhi, Haryana)', hindi: 'बिस्वा', factor: 1361.25, region: 'North India', desc: '1/20th Bigha (1361.25 sq ft)' },
+    { id: 'kanal', name: 'Kanal (Punjab, Haryana)', hindi: 'कनाल', factor: 5445, region: 'North India', desc: '1/8th Acre (605 Gaj)' },
+    { id: 'marla', name: 'Marla (Punjab, Haryana)', hindi: 'मरला', factor: 272.25, region: 'North India', desc: '1/20th Kanal (30.25 Gaj)' },
+    { id: 'killa', name: 'Killa (Punjab, Haryana)', hindi: 'किल्ला', factor: 43560, region: 'North India', desc: 'Equivalent to 1 Acre' },
+    { id: 'guntha', name: 'Guntha (MH, Gujarat, Karnataka)', hindi: 'गुंठा', factor: 1089, region: 'South & West', desc: '121 Gaj (1/40th Acre)' },
+    { id: 'cent', name: 'Cent (Tamil Nadu, Kerala, AP)', hindi: 'सेंट', factor: 435.6, region: 'South & West', desc: '1/100th Acre' },
+    { id: 'ground', name: 'Ground (Chennai)', hindi: 'ग्राउंड', factor: 2400, region: 'South & West', desc: '2,400 sq ft (~5.5 Cents)' },
+    { id: 'ankanam', name: 'Ankanam (Andhra Pradesh)', hindi: 'अंकणम', factor: 72, region: 'South & West', desc: '72 sq ft' },
+    { id: 'kattha_bihar', name: 'Kattha (Bihar, Jharkhand)', hindi: 'कट्ठा', factor: 1361.25, region: 'East India', desc: '1/20th Bigha' },
+    { id: 'kattha_bengal', name: 'Kattha (West Bengal)', hindi: 'काठा (बंगाल)', factor: 720, region: 'East India', desc: '720 sq ft' },
+    { id: 'dhur', name: 'Dhur (Bihar, Jharkhand)', hindi: 'धुर', factor: 68.0625, region: 'East India', desc: '1/20th Kattha' },
+    { id: 'decimal', name: 'Decimal / Dismil (Odisha, WB)', hindi: 'डिसमिल', factor: 435.6, region: 'East India', desc: '1/100th Acre' },
+  ];
+
+  let currentFilter = 'all';
+
+  const valInput = document.getElementById('land-val-input');
+  const unitSelect = document.getElementById('land-unit-select');
+  const resSqft = document.getElementById('res-total-sqft');
+  const resSource = document.getElementById('res-source-summary');
+  const resGaj = document.getElementById('res-quick-gaj');
+  const resAcre = document.getElementById('res-quick-acre');
+  const resGuntha = document.getElementById('res-quick-guntha');
+  const resBiswa = document.getElementById('res-quick-biswa');
+  const matrixContainer = document.getElementById('matrix-container');
+
+  const plotLen = document.getElementById('plot-length');
+  const plotWid = document.getElementById('plot-width');
+  const plotSummary = document.getElementById('plot-calc-summary');
+  const btnApplyPlot = document.getElementById('btn-apply-plot');
+
+  function formatNum(num) {
+    if (num >= 1000) {
+      return num.toLocaleString('en-IN', { maximumFractionDigits: 2 });
+    } else if (num >= 1) {
+      return num.toLocaleString('en-IN', { maximumFractionDigits: 4 });
+    } else {
+      return num.toLocaleString('en-IN', { maximumFractionDigits: 6 });
+    }
+  }
+
+  function render() {
+    const val = parseFloat(valInput?.value) || 0;
+    const unitId = unitSelect?.value || 'bigha_up';
+    const activeUnit = unitsData.find(u => u.id === unitId) || unitsData[0];
+
+    const totalSqFt = val * activeUnit.factor;
+
+    if (resSqft) resSqft.textContent = `${formatNum(totalSqFt)} Sq Ft`;
+    if (resSource) resSource.textContent = `= ${val} ${activeUnit.name}`;
+
+    const totalGaj = totalSqFt / 9;
+    const totalAcre = totalSqFt / 43560;
+    const totalGuntha = totalSqFt / 1089;
+    const totalBiswa = totalSqFt / 1361.25;
+
+    if (resGaj) resGaj.textContent = `${formatNum(totalGaj)} Gaj`;
+    if (resAcre) resAcre.textContent = `${formatNum(totalAcre)} Acre`;
+    if (resGuntha) resGuntha.textContent = `${formatNum(totalGuntha)} Guntha`;
+    if (resBiswa) resBiswa.textContent = `${formatNum(totalBiswa)} Biswa`;
+
+    // Render matrix
+    if (matrixContainer) {
+      const filtered = currentFilter === 'all' 
+        ? unitsData 
+        : unitsData.filter(u => u.region === currentFilter);
+
+      matrixContainer.innerHTML = filtered.map(u => {
+        const convertedVal = totalSqFt / u.factor;
+        const isCurrent = u.id === activeUnit.id;
+        return `
+          <div class="rounded-xl border ${isCurrent ? 'border-blue-600 bg-blue-50/50 dark:border-blue-500 dark:bg-blue-950/40' : 'border-slate-200 bg-slate-50/50 dark:border-slate-800 dark:bg-slate-800/40'} p-3.5 transition hover:shadow-xs">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-semibold text-slate-700 dark:text-slate-300">${u.name}</span>
+              <span class="rounded-md bg-white dark:bg-slate-700 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 dark:text-slate-300">${u.hindi}</span>
+            </div>
+            <div class="mt-2 text-lg font-black text-slate-900 dark:text-white font-mono">
+              ${formatNum(convertedVal)}
+            </div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">${u.desc}</div>
+          </div>
+        `;
+      }).join('');
+    }
+  }
+
+  let hasCalculated = false;
+  const btnCalc = document.getElementById('btn-calc-land');
+  const btnClear = document.getElementById('btn-clear-land');
+  const resultsPlaceholder = document.getElementById('land-results-placeholder');
+  const resultsSection = document.getElementById('results-section');
+  const matrixSection = document.getElementById('land-matrix-section');
+
+  function showResults() {
+    hasCalculated = true;
+    render();
+    resultsPlaceholder?.classList.add('hidden');
+    resultsSection?.classList.remove('hidden');
+    resultsSection?.classList.add('flex');
+    matrixSection?.classList.remove('hidden');
+    const bar = document.getElementById('calc-action-bar-container');
+    if (bar) bar.classList.remove('hidden');
+    resultsSection?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function clearCalculator() {
+    hasCalculated = false;
+    if (valInput) valInput.value = '1';
+    if (unitSelect) unitSelect.value = 'bigha_up';
+    if (plotLen) plotLen.value = '';
+    if (plotWid) plotWid.value = '';
+    updatePlot();
+
+    resultsPlaceholder?.classList.remove('hidden');
+    resultsSection?.classList.add('hidden');
+    resultsSection?.classList.remove('flex');
+    matrixSection?.classList.add('hidden');
+    const bar = document.getElementById('calc-action-bar-container');
+    if (bar) bar.classList.add('hidden');
+  }
+
+  btnCalc?.addEventListener('click', showResults);
+  btnClear?.addEventListener('click', clearCalculator);
+
+  // Plot dimension calculator
+  function updatePlot() {
+    const l = parseFloat(plotLen?.value) || 0;
+    const w = parseFloat(plotWid?.value) || 0;
+    const sqft = l * w;
+    const gaj = sqft / 9;
+    if (plotSummary) {
+      plotSummary.innerHTML = `Plot Area: <strong>${formatNum(sqft)} Sq Ft</strong> (${formatNum(gaj)} Gaj)`;
+    }
+  }
+
+  plotLen?.addEventListener('input', updatePlot);
+  plotWid?.addEventListener('input', updatePlot);
+
+  btnApplyPlot?.addEventListener('click', () => {
+    const l = parseFloat(plotLen?.value) || 0;
+    const w = parseFloat(plotWid?.value) || 0;
+    const sqft = l * w;
+    if (sqft > 0 && valInput && unitSelect) {
+      valInput.value = sqft;
+      unitSelect.value = 'sqft';
+      showResults();
+    }
+  });
+
+  valInput?.addEventListener('input', () => { if (hasCalculated) render(); });
+  unitSelect?.addEventListener('change', () => { if (hasCalculated) render(); });
+
+  // Quick presets
+  document.querySelectorAll('.btn-land-preset').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (valInput) valInput.value = btn.dataset.val;
+      if (unitSelect) unitSelect.value = btn.dataset.unit;
+      showResults();
+    });
+  });
+
+  // Matrix category filter
+  document.querySelectorAll('.btn-matrix-filter').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.btn-matrix-filter').forEach(b => {
+        b.classList.remove('active', 'bg-blue-50', 'text-blue-700', 'dark:bg-blue-950', 'dark:text-blue-300');
+        b.classList.add('bg-slate-100', 'text-slate-600', 'dark:bg-slate-800', 'dark:text-slate-300');
+      });
+      btn.classList.add('active', 'bg-blue-50', 'text-blue-700', 'dark:bg-blue-950', 'dark:text-blue-300');
+      btn.classList.remove('bg-slate-100', 'text-slate-600', 'dark:bg-slate-800', 'dark:text-slate-300');
+      currentFilter = btn.dataset.filter;
+      if (hasCalculated) render();
+    });
+  });
+})();
+</script>

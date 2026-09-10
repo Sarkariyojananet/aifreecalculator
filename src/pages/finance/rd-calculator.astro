@@ -1,0 +1,597 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="RD Calculator – Recurring Deposit Interest & Maturity Calculator"
+  description="Calculate exact Recurring Deposit (RD) maturity amount, interest earned, and quarterly compounding returns for Post Office, SBI, HDFC, and ICICI bank RDs."
+  category="Finance"
+  calculatorName="RD Calculator"
+  slug="rd-calculator"
+  keywords={[
+    'rd calculator',
+    'recurring deposit calculator',
+    'post office rd calculator',
+    'sbi rd calculator',
+    'rd interest calculator',
+    'rd maturity calculator',
+    'hdfc rd calculator',
+    'rd return calculator',
+    'quarterly compounding rd calculator'
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- PRESETS BAR -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-center gap-1.5 text-xs">
+        <span class="font-bold text-slate-600 dark:text-slate-400 mr-1 flex items-center gap-1">
+          <span>⚡</span> Quick Scenarios:
+        </span>
+        <button type="button" class="btn-rd-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-amt="2000" data-months="12" data-rate="7.0">
+          ₹2,000 / Mo (1 Year @ 7.0%)
+        </button>
+        <button type="button" class="btn-rd-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-amt="5000" data-months="36" data-rate="7.1">
+          ₹5,000 / Mo (3 Years @ 7.1%)
+        </button>
+        <button type="button" class="btn-rd-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-amt="10000" data-months="60" data-rate="6.7">
+          ₹10,000 / Mo (5 Yrs Post Office)
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN CALCULATOR GRID -->
+    <div class="grid grid-cols-1 gap-6 lg:grid-cols-12">
+      
+      <!-- INPUT PANEL (7 cols) -->
+      <div class="lg:col-span-7 space-y-5 rounded-3xl border border-slate-200/90 bg-white p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 sm:p-7">
+        
+        <h2 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>🏦</span> Recurring Deposit Details
+        </h2>
+
+        <!-- Monthly Deposit -->
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+            <label for="rd-amount">Monthly Deposit Amount (₹)</label>
+            <span class="font-mono text-blue-600 dark:text-blue-400 font-bold" id="display-rd-amount">₹5,000</span>
+          </div>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-slate-400 text-sm">₹</span>
+            <input
+              type="number"
+              id="rd-amount"
+              min="500"
+              max="200000"
+              step="500"
+              value="5000"
+              class="w-full rounded-xl border border-slate-300 bg-slate-50 py-2.5 pl-8 pr-3 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            />
+          </div>
+          <input type="range" id="slider-rd-amount" min="1000" max="50000" step="500" value="5000" class="w-full accent-blue-600 cursor-pointer" />
+        </div>
+
+        <!-- Tenure (Years & Months) -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+              <label for="rd-years">Tenure (Years)</label>
+              <span class="font-mono text-blue-600 dark:text-blue-400 font-bold" id="display-rd-years">3 Yrs</span>
+            </div>
+            <input
+              type="number"
+              id="rd-years"
+              min="0"
+              max="10"
+              value="3"
+              class="w-full rounded-xl border border-slate-300 bg-slate-50 py-2.5 px-3 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+            />
+          </div>
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+              <label for="rd-extra-months">Extra Months</label>
+              <span class="font-mono text-blue-600 dark:text-blue-400 font-bold" id="display-rd-months">0 Mo</span>
+            </div>
+            <select id="rd-extra-months" class="w-full rounded-xl border border-slate-300 bg-slate-50 py-2.5 px-3 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white">
+              <option value="0" selected>0 Months</option>
+              <option value="3">3 Months</option>
+              <option value="6">6 Months</option>
+              <option value="9">9 Months</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Interest Rate & Senior Citizen -->
+        <div class="space-y-3">
+          <div class="space-y-1.5">
+            <div class="flex items-center justify-between text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+              <label for="rd-rate">Annual Interest Rate (%)</label>
+              <span class="font-mono text-blue-600 dark:text-blue-400 font-bold" id="display-rd-rate">7.1%</span>
+            </div>
+            <div class="relative">
+              <input
+                type="number"
+                id="rd-rate"
+                min="3"
+                max="12"
+                step="0.1"
+                value="7.1"
+                class="w-full rounded-xl border border-slate-300 bg-slate-50 py-2.5 pl-3 pr-8 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:bg-white focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              />
+              <span class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-400 text-sm">%</span>
+            </div>
+            <input type="range" id="slider-rd-rate" min="5" max="9" step="0.1" value="7.1" class="w-full accent-blue-600 cursor-pointer" />
+          </div>
+
+          <!-- Senior Citizen Checkbox -->
+          <label class="flex items-center gap-2.5 rounded-xl border border-slate-200 p-3 bg-slate-50/60 dark:border-slate-800 dark:bg-slate-800/50 cursor-pointer">
+            <input type="checkbox" id="rd-senior" class="h-4 w-4 rounded-sm border-slate-300 text-blue-600 focus:ring-blue-500" />
+            <div class="text-xs">
+              <span class="font-bold text-slate-800 dark:text-slate-200">Senior Citizen (60+ Years)</span>
+              <p class="text-slate-500 text-[11px]">Adds +0.50% extra interest rate as per Indian bank norms.</p>
+            </div>
+          </label>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+          <button
+            type="button"
+            id="btn-calc-rd"
+            class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3.5 text-center text-sm font-black text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer"
+          >
+            Calculate RD Maturity →
+          </button>
+          <button
+            type="button"
+            id="btn-clear-rd"
+            class="rounded-xl border border-slate-300 bg-white px-5 py-3.5 text-center text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 cursor-pointer"
+          >
+            Clear (✕)
+          </button>
+        </div>
+
+      </div>
+
+      <!-- RESULTS PLACEHOLDER (Visible until Calculate is clicked) -->
+      <div id="rd-results-placeholder" class="lg:col-span-5 flex flex-col items-center justify-center p-8 text-center rounded-3xl border border-dashed border-slate-300 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/30 min-h-85">
+        <span class="text-4xl mb-3">📈</span>
+        <h4 class="text-base font-bold text-slate-800 dark:text-slate-200">Ready to Calculate</h4>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-xs">Enter your monthly deposit, tenure, and bank interest rate, then click <strong>Calculate RD Maturity</strong> to view maturity value and quarterly compounding breakdown.</p>
+      </div>
+
+      <!-- RESULTS PANEL (Hidden until Calculate is clicked) -->
+      <div id="results-section" class="hidden lg:col-span-5 flex-col justify-between space-y-4 rounded-3xl border border-blue-200/80 bg-linear-to-b from-blue-50/60 to-white p-5 shadow-xl shadow-slate-900/5 dark:border-blue-900/40 dark:from-slate-900 dark:to-slate-950 sm:p-7">
+        
+        <div>
+          <div class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Total Maturity Payout</div>
+          <div class="mt-2">
+            <div class="text-3xl sm:text-4xl font-black font-mono text-emerald-600 dark:text-emerald-400" id="res-rd-maturity">
+              ₹2,01,050
+            </div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 mt-1" id="res-rd-tenure-label">
+              Matures in 36 Months (Compounded Quarterly)
+            </div>
+          </div>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div class="grid grid-cols-2 gap-3 pt-2 border-t border-slate-200/80 dark:border-slate-800">
+          <div class="rounded-xl border border-slate-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/80">
+            <div class="text-[11px] font-medium text-slate-500">Total Deposited</div>
+            <div class="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-mono" id="res-rd-invested">₹1,80,000</div>
+          </div>
+          <div class="rounded-xl border border-slate-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/80">
+            <div class="text-[11px] font-medium text-slate-500">Total Interest Earned</div>
+            <div class="text-base sm:text-lg font-bold text-emerald-600 dark:text-emerald-400 font-mono" id="res-rd-interest">₹21,050</div>
+          </div>
+        </div>
+
+        <!-- Visual Proportion Bar -->
+        <div class="space-y-1.5">
+          <div class="flex justify-between text-[11px] font-semibold">
+            <span class="text-blue-600 dark:text-blue-400" id="bar-label-invested">Deposit: 89.5%</span>
+            <span class="text-emerald-600 dark:text-emerald-400" id="bar-label-interest">Interest: 10.5%</span>
+          </div>
+          <div class="h-2.5 w-full rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden flex">
+            <div id="bar-invested" class="bg-blue-600 h-full transition-all duration-300" style="width: 89.5%;"></div>
+            <div id="bar-interest" class="bg-emerald-500 h-full transition-all duration-300" style="width: 10.5%;"></div>
+          </div>
+        </div>
+
+        <div class="rounded-xl border border-slate-200 bg-white/80 p-3 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-400">
+          📊 <strong>Quarterly Compounding:</strong> Unlike simple interest, Indian banks calculate interest on RD every quarter, earning you extra interest on past interest!
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- SCHEDULE ACCORDION -->
+    <div id="schedule-section" class="hidden rounded-3xl border border-slate-200/90 bg-white p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:bg-slate-900 sm:p-7">
+      <details class="group">
+        <summary class="flex cursor-pointer items-center justify-between font-bold text-slate-900 dark:text-white">
+          <span class="flex items-center gap-2">
+            <span>📅</span> View Quarter-by-Quarter Compounding Schedule
+          </span>
+          <span class="text-blue-600 text-xs font-semibold group-open:rotate-180 transition-transform">▼ Click to Expand</span>
+        </summary>
+        <div class="mt-4 overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-semibold">
+                <th class="p-2.5">Quarter</th>
+                <th class="p-2.5">Cumulative Month</th>
+                <th class="p-2.5">Opening Balance</th>
+                <th class="p-2.5">Quarter Deposit</th>
+                <th class="p-2.5">Interest Earned</th>
+                <th class="p-2.5">Closing Balance</th>
+              </tr>
+            </thead>
+            <tbody id="rd-schedule-tbody" class="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+      </details>
+    </div>
+
+  </div>
+
+  <!-- EDUCATIONAL CONTENT -->
+  <Fragment slot="content">
+    <article class="prose prose-slate dark:prose-invert max-w-none text-sm leading-relaxed space-y-5 pt-4">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">What is a Recurring Deposit (RD) and How Does It Work?</h2>
+      <p>
+        A <strong>Recurring Deposit (RD)</strong> is one of India's most dependable and risk-free investment instruments, offered by commercial public and private banks (such as State Bank of India, HDFC Bank, ICICI Bank, Punjab National Bank) as well as the Department of Posts (India Post). It is designed to cultivate disciplined financial savings by allowing investors to deposit a fixed sum of money on a designated date every month for a pre-agreed tenure ranging from <strong>6 months to 120 months (10 years)</strong>.
+      </p>
+      <p>
+        Unlike a Fixed Deposit (FD) which demands an upfront lump-sum capital, a Recurring Deposit allows salaried and self-employed individuals to systematically build wealth from their monthly cash flow. Throughout the chosen deposit tenure, your monthly installments earn a guaranteed interest rate that is locked in at the time of opening the RD, insulating you against broader economic interest rate cuts.
+      </p>
+
+      <h3 class="text-base font-bold text-slate-900 dark:text-white">RBI Quarterly Compounding Formula for Recurring Deposits</h3>
+      <p>
+        Per Reserve Bank of India (RBI) guidelines, interest on recurring deposits is <strong>compounded on a quarterly basis</strong> (every three months). Because each monthly installment stays invested for a different duration (the first installment earns interest for the full tenure, while the final installment earns interest for only one month), Indian financial institutions use the standardized compound interest summation formula:
+      </p>
+      <div class="p-3.5 bg-slate-100 dark:bg-slate-800/80 rounded-xl font-mono text-xs text-center border border-slate-200 dark:border-slate-700">
+        M = P × [ (1 + r / 400)ⁿ - 1 ] ÷ [ 1 - (1 + r / 400)⁻¹/³ ]
+      </div>
+      <p>Where:</p>
+      <ul class="list-disc pl-5 space-y-1 text-slate-700 dark:text-slate-300">
+        <li><strong>M</strong> = Total maturity amount received at completion (₹)</li>
+        <li><strong>P</strong> = Fixed monthly installment amount (₹)</li>
+        <li><strong>r</strong> = Annual nominal interest rate (%)</li>
+        <li><strong>n</strong> = Total number of compounding quarters in your tenure (Tenure in months ÷ 3)</li>
+        <li><strong>400</strong> = Factor accounting for 4 quarters per year with percentage conversion</li>
+      </ul>
+      <p>
+        Total interest earned across the full tenure is simply the difference between your maturity value and cumulative principal invested: <strong>Total Interest = M - (P × Total Months)</strong>.
+      </p>
+
+      <h3 class="text-base font-bold text-slate-900 dark:text-white">Step-by-Step Calculation Example: ₹5,000 Monthly for 3 Years (36 Months)</h3>
+      <p>
+        Suppose an investor opens a bank RD with a monthly installment of <strong>₹5,000</strong> at an annual interest rate of <strong>7.00%</strong> for <strong>3 years (12 quarters)</strong>:
+      </p>
+      <ol class="list-decimal pl-5 space-y-1 text-slate-700 dark:text-slate-300">
+        <li><strong>Total Capital Deposited:</strong> ₹5,000 × 36 months = <strong>₹1,80,000</strong></li>
+        <li><strong>Quarterly Compounded Factor:</strong> With quarterly compounding, the earliest installments earn compounding interest across all 12 quarters, whereas later installments earn progressively fewer quarters.</li>
+        <li><strong>Maturity Payout ($M$):</strong> Evaluates to approximately <strong>₹2,01,050</strong>.</li>
+        <li><strong>Pure Interest Profit:</strong> ₹2,01,050 - ₹1,80,000 = <strong>₹21,050</strong> of risk-free interest gain.</li>
+      </ol>
+
+      <h3 class="text-base font-bold text-slate-900 dark:text-white">Comparative Analysis: Bank RD vs. Post Office RD vs. Mutual Fund SIP vs. Fixed Deposit</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse border border-slate-200 dark:border-slate-800">
+          <thead>
+            <tr class="bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-200">
+              <th class="p-2.5 font-bold">Investment Product</th>
+              <th class="p-2.5 font-bold">Minimum Tenure</th>
+              <th class="p-2.5 font-bold">Risk Level</th>
+              <th class="p-2.5 font-bold">Typical Return Profile</th>
+              <th class="p-2.5 font-bold">Liquidity & Loans</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-600 dark:text-slate-300">
+            <tr>
+              <td class="p-2.5 font-semibold text-slate-900 dark:text-white">Bank Recurring Deposit (RD)</td>
+              <td class="p-2.5 font-mono">6 Months</td>
+              <td class="p-2.5 text-emerald-600 font-bold">Zero (DICGC insured up to ₹5 Lakh)</td>
+              <td class="p-2.5">Guaranteed 6.5% - 7.5% p.a. (Extra 0.5% for seniors)</td>
+              <td class="p-2.5">Loan up to 90% of deposit balance; premature closure with ~0.5%-1% penalty.</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-semibold text-slate-900 dark:text-white">Post Office RD (PO-RD)</td>
+              <td class="p-2.5 font-mono">5 Years (Fixed)</td>
+              <td class="p-2.5 text-emerald-600 font-bold">Zero (100% Sovereign Guarantee)</td>
+              <td class="p-2.5">Notified quarterly by Finance Ministry (currently ~6.7% p.a.)</td>
+              <td class="p-2.5">Loan permitted after 1 year up to 50% of credit balance; can extend by 5 years.</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-semibold text-slate-900 dark:text-white">Bank Fixed Deposit (FD)</td>
+              <td class="p-2.5 font-mono">7 Days</td>
+              <td class="p-2.5 text-emerald-600 font-bold">Zero (DICGC insured up to ₹5 Lakh)</td>
+              <td class="p-2.5">Guaranteed 6.8% - 7.8% p.a. (Lump-sum deposit required upfront)</td>
+              <td class="p-2.5">Overdraft/loan facility up to 90%; partial withdrawal options available.</td>
+            </tr>
+            <tr>
+              <td class="p-2.5 font-semibold text-slate-900 dark:text-white">Mutual Fund SIP</td>
+              <td class="p-2.5 font-mono">No Lock-in (Except ELSS)</td>
+              <td class="p-2.5 text-amber-600 font-bold">Market-linked (Moderate to High)</td>
+              <td class="p-2.5">Historical 11% - 15% CAGR over 5+ years (Not guaranteed)</td>
+              <td class="p-2.5">Redeemable in 1-3 business days without fixed tenure penalties.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="text-base font-bold text-slate-900 dark:text-white">Taxation on Recurring Deposits: TDS Rules & Form 15G / 15H</h3>
+      <p>
+        A widespread misconception is that interest earned from Recurring Deposits is completely tax-free. Under Indian income tax law:
+      </p>
+      <ul class="list-disc pl-5 space-y-1.5 text-slate-700 dark:text-slate-300">
+        <li><strong>Tax Bracket Addition:</strong> All interest earned on an RD is classified under <em>"Income from Other Sources"</em> and added to your gross total income, where it is taxed at your applicable personal income tax slab rate.</li>
+        <li><strong>Section 194A TDS Threshold:</strong> Banks deduct <strong>10% TDS</strong> if total interest from all FDs and RDs held across branches of the same bank exceeds <strong>₹40,000 per financial year</strong> (or <strong>₹50,000</strong> for senior citizens aged 60 and above). If PAN is not provided, TDS jumps to 20%.</li>
+        <li><strong>Form 15G & Form 15H Exemption:</strong> If your total taxable income for the financial year is below the basic income tax exemption limit, you can submit <strong>Form 15G</strong> (or <strong>Form 15H</strong> for senior citizens) at the start of the financial year to request your bank not to deduct TDS.</li>
+      </ul>
+
+      <h3 class="text-base font-bold text-slate-900 dark:text-white">Key RD Account Rules: Defaults, Grace Periods & Premature Closures</h3>
+      <p>
+        If you fail to pay your monthly installment by the due date, banks usually grant a grace period up to the last working day of the calendar month. Beyond this, a nominal default penalty of ₹1.50 to ₹2.00 per ₹100 of installment is charged. If 4 to 6 consecutive installments are missed, the bank reserves the right to terminate the RD account prematurely and credit the net funds to your linked savings account.
+      </p>
+    </article>
+  </Fragment>
+
+  <!-- FAQS -->
+  <Fragment slot="faq">
+    <div class="space-y-3">
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900" open>
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white">How is interest compounded on a recurring deposit in Indian banks?</summary>
+        <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">As mandated by the RBI, interest on recurring deposits is compounded quarterly (every 3 months). The interest earned during a quarter is added to the principal balance for calculating interest in subsequent quarters, maximizing overall compound growth.</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white">Which is better: Bank RD or Post Office Recurring Deposit?</summary>
+        <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">Bank RDs offer maximum flexibility with tenures ranging from 6 months to 10 years, instant online net banking setup, and senior citizen bonus rates (0.50%). Post Office RD has a rigid 5-year tenure with central government backing, making it suitable for conservative rural and long-term savers.</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white">Do senior citizens receive higher interest rates on Recurring Deposits?</summary>
+        <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">Yes! Almost all scheduled commercial banks (SBI, HDFC, ICICI, Axis, PNB) offer an additional <strong>0.50% (50 basis points)</strong> interest rate on recurring deposits for senior citizens aged 60 and above, with select super-senior schemes offering up to 0.75% extra.</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white">Can I withdraw my RD before its maturity date?</summary>
+        <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">Yes, banks permit premature withdrawal of recurring deposits. However, a premature withdrawal penalty (typically 0.5% to 1.0%) is deducted from the applicable interest rate for the actual duration the deposit remained with the bank.</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white">Can I avail a loan against my Recurring Deposit account?</summary>
+        <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">Yes, most banks allow you to take a loan or overdraft facility up to <strong>90% of the accumulated deposit value</strong> in your RD account. The loan interest rate is usually only 1% to 2% higher than your RD interest rate, avoiding the need to break the RD prematurely.</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white">What happens if I miss paying my monthly RD installment?</summary>
+        <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">If you fail to pay on the due date, banks charge a small late payment penalty (usually ₹1.50 to ₹2.00 per ₹100 per month). If you fail to deposit installments for 4 to 6 consecutive months, the bank may close the account prematurely.</p>
+      </details>
+      <details class="group rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white">Is RD interest eligible for tax deductions under Section 80C?</summary>
+        <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">No. Standard bank and post office recurring deposits do not qualify for deductions under Section 80C. Only 5-Year Tax-Saving Fixed Deposits (FDs) qualify for 80C deductions up to ₹1.5 Lakh.</p>
+      </details>
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<script is:inline>
+(function initRdCalculator() {
+  const amountInput = document.getElementById('rd-amount');
+  const sliderAmount = document.getElementById('slider-rd-amount');
+  const yearsInput = document.getElementById('rd-years');
+  const monthsSelect = document.getElementById('rd-extra-months');
+  const rateInput = document.getElementById('rd-rate');
+  const sliderRate = document.getElementById('slider-rd-rate');
+  const seniorCheck = document.getElementById('rd-senior');
+
+  const displayAmount = document.getElementById('display-rd-amount');
+  const displayYears = document.getElementById('display-rd-years');
+  const displayMonths = document.getElementById('display-rd-months');
+  const displayRate = document.getElementById('display-rd-rate');
+
+  const resMaturity = document.getElementById('res-rd-maturity');
+  const resTenureLabel = document.getElementById('res-rd-tenure-label');
+  const resInvested = document.getElementById('res-rd-invested');
+  const resInterest = document.getElementById('res-rd-interest');
+  const barInvested = document.getElementById('bar-invested');
+  const barInterest = document.getElementById('bar-interest');
+  const barLabelInvested = document.getElementById('bar-label-invested');
+  const barLabelInterest = document.getElementById('bar-label-interest');
+  const scheduleTbody = document.getElementById('rd-schedule-tbody');
+
+  function formatInr(val) {
+    return '₹' + Math.round(val).toLocaleString('en-IN');
+  }
+
+  function calculate() {
+    const p = parseFloat(amountInput?.value) || 0;
+    const yrs = parseInt(yearsInput?.value) || 0;
+    const extraMo = parseInt(monthsSelect?.value) || 0;
+    const baseRate = parseFloat(rateInput?.value) || 0;
+    const isSenior = seniorCheck?.checked || false;
+    const effectiveRate = baseRate + (isSenior ? 0.5 : 0);
+
+    const totalMonths = yrs * 12 + extraMo;
+
+    if (displayAmount) displayAmount.textContent = formatInr(p);
+    if (sliderAmount) sliderAmount.value = p;
+    if (displayYears) displayYears.textContent = `${yrs} Yrs`;
+    if (displayMonths) displayMonths.textContent = `${extraMo} Mo`;
+    if (displayRate) displayRate.textContent = `${effectiveRate.toFixed(2)}%${isSenior ? ' (Senior)' : ''}`;
+    if (sliderRate) sliderRate.value = baseRate;
+
+    const totalInvested = p * totalMonths;
+
+    if (p <= 0 || totalMonths <= 0 || effectiveRate <= 0) {
+      if (resMaturity) resMaturity.textContent = formatInr(0);
+      if (resInvested) resInvested.textContent = formatInr(0);
+      if (resInterest) resInterest.textContent = formatInr(0);
+      return;
+    }
+
+    const quarters = Math.ceil(totalMonths / 3);
+    const qRate = effectiveRate / 400;
+
+    let balance = 0;
+    let totalInt = 0;
+    const schedule = [];
+
+    for (let q = 1; q <= quarters; q++) {
+      const openBal = balance;
+      const mInQ = Math.min(3, totalMonths - (q - 1) * 3);
+      let qDeposit = 0;
+
+      for (let m = 1; m <= mInQ; m++) {
+        qDeposit += p;
+        balance += p;
+      }
+
+      let qInt = openBal * qRate;
+      for (let m = 1; m <= mInQ; m++) {
+        const mActive = mInQ - m + 1;
+        qInt += p * (effectiveRate / 1200) * mActive;
+      }
+
+      balance += qInt;
+      totalInt += qInt;
+
+      schedule.push({
+        q,
+        month: (q - 1) * 3 + mInQ,
+        openBal,
+        qDeposit,
+        qInt,
+        closeBal: balance,
+      });
+    }
+
+    if (resMaturity) resMaturity.textContent = formatInr(balance);
+    if (resTenureLabel) {
+      resTenureLabel.textContent = `Matures in ${totalMonths} Months (${(totalMonths / 12).toFixed(1)} Yrs, Compounded Quarterly)`;
+    }
+    if (resInvested) resInvested.textContent = formatInr(totalInvested);
+    if (resInterest) resInterest.textContent = formatInr(totalInt);
+
+    // Bar proportion
+    const total = balance;
+    const invPct = total > 0 ? ((totalInvested / total) * 100).toFixed(1) : '100';
+    const intPct = total > 0 ? ((totalInt / total) * 100).toFixed(1) : '0';
+
+    if (barInvested) barInvested.style.width = `${invPct}%`;
+    if (barInterest) barInterest.style.width = `${intPct}%`;
+    if (barLabelInvested) barLabelInvested.textContent = `Deposit: ${invPct}%`;
+    if (barLabelInterest) barLabelInterest.textContent = `Interest: ${intPct}%`;
+
+    // Table
+    if (scheduleTbody) {
+      scheduleTbody.innerHTML = schedule.map(row => `
+        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+          <td class="p-2.5 font-bold">Quarter ${row.q}</td>
+          <td class="p-2.5">Month ${row.month}</td>
+          <td class="p-2.5">${formatInr(row.openBal)}</td>
+          <td class="p-2.5 text-blue-600 dark:text-blue-400 font-semibold">${formatInr(row.qDeposit)}</td>
+          <td class="p-2.5 text-emerald-600 dark:text-emerald-400">+${formatInr(row.qInt)}</td>
+          <td class="p-2.5 font-bold">${formatInr(row.closeBal)}</td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  let hasCalculated = false;
+  const btnCalc = document.getElementById('btn-calc-rd');
+  const btnClear = document.getElementById('btn-clear-rd');
+  const resultsPlaceholder = document.getElementById('rd-results-placeholder');
+  const resultsSection = document.getElementById('results-section');
+  const scheduleSection = document.getElementById('schedule-section');
+
+  function showResults() {
+    hasCalculated = true;
+    calculate();
+    resultsPlaceholder?.classList.add('hidden');
+    resultsSection?.classList.remove('hidden');
+    resultsSection?.classList.add('flex');
+    scheduleSection?.classList.remove('hidden');
+    const bar = document.getElementById('calc-action-bar-container');
+    if (bar) bar.classList.remove('hidden');
+    resultsSection?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+
+  function clearCalculator() {
+    hasCalculated = false;
+    if (amountInput) amountInput.value = '5000';
+    if (sliderAmount) sliderAmount.value = '5000';
+    if (yearsInput) yearsInput.value = '3';
+    if (monthsSelect) monthsSelect.value = '0';
+    if (rateInput) rateInput.value = '7.1';
+    if (sliderRate) sliderRate.value = '7.1';
+    if (seniorCheck) seniorCheck.checked = false;
+
+    if (displayAmount) displayAmount.textContent = formatInr(5000);
+    if (displayYears) displayYears.textContent = '3 Years';
+    if (displayMonths) displayMonths.textContent = '0 Mos';
+    if (displayRate) displayRate.textContent = '7.10%';
+
+    resultsPlaceholder?.classList.remove('hidden');
+    resultsSection?.classList.add('hidden');
+    resultsSection?.classList.remove('flex');
+    scheduleSection?.classList.add('hidden');
+    const bar = document.getElementById('calc-action-bar-container');
+    if (bar) bar.classList.add('hidden');
+  }
+
+  btnCalc?.addEventListener('click', showResults);
+  btnClear?.addEventListener('click', clearCalculator);
+
+  [amountInput, yearsInput, monthsSelect, rateInput, seniorCheck].forEach(el => {
+    el?.addEventListener('input', () => {
+      const p = parseFloat(amountInput?.value) || 0;
+      const y = parseInt(yearsInput?.value) || 0;
+      const m = parseInt(monthsSelect?.value) || 0;
+      const r = parseFloat(rateInput?.value) || 0;
+      const senior = seniorCheck?.checked || false;
+      const effR = senior ? r + 0.5 : r;
+
+      if (displayAmount) displayAmount.textContent = formatInr(p);
+      if (sliderAmount) sliderAmount.value = p;
+      if (displayYears) displayYears.textContent = `${y} Year${y !== 1 ? 's' : ''}`;
+      if (displayMonths) displayMonths.textContent = `${m} Mo${m !== 1 ? 's' : ''}`;
+      if (displayRate) displayRate.textContent = `${effR.toFixed(2)}%`;
+      if (sliderRate) sliderRate.value = r;
+
+      if (hasCalculated) calculate();
+    });
+  });
+
+  sliderAmount?.addEventListener('input', (e) => {
+    if (amountInput) amountInput.value = e.target.value;
+    if (displayAmount) displayAmount.textContent = formatInr(parseFloat(e.target.value) || 0);
+    if (hasCalculated) calculate();
+  });
+
+  sliderRate?.addEventListener('input', (e) => {
+    if (rateInput) rateInput.value = e.target.value;
+    const r = parseFloat(e.target.value) || 0;
+    const effR = seniorCheck?.checked ? r + 0.5 : r;
+    if (displayRate) displayRate.textContent = `${effR.toFixed(2)}%`;
+    if (hasCalculated) calculate();
+  });
+
+  // Presets
+  document.querySelectorAll('.btn-rd-preset').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const amt = btn.dataset.amt;
+      const m = parseInt(btn.dataset.months) || 12;
+      const r = btn.dataset.rate;
+
+      if (amountInput) amountInput.value = amt;
+      if (yearsInput) yearsInput.value = Math.floor(m / 12);
+      if (monthsSelect) monthsSelect.value = m % 12;
+      if (rateInput) rateInput.value = r;
+      if (seniorCheck) seniorCheck.checked = false;
+      showResults();
+    });
+  });
+})();
+</script>
