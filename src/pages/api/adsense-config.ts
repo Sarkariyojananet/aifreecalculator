@@ -35,6 +35,7 @@ function normalizeSettings(stored: any): AdsConfig {
   const thirdPartyAdsTxt = typeof stored.thirdPartyAdsTxt === 'string' ? stored.thirdPartyAdsTxt : (defaults.thirdPartyAdsTxt || '');
   const customAdsTxt = typeof stored.customAdsTxt === 'string' ? stored.customAdsTxt : (defaults.customAdsTxt || '');
   const headerScript = typeof stored.headerScript === 'string' ? stored.headerScript : (defaults.headerScript || '');
+  const customMetaTags = typeof stored.customMetaTags === 'string' ? stored.customMetaTags : (defaults.customMetaTags || '');
 
   // Smart Throttling config
   const rawThrottling = stored.smartThrottling || {};
@@ -95,6 +96,7 @@ function normalizeSettings(stored: any): AdsConfig {
     thirdPartyAdsTxt,
     customAdsTxt,
     headerScript,
+    customMetaTags,
     smartThrottling,
     slots,
   };
@@ -144,8 +146,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
     status: 200,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400',
-      'Cloudflare-CDN-Cache-Control': 'max-age=3600, stale-while-revalidate=86400',
+      'Cache-Control': 'public, max-age=60, s-maxage=60, stale-while-revalidate=120',
+      'Cloudflare-CDN-Cache-Control': 'max-age=60, stale-while-revalidate=120',
     },
   });
 
@@ -208,8 +210,14 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
       .bind(SETTINGS_KEY, JSON.stringify(normalized))
       .run();
 
-    // Invalidate in-memory cache
+    // Invalidate in-memory cache and Cloudflare edge cache
     invalidateAdsConfigCache();
+    const edgeCache = typeof caches !== 'undefined' && (caches as any).default ? ((caches as any).default as Cache) : null;
+    if (edgeCache) {
+      try {
+        await edgeCache.delete(request.url);
+      } catch {}
+    }
 
     // Log audit event
     const activeNetworks = Object.entries(normalized.slots).map(([slot, cfg]) => `${slot}:${cfg.adNetwork}`);

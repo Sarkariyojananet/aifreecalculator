@@ -158,7 +158,7 @@ const resolvedOgImage = ogImage.startsWith('http')
             if (!res.ok) return null;
             const data = await res.json();
             try {
-              sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data, expiry: Date.now() + 300_000 }));
+              sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data, expiry: Date.now() + 60_000 }));
             } catch {}
             return data;
           } catch (err) {
@@ -178,27 +178,83 @@ const resolvedOgImage = ogImage.startsWith('http')
 
         function loadHeaderScript(headerCode) {
           if (!headerCode || !headerCode.trim()) return;
-          if (document.querySelector('[data-custom-header-script]')) return;
-          const holder = document.createElement('div');
-          holder.setAttribute('data-custom-header-script', 'true');
-          holder.style.display = 'none';
-          document.head.appendChild(holder);
-          injectCustomCode(holder, headerCode);
-        }
+          if (document.querySelector('[data-aifree-header-tag]')) return;
 
-        function injectCustomCode(container, codeString) {
-          container.innerHTML = codeString;
-          const scripts = container.querySelectorAll('script');
-          scripts.forEach((oldScript) => {
-            const newScript = document.createElement('script');
-            Array.from(oldScript.attributes).forEach((attr) => {
-              newScript.setAttribute(attr.name, attr.value);
-            });
-            newScript.appendChild(document.createTextNode(oldScript.innerHTML));
-            oldScript.parentNode.replaceChild(newScript, oldScript);
+          let raw = headerCode.trim();
+          // If raw JavaScript is provided without <script> tags, wrap it automatically
+          if (!raw.includes('<script') && !raw.includes('<link') && !raw.includes('<meta')) {
+            raw = `<script>${raw}<\/script>`;
+          }
+
+          const parser = document.createElement('div');
+          parser.innerHTML = raw;
+
+          Array.from(parser.childNodes).forEach((node) => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              const el = node;
+              const tag = el.tagName.toUpperCase();
+
+              if (tag === 'SCRIPT') {
+                const script = document.createElement('script');
+                Array.from(el.attributes).forEach((attr) => {
+                  script.setAttribute(attr.name, attr.value);
+                });
+                script.setAttribute('data-aifree-header-tag', 'true');
+                if (el.textContent && el.textContent.trim()) {
+                  script.textContent = el.textContent;
+                }
+                document.head.appendChild(script);
+              } else {
+                const clone = el.cloneNode(true);
+                clone.setAttribute('data-aifree-header-tag', 'true');
+                document.head.appendChild(clone);
+              }
+            }
           });
         }
 
+        function loadMetaTags(metaTagsString) {
+          if (!metaTagsString || !metaTagsString.trim()) return;
+          if (document.querySelector('[data-aifree-meta-tag]')) return;
+
+          const parser = document.createElement('div');
+          parser.innerHTML = metaTagsString.trim();
+
+          Array.from(parser.childNodes).forEach((node) => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              const el = node;
+              const clone = el.cloneNode(true);
+              clone.setAttribute('data-aifree-meta-tag', 'true');
+              document.head.appendChild(clone);
+            }
+          });
+        }
+
+        function injectCustomCode(container, codeString) {
+          container.innerHTML = '';
+          const temp = document.createElement('div');
+          temp.innerHTML = codeString;
+
+          Array.from(temp.childNodes).forEach((node) => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
+              const el = node;
+              if (el.tagName.toUpperCase() === 'SCRIPT') {
+                const s = document.createElement('script');
+                Array.from(el.attributes).forEach((attr) => {
+                  s.setAttribute(attr.name, attr.value);
+                });
+                if (el.textContent && el.textContent.trim()) {
+                  s.textContent = el.textContent;
+                }
+                container.appendChild(s);
+              } else {
+                container.appendChild(el.cloneNode(true));
+              }
+            } else if (node.nodeType === Node.TEXT_NODE && node.textContent.trim()) {
+              container.appendChild(document.createTextNode(node.textContent));
+            }
+          });
+        }
 
         function loadGoogleAnalytics(gaId) {
           if (!gaId || !gaId.startsWith('G-')) return;
@@ -229,9 +285,20 @@ const resolvedOgImage = ogImage.startsWith('http')
 
         async function renderAdSlots() {
           const config = await fetchAdConfig();
+          if (!config) return;
 
-          // Load Google Analytics 4 dynamically if configured in admin settings
-          if (config && config.gaMeasurementId) {
+          // 1. ALWAYS load Global Header Script / Tags (AdX, Prebid, Ezoic, GTM) immediately in <head>
+          if (config.headerScript && config.headerScript.trim()) {
+            loadHeaderScript(config.headerScript);
+          }
+
+          // 2. ALWAYS load Custom Meta Tags (Google Search Console, Bing, Pinterest, SEO) immediately in <head>
+          if (config.customMetaTags && config.customMetaTags.trim()) {
+            loadMetaTags(config.customMetaTags);
+          }
+
+          // 3. ALWAYS load Google Analytics 4 dynamically if configured in admin settings
+          if (config.gaMeasurementId && config.gaMeasurementId.trim()) {
             loadGoogleAnalytics(config.gaMeasurementId);
           }
 
@@ -247,7 +314,7 @@ const resolvedOgImage = ogImage.startsWith('http')
           }
 
           // If no config or globally disabled AND Test Mode is OFF
-          if (!config || (!config.enabled && config.testMode !== true)) {
+          if (!config.enabled && config.testMode !== true) {
             slotElements.forEach(hideSlot);
             return;
           }
@@ -325,11 +392,6 @@ const resolvedOgImage = ogImage.startsWith('http')
             const hasAdsenseSlot = Object.values(config.slots || {}).some((s) => !s.adNetwork || s.adNetwork === 'adsense');
             if (hasAdsenseSlot && config.clientId && config.clientId.startsWith('ca-pub-')) {
               loadGoogleScript(config.clientId);
-            }
-
-            // Load Global 3rd-Party Header Script / Tags if configured
-            if (config.headerScript) {
-              loadHeaderScript(config.headerScript);
             }
 
             const isMobile = window.innerWidth < 768;

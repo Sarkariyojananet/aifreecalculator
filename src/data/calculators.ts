@@ -70,6 +70,7 @@ const CALCULATOR_ALIASES: Record<string, string[]> = {
   'epf-calculator': ['epf calculator', 'pf calculator', 'provident fund calculator', 'epfo interest', 'pf balance', 'epf corpus', 'vpf calculator'],
   'rd-calculator': ['rd calculator', 'recurring deposit', 'post office rd', 'sbi rd', 'quarterly compounding rd', 'bank rd interest'],
   'macro-calculator': ['macro calculator', 'iifym calculator', 'protein calculator', 'macronutrient calculator', 'keto macros', 'bodybuilding macros', 'macros for fat loss'],
+  'map-calculator': ['map calculator', 'map calculator bp', 'bp map calculator', 'map calculator nursing', 'mean arterial pressure', 'arterial pressure', 'map bp', 'blood pressure map', 'icu map', 'perfusion pressure'],
 };
 
 export const calculators: Calculator[] = (rawCalculators as Calculator[])

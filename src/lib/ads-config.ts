@@ -57,6 +57,7 @@ export interface AdsConfig {
   thirdPartyAdsTxt?: string;
   customAdsTxt?: string;
   headerScript?: string;
+  customMetaTags?: string;
   smartThrottling?: SmartThrottlingConfig;
   slots: Record<AdSlotKey, AdSlotConfig>;
 }
@@ -81,6 +82,7 @@ export const DEFAULT_ADS_CONFIG: AdsConfig = {
   thirdPartyAdsTxt: '',
   customAdsTxt: '',
   headerScript: '',
+  customMetaTags: '',
   smartThrottling: { ...DEFAULT_SMART_THROTTLING },
   slots: {
     top: {

@@ -165,6 +165,11 @@ import AuditLogCard from '../../components/admin/settings/AuditLogCard.astro';
   const fieldAutoAds = document.getElementById('field-auto-ads') as HTMLInputElement | null;
   const fieldGaId = document.getElementById('field-ga-id') as HTMLInputElement | null;
   const fieldHeaderScript = document.getElementById('field-header-script') as HTMLTextAreaElement | null;
+  const headerScriptBadge = document.getElementById('header-script-badge');
+  const btnClearHeaderScript = document.getElementById('btn-clear-header-script');
+  const fieldMetaTags = document.getElementById('field-meta-tags') as HTMLTextAreaElement | null;
+  const metaTagsBadge = document.getElementById('meta-tags-badge');
+  const btnClearMetaTags = document.getElementById('btn-clear-meta-tags');
 
   // Smart Throttling Inputs
   const fieldThrottlingEnabled = document.getElementById('field-throttling-enabled') as HTMLInputElement | null;
@@ -235,6 +240,149 @@ import AuditLogCard from '../../components/admin/settings/AuditLogCard.astro';
 
   slotKeys.forEach(setupNetworkRadioListeners);
 
+  // ─── Header Script Helper & Starter Templates ──────────────────────────────
+  const HEADER_TEMPLATES: Record<string, string> = {
+    gtm: '<!-- Google Tag Manager -->\n' +
+      '<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({\'gtm.start\':\n' +
+      'new Date().getTime(),event:\'gtm.js\'});var f=d.getElementsByTagName(s)[0],\n' +
+      'j=d.createElement(s),dl=l!=\'dataLayer\'?\'&l=\'+l:\'\';j.async=true;j.src=\n' +
+      '\'https://www.googletagmanager.com/gtm.js?id=\'+i+dl;f.parentNode.insertBefore(j,f);\n' +
+      '})(window,document,\'script\',\'dataLayer\',\'GTM-XXXXXX\');<' + '/script>\n' +
+      '<!-- End Google Tag Manager -->',
+
+    adx: '<!-- Google Ad Manager / AdX (GPT) -->\n' +
+      '<link rel="preconnect" href="https://securepubads.g.doubleclick.net" crossorigin>\n' +
+      '<script async src="https://securepubads.g.doubleclick.net/tag/js/gpt.js"><' + '/script>\n' +
+      '<script>\n' +
+      '  window.googletag = window.googletag || {cmd: []};\n' +
+      '  googletag.cmd.push(function() {\n' +
+      '    // googletag.pubads().enableSingleRequest();\n' +
+      '    // googletag.enableServices();\n' +
+      '  });\n' +
+      '<' + '/script>',
+
+    prebid: '<!-- Prebid.js Header Bidding -->\n' +
+      '<link rel="preconnect" href="https://ib.adnxs.com" crossorigin>\n' +
+      '<script async src="https://cdn.jsdelivr.net/npm/prebid.js@latest/dist/not-for-prod/prebid.js"><' + '/script>\n' +
+      '<script>\n' +
+      '  var pbjs = pbjs || {};\n' +
+      '  pbjs.que = pbjs.que || [];\n' +
+      '<' + '/script>',
+
+    ezoic: '<!-- Ezoic Header Script -->\n' +
+      '<link rel="preconnect" href="https://go.ezoic.net" crossorigin>\n' +
+      '<script async src="//go.ezoic.net/detroitchicago/matterhorn.js?cb=1"><' + '/script>'
+  };
+
+  function updateHeaderScriptBadge() {
+    if (!headerScriptBadge) return;
+    const val = fieldHeaderScript?.value?.trim() || '';
+    if (!val) {
+      headerScriptBadge.textContent = 'Empty (Inactive)';
+      headerScriptBadge.className = 'rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400';
+      return;
+    }
+    const scriptMatches = val.match(/<script\b/gi) || [];
+    const linkMatches = val.match(/<link\b/gi) || [];
+    const metaMatches = val.match(/<meta\b/gi) || [];
+    const totalTags = scriptMatches.length + linkMatches.length + metaMatches.length;
+
+    if (totalTags > 0) {
+      headerScriptBadge.textContent = `✓ ${totalTags} tag${totalTags > 1 ? 's' : ''} detected (${scriptMatches.length} script, ${linkMatches.length} link)`;
+      headerScriptBadge.className = 'rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+    } else {
+      headerScriptBadge.textContent = 'Custom code entered';
+      headerScriptBadge.className = 'rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300';
+    }
+  }
+
+  fieldHeaderScript?.addEventListener('input', updateHeaderScriptBadge);
+
+  document.querySelectorAll('.btn-insert-header-template').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const templateKey = (btn as HTMLElement).dataset.template;
+      if (!templateKey || !HEADER_TEMPLATES[templateKey]) return;
+      const snippet = HEADER_TEMPLATES[templateKey];
+      if (!fieldHeaderScript) return;
+
+      const current = fieldHeaderScript.value.trim();
+      if (!current) {
+        fieldHeaderScript.value = snippet;
+      } else if (current.includes(snippet.substring(0, 30))) {
+        alert('This starter template is already inserted in the script box.');
+        return;
+      } else {
+        fieldHeaderScript.value = current + '\n\n' + snippet;
+      }
+      updateHeaderScriptBadge();
+      fieldHeaderScript.focus();
+    });
+  });
+
+  btnClearHeaderScript?.addEventListener('click', () => {
+    if (!fieldHeaderScript) return;
+    if (fieldHeaderScript.value && !confirm('Clear all global header tags and scripts?')) return;
+    fieldHeaderScript.value = '';
+    updateHeaderScriptBadge();
+  });
+
+  // ─── Custom Meta Tags Helper & Starter Templates ───────────────────────────
+  const META_TEMPLATES: Record<string, string> = {
+    'google-site-verification': '<meta name="google-site-verification" content="PASTE_YOUR_GOOGLE_CODE_HERE" />',
+    'bing-webmaster': '<meta name="msvalidate.01" content="PASTE_YOUR_BING_CODE_HERE" />',
+    'pinterest-verify': '<meta name="p:domain_verify" content="PASTE_YOUR_PINTEREST_CODE_HERE" />',
+    'facebook-domain': '<meta name="facebook-domain-verification" content="PASTE_YOUR_FB_CODE_HERE" />',
+    'author-robots': '<meta name="author" content="AI Free Calculator" />\n<meta name="geo.region" content="IN" />'
+  };
+
+  function updateMetaTagsBadge() {
+    if (!metaTagsBadge) return;
+    const val = fieldMetaTags?.value?.trim() || '';
+    if (!val) {
+      metaTagsBadge.textContent = 'Empty (Inactive)';
+      metaTagsBadge.className = 'rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400';
+      return;
+    }
+    const metaMatches = val.match(/<meta\b/gi) || [];
+    if (metaMatches.length > 0) {
+      metaTagsBadge.textContent = `✓ ${metaMatches.length} meta tag${metaMatches.length > 1 ? 's' : ''} detected`;
+      metaTagsBadge.className = 'rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+    } else {
+      metaTagsBadge.textContent = 'Custom meta tags entered';
+      metaTagsBadge.className = 'rounded-full px-2.5 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300';
+    }
+  }
+
+  fieldMetaTags?.addEventListener('input', updateMetaTagsBadge);
+
+  document.querySelectorAll('.btn-insert-meta-template').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const templateKey = (btn as HTMLElement).dataset.template;
+      if (!templateKey || !META_TEMPLATES[templateKey]) return;
+      const snippet = META_TEMPLATES[templateKey];
+      if (!fieldMetaTags) return;
+
+      const current = fieldMetaTags.value.trim();
+      if (!current) {
+        fieldMetaTags.value = snippet;
+      } else if (current.includes(snippet.substring(0, 25))) {
+        alert('This meta tag template is already added.');
+        return;
+      } else {
+        fieldMetaTags.value = current + '\n' + snippet;
+      }
+      updateMetaTagsBadge();
+      fieldMetaTags.focus();
+    });
+  });
+
+  btnClearMetaTags?.addEventListener('click', () => {
+    if (!fieldMetaTags) return;
+    if (fieldMetaTags.value && !confirm('Clear all custom meta tags?')) return;
+    fieldMetaTags.value = '';
+    updateMetaTagsBadge();
+  });
+
   // ─── Load Settings from API ────────────────────────────────────────────────
   async function loadSettings() {
     try {
@@ -255,7 +403,14 @@ import AuditLogCard from '../../components/admin/settings/AuditLogCard.astro';
       if (fieldClientId) fieldClientId.value = config.clientId || '';
       if (fieldAutoAds) fieldAutoAds.checked = Boolean(config.autoAds);
       if (fieldGaId) fieldGaId.value = config.gaMeasurementId || '';
-      if (fieldHeaderScript) fieldHeaderScript.value = config.headerScript || '';
+      if (fieldHeaderScript) {
+        fieldHeaderScript.value = config.headerScript || '';
+        updateHeaderScriptBadge();
+      }
+      if (fieldMetaTags) {
+        fieldMetaTags.value = config.customMetaTags || '';
+        updateMetaTagsBadge();
+      }
 
       // Populate Smart Throttling
       const throttling = config.smartThrottling || {};
@@ -405,6 +560,7 @@ import AuditLogCard from '../../components/admin/settings/AuditLogCard.astro';
       autoAds: Boolean(fieldAutoAds?.checked),
       gaMeasurementId: fieldGaId?.value?.trim() || '',
       headerScript: fieldHeaderScript?.value?.trim() || '',
+      customMetaTags: fieldMetaTags?.value?.trim() || '',
       includeGoogleAdsTxt: Boolean(fieldIncludeGoogleAdsTxt?.checked),
       thirdPartyAdsTxt: fieldThirdPartyAdsTxt?.value?.trim() || '',
       smartThrottling: {
@@ -457,6 +613,7 @@ import AuditLogCard from '../../components/admin/settings/AuditLogCard.astro';
       // Clear client-side cache so public and admin see changes immediately
       try {
         sessionStorage.removeItem('adsense_cfg');
+        sessionStorage.removeItem('__aifree_ads_cfg');
       } catch (e) {}
 
       if (formStatusMsg) {

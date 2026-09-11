@@ -1,0 +1,1038 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="MAP Calculator – Mean Arterial Pressure (BP MAP) Calculator"
+  description="Calculate Mean Arterial Pressure (MAP) from systolic and diastolic blood pressure. Free BP MAP calculator for nursing, ICU hemodynamic monitoring, and organ perfusion assessment."
+  category="Health"
+  calculatorName="MAP Calculator"
+  slug="map-calculator"
+  keywords={[
+    'map calculator',
+    'map calculator bp',
+    'bp map calculator',
+    'map calculator nursing',
+    'mean arterial pressure calculator',
+    'blood pressure map',
+    'nursing map calculator',
+    'pulse pressure calculator',
+    'hemodynamic calculator',
+    'sepsis map target'
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- TOP TAB SWITCHER -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-2.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-semibold scrollbar-thin">
+        <button type="button" class="btn-map-tab active shrink-0 rounded-lg bg-rose-600 px-3.5 py-1.5 font-bold text-white shadow-xs cursor-pointer" data-tab="standard">
+          🩺 Standard BP to MAP
+        </button>
+        <button type="button" class="btn-map-tab shrink-0 rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-tab="nursing">
+          🏥 Nursing & ICU Target Mode
+        </button>
+        <button type="button" class="btn-map-tab shrink-0 rounded-lg border border-slate-300 bg-white px-3.5 py-1.5 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-tab="reference">
+          📊 MAP Ranges & Guidelines
+        </button>
+      </div>
+    </div>
+
+    <!-- QUICK PRESETS -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-center gap-1.5 text-xs">
+        <span class="font-bold text-slate-600 dark:text-slate-400 mr-1 flex items-center gap-1">
+          <span>⚡</span> Quick BP Presets:
+        </span>
+        <button type="button" class="btn-map-preset rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1 font-semibold text-emerald-700 hover:bg-emerald-100 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300 cursor-pointer" data-sbp="120" data-dbp="80" data-hr="72">
+          120/80 (Normal)
+        </button>
+        <button type="button" class="btn-map-preset rounded-lg border border-sky-300 bg-sky-50 px-2.5 py-1 font-semibold text-sky-700 hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-300 cursor-pointer" data-sbp="110" data-dbp="70" data-hr="68">
+          110/70 (Optimal)
+        </button>
+        <button type="button" class="btn-map-preset rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1 font-semibold text-amber-700 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300 cursor-pointer" data-sbp="90" data-dbp="55" data-hr="95">
+          90/55 (ICU Threshold)
+        </button>
+        <button type="button" class="btn-map-preset rounded-lg border border-red-300 bg-red-50 px-2.5 py-1 font-semibold text-red-700 hover:bg-red-100 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300 cursor-pointer" data-sbp="85" data-dbp="50" data-hr="108">
+          85/50 (Hypotension/Shock)
+        </button>
+        <button type="button" class="btn-map-preset rounded-lg border border-purple-300 bg-purple-50 px-2.5 py-1 font-semibold text-purple-700 hover:bg-purple-100 dark:border-purple-800 dark:bg-purple-950/30 dark:text-purple-300 cursor-pointer" data-sbp="145" data-dbp="92" data-hr="80">
+          145/92 (Hypertension)
+        </button>
+        <button type="button" class="btn-map-preset rounded-lg border border-rose-400 bg-rose-50 px-2.5 py-1 font-semibold text-rose-800 hover:bg-rose-100 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300 cursor-pointer" data-sbp="180" data-dbp="110" data-hr="88">
+          180/110 (Crisis)
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN CALCULATOR CARD -->
+    <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-rose-50/20 to-red-50/20 p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-rose-950/10 sm:p-7">
+      
+      <!-- TAB 1: STANDARD BP TO MAP -->
+      <div id="panel-standard" class="map-panel space-y-5">
+        <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+              <span>🩺</span> Blood Pressure to Mean Arterial Pressure (MAP)
+            </h2>
+            <span class="rounded-md bg-rose-100 px-2 py-0.5 text-[11px] font-bold text-rose-700 dark:bg-rose-950/50 dark:text-rose-300">
+              Gold Standard Formula
+            </span>
+          </div>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            Formula: MAP = DBP + [ ⅓ × (SBP - DBP) ] = [ (2 × DBP) + SBP ] ÷ 3
+          </p>
+        </div>
+
+        <form id="form-standard-map" class="space-y-4" novalidate onsubmit="return false;">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <label for="input-sbp" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Systolic BP (SBP)
+              </label>
+              <div class="relative mt-1.5">
+                <input
+                  type="number"
+                  id="input-sbp"
+                  value="120"
+                  step="1"
+                  min="40"
+                  max="300"
+                  required
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-14 text-base font-bold text-slate-900 shadow-2xs focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
+                  mmHg
+                </span>
+              </div>
+              <span class="mt-1 block text-[11px] text-slate-500">Peak pumping pressure</span>
+            </div>
+
+            <div>
+              <label for="input-dbp" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Diastolic BP (DBP)
+              </label>
+              <div class="relative mt-1.5">
+                <input
+                  type="number"
+                  id="input-dbp"
+                  value="80"
+                  step="1"
+                  min="20"
+                  max="200"
+                  required
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-14 text-base font-bold text-slate-900 shadow-2xs focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
+                  mmHg
+                </span>
+              </div>
+              <span class="mt-1 block text-[11px] text-slate-500">Resting filling pressure</span>
+            </div>
+
+            <div>
+              <label for="input-hr" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Heart Rate (Optional)
+              </label>
+              <div class="relative mt-1.5">
+                <input
+                  type="number"
+                  id="input-hr"
+                  value="72"
+                  step="1"
+                  min="30"
+                  max="250"
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-14 text-base font-bold text-slate-900 shadow-2xs focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-400">
+                  BPM
+                </span>
+              </div>
+              <span class="mt-1 block text-[11px] text-slate-500">For cardiac cycle ratio</span>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 pt-2">
+            <button
+              type="submit"
+              id="btn-calc-standard"
+              class="flex-1 rounded-xl bg-rose-600 hover:bg-rose-700 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-rose-600/25 transition active:scale-[0.98] cursor-pointer"
+            >
+              Calculate MAP →
+            </button>
+            <button
+              type="button"
+              id="btn-reset-standard"
+              class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer"
+            >
+              Reset
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- TAB 2: NURSING & ICU TARGET MODE -->
+      <div id="panel-nursing" class="map-panel hidden space-y-5">
+        <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+          <div class="flex items-center justify-between">
+            <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+              <span>🏥</span> Nursing & ICU Target Perfusion Evaluator
+            </h2>
+            <span class="rounded-md bg-blue-100 px-2 py-0.5 text-[11px] font-bold text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+              Critical Care Protocol
+            </span>
+          </div>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            Compare actual Mean Arterial Pressure against bedside clinical targets (Sepsis bundles, Neuro-ICU, Cardiopulmonary bypass).
+          </p>
+        </div>
+
+        <form id="form-nursing-map" class="space-y-4" novalidate onsubmit="return false;">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <label for="nursing-sbp" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Current SBP (mmHg)
+              </label>
+              <input
+                type="number"
+                id="nursing-sbp"
+                value="88"
+                step="1"
+                min="40"
+                max="300"
+                required
+                class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-base font-bold text-slate-900 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              />
+            </div>
+            <div>
+              <label for="nursing-dbp" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Current DBP (mmHg)
+              </label>
+              <input
+                type="number"
+                id="nursing-dbp"
+                value="52"
+                step="1"
+                min="20"
+                max="200"
+                required
+                class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-base font-bold text-slate-900 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              />
+            </div>
+            <div>
+              <label for="nursing-target-map" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Target MAP Goal
+              </label>
+              <select
+                id="nursing-target-map"
+                class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+              >
+                <option value="65" selected>≥ 65 mmHg (Sepsis / General ICU Standard)</option>
+                <option value="70">≥ 70 mmHg (Cardiogenic Shock / Post-CABG)</option>
+                <option value="80">≥ 80 mmHg (Neuro-ICU / Spinal Cord Injury)</option>
+                <option value="85">≥ 85 mmHg (Acute Ischemic Stroke Candidate)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 pt-2">
+            <button
+              type="submit"
+              id="btn-calc-nursing"
+              class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer"
+            >
+              Evaluate ICU Target →
+            </button>
+            <button
+              type="button"
+              id="btn-reset-nursing"
+              class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer"
+            >
+              Reset
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- TAB 3: REFERENCE TABLE -->
+      <div id="panel-reference" class="map-panel hidden space-y-5">
+        <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+          <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📊</span> Mean Arterial Pressure Clinical Reference Chart
+          </h2>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            Standard clinical thresholds used across critical care, emergency medicine, and nursing assessments.
+          </p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-100 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-300">
+              <tr>
+                <th class="p-3">MAP Range</th>
+                <th class="p-3">Classification</th>
+                <th class="p-3">Organ Perfusion Status</th>
+                <th class="p-3">Clinical Nursing Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-sans">
+              <tr class="bg-red-50 dark:bg-red-950/20">
+                <td class="p-3 font-mono font-bold text-red-700 dark:text-red-400">&lt; 60 mmHg</td>
+                <td class="p-3 font-bold text-red-700 dark:text-red-300">Critical Hypoperfusion</td>
+                <td class="p-3 text-slate-700 dark:text-slate-300">Inadequate perfusion to kidneys &amp; brain; shock state</td>
+                <td class="p-3 font-medium text-slate-800 dark:text-slate-200">Urgent fluid resuscitation, vasopressors (Norepinephrine)</td>
+              </tr>
+              <tr class="bg-amber-50 dark:bg-amber-950/20">
+                <td class="p-3 font-mono font-bold text-amber-700 dark:text-amber-400">60 – 64 mmHg</td>
+                <td class="p-3 font-bold text-amber-700 dark:text-amber-300">Marginal / Low</td>
+                <td class="p-3 text-slate-700 dark:text-slate-300">Borderline organ perfusion; risk of acute kidney injury (AKI)</td>
+                <td class="p-3 font-medium text-slate-800 dark:text-slate-200">Close surveillance, recheck BP, review fluid balance &amp; meds</td>
+              </tr>
+              <tr class="bg-emerald-50 dark:bg-emerald-950/20">
+                <td class="p-3 font-mono font-bold text-emerald-700 dark:text-emerald-400">65 – 100 mmHg</td>
+                <td class="p-3 font-bold text-emerald-700 dark:text-emerald-300">Normal / Optimal</td>
+                <td class="p-3 text-slate-700 dark:text-slate-300">Adequate continuous perfusion to all vital microvascular beds</td>
+                <td class="p-3 font-medium text-slate-800 dark:text-slate-200">Routine patient monitoring; continue current treatment plan</td>
+              </tr>
+              <tr class="bg-blue-50 dark:bg-blue-950/20">
+                <td class="p-3 font-mono font-bold text-blue-700 dark:text-blue-400">101 – 110 mmHg</td>
+                <td class="p-3 font-bold text-blue-700 dark:text-blue-300">Elevated</td>
+                <td class="p-3 text-slate-700 dark:text-slate-300">Increased cardiac workload and peripheral vascular resistance</td>
+                <td class="p-3 font-medium text-slate-800 dark:text-slate-200">Assess causes (pain, anxiety, medications, fluid overload)</td>
+              </tr>
+              <tr class="bg-purple-50 dark:bg-purple-950/20">
+                <td class="p-3 font-mono font-bold text-purple-700 dark:text-purple-400">&gt; 110 mmHg</td>
+                <td class="p-3 font-bold text-purple-700 dark:text-purple-300">Severely Elevated / Crisis</td>
+                <td class="p-3 text-slate-700 dark:text-slate-300">Risk of cerebral edema, hypertensive encephalopathy, MI</td>
+                <td class="p-3 font-medium text-slate-800 dark:text-slate-200">Notify provider; titrate IV antihypertensives per order</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- RESULTS DASHBOARD -->
+      <div id="map-results" class="mt-6 space-y-5">
+        <div class="overflow-hidden rounded-3xl border border-rose-200 bg-linear-to-br from-white via-rose-50/40 to-red-100/50 p-5 shadow-lg shadow-rose-500/5 dark:border-rose-900/60 dark:from-slate-950 dark:via-slate-900 dark:to-rose-950/30 sm:p-7">
+          
+          <!-- Primary Highlight Metric -->
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-rose-200/80 pb-4 dark:border-slate-800">
+            <div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-rose-700 dark:text-rose-300">
+                  Mean Arterial Pressure (MAP)
+                </span>
+                <span id="res-badge" class="rounded-full px-2.5 py-0.5 text-xs font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                  Optimal Perfusion
+                </span>
+              </div>
+              <div class="mt-1 flex items-baseline gap-2">
+                <div id="res-map-val" class="text-4xl sm:text-5xl font-black text-rose-600 dark:text-rose-400">
+                  93.3
+                </div>
+                <span class="text-lg font-bold text-slate-500">mmHg</span>
+              </div>
+            </div>
+
+            <div class="sm:text-right space-y-1">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Pulse Pressure (PP):</span>
+              <div id="res-pp-val" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                40 mmHg
+              </div>
+              <div id="res-pp-desc" class="text-[11px] text-slate-500 font-medium">
+                Normal Pulse Pressure
+              </div>
+            </div>
+          </div>
+
+          <!-- Secondary Grid Details -->
+          <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="rounded-xl border border-rose-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 font-semibold">Blood Pressure</div>
+              <div id="res-bp-val" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">120 / 80 mmHg</div>
+            </div>
+            <div class="rounded-xl border border-rose-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 font-semibold">ICU Sepsis Target (&ge;65)</div>
+              <div id="res-sepsis-target" class="mt-1 text-sm font-bold text-emerald-600 dark:text-emerald-400">Met (+28.3 mmHg)</div>
+            </div>
+            <div class="rounded-xl border border-rose-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 font-semibold">Cerebral Target (&ge;80)</div>
+              <div id="res-neuro-target" class="mt-1 text-sm font-bold text-emerald-600 dark:text-emerald-400">Met (+13.3 mmHg)</div>
+            </div>
+            <div class="rounded-xl border border-rose-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 font-semibold">Hemodynamic Status</div>
+              <div id="res-status-summary" class="mt-1 text-sm font-bold text-slate-900 dark:text-white">Normotensive</div>
+            </div>
+          </div>
+
+          <!-- Visual Linear MAP Perfusion Scale -->
+          <div class="mt-5">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5">
+              <span>Perfusion Gauge</span>
+              <span id="res-gauge-label" class="text-emerald-600 dark:text-emerald-400">93.3 mmHg (Optimal)</span>
+            </div>
+            
+            <div class="relative h-4 w-full rounded-full overflow-hidden bg-slate-200 dark:bg-slate-800">
+              <!-- Scale Color Bands: 40 to 140 mmHg span (100 units) -->
+              <div class="absolute inset-0 flex">
+                <div class="w-[20%] bg-red-500" title="<60 mmHg: Critical Hypoperfusion"></div>
+                <div class="w-[5%] bg-amber-400" title="60-64 mmHg: Marginal Perfusion"></div>
+                <div class="w-[35%] bg-emerald-500" title="65-100 mmHg: Optimal Range"></div>
+                <div class="w-[40%] bg-purple-500" title=">100 mmHg: High / Hypertensive"></div>
+              </div>
+              
+              <!-- Pinpoint Indicator -->
+              <div
+                id="map-gauge-pin"
+                class="absolute top-0 bottom-0 w-2 -ml-1 bg-white border-2 border-slate-900 shadow-md rounded-full transition-all duration-300"
+                style="left: 53.3%;"
+              ></div>
+            </div>
+
+            <div class="mt-1.5 flex justify-between text-[10px] text-slate-500 font-mono">
+              <span>40</span>
+              <span class="text-red-600 font-bold">60 (Shock)</span>
+              <span class="text-emerald-600 font-bold">65 (Min Target)</span>
+              <span class="text-emerald-600 font-bold">100 (Upper)</span>
+              <span>140+</span>
+            </div>
+          </div>
+
+          <!-- Clinical Organ Perfusion Assessment Cards -->
+          <div class="mt-5 border-t border-rose-200/80 pt-4 dark:border-slate-800">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-2">
+              Vital Organ Perfusion Breakdown
+            </h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+              <div id="card-renal" class="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 dark:border-emerald-900/40 dark:bg-emerald-950/30">
+                <div class="flex items-center gap-1.5 font-bold text-emerald-800 dark:text-emerald-300">
+                  <span>🫘</span> Renal (Kidneys)
+                </div>
+                <p id="desc-renal" class="mt-1 text-[11px] text-emerald-900 dark:text-emerald-200">
+                  Glomerular filtration pressure adequate. Low risk of acute tubular necrosis.
+                </p>
+              </div>
+
+              <div id="card-cerebral" class="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 dark:border-emerald-900/40 dark:bg-emerald-950/30">
+                <div class="flex items-center gap-1.5 font-bold text-emerald-800 dark:text-emerald-300">
+                  <span>🧠</span> Cerebral (Brain)
+                </div>
+                <p id="desc-cerebral" class="mt-1 text-[11px] text-emerald-900 dark:text-emerald-200">
+                  Cerebral perfusion pressure (CPP) maintained within autoregulatory limits.
+                </p>
+              </div>
+
+              <div id="card-coronary" class="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 dark:border-emerald-900/40 dark:bg-emerald-950/30">
+                <div class="flex items-center gap-1.5 font-bold text-emerald-800 dark:text-emerald-300">
+                  <span>🫀</span> Coronary (Myocardium)
+                </div>
+                <p id="desc-coronary" class="mt-1 text-[11px] text-emerald-900 dark:text-emerald-200">
+                  Sufficient diastolic driving pressure to maintain subendocardial blood flow.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Bar for Copy & Share -->
+          <div class="mt-4 flex items-center justify-between border-t border-rose-200/80 pt-3 dark:border-slate-800">
+            <button
+              type="button"
+              id="btn-copy-map"
+              class="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer"
+            >
+              <span>📋</span> Copy MAP Summary
+            </button>
+            <span id="copy-feedback" class="text-xs text-emerald-600 font-semibold hidden">Copied!</span>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- SEO CONTENT ARTICLE -->
+  <Fragment slot="content">
+    <article class="map-content">
+      
+      <h2>Mean Arterial Pressure – MAP Calculator: Clinical Guide for Blood Pressure &amp; Nursing</h2>
+      <p>
+        The <strong>Mean Arterial Pressure (MAP)</strong> is a vital hemodynamic indicator in triage, cardiology, and critical care. While standard blood pressure cuffs report systolic (SBP) and diastolic (DBP) values, our online <strong>MAP calculator</strong> translates these readings into a single metric representing continuous microvascular tissue perfusion.
+      </p>
+      <p>
+        Whether you are a bedside nurse titrating vasopressors or evaluating cardiovascular wellness, this <strong>map calculator bp</strong> tool provides rapid insight into whether blood is adequately perfusing the kidneys, brain, and heart.
+      </p>
+
+      <h2>What is Mean Arterial Pressure (MAP)?</h2>
+      <p>
+        <strong>Mean Arterial Pressure</strong> defines the average pressure exerted by circulating blood against arterial walls throughout one cardiac cycle. 
+      </p>
+      <p>
+        MAP is not a simple arithmetic average. Because the heart spends approximately two-thirds of each cycle in diastole (ventricular filling) and one-third in systole (ejection), diastolic pressure is weighted twice as heavily. Consequently, MAP represents the true continuous driving force delivering oxygen and nutrients into capillary beds.
+      </p>
+
+      <h2>How the MAP Calculator Works: Formulas and Math</h2>
+      <p>
+        Our <strong>bp map calculator</strong> uses the clinical formula recognized by hemodynamic societies:
+      </p>
+      
+      <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 font-mono text-sm dark:border-slate-800 dark:bg-slate-900/60 my-4">
+        <strong>Primary Clinical Formula:</strong><br />
+        MAP = DBP + [ ⅓ × (SBP - DBP) ]<br /><br />
+        <strong>Alternative Formula:</strong><br />
+        MAP = [ (2 × DBP) + SBP ] ÷ 3
+      </div>
+
+      <p>Key components include:</p>
+      <ul>
+        <li><strong>SBP (Systolic BP):</strong> Peak pressure during left ventricular contraction.</li>
+        <li><strong>DBP (Diastolic BP):</strong> Resting pressure between heartbeats.</li>
+        <li><strong>Pulse Pressure (PP = SBP - DBP):</strong> Force generated by ventricular ejection and arterial compliance.</li>
+      </ul>
+
+      <h3>Step-by-Step Calculation Example</h3>
+      <p>
+        For a patient with a blood pressure of <strong>120/80 mmHg</strong>:
+      </p>
+      <ol>
+        <li>Identify SBP = 120 mmHg and DBP = 80 mmHg.</li>
+        <li>Calculate Pulse Pressure: 120 - 80 = 40 mmHg.</li>
+        <li>Divide Pulse Pressure by 3: 40 ÷ 3 = 13.33 mmHg.</li>
+        <li>Add to DBP: 80 + 13.33 = <strong>93.33 mmHg</strong>.</li>
+      </ol>
+      <p>
+        Using the alternative formula: [ (2 × 80) + 120 ] ÷ 3 = 280 ÷ 3 = <strong>93.33 mmHg</strong>. Both methods verify optimal tissue perfusion.
+      </p>
+
+      <h2>Why Nurses Rely on the MAP Calculator Nursing Tool</h2>
+      <p>
+        Bedside clinicians depend on the <strong>map calculator nursing</strong> workflow across emergency and ICU units for critical interventions:
+      </p>
+
+      <ul>
+        <li>
+          <strong>Sepsis Bundles (Surviving Sepsis Campaign):</strong> Protocols require maintaining a <strong>target MAP ≥ 65 mmHg</strong>. Pressures below 65 mmHg cause acute tubular necrosis and multi-organ failure.
+        </li>
+        <li>
+          <strong>Cerebral Perfusion Pressure (CPP):</strong> In neurotrauma and stroke, cerebral perfusion is calculated as <code>CPP = MAP - ICP</code>. Keeping MAP optimized ensures brain oxygenation without triggering intracranial bleeding.
+        </li>
+        <li>
+          <strong>Preventing Acute Kidney Injury (AKI):</strong> Renal autoregulation depends on stable perfusion gradients. When MAP falls below 65 mmHg, glomerular filtration ceases, causing oliguria.
+        </li>
+        <li>
+          <strong>Vasopressor Titration:</strong> ICU nurses titrate infusions like norepinephrine directly to MAP goals rather than systolic peaks alone.
+        </li>
+      </ul>
+
+      <h2>MAP Calculator BP: Normal Ranges &amp; Interpretation</h2>
+      <p>
+        To evaluate results from the <strong>map calculator bp</strong>, use this clinical reference guide:
+      </p>
+
+      <div class="overflow-x-auto my-6">
+        <table class="w-full text-left text-xs sm:text-sm border border-slate-200 dark:border-slate-800">
+          <thead class="bg-slate-100 dark:bg-slate-800 font-bold text-slate-900 dark:text-slate-100">
+            <tr>
+              <th class="p-3 border-b border-slate-200 dark:border-slate-700">MAP Range</th>
+              <th class="p-3 border-b border-slate-200 dark:border-slate-700">Classification</th>
+              <th class="p-3 border-b border-slate-200 dark:border-slate-700">Perfusion State</th>
+              <th class="p-3 border-b border-slate-200 dark:border-slate-700">Clinical Focus</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+            <tr class="bg-red-50/50 dark:bg-red-950/20">
+              <td class="p-3 font-mono font-bold text-red-600">&lt; 60 mmHg</td>
+              <td class="p-3 font-semibold text-red-700 dark:text-red-400">Critical Shock</td>
+              <td class="p-3">Severe cellular hypoperfusion, kidney ischemia, lactic acidosis.</td>
+              <td class="p-3">Emergency IV fluids, vasopressors, shock workup.</td>
+            </tr>
+            <tr class="bg-amber-50/50 dark:bg-amber-950/20">
+              <td class="p-3 font-mono font-bold text-amber-600">60 – 64 mmHg</td>
+              <td class="p-3 font-semibold text-amber-700 dark:text-amber-400">Marginal</td>
+              <td class="p-3">Borderline capillary driving pressure; risk of low urine output.</td>
+              <td class="p-3">Close observation, fluid challenge review.</td>
+            </tr>
+            <tr class="bg-emerald-50/50 dark:bg-emerald-950/20">
+              <td class="p-3 font-mono font-bold text-emerald-600">65 – 100 mmHg</td>
+              <td class="p-3 font-semibold text-emerald-700 dark:text-emerald-400">Optimal</td>
+              <td class="p-3">Normal tissue oxygen delivery to all vital organs.</td>
+              <td class="p-3">Maintain care plan and routine vital surveillance.</td>
+            </tr>
+            <tr class="bg-purple-50/50 dark:bg-purple-950/20">
+              <td class="p-3 font-mono font-bold text-purple-600">&gt; 100 mmHg</td>
+              <td class="p-3 font-semibold text-purple-700 dark:text-purple-400">Elevated</td>
+              <td class="p-3">Excessive afterload; risk of encephalopathy or myocardial strain.</td>
+              <td class="p-3">Assess pain, agitation, or titrate antihypertensives.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>MAP vs. Systolic Blood Pressure: Which Number Matters More?</h2>
+      <p>
+        Systolic pressure reveals peak ejection force, but fluctuates with vascular resistance and anxiety. In contrast, our <strong>bp map calculator</strong> measures continuous driving perfusion. In septic shock, vasoconstriction may falsely preserve systolic numbers while tissues remain hypoxic. Tracking MAP provides a true assessment of microvascular delivery.
+      </p>
+
+      <h2>Pulse Pressure (PP) and Arterial Health</h2>
+      <p>
+        Evaluating Pulse Pressure (PP = SBP - DBP) alongside MAP yields valuable insights:
+      </p>
+      <ul>
+        <li><strong>Normal (30–50 mmHg):</strong> Healthy aortic elasticity and stroke volume.</li>
+        <li><strong>Narrow (&lt; 30 mmHg):</strong> Seen in hypovolemic shock, cardiac tamponade, or severe aortic stenosis.</li>
+        <li><strong>Wide (&gt; 60 mmHg):</strong> Common in arterial stiffness, aortic regurgitation, or severe hypertension.</li>
+      </ul>
+
+      <h2>Frequently Asked Questions (Clinical &amp; Nursing FAQ)</h2>
+      
+      <div class="space-y-4 my-6">
+        <details class="group rounded-2xl border border-slate-200 bg-white p-4.5 dark:border-slate-800 dark:bg-slate-900">
+          <summary class="cursor-pointer list-none">
+            <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+              1. What is a normal Mean Arterial Pressure (MAP)?
+              <span class="group-open:rotate-180 transition-transform">▼</span>
+            </h3>
+          </summary>
+          <p class="mt-2 text-slate-600 dark:text-slate-300">
+            A normal MAP for adults is <strong>70 to 100 mmHg</strong>. In critical care, a minimum threshold of <strong>65 mmHg</strong> is required to maintain vital organ perfusion.
+          </p>
+        </details>
+
+        <details class="group rounded-2xl border border-slate-200 bg-white p-4.5 dark:border-slate-800 dark:bg-slate-900">
+          <summary class="cursor-pointer list-none">
+            <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+              2. Why do nurses use a map calculator nursing tool instead of blood pressure alone?
+              <span class="group-open:rotate-180 transition-transform">▼</span>
+            </h3>
+          </summary>
+          <p class="mt-2 text-slate-600 dark:text-slate-300">
+            Nurses utilize the <strong>map calculator nursing</strong> method because MAP represents sustained perfusion pressure across the entire heartbeat, guiding accurate fluid and vasopressor titration.
+          </p>
+        </details>
+
+        <details class="group rounded-2xl border border-slate-200 bg-white p-4.5 dark:border-slate-800 dark:bg-slate-900">
+          <summary class="cursor-pointer list-none">
+            <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+              3. How is MAP calculated from blood pressure?
+              <span class="group-open:rotate-180 transition-transform">▼</span>
+            </h3>
+          </summary>
+          <p class="mt-2 text-slate-600 dark:text-slate-300">
+            Using our <strong>map calculator bp</strong>, the formula is MAP = DBP + ⅓(SBP - DBP), or [(2 × DBP) + SBP] ÷ 3. Diastolic pressure is doubled because the cardiac cycle spends twice as long in diastole.
+          </p>
+        </details>
+
+        <details class="group rounded-2xl border border-slate-200 bg-white p-4.5 dark:border-slate-800 dark:bg-slate-900">
+          <summary class="cursor-pointer list-none">
+            <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+              4. Why is 65 mmHg the target MAP in septic shock?
+              <span class="group-open:rotate-180 transition-transform">▼</span>
+            </h3>
+          </summary>
+          <p class="mt-2 text-slate-600 dark:text-slate-300">
+            Surviving Sepsis guidelines target 65 mmHg because clinical evidence proves it maintains adequate tissue perfusion without the arrhythmias and excessive vasoconstriction caused by higher vasopressor doses.
+          </p>
+        </details>
+
+        <details class="group rounded-2xl border border-slate-200 bg-white p-4.5 dark:border-slate-800 dark:bg-slate-900">
+          <summary class="cursor-pointer list-none">
+            <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+              5. What causes low Mean Arterial Pressure?
+              <span class="group-open:rotate-180 transition-transform">▼</span>
+            </h3>
+          </summary>
+          <p class="mt-2 text-slate-600 dark:text-slate-300">
+            Low MAP results from hypovolemic shock (dehydration, bleeding), distributive shock (sepsis, anaphylaxis), cardiogenic shock (heart failure), or antihypertensive overdose.
+          </p>
+        </details>
+      </div>
+
+      <div class="rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-200 mt-6">
+        <strong>Medical Disclaimer:</strong> This Mean Arterial Pressure (MAP) calculator is intended solely for educational and reference purposes. It does not replace clinical evaluation. Consult licensed healthcare practitioners for emergencies.
+      </div>
+
+    </article>
+  </Fragment>
+</CalculatorLayout>
+
+<style>
+  .map-content h2 {
+    margin-top: 2.25rem;
+    margin-bottom: 0.85rem;
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.3;
+  }
+  .map-content h2:first-child {
+    margin-top: 0;
+  }
+  .map-content h3 {
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #1e293b;
+  }
+  .map-content p {
+    margin: 0 0 1rem;
+    line-height: 1.75;
+    color: #475569;
+  }
+  .map-content ul, .map-content ol {
+    margin: 0.75rem 0 1.25rem;
+    padding-left: 1.5rem;
+  }
+  .map-content ul {
+    list-style: disc;
+  }
+  .map-content ol {
+    list-style: decimal;
+  }
+  .map-content li + li {
+    margin-top: 0.5rem;
+  }
+  .map-content strong {
+    color: #0f172a;
+  }
+  :global(.dark) .map-content h2 {
+    color: #f8fafc;
+  }
+  :global(.dark) .map-content h3 {
+    color: #e2e8f0;
+  }
+  :global(.dark) .map-content p,
+  :global(.dark) .map-content li {
+    color: #cbd5e1;
+  }
+  :global(.dark) .map-content strong {
+    color: #f1f5f9;
+  }
+</style>
+
+<script is:inline>
+  // Tab switching logic
+  const mapTabs = document.querySelectorAll('.btn-map-tab');
+  const mapPanels = document.querySelectorAll('.map-panel');
+
+  mapTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      mapTabs.forEach(t => {
+        t.classList.remove('bg-rose-600', 'text-white', 'shadow-xs');
+        t.classList.add('border', 'border-slate-300', 'bg-white', 'text-slate-700', 'dark:border-slate-700', 'dark:bg-slate-800', 'dark:text-slate-200');
+      });
+      tab.classList.add('bg-rose-600', 'text-white', 'shadow-xs');
+      tab.classList.remove('border', 'border-slate-300', 'bg-white', 'text-slate-700');
+      mapPanels.forEach(p => p.classList.add('hidden'));
+      document.getElementById('panel-' + tab.dataset.tab)?.classList.remove('hidden');
+    });
+  });
+
+  // Presets handling
+  document.querySelectorAll('.btn-map-preset').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sbp = btn.dataset.sbp;
+      const dbp = btn.dataset.dbp;
+      const hr = btn.dataset.hr;
+      
+      const inSbp = document.getElementById('input-sbp');
+      const inDbp = document.getElementById('input-dbp');
+      const inHr = document.getElementById('input-hr');
+      
+      if (inSbp && inDbp) {
+        inSbp.value = sbp;
+        inDbp.value = dbp;
+        if (inHr && hr) inHr.value = hr;
+        calculateStandardMap();
+      }
+    });
+  });
+
+  function calculateStandardMap() {
+    const sbp = parseFloat(document.getElementById('input-sbp')?.value);
+    const dbp = parseFloat(document.getElementById('input-dbp')?.value);
+    const hr = parseFloat(document.getElementById('input-hr')?.value) || 72;
+
+    if (isNaN(sbp) || isNaN(dbp) || sbp <= dbp || sbp <= 0 || dbp <= 0) {
+      alert('Please enter valid blood pressure values where Systolic pressure is greater than Diastolic pressure.');
+      return;
+    }
+
+    // Standard MAP Formula: DBP + 1/3 (SBP - DBP)
+    const pp = sbp - dbp;
+    const map = dbp + (pp / 3);
+
+    renderResults(map, sbp, dbp, pp);
+  }
+
+  function calculateNursingMap() {
+    const sbp = parseFloat(document.getElementById('nursing-sbp')?.value);
+    const dbp = parseFloat(document.getElementById('nursing-dbp')?.value);
+    const targetMap = parseFloat(document.getElementById('nursing-target-map')?.value) || 65;
+
+    if (isNaN(sbp) || isNaN(dbp) || sbp <= dbp || sbp <= 0 || dbp <= 0) {
+      alert('Please enter valid blood pressure values.');
+      return;
+    }
+
+    const pp = sbp - dbp;
+    const map = dbp + (pp / 3);
+
+    renderResults(map, sbp, dbp, pp, targetMap);
+  }
+
+  function renderResults(map, sbp, dbp, pp, customTarget = 65) {
+    const mapValEl = document.getElementById('res-map-val');
+    const badgeEl = document.getElementById('res-badge');
+    const ppValEl = document.getElementById('res-pp-val');
+    const ppDescEl = document.getElementById('res-pp-desc');
+    const bpValEl = document.getElementById('res-bp-val');
+    const sepsisTargetEl = document.getElementById('res-sepsis-target');
+    const neuroTargetEl = document.getElementById('res-neuro-target');
+    const statusSummaryEl = document.getElementById('res-status-summary');
+    const gaugePinEl = document.getElementById('map-gauge-pin');
+    const gaugeLabelEl = document.getElementById('res-gauge-label');
+
+    const descRenalEl = document.getElementById('desc-renal');
+    const descCerebralEl = document.getElementById('desc-cerebral');
+    const descCoronaryEl = document.getElementById('desc-coronary');
+
+    const cardRenal = document.getElementById('card-renal');
+    const cardCerebral = document.getElementById('card-cerebral');
+    const cardCoronary = document.getElementById('card-coronary');
+
+    if (!mapValEl) return;
+
+    // Display primary MAP
+    mapValEl.textContent = map.toFixed(1);
+    bpValEl.textContent = `${Math.round(sbp)} / ${Math.round(dbp)} mmHg`;
+    ppValEl.textContent = `${Math.round(pp)} mmHg`;
+
+    // Pulse pressure descriptor
+    if (pp < 30) {
+      ppDescEl.textContent = 'Narrow Pulse Pressure (Low Stroke Volume)';
+      ppDescEl.className = 'text-[11px] text-red-600 font-semibold';
+    } else if (pp > 60) {
+      ppDescEl.textContent = 'Wide Pulse Pressure (Arterial Stiffness)';
+      ppDescEl.className = 'text-[11px] text-amber-600 font-semibold';
+    } else {
+      ppDescEl.textContent = 'Normal Pulse Pressure (Healthy Elasticity)';
+      ppDescEl.className = 'text-[11px] text-emerald-600 font-semibold';
+    }
+
+    // Sepsis target delta (>= 65 mmHg)
+    const sepsisDelta = map - 65;
+    if (sepsisDelta >= 0) {
+      sepsisTargetEl.textContent = `Met (+${sepsisDelta.toFixed(1)} mmHg)`;
+      sepsisTargetEl.className = 'mt-1 text-sm font-bold text-emerald-600 dark:text-emerald-400';
+    } else {
+      sepsisTargetEl.textContent = `Unmet (${sepsisDelta.toFixed(1)} mmHg)`;
+      sepsisTargetEl.className = 'mt-1 text-sm font-bold text-red-600 dark:text-red-400';
+    }
+
+    // Neuro target delta (>= 80 mmHg)
+    const neuroDelta = map - 80;
+    if (neuroDelta >= 0) {
+      neuroTargetEl.textContent = `Met (+${neuroDelta.toFixed(1)} mmHg)`;
+      neuroTargetEl.className = 'mt-1 text-sm font-bold text-emerald-600 dark:text-emerald-400';
+    } else {
+      neuroTargetEl.textContent = `Unmet (${neuroDelta.toFixed(1)} mmHg)`;
+      neuroTargetEl.className = 'mt-1 text-sm font-bold text-amber-600 dark:text-amber-400';
+    }
+
+    // Position on visual gauge (scale range: 40 to 140 mmHg = 100 span)
+    const gaugePct = Math.min(100, Math.max(0, ((map - 40) / 100) * 100));
+    if (gaugePinEl) {
+      gaugePinEl.style.left = `${gaugePct}%`;
+    }
+
+    // Hemodynamic Classification & Organ Status
+    if (map < 60) {
+      badgeEl.textContent = 'Critical Hypoperfusion';
+      badgeEl.className = 'rounded-full px-2.5 py-0.5 text-xs font-extrabold bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300';
+      statusSummaryEl.textContent = 'Hypoperfusion / Shock';
+      statusSummaryEl.className = 'mt-1 text-sm font-bold text-red-600 dark:text-red-400';
+      gaugeLabelEl.textContent = `${map.toFixed(1)} mmHg (Critical Shock)`;
+      gaugeLabelEl.className = 'text-red-600 dark:text-red-400 font-bold';
+
+      descRenalEl.textContent = 'Critically low filtration pressure. High risk of oliguria and acute tubular necrosis.';
+      descCerebralEl.textContent = 'Cerebral perfusion compromised. Risk of ischemic injury and altered mental state.';
+      descCoronaryEl.textContent = 'Insufficient diastolic coronary driving pressure; risk of myocardial ischemia.';
+
+      cardRenal.className = 'rounded-xl border border-red-300 bg-red-50/70 p-3 dark:border-red-900/60 dark:bg-red-950/40';
+      cardCerebral.className = 'rounded-xl border border-red-300 bg-red-50/70 p-3 dark:border-red-900/60 dark:bg-red-950/40';
+      cardCoronary.className = 'rounded-xl border border-red-300 bg-red-50/70 p-3 dark:border-red-900/60 dark:bg-red-950/40';
+
+    } else if (map < 65) {
+      badgeEl.textContent = 'Borderline Perfusion';
+      badgeEl.className = 'rounded-full px-2.5 py-0.5 text-xs font-extrabold bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+      statusSummaryEl.textContent = 'Suboptimal MAP';
+      statusSummaryEl.className = 'mt-1 text-sm font-bold text-amber-600 dark:text-amber-400';
+      gaugeLabelEl.textContent = `${map.toFixed(1)} mmHg (Borderline)`;
+      gaugeLabelEl.className = 'text-amber-600 dark:text-amber-400 font-bold';
+
+      descRenalEl.textContent = 'Filtration pressure marginal. Monitor hourly urine output closely for early AKI signs.';
+      descCerebralEl.textContent = 'Autoregulation working hard. Keep MAP stable to prevent cerebral hypoperfusion.';
+      descCoronaryEl.textContent = 'Acceptable baseline, but vulnerable to additional sudden pressure drops.';
+
+      cardRenal.className = 'rounded-xl border border-amber-300 bg-amber-50/70 p-3 dark:border-amber-900/60 dark:bg-amber-950/40';
+      cardCerebral.className = 'rounded-xl border border-amber-300 bg-amber-50/70 p-3 dark:border-amber-900/60 dark:bg-amber-950/40';
+      cardCoronary.className = 'rounded-xl border border-amber-300 bg-amber-50/70 p-3 dark:border-amber-900/60 dark:bg-amber-950/40';
+
+    } else if (map <= 100) {
+      badgeEl.textContent = 'Optimal Organ Perfusion';
+      badgeEl.className = 'rounded-full px-2.5 py-0.5 text-xs font-extrabold bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+      statusSummaryEl.textContent = 'Normotensive Perfusion';
+      statusSummaryEl.className = 'mt-1 text-sm font-bold text-emerald-600 dark:text-emerald-400';
+      gaugeLabelEl.textContent = `${map.toFixed(1)} mmHg (Optimal)`;
+      gaugeLabelEl.className = 'text-emerald-600 dark:text-emerald-400 font-bold';
+
+      descRenalEl.textContent = 'Adequate glomerular filtration. Low risk of renal ischemic complications.';
+      descCerebralEl.textContent = 'Normal cerebral blood flow maintained within physiological autoregulation.';
+      descCoronaryEl.textContent = 'Healthy coronary driving pressure without excessive myocardial wall stress.';
+
+      cardRenal.className = 'rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 dark:border-emerald-900/40 dark:bg-emerald-950/30';
+      cardCerebral.className = 'rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 dark:border-emerald-900/40 dark:bg-emerald-950/30';
+      cardCoronary.className = 'rounded-xl border border-emerald-200 bg-emerald-50/60 p-3 dark:border-emerald-900/40 dark:bg-emerald-950/30';
+
+    } else if (map <= 110) {
+      badgeEl.textContent = 'Elevated MAP';
+      badgeEl.className = 'rounded-full px-2.5 py-0.5 text-xs font-extrabold bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300';
+      statusSummaryEl.textContent = 'Mildly Elevated Pressure';
+      statusSummaryEl.className = 'mt-1 text-sm font-bold text-blue-600 dark:text-blue-400';
+      gaugeLabelEl.textContent = `${map.toFixed(1)} mmHg (Elevated)`;
+      gaugeLabelEl.className = 'text-blue-600 dark:text-blue-400 font-bold';
+
+      descRenalEl.textContent = 'Mildly elevated intraglomerular pressure. Long-term risk of microalbuminuria.';
+      descCerebralEl.textContent = 'Approaching upper ceiling of cerebral autoregulation curve.';
+      descCoronaryEl.textContent = 'Increased left ventricular afterload and higher myocardial oxygen consumption.';
+
+      cardRenal.className = 'rounded-xl border border-blue-200 bg-blue-50/60 p-3 dark:border-blue-900/40 dark:bg-blue-950/30';
+      cardCerebral.className = 'rounded-xl border border-blue-200 bg-blue-50/60 p-3 dark:border-blue-900/40 dark:bg-blue-950/30';
+      cardCoronary.className = 'rounded-xl border border-blue-200 bg-blue-50/60 p-3 dark:border-blue-900/40 dark:bg-blue-950/30';
+
+    } else {
+      badgeEl.textContent = 'Severely Elevated / Crisis';
+      badgeEl.className = 'rounded-full px-2.5 py-0.5 text-xs font-extrabold bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300';
+      statusSummaryEl.textContent = 'Hypertensive State';
+      statusSummaryEl.className = 'mt-1 text-sm font-bold text-purple-600 dark:text-purple-400';
+      gaugeLabelEl.textContent = `${map.toFixed(1)} mmHg (Crisis Level)`;
+      gaugeLabelEl.className = 'text-purple-600 dark:text-purple-400 font-bold';
+
+      descRenalEl.textContent = 'Severe hyperperfusion stress on nephrons; risk of acute kidney injury.';
+      descCerebralEl.textContent = 'Breakthrough hyperperfusion; risk of cerebral edema, headache, and stroke.';
+      descCoronaryEl.textContent = 'Extreme cardiac workload. Potential for myocardial strain or pulmonary edema.';
+
+      cardRenal.className = 'rounded-xl border border-purple-300 bg-purple-50/70 p-3 dark:border-purple-900/60 dark:bg-purple-950/40';
+      cardCerebral.className = 'rounded-xl border border-purple-300 bg-purple-50/70 p-3 dark:border-purple-900/60 dark:bg-purple-950/40';
+      cardCoronary.className = 'rounded-xl border border-purple-300 bg-purple-50/70 p-3 dark:border-purple-900/60 dark:bg-purple-950/40';
+    }
+  }
+
+  // Event Listeners for Forms
+  document.getElementById('form-standard-map')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    calculateStandardMap();
+  });
+
+  document.getElementById('form-nursing-map')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    calculateNursingMap();
+  });
+
+  document.getElementById('btn-reset-standard')?.addEventListener('click', () => {
+    document.getElementById('input-sbp').value = '120';
+    document.getElementById('input-dbp').value = '80';
+    document.getElementById('input-hr').value = '72';
+    calculateStandardMap();
+  });
+
+  document.getElementById('btn-reset-nursing')?.addEventListener('click', () => {
+    document.getElementById('nursing-sbp').value = '88';
+    document.getElementById('nursing-dbp').value = '52';
+    document.getElementById('nursing-target-map').value = '65';
+    calculateNursingMap();
+  });
+
+  // Copy Summary feature
+  document.getElementById('btn-copy-map')?.addEventListener('click', () => {
+    const mapVal = document.getElementById('res-map-val')?.textContent || '';
+    const bpVal = document.getElementById('res-bp-val')?.textContent || '';
+    const ppVal = document.getElementById('res-pp-val')?.textContent || '';
+    const statusVal = document.getElementById('res-status-summary')?.textContent || '';
+    const badgeVal = document.getElementById('res-badge')?.textContent || '';
+
+    const summary = `Mean Arterial Pressure (MAP) Assessment:
+- BP: ${bpVal}
+- MAP: ${mapVal} mmHg (${badgeVal})
+- Pulse Pressure: ${ppVal}
+- Clinical Status: ${statusVal}
+Calculated via aifreecalculator.com MAP Calculator`;
+
+    navigator.clipboard.writeText(summary).then(() => {
+      const fb = document.getElementById('copy-feedback');
+      if (fb) {
+        fb.classList.remove('hidden');
+        setTimeout(() => fb.classList.add('hidden'), 2500);
+      }
+    });
+  });
+
+  // Initial calculation on page load
+  calculateStandardMap();
+</script>
+
+<script type="application/ld+json" set:html={JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is a normal Mean Arterial Pressure (MAP)?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A normal MAP for healthy adults is between 70 and 100 mmHg. A minimum MAP of 65 mmHg is necessary to maintain adequate perfusion to vital organs such as the kidneys and brain."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why do nurses use a map calculator nursing tool instead of checking blood pressure alone?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Nurses and ICU clinicians rely on the MAP formula because it reflects the continuous tissue perfusion pressure across the entire cardiac cycle, whereas systolic pressure represents only a brief peak."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How is MAP calculated from blood pressure?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The standard MAP formula is MAP = DBP + [1/3 * (SBP - DBP)] or MAP = [(2 * DBP) + SBP] / 3. Diastolic pressure is doubled because the heart spends approximately two-thirds of the resting cycle in diastole."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why is 65 mmHg the target MAP in septic shock?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The Surviving Sepsis Campaign establishes 65 mmHg as the target because it achieves adequate microvascular perfusion to the kidneys and brain while avoiding the tachycardia, arrhythmias, and excessive vasoconstriction linked to higher vasopressor doses."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is pulse pressure and why does the MAP calculator display it?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Pulse pressure is the difference between systolic and diastolic blood pressure (SBP - DBP). Normal pulse pressure is 30 to 50 mmHg. Narrow pulse pressure (<30 mmHg) may indicate hypovolemia or cardiogenic shock, while wide pulse pressure (>60 mmHg) indicates arterial stiffness or aortic regurgitation."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What causes low Mean Arterial Pressure?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Low MAP is caused by hypovolemia (dehydration, hemorrhage), distributive shock (sepsis, anaphylaxis), cardiogenic shock (heart attack, arrhythmias), or antihypertensive medication overdose."
+      }
+    }
+  ]
+})} />
