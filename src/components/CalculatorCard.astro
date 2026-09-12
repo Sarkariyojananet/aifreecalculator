@@ -2,17 +2,37 @@
 import type { Calculator } from '../data/calculators';
 
 interface Props {
-  calculator: Calculator;
+  calculator?: Calculator;
+  title?: string;
+  description?: string;
+  path?: string;
+  icon?: string;
+  category?: string;
+  badge?: string;
   featured?: boolean;
 }
 
-const { calculator, featured = false } = Astro.props;
+const {
+  calculator,
+  featured: propFeatured,
+  title: propTitle,
+  description: propDescription,
+  path: propPath,
+  category: propCategory,
+  badge: propBadge,
+} = Astro.props;
+
+const effectivePath = propPath || calculator?.path || '/';
+const effectiveCategory = propCategory || calculator?.category || 'General';
+const effectiveName = propTitle || calculator?.name || '';
+const effectiveDesc = propDescription || calculator?.description || '';
+const isFeatured = propFeatured !== undefined ? propFeatured : (calculator?.featured || !!propBadge);
 ---
 
 <a
-  href={calculator.path}
+  href={effectivePath}
   class={`group flex flex-col justify-between rounded-xl border bg-white p-5 shadow-xs transition hover:border-slate-400 dark:hover:border-slate-600 hover:shadow-sm dark:bg-slate-900 ${
-    featured
+    isFeatured
       ? 'border-blue-300 dark:border-blue-900/60 bg-blue-50/20 dark:bg-blue-950/20'
       : 'border-slate-200 dark:border-slate-800'
   }`}
@@ -21,23 +41,23 @@ const { calculator, featured = false } = Astro.props;
     <!-- Category Label & Optional Featured Flag -->
     <div class="flex items-center justify-between">
       <span class="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
-        {calculator.category}
+        {effectiveCategory}
       </span>
-      {featured && (
+      {isFeatured && (
         <span class="text-[11px] font-semibold text-blue-600 dark:text-blue-400">
-          Featured
+          {propBadge || 'Featured'}
         </span>
       )}
     </div>
 
     <!-- Title -->
     <h3 class="mt-3 text-base font-bold text-slate-900 group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400 transition-colors">
-      {calculator.name}
+      {effectiveName}
     </h3>
 
     <!-- Description -->
     <p class="mt-1.5 text-xs leading-relaxed text-slate-600 dark:text-slate-400 line-clamp-2">
-      {calculator.description}
+      {effectiveDesc}
     </p>
   </div>
 

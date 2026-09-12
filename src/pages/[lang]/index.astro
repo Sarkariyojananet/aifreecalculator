@@ -1,0 +1,204 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import CalculatorCard from '../../components/CalculatorCard.astro';
+import AdSlotTop from '../../components/ads/AdSlotTop.astro';
+import AdSlotFooter from '../../components/ads/AdSlotFooter.astro';
+import { calculators, categories } from '../../data/calculators';
+import { getTranslatedHomeStaticPaths } from '../../i18n/registry';
+import { COMMON_TRANSLATIONS } from '../../i18n/translations/common';
+import { CATEGORIES_CONFIG } from '../../i18n/translations/categories';
+import { getLocalizedPath } from '../../i18n/utils';
+import type { Locale } from '../../i18n/config';
+
+export function getStaticPaths() {
+  return getTranslatedHomeStaticPaths();
+}
+
+const { lang } = Astro.params as { lang: Locale };
+const tCommon = COMMON_TRANSLATIONS[lang] || COMMON_TRANSLATIONS.en;
+
+const preferredCategoryOrder = ['Finance', 'Construction', 'Health', 'Math', 'General'];
+const categoryPills = [...categories]
+  .sort((a, b) => {
+    const idxA = preferredCategoryOrder.indexOf(a.name);
+    const idxB = preferredCategoryOrder.indexOf(b.name);
+    return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
+  })
+  .map((cat) => {
+    const catKey = cat.name.toLowerCase() as keyof typeof CATEGORIES_CONFIG;
+    return {
+      name: CATEGORIES_CONFIG[catKey]?.names[lang] || cat.name,
+      description: CATEGORIES_CONFIG[catKey]?.descriptions[lang] || cat.description,
+      icon: cat.icon,
+      path: getLocalizedPath(cat.path, lang),
+      count: calculators.filter(
+        (c) =>
+          c.category.toLowerCase() === cat.name.toLowerCase() ||
+          (c.additionalCategories &&
+            c.additionalCategories.some((ac) => ac.toLowerCase() === cat.name.toLowerCase()))
+      ).length,
+    };
+  });
+
+// Core popular calculators translated
+const popularSlugs = [
+  'emi-calculator',
+  'sip-calculator',
+  'bmi-calculator',
+  'age-calculator',
+  'calorie-calculator',
+  'rcc-slab-steel-calculator',
+];
+
+const popularCalculators = popularSlugs
+  .map((slug) => calculators.find((c) => c.slug === slug))
+  .filter(Boolean) as typeof calculators;
+
+const heroTitleMap: Record<Locale, string> = {
+  en: 'Free Online Calculators for Everyone',
+  hi: 'सभी के लिए मुफ़्त और सटीक ऑनलाइन कैलकुलेटर',
+  es: 'Calculadoras en línea gratuitas y precisas',
+  ja: '誰でも使える高精度な無料オンライン計算機',
+  fr: 'Calculateurs en ligne gratuits et précis',
+  de: 'Kostenlose und präzise Online-Rechner für alle',
+  pt: 'Calculadoras online gratuitas e precisas para todos',
+  ko: '누구나 쉽게 사용하는 무료 온라인 계산기',
+  it: 'Calcolatori online gratuiti e precisi per tutti',
+};
+
+const heroSubtitleMap: Record<Locale, string> = {
+  en: 'Fast, private, client-side tools for finance, construction, health, math, and daily utilities.',
+  hi: 'वित्त, निर्माण, स्वास्थ्य, गणित और दैनिक उपयोग के लिए तेज़, सुरक्षित और मुफ़्त ऑनलाइन टूल्स।',
+  es: 'Herramientas rápidas y privadas para finanzas, construcción, salud, matemáticas y vida diaria.',
+  ja: '金融、建築、健康、数学、日常生活で役立つ安全で高速なブラウザ完結型ツール。',
+  fr: 'Des outils rapides et sécurisés pour la finance, le bâtiment, la santé, les maths et le quotidien.',
+  de: 'Schnelle und sichere Rechenwerkzeuge für Finanzen, Bauwesen, Gesundheit, Mathematik und Alltag.',
+  pt: 'Ferramentas rápidas e privadas para finanças, construção civil, saúde, matemática e dia a dia.',
+  ko: '금융, 건축, 건강, 수학 및 일상생활을 위한 빠르고 안전한 브라우저 기반 계산 도구입니다.',
+  it: 'Strumenti immediati e riservati per finanza, edilizia, salute, matematica e vita quotidiana.',
+};
+
+const heroTitle = heroTitleMap[lang] || heroTitleMap.en;
+const heroSubtitle = heroSubtitleMap[lang] || heroSubtitleMap.en;
+
+const pageTitle = `${heroTitle} | AI Free Calculator`;
+const pageDescription = heroSubtitle;
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  lang={lang}
+>
+  <!-- Hero Section -->
+  <section class="relative overflow-hidden border-b border-slate-200 bg-linear-to-b from-blue-50/50 via-white to-white px-4 pt-10 pb-12 sm:pt-16 sm:pb-16 dark:border-slate-800 dark:from-slate-900 dark:via-slate-950 dark:to-slate-950">
+    <div class="mx-auto max-w-5xl text-center">
+      <div class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3.5 py-1 text-xs font-bold text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/60 dark:text-blue-300 mb-6">
+        <span class="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse"></span>
+        60+ {tCommon.search.placeholder.replace('...', '')}
+      </div>
+
+      <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
+        {heroTitle}
+      </h1>
+
+      <p class="mx-auto mt-4 max-w-2xl text-base text-slate-600 dark:text-slate-400 sm:text-lg">
+        {heroSubtitle}
+      </p>
+
+      <!-- Category Filter Quick Pills -->
+      <div class="mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+        {categoryPills.map((cat) => (
+          <a
+            href={cat.path}
+            class="group inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-2xs transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-800 dark:hover:bg-blue-950/50 dark:hover:text-blue-400"
+          >
+            <span>{cat.icon}</span>
+            <span>{cat.name}</span>
+            <span class="rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 group-hover:bg-blue-100 group-hover:text-blue-700 dark:bg-slate-800 dark:text-slate-400 dark:group-hover:bg-blue-900 dark:group-hover:text-blue-300">
+              {cat.count}
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Top Ad Slot -->
+  <AdSlotTop />
+
+  <!-- Popular Calculators Grid -->
+  <section class="py-12 sm:py-16">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 border-b border-slate-200 pb-5 dark:border-slate-800 mb-8">
+        <div>
+          <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            {tCommon.sections.popularTools}
+          </h2>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            {tCommon.tagline}
+          </p>
+        </div>
+        <a
+          href={getLocalizedPath('/all-calculators/', lang)}
+          class="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-700 dark:text-blue-400"
+        >
+          {tCommon.buttons.viewAll} ({calculators.length}) →
+        </a>
+      </div>
+
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {popularCalculators.map((calc) => (
+          <CalculatorCard
+            title={calc.name}
+            description={calc.description}
+            path={getLocalizedPath(calc.path, lang)}
+            icon={calc.icon}
+            category={calc.category}
+            badge={calc.featured ? 'Featured' : undefined}
+          />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Categories Breakdown Section -->
+  <section id="categories" class="bg-slate-50 py-12 dark:bg-slate-900/40 sm:py-16">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div class="text-center max-w-2xl mx-auto mb-10">
+        <h2 class="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+          {tCommon.nav.categories}
+        </h2>
+        <p class="mt-2 text-sm text-slate-500 dark:text-slate-400">
+          {tCommon.footer.categoriesTitle}
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {categoryPills.map((cat) => (
+          <a
+            href={cat.path}
+            class="group rounded-2xl border border-slate-200 bg-white p-6 shadow-xs transition hover:border-blue-400 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-700 flex flex-col justify-between"
+          >
+            <div>
+              <div class="text-3xl mb-3">{cat.icon}</div>
+              <h3 class="text-lg font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">
+                {cat.name}
+              </h3>
+              <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                {cat.description}
+              </p>
+            </div>
+            <div class="mt-5 flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800/80 text-xs font-semibold text-slate-500 dark:text-slate-400 group-hover:text-blue-600 dark:group-hover:text-blue-400">
+              <span>{cat.count} {tCommon.buttons.viewAll}</span>
+              <span>→</span>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- Bottom Ad Slot -->
+  <AdSlotFooter />
+</BaseLayout>

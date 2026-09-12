@@ -12,6 +12,14 @@ export default defineConfig({
     imageService: 'passthrough',
   }),
 
+  i18n: {
+    defaultLocale: 'en',
+    locales: ['en', 'hi', 'es', 'ja', 'fr', 'de', 'pt', 'ko', 'it'],
+    routing: {
+      prefixDefaultLocale: false,
+    },
+  },
+
   redirects: {
     '/finance/sukanya-samriddhi-calculator': '/finance/sukanya-samriddhi-yojana-calculator',
     '/brickwork-calculator': '/construction/brickwork-calculator',

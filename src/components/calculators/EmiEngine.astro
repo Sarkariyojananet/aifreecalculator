@@ -1,0 +1,162 @@
+---
+import type { Locale } from '../../i18n/config';
+
+interface Props {
+  lang?: Locale;
+  ui?: {
+    calculate?: string;
+    reset?: string;
+    results?: string;
+    loading?: string;
+  };
+}
+
+const { lang = 'en', ui } = Astro.props;
+const btnCalculate = ui?.calculate || 'Calculate EMI';
+const btnReset = ui?.reset || 'Reset';
+const resultsTitle = ui?.results || 'EMI Summary';
+---
+
+<div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-blue-50/60 p-5 sm:p-7 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/20">
+  <form id="localized-emi-form" class="space-y-5" onsubmit="return false;">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div>
+        <label for="emi-principal" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+          Loan Amount / मूलधन / Monto
+        </label>
+        <input
+          type="number"
+          id="emi-principal"
+          step="1000"
+          min="1000"
+          value="100000"
+          required
+          class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+        />
+      </div>
+
+      <div>
+        <label for="emi-rate" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+          Interest Rate (% p.a.) / ब्याज दर
+        </label>
+        <input
+          type="number"
+          id="emi-rate"
+          step="0.05"
+          min="0.1"
+          max="50"
+          value="8.5"
+          required
+          class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+        />
+      </div>
+
+      <div>
+        <label for="emi-tenure" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+          Tenure (Years) / अवधि / Plazo
+        </label>
+        <input
+          type="number"
+          id="emi-tenure"
+          min="1"
+          max="40"
+          value="20"
+          required
+          class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+        />
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 pt-2">
+      <button
+        type="button"
+        id="emi-calc-btn"
+        class="inline-flex items-center justify-center rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-md transition hover:bg-blue-700 cursor-pointer"
+      >
+        {btnCalculate}
+      </button>
+      <button
+        type="button"
+        id="emi-reset-btn"
+        class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
+      >
+        {btnReset}
+      </button>
+    </div>
+  </form>
+
+  <!-- Results Box -->
+  <div id="emi-result-card" class="mt-6 rounded-2xl border border-blue-200 bg-blue-50/70 p-5 dark:border-blue-900/50 dark:bg-blue-950/30">
+    <div class="text-xs font-bold uppercase tracking-wider text-blue-800 dark:text-blue-300 mb-1">
+      {resultsTitle}
+    </div>
+    
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+      <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-blue-100 dark:border-blue-900/40">
+        <div class="text-xs text-slate-500 dark:text-slate-400">Monthly EMI / मासिक किस्त</div>
+        <div id="emi-monthly" class="text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400 mt-1">867.82</div>
+      </div>
+
+      <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-blue-100 dark:border-blue-900/40">
+        <div class="text-xs text-slate-500 dark:text-slate-400">Total Interest / कुल ब्याज</div>
+        <div id="emi-total-interest" class="text-xl sm:text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1">108,277</div>
+      </div>
+
+      <div class="bg-white dark:bg-slate-900 p-4 rounded-xl border border-blue-100 dark:border-blue-900/40">
+        <div class="text-xs text-slate-500 dark:text-slate-400">Total Payment / कुल भुगतान</div>
+        <div id="emi-total-payment" class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mt-1">208,277</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function initEmiEngine() {
+    const principalInput = document.getElementById('emi-principal') as HTMLInputElement | null;
+    const rateInput = document.getElementById('emi-rate') as HTMLInputElement | null;
+    const tenureInput = document.getElementById('emi-tenure') as HTMLInputElement | null;
+    const calcBtn = document.getElementById('emi-calc-btn');
+    const resetBtn = document.getElementById('emi-reset-btn');
+    const monthlyEl = document.getElementById('emi-monthly');
+    const interestEl = document.getElementById('emi-total-interest');
+    const paymentEl = document.getElementById('emi-total-payment');
+
+    if (!principalInput || !rateInput || !tenureInput || !calcBtn) return;
+
+    function calculate() {
+      const p = parseFloat(principalInput?.value || '0');
+      const annualRate = parseFloat(rateInput?.value || '0');
+      const years = parseFloat(tenureInput?.value || '0');
+
+      if (p <= 0 || annualRate <= 0 || years <= 0) return;
+
+      const r = (annualRate / 12) / 100;
+      const n = years * 12;
+
+      const emi = (p * r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+      const totalPayment = emi * n;
+      const totalInterest = totalPayment - p;
+
+      if (monthlyEl) monthlyEl.textContent = emi.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (interestEl) interestEl.textContent = Math.round(totalInterest).toLocaleString();
+      if (paymentEl) paymentEl.textContent = Math.round(totalPayment).toLocaleString();
+    }
+
+    calcBtn.addEventListener('click', calculate);
+    principalInput.addEventListener('input', calculate);
+    rateInput.addEventListener('input', calculate);
+    tenureInput.addEventListener('input', calculate);
+
+    resetBtn?.addEventListener('click', () => {
+      if (principalInput) principalInput.value = '100000';
+      if (rateInput) rateInput.value = '8.5';
+      if (tenureInput) tenureInput.value = '20';
+      calculate();
+    });
+
+    calculate();
+  }
+
+  initEmiEngine();
+  document.addEventListener('astro:page-load', initEmiEngine);
+</script>

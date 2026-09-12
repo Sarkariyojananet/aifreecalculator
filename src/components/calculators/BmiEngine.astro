@@ -1,0 +1,200 @@
+---
+import type { Locale } from '../../i18n/config';
+
+interface Props {
+  lang?: Locale;
+  ui?: {
+    calculate?: string;
+    reset?: string;
+    results?: string;
+    loading?: string;
+  };
+}
+
+const { lang = 'en', ui } = Astro.props;
+const btnCalculate = ui?.calculate || 'Calculate BMI';
+const btnReset = ui?.reset || 'Reset';
+const resultsTitle = ui?.results || 'BMI Result';
+---
+
+<div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-emerald-50/60 p-5 sm:p-7 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-emerald-950/20">
+  <form id="localized-bmi-form" class="space-y-5" onsubmit="return false;">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label for="bmi-weight" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+          Weight (kg) / वजन / Peso
+        </label>
+        <input
+          type="number"
+          id="bmi-weight"
+          step="0.1"
+          min="10"
+          max="300"
+          value="70"
+          required
+          class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+        />
+      </div>
+
+      <div>
+        <label for="bmi-height" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+          Height (cm) / कद / Altura
+        </label>
+        <input
+          type="number"
+          id="bmi-height"
+          step="0.5"
+          min="50"
+          max="250"
+          value="175"
+          required
+          class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+        />
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label for="bmi-age" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+          Age (Years) / आयु / Edad
+        </label>
+        <input
+          type="number"
+          id="bmi-age"
+          min="2"
+          max="120"
+          value="28"
+          class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+        />
+      </div>
+
+      <div>
+        <label for="bmi-standard" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+          Standard / मानक / Estándar
+        </label>
+        <select
+          id="bmi-standard"
+          class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white cursor-pointer"
+        >
+          <option value="who">WHO International Standard</option>
+          <option value="asian">Asian / Indian Standard</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 pt-2">
+      <button
+        type="button"
+        id="bmi-calc-btn"
+        class="inline-flex items-center justify-center rounded-xl bg-blue-600 px-6 py-3 text-sm font-bold text-white shadow-md transition hover:bg-blue-700 cursor-pointer"
+      >
+        {btnCalculate}
+      </button>
+      <button
+        type="button"
+        id="bmi-reset-btn"
+        class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
+      >
+        {btnReset}
+      </button>
+    </div>
+  </form>
+
+  <!-- Results Box -->
+  <div id="bmi-result-card" class="mt-6 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-5 dark:border-emerald-900/50 dark:bg-emerald-950/30">
+    <div class="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 mb-1">
+      {resultsTitle}
+    </div>
+    <div class="flex flex-wrap items-baseline gap-3">
+      <span id="bmi-score" class="text-4xl font-black text-slate-900 dark:text-white">22.86</span>
+      <span class="text-sm font-medium text-slate-500 dark:text-slate-400">kg/m²</span>
+      <span id="bmi-badge" class="rounded-full bg-emerald-600 px-3 py-0.5 text-xs font-bold text-white">
+        Normal / Healthy Weight
+      </span>
+    </div>
+    <div class="mt-3 text-xs text-slate-600 dark:text-slate-300 space-y-1">
+      <div>Healthy Weight Range for your height: <strong id="bmi-healthy-range">56.7 kg – 76.3 kg</strong></div>
+      <div>Category: <strong id="bmi-category-desc">Normal BMI according to WHO guidelines.</strong></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function initBmiEngine() {
+    const weightInput = document.getElementById('bmi-weight') as HTMLInputElement | null;
+    const heightInput = document.getElementById('bmi-height') as HTMLInputElement | null;
+    const standardSelect = document.getElementById('bmi-standard') as HTMLSelectElement | null;
+    const calcBtn = document.getElementById('bmi-calc-btn');
+    const resetBtn = document.getElementById('bmi-reset-btn');
+    const scoreEl = document.getElementById('bmi-score');
+    const badgeEl = document.getElementById('bmi-badge');
+    const healthyRangeEl = document.getElementById('bmi-healthy-range');
+    const categoryDescEl = document.getElementById('bmi-category-desc');
+
+    if (!weightInput || !heightInput || !calcBtn) return;
+
+    function calculate() {
+      const weight = parseFloat(weightInput?.value || '0');
+      const height = parseFloat(heightInput?.value || '0');
+      const standard = standardSelect?.value || 'who';
+
+      if (weight <= 0 || height <= 0) return;
+
+      const heightInMeters = height / 100;
+      const bmi = weight / (heightInMeters * heightInMeters);
+      const roundedBmi = Math.round(bmi * 100) / 100;
+
+      if (scoreEl) scoreEl.textContent = roundedBmi.toFixed(2);
+
+      let status = 'Normal';
+      let badgeClass = 'bg-emerald-600';
+      let minNormal = standard === 'asian' ? 18.5 : 18.5;
+      let maxNormal = standard === 'asian' ? 22.9 : 24.9;
+
+      if (bmi < 18.5) {
+        status = 'Underweight';
+        badgeClass = 'bg-amber-600';
+      } else if (bmi <= maxNormal) {
+        status = 'Healthy Weight';
+        badgeClass = 'bg-emerald-600';
+      } else if (bmi <= (standard === 'asian' ? 24.9 : 29.9)) {
+        status = 'Overweight';
+        badgeClass = 'bg-orange-600';
+      } else {
+        status = 'Obese';
+        badgeClass = 'bg-red-600';
+      }
+
+      if (badgeEl) {
+        badgeEl.textContent = status;
+        badgeEl.className = `rounded-full px-3 py-0.5 text-xs font-bold text-white ${badgeClass}`;
+      }
+
+      const minWeight = Math.round(minNormal * (heightInMeters * heightInMeters) * 10) / 10;
+      const maxWeight = Math.round(maxNormal * (heightInMeters * heightInMeters) * 10) / 10;
+
+      if (healthyRangeEl) {
+        healthyRangeEl.textContent = `${minWeight} kg – ${maxWeight} kg`;
+      }
+      if (categoryDescEl) {
+        categoryDescEl.textContent = `${status} (${roundedBmi.toFixed(2)} kg/m²)`;
+      }
+    }
+
+    calcBtn.addEventListener('click', calculate);
+    weightInput.addEventListener('input', calculate);
+    heightInput.addEventListener('input', calculate);
+    standardSelect?.addEventListener('change', calculate);
+
+    resetBtn?.addEventListener('click', () => {
+      if (weightInput) weightInput.value = '70';
+      if (heightInput) heightInput.value = '175';
+      calculate();
+    });
+
+    calculate();
+  }
+
+  initBmiEngine();
+  document.addEventListener('astro:page-load', initBmiEngine);
+</script>

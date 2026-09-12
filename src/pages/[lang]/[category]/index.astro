@@ -1,0 +1,96 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import CalculatorCard from '../../../components/CalculatorCard.astro';
+import AdSlotTop from '../../../components/ads/AdSlotTop.astro';
+import AdSlotFooter from '../../../components/ads/AdSlotFooter.astro';
+import { getTranslatedCategoryStaticPaths } from '../../../i18n/registry';
+import { getCalculatorsByCategory } from '../../../data/calculators';
+import { COMMON_TRANSLATIONS } from '../../../i18n/translations/common';
+import { getLocalizedPath } from '../../../i18n/utils';
+import type { Locale } from '../../../i18n/config';
+
+export function getStaticPaths() {
+  return getTranslatedCategoryStaticPaths();
+}
+
+const { lang, category } = Astro.params as { lang: Locale; category: string };
+const { categoryData } = Astro.props;
+
+const tCommon = COMMON_TRANSLATIONS[lang] || COMMON_TRANSLATIONS.en;
+
+// Format category name for lookup (e.g. 'finance' -> 'Finance')
+const capitalizedCategory = category.charAt(0).toUpperCase() + category.slice(1);
+const categoryCalculators = getCalculatorsByCategory(capitalizedCategory as any);
+
+const pageTitle = `${categoryData.metaTitle} | AI Free Calculator`;
+const pageDescription = categoryData.metaDescription;
+const ogImage = `/og/${category.toLowerCase()}.png`;
+---
+
+<BaseLayout
+  title={pageTitle}
+  description={pageDescription}
+  lang={lang}
+  ogImage={ogImage}
+>
+  <!-- Category Header Hero -->
+  <section class="border-b border-slate-200 bg-white px-4 py-10 dark:border-slate-800 dark:bg-slate-900/60 sm:py-14">
+    <div class="mx-auto max-w-7xl">
+      <!-- Breadcrumb Bar -->
+      <nav class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-4" aria-label="Breadcrumb">
+        <a href={getLocalizedPath('/', lang)} class="hover:text-blue-600 dark:hover:text-blue-400">
+          {tCommon.nav.home}
+        </a>
+        <span>/</span>
+        <span class="text-slate-800 dark:text-slate-200 font-semibold">
+          {categoryData.name}
+        </span>
+      </nav>
+
+      <div class="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider mb-2">
+        <span>{categoryData.icon}</span>
+        <span>{categoryData.badge}</span>
+      </div>
+
+      <h1 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white sm:text-4xl">
+        {categoryData.h1}
+      </h1>
+
+      <p class="mt-3 max-w-3xl text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+        {categoryData.description}
+      </p>
+    </div>
+  </section>
+
+  <div class="mx-auto max-w-7xl px-4">
+    <AdSlotTop />
+  </div>
+
+  <!-- Calculator Tools Grid -->
+  <section class="px-4 py-10">
+    <div class="mx-auto max-w-7xl space-y-6">
+      <div class="flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-800">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-400">
+          {categoryCalculators.length} {tCommon.search.placeholder.replace('...', '')}
+        </span>
+      </div>
+
+      <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {categoryCalculators.map((calc) => (
+          <CalculatorCard
+            title={calc.name}
+            description={calc.description}
+            path={getLocalizedPath(calc.path, lang)}
+            icon={calc.icon}
+            category={calc.category}
+            badge={calc.featured ? 'Featured' : undefined}
+          />
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <div class="mx-auto max-w-7xl px-4">
+    <AdSlotFooter />
+  </div>
+</BaseLayout>

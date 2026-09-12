@@ -1,0 +1,73 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import CalculatorCard from '../../components/CalculatorCard.astro';
+import AdSlotTop from '../../components/ads/AdSlotTop.astro';
+import AdSlotFooter from '../../components/ads/AdSlotFooter.astro';
+import { calculators, categories } from '../../data/calculators';
+import { getTranslatedStaticPagePaths } from '../../i18n/registry';
+import { getLocalizedPath } from '../../i18n/utils';
+import { COMMON_TRANSLATIONS } from '../../i18n/translations/common';
+import type { Locale } from '../../i18n/config';
+
+export function getStaticPaths() {
+  return getTranslatedStaticPagePaths('all-calculators');
+}
+
+const { lang } = Astro.params as { lang: Locale };
+const { pageData } = Astro.props;
+const tCommon = COMMON_TRANSLATIONS[lang] || COMMON_TRANSLATIONS.en;
+---
+
+<BaseLayout
+  title={`${pageData.metaTitle} | AI Free Calculator`}
+  description={pageData.metaDescription}
+  lang={lang}
+>
+  <!-- Page Header -->
+  <section class="border-b border-slate-200 bg-white px-4 py-10 sm:py-14 dark:border-slate-800 dark:bg-slate-900/60">
+    <div class="mx-auto max-w-7xl">
+      <nav class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-3" aria-label="Breadcrumb">
+        <a href={getLocalizedPath('/', lang)} class="hover:text-blue-600 dark:hover:text-blue-400">
+          {tCommon.nav.home}
+        </a>
+        <span>/</span>
+        <span class="text-slate-800 dark:text-slate-200 font-semibold">{pageData.name}</span>
+      </nav>
+
+      <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+        <div>
+          <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl dark:text-white">
+            {pageData.h1}
+          </h1>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 max-w-2xl">
+            {pageData.intro}
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="mx-auto max-w-7xl px-4">
+    <AdSlotTop />
+  </div>
+
+  <!-- Calculators Grid -->
+  <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {calculators.map((calc) => (
+        <CalculatorCard
+          title={calc.name}
+          description={calc.description}
+          path={getLocalizedPath(calc.path, lang)}
+          icon={calc.icon}
+          category={calc.category}
+          badge={calc.featured ? 'Featured' : undefined}
+        />
+      ))}
+    </div>
+  </main>
+
+  <div class="mx-auto max-w-7xl px-4">
+    <AdSlotFooter />
+  </div>
+</BaseLayout>

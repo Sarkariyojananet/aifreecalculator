@@ -8,6 +8,10 @@ import AdSlotFooter from '../components/ads/AdSlotFooter.astro';
 import { calculators, type CalculatorCategory } from '../data/calculators';
 import { getInternalLinks, getCalculatorOverrides } from '../lib/admin/content-store';
 import { buildCalculatorGraphSchema } from '../lib/seo/schema-builder';
+import { extractLocaleFromPath, getLocalizedPath } from '../i18n/utils';
+import { COMMON_TRANSLATIONS } from '../i18n/translations/common';
+import { CATEGORIES_CONFIG } from '../i18n/translations/categories';
+import type { Locale } from '../i18n/config';
 
 interface Props {
   title: string;
@@ -17,6 +21,7 @@ interface Props {
   slug: string;
   keywords?: string[];
   ogImage?: string;
+  lang?: Locale;
 }
 
 const {
@@ -27,7 +32,12 @@ const {
   slug,
   keywords = [],
   ogImage,
+  lang: explicitLang,
 } = Astro.props;
+
+const detectedLang = extractLocaleFromPath(Astro.url.pathname).lang;
+const lang: Locale = explicitLang || detectedLang;
+const tCommon = COMMON_TRANSLATIONS[lang] || COMMON_TRANSLATIONS.en;
 
 // Fetch live CMS override (if admin configured custom SEO in /admin/seo/bulk/ or CMS)
 const allOverrides = await getCalculatorOverrides(Astro.locals);
@@ -64,7 +74,10 @@ const popularCrossCategory = calculators
   .filter((c) => c.featured && c.slug !== slug)
   .slice(0, 5);
 
-const categoryPath = `/${category.toLowerCase()}/`;
+const categoryKey = category.toLowerCase() as keyof typeof CATEGORIES_CONFIG;
+const localizedCategoryName = CATEGORIES_CONFIG[categoryKey]?.names[lang] || category;
+const homeHref = getLocalizedPath('/', lang);
+const categoryPath = getLocalizedPath(`/${categoryKey}/`, lang);
 
 // Build interconnected Schema.org @graph (WebApplication + BreadcrumbList + HowTo)
 const graphSchema = buildCalculatorGraphSchema({
@@ -82,6 +95,7 @@ const graphSchema = buildCalculatorGraphSchema({
   noindex={effectiveRobots?.includes('noindex')}
   keywords={[...effectiveKeywords, effectiveName.toLowerCase(), `${effectiveName.toLowerCase()} online`, `${category.toLowerCase()} calculator`]}
   ogImage={resolvedOgImage}
+  lang={lang}
 >
   <Fragment slot="head">
     <!-- JSON-LD Multi-Schema @graph (WebApplication + BreadcrumbList + HowTo) -->
@@ -94,10 +108,10 @@ const graphSchema = buildCalculatorGraphSchema({
       
       <!-- Breadcrumb Bar -->
       <nav class="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-4" aria-label="Breadcrumb">
-        <a href="/" class="hover:text-blue-600 dark:hover:text-blue-400">Home</a>
+        <a href={homeHref} class="hover:text-blue-600 dark:hover:text-blue-400">{tCommon.nav.home}</a>
         <span>/</span>
         <a href={categoryPath} class="hover:text-blue-600 dark:hover:text-blue-400 font-medium">
-          {category}
+          {localizedCategoryName}
         </a>
         <span>/</span>
         <span class="text-slate-800 dark:text-slate-200 font-semibold truncate">

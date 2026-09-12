@@ -1,0 +1,161 @@
+---
+import type { Locale } from '../../i18n/config';
+
+interface Props {
+  lang?: Locale;
+  ui?: {
+    calculate?: string;
+    reset?: string;
+    results?: string;
+    loading?: string;
+  };
+}
+
+const { lang = 'en', ui } = Astro.props;
+const btnCalculate = ui?.calculate || 'Calculate Age';
+const btnReset = ui?.reset || 'Reset';
+const resultsTitle = ui?.results || 'Age Summary';
+---
+
+<div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-amber-50/60 p-5 sm:p-7 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-amber-950/20">
+  <form id="localized-age-form" class="space-y-5" onsubmit="return false;">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label for="age-dob" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+          Date of Birth / जन्मतिथि / Fecha de Nacimiento
+        </label>
+        <input
+          type="date"
+          id="age-dob"
+          value="1995-08-15"
+          required
+          class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-amber-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white cursor-pointer"
+        />
+      </div>
+
+      <div>
+        <label for="age-target" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+          Age as of Date / गणना तिथि / Fecha de Referencia
+        </label>
+        <input
+          type="date"
+          id="age-target"
+          value={new Date().toISOString().split('T')[0]}
+          required
+          class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-amber-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white cursor-pointer"
+        />
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 pt-2">
+      <button
+        type="button"
+        id="age-calc-btn"
+        class="inline-flex items-center justify-center rounded-xl bg-amber-600 px-6 py-3 text-sm font-bold text-white shadow-md transition hover:bg-amber-700 cursor-pointer"
+      >
+        {btnCalculate}
+      </button>
+      <button
+        type="button"
+        id="age-reset-btn"
+        class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
+      >
+        {btnReset}
+      </button>
+    </div>
+  </form>
+
+  <!-- Results Box -->
+  <div id="age-result-card" class="mt-6 rounded-2xl border border-amber-200 bg-amber-50/70 p-5 dark:border-amber-900/50 dark:bg-amber-950/30">
+    <div class="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300 mb-1">
+      {resultsTitle}
+    </div>
+    
+    <div class="mt-2 text-3xl sm:text-4xl font-black text-slate-900 dark:text-white flex flex-wrap items-baseline gap-2">
+      <span id="age-years">31</span> <span class="text-sm font-medium text-slate-500">Years</span>
+      <span id="age-months">0</span> <span class="text-sm font-medium text-slate-500">Months</span>
+      <span id="age-days">28</span> <span class="text-sm font-medium text-slate-500">Days</span>
+    </div>
+
+    <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-amber-200/70 dark:border-amber-900/40 text-xs">
+      <div>Total Days Lived: <strong id="age-total-days" class="text-slate-900 dark:text-white">11,351</strong></div>
+      <div>Day of Birth: <strong id="age-birth-day" class="text-slate-900 dark:text-white">Tuesday</strong></div>
+      <div>Next Birthday in: <strong id="age-next-bday" class="text-slate-900 dark:text-white">337 Days</strong></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function initAgeEngine() {
+    const dobInput = document.getElementById('age-dob') as HTMLInputElement | null;
+    const targetInput = document.getElementById('age-target') as HTMLInputElement | null;
+    const calcBtn = document.getElementById('age-calc-btn');
+    const resetBtn = document.getElementById('age-reset-btn');
+    const yearsEl = document.getElementById('age-years');
+    const monthsEl = document.getElementById('age-months');
+    const daysEl = document.getElementById('age-days');
+    const totalDaysEl = document.getElementById('age-total-days');
+    const birthDayEl = document.getElementById('age-birth-day');
+    const nextBdayEl = document.getElementById('age-next-bday');
+
+    if (!dobInput || !targetInput || !calcBtn) return;
+
+    function calculate() {
+      const dobVal = dobInput?.value;
+      const targetVal = targetInput?.value;
+      if (!dobVal || !targetVal) return;
+
+      const dob = new Date(dobVal);
+      const target = new Date(targetVal);
+
+      if (isNaN(dob.getTime()) || isNaN(target.getTime()) || target < dob) return;
+
+      let y = target.getFullYear() - dob.getFullYear();
+      let m = target.getMonth() - dob.getMonth();
+      let d = target.getDate() - dob.getDate();
+
+      if (d < 0) {
+        m -= 1;
+        const prevMonth = new Date(target.getFullYear(), target.getMonth(), 0);
+        d += prevMonth.getDate();
+      }
+      if (m < 0) {
+        y -= 1;
+        m += 12;
+      }
+
+      if (yearsEl) yearsEl.textContent = y.toString();
+      if (monthsEl) monthsEl.textContent = m.toString();
+      if (daysEl) daysEl.textContent = d.toString();
+
+      const diffTime = Math.abs(target.getTime() - dob.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      if (totalDaysEl) totalDaysEl.textContent = diffDays.toLocaleString();
+
+      const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+      if (birthDayEl) birthDayEl.textContent = daysOfWeek[dob.getDay()];
+
+      let nextBday = new Date(target.getFullYear(), dob.getMonth(), dob.getDate());
+      if (nextBday < target) {
+        nextBday.setFullYear(target.getFullYear() + 1);
+      }
+      const daysToNext = Math.ceil((nextBday.getTime() - target.getTime()) / (1000 * 60 * 60 * 24));
+      if (nextBdayEl) nextBdayEl.textContent = `${daysToNext} Days`;
+    }
+
+    calcBtn.addEventListener('click', calculate);
+    dobInput.addEventListener('change', calculate);
+    targetInput.addEventListener('change', calculate);
+
+    resetBtn?.addEventListener('click', () => {
+      if (dobInput) dobInput.value = '1995-08-15';
+      if (targetInput) targetInput.value = new Date().toISOString().split('T')[0];
+      calculate();
+    });
+
+    calculate();
+  }
+
+  initAgeEngine();
+  document.addEventListener('astro:page-load', initAgeEngine);
+</script>

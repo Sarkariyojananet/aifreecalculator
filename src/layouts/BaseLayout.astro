@@ -5,6 +5,9 @@ import Footer from '../components/Footer.astro';
 import NavigationProgressBar from '../components/NavigationProgressBar.astro';
 import GoogleAnalytics from '../components/analytics/GoogleAnalytics.astro';
 import { ADS_CONFIG } from '../lib/ads-config';
+import { LOCALES_MAP, DEFAULT_LOCALE, type Locale } from '../i18n/config';
+import { extractLocaleFromPath, buildCanonicalUrl, buildHreflangCluster, getBcp47Lang } from '../i18n/utils';
+import { getAvailableLocalesForPath } from '../i18n/registry';
 
 interface Props {
   title?: string;
@@ -13,16 +16,31 @@ interface Props {
   canonicalUrl?: string;
   ogImage?: string;
   noindex?: boolean;
+  lang?: Locale;
 }
 
 const {
   title = 'Free Online Calculators - Finance, Health, Construction & Math',
   description = 'Use 42+ free online calculators for loan EMI, SIP returns, Indian income tax, RCC construction steel, BMI, calorie TDEE, percentages, and scientific math.',
   keywords = ['free online calculator', 'financial calculator', 'construction calculator', 'health calculator', 'math calculator', 'emi calculator', 'civil boq'],
-  canonicalUrl = Astro.url.href,
+  canonicalUrl,
   ogImage = '/og/default.png',
   noindex = false,
+  lang: explicitLang,
 } = Astro.props;
+
+const pathname = Astro.url.pathname;
+const detectedLocale = extractLocaleFromPath(pathname).lang;
+const currentLang: Locale = explicitLang || detectedLocale;
+const bcp47Lang = getBcp47Lang(currentLang);
+const textDir = LOCALES_MAP[currentLang]?.dir || 'ltr';
+
+// Automatic self-referencing canonical URL
+const selfCanonical = canonicalUrl || buildCanonicalUrl(pathname);
+
+// Reciprocal hreflang cluster for validated available translations
+const availableLocales = getAvailableLocalesForPath(pathname);
+const hreflangCluster = buildHreflangCluster(pathname, availableLocales);
 
 const siteName = import.meta.env.PUBLIC_SITE_NAME || 'AI Free Calculator';
 const fullTitle = title.includes(siteName) ? title : `${title} | ${siteName}`;
@@ -35,7 +53,7 @@ const resolvedOgImage = ogImage.startsWith('http')
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={bcp47Lang} dir={textDir}>
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -47,7 +65,12 @@ const resolvedOgImage = ogImage.startsWith('http')
     ) : (
       <meta name="robots" content="index, follow" />
     )}
-    <link rel="canonical" href={canonicalUrl} />
+    <link rel="canonical" href={selfCanonical} />
+
+    <!-- Reciprocal hreflang cluster (Strictly available translations + x-default) -->
+    {hreflangCluster.map((item) => (
+      <link rel="alternate" hreflang={item.lang} href={item.url} />
+    ))}
 
     <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:type" content="website" />

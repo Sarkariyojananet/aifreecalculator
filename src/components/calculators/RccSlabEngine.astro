@@ -1,0 +1,236 @@
+---
+import type { Locale } from '../../i18n/config';
+
+interface Props {
+  lang?: Locale;
+  ui?: {
+    calculate?: string;
+    reset?: string;
+    results?: string;
+    loading?: string;
+  };
+}
+
+const { lang = 'en', ui } = Astro.props;
+const btnCalculate = ui?.calculate || 'Calculate Materials';
+const btnReset = ui?.reset || 'Reset';
+const resultsTitle = ui?.results || 'Bill of Quantities (BOQ)';
+---
+
+<div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-orange-50/60 p-5 sm:p-7 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-orange-950/20">
+  <form id="localized-rcc-form" class="space-y-5" onsubmit="return false;">
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div>
+        <label for="rcc-length" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+          Length (m) / लंबाई / Largo
+        </label>
+        <input
+          type="number"
+          id="rcc-length"
+          step="0.1"
+          min="1"
+          value="10"
+          required
+          class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-orange-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+        />
+      </div>
+
+      <div>
+        <label for="rcc-width" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+          Width (m) / चौड़ाई / Ancho
+        </label>
+        <input
+          type="number"
+          id="rcc-width"
+          step="0.1"
+          min="1"
+          value="5"
+          required
+          class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-orange-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+        />
+      </div>
+
+      <div>
+        <label for="rcc-thickness" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+          Thickness (mm) / मोटाई / Espesor
+        </label>
+        <input
+          type="number"
+          id="rcc-thickness"
+          step="5"
+          min="75"
+          max="300"
+          value="125"
+          required
+          class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-orange-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+        />
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div>
+        <label for="rcc-grade" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+          Concrete Grade / कंक्रीट ग्रेड / Dosificación
+        </label>
+        <select
+          id="rcc-grade"
+          class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-orange-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white cursor-pointer"
+        >
+          <option value="m20" selected>M20 Grade (1 : 1.5 : 3) — Standard Residential</option>
+          <option value="m25">M25 Grade (1 : 1 : 2) — Heavy Load</option>
+          <option value="m15">M15 Grade (1 : 2 : 4) — PCC / Lean</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="rcc-steel-pct" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-1.5">
+          Steel Percentage (%) / सरिया प्रतिशत / Armadura
+        </label>
+        <select
+          id="rcc-steel-pct"
+          class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-orange-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white cursor-pointer"
+        >
+          <option value="0.008">0.8% (Lightly loaded roof slab)</option>
+          <option value="0.010" selected>1.0% (Standard residential slab)</option>
+          <option value="0.012">1.2% (Heavy commercial / two-way slab)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3 pt-2">
+      <button
+        type="button"
+        id="rcc-calc-btn"
+        class="inline-flex items-center justify-center rounded-xl bg-orange-600 px-6 py-3 text-sm font-bold text-white shadow-md transition hover:bg-orange-700 cursor-pointer"
+      >
+        {btnCalculate}
+      </button>
+      <button
+        type="button"
+        id="rcc-reset-btn"
+        class="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 cursor-pointer"
+      >
+        {btnReset}
+      </button>
+    </div>
+  </form>
+
+  <!-- Results Box -->
+  <div id="rcc-result-card" class="mt-6 rounded-2xl border border-orange-200 bg-orange-50/70 p-5 dark:border-orange-900/50 dark:bg-orange-950/30">
+    <div class="text-xs font-bold uppercase tracking-wider text-orange-800 dark:text-orange-300 mb-1">
+      {resultsTitle}
+    </div>
+    
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+      <div class="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-orange-100 dark:border-orange-900/40">
+        <div class="text-[11px] text-slate-500 dark:text-slate-400">Cement / सीमेंट</div>
+        <div class="text-xl font-black text-orange-600 dark:text-orange-400 mt-0.5"><span id="rcc-cement-bags">51</span> <span class="text-xs font-semibold">Bags</span></div>
+      </div>
+
+      <div class="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-orange-100 dark:border-orange-900/40">
+        <div class="text-[11px] text-slate-500 dark:text-slate-400">Sand / बालू</div>
+        <div class="text-xl font-black text-slate-800 dark:text-white mt-0.5"><span id="rcc-sand-cft">93</span> <span class="text-xs font-semibold">cft</span></div>
+      </div>
+
+      <div class="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-orange-100 dark:border-orange-900/40">
+        <div class="text-[11px] text-slate-500 dark:text-slate-400">Aggregate / गिट्टी</div>
+        <div class="text-xl font-black text-slate-800 dark:text-white mt-0.5"><span id="rcc-aggregate-cft">185</span> <span class="text-xs font-semibold">cft</span></div>
+      </div>
+
+      <div class="bg-white dark:bg-slate-900 p-3.5 rounded-xl border border-orange-100 dark:border-orange-900/40">
+        <div class="text-[11px] text-slate-500 dark:text-slate-400">Steel / सरिया</div>
+        <div class="text-xl font-black text-blue-600 dark:text-blue-400 mt-0.5"><span id="rcc-steel-kg">490</span> <span class="text-xs font-semibold">kg</span></div>
+      </div>
+    </div>
+
+    <div class="mt-3 text-xs text-slate-500 dark:text-slate-400 flex flex-wrap gap-4">
+      <div>Wet Concrete Volume: <strong id="rcc-wet-vol" class="text-slate-900 dark:text-white">6.25 m³</strong></div>
+      <div>Dry Volume (×1.54): <strong id="rcc-dry-vol" class="text-slate-900 dark:text-white">9.63 m³</strong></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function initRccEngine() {
+    const lenInput = document.getElementById('rcc-length') as HTMLInputElement | null;
+    const widthInput = document.getElementById('rcc-width') as HTMLInputElement | null;
+    const thickInput = document.getElementById('rcc-thickness') as HTMLInputElement | null;
+    const gradeSelect = document.getElementById('rcc-grade') as HTMLSelectElement | null;
+    const steelSelect = document.getElementById('rcc-steel-pct') as HTMLSelectElement | null;
+    const calcBtn = document.getElementById('rcc-calc-btn');
+    const resetBtn = document.getElementById('rcc-reset-btn');
+
+    const cementEl = document.getElementById('rcc-cement-bags');
+    const sandEl = document.getElementById('rcc-sand-cft');
+    const aggEl = document.getElementById('rcc-aggregate-cft');
+    const steelEl = document.getElementById('rcc-steel-kg');
+    const wetVolEl = document.getElementById('rcc-wet-vol');
+    const dryVolEl = document.getElementById('rcc-dry-vol');
+
+    if (!lenInput || !widthInput || !thickInput || !calcBtn) return;
+
+    function calculate() {
+      const l = parseFloat(lenInput?.value || '0');
+      const w = parseFloat(widthInput?.value || '0');
+      const thMm = parseFloat(thickInput?.value || '0');
+      const grade = gradeSelect?.value || 'm20';
+      const steelPct = parseFloat(steelSelect?.value || '0.01');
+
+      if (l <= 0 || w <= 0 || thMm <= 0) return;
+
+      const thM = thMm / 1000;
+      const wetVol = l * w * thM;
+      const dryVol = wetVol * 1.54;
+
+      // Grade ratios (Cement : Sand : Agg)
+      let cPart = 1, sPart = 1.5, aPart = 3;
+      if (grade === 'm25') {
+        cPart = 1; sPart = 1; aPart = 2;
+      } else if (grade === 'm15') {
+        cPart = 1; sPart = 2; aPart = 4;
+      }
+      const sumParts = cPart + sPart + aPart;
+
+      const cementVolM3 = (cPart / sumParts) * dryVol;
+      // 1 m3 cement = 1440 kg; 1 bag = 50 kg -> 28.8 bags per m3
+      const cementBags = Math.ceil(cementVolM3 * 28.8);
+
+      const sandVolM3 = (sPart / sumParts) * dryVol;
+      const sandCft = Math.round(sandVolM3 * 35.3147);
+
+      const aggVolM3 = (aPart / sumParts) * dryVol;
+      const aggCft = Math.round(aggVolM3 * 35.3147);
+
+      // Steel: wetVol * steelPct * 7850 kg/m3
+      const steelKg = Math.round(wetVol * steelPct * 7850);
+
+      if (cementEl) cementEl.textContent = cementBags.toString();
+      if (sandEl) sandEl.textContent = sandCft.toString();
+      if (aggEl) aggEl.textContent = aggCft.toString();
+      if (steelEl) steelEl.textContent = steelKg.toLocaleString();
+      if (wetVolEl) wetVolEl.textContent = `${wetVol.toFixed(2)} m³`;
+      if (dryVolEl) dryVolEl.textContent = `${dryVol.toFixed(2)} m³`;
+    }
+
+    calcBtn.addEventListener('click', calculate);
+    lenInput.addEventListener('input', calculate);
+    widthInput.addEventListener('input', calculate);
+    thickInput.addEventListener('input', calculate);
+    gradeSelect?.addEventListener('change', calculate);
+    steelSelect?.addEventListener('change', calculate);
+
+    resetBtn?.addEventListener('click', () => {
+      if (lenInput) lenInput.value = '10';
+      if (widthInput) widthInput.value = '5';
+      if (thickInput) thickInput.value = '125';
+      if (gradeSelect) gradeSelect.value = 'm20';
+      if (steelSelect) steelSelect.value = '0.010';
+      calculate();
+    });
+
+    calculate();
+  }
+
+  initRccEngine();
+  document.addEventListener('astro:page-load', initRccEngine);
+</script>

@@ -1,27 +1,35 @@
 ---
 import { categories } from '../data/calculators';
+import { extractLocaleFromPath, getLocalizedPath } from '../i18n/utils';
+import { COMMON_TRANSLATIONS } from '../i18n/translations/common';
+import { CATEGORIES_CONFIG } from '../i18n/translations/categories';
 
+const currentPath = Astro.url.pathname;
+const { lang } = extractLocaleFromPath(currentPath);
+const tCommon = COMMON_TRANSLATIONS[lang] || COMMON_TRANSLATIONS.en;
 const currentYear = new Date().getFullYear();
 
+const homeHref = getLocalizedPath('/', lang);
+
 const popularCalculators = [
-  { name: 'EMI Calculator', href: '/finance/emi-calculator/' },
-  { name: 'SIP Calculator', href: '/finance/sip-calculator/' },
-  { name: 'Percentage Calculator', href: '/general/percentage-calculator/' },
-  { name: 'GST Calculator', href: '/finance/gst-calculator/' },
-  { name: 'BMR Calculator', href: '/health/bmr-calculator/' },
-  { name: 'Steel Weight Calculator', href: '/construction/steel-weight-calculator/' },
+  { name: lang === 'hi' ? 'ईएमआई कैलकुलेटर' : 'EMI Calculator', href: getLocalizedPath('/finance/emi-calculator/', lang) },
+  { name: lang === 'hi' ? 'एसआईपी कैलकुलेटर' : 'SIP Calculator', href: getLocalizedPath('/finance/sip-calculator/', lang) },
+  { name: lang === 'hi' ? 'बीएमआई कैलकुलेटर' : 'BMI Calculator', href: getLocalizedPath('/general/bmi-calculator/', lang) },
+  { name: lang === 'hi' ? 'उम्र कैलकुलेटर' : 'Age Calculator', href: getLocalizedPath('/general/age-calculator/', lang) },
+  { name: lang === 'hi' ? 'कैलोरी कैलकुलेटर' : 'Calorie Calculator', href: getLocalizedPath('/health/calorie-calculator/', lang) },
+  { name: lang === 'hi' ? 'आरसीसी स्लैब कैलकुलेटर' : 'RCC Slab Calculator', href: getLocalizedPath('/construction/rcc-slab-steel-calculator/', lang) },
 ];
 
 const companyLinks = [
-  { name: 'About Us', href: '/about/' },
-  { name: 'Contact Us', href: '/contact/' },
-  { name: 'All Calculators', href: '/all-calculators/' },
+  { name: tCommon.nav.about, href: getLocalizedPath('/about/', lang) },
+  { name: tCommon.nav.contact, href: getLocalizedPath('/contact/', lang) },
+  { name: tCommon.nav.allCalculators, href: getLocalizedPath('/all-calculators/', lang) },
 ];
 
 const legalLinks = [
-  { name: 'Privacy Policy', href: '/privacy-policy/' },
-  { name: 'Terms of Use', href: '/terms/' },
-  { name: 'Disclaimer', href: '/disclaimer/' },
+  { name: tCommon.nav.privacyPolicy, href: getLocalizedPath('/privacy-policy/', lang) },
+  { name: tCommon.nav.terms, href: getLocalizedPath('/terms/', lang) },
+  { name: tCommon.nav.disclaimer, href: getLocalizedPath('/disclaimer/', lang) },
 ];
 ---
 
@@ -62,16 +70,20 @@ const legalLinks = [
         </h3>
         <nav aria-label="Calculator categories">
           <ul class="space-y-2 text-xs sm:text-sm">
-            {categories.map((cat) => (
-              <li>
-                <a
-                  href={cat.path}
-                  class="transition hover:text-slate-900 dark:hover:text-white"
-                >
-                  {cat.name} Calculators
-                </a>
-              </li>
-            ))}
+            {categories.map((cat) => {
+              const catKey = cat.name.toLowerCase() as keyof typeof CATEGORIES_CONFIG;
+              const catName = CATEGORIES_CONFIG[catKey]?.names[lang] || cat.name;
+              return (
+                <li>
+                  <a
+                    href={getLocalizedPath(cat.path, lang)}
+                    class="transition hover:text-slate-900 dark:hover:text-white"
+                  >
+                    {catName}
+                  </a>
+                </li>
+              );
+            })}
           </ul>
         </nav>
       </div>
