@@ -6,7 +6,7 @@ async function test() {
   console.log('Total test cases:', cases.length);
   for (const tc of cases) {
     const res = await runTestCase(tc);
-    console.log(`${res.state}: ${tc.name} -> ${res.message || 'OK'}`);
+    console.log(`${res.state}: ${tc.name} -> ${(res as any).message || (res as any).error || 'OK'}`);
   }
 }
 

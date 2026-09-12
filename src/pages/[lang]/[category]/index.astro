@@ -1,11 +1,13 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import CalculatorCard from '../../../components/CalculatorCard.astro';
+import CategoryTabs from '../../../components/CategoryTabs.astro';
 import AdSlotTop from '../../../components/ads/AdSlotTop.astro';
 import AdSlotFooter from '../../../components/ads/AdSlotFooter.astro';
 import { getTranslatedCategoryStaticPaths } from '../../../i18n/registry';
-import { getCalculatorsByCategory } from '../../../data/calculators';
-import { COMMON_TRANSLATIONS } from '../../../i18n/translations/common';
+import { getCalculatorsByCategory, categories } from '../../../data/calculators';
+import { getCalculatorTranslation } from '../../../i18n/translations/calculators';
+import { getCommonTranslations } from '../../../i18n/translations/common';
 import { getLocalizedPath } from '../../../i18n/utils';
 import type { Locale } from '../../../i18n/config';
 
@@ -16,11 +18,14 @@ export function getStaticPaths() {
 const { lang, category } = Astro.params as { lang: Locale; category: string };
 const { categoryData } = Astro.props;
 
-const tCommon = COMMON_TRANSLATIONS[lang] || COMMON_TRANSLATIONS.en;
+const tCommon = getCommonTranslations(lang);
 
 // Format category name for lookup (e.g. 'finance' -> 'Finance')
 const capitalizedCategory = category.charAt(0).toUpperCase() + category.slice(1);
 const categoryCalculators = getCalculatorsByCategory(capitalizedCategory as any);
+const currentCategoryInfo = categories.find((c) => c.name.toLowerCase() === category.toLowerCase());
+const categoryIcon = currentCategoryInfo?.icon || '📊';
+const heroBadge = categoryData.heroBadge || tCommon.sections.calculatorTools;
 
 const pageTitle = `${categoryData.metaTitle} | AI Free Calculator`;
 const pageDescription = categoryData.metaDescription;
@@ -48,8 +53,8 @@ const ogImage = `/og/${category.toLowerCase()}.png`;
       </nav>
 
       <div class="flex items-center gap-2 text-xs text-blue-600 dark:text-blue-400 font-bold uppercase tracking-wider mb-2">
-        <span>{categoryData.icon}</span>
-        <span>{categoryData.badge}</span>
+        <span>{categoryIcon}</span>
+        <span>{heroBadge}</span>
       </div>
 
       <h1 class="text-3xl font-black tracking-tight text-slate-900 dark:text-white sm:text-4xl">
@@ -69,23 +74,28 @@ const ogImage = `/og/${category.toLowerCase()}.png`;
   <!-- Calculator Tools Grid -->
   <section class="px-4 py-10">
     <div class="mx-auto max-w-7xl space-y-6">
+      <CategoryTabs activeCategory={category} lang={lang} />
+
       <div class="flex items-center justify-between border-b border-slate-200 pb-3 dark:border-slate-800">
         <span class="text-xs font-bold uppercase tracking-wider text-slate-400">
-          {categoryCalculators.length} {tCommon.search.placeholder.replace('...', '')}
+          {categoryCalculators.length} {tCommon.sections.calculatorTools}
         </span>
       </div>
 
       <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {categoryCalculators.map((calc) => (
-          <CalculatorCard
-            title={calc.name}
-            description={calc.description}
-            path={getLocalizedPath(calc.path, lang)}
-            icon={calc.icon}
-            category={calc.category}
-            badge={calc.featured ? 'Featured' : undefined}
-          />
-        ))}
+        {categoryCalculators.map((calc) => {
+          const calcTrans = getCalculatorTranslation(calc.slug, lang);
+          return (
+            <CalculatorCard
+              title={calcTrans.name}
+              description={calcTrans.shortDescription}
+              path={getLocalizedPath(calc.path, lang)}
+              icon={calc.icon}
+              category={calcTrans.categoryLabel || categoryData.name}
+              badge={calc.featured ? 'Featured' : undefined}
+            />
+          );
+        })}
       </div>
     </div>
   </section>

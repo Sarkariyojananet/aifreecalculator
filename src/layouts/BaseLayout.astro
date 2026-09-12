@@ -5,7 +5,7 @@ import Footer from '../components/Footer.astro';
 import NavigationProgressBar from '../components/NavigationProgressBar.astro';
 import GoogleAnalytics from '../components/analytics/GoogleAnalytics.astro';
 import { ADS_CONFIG } from '../lib/ads-config';
-import { LOCALES_MAP, DEFAULT_LOCALE, type Locale } from '../i18n/config';
+import { LOCALES_MAP, DEFAULT_LOCALE, isValidLocale, type Locale } from '../i18n/config';
 import { extractLocaleFromPath, buildCanonicalUrl, buildHreflangCluster, getBcp47Lang } from '../i18n/utils';
 import { getAvailableLocalesForPath } from '../i18n/registry';
 
@@ -29,9 +29,13 @@ const {
   lang: explicitLang,
 } = Astro.props;
 
-const pathname = Astro.url.pathname;
+const localsLang = (Astro.locals as any)?.locale;
+const originalPath = (Astro.locals as any)?.originalPath;
+const pathname = originalPath || Astro.url.pathname;
+const urlQueryLang = Astro.url.searchParams.get('lang');
 const detectedLocale = extractLocaleFromPath(pathname).lang;
-const currentLang: Locale = explicitLang || detectedLocale;
+const candidateLang = explicitLang || (localsLang && isValidLocale(localsLang) ? localsLang : null) || (urlQueryLang && isValidLocale(urlQueryLang) ? urlQueryLang : null) || detectedLocale;
+const currentLang: Locale = isValidLocale(candidateLang) ? candidateLang : DEFAULT_LOCALE;
 const bcp47Lang = getBcp47Lang(currentLang);
 const textDir = LOCALES_MAP[currentLang]?.dir || 'ltr';
 
@@ -74,7 +78,7 @@ const resolvedOgImage = ogImage.startsWith('http')
 
     <!-- Open Graph / Facebook / WhatsApp -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:url" content={selfCanonical} />
     <meta property="og:title" content={fullTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={resolvedOgImage} />
@@ -87,7 +91,7 @@ const resolvedOgImage = ogImage.startsWith('http')
 
     <!-- Twitter / X -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:url" content={canonicalUrl} />
+    <meta name="twitter:url" content={selfCanonical} />
     <meta name="twitter:title" content={fullTitle} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={resolvedOgImage} />
@@ -151,14 +155,26 @@ const resolvedOgImage = ogImage.startsWith('http')
   <body class="min-h-screen bg-slate-50/50 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100 selection:bg-blue-600 selection:text-white transition-colors overflow-x-clip">
     <NavigationProgressBar />
     <div class="flex min-h-screen flex-col">
-      <Header />
+      <Header lang={currentLang} />
 
       <main class="flex-1">
         <slot />
       </main>
 
-      <Footer />
+      <Footer lang={currentLang} />
     </div>
+
+    <!-- Client-Side Preferred Language Persistence -->
+    <script is:inline define:vars={{ serverLang: currentLang }}>
+      (function syncPreferredLanguage() {
+        try {
+          if (serverLang && serverLang !== 'en') {
+            localStorage.setItem('preferred_locale', serverLang);
+            document.cookie = 'preferred_locale=' + serverLang + '; path=/; max-age=31536000; SameSite=Lax';
+          }
+        } catch (e) {}
+      })();
+    </script>
 
     <!-- Client-Side Google AdSense Slot Hydration Engine -->
     <script is:inline>

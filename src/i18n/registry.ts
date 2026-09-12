@@ -13,6 +13,13 @@ import {
   getCalculatorTranslation,
   EXPLICIT_CALCULATOR_TRANSLATIONS,
 } from './translations/calculators';
+
+export {
+  isCalculatorTranslated,
+  getCalculatorAvailableLocales,
+  getCalculatorTranslation,
+  EXPLICIT_CALCULATOR_TRANSLATIONS,
+};
 import { calculators } from '../data/calculators';
 
 const STATIC_SLUGS = [
@@ -64,7 +71,7 @@ export function getAvailableLocalesForPath(pathname: string): Locale[] {
   if (segments.length === 2) {
     const [cat, slug] = segments;
     if (CATEGORY_SLUGS.includes(cat as any)) {
-      return getCalculatorAvailableLocales(slug);
+      return [...LOCALES];
     }
   }
 

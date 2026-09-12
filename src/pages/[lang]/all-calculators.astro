@@ -5,8 +5,10 @@ import AdSlotTop from '../../components/ads/AdSlotTop.astro';
 import AdSlotFooter from '../../components/ads/AdSlotFooter.astro';
 import { calculators, categories } from '../../data/calculators';
 import { getTranslatedStaticPagePaths } from '../../i18n/registry';
+import { getCalculatorTranslation } from '../../i18n/translations/calculators';
 import { getLocalizedPath } from '../../i18n/utils';
-import { COMMON_TRANSLATIONS } from '../../i18n/translations/common';
+import { getCommonTranslations } from '../../i18n/translations/common';
+import { CATEGORIES_CONFIG } from '../../i18n/translations/categories';
 import type { Locale } from '../../i18n/config';
 
 export function getStaticPaths() {
@@ -15,7 +17,13 @@ export function getStaticPaths() {
 
 const { lang } = Astro.params as { lang: Locale };
 const { pageData } = Astro.props;
-const tCommon = COMMON_TRANSLATIONS[lang] || COMMON_TRANSLATIONS.en;
+const tCommon = getCommonTranslations(lang);
+const totalCount = calculators.length;
+
+const searchPlaceholder = tCommon.directory.filterPlaceholder;
+const allLabel = tCommon.directory.allLabel;
+const noResultsTitle = tCommon.directory.noResultsTitle;
+const noResultsDesc = tCommon.directory.noResultsDesc;
 ---
 
 <BaseLayout
@@ -43,31 +51,157 @@ const tCommon = COMMON_TRANSLATIONS[lang] || COMMON_TRANSLATIONS.en;
             {pageData.intro}
           </p>
         </div>
+
+        <!-- Filter Search Bar -->
+        <div class="w-full sm:w-72">
+          <label for="dir-search" class="sr-only">{searchPlaceholder}</label>
+          <div class="relative">
+            <input
+              type="text"
+              id="dir-search"
+              placeholder={searchPlaceholder}
+              class="w-full rounded-xl border border-slate-300 bg-white py-2.5 pl-9 pr-3 text-xs text-slate-900 focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+            />
+            <svg class="pointer-events-none absolute left-3 top-3 h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category Filter Tabs -->
+      <div class="mt-6 flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800" id="category-filter-bar">
+        <button
+          type="button"
+          data-filter="all"
+          class="filter-cat-btn rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition cursor-pointer"
+        >
+          {allLabel} ({totalCount})
+        </button>
+        {categories.map((cat) => {
+          const catKey = cat.name.toLowerCase() as keyof typeof CATEGORIES_CONFIG;
+          const localizedName = CATEGORIES_CONFIG[catKey]?.names[lang];
+          if (!localizedName) throw new Error(`[i18n] Missing category name for ${catKey} in ${lang}`);
+          const count = calculators.filter((c) =>
+            c.category.toLowerCase() === cat.name.toLowerCase() ||
+            (c.additionalCategories && c.additionalCategories.some(ac => ac.toLowerCase() === cat.name.toLowerCase()))
+          ).length;
+          return (
+            <button
+              type="button"
+              data-filter={cat.name.toLowerCase()}
+              class="filter-cat-btn rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition cursor-pointer"
+            >
+              {localizedName} ({count})
+            </button>
+          );
+        })}
       </div>
     </div>
   </section>
 
-  <div class="mx-auto max-w-7xl px-4">
+  <!-- Top Ad Slot -->
+  <div class="mx-auto max-w-7xl px-4 py-4">
     <AdSlotTop />
   </div>
 
-  <!-- Calculators Grid -->
-  <main class="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-      {calculators.map((calc) => (
-        <CalculatorCard
-          title={calc.name}
-          description={calc.description}
-          path={getLocalizedPath(calc.path, lang)}
-          icon={calc.icon}
-          category={calc.category}
-          badge={calc.featured ? 'Featured' : undefined}
-        />
-      ))}
+  <!-- Calculator Directory Grid -->
+  <section class="mx-auto max-w-7xl px-4 py-6 sm:py-8">
+    <div id="dir-grid" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {calculators.map((calc) => {
+        const calcTrans = getCalculatorTranslation(calc.slug, lang);
+        const calcName = calcTrans.name;
+        const calcDesc = calcTrans.shortDescription;
+        return (
+          <div
+            class="dir-calc-item"
+            data-name={calcName.toLowerCase()}
+            data-category={calc.category.toLowerCase()}
+            data-categories={[calc.category, ...(calc.additionalCategories || [])].map(c => c.toLowerCase()).join(' ')}
+            data-keywords={(calc.keywords || []).join(' ').toLowerCase()}
+            data-desc={calcDesc.toLowerCase()}
+          >
+            <CalculatorCard
+              title={calcName}
+              description={calcDesc}
+              path={getLocalizedPath(calc.path, lang)}
+              icon={calc.icon}
+              category={calcTrans.categoryLabel || calc.category}
+              badge={calc.featured ? 'Featured' : undefined}
+            />
+          </div>
+        );
+      })}
     </div>
-  </main>
 
-  <div class="mx-auto max-w-7xl px-4">
+    <!-- No Match State -->
+    <div id="dir-no-results" class="hidden py-16 text-center">
+      <p class="text-sm font-bold text-slate-700 dark:text-slate-300">{noResultsTitle}</p>
+      <p class="text-xs text-slate-500 mt-1">{noResultsDesc}</p>
+    </div>
+  </section>
+
+  <!-- Bottom Ad Slot -->
+  <div class="mx-auto max-w-7xl px-4 py-4">
     <AdSlotFooter />
   </div>
+
+  <script is:inline>
+    (function initDirectoryFilter() {
+      const searchInput = document.getElementById('dir-search');
+      const filterButtons = document.querySelectorAll('.filter-cat-btn');
+      const items = document.querySelectorAll('.dir-calc-item');
+      const noResults = document.getElementById('dir-no-results');
+
+      let activeCategory = 'all';
+      let searchQuery = '';
+
+      function applyFilter() {
+        let visibleCount = 0;
+        items.forEach((el) => {
+          const itemCat = el.getAttribute('data-category') || '';
+          const itemCategories = (el.getAttribute('data-categories') || itemCat).split(' ');
+          const itemName = el.getAttribute('data-name') || '';
+          const itemKw = el.getAttribute('data-keywords') || '';
+          const itemDesc = el.getAttribute('data-desc') || '';
+
+          const matchCat = activeCategory === 'all' || itemCategories.includes(activeCategory);
+          const matchSearch =
+            !searchQuery ||
+            itemName.includes(searchQuery) ||
+            itemCat.includes(searchQuery) ||
+            itemKw.includes(searchQuery) ||
+            itemDesc.includes(searchQuery);
+
+          if (matchCat && matchSearch) {
+            el.style.display = '';
+            visibleCount++;
+          } else {
+            el.style.display = 'none';
+          }
+        });
+
+        if (noResults) {
+          if (visibleCount === 0) noResults.classList.remove('hidden');
+          else noResults.classList.add('hidden');
+        }
+      }
+
+      filterButtons.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          filterButtons.forEach((b) => {
+            b.className = 'filter-cat-btn rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 transition cursor-pointer';
+          });
+          btn.className = 'filter-cat-btn rounded-lg bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs transition cursor-pointer';
+          activeCategory = btn.getAttribute('data-filter') || 'all';
+          applyFilter();
+        });
+      });
+
+      searchInput?.addEventListener('input', (e) => {
+        searchQuery = (e.target.value || '').trim().toLowerCase();
+        applyFilter();
+      });
+    })();
+  </script>
 </BaseLayout>

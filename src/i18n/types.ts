@@ -33,13 +33,16 @@ export interface WorkedExample {
 }
 
 export interface CalculatorUiStrings {
-  calculate: string;
-  reset: string;
-  result: string;
-  inputs: string;
-  summary: string;
-  share: string;
-  copied: string;
+  calculate?: string;
+  reset?: string;
+  result?: string;
+  results?: string;
+  inputs?: string;
+  summary?: string;
+  share?: string;
+  copied?: string;
+  print?: string;
+  loading?: string;
   downloadPdf?: string;
   disclaimerNote?: string;
   [key: string]: any;
@@ -53,6 +56,8 @@ export interface CalculatorTranslation {
   metaDescription: string;
   h1: string;
   shortDescription: string;
+  description?: string;
+  title?: string;
   categoryLabel: string;
   formulaTitle: string;
   formulaDescription: string;

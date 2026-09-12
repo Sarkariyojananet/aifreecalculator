@@ -1,20 +1,37 @@
 ---
 import { categories } from '../data/calculators';
+import { CATEGORIES_CONFIG } from '../i18n/translations/categories';
+import { getCommonTranslations } from '../i18n/translations/common';
+import { getLocalizedPath, extractLocaleFromPath } from '../i18n/utils';
+import { isValidLocale, type Locale } from '../i18n/config';
 
 interface Props {
   activeCategory?: string;
+  lang?: Locale;
 }
 
-const { activeCategory = 'all' } = Astro.props;
+const { activeCategory = 'all', lang: propLang } = Astro.props;
+
+const localsLang = (Astro.locals as any)?.locale;
+const detectedLang = extractLocaleFromPath(Astro.url.pathname).lang;
+const lang: Locale = propLang || (localsLang && isValidLocale(localsLang) ? (localsLang as Locale) : null) || detectedLang || 'en';
+const tCommon = getCommonTranslations(lang);
+
+const allLabel = tCommon.nav.allCalculators;
 
 const tabs = [
-  { id: 'all', name: 'All Calculators', icon: '✨', path: '/#all-calculators' },
-  ...categories.map((c) => ({
-    id: c.name.toLowerCase(),
-    name: c.name,
-    icon: c.icon,
-    path: c.path,
-  })),
+  { id: 'all', name: allLabel, icon: '✨', path: getLocalizedPath('/all-calculators/', lang) },
+  ...categories.map((c) => {
+    const catKey = c.name.toLowerCase() as keyof typeof CATEGORIES_CONFIG;
+    const localizedName = CATEGORIES_CONFIG[catKey]?.names[lang];
+    if (!localizedName) throw new Error(`[i18n] Missing category name for ${catKey} in ${lang}`);
+    return {
+      id: c.name.toLowerCase(),
+      name: localizedName,
+      icon: c.icon,
+      path: getLocalizedPath(c.path, lang),
+    };
+  }),
 ];
 ---
 

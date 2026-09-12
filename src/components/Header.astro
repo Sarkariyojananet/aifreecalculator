@@ -2,12 +2,24 @@
 import { calculators } from '../data/calculators';
 import LanguageSwitcher from './LanguageSwitcher.astro';
 import { extractLocaleFromPath, getLocalizedPath } from '../i18n/utils';
-import { COMMON_TRANSLATIONS } from '../i18n/translations/common';
+import { getCommonTranslations } from '../i18n/translations/common';
 import { CATEGORIES_CONFIG } from '../i18n/translations/categories';
+import { getCalculatorTranslation } from '../i18n/translations/calculators';
+import { isValidLocale, DEFAULT_LOCALE, type Locale } from '../i18n/config';
 
-const currentPath = Astro.url.pathname;
-const { lang } = extractLocaleFromPath(currentPath);
-const tCommon = COMMON_TRANSLATIONS[lang] || COMMON_TRANSLATIONS.en;
+interface Props {
+  lang?: Locale;
+}
+
+const { lang: propLang } = Astro.props;
+const localsLang = (Astro.locals as any)?.locale;
+const originalPath = (Astro.locals as any)?.originalPath;
+const currentPath = originalPath || Astro.url.pathname;
+const urlQueryLang = Astro.url.searchParams.get('lang');
+const detectedLocale = extractLocaleFromPath(currentPath).lang;
+const candidateLang = propLang || (localsLang && isValidLocale(localsLang) ? (localsLang as Locale) : null) || (urlQueryLang && isValidLocale(urlQueryLang) ? (urlQueryLang as Locale) : null) || detectedLocale;
+const lang: Locale = isValidLocale(candidateLang) ? candidateLang : DEFAULT_LOCALE;
+const tCommon = getCommonTranslations(lang);
 
 const homeHref = getLocalizedPath('/', lang);
 const categoriesHref = `${homeHref}#categories`;
@@ -22,21 +34,24 @@ const navLinks = [
 ];
 
 const categoryLinks = [
-  { name: CATEGORIES_CONFIG.finance.names[lang] || 'Finance', href: getLocalizedPath('/finance/', lang) },
-  { name: CATEGORIES_CONFIG.construction.names[lang] || 'Construction', href: getLocalizedPath('/construction/', lang) },
-  { name: CATEGORIES_CONFIG.health.names[lang] || 'Health', href: getLocalizedPath('/health/', lang) },
-  { name: CATEGORIES_CONFIG.math.names[lang] || 'Math', href: getLocalizedPath('/math/', lang) },
-  { name: CATEGORIES_CONFIG.general.names[lang] || 'General', href: getLocalizedPath('/general/', lang) },
+  { name: CATEGORIES_CONFIG.finance.names[lang], href: getLocalizedPath('/finance/', lang) },
+  { name: CATEGORIES_CONFIG.construction.names[lang], href: getLocalizedPath('/construction/', lang) },
+  { name: CATEGORIES_CONFIG.health.names[lang], href: getLocalizedPath('/health/', lang) },
+  { name: CATEGORIES_CONFIG.math.names[lang], href: getLocalizedPath('/math/', lang) },
+  { name: CATEGORIES_CONFIG.general.names[lang], href: getLocalizedPath('/general/', lang) },
 ];
 const searchDataJson = JSON.stringify(
-  calculators.map((c) => ({
-    name: c.name,
-    category: c.category,
-    desc: c.description,
-    icon: c.icon,
-    path: c.path,
-    keywords: c.keywords || [],
-  }))
+  calculators.map((c) => {
+    const calcTrans = getCalculatorTranslation(c.slug, lang);
+    return {
+      name: calcTrans.name,
+      category: calcTrans.categoryLabel || c.category,
+      desc: calcTrans.shortDescription,
+      icon: c.icon,
+      path: getLocalizedPath(c.path, lang),
+      keywords: c.keywords || [],
+    };
+  })
 );
 ---
 
@@ -45,7 +60,7 @@ const searchDataJson = JSON.stringify(
     
     <!-- Logo -->
     <div class="flex items-center gap-6">
-      <a href="/" class="flex items-center gap-2.5 text-slate-900 dark:text-white group">
+      <a href={homeHref} class="flex items-center gap-2.5 text-slate-900 dark:text-white group">
         <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 font-bold text-xs text-white shadow-xs group-hover:bg-blue-700 transition-colors">
           AI
         </div>
@@ -137,7 +152,7 @@ const searchDataJson = JSON.stringify(
       </button>
 
       <!-- Language Switcher (Desktop) -->
-      <LanguageSwitcher variant="dropdown" class="hidden sm:inline-block" />
+      <LanguageSwitcher lang={lang} variant="dropdown" class="hidden sm:inline-block" />
 
       <!-- Mobile Menu Toggle Button -->
       <button
@@ -195,11 +210,11 @@ const searchDataJson = JSON.stringify(
   <div class="flex-1 overflow-y-auto p-4 space-y-4">
     <nav class="flex flex-col gap-1 text-sm font-medium">
       <a
-        href="/"
+        href={homeHref}
         class="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-slate-800 hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-800 transition"
       >
         <span>🏠</span>
-        <span>Home</span>
+        <span>{tCommon.nav.home}</span>
       </a>
       <button
         type="button"
@@ -215,12 +230,12 @@ const searchDataJson = JSON.stringify(
         <span id="mobile-saved-counter" class="hidden rounded-full bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-800 dark:bg-blue-950 dark:text-blue-300">0</span>
       </button>
       <a
-        href="/all-calculators/"
+        href={allCalculatorsHref}
         class="flex items-center justify-between rounded-xl px-3 py-2.5 text-slate-800 hover:bg-slate-100 dark:text-slate-100 dark:hover:bg-slate-800 transition"
       >
         <span class="flex items-center gap-2.5">
           <span>🧮</span>
-          <span>All Calculators</span>
+          <span>{tCommon.nav.allCalculators}</span>
         </span>
         <span class="rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-bold text-blue-600 dark:bg-blue-950 dark:text-blue-400">{calculators.length}+</span>
       </a>
@@ -229,7 +244,7 @@ const searchDataJson = JSON.stringify(
     <!-- Category quick list -->
     <div>
       <div class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-        Browse Categories
+        {tCommon.nav.categories}
       </div>
       <div class="flex flex-col gap-0.5 text-xs font-medium">
         {categoryLinks.map((cat) => (
@@ -245,7 +260,7 @@ const searchDataJson = JSON.stringify(
     </div>
 
     <!-- Mobile Language Switcher -->
-    <LanguageSwitcher variant="mobile" class="border-t border-slate-100 dark:border-slate-800 pt-3" />
+    <LanguageSwitcher lang={lang} variant="mobile" class="border-t border-slate-100 dark:border-slate-800 pt-3" />
 
     <div class="border-t border-slate-100 dark:border-slate-800 pt-2">
       <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
@@ -254,8 +269,8 @@ const searchDataJson = JSON.stringify(
       <nav class="flex flex-col gap-0.5 text-xs font-medium text-slate-600 dark:text-slate-300">
         <a href={aboutHref} class="rounded-lg px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 transition">{tCommon.nav.about}</a>
         <a href={getLocalizedPath('/contact/', lang)} class="rounded-lg px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 transition">{tCommon.nav.contact}</a>
-        <a href={getLocalizedPath('/privacy-policy/', lang)} class="rounded-lg px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 transition">{tCommon.nav.privacyPolicy}</a>
-        <a href={getLocalizedPath('/terms/', lang)} class="rounded-lg px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 transition">{tCommon.nav.terms}</a>
+        <a href={getLocalizedPath('/privacy-policy/', lang)} class="rounded-lg px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 transition">{tCommon.footer.privacy}</a>
+        <a href={getLocalizedPath('/terms/', lang)} class="rounded-lg px-3 py-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 transition">{tCommon.footer.terms}</a>
       </nav>
     </div>
   </div>
@@ -378,8 +393,9 @@ const searchDataJson = JSON.stringify(
 </div>
 
 <!-- Embedded Search Data -->
-<script is:inline define:vars={{ searchDataJson }}>
+<script is:inline define:vars={{ searchDataJson, activeHeaderLang: lang }}>
   window.__CALCULATORS_DATA__ = JSON.parse(searchDataJson);
+  window.__ACTIVE_HEADER_LANG__ = activeHeaderLang;
 </script>
 
 <script is:inline>
@@ -597,11 +613,16 @@ const searchDataJson = JSON.stringify(
       return;
     }
 
+    const curLang = window.__ACTIVE_HEADER_LANG__ || 'en';
     resultsContainer.innerHTML = filtered
-      .map(
-        (item, idx) => `
+      .map((item, idx) => {
+        const cleanItemPath = item.path.startsWith('/') ? item.path : `/${item.path}`;
+        const itemUrl = (curLang && curLang !== 'en')
+          ? `/${curLang}${cleanItemPath}`
+          : cleanItemPath;
+        return `
       <a
-        href="${item.path}"
+        href="${itemUrl}"
         data-index="${idx}"
         class="search-result-item flex items-center justify-between p-3 rounded-2xl transition hover:bg-blue-50/80 dark:hover:bg-slate-800/80 group ${
           idx === activeIndex ? 'bg-blue-50 dark:bg-slate-800 ring-1 ring-blue-500/30' : ''
@@ -625,8 +646,8 @@ const searchDataJson = JSON.stringify(
           <span class="text-slate-400 text-xs group-hover:translate-x-0.5 transition-transform">→</span>
         </div>
       </a>
-    `
-      )
+    `;
+      })
       .join('');
 
     resultsContainer.querySelectorAll('.search-result-item').forEach((item) => {

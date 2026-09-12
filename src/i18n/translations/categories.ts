@@ -486,9 +486,13 @@ export const CATEGORY_TRANSLATIONS: Record<CategoryKey, Record<Locale, CategoryT
 export function getCategoryTranslation(category: string, locale: Locale): CategoryTranslation {
   const key = category.toLowerCase() as CategoryKey;
   if (key in CATEGORY_TRANSLATIONS) {
-    return CATEGORY_TRANSLATIONS[key][locale] || CATEGORY_TRANSLATIONS[key].en;
+    const t = CATEGORY_TRANSLATIONS[key][locale];
+    if (!t) {
+      throw new Error(`[i18n] Missing required category translation for "${key}" in locale "${locale}"`);
+    }
+    return t;
   }
-  return CATEGORY_TRANSLATIONS.general[locale] || CATEGORY_TRANSLATIONS.general.en;
+  throw new Error(`[i18n] Unknown category: "${category}"`);
 }
 
 export const CATEGORIES_CONFIG = {

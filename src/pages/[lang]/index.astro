@@ -5,7 +5,8 @@ import AdSlotTop from '../../components/ads/AdSlotTop.astro';
 import AdSlotFooter from '../../components/ads/AdSlotFooter.astro';
 import { calculators, categories } from '../../data/calculators';
 import { getTranslatedHomeStaticPaths } from '../../i18n/registry';
-import { COMMON_TRANSLATIONS } from '../../i18n/translations/common';
+import { getCalculatorTranslation } from '../../i18n/translations/calculators';
+import { getCommonTranslations } from '../../i18n/translations/common';
 import { CATEGORIES_CONFIG } from '../../i18n/translations/categories';
 import { getLocalizedPath } from '../../i18n/utils';
 import type { Locale } from '../../i18n/config';
@@ -15,7 +16,7 @@ export function getStaticPaths() {
 }
 
 const { lang } = Astro.params as { lang: Locale };
-const tCommon = COMMON_TRANSLATIONS[lang] || COMMON_TRANSLATIONS.en;
+const tCommon = getCommonTranslations(lang);
 
 const preferredCategoryOrder = ['Finance', 'Construction', 'Health', 'Math', 'General'];
 const categoryPills = [...categories]
@@ -26,9 +27,14 @@ const categoryPills = [...categories]
   })
   .map((cat) => {
     const catKey = cat.name.toLowerCase() as keyof typeof CATEGORIES_CONFIG;
+    const catName = CATEGORIES_CONFIG[catKey]?.names[lang];
+    const catDesc = CATEGORIES_CONFIG[catKey]?.descriptions[lang];
+    if (!catName || !catDesc) {
+      throw new Error(`[i18n] Missing category translation for ${catKey} in ${lang}`);
+    }
     return {
-      name: CATEGORIES_CONFIG[catKey]?.names[lang] || cat.name,
-      description: CATEGORIES_CONFIG[catKey]?.descriptions[lang] || cat.description,
+      name: catName,
+      description: catDesc,
       icon: cat.icon,
       path: getLocalizedPath(cat.path, lang),
       count: calculators.filter(
@@ -40,14 +46,16 @@ const categoryPills = [...categories]
     };
   });
 
-// Core popular calculators translated
+// Core popular calculators
 const popularSlugs = [
   'emi-calculator',
   'sip-calculator',
+  'income-tax-calculator',
+  'rcc-slab-steel-calculator',
   'bmi-calculator',
   'age-calculator',
+  'percentage-calculator',
   'calorie-calculator',
-  'rcc-slab-steel-calculator',
 ];
 
 const popularCalculators = popularSlugs
@@ -78,8 +86,11 @@ const heroSubtitleMap: Record<Locale, string> = {
   it: 'Strumenti immediati e riservati per finanza, edilizia, salute, matematica e vita quotidiana.',
 };
 
-const heroTitle = heroTitleMap[lang] || heroTitleMap.en;
-const heroSubtitle = heroSubtitleMap[lang] || heroSubtitleMap.en;
+const heroTitle = heroTitleMap[lang];
+const heroSubtitle = heroSubtitleMap[lang];
+if (!heroTitle || !heroSubtitle) {
+  throw new Error(`[i18n] Missing hero texts for language "${lang}"`);
+}
 
 const pageTitle = `${heroTitle} | AI Free Calculator`;
 const pageDescription = heroSubtitle;
@@ -95,7 +106,7 @@ const pageDescription = heroSubtitle;
     <div class="mx-auto max-w-5xl text-center">
       <div class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3.5 py-1 text-xs font-bold text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/60 dark:text-blue-300 mb-6">
         <span class="flex h-2 w-2 rounded-full bg-blue-600 animate-pulse"></span>
-        60+ {tCommon.search.placeholder.replace('...', '')}
+        {tCommon.directory.toolsCountBadge}
       </div>
 
       <h1 class="text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-5xl lg:text-6xl">
@@ -148,16 +159,19 @@ const pageDescription = heroSubtitle;
       </div>
 
       <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {popularCalculators.map((calc) => (
-          <CalculatorCard
-            title={calc.name}
-            description={calc.description}
-            path={getLocalizedPath(calc.path, lang)}
-            icon={calc.icon}
-            category={calc.category}
-            badge={calc.featured ? 'Featured' : undefined}
-          />
-        ))}
+        {popularCalculators.map((calc) => {
+          const calcTrans = getCalculatorTranslation(calc.slug, lang);
+          return (
+            <CalculatorCard
+              title={calcTrans.name}
+              description={calcTrans.shortDescription}
+              path={getLocalizedPath(calc.path, lang)}
+              icon={calc.icon}
+              category={calcTrans.categoryLabel || calc.category}
+              badge={calc.featured ? 'Featured' : undefined}
+            />
+          );
+        })}
       </div>
     </div>
   </section>

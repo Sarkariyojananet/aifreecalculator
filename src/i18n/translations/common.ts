@@ -40,6 +40,15 @@ export interface CommonTranslations {
     faq: string;
     relatedTools: string;
     popularTools: string;
+    calculatorTools: string;
+    moreCategoryTools: string;
+  };
+  directory: {
+    filterPlaceholder: string;
+    allLabel: string;
+    noResultsTitle: string;
+    noResultsDesc: string;
+    toolsCountBadge: string;
   };
   footer: {
     quickLinks: string;
@@ -91,6 +100,15 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       faq: 'Frequently Asked Questions',
       relatedTools: 'Related Calculators',
       popularTools: 'Popular Tools',
+      calculatorTools: 'Calculator Tools',
+      moreCategoryTools: 'More Tools',
+    },
+    directory: {
+      filterPlaceholder: 'Filter by name or keyword…',
+      allLabel: 'All',
+      noResultsTitle: 'No calculators found',
+      noResultsDesc: 'Try a different search term or select "All" categories.',
+      toolsCountBadge: '60+ Free Online Tools',
     },
     footer: {
       quickLinks: 'Quick Links',
@@ -141,6 +159,15 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       faq: 'अक्सर पूछे जाने वाले प्रश्न (FAQ)',
       relatedTools: 'संबंधित कैलकुलेटर',
       popularTools: 'लोकप्रिय टूल्स',
+      calculatorTools: 'कैलकुलेटर टूल्स',
+      moreCategoryTools: 'के अन्य टूल्स',
+    },
+    directory: {
+      filterPlaceholder: 'नाम या कीवर्ड से खोजें…',
+      allLabel: 'सभी',
+      noResultsTitle: 'कोई कैलकुलेटर नहीं मिला',
+      noResultsDesc: 'कृपया दूसरा कीवर्ड खोजें या "सभी" श्रेणी चुनें।',
+      toolsCountBadge: '60+ मुफ़्त ऑनलाइन टूल्स',
     },
     footer: {
       quickLinks: 'त्वरित लिंक',
@@ -191,6 +218,15 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       faq: 'Preguntas frecuentes (FAQ)',
       relatedTools: 'Calculadoras relacionadas',
       popularTools: 'Herramientas populares',
+      calculatorTools: 'Herramientas y Calculadoras',
+      moreCategoryTools: 'Otras herramientas',
+    },
+    directory: {
+      filterPlaceholder: 'Filtrar por nombre o palabra clave…',
+      allLabel: 'Todas',
+      noResultsTitle: 'No se encontraron calculadoras',
+      noResultsDesc: 'Pruebe con otro término de búsqueda o seleccione la categoría "Todas".',
+      toolsCountBadge: 'Más de 60 herramientas en línea gratuitas',
     },
     footer: {
       quickLinks: 'Enlaces rápidos',
@@ -198,20 +234,20 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       legalTitle: 'Legal y privacidad',
       privacy: 'Política de privacidad',
       terms: 'Términos de uso',
-      disclaimer: 'Descargo de responsabilidad',
+      disclaimer: 'Aviso legal',
       aboutUs: 'Acerca de nosotros',
-      contactUs: 'Contacto y soporte',
+      contactUs: 'Contacto de soporte',
       allRightsReserved: 'Todos los derechos reservados.',
-      freeNotice: 'Todos los cálculos se ejecutan en su navegador. Gratuito, ilimitado y privado.',
+      freeNotice: 'Todos los cálculos se procesan directamente en su navegador. Totalmente gratis, ilimitado y privado.',
     },
   },
 
   ja: {
     siteName: 'AI Free Calculator',
-    tagline: '金融、健康、建築、数学のための完全無料オンライン計算ツール',
+    tagline: '金融、建築、健康、数学のための完全無料オンライン計算ツール',
     nav: {
       home: 'ホーム',
-      categories: 'カテゴリー',
+      categories: 'カテゴリ',
       allCalculators: 'すべての計算機',
       about: '概要',
       contact: 'お問い合わせ',
@@ -219,7 +255,7 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
     search: {
       placeholder: '60以上の計算機を検索...',
       label: '計算機を検索',
-      noResults: '該当する計算機が見つかりませんでした。',
+      noResults: '一致する計算機が見つかりませんでした。',
       searching: '検索中...',
     },
     buttons: {
@@ -229,36 +265,45 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       copied: 'クリップボードにコピーしました！',
       downloadPdf: 'PDFレポートを保存',
       viewAll: 'すべての計算ツールを見る',
-      readMore: '続きを読む',
+      readMore: '詳しく見る',
     },
     breadcrumbs: {
       home: 'ホーム',
     },
     sections: {
-      formula: '計算式と数学的根拠',
+      formula: '計算式・数学的根拠',
       howItWorks: '計算の仕組み',
-      example: 'ステップごとの計算例',
+      example: 'ステップ別計算例',
       faq: 'よくある質問 (FAQ)',
       relatedTools: '関連する計算機',
-      popularTools: '人気のツール',
+      popularTools: '人気の計算ツール',
+      calculatorTools: '計算ツール',
+      moreCategoryTools: '関連ツール',
+    },
+    directory: {
+      filterPlaceholder: '名前やキーワードで絞り込み…',
+      allLabel: 'すべて',
+      noResultsTitle: '計算機が見つかりません',
+      noResultsDesc: '別の検索語を入力するか、「すべて」のカテゴリを選択してください。',
+      toolsCountBadge: '60以上の無料オンライン計算ツール',
     },
     footer: {
       quickLinks: 'クイックリンク',
-      categoriesTitle: 'カテゴリー一覧',
-      legalTitle: '利用規約・プライバシー',
+      categoriesTitle: 'カテゴリ一覧',
+      legalTitle: '法的情報・プライバシー',
       privacy: 'プライバシーポリシー',
       terms: '利用規約',
       disclaimer: '免責事項',
-      aboutUs: 'サイトについて',
-      contactUs: 'サポート問い合わせ',
-      allRightsReserved: 'All rights reserved.',
-      freeNotice: 'すべての計算はブラウザ上で安全に実行されます。完全無料・登録不要。',
+      aboutUs: '当サイトについて',
+      contactUs: 'サポートへのお問い合わせ',
+      allRightsReserved: '無断転載を禁じます。',
+      freeNotice: 'すべての計算処理はお使いのブラウザ上で安全に完結します。無料・無制限・プライバシー保護。',
     },
   },
 
   fr: {
     siteName: 'AI Free Calculator',
-    tagline: 'Calculatrices en ligne 100% gratuites pour les finances, la santé, le bâtiment et les maths',
+    tagline: 'Calculateurs 100% gratuits pour la finance, le bâtiment, la santé et les maths',
     nav: {
       home: 'Accueil',
       categories: 'Catégories',
@@ -267,10 +312,10 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       contact: 'Contact',
     },
     search: {
-      placeholder: 'Rechercher parmi plus de 60 calculatrices...',
-      label: 'Rechercher des calculatrices',
-      noResults: 'Aucune calculatrice ne correspond à votre recherche.',
-      searching: 'Recherche en cours...',
+      placeholder: 'Rechercher parmi 60+ calculateurs...',
+      label: 'Rechercher un calculateur',
+      noResults: 'Aucun calculateur ne correspond à votre recherche.',
+      searching: 'Recherche...',
     },
     buttons: {
       calculate: 'Calculer',
@@ -285,24 +330,33 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       home: 'Accueil',
     },
     sections: {
-      formula: 'Formule et méthode de calcul',
+      formula: 'Formule et méthode mathématique',
       howItWorks: 'Fonctionnement du calcul',
-      example: 'Exemple détaillé étape par étape',
+      example: 'Exemple détaillé pas à pas',
       faq: 'Foire aux questions (FAQ)',
-      relatedTools: 'Calculatrices similaires',
+      relatedTools: 'Calculateurs associés',
       popularTools: 'Outils populaires',
+      calculatorTools: 'Outils et calculatrices',
+      moreCategoryTools: 'Autres outils',
+    },
+    directory: {
+      filterPlaceholder: 'Filtrer par nom ou mot-clé…',
+      allLabel: 'Toutes',
+      noResultsTitle: 'Aucune calculatrice trouvée',
+      noResultsDesc: 'Essayez un autre mot-clé ou sélectionnez la catégorie « Toutes ».',
+      toolsCountBadge: '60+ outils en ligne gratuits',
     },
     footer: {
       quickLinks: 'Liens rapides',
       categoriesTitle: 'Catégories',
-      legalTitle: 'Mentions légales',
+      legalTitle: 'Mentions légales & Confidentialité',
       privacy: 'Politique de confidentialité',
       terms: 'Conditions d’utilisation',
       disclaimer: 'Avertissement',
       aboutUs: 'À propos de nous',
-      contactUs: 'Contact & assistance',
+      contactUs: 'Support et contact',
       allRightsReserved: 'Tous droits réservés.',
-      freeNotice: 'Tous les calculs s’exécutent directement dans votre navigateur. Gratuit, illimité et confidentiel.',
+      freeNotice: 'Tous les calculs sont exécutés directement dans votre navigateur. Gratuit, illimité et confidentiel.',
     },
   },
 
@@ -319,7 +373,7 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
     search: {
       placeholder: 'Über 60 Rechner durchsuchen...',
       label: 'Rechner suchen',
-      noResults: 'Keine passenden Rechner gefunden.',
+      noResults: 'Keine Rechner passend zu Ihrer Suche gefunden.',
       searching: 'Suche läuft...',
     },
     buttons: {
@@ -335,12 +389,21 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       home: 'Startseite',
     },
     sections: {
-      formula: 'Formel und mathematische Methode',
-      howItWorks: 'So funktioniert die Berechnung',
+      formula: 'Formel & Rechenweg',
+      howItWorks: 'Funktionsweise der Berechnung',
       example: 'Schritt-für-Schritt-Beispiel',
       faq: 'Häufig gestellte Fragen (FAQ)',
       relatedTools: 'Ähnliche Rechner',
       popularTools: 'Beliebte Rechner',
+      calculatorTools: 'Rechner & Tools',
+      moreCategoryTools: 'Weitere Tools',
+    },
+    directory: {
+      filterPlaceholder: 'Nach Name oder Stichwort filtern…',
+      allLabel: 'Alle',
+      noResultsTitle: 'Keine Rechner gefunden',
+      noResultsDesc: 'Versuchen Sie einen anderen Suchbegriff oder wählen Sie "Alle" Kategorien.',
+      toolsCountBadge: '60+ kostenlose Online-Tools',
     },
     footer: {
       quickLinks: 'Schnellzugriff',
@@ -349,27 +412,27 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       privacy: 'Datenschutzerklärung',
       terms: 'Nutzungsbedingungen',
       disclaimer: 'Haftungsausschluss',
-      aboutUs: 'Über das Projekt',
+      aboutUs: 'Über uns',
       contactUs: 'Support kontaktieren',
       allRightsReserved: 'Alle Rechte vorbehalten.',
-      freeNotice: 'Alle Berechnungen laufen direkt in Ihrem Browser. Kostenlos, unbegrenzt und sicher.',
+      freeNotice: 'Alle Berechnungen laufen direkt in Ihrem Browser. Kostenlos, unbegrenzt und datenschutzkonform.',
     },
   },
 
   pt: {
     siteName: 'AI Free Calculator',
-    tagline: 'Calculadoras online 100% gratuitas para finanças, construção, saúde e matemática',
+    tagline: 'Calculadoras online 100% gratuitas de finanças, construção, saúde e matemática',
     nav: {
       home: 'Início',
       categories: 'Categorias',
       allCalculators: 'Todas as calculadoras',
-      about: 'Sobre',
+      about: 'Sobre nós',
       contact: 'Contato',
     },
     search: {
-      placeholder: 'Pesquisar mais de 60 calculadoras...',
-      label: 'Pesquisar calculadoras',
-      noResults: 'Nenhuma calculadora encontrada para esta busca.',
+      placeholder: 'Pesquisar em mais de 60 calculadoras...',
+      label: 'Buscar calculadoras',
+      noResults: 'Nenhuma calculadora encontrada correspondente à sua busca.',
       searching: 'Pesquisando...',
     },
     buttons: {
@@ -386,40 +449,49 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
     },
     sections: {
       formula: 'Fórmula e método matemático',
-      howItWorks: 'Como funciona este cálculo',
+      howItWorks: 'Como este cálculo funciona',
       example: 'Exemplo prático passo a passo',
       faq: 'Perguntas frequentes (FAQ)',
       relatedTools: 'Calculadoras relacionadas',
       popularTools: 'Ferramentas populares',
+      calculatorTools: 'Ferramentas e Calculadoras',
+      moreCategoryTools: 'Mais ferramentas',
+    },
+    directory: {
+      filterPlaceholder: 'Filtrar por nome ou palavra-chave…',
+      allLabel: 'Todas',
+      noResultsTitle: 'Nenhuma calculadora encontrada',
+      noResultsDesc: 'Tente outro termo de pesquisa ou selecione a categoria "Todas".',
+      toolsCountBadge: 'Mais de 60 ferramentas online gratuitas',
     },
     footer: {
-      quickLinks: 'Acesso rápido',
+      quickLinks: 'Links rápidos',
       categoriesTitle: 'Categorias',
-      legalTitle: 'Legal e privacidade',
+      legalTitle: 'Avisos legais e privacidade',
       privacy: 'Política de privacidade',
       terms: 'Termos de uso',
-      disclaimer: 'Aviso legal',
+      disclaimer: 'Isenção de responsabilidade',
       aboutUs: 'Sobre nós',
-      contactUs: 'Suporte e contato',
+      contactUs: 'Fale com o suporte',
       allRightsReserved: 'Todos os direitos reservados.',
-      freeNotice: 'Todos os cálculos rodam direto no seu navegador. Gratuito, ilimitado e privado.',
+      freeNotice: 'Todos os cálculos rodam diretamente no seu navegador. Grátis, ilimitado e privativo.',
     },
   },
 
   ko: {
     siteName: 'AI Free Calculator',
-    tagline: '금융, 건강, 건축 및 수학을 위한 100% 무료 온라인 계산기',
+    tagline: '금융, 건설, 건강, 수학을 위한 100% 무료 온라인 계산기',
     nav: {
       home: '홈',
       categories: '카테고리',
-      allCalculators: '모든 계산기',
+      allCalculators: '전체 계산기',
       about: '소개',
       contact: '문의하기',
     },
     search: {
       placeholder: '60개 이상의 계산기 검색...',
       label: '계산기 검색',
-      noResults: '검색 결과가 없습니다.',
+      noResults: '일치하는 계산기를 찾을 수 없습니다.',
       searching: '검색 중...',
     },
     buttons: {
@@ -427,38 +499,47 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       reset: '초기화',
       share: '결과 공유',
       copied: '클립보드에 복사되었습니다!',
-      downloadPdf: 'PDF 보고서 저장',
+      downloadPdf: 'PDF 리포트 저장',
       viewAll: '모든 계산기 보기',
-      readMore: '더 알아보기',
+      readMore: '자세히 보기',
     },
     breadcrumbs: {
       home: '홈',
     },
     sections: {
       formula: '공식 및 계산 원리',
-      howItWorks: '계산 작동 방식',
-      example: '단계별 계산 예시',
+      howItWorks: '계산 방식 안내',
+      example: '단계별 계산 예제',
       faq: '자주 묻는 질문 (FAQ)',
       relatedTools: '관련 계산기',
-      popularTools: '인기 계산 도구',
+      popularTools: '인기 계산기',
+      calculatorTools: '계산기 및 도구',
+      moreCategoryTools: '기타 도구',
+    },
+    directory: {
+      filterPlaceholder: '이름 또는 키워드로 검색…',
+      allLabel: '전체',
+      noResultsTitle: '계산기를 찾을 수 없습니다',
+      noResultsDesc: '다른 검색어를 입력하시거나 "전체" 카테고리를 선택해 주세요.',
+      toolsCountBadge: '60개 이상의 무료 온라인 계산 도구',
     },
     footer: {
       quickLinks: '빠른 링크',
-      categoriesTitle: '카테고리',
+      categoriesTitle: '카테고리 목록',
       legalTitle: '법적 고지 및 개인정보',
-      privacy: '개인정보 처리방침',
+      privacy: '개인정보처리방침',
       terms: '이용약관',
       disclaimer: '면책 조항',
-      aboutUs: '사이트 소개',
-      contactUs: '고객 지원',
+      aboutUs: '서비스 소개',
+      contactUs: '고객 지원 문의',
       allRightsReserved: 'All rights reserved.',
-      freeNotice: '모든 계산은 사용자의 웹 브라우저에서 안전하게 수행됩니다. 완전 무료 및 무제한.',
+      freeNotice: '모든 계산은 사용자의 브라우저에서 안전하게 실행됩니다. 완전 무료, 무제한, 비공개 원칙.',
     },
   },
 
   it: {
     siteName: 'AI Free Calculator',
-    tagline: 'Calcolatori online gratuiti al 100% per finanza, salute, edilizia e matematica',
+    tagline: 'Calcolatori online gratuiti al 100% per finanza, edilizia, salute e matematica',
     nav: {
       home: 'Home',
       categories: 'Categorie',
@@ -469,7 +550,7 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
     search: {
       placeholder: 'Cerca tra oltre 60 calcolatori...',
       label: 'Cerca calcolatori',
-      noResults: 'Nessun calcolatore trovato per questa ricerca.',
+      noResults: 'Nessun calcolatore trovato per la ricerca effettuata.',
       searching: 'Ricerca in corso...',
     },
     buttons: {
@@ -491,6 +572,15 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       faq: 'Domande frequenti (FAQ)',
       relatedTools: 'Calcolatori correlati',
       popularTools: 'Strumenti popolari',
+      calculatorTools: 'Strumenti e Calcolatori',
+      moreCategoryTools: 'Altri strumenti',
+    },
+    directory: {
+      filterPlaceholder: 'Filtra per nome o parola chiave…',
+      allLabel: 'Tutti',
+      noResultsTitle: 'Nessun calcolatore trovato',
+      noResultsDesc: 'Prova con un altro termine di ricerca o seleziona la categoria "Tutti".',
+      toolsCountBadge: '60+ strumenti online gratuiti',
     },
     footer: {
       quickLinks: 'Collegamenti rapidi',
@@ -507,6 +597,14 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
   },
 };
 
+/**
+ * Returns strictly localized common translations.
+ * Throws an error if translation is missing for the locale (no silent fallback).
+ */
 export function getCommonTranslations(locale: Locale): CommonTranslations {
-  return COMMON_TRANSLATIONS[locale] || COMMON_TRANSLATIONS.en;
+  const trans = COMMON_TRANSLATIONS[locale];
+  if (!trans) {
+    throw new Error(`[i18n] Missing required common translations for locale: "${locale}"`);
+  }
+  return trans;
 }

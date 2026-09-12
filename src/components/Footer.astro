@@ -1,23 +1,35 @@
 ---
 import { categories } from '../data/calculators';
 import { extractLocaleFromPath, getLocalizedPath } from '../i18n/utils';
-import { COMMON_TRANSLATIONS } from '../i18n/translations/common';
+import { getCommonTranslations } from '../i18n/translations/common';
 import { CATEGORIES_CONFIG } from '../i18n/translations/categories';
+import { getCalculatorTranslation } from '../i18n/translations/calculators';
+import { isValidLocale, DEFAULT_LOCALE, type Locale } from '../i18n/config';
 
-const currentPath = Astro.url.pathname;
-const { lang } = extractLocaleFromPath(currentPath);
-const tCommon = COMMON_TRANSLATIONS[lang] || COMMON_TRANSLATIONS.en;
+interface Props {
+  lang?: Locale;
+}
+
+const { lang: propLang } = Astro.props;
+const localsLang = (Astro.locals as any)?.locale;
+const originalPath = (Astro.locals as any)?.originalPath;
+const currentPath = originalPath || Astro.url.pathname;
+const urlQueryLang = Astro.url.searchParams.get('lang');
+const { lang: pathLang } = extractLocaleFromPath(currentPath);
+const candidateLang = propLang || (localsLang && isValidLocale(localsLang) ? (localsLang as Locale) : null) || (urlQueryLang && isValidLocale(urlQueryLang) ? (urlQueryLang as Locale) : null) || pathLang;
+const lang: Locale = isValidLocale(candidateLang) ? candidateLang : DEFAULT_LOCALE;
+const tCommon = getCommonTranslations(lang);
 const currentYear = new Date().getFullYear();
 
 const homeHref = getLocalizedPath('/', lang);
 
 const popularCalculators = [
-  { name: lang === 'hi' ? 'ईएमआई कैलकुलेटर' : 'EMI Calculator', href: getLocalizedPath('/finance/emi-calculator/', lang) },
-  { name: lang === 'hi' ? 'एसआईपी कैलकुलेटर' : 'SIP Calculator', href: getLocalizedPath('/finance/sip-calculator/', lang) },
-  { name: lang === 'hi' ? 'बीएमआई कैलकुलेटर' : 'BMI Calculator', href: getLocalizedPath('/general/bmi-calculator/', lang) },
-  { name: lang === 'hi' ? 'उम्र कैलकुलेटर' : 'Age Calculator', href: getLocalizedPath('/general/age-calculator/', lang) },
-  { name: lang === 'hi' ? 'कैलोरी कैलकुलेटर' : 'Calorie Calculator', href: getLocalizedPath('/health/calorie-calculator/', lang) },
-  { name: lang === 'hi' ? 'आरसीसी स्लैब कैलकुलेटर' : 'RCC Slab Calculator', href: getLocalizedPath('/construction/rcc-slab-steel-calculator/', lang) },
+  { name: getCalculatorTranslation('emi-calculator', lang).name, href: getLocalizedPath('/finance/emi-calculator/', lang) },
+  { name: getCalculatorTranslation('sip-calculator', lang).name, href: getLocalizedPath('/finance/sip-calculator/', lang) },
+  { name: getCalculatorTranslation('bmi-calculator', lang).name, href: getLocalizedPath('/general/bmi-calculator/', lang) },
+  { name: getCalculatorTranslation('age-calculator', lang).name, href: getLocalizedPath('/general/age-calculator/', lang) },
+  { name: getCalculatorTranslation('calorie-calculator', lang).name, href: getLocalizedPath('/health/calorie-calculator/', lang) },
+  { name: getCalculatorTranslation('rcc-slab-steel-calculator', lang).name, href: getLocalizedPath('/construction/rcc-slab-steel-calculator/', lang) },
 ];
 
 const companyLinks = [
@@ -27,9 +39,9 @@ const companyLinks = [
 ];
 
 const legalLinks = [
-  { name: tCommon.nav.privacyPolicy, href: getLocalizedPath('/privacy-policy/', lang) },
-  { name: tCommon.nav.terms, href: getLocalizedPath('/terms/', lang) },
-  { name: tCommon.nav.disclaimer, href: getLocalizedPath('/disclaimer/', lang) },
+  { name: tCommon.footer.privacy, href: getLocalizedPath('/privacy-policy/', lang) },
+  { name: tCommon.footer.terms, href: getLocalizedPath('/terms/', lang) },
+  { name: tCommon.footer.disclaimer, href: getLocalizedPath('/disclaimer/', lang) },
 ];
 ---
 
@@ -42,37 +54,34 @@ const legalLinks = [
       <!-- 1. Brand Section -->
       <div class="space-y-3 sm:col-span-2 lg:col-span-1">
         <a
-          href="/"
+          href={homeHref}
           class="inline-flex items-center gap-2 text-slate-900 dark:text-white"
           aria-label="AIFreeCalculator.com Home"
         >
           <div class="flex h-7 w-7 items-center justify-center rounded-md bg-blue-600 font-bold text-xs text-white shadow-xs">
             AI
           </div>
-          <span class="font-bold text-base tracking-tight">
-            AIFree<span class="text-blue-600 dark:text-blue-400">Calculator</span>
+          <span class="text-base font-bold tracking-tight text-slate-900 dark:text-white">
+            AI Free Calculator
           </span>
         </a>
 
-        <p class="text-xs leading-relaxed text-slate-600 dark:text-slate-400">
-          Free online calculators for finance, construction, health, math, and everyday tasks.
-        </p>
-
-        <p class="text-[11px] text-slate-500 dark:text-slate-400">
-          Have feedback or need a new tool? <a href="/contact/" class="text-blue-600 hover:underline dark:text-blue-400">Contact our team</a>.
+        <p class="text-xs sm:text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+          {tCommon.tagline}
         </p>
       </div>
 
       <!-- 2. Calculator Categories -->
       <div class="space-y-3">
         <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-          Categories
+          {tCommon.footer.categoriesTitle}
         </h3>
         <nav aria-label="Calculator categories">
           <ul class="space-y-2 text-xs sm:text-sm">
             {categories.map((cat) => {
               const catKey = cat.name.toLowerCase() as keyof typeof CATEGORIES_CONFIG;
-              const catName = CATEGORIES_CONFIG[catKey]?.names[lang] || cat.name;
+              const catName = CATEGORIES_CONFIG[catKey]?.names[lang];
+              if (!catName) throw new Error(`[i18n] Missing category name for ${catKey} in ${lang}`);
               return (
                 <li>
                   <a
@@ -91,7 +100,7 @@ const legalLinks = [
       <!-- 3. Popular Calculators -->
       <div class="space-y-3">
         <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-          Popular Calculators
+          {tCommon.sections.popularTools}
         </h3>
         <nav aria-label="Popular calculators">
           <ul class="space-y-2 text-xs sm:text-sm">
@@ -112,7 +121,7 @@ const legalLinks = [
       <!-- 4. Company -->
       <div class="space-y-3">
         <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-          Company
+          {tCommon.footer.quickLinks}
         </h3>
         <nav aria-label="Company">
           <ul class="space-y-2 text-xs sm:text-sm">
@@ -133,7 +142,7 @@ const legalLinks = [
       <!-- 5. Legal -->
       <div class="space-y-3">
         <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">
-          Legal
+          {tCommon.footer.legalTitle}
         </h3>
         <nav aria-label="Legal">
           <ul class="space-y-2 text-xs sm:text-sm">
@@ -155,16 +164,16 @@ const legalLinks = [
 
     <!-- Small Subtle Informational Disclaimer -->
     <div class="mt-10 pt-6 border-t border-slate-200/80 dark:border-slate-800/80 text-[11px] text-slate-500 dark:text-slate-400 text-center sm:text-left">
-      Calculator results are estimates based on the information provided. Please verify important financial, health, construction, or professional decisions when necessary.
+      {tCommon.footer.freeNotice}
     </div>
 
     <!-- Bottom Copyright Bar -->
     <div class="mt-4 pt-4 border-t border-slate-200/60 dark:border-slate-800/60 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between text-xs text-slate-500 dark:text-slate-400">
       <div>
-        © {currentYear} AIFreeCalculator.com. All rights reserved.
+        © {currentYear} AIFreeCalculator.com. {tCommon.footer.allRightsReserved}
       </div>
       <div>
-        Free online tools for everyday calculations.
+        {tCommon.tagline}
       </div>
     </div>
 

@@ -9,9 +9,10 @@ import { calculators, type CalculatorCategory } from '../data/calculators';
 import { getInternalLinks, getCalculatorOverrides } from '../lib/admin/content-store';
 import { buildCalculatorGraphSchema } from '../lib/seo/schema-builder';
 import { extractLocaleFromPath, getLocalizedPath } from '../i18n/utils';
-import { COMMON_TRANSLATIONS } from '../i18n/translations/common';
+import { getCommonTranslations } from '../i18n/translations/common';
 import { CATEGORIES_CONFIG } from '../i18n/translations/categories';
-import type { Locale } from '../i18n/config';
+import { isValidLocale, type Locale } from '../i18n/config';
+import { getCalculatorTranslation } from '../i18n/translations/calculators';
 
 interface Props {
   title: string;
@@ -35,17 +36,23 @@ const {
   lang: explicitLang,
 } = Astro.props;
 
-const detectedLang = extractLocaleFromPath(Astro.url.pathname).lang;
-const lang: Locale = explicitLang || detectedLang;
-const tCommon = COMMON_TRANSLATIONS[lang] || COMMON_TRANSLATIONS.en;
+const localsLang = (Astro.locals as any)?.locale;
+const originalPath = (Astro.locals as any)?.originalPath;
+const urlQueryLang = Astro.url.searchParams.get('lang');
+const detectedLang = extractLocaleFromPath(originalPath || Astro.url.pathname).lang;
+const candidateLang = explicitLang || (localsLang && isValidLocale(localsLang) ? (localsLang as Locale) : null) || (urlQueryLang && isValidLocale(urlQueryLang) ? (urlQueryLang as Locale) : null) || detectedLang;
+const lang: Locale = isValidLocale(candidateLang) ? candidateLang : 'en';
+const tCommon = getCommonTranslations(lang);
 
 // Fetch live CMS override (if admin configured custom SEO in /admin/seo/bulk/ or CMS)
 const allOverrides = await getCalculatorOverrides(Astro.locals);
 const override = allOverrides[slug] || {};
 
-const effectiveName = override.name || calculatorName;
-const effectiveTitle = override.metaTitle || title;
-const effectiveDescription = override.metaDescription || override.description || description;
+const calcTranslation = getCalculatorTranslation(slug, lang);
+
+const effectiveName = override.name || (lang !== 'en' ? calcTranslation.name : calculatorName);
+const effectiveTitle = override.metaTitle || (lang !== 'en' ? calcTranslation.metaTitle : title);
+const effectiveDescription = override.metaDescription || (lang !== 'en' ? calcTranslation.metaDescription : (override.description || description));
 const effectiveCanonical = override.canonicalUrl;
 const effectiveRobots = override.robots;
 const effectiveKeywords = Array.isArray(override.keywords) && override.keywords.length > 0 ? override.keywords : keywords;
@@ -75,7 +82,9 @@ const popularCrossCategory = calculators
   .slice(0, 5);
 
 const categoryKey = category.toLowerCase() as keyof typeof CATEGORIES_CONFIG;
-const localizedCategoryName = CATEGORIES_CONFIG[categoryKey]?.names[lang] || category;
+const localizedCategoryName = CATEGORIES_CONFIG[categoryKey]?.names[lang];
+if (!localizedCategoryName) throw new Error(`[i18n] Missing category name for "${categoryKey}" in "${lang}"`);
+
 const homeHref = getLocalizedPath('/', lang);
 const categoryPath = getLocalizedPath(`/${categoryKey}/`, lang);
 
@@ -123,11 +132,11 @@ const graphSchema = buildCalculatorGraphSchema({
       <div class="max-w-3xl">
         <div class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold tracking-wider text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/60 dark:text-blue-400">
           <span class="h-1.5 w-1.5 rounded-full bg-blue-600 dark:bg-blue-400"></span>
-          {category.toUpperCase()} TOOL
+          {localizedCategoryName.toUpperCase()}
         </div>
 
         <h1 class="mt-3 text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl lg:text-4xl">
-          {effectiveName}
+          {lang !== 'en' ? calcTranslation.h1 : effectiveName}
         </h1>
 
         <p class="mt-2.5 text-xs leading-relaxed text-slate-600 dark:text-slate-300 sm:text-sm">
@@ -153,7 +162,7 @@ const graphSchema = buildCalculatorGraphSchema({
         <!-- Interactive Calculator Widget Container -->
         <div class="rounded-3xl border border-slate-200/90 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-7">
           <slot />
-          <CalculatorActionBar calculatorName={effectiveName} slug={slug} category={category} />
+          <CalculatorActionBar calculatorName={effectiveName} slug={slug} category={category} lang={lang} />
         </div>
 
         <!-- Feedback & Report Issue Banner (Directly below calculator) -->
@@ -178,18 +187,86 @@ const graphSchema = buildCalculatorGraphSchema({
         <!-- Educational Content / Formula / How to Calculate Slot -->
         <div class="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/60 sm:p-8">
           <div class="prose prose-slate max-w-none dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-a:text-blue-600 dark:prose-a:text-blue-400">
-            <slot name="content" />
+            {lang !== 'en' ? (
+              <div>
+                <h2>{calcTranslation.formulaTitle}</h2>
+                <p>{calcTranslation.formulaDescription}</p>
+                {calcTranslation.formulaEquation && (
+                  <div class="my-4 rounded-xl border border-blue-200 bg-blue-50/70 p-4 font-mono text-sm font-bold text-blue-900 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-200">
+                    {calcTranslation.formulaEquation}
+                  </div>
+                )}
+                {calcTranslation.variables && calcTranslation.variables.length > 0 && (
+                  <div class="my-6">
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-3">Formula Variables</h3>
+                    <ul class="space-y-2 list-none pl-0">
+                      {calcTranslation.variables.map((v) => (
+                        <li class="flex items-start gap-2 text-sm">
+                          <span class="font-bold text-blue-600 dark:text-blue-400 shrink-0">{v.symbol} ({v.label}):</span>
+                          <span class="text-slate-600 dark:text-slate-300">{v.description}{v.unit ? ` [${v.unit}]` : ''}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {calcTranslation.stepByStep && calcTranslation.stepByStep.length > 0 && (
+                  <div class="my-6">
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-3">{tCommon.sections.howItWorks}</h3>
+                    <ol class="space-y-2.5 list-decimal pl-5">
+                      {calcTranslation.stepByStep.map((s) => (
+                        <li class="text-sm">
+                          <strong class="text-slate-900 dark:text-white">{s.title}:</strong>{' '}
+                          <span class="text-slate-600 dark:text-slate-300">{s.instruction}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+                {calcTranslation.workedExample && (
+                  <div class="my-6 rounded-2xl border border-slate-200 bg-slate-50/70 p-5 dark:border-slate-800 dark:bg-slate-900/50">
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-2">{calcTranslation.workedExample.title}</h3>
+                    <p class="text-sm text-slate-600 dark:text-slate-300 mb-2"><strong>Scenario:</strong> {calcTranslation.workedExample.scenario}</p>
+                    <p class="text-sm font-mono text-blue-700 dark:text-blue-300 mb-2"><strong>Calculation:</strong> {calcTranslation.workedExample.calculation}</p>
+                    <p class="text-sm font-semibold text-emerald-700 dark:text-emerald-400"><strong>Result:</strong> {calcTranslation.workedExample.result}</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <slot name="content" />
+            )}
           </div>
         </div>
 
-        <!-- FAQs Section (Rendered ONLY when slot="faq" is provided) -->
-        {Astro.slots.has('faq') && (
-          <div class="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/60 sm:p-8">
-            <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-              <span>❓</span> Frequently Asked Questions
-            </h2>
-            <slot name="faq" />
-          </div>
+        <!-- FAQs Section -->
+        {lang !== 'en' ? (
+          calcTranslation.faqs && calcTranslation.faqs.length > 0 && (
+            <div class="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/60 sm:p-8">
+              <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+                <span>❓</span> {tCommon.sections.faq}
+              </h2>
+              <div class="space-y-4">
+                {calcTranslation.faqs.map((faq) => (
+                  <details class="group rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
+                    <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+                      {faq.question}
+                    </summary>
+                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                      {faq.answer}
+                    </p>
+                  </details>
+                ))}
+              </div>
+            </div>
+          )
+        ) : (
+          Astro.slots.has('faq') && (
+            <div class="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/60 sm:p-8">
+              <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+                <span>❓</span> {tCommon.sections.faq}
+              </h2>
+              <slot name="faq" />
+            </div>
+          )
         )}
 
       </div>
@@ -206,30 +283,33 @@ const graphSchema = buildCalculatorGraphSchema({
             <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900/70">
               <div class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800">
                 <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <span>📂</span> More {category} Tools
+                  <span>📂</span> {localizedCategoryName} {tCommon.sections.moreCategoryTools}
                 </h3>
                 <a href={categoryPath} class="text-[11px] font-semibold text-blue-600 hover:underline dark:text-blue-400">
-                  View all →
+                  {tCommon.buttons.viewAll} →
                 </a>
               </div>
 
               <div class="mt-3 divide-y divide-slate-100 dark:divide-slate-800/60">
-                {relatedCalculators.map((c) => (
-                  <a
-                    href={c.path}
-                    class="group flex items-center justify-between py-2.5 text-xs transition hover:text-blue-600 dark:hover:text-blue-400"
-                  >
-                    <div class="flex items-center gap-2 min-w-0 pr-2">
-                      <span class="text-base shrink-0">{c.icon}</span>
-                      <span class="truncate font-medium text-slate-700 group-hover:text-blue-600 dark:text-slate-200 dark:group-hover:text-blue-400">
-                        {c.name}
+                {relatedCalculators.map((c) => {
+                  const relTrans = getCalculatorTranslation(c.slug, lang);
+                  return (
+                    <a
+                      href={getLocalizedPath(c.path, lang)}
+                      class="group flex items-center justify-between py-2.5 text-xs transition hover:text-blue-600 dark:hover:text-blue-400"
+                    >
+                      <div class="flex items-center gap-2 min-w-0 pr-2">
+                        <span class="text-base shrink-0">{c.icon}</span>
+                        <span class="truncate font-medium text-slate-700 group-hover:text-blue-600 dark:text-slate-200 dark:group-hover:text-blue-400">
+                          {relTrans.name}
+                        </span>
+                      </div>
+                      <span class="shrink-0 text-slate-400 group-hover:translate-x-0.5 transition-transform text-[10px]">
+                        →
                       </span>
-                    </div>
-                    <span class="shrink-0 text-slate-400 group-hover:translate-x-0.5 transition-transform text-[10px]">
-                      →
-                    </span>
-                  </a>
-                ))}
+                    </a>
+                  );
+                })}
               </div>
             </div>
           )}
@@ -238,26 +318,32 @@ const graphSchema = buildCalculatorGraphSchema({
           <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900/70">
             <div class="border-b border-slate-100 pb-3 dark:border-slate-800">
               <h3 class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white flex items-center gap-1.5">
-                <span>🔥</span> Most Popular
+                <span>🔥</span> {tCommon.sections.popularTools}
               </h3>
             </div>
             <div class="mt-3 divide-y divide-slate-100 dark:divide-slate-800/60">
-              {popularCrossCategory.map((c) => (
-                <a
-                  href={c.path}
-                  class="group flex items-center justify-between py-2 text-xs transition hover:text-blue-600 dark:hover:text-blue-400"
-                >
-                  <div class="flex items-center gap-2 min-w-0 pr-2">
-                    <span class="text-sm shrink-0">{c.icon}</span>
-                    <span class="truncate font-medium text-slate-700 group-hover:text-blue-600 dark:text-slate-200 dark:group-hover:text-blue-400">
-                      {c.name}
+              {popularCrossCategory.map((c) => {
+                const popTrans = getCalculatorTranslation(c.slug, lang);
+                const catKey = c.category.toLowerCase() as keyof typeof CATEGORIES_CONFIG;
+                const popCatName = CATEGORIES_CONFIG[catKey]?.names[lang];
+                if (!popCatName) throw new Error(`[i18n] Missing category name for "${catKey}" in "${lang}"`);
+                return (
+                  <a
+                    href={getLocalizedPath(c.path, lang)}
+                    class="group flex items-center justify-between py-2 text-xs transition hover:text-blue-600 dark:hover:text-blue-400"
+                  >
+                    <div class="flex items-center gap-2 min-w-0 pr-2">
+                      <span class="text-sm shrink-0">{c.icon}</span>
+                      <span class="truncate font-medium text-slate-700 group-hover:text-blue-600 dark:text-slate-200 dark:group-hover:text-blue-400">
+                        {popTrans.name}
+                      </span>
+                    </div>
+                    <span class="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                      {popCatName}
                     </span>
-                  </div>
-                  <span class="rounded bg-slate-100 px-1.5 py-0.5 text-[9px] font-bold text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                    {c.category}
-                  </span>
-                </a>
-              ))}
+                  </a>
+                );
+              })}
             </div>
           </div>
 

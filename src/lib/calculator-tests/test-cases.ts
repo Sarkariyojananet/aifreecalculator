@@ -433,7 +433,7 @@ const xirrTests: CalculatorTestCase[] = [
     tolerance: 0.05,
     description: 'Verifies 3 yearly installments of ₹10,000 reaching ₹60,000 on 2024-01-01 yields 38.92% p.a.',
     run: () => calculateRecurringXirr({
-      frequency: 'Yearly',
+      frequency: 'yearly',
       startDate: '2021-01-01',
       maturityDate: '2024-01-01',
       recurringAmount: 10000,
@@ -450,7 +450,7 @@ const xirrTests: CalculatorTestCase[] = [
     tolerance: 0,
     description: 'Verifies 6 monthly installments of ₹5,000 gives totalInvested of ₹30,000.',
     run: () => calculateRecurringXirr({
-      frequency: 'Monthly',
+      frequency: 'monthly',
       startDate: '2023-01-01',
       maturityDate: '2023-07-01',
       recurringAmount: 5000,
@@ -467,7 +467,7 @@ const xirrTests: CalculatorTestCase[] = [
     tolerance: 0,
     description: 'Verifies 14-day intervals from 2023-01-01 to 2023-02-28 results in 5 installments (Jan 1, Jan 15, Jan 29, Feb 12, Feb 26).',
     run: () => calculateRecurringXirr({
-      frequency: '14 Days',
+      frequency: '14days',
       startDate: '2023-01-01',
       maturityDate: '2023-02-28',
       recurringAmount: 1000,
@@ -484,9 +484,9 @@ const xirrTests: CalculatorTestCase[] = [
     tolerance: 0,
     description: 'Verifies custom cash flows total invested calculation.',
     run: () => calculateCustomXirr([
-      { date: '2022-01-01', amount: -50000 },
-      { date: '2022-07-01', amount: -20000 },
-      { date: '2023-01-01', amount: 80000 },
+      { date: '2022-01-01', type: 'outflow', amount: -50000 },
+      { date: '2022-07-01', type: 'outflow', amount: -20000 },
+      { date: '2023-01-01', type: 'inflow', amount: 80000 },
     ]),
   },
   {
@@ -500,7 +500,7 @@ const xirrTests: CalculatorTestCase[] = [
     description: 'Verifies negative return when maturity value is less than total invested (₹20k invested, ₹15k returned).',
     run: () => {
       const res = calculateRecurringXirr({
-        frequency: 'Yearly',
+        frequency: 'yearly',
         startDate: '2021-01-01',
         maturityDate: '2023-01-01',
         recurringAmount: 10000,

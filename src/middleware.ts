@@ -2,6 +2,9 @@ import { defineMiddleware } from 'astro:middleware';
 import { getRedirectRules } from './lib/admin/content-store';
 import { record404Hit } from './lib/redirects/monitor';
 import { recordError } from './lib/monitoring/store';
+import { isValidLocale, type Locale } from './i18n/config';
+import { isCalculatorTranslated } from './i18n/translations/calculators';
+import { calculators } from './data/calculators';
 
 // Marketing, analytics, and social tracking query parameters that do not alter page HTML
 const TRACKING_QUERY_PARAMS = new Set([
@@ -138,6 +141,48 @@ export const onRequest = defineMiddleware(async (context, next) => {
       }
     } catch {
       // Fail safely to avoid blocking request
+    }
+  }
+
+  // 2b. Universal i18n Calculator Routing
+  // Seamlessly routes /{lang}/{category}/{slug}/ to the full rich calculator page with the selected locale
+  if (!isAdminRoute && !isApiRoute && !isAstroInternal && !isStaticFile && !pathname.includes('.')) {
+    const segments = pathname.split('/').filter(Boolean);
+    if (segments.length >= 3 && isValidLocale(segments[0]) && segments[0] !== 'en') {
+      const reqLocale = segments[0] as Locale;
+      const category = segments[1].toLowerCase();
+      const slug = segments[2].toLowerCase();
+
+      const baseCalc = calculators.find(
+        (c) =>
+          c.slug.toLowerCase() === slug &&
+          (c.category.toLowerCase() === category ||
+            (c.additionalCategories &&
+              c.additionalCategories.some((ac) => ac.toLowerCase() === category)))
+      );
+      if (baseCalc) {
+        (context.locals as any).locale = reqLocale;
+        (context.locals as any).originalPath = pathname;
+        return context.rewrite(`${baseCalc.path}?lang=${reqLocale}`);
+      }
+    }
+  }
+
+  // 2c. Canonicalize legacy or query parameter `?lang=xx` to clean path `/{lang}/...`
+  if (!isAdminRoute && !isApiRoute && !isAstroInternal && !isStaticFile && !pathname.includes('.')) {
+    const queryLang = context.url.searchParams.get('lang');
+    if (queryLang && isValidLocale(queryLang) && queryLang !== 'en') {
+      const segments = pathname.split('/').filter(Boolean);
+      if (!isValidLocale(segments[0])) {
+        const cleanUrl = new URL(context.url.toString());
+        cleanUrl.searchParams.delete('lang');
+        const remainingQuery = cleanUrl.searchParams.toString();
+        const cleanPath = pathname.startsWith('/') ? pathname : `/${pathname}`;
+        const targetUrl = `/${queryLang}${cleanPath}${remainingQuery ? `?${remainingQuery}` : ''}`;
+        const redirectResponse = context.redirect(targetUrl, 301);
+        redirectResponse.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+        return redirectResponse;
+      }
     }
   }
 
