@@ -173,13 +173,17 @@ async function readSetting<T>(key: string, defaultValue: T, locals?: any): Promi
 async function writeSetting<T>(key: string, value: T, locals?: any): Promise<void> {
   inMemorySettingsCache.delete(key);
   const db = getDb(locals);
+  const query = 'INSERT INTO site_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value';
   try {
-    await db.exec('CREATE TABLE IF NOT EXISTS site_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
-    await db
-      .prepare('INSERT INTO site_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value')
-      .bind(key, JSON.stringify(value))
-      .run();
-  } catch {}
+    await db.prepare(query).bind(key, JSON.stringify(value)).run();
+  } catch (err: any) {
+    if (err?.message && String(err.message).includes('no such table')) {
+      try {
+        await db.exec('CREATE TABLE IF NOT EXISTS site_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)');
+        await db.prepare(query).bind(key, JSON.stringify(value)).run();
+      } catch {}
+    }
+  }
 }
 
 export async function getFeatureFlags(locals?: any): Promise<FeatureFlags> {

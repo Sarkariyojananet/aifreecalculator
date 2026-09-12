@@ -145,7 +145,12 @@ const resolvedOgImage = ogImage.startsWith('http')
         async function fetchAdConfig() {
           try {
             const CACHE_KEY = 'adsense_cfg';
-            const cached = sessionStorage.getItem(CACHE_KEY);
+            const ONE_DAY_MS = 86_400_000; // 24 hours
+            let cached = null;
+            try {
+              cached = localStorage.getItem(CACHE_KEY) || sessionStorage.getItem(CACHE_KEY);
+            } catch {}
+
             if (cached) {
               try {
                 const parsed = JSON.parse(cached);
@@ -158,8 +163,13 @@ const resolvedOgImage = ogImage.startsWith('http')
             if (!res.ok) return null;
             const data = await res.json();
             try {
-              sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data, expiry: Date.now() + 60_000 }));
-            } catch {}
+              const payload = JSON.stringify({ data, expiry: Date.now() + ONE_DAY_MS });
+              localStorage.setItem(CACHE_KEY, payload);
+            } catch {
+              try {
+                sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data, expiry: Date.now() + ONE_DAY_MS }));
+              } catch {}
+            }
             return data;
           } catch (err) {
             return null;

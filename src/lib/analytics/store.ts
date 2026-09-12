@@ -115,7 +115,6 @@ export async function recordCalculatorAnalyticsEvent(
   },
   locals?: any
 ): Promise<void> {
-  await initAnalyticsStore(locals);
   const db = getDb(locals);
 
   const cleanSlug = params.slug.trim().toLowerCase();
@@ -151,21 +150,26 @@ export async function recordCalculatorAnalyticsEvent(
       ? 'social_count'
       : 'referral_count';
 
+  const query = `
+    INSERT INTO cms_calc_daily_analytics (
+      id, calculator_slug, date, ${col}, ${devCol}, ${srcCol}, updated_at
+    ) VALUES (?, ?, ?, 1, 1, 1, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      ${col} = ${col} + 1,
+      ${devCol} = ${devCol} + 1,
+      ${srcCol} = ${srcCol} + 1,
+      updated_at = excluded.updated_at
+  `;
+
   try {
-    await db
-      .prepare(`
-        INSERT INTO cms_calc_daily_analytics (
-          id, calculator_slug, date, ${col}, ${devCol}, ${srcCol}, updated_at
-        ) VALUES (?, ?, ?, 1, 1, 1, ?)
-        ON CONFLICT(id) DO UPDATE SET
-          ${col} = ${col} + 1,
-          ${devCol} = ${devCol} + 1,
-          ${srcCol} = ${srcCol} + 1,
-          updated_at = excluded.updated_at
-      `)
-      .bind(id, cleanSlug, today, now)
-      .run();
-  } catch {
+    await db.prepare(query).bind(id, cleanSlug, today, now).run();
+  } catch (err: any) {
+    if (err?.message && String(err.message).includes('no such table')) {
+      try {
+        await initAnalyticsStore(locals);
+        await db.prepare(query).bind(id, cleanSlug, today, now).run();
+      } catch {}
+    }
     // Fail safely; analytics must never throw
   }
 }

@@ -3,15 +3,15 @@
  * Compatible with Cloudflare Workers (non-blocking, zero PII, async execution).
  */
 
-import { findSmartRedirectSuggestion } from './suggestion-engine';
-import { calculate404Priority } from './priority-scorer';
 import { upsert404Hit } from './store';
-import { getCachedGscSnapshot } from '../seo/gsc-store';
 import type { DeviceCategory } from './types';
 
 // In-memory throttling map: normalizedPath -> timestamp
 const lastRecordedTimestamp = new Map<string, number>();
 const THROTTLE_WINDOW_MS = 10_000; // 10 seconds per unique path to avoid burst write amplification
+
+// Cheap path-based rejection for obvious vulnerability scanner probes
+const SCANNER_PATH_REGEX = /(?:^\/(?:\.env|\.git|wp-admin|wp-login|xmlrpc|cgi-bin|autodiscover|actuator|swagger)|\.(?:php|asp|aspx|jsp|cgi|env)$)/i;
 
 /**
  * Normalizes a requested 404 URL into a clean canonical path.
@@ -75,6 +75,11 @@ export function extractDeviceCategory(request: Request): DeviceCategory {
 export async function record404Hit(url: URL, request: Request, locals?: any): Promise<void> {
   const normalizedPath = normalize404Path(url);
 
+  // 1. Cheap rejection for vulnerability scanners and probe tools (0 ms CPU, 0 D1 queries)
+  if (SCANNER_PATH_REGEX.test(normalizedPath)) {
+    return;
+  }
+
   // Filter out internal system or developer noise
   if (
     normalizedPath.startsWith('/admin') ||
@@ -104,48 +109,13 @@ export async function record404Hit(url: URL, request: Request, locals?: any): Pr
     const referrer = extractSafeReferrer(request);
     const deviceCategory = extractDeviceCategory(request);
 
-    // 1. Calculate smart redirect suggestion
-    const suggestion = findSmartRedirectSuggestion(normalizedPath);
-
-    // 2. Check if this URL had historical Google Search Console impressions
-    let gscImpressions = 0;
-    let gscClicks = 0;
-
-    try {
-      const gscSnapshot = await getCachedGscSnapshot('28d', locals);
-      const topPages = gscSnapshot?.data?.['28d']?.topPages || [];
-      if (topPages.length > 0) {
-        const matchingPage = topPages.find((p: any) => {
-          const pagePath = (p.path || p.url || '').toLowerCase();
-          return pagePath.endsWith(normalizedPath) || pagePath.endsWith(normalizedPath.replace(/\/$/, ''));
-        });
-        if (matchingPage) {
-          gscImpressions = matchingPage.impressions || 0;
-          gscClicks = matchingPage.clicks || 0;
-        }
-      }
-    } catch {}
-
-    // 3. Calculate priority score
-    const priority = calculate404Priority({
-      totalHits: 1,
-      recentHits: 1,
-      gscImpressions,
-      hasSafeSuggestion: Boolean(suggestion && suggestion.confidence >= 70),
-    });
-
-    // 4. Save to Cloudflare D1
+    // Save to Cloudflare D1 cleanly without expensive Levenshtein loops or GSC queries on live paths
     await upsert404Hit(
       {
         path: normalizedPath,
         referrer,
         deviceCategory,
-        suggestedDestination: suggestion?.destination,
-        suggestionConfidence: suggestion?.confidence,
-        suggestionReason: suggestion?.reason,
-        priority,
-        gscImpressions,
-        gscClicks,
+        priority: 'low',
       },
       locals
     );

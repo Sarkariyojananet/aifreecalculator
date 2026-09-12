@@ -15,6 +15,7 @@ export default defineConfig({
   redirects: {
     '/finance/sukanya-samriddhi-calculator': '/finance/sukanya-samriddhi-yojana-calculator',
     '/brickwork-calculator': '/construction/brickwork-calculator',
+    '/finance/loan-calculator': '/finance/emi-calculator/?type=personal',
   },
 
   cache: {

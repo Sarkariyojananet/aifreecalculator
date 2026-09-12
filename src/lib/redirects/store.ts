@@ -6,6 +6,7 @@ import { getDb, type D1Database } from '../db';
 import type { Log404Entry, Log404Status, RedirectHistoryEntry, RedirectPriority, RedirectSummaryKPIs } from './types';
 import { getRedirectRules } from '../admin/content-store';
 import { auditAllRedirectRules } from './validator';
+import { findSmartRedirectSuggestion } from './suggestion-engine';
 
 let tablesInitialized = false;
 
@@ -74,12 +75,11 @@ export async function upsert404Hit(
   },
   locals?: any
 ): Promise<void> {
-  await init404Store(locals);
   const db = getDb(locals);
   const now = new Date().toISOString();
   const windowThresholdMs = 24 * 60 * 60 * 1000; // 24-hour rolling window
 
-  try {
+  const executeUpsert = async () => {
     const existing = await db
       .prepare('SELECT path, first_seen, hit_count, recent_hit_count, recent_window_start, status FROM cms_404_logs WHERE path = ?')
       .bind(entry.path)
@@ -156,8 +156,17 @@ export async function upsert404Hit(
         )
         .run();
     }
-  } catch (err) {
-    // Fail safely to never throw on 404 logging
+  };
+
+  try {
+    await executeUpsert();
+  } catch (err: any) {
+    if (err?.message && String(err.message).includes('no such table')) {
+      try {
+        await init404Store(locals);
+        await executeUpsert();
+      } catch {}
+    }
   }
 }
 
@@ -233,24 +242,41 @@ export async function get404Logs(
       .bind(...bindings, limit, offset)
       .all<any>();
 
-    const logs: Log404Entry[] = (rows?.results || []).map((r) => ({
-      path: r.path,
-      firstSeen: r.first_seen,
-      lastSeen: r.last_seen,
-      hitCount: r.hit_count,
-      recentHitCount: r.recent_hit_count,
-      recentWindowStart: r.recent_window_start,
-      referrer: r.referrer || undefined,
-      deviceCategory: (r.device_category || 'desktop') as any,
-      suggestedDestination: r.suggested_destination || undefined,
-      suggestionConfidence: r.suggestion_confidence || 0,
-      suggestionReason: r.suggestion_reason || undefined,
-      priority: r.priority as RedirectPriority,
-      status: r.status as Log404Status,
-      redirectId: r.redirect_id || undefined,
-      gscImpressions: r.gsc_impressions || 0,
-      gscClicks: r.gsc_clicks || 0,
-    }));
+    const logs: Log404Entry[] = (rows?.results || []).map((r) => {
+      let dest = r.suggested_destination || undefined;
+      let conf = r.suggestion_confidence || 0;
+      let reason = r.suggestion_reason || undefined;
+
+      if (!dest && r.path) {
+        try {
+          const suggestion = findSmartRedirectSuggestion(r.path);
+          if (suggestion) {
+            dest = suggestion.destination;
+            conf = suggestion.confidence;
+            reason = suggestion.reason;
+          }
+        } catch {}
+      }
+
+      return {
+        path: r.path,
+        firstSeen: r.first_seen,
+        lastSeen: r.last_seen,
+        hitCount: r.hit_count,
+        recentHitCount: r.recent_hit_count,
+        recentWindowStart: r.recent_window_start,
+        referrer: r.referrer || undefined,
+        deviceCategory: (r.device_category || 'desktop') as any,
+        suggestedDestination: dest,
+        suggestionConfidence: conf,
+        suggestionReason: reason,
+        priority: r.priority as RedirectPriority,
+        status: r.status as Log404Status,
+        redirectId: r.redirect_id || undefined,
+        gscImpressions: r.gsc_impressions || 0,
+        gscClicks: r.gsc_clicks || 0,
+      };
+    });
 
     return { logs, total };
   } catch {

@@ -146,8 +146,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
     status: 200,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'public, max-age=60, s-maxage=60, stale-while-revalidate=120',
-      'Cloudflare-CDN-Cache-Control': 'max-age=60, stale-while-revalidate=120',
+      'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
+      'Cloudflare-CDN-Cache-Control': 'max-age=86400, stale-while-revalidate=604800',
     },
   });
 
