@@ -52,6 +52,8 @@ import { factorial } from '../calculators/scientific';
 import { calculateFractionOperation } from '../calculators/fraction';
 import { generateMultipleRandomNumbers } from '../calculators/random-number-generator';
 import { calculateVolumeComprehensive } from '../calculators/volume';
+import { calculateMarginExtended } from '../calculators/margin';
+import { calculateAnnualIncomeExtended } from '../calculators/annual-income';
 import type { CalculatorTestCase, CustomTestCaseDefinition } from './types';
 
 /**
@@ -186,6 +188,25 @@ export function executeCalculatorFormula(slug: string, inputs: Record<string, an
       });
     case 'volume-calculator':
       return calculateVolumeComprehensive(inputs as any);
+    case 'margin-calculator':
+      return calculateMarginExtended({
+        mode: inputs.mode || (inputs.cost !== undefined && inputs.revenue !== undefined ? 'cost_revenue' : 'cost_margin'),
+        cost: inputs.cost,
+        revenue: inputs.revenue,
+        profit: inputs.profit,
+        margin: inputs.margin ?? inputs.marginPercent,
+      });
+    case 'annual-income-calculator':
+      return calculateAnnualIncomeExtended({
+        mode: inputs.mode || 'hourly_to_annual',
+        hourlyWage: inputs.hourlyWage,
+        hoursPerWeek: inputs.hoursPerWeek,
+        weeksPerYear: inputs.weeksPerYear,
+        unpaidWeeks: inputs.unpaidWeeks,
+        grossAnnualIncome: inputs.grossAnnualIncome,
+        netAnnualIncome: inputs.netAnnualIncome,
+        taxRatePercent: inputs.taxRatePercent,
+      });
     default:
       throw new Error(`No formula runner registered for calculator slug: ${slug}`);
   }

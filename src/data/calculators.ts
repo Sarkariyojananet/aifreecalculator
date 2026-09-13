@@ -71,6 +71,39 @@ const CALCULATOR_ALIASES: Record<string, string[]> = {
   'rd-calculator': ['rd calculator', 'recurring deposit', 'post office rd', 'sbi rd', 'quarterly compounding rd', 'bank rd interest'],
   'macro-calculator': ['macro calculator', 'iifym calculator', 'protein calculator', 'macronutrient calculator', 'keto macros', 'bodybuilding macros', 'macros for fat loss'],
   'map-calculator': ['map calculator', 'map calculator bp', 'bp map calculator', 'map calculator nursing', 'mean arterial pressure', 'arterial pressure', 'map bp', 'blood pressure map', 'icu map', 'perfusion pressure'],
+  'margin-calculator': [
+    'margin calculator',
+    'profit margin',
+    'profit margin calculator',
+    'gross margin',
+    'gross margin calculator',
+    'gross profit',
+    'gross profit calculator',
+    'sales margin',
+    'sales margin calculator',
+    'markup vs margin',
+    'margin vs markup',
+    'profit calculator',
+    'cogs calculator',
+    'selling price calculator',
+    'labh margin',
+    'margin formula'
+  ],
+  'annual-income-calculator': [
+    'annual income calculator',
+    'yearly income calculator',
+    'annual salary calculator',
+    'yearly salary calculator',
+    'hourly to salary',
+    'hourly to annual',
+    'salary to hourly',
+    'varshik aay calculator',
+    'wage to salary',
+    'gross annual income',
+    'net annual income',
+    'take home pay',
+    'income calculator'
+  ],
 };
 
 export const calculators: Calculator[] = (rawCalculators as Calculator[])

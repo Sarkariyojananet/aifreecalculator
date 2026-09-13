@@ -60,6 +60,8 @@ import { calculateRetirementCorpus } from '../calculators/retirement';
 import { calculateAmortizationSchedule } from '../calculators/amortization';
 import { calculateSalesTaxExtended } from '../calculators/sales-tax';
 import { calculateDiscountExtended } from '../calculators/discount';
+import { calculateMarginExtended } from '../calculators/margin';
+import { calculateAnnualIncomeExtended } from '../calculators/annual-income';
 import { calculateNavyBodyFat } from '../calculators/body-fat';
 import { calculateDailyCalories } from '../calculators/calorie';
 import { calculateBmr } from '../calculators/bmr';
@@ -2438,6 +2440,201 @@ const discountTests: CalculatorTestCase[] = [
   },
 ];
 
+// ─── Margin Calculator Tests ───────────────────────────────────────────────────
+const marginTests: CalculatorTestCase[] = [
+  {
+    slug: 'margin-calculator',
+    name: 'Test 1: Cost 30, Revenue 50 -> Profit 20 & Margin 40%',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'profit',
+    expectedValue: 20,
+    tolerance: 0.01,
+    description: 'Cost = ₹30, Revenue = ₹50 yields Profit = ₹20 and Margin = 40%.',
+    run: () => calculateMarginExtended({
+      mode: 'cost_revenue',
+      cost: 30,
+      revenue: 50,
+    }),
+  },
+  {
+    slug: 'margin-calculator',
+    name: 'Test 2: Cost 30, Margin 40% -> Revenue 50 & Profit 20',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'revenue',
+    expectedValue: 50,
+    tolerance: 0.01,
+    description: 'Cost = ₹30 with desired 40% margin requires Revenue = ₹50.',
+    run: () => calculateMarginExtended({
+      mode: 'cost_margin',
+      cost: 30,
+      margin: 40,
+    }),
+  },
+  {
+    slug: 'margin-calculator',
+    name: 'Test 3: Revenue 100, Margin 25% -> Cost 75 & Profit 25',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'cost',
+    expectedValue: 75,
+    tolerance: 0.01,
+    description: 'Revenue = ₹100 with 25% target margin allows Cost = ₹75.',
+    run: () => calculateMarginExtended({
+      mode: 'revenue_margin',
+      revenue: 100,
+      margin: 25,
+    }),
+  },
+  {
+    slug: 'margin-calculator',
+    name: 'Test 4: Revenue 200, Profit 50 -> Cost 150 & Margin 25%',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'cost',
+    expectedValue: 150,
+    tolerance: 0.01,
+    description: 'Revenue = ₹200 and Profit = ₹50 gives Cost = ₹150 and Margin = 25%.',
+    run: () => calculateMarginExtended({
+      mode: 'revenue_profit',
+      revenue: 200,
+      profit: 50,
+    }),
+  },
+  {
+    slug: 'margin-calculator',
+    name: 'Test 5: Cost 100, Profit 50 -> Revenue 150 & Margin 33.333%',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'revenue',
+    expectedValue: 150,
+    tolerance: 0.01,
+    description: 'Cost = ₹100 and Profit = ₹50 requires Revenue = ₹150.',
+    run: () => calculateMarginExtended({
+      mode: 'cost_profit',
+      cost: 100,
+      profit: 50,
+    }),
+  },
+  {
+    slug: 'margin-calculator',
+    name: 'Test 6: Break-even Cost 100, Revenue 100 -> Profit 0 & Margin 0%',
+    category: 'Boundary',
+    expectedBehavior: 'result',
+    expectedResultKey: 'profit',
+    expectedValue: 0,
+    tolerance: 0.01,
+    description: 'Cost = ₹100 and Revenue = ₹100 yields Profit = 0 and Margin = 0%.',
+    run: () => calculateMarginExtended({
+      mode: 'cost_revenue',
+      cost: 100,
+      revenue: 100,
+    }),
+  },
+];
+
+// ─── Annual Income Calculator Tests ────────────────────────────────────────────
+const annualIncomeTests: CalculatorTestCase[] = [
+  {
+    slug: 'annual-income-calculator',
+    name: 'Test 1: Hourly ₹500, 40 hrs/wk, 52 wks -> ₹10,40,000',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'grossAnnualIncome',
+    expectedValue: 1040000,
+    tolerance: 0.01,
+    description: 'Hourly wage ₹500 × 40 hrs/wk × 52 wks = ₹10,40,000 annual income.',
+    run: () => calculateAnnualIncomeExtended({
+      mode: 'hourly_to_annual',
+      hourlyWage: 500,
+      hoursPerWeek: 40,
+      weeksPerYear: 52,
+    }),
+  },
+  {
+    slug: 'annual-income-calculator',
+    name: 'Test 2: Hourly ₹500, 40 hrs/wk, 50 wks -> ₹10,00,000',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'grossAnnualIncome',
+    expectedValue: 1000000,
+    tolerance: 0.01,
+    description: 'Hourly wage ₹500 × 40 hrs/wk × 50 wks (2 unpaid leave) = ₹10,00,000.',
+    run: () => calculateAnnualIncomeExtended({
+      mode: 'hourly_to_annual',
+      hourlyWage: 500,
+      hoursPerWeek: 40,
+      weeksPerYear: 50,
+    }),
+  },
+  {
+    slug: 'annual-income-calculator',
+    name: 'Test 3: Gross ₹10,00,000, Tax 10% -> Tax ₹1,00,000 & Net ₹9,00,000',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'netAnnualIncome',
+    expectedValue: 900000,
+    tolerance: 0.01,
+    description: 'Gross ₹10,00,000 at 10% tax yields ₹9,00,000 net income.',
+    run: () => calculateAnnualIncomeExtended({
+      mode: 'hourly_to_annual',
+      hourlyWage: 500,
+      hoursPerWeek: 40,
+      weeksPerYear: 50,
+      taxRatePercent: 10,
+    }),
+  },
+  {
+    slug: 'annual-income-calculator',
+    name: 'Test 4: Annual ₹10,40,000, 40 hrs/wk, 52 wks -> Hourly ₹500',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'hourlyWage',
+    expectedValue: 500,
+    tolerance: 0.01,
+    description: 'Reverse: ₹10,40,000 annual salary yields ₹500/hour.',
+    run: () => calculateAnnualIncomeExtended({
+      mode: 'annual_to_hourly',
+      grossAnnualIncome: 1040000,
+      hoursPerWeek: 40,
+      weeksPerYear: 52,
+    }),
+  },
+  {
+    slug: 'annual-income-calculator',
+    name: 'Test 5: Desired ₹12,00,000, Hourly ₹500, 48 wks -> 50 hrs/wk',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'hoursPerWeek',
+    expectedValue: 50,
+    tolerance: 0.01,
+    description: 'Reverse: ₹12,00,000 at ₹500/hr for 48 wks requires 50 hrs/wk.',
+    run: () => calculateAnnualIncomeExtended({
+      mode: 'solve_hours',
+      grossAnnualIncome: 1200000,
+      hourlyWage: 500,
+      weeksPerYear: 48,
+    }),
+  },
+  {
+    slug: 'annual-income-calculator',
+    name: 'Test 6: Annual ₹10,00,000, Hourly ₹500, 40 hrs/wk -> 50 Weeks',
+    category: 'Normal',
+    expectedBehavior: 'result',
+    expectedResultKey: 'workingWeeks',
+    expectedValue: 50,
+    tolerance: 0.01,
+    description: 'Reverse: ₹10,00,000 at ₹500/hr and 40 hrs/wk requires 50 working weeks.',
+    run: () => calculateAnnualIncomeExtended({
+      mode: 'solve_weeks',
+      grossAnnualIncome: 1000000,
+      hourlyWage: 500,
+      hoursPerWeek: 40,
+    }),
+  },
+];
+
 // ─── Body Fat Calculator Tests ─────────────────────────────────────────────────
 const bodyFatTests: CalculatorTestCase[] = [
   {
@@ -2730,6 +2927,8 @@ export const ALL_TEST_CASES: CalculatorTestCase[] = [
   ...amortizationTests,
   ...salesTaxTests,
   ...discountTests,
+  ...marginTests,
+  ...annualIncomeTests,
   ...bodyFatTests,
   ...calorieTests,
   ...bmrTests,
