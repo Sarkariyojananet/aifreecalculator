@@ -155,6 +155,40 @@ const CALCULATOR_ALIASES: Record<string, string[]> = {
     '45 45 90 triangle area',
     'pythagorean triangle area',
     'triangle area with legs'
+  ],
+  'volume-of-a-cylinder-calculator': [
+    'volume of a cylinder calculator',
+    'cylinder volume calculator',
+    'cylinder volume',
+    'calculate cylinder volume',
+    'cylinder volume formula',
+    'volume of a cylinder',
+    'hollow cylinder calculator',
+    'cylindrical shell volume',
+    'pipe volume calculator',
+    'belan ka aayatan',
+    'cylinder volume from diameter',
+    'cylinder volume from radius and height',
+    'find cylinder height from volume',
+    'find cylinder radius from volume',
+    'oblique cylinder volume'
+  ],
+  'slope-calculator': [
+    'slope calculator',
+    'slope percentage calculator',
+    'roof slope calculator',
+    'roof pitch calculator',
+    'wheelchair ramp slope calculator',
+    'ramp slope calculator',
+    'rise over run calculator',
+    'dhalan calculator',
+    'pitch to angle calculator',
+    'slope angle calculator',
+    'slope percentage to degrees',
+    'degrees to slope percentage',
+    'rafter length calculator',
+    'calculate ramp length',
+    'grade percentage calculator'
   ]
 };
 

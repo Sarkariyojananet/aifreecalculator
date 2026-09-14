@@ -1,0 +1,1726 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="Volume of a Cylinder Calculator – Calculate Cylinder Volume"
+  description="Calculate cylinder volume using radius, diameter, height, reverse dimensions, hollow shell pipes, or oblique cylinders with step-by-step formulas."
+  category="Math"
+  calculatorName="Volume of a Cylinder Calculator"
+  slug="volume-of-a-cylinder-calculator"
+  keywords={[
+    'volume of a cylinder calculator',
+    'cylinder volume calculator',
+    'volume calculator cylinder',
+    'calculate cylinder volume',
+    'volume of cylinder',
+    'cylinder volume formula',
+    'volume of a hollow cylinder',
+    'hollow cylinder volume calculator',
+    'cylindrical shell volume',
+    'oblique cylinder volume',
+    'cylinder volume from diameter',
+    'cylinder volume from radius and height',
+    'find cylinder height from volume',
+    'find cylinder radius from volume',
+    'pipe volume calculator'
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- Shape switcher / parent suite banner -->
+    <div
+      class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 rounded-2xl border border-slate-200/90 bg-white px-4 py-3 shadow-2xs dark:border-slate-800 dark:bg-slate-900 text-xs"
+    >
+      <div class="flex items-center gap-2">
+        <span class="font-bold text-slate-700 dark:text-slate-200">Volume Suite:</span>
+        <span class="rounded-md bg-blue-100 px-2 py-0.5 font-bold text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+          Cylinder (7 Specialized Modes)
+        </span>
+      </div>
+      <a
+        href="/math/volume-calculator/"
+        class="inline-flex items-center gap-1 font-bold text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition"
+      >
+        <span>Looking for other 3D shapes (Tanks, Pipes, Pools, Cones)?</span>
+        <span>→</span>
+      </a>
+    </div>
+
+    <!-- Calculator Card Container -->
+    <div
+      class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-blue-50/50 p-1.5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/20"
+    >
+      <!-- Top Mode Selector Tabs -->
+      <div
+        class="flex items-center gap-1 border-b border-slate-300/80 px-2 pt-1 pb-0 dark:border-slate-800 overflow-x-auto scrollbar-thin"
+        role="tablist"
+        aria-label="Cylinder Calculation Modes"
+      >
+        <button
+          type="button"
+          id="tab-radius-height"
+          data-mode="radius_height"
+          role="tab"
+          aria-selected="true"
+          class="mode-tab active rounded-t-xl border-t border-x border-slate-300/90 bg-white px-3.5 py-2.5 text-xs sm:text-sm font-bold text-slate-900 shadow-2xs -mb-px dark:border-slate-700 dark:bg-slate-900 dark:text-white transition cursor-pointer shrink-0"
+        >
+          Radius &amp; Height
+        </button>
+        <button
+          type="button"
+          id="tab-diameter-height"
+          data-mode="diameter_height"
+          role="tab"
+          aria-selected="false"
+          class="mode-tab rounded-t-xl bg-blue-700/90 px-3.5 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-blue-800 dark:bg-blue-800 dark:hover:bg-blue-700 transition cursor-pointer shrink-0"
+        >
+          Diameter &amp; Height
+        </button>
+        <button
+          type="button"
+          id="tab-find-height"
+          data-mode="find_height"
+          role="tab"
+          aria-selected="false"
+          class="mode-tab rounded-t-xl bg-blue-700/90 px-3.5 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-blue-800 dark:bg-blue-800 dark:hover:bg-blue-700 transition cursor-pointer shrink-0"
+        >
+          Find Height (h)
+        </button>
+        <button
+          type="button"
+          id="tab-find-radius"
+          data-mode="find_radius"
+          role="tab"
+          aria-selected="false"
+          class="mode-tab rounded-t-xl bg-blue-700/90 px-3.5 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-blue-800 dark:bg-blue-800 dark:hover:bg-blue-700 transition cursor-pointer shrink-0"
+        >
+          Find Radius (r)
+        </button>
+        <button
+          type="button"
+          id="tab-hollow-radius"
+          data-mode="hollow_radius"
+          role="tab"
+          aria-selected="false"
+          class="mode-tab rounded-t-xl bg-blue-700/90 px-3.5 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-blue-800 dark:bg-blue-800 dark:hover:bg-blue-700 transition cursor-pointer shrink-0"
+        >
+          Hollow (Radii)
+        </button>
+        <button
+          type="button"
+          id="tab-hollow-diameter"
+          data-mode="hollow_diameter"
+          role="tab"
+          aria-selected="false"
+          class="mode-tab rounded-t-xl bg-blue-700/90 px-3.5 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-blue-800 dark:bg-blue-800 dark:hover:bg-blue-700 transition cursor-pointer shrink-0"
+        >
+          Hollow (Diameters)
+        </button>
+        <button
+          type="button"
+          id="tab-oblique"
+          data-mode="oblique"
+          role="tab"
+          aria-selected="false"
+          class="mode-tab rounded-t-xl bg-blue-700/90 px-3.5 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-blue-800 dark:bg-blue-800 dark:hover:bg-blue-700 transition cursor-pointer shrink-0"
+        >
+          Oblique Cylinder
+        </button>
+      </div>
+
+      <!-- Main Form Container -->
+      <form
+        id="cylinder-form"
+        class="space-y-4 bg-white/50 p-4 sm:p-6 dark:bg-slate-950/40"
+        novalidate
+        onsubmit="return false;"
+      >
+        <!-- Mode Subtitle & Unit Selectors Bar -->
+        <div
+          class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-3 dark:border-slate-800/80 text-xs"
+        >
+          <span id="mode-subtitle" class="font-bold text-slate-700 dark:text-slate-300">
+            Known: Base Radius r and Perpendicular Height h
+          </span>
+
+          <div class="flex flex-wrap items-center gap-3">
+            <!-- Length Unit Selector -->
+            <div class="flex items-center gap-1.5">
+              <label for="select-length-unit" class="font-semibold text-slate-600 dark:text-slate-400">Length Unit:</label>
+              <select
+                id="select-length-unit"
+                class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-800 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 cursor-pointer"
+              >
+                <option value="mm">Millimeters (mm)</option>
+                <option value="cm" selected>Centimeters (cm)</option>
+                <option value="m">Meters (m)</option>
+                <option value="in">Inches (in)</option>
+                <option value="ft">Feet (ft)</option>
+                <option value="yd">Yards (yd)</option>
+              </select>
+            </div>
+
+            <!-- Volume Unit Display Selector -->
+            <div class="flex items-center gap-1.5">
+              <label for="select-volume-unit" class="font-semibold text-slate-600 dark:text-slate-400">Result Volume Unit:</label>
+              <select
+                id="select-volume-unit"
+                class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-800 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 cursor-pointer"
+              >
+                <option value="cm3" selected>Cubic Centimeters (cm³)</option>
+                <option value="m3">Cubic Meters (m³)</option>
+                <option value="mm3">Cubic Millimeters (mm³)</option>
+                <option value="L">Liters (L)</option>
+                <option value="mL">Milliliters (mL)</option>
+                <option value="in3">Cubic Inches (in³)</option>
+                <option value="ft3">Cubic Feet (ft³)</option>
+                <option value="yd3">Cubic Yards (yd³)</option>
+                <option value="us_gal">US Gallons (gal)</option>
+                <option value="imp_gal">Imperial Gallons (UK gal)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic Inputs Grid (EVERY INPUT STARTS EMPTY) -->
+
+        <!-- Row: Radius r (Standard & Oblique modes) -->
+        <div
+          id="row-radius"
+          class="grid grid-cols-1 sm:grid-cols-[160px_1fr] items-center gap-2 sm:gap-4"
+        >
+          <label
+            for="input-radius"
+            id="label-radius"
+            class="text-sm font-bold text-slate-900 dark:text-white"
+          >
+            Base Radius (r)
+          </label>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="relative flex items-center w-44 sm:w-56">
+              <input
+                type="number"
+                id="input-radius"
+                value=""
+                step="any"
+                min="0"
+                placeholder="Enter radius"
+                class="w-full rounded-lg border-2 border-slate-400/80 bg-white px-3 py-1.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white pr-10"
+                autocomplete="off"
+              />
+              <span class="unit-badge pointer-events-none absolute right-3 text-xs text-slate-500 dark:text-slate-400 font-medium">cm</span>
+            </div>
+            <span class="text-xs text-slate-500 dark:text-slate-400">center to outer circle rim (r &gt; 0)</span>
+          </div>
+        </div>
+
+        <!-- Row: Diameter d (Diameter mode) -->
+        <div
+          id="row-diameter"
+          class="hidden grid grid-cols-1 sm:grid-cols-[160px_1fr] items-center gap-2 sm:gap-4"
+        >
+          <label
+            for="input-diameter"
+            class="text-sm font-bold text-slate-900 dark:text-white"
+          >
+            Base Diameter (d)
+          </label>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="relative flex items-center w-44 sm:w-56">
+              <input
+                type="number"
+                id="input-diameter"
+                value=""
+                step="any"
+                min="0"
+                placeholder="Enter diameter"
+                class="w-full rounded-lg border-2 border-slate-400/80 bg-white px-3 py-1.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white pr-10"
+                autocomplete="off"
+              />
+              <span class="unit-badge pointer-events-none absolute right-3 text-xs text-slate-500 dark:text-slate-400 font-medium">cm</span>
+            </div>
+            <span class="text-xs text-slate-500 dark:text-slate-400">across base through center (d = 2r)</span>
+          </div>
+        </div>
+
+        <!-- Row: Height h (Perpendicular Height) -->
+        <div
+          id="row-height"
+          class="grid grid-cols-1 sm:grid-cols-[160px_1fr] items-center gap-2 sm:gap-4"
+        >
+          <label
+            for="input-height"
+            id="label-height"
+            class="text-sm font-bold text-slate-900 dark:text-white"
+          >
+            Height (h)
+          </label>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="relative flex items-center w-44 sm:w-56">
+              <input
+                type="number"
+                id="input-height"
+                value=""
+                step="any"
+                min="0"
+                placeholder="Enter height"
+                class="w-full rounded-lg border-2 border-slate-400/80 bg-white px-3 py-1.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white pr-10"
+                autocomplete="off"
+              />
+              <span class="unit-badge pointer-events-none absolute right-3 text-xs text-slate-500 dark:text-slate-400 font-medium">cm</span>
+            </div>
+            <span class="text-xs text-slate-500 dark:text-slate-400">perpendicular distance between bases</span>
+          </div>
+        </div>
+
+        <!-- Row: Volume Input (Reverse Modes: Find Height / Find Radius) -->
+        <div
+          id="row-volume-input"
+          class="hidden grid grid-cols-1 sm:grid-cols-[160px_1fr] items-center gap-2 sm:gap-4"
+        >
+          <label
+            for="input-volume"
+            class="text-sm font-bold text-slate-900 dark:text-white"
+          >
+            Known Volume (V)
+          </label>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="relative flex items-center w-44 sm:w-56">
+              <input
+                type="number"
+                id="input-volume"
+                value=""
+                step="any"
+                min="0"
+                placeholder="Enter volume"
+                class="w-full rounded-lg border-2 border-slate-400/80 bg-white px-3 py-1.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                autocomplete="off"
+              />
+            </div>
+            <select
+              id="select-input-volume-unit"
+              class="rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 cursor-pointer"
+            >
+              <option value="cm3" selected>cm³ (mL)</option>
+              <option value="m3">m³</option>
+              <option value="L">Liters (L)</option>
+              <option value="mm3">mm³</option>
+              <option value="in3">in³</option>
+              <option value="ft3">ft³</option>
+              <option value="us_gal">US Gallons</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row: Hollow Outer Radius R -->
+        <div
+          id="row-outer-radius"
+          class="hidden grid grid-cols-1 sm:grid-cols-[160px_1fr] items-center gap-2 sm:gap-4"
+        >
+          <label
+            for="input-outer-radius"
+            class="text-sm font-bold text-slate-900 dark:text-white"
+          >
+            Outer Radius (R)
+          </label>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="relative flex items-center w-44 sm:w-56">
+              <input
+                type="number"
+                id="input-outer-radius"
+                value=""
+                step="any"
+                min="0"
+                placeholder="Enter outer radius R"
+                class="w-full rounded-lg border-2 border-slate-400/80 bg-white px-3 py-1.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white pr-10"
+                autocomplete="off"
+              />
+              <span class="unit-badge pointer-events-none absolute right-3 text-xs text-slate-500 dark:text-slate-400 font-medium">cm</span>
+            </div>
+            <span class="text-xs text-slate-500 dark:text-slate-400">external shell radius (R &gt; r)</span>
+          </div>
+        </div>
+
+        <!-- Row: Hollow Inner Radius r -->
+        <div
+          id="row-inner-radius"
+          class="hidden grid grid-cols-1 sm:grid-cols-[160px_1fr] items-center gap-2 sm:gap-4"
+        >
+          <label
+            for="input-inner-radius"
+            class="text-sm font-bold text-slate-900 dark:text-white"
+          >
+            Inner Radius (r)
+          </label>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="relative flex items-center w-44 sm:w-56">
+              <input
+                type="number"
+                id="input-inner-radius"
+                value=""
+                step="any"
+                min="0"
+                placeholder="Enter inner radius r"
+                class="w-full rounded-lg border-2 border-slate-400/80 bg-white px-3 py-1.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white pr-10"
+                autocomplete="off"
+              />
+              <span class="unit-badge pointer-events-none absolute right-3 text-xs text-slate-500 dark:text-slate-400 font-medium">cm</span>
+            </div>
+            <span class="text-xs text-slate-500 dark:text-slate-400">internal hollow bore radius (r &lt; R)</span>
+          </div>
+        </div>
+
+        <!-- Row: Hollow Outer Diameter D -->
+        <div
+          id="row-outer-diameter"
+          class="hidden grid grid-cols-1 sm:grid-cols-[160px_1fr] items-center gap-2 sm:gap-4"
+        >
+          <label
+            for="input-outer-diameter"
+            class="text-sm font-bold text-slate-900 dark:text-white"
+          >
+            Outer Diameter (D)
+          </label>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="relative flex items-center w-44 sm:w-56">
+              <input
+                type="number"
+                id="input-outer-diameter"
+                value=""
+                step="any"
+                min="0"
+                placeholder="Enter outer diameter D"
+                class="w-full rounded-lg border-2 border-slate-400/80 bg-white px-3 py-1.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white pr-10"
+                autocomplete="off"
+              />
+              <span class="unit-badge pointer-events-none absolute right-3 text-xs text-slate-500 dark:text-slate-400 font-medium">cm</span>
+            </div>
+            <span class="text-xs text-slate-500 dark:text-slate-400">pipe outside diameter (OD)</span>
+          </div>
+        </div>
+
+        <!-- Row: Hollow Inner Diameter d -->
+        <div
+          id="row-inner-diameter"
+          class="hidden grid grid-cols-1 sm:grid-cols-[160px_1fr] items-center gap-2 sm:gap-4"
+        >
+          <label
+            for="input-inner-diameter"
+            class="text-sm font-bold text-slate-900 dark:text-white"
+          >
+            Inner Diameter (d)
+          </label>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="relative flex items-center w-44 sm:w-56">
+              <input
+                type="number"
+                id="input-inner-diameter"
+                value=""
+                step="any"
+                min="0"
+                placeholder="Enter inner diameter d"
+                class="w-full rounded-lg border-2 border-slate-400/80 bg-white px-3 py-1.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white pr-10"
+                autocomplete="off"
+              />
+              <span class="unit-badge pointer-events-none absolute right-3 text-xs text-slate-500 dark:text-slate-400 font-medium">cm</span>
+            </div>
+            <span class="text-xs text-slate-500 dark:text-slate-400">pipe inside diameter (ID, d &lt; D)</span>
+          </div>
+        </div>
+
+        <!-- Oblique Subtype Radio (Perpendicular vs Slant Length) -->
+        <div id="row-oblique-type" class="hidden">
+          <div class="grid grid-cols-1 sm:grid-cols-[160px_1fr] items-center gap-2 sm:gap-4">
+            <span class="text-sm font-bold text-slate-900 dark:text-white">Height Input:</span>
+            <div class="flex flex-wrap items-center gap-4 text-xs font-bold text-slate-800 dark:text-slate-200">
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="oblique-type" value="perpendicular_height" checked class="text-blue-600 focus:ring-blue-500 cursor-pointer" />
+                <span>Known Perpendicular Height (h)</span>
+              </label>
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="oblique-type" value="slant_angle" class="text-blue-600 focus:ring-blue-500 cursor-pointer" />
+                <span>Known Slant Side Length (L) &amp; Angle (θ)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row: Slant Side Length L (Oblique mode) -->
+        <div
+          id="row-slant-length"
+          class="hidden grid grid-cols-1 sm:grid-cols-[160px_1fr] items-center gap-2 sm:gap-4"
+        >
+          <label
+            for="input-slant-length"
+            class="text-sm font-bold text-slate-900 dark:text-white"
+          >
+            Slant Side Length (L)
+          </label>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="relative flex items-center w-44 sm:w-56">
+              <input
+                type="number"
+                id="input-slant-length"
+                value=""
+                step="any"
+                min="0"
+                placeholder="Enter slant length L"
+                class="w-full rounded-lg border-2 border-slate-400/80 bg-white px-3 py-1.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white pr-10"
+                autocomplete="off"
+              />
+              <span class="unit-badge pointer-events-none absolute right-3 text-xs text-slate-500 dark:text-slate-400 font-medium">cm</span>
+            </div>
+            <span class="text-xs text-slate-500 dark:text-slate-400">length of slanted edge (L &gt; 0)</span>
+          </div>
+        </div>
+
+        <!-- Row: Slant Angle θ (Oblique mode) -->
+        <div
+          id="row-slant-angle"
+          class="hidden grid grid-cols-1 sm:grid-cols-[160px_1fr] items-center gap-2 sm:gap-4"
+        >
+          <label
+            for="input-slant-angle"
+            class="text-sm font-bold text-slate-900 dark:text-white"
+          >
+            Inclination Angle (θ)
+          </label>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="relative flex items-center w-44 sm:w-56">
+              <input
+                type="number"
+                id="input-slant-angle"
+                value=""
+                step="any"
+                min="0.1"
+                max="89.9"
+                placeholder="e.g. 60"
+                class="w-full rounded-lg border-2 border-slate-400/80 bg-white px-3 py-1.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white pr-8"
+                autocomplete="off"
+              />
+              <span class="pointer-events-none absolute right-3 text-xs text-slate-500 dark:text-slate-400 font-bold">°</span>
+            </div>
+            <span class="text-xs text-slate-500 dark:text-slate-400">measured relative to base plane (0° &lt; θ &lt; 90°)</span>
+          </div>
+        </div>
+
+        <!-- Action Buttons (Green Calculate & Gray Clear) -->
+        <div class="flex flex-wrap items-center gap-3 pt-3">
+          <button
+            type="submit"
+            id="btn-calculate"
+            class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-emerald-600/20 transition hover:-translate-y-0.5 hover:bg-emerald-700 active:scale-[0.98] cursor-pointer"
+          >
+            <span>Calculate</span>
+            <span class="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 text-[10px]">
+              ▶
+            </span>
+          </button>
+          <button
+            type="button"
+            id="btn-clear"
+            class="inline-flex items-center justify-center rounded-md bg-slate-400 hover:bg-slate-500 dark:bg-slate-600 dark:hover:bg-slate-500 px-5 py-2.5 text-sm font-bold text-white shadow-xs active:scale-[0.98] transition cursor-pointer"
+          >
+            Clear
+          </button>
+        </div>
+
+        <!-- Validation / Error Banner -->
+        <p
+          id="cylinder-error"
+          class="hidden rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
+          role="alert"
+          aria-live="polite"
+        >
+        </p>
+      </form>
+    </div>
+
+    <!-- Initial Prompt Placeholder (Shown before Calculate is clicked) -->
+    <div
+      id="results-placeholder"
+      class="rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-8 text-center dark:border-slate-800 dark:bg-slate-950/40"
+    >
+      <div
+        class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-xl text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+      >
+        🛢️
+      </div>
+      <h3 class="mt-3 text-sm font-bold text-slate-900 dark:text-white">
+        Ready to Calculate Cylinder Volume
+      </h3>
+      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+        Select your calculation mode above, enter your measurements into the empty input fields, and click the green <strong>"Calculate ▶"</strong> button to view exact volume, surface area, fluid conversions, and step-by-step mathematical derivations.
+      </p>
+    </div>
+
+    <!-- Calculation Results Card (Revealed on Calculate) -->
+    <div
+      id="results-card"
+      class="hidden rounded-2xl border border-slate-200 bg-slate-50/95 p-5 shadow-xs transition dark:border-slate-800 dark:bg-slate-950/90 sm:p-6 space-y-6"
+    >
+      <!-- Top Banner: Primary Calculated Output -->
+      <div
+        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-5 dark:border-slate-800"
+      >
+        <div>
+          <div class="flex items-center gap-2">
+            <span id="res-primary-label" class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Cylinder Volume (V)
+            </span>
+            <span
+              id="res-mode-badge"
+              class="rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold text-blue-800 dark:bg-blue-950 dark:text-blue-300"
+            >
+              Right Cylinder
+            </span>
+          </div>
+          <div class="mt-1.5 flex flex-wrap items-baseline gap-2">
+            <span
+              id="res-primary-val"
+              class="text-4xl sm:text-5xl font-black tracking-tight text-blue-600 dark:text-blue-400"
+            >
+              —
+            </span>
+            <span
+              id="res-primary-unit"
+              class="text-xl font-bold text-slate-600 dark:text-slate-400"
+            >
+              cm³
+            </span>
+          </div>
+          <p id="res-subtitle" class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Calculated from base radius and perpendicular height
+          </p>
+        </div>
+
+        <!-- Quick Secondary Stats (Fluid Capacity & Water Weight) -->
+        <div class="flex sm:flex-col items-start sm:items-end justify-between gap-1 text-xs">
+          <div class="text-slate-500 dark:text-slate-400">
+            Fluid Capacity (Liters): <span id="res-liters-stat" class="font-bold text-slate-900 dark:text-white">—</span>
+          </div>
+          <div class="text-slate-500 dark:text-slate-400">
+            Fluid Capacity (US Gal): <span id="res-gallons-stat" class="font-bold text-slate-900 dark:text-white">—</span>
+          </div>
+          <div class="text-slate-500 dark:text-slate-400">
+            Water Mass (at 4°C): <span id="res-water-weight" class="font-bold text-slate-900 dark:text-white">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid of Dimensions & Surface Areas -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <div class="rounded-xl border border-slate-200/80 bg-white p-3 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <span class="text-slate-500 dark:text-slate-400 block font-medium">Radius (r):</span>
+          <span id="stat-radius" class="font-bold text-slate-900 dark:text-white text-sm mt-0.5 block">—</span>
+        </div>
+        <div class="rounded-xl border border-slate-200/80 bg-white p-3 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <span class="text-slate-500 dark:text-slate-400 block font-medium">Perp. Height (h):</span>
+          <span id="stat-height" class="font-bold text-slate-900 dark:text-white text-sm mt-0.5 block">—</span>
+        </div>
+        <div class="rounded-xl border border-slate-200/80 bg-white p-3 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <span class="text-slate-500 dark:text-slate-400 block font-medium">Base Area:</span>
+          <span id="stat-base-area" class="font-bold text-blue-600 dark:text-blue-400 text-sm mt-0.5 block">—</span>
+        </div>
+        <div class="rounded-xl border border-slate-200/80 bg-white p-3 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <span class="text-slate-500 dark:text-slate-400 block font-medium">Total Surface Area:</span>
+          <span id="stat-total-surface" class="font-bold text-emerald-600 dark:text-emerald-400 text-sm mt-0.5 block">—</span>
+        </div>
+      </div>
+
+      <!-- Live Interactive Proportional Cylinder SVG Preview -->
+      <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex items-center justify-between mb-2">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+            <span>📐</span> Proportional Cylinder Diagram Preview
+          </h4>
+          <span class="text-[11px] text-slate-500 dark:text-slate-400">Proportional Euclidean Scale</span>
+        </div>
+        <div class="flex justify-center p-2">
+          <svg id="svg-cylinder-preview" viewBox="0 0 420 250" class="w-full max-w-sm h-52 sm:h-60">
+            <!-- Dynamic Proportional Cylinder Elements -->
+            <g id="svg-cyl-group">
+              <!-- Bottom Base Hidden -->
+              <path id="svg-bottom-hidden" d="M 120 190 A 60 18 0 0 1 240 190" fill="none" stroke="#64748b" stroke-width="1.5" stroke-dasharray="3 3" />
+              <!-- Lateral Body -->
+              <path id="svg-body-path" d="M 120 70 L 120 190 A 60 18 0 0 0 240 190 L 240 70 Z" fill="rgba(37,99,235,0.18)" stroke="none" />
+              <!-- Lateral Sides -->
+              <line id="svg-side-left" x1="120" y1="70" x2="120" y2="190" stroke="#2563eb" stroke-width="2.5" />
+              <line id="svg-side-right" x1="240" y1="70" x2="240" y2="190" stroke="#2563eb" stroke-width="2.5" />
+              <!-- Bottom Base Front -->
+              <path id="svg-bottom-front" d="M 120 190 A 60 18 0 0 0 240 190" fill="none" stroke="#2563eb" stroke-width="2.5" />
+              <!-- Top Base Ellipse -->
+              <ellipse id="svg-top-ellipse" cx="180" cy="70" rx="60" ry="18" fill="#93c5fd" stroke="#2563eb" stroke-width="2.5" />
+              <!-- Radius Line -->
+              <line id="svg-radius-line" x1="180" y1="70" x2="240" y2="70" stroke="#dc2626" stroke-width="2" />
+              <!-- Labels -->
+              <text id="svg-radius-txt" x="210" y="62" font-family="system-ui, sans-serif" font-size="11" font-weight="bold" fill="#dc2626" text-anchor="middle">r = 5</text>
+              <text id="svg-height-txt" x="96" y="135" font-family="system-ui, sans-serif" font-size="12" font-weight="bold" fill="#0f172a" text-anchor="middle">h = 10</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Step-by-Step Mathematical Derivation -->
+      <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+          <span>📝</span> Step-by-Step Calculation Breakdown
+        </h4>
+        <ol id="res-steps" class="mt-3 space-y-2 text-xs text-slate-700 dark:text-slate-300 list-decimal pl-5 font-mono leading-relaxed">
+        </ol>
+      </div>
+
+      <!-- Converted Volume in All Standard Units -->
+      <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 overflow-x-auto">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5">
+          <span>🔄</span> Equivalent Volume in Other Standard Units
+        </h4>
+        <table class="w-full text-left text-xs font-mono">
+          <tbody id="table-units-body" class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-600 dark:text-slate-400">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- EDUCATIONAL CONTENT & COMPREHENSIVE GUIDE                -->
+  <!-- ======================================================== -->
+  <Fragment slot="content">
+    <div>
+      <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">What Is a Cylinder?</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          A <strong>cylinder</strong> is one of the most essential three-dimensional geometric solids. It is defined by two congruent, parallel circular flat faces (called <strong>bases</strong>) interconnected by a smooth, curved lateral surface. Because the cross-section parallel to the bases remains identical everywhere along its height, a cylinder is mathematically classified as a curvilinear prism.
+        </p>
+        <p>
+          When the central axis connecting the center points of both circular bases is strictly perpendicular (orthogonal at a 90° angle) to the base planes, the solid is termed a <strong>right circular cylinder</strong>. Right circular cylinders are the universal foundation for real-world storage tanks, fluid pipelines, hydraulic pistons, canned goods, and structural columns.
+        </p>
+      </div>
+    </div>
+
+    <!-- Educational Diagram 1: Right Circular Cylinder -->
+    <div class="my-6 text-center">
+      <img
+        src="/images/math/right-circular-cylinder-volume.svg"
+        alt="Right circular cylinder diagram illustrating circular top and bottom bases, radius r, diameter d, perpendicular height h, and core volume formula V = pi * r^2 * h"
+        class="mx-auto rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs max-w-full sm:max-w-lg"
+        loading="lazy"
+      />
+      <p class="mt-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
+        Figure 1: Anatomy of a standard right circular cylinder with radius <em>r</em>, diameter <em>d = 2r</em>, and orthogonal perpendicular height <em>h</em>.
+      </p>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">The Cylinder Volume Formula: V = πr²h</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          To understand why the cylinder volume formula is so straightforward, recall the universal rule for any right prism-like solid:
+        </p>
+        <div class="my-3 rounded-2xl border border-blue-200 bg-blue-50/50 p-4 font-mono text-center text-base sm:text-lg font-black text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300">
+          Volume = Base Area × Perpendicular Height
+        </div>
+        <p>
+          The base of a circular cylinder is a flat circle of radius <em>r</em>. The area of a circle is calculated by the famous formula <code>Area = π × r²</code>. When you extrude this circular area uniformly along a perpendicular height <em>h</em>, you sweep out the total 3D capacity:
+        </p>
+        <div class="my-3 rounded-2xl border border-blue-200 bg-blue-50/50 p-4 font-mono text-center text-base sm:text-lg font-black text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300">
+          V = π × r² × h
+        </div>
+        <p>
+          Where:
+        </p>
+        <ul class="space-y-1.5 list-disc list-inside">
+          <li><strong>V</strong> = Three-dimensional volume (measured in cubic units like cm³, m³, or in³)</li>
+          <li><strong>π (Pi)</strong> = The mathematical constant approximately equal to 3.14159265...</li>
+          <li><strong>r</strong> = The radius of the circular base (half of the diameter)</li>
+          <li><strong>h</strong> = The perpendicular height separating the two circular bases</li>
+        </ul>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Calculating Cylinder Volume from Diameter</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          In engineering, architecture, and plumbing, it is often much easier to measure the total outer or inner <strong>diameter (d)</strong> of a pipe or tank with calipers rather than locating the exact center point to find the radius.
+        </p>
+        <p>
+          Because diameter is twice the radius (<code>d = 2r</code>), the radius is simply half the diameter: <code>r = d / 2</code>. Substituting <code>(d / 2)</code> into the primary volume equation:
+        </p>
+        <div class="my-2 rounded-xl border border-slate-200 bg-slate-50/80 p-3 font-mono text-sm dark:border-slate-800 dark:bg-slate-900">
+          V = π × (d / 2)² × h = π × (d² / 4) × h = (π × d² × h) / 4
+        </div>
+        <p>
+          This diameter formula produces identical mathematical precision without having to divide by 2 as a separate preliminary step.
+        </p>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Hollow Cylinder / Cylindrical Shell Volume</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          A <strong>hollow cylinder</strong> (also referred to as a <em>cylindrical shell</em>, tube, pipe, straw, or sleeve) consists of a solid cylinder with a concentric cylindrical core bored straight through its center. When engineers need to determine the material volume of steel in a pipeline, concrete in a circular culvert, or aluminum in a beverage can, they calculate the volume of this cylindrical shell.
+        </p>
+      </div>
+    </div>
+
+    <!-- Educational Diagram 2: Hollow Cylinder -->
+    <div class="my-6 text-center">
+      <img
+        src="/images/math/hollow-cylinder-volume.svg"
+        alt="Hollow cylinder diagram showing outer radius R, inner radius r, wall thickness t, height h, and shell volume formula V = pi * (R^2 - r^2) * h"
+        class="mx-auto rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs max-w-full sm:max-w-lg"
+        loading="lazy"
+      />
+      <p class="mt-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
+        Figure 2: Geometric anatomy of a hollow cylindrical shell showing outer radius <em>R</em>, inner radius <em>r</em>, wall thickness <em>t = R − r</em>, and perpendicular height <em>h</em>.
+      </p>
+    </div>
+
+    <div>
+      <h3 class="text-lg font-bold text-slate-900 dark:text-white">Derivation of the Hollow Cylinder Formula</h3>
+      <div class="space-y-3 mt-2 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          The volume of material contained in the shell is simply the difference between the total outer cylinder volume and the hollow inner core volume:
+        </p>
+        <div class="my-2 rounded-xl border border-slate-200 bg-slate-50/80 p-3 font-mono text-sm dark:border-slate-800 dark:bg-slate-900">
+          V_shell = V_outer − V_inner = (π × R² × h) − (π × r² × h) = π × (R² − r²) × h
+        </div>
+        <p>
+          Expressed using outer diameter <em>D</em> and inner diameter <em>d</em>:
+        </p>
+        <div class="my-2 rounded-xl border border-slate-200 bg-slate-50/80 p-3 font-mono text-sm dark:border-slate-800 dark:bg-slate-900">
+          V_shell = [π × (D² − d²) × h] / 4
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          <strong>Mandatory Geometric Constraint:</strong> The outer radius must strictly exceed the inner radius (<code>R &gt; r &gt; 0</code>). The wall thickness is <code>t = R − r = (D − d) / 2</code>.
+        </p>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Oblique Cylinders &amp; Cavalieri's Principle</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          An <strong>oblique cylinder</strong> is a cylinder where the central axis is tilted at an acute angle rather than standing perpendicular to the circular bases. The two circular bases remain strictly parallel to one another, but the lateral surface slopes sideways.
+        </p>
+      </div>
+    </div>
+
+    <!-- Educational Diagram 3: Oblique Cylinder -->
+    <div class="my-6 text-center">
+      <img
+        src="/images/math/oblique-cylinder-volume.svg"
+        alt="Oblique cylinder diagram illustrating perpendicular height h versus slanted side length L and slant inclination angle theta"
+        class="mx-auto rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xs max-w-full sm:max-w-lg"
+        loading="lazy"
+      />
+      <p class="mt-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
+        Figure 3: Oblique cylinder demonstrating Cavalieri’s principle: volume depends on orthogonal perpendicular height <em>h</em>, not the longer slanted side length <em>L</em>.
+      </p>
+    </div>
+
+    <div>
+      <h3 class="text-lg font-bold text-slate-900 dark:text-white">The Golden Rule: Perpendicular Height vs. Slant Length</h3>
+      <div class="space-y-3 mt-2 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          According to <strong>Cavalieri's Principle</strong>, if two solids have equal heights and identical cross-sectional areas at every plane parallel to their bases, they have equal volumes. Imagine a neat vertical stack of circular coins: if you push the stack so that it leans sideways into an oblique slant, the amount of metal in the stack does not change.
+        </p>
+        <p>
+          Therefore, the volume of an oblique cylinder is still:
+        </p>
+        <div class="my-2 rounded-xl border border-purple-200 bg-purple-50/50 p-3 font-mono text-base font-bold text-purple-800 dark:border-purple-900/60 dark:bg-purple-950/40 dark:text-purple-300 text-center">
+          V = π × r² × h
+        </div>
+        <p>
+          <strong>Crucial Warning:</strong> <em>h</em> is the vertical perpendicular distance between the parallel base planes. Never use the slanted edge length <em>L</em> directly as height! If you only know the slant side length <em>L</em> and its inclination angle <em>θ</em> relative to the horizontal base plane, resolve the perpendicular height trigonometrically:
+        </p>
+        <div class="my-2 rounded-xl border border-slate-200 bg-slate-50/80 p-3 font-mono text-sm dark:border-slate-800 dark:bg-slate-900 text-center">
+          h = L × sin(θ) &nbsp;⟹&nbsp; V = π × r² × [L × sin(θ)]
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Reverse Calculations: Finding Missing Dimensions</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          In manufacturing and design, you often start with a target volume (such as designing a 500 mL beverage container or a 10,000-liter storage tank) and need to solve for the necessary height or radius.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+          <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
+            <h3 class="font-bold text-slate-900 dark:text-white">Solve for Height (Given V and r):</h3>
+            <p class="mt-1 text-xs text-slate-600 dark:text-slate-400 font-mono">
+              V = π × r² × h ⟹ h = V / (π × r²)
+            </p>
+            <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">
+              Divide the volume by the circular base area.
+            </p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
+            <h3 class="font-bold text-slate-900 dark:text-white">Solve for Radius (Given V and h):</h3>
+            <p class="mt-1 text-xs text-slate-600 dark:text-slate-400 font-mono">
+              V = π × r² × h ⟹ r = √(V / (π × h))
+            </p>
+            <p class="mt-2 text-xs text-slate-600 dark:text-slate-400">
+              Divide volume by (πh) and take the square root. Diameter is then <code>d = 2r</code>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Step-by-Step Worked Examples (Article-Only)</h2>
+      <div class="space-y-4 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        
+        <!-- Example 1 -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="font-bold text-slate-900 dark:text-white text-sm">
+            Example 1: Standard Right Cylinder (Radius + Height)
+          </h3>
+          <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">
+            <strong>Problem:</strong> A cylindrical hot water tank has a radius of 30 cm and a height of 120 cm. Find its volume in cubic centimeters and liters.
+          </p>
+          <div class="mt-2 rounded-xl bg-slate-50 p-3 font-mono text-xs dark:bg-slate-950/60 space-y-1">
+            <p>1. Base Area = π × r² = π × (30)² = 900π ≈ 2,827.43 cm²</p>
+            <p>2. Volume = Base Area × h = 2,827.43 × 120 ≈ 339,292 cm³</p>
+            <p>3. Convert to Liters: 1 L = 1,000 cm³ ⟹ 339,292 / 1,000 = <strong>339.29 Liters</strong></p>
+          </div>
+        </div>
+
+        <!-- Example 2 -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="font-bold text-slate-900 dark:text-white text-sm">
+            Example 2: Diameter &amp; Height Mode
+          </h3>
+          <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">
+            <strong>Problem:</strong> A standard beverage can has a diameter of 6.6 cm and a height of 12.2 cm. Calculate its internal capacity.
+          </p>
+          <div class="mt-2 rounded-xl bg-slate-50 p-3 font-mono text-xs dark:bg-slate-950/60 space-y-1">
+            <p>1. Radius = d / 2 = 6.6 / 2 = 3.3 cm</p>
+            <p>2. Volume = π × (3.3)² × 12.2 = π × 10.89 × 12.2 ≈ 417.4 cm³ (or 417.4 mL)</p>
+          </div>
+        </div>
+
+        <!-- Example 3 -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="font-bold text-slate-900 dark:text-white text-sm">
+            Example 3: Hollow Cylindrical Pipe Material Volume
+          </h3>
+          <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">
+            <strong>Problem:</strong> A cast-iron drainage pipe has an outer diameter D = 16 cm, an inner diameter d = 14 cm, and length h = 200 cm. Find the volume of cast iron.
+          </p>
+          <div class="mt-2 rounded-xl bg-slate-50 p-3 font-mono text-xs dark:bg-slate-950/60 space-y-1">
+            <p>1. Outer Radius R = 8 cm, Inner Radius r = 7 cm</p>
+            <p>2. Ring Cross-Section = π × (R² − r²) = π × (64 − 49) = 15π ≈ 47.12 cm²</p>
+            <p>3. Shell Volume = 47.12 × 200 = <strong>9,424.78 cm³</strong></p>
+          </div>
+        </div>
+
+        <!-- Example 4 -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="font-bold text-slate-900 dark:text-white text-sm">
+            Example 4: Reverse Calculation (Find Height)
+          </h3>
+          <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">
+            <strong>Problem:</strong> You need a cylindrical container to hold exactly 2,000 cm³ of liquid, with a base radius of 7 cm. How tall must it be?
+          </p>
+          <div class="mt-2 rounded-xl bg-slate-50 p-3 font-mono text-xs dark:bg-slate-950/60 space-y-1">
+            <p>1. Base Area = π × 7² = 49π ≈ 153.938 cm²</p>
+            <p>2. Height h = V / Base Area = 2,000 / 153.938 ≈ <strong>12.99 cm</strong></p>
+          </div>
+        </div>
+
+        <!-- Example 5 -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="font-bold text-slate-900 dark:text-white text-sm">
+            Example 5: Oblique Cylinder with Slant Angle
+          </h3>
+          <p class="text-xs text-slate-600 dark:text-slate-400 mt-1">
+            <strong>Problem:</strong> A slanted architectural column has a base radius of 20 cm, a slanted side length L = 150 cm, and leans at an angle θ = 60° to the horizontal foundation. Find its volume.
+          </p>
+          <div class="mt-2 rounded-xl bg-slate-50 p-3 font-mono text-xs dark:bg-slate-950/60 space-y-1">
+            <p>1. Perpendicular Height h = L × sin(60°) = 150 × 0.86603 ≈ 129.90 cm</p>
+            <p>2. Base Area = π × (20)² = 400π ≈ 1,256.64 cm²</p>
+            <p>3. Volume = 1,256.64 × 129.90 ≈ <strong>163,237 cm³ (163.24 Liters)</strong></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Real-World Applications</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          Cylinders are everywhere in nature and human engineering because the circle provides the maximum cross-sectional area for any given perimeter, minimizing material weight while resisting internal pressure evenly:
+        </p>
+        <ul class="space-y-2 list-disc list-inside">
+          <li><strong>Storage Tanks &amp; Silos:</strong> Vertical grain silos, crude oil storage tanks, and municipal water towers rely on cylindrical geometry to distribute hoop stress evenly without weak corner joints.</li>
+          <li><strong>Pipelines &amp; Plumbing:</strong> Water pipes, sewer mains, and natural gas lines use hollow cylindrical shells to optimize volumetric flow rates while keeping pipe walls resilient against hydraulic pressure.</li>
+          <li><strong>Hydraulic Cylinders:</strong> Heavy machinery (excavators, dump trucks, aircraft landing gear) uses hydraulic fluid displacement across a cylindrical bore to exert immense linear force.</li>
+          <li><strong>Beverage Cans &amp; Food Tins:</strong> Aluminum cans are manufactured as lightweight right circular cylinders with domed bottoms for optimal stacking, refrigeration, and carbonation retention.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Engine Cylinder Displacement (Swept Volume)</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          In automotive and mechanical engineering, the displacement of an internal combustion engine is calculated as the sum of the swept volumes of all its cylinders. For a single cylinder:
+        </p>
+        <div class="my-2 rounded-xl border border-slate-200 bg-slate-50/80 p-3 font-mono text-sm dark:border-slate-800 dark:bg-slate-900">
+          Swept Volume (V_d) = (π × B² × S) / 4
+        </div>
+        <p>
+          Where <strong>B</strong> is the cylinder bore diameter and <strong>S</strong> is the piston stroke length. For an engine with <em>N</em> cylinders, the total engine displacement is <code>Total Displacement = V_d × N</code> (commonly measured in cubic centimeters, cc, or liters).
+        </p>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Surface Area to Volume Ratio (SA/V)</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          The surface area of a closed right circular cylinder includes its lateral wall and its two circular ends:
+        </p>
+        <div class="my-2 rounded-xl border border-slate-200 bg-slate-50/80 p-3 font-mono text-sm dark:border-slate-800 dark:bg-slate-900">
+          Total Surface Area (A) = 2πrh + 2πr²
+        </div>
+        <p>
+          The ratio of surface area to volume (<code>SA/V = (2πrh + 2πr²) / (πr²h) = (2/r) + (2/h)</code>) governs how rapidly a cylinder loses or absorbs heat. A tall, thin cylinder has a much higher SA/V ratio and cools down rapidly, while a squat cylinder (where height approximately equals diameter) minimizes heat transfer and material costs.
+        </p>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">10 Common Mistakes When Calculating Cylinder Volume</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <ol class="space-y-2 list-decimal list-inside">
+          <li><strong>Using Diameter Instead of Radius:</strong> Forgetting to divide the diameter by 2 before squaring leads to a volume that is <strong>4 times too large</strong> (since <code>d² = 4r²</code>).</li>
+          <li><strong>Forgetting to Square the Radius:</strong> Writing <code>π × r × h</code> instead of <code>π × r² × h</code> produces a surface measurement rather than a volumetric capacity.</li>
+          <li><strong>Using Slant Length as Height:</strong> In an oblique cylinder, the slanted edge length <em>L</em> is always longer than the perpendicular height <em>h</em>. You must use <code>h = L × sin(θ)</code>.</li>
+          <li><strong>Inner Radius Greater Than Outer Radius:</strong> In a hollow pipe calculation, the outer dimension must always be strictly larger than the inner dimension (<code>R &gt; r</code>).</li>
+          <li><strong>Mixing Dimensional Units:</strong> Combining radius in centimeters with height in meters without converting first yields nonsensical values. Always harmonize units before multiplying.</li>
+          <li><strong>Confusing Liquid Ounces with Weight Ounces:</strong> Fluid ounces measure volumetric capacity, whereas ounces measure mass. Always use density to convert.</li>
+          <li><strong>Confusing Surface Area with Volume:</strong> Surface area measures the outer 2D skin in square units; volume measures the interior 3D capacity in cubic units.</li>
+          <li><strong>Assuming Ellipses Use Simple Radius:</strong> For an elliptical cylinder, the base area is <code>π × a × b</code> where <em>a</em> and <em>b</em> are semi-major and semi-minor axes, not standard radii.</li>
+          <li><strong>Rounding Pi Prematurely:</strong> Truncating π to 3.14 for large industrial tanks creates significant engineering discrepancy. Always use high-precision <code>Math.PI</code>.</li>
+          <li><strong>Forgetting Pipe Wall Thickness Factor of Two:</strong> When converting outer diameter <em>D</em> to inner diameter <em>d</em>, remember <code>d = D − 2t</code> because the wall exists on both sides of the diameter.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Related Mathematical &amp; Geometry Calculators</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>Explore other precision calculators across our math and engineering suite:</p>
+        <ul class="space-y-2 list-disc list-inside">
+          <li><a href="/math/volume-calculator/" class="text-blue-600 hover:underline dark:text-blue-400 font-bold">General Volume Calculator</a> – Calculate volume for tanks, spheres, cones, boxes, and pools.</li>
+          <li><a href="/math/right-triangle-area-calculator/" class="text-blue-600 hover:underline dark:text-blue-400 font-bold">Right Triangle Area Calculator</a> – Compute triangle areas and Pythagorean hypotenuse dimensions.</li>
+          <li><a href="/math/scientific-calculator/" class="text-blue-600 hover:underline dark:text-blue-400 font-bold">Scientific Calculator</a> – High-precision mathematical and trigonometric functions.</li>
+          <li><a href="/construction/concrete-material-breakup-calculator/" class="text-blue-600 hover:underline dark:text-blue-400 font-bold">Concrete Mix Calculator</a> – Estimate cement, sand, and aggregate volume for construction slabs and columns.</li>
+          <li><a href="/general/unit-converter/" class="text-blue-600 hover:underline dark:text-blue-400 font-bold">Unit Converter</a> – Convert between metric, imperial, and astronomical units.</li>
+        </ul>
+      </div>
+    </div>
+  </Fragment>
+
+  <!-- ======================================================== -->
+  <!-- FAQ SECTION (English Slot)                              -->
+  <!-- ======================================================== -->
+  <Fragment slot="faq">
+    <div class="space-y-4">
+      <details class="group rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+          What is the formula for the volume of a cylinder?
+        </summary>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          The formula is <code>V = π × r² × h</code>, where <em>V</em> represents volume, <em>r</em> is the radius of the circular base, and <em>h</em> is the perpendicular height. It signifies multiplying the 2D area of the circular base (<code>πr²</code>) by its perpendicular extrusion height.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+          How do I calculate cylinder volume from diameter?
+        </summary>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          Because diameter <em>d</em> is twice the radius (<code>d = 2r</code>), radius is <code>r = d / 2</code>. Substituting this into the volume equation gives <code>V = (π × d² × h) / 4</code>. Square the diameter, multiply by π and height, then divide by 4.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+          How do I find the height when volume and radius are known?
+        </summary>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          Rearrange the volume formula to solve for height: <code>h = V / (π × r²)</code>. Calculate the circular base area (<code>πr²</code>), then divide the total volume by that area.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+          How do I find the radius from volume and height?
+        </summary>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          Rearrange the formula to isolate radius: <code>r = √(V / (π × h))</code>. Divide the volume by <code>(π × h)</code> and compute the square root. The diameter is then <code>d = 2r</code>.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+          How is the volume of a hollow cylinder or pipe calculated?
+        </summary>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          Subtract the inner core volume from the outer cylinder volume: <code>V = π × (R² − r²) × h</code>, where <em>R</em> is the outer radius, <em>r</em> is the inner radius, and <em>h</em> is the length. Using diameters, <code>V = [π × (D² − d²) × h] / 4</code>.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+          Does an oblique (slanted) cylinder use a different volume formula?
+        </summary>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          No. By Cavalieri's Principle, any oblique cylinder with circular bases has the exact same volume formula <code>V = π × r² × h</code>, provided <em>h</em> is the strictly perpendicular distance between the two parallel base planes, not the slanted side length.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+          What is the difference between perpendicular height and slant length?
+        </summary>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          Perpendicular height (<em>h</em>) is the orthogonal, shortest vertical distance measured at a 90° angle between the parallel bases. Slant length (<em>L</em>) is the length along the tilted lateral side. They are related by <code>h = L × sin(θ)</code>, where <em>θ</em> is the slant angle relative to the base plane.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+          Why is cylinder volume expressed in cubic units?
+        </summary>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          Volume measures three-dimensional physical space. When you multiply a 2D circular area (units squared, e.g. cm²) by a linear height (units, e.g. cm), the resulting dimensional product is <code>cm² × cm = cm³</code> (cubic centimeters).
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+          How many liters are in one cubic meter?
+        </summary>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          There are exactly <strong>1,000 liters</strong> in one cubic meter (1 m³ = 1,000 L). Similarly, 1 liter equals 1,000 cubic centimeters (1 L = 1,000 cm³ = 1,000 mL).
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
+        <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+          How is cylinder volume converted to weight or mass?
+        </summary>
+        <p class="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          Mass equals density multiplied by volume: <code>Mass = Density × Volume</code>. For freshwater at 4°C, the density is approximately 1,000 kg/m³ (or 1 gram per cm³). Therefore, 1 liter of pure water weighs almost exactly 1 kilogram (2.205 pounds).
+        </p>
+      </details>
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<!-- Client-Side Interactive Engine -->
+<script>
+  import {
+    calculateCylinderVolume,
+    formatNum,
+    VOLUME_UNIT_NAMES,
+    VOLUME_UNIT_SYMBOLS,
+    type CylinderMode,
+    type LengthUnit,
+    type VolumeUnit,
+  } from '../../lib/calculators/cylinder-volume';
+
+  // DOM Elements
+  const modeTabs = document.querySelectorAll<HTMLButtonElement>('.mode-tab');
+  const modeSubtitle = document.getElementById('mode-subtitle')!;
+
+  const selectLengthUnit = document.getElementById('select-length-unit') as HTMLSelectElement;
+  const selectVolumeUnit = document.getElementById('select-volume-unit') as HTMLSelectElement;
+  const selectInputVolumeUnit = document.getElementById('select-input-volume-unit') as HTMLSelectElement;
+  const unitBadges = document.querySelectorAll<HTMLElement>('.unit-badge');
+
+  // Input Rows
+  const rowRadius = document.getElementById('row-radius')!;
+  const rowDiameter = document.getElementById('row-diameter')!;
+  const rowHeight = document.getElementById('row-height')!;
+  const rowVolumeInput = document.getElementById('row-volume-input')!;
+  const rowOuterRadius = document.getElementById('row-outer-radius')!;
+  const rowInnerRadius = document.getElementById('row-inner-radius')!;
+  const rowOuterDiameter = document.getElementById('row-outer-diameter')!;
+  const rowInnerDiameter = document.getElementById('row-inner-diameter')!;
+  const rowObliqueType = document.getElementById('row-oblique-type')!;
+  const rowSlantLength = document.getElementById('row-slant-length')!;
+  const rowSlantAngle = document.getElementById('row-slant-angle')!;
+
+  // Inputs
+  const inputRadius = document.getElementById('input-radius') as HTMLInputElement;
+  const inputDiameter = document.getElementById('input-diameter') as HTMLInputElement;
+  const inputHeight = document.getElementById('input-height') as HTMLInputElement;
+  const inputVolume = document.getElementById('input-volume') as HTMLInputElement;
+  const inputOuterRadius = document.getElementById('input-outer-radius') as HTMLInputElement;
+  const inputInnerRadius = document.getElementById('input-inner-radius') as HTMLInputElement;
+  const inputOuterDiameter = document.getElementById('input-outer-diameter') as HTMLInputElement;
+  const inputInnerDiameter = document.getElementById('input-inner-diameter') as HTMLInputElement;
+  const inputSlantLength = document.getElementById('input-slant-length') as HTMLInputElement;
+  const inputSlantAngle = document.getElementById('input-slant-angle') as HTMLInputElement;
+
+  // Labels
+  const labelRadius = document.getElementById('label-radius')!;
+  const labelHeight = document.getElementById('label-height')!;
+
+  // Buttons & Error
+  const btnCalculate = document.getElementById('btn-calculate')!;
+  const btnClear = document.getElementById('btn-clear')!;
+  const cylinderError = document.getElementById('cylinder-error')!;
+
+  // Results Card
+  const resultsPlaceholder = document.getElementById('results-placeholder')!;
+  const resultsCard = document.getElementById('results-card')!;
+
+  const resPrimaryLabel = document.getElementById('res-primary-label')!;
+  const resModeBadge = document.getElementById('res-mode-badge')!;
+  const resPrimaryVal = document.getElementById('res-primary-val')!;
+  const resPrimaryUnit = document.getElementById('res-primary-unit')!;
+  const resSubtitle = document.getElementById('res-subtitle')!;
+
+  const resLitersStat = document.getElementById('res-liters-stat')!;
+  const resGallonsStat = document.getElementById('res-gallons-stat')!;
+  const resWaterWeight = document.getElementById('res-water-weight')!;
+
+  const statRadius = document.getElementById('stat-radius')!;
+  const statHeight = document.getElementById('stat-height')!;
+  const statBaseArea = document.getElementById('stat-base-area')!;
+  const statTotalSurface = document.getElementById('stat-total-surface')!;
+
+  const resSteps = document.getElementById('res-steps')!;
+  const tableUnitsBody = document.getElementById('table-units-body')!;
+
+  // SVG Elements
+  const svgTopEllipse = document.getElementById('svg-top-ellipse') as SVGEllipseElement | null;
+  const svgBottomHidden = document.getElementById('svg-bottom-hidden') as SVGPathElement | null;
+  const svgBottomFront = document.getElementById('svg-bottom-front') as SVGPathElement | null;
+  const svgBodyPath = document.getElementById('svg-body-path') as SVGPathElement | null;
+  const svgSideLeft = document.getElementById('svg-side-left') as SVGLineElement | null;
+  const svgSideRight = document.getElementById('svg-side-right') as SVGLineElement | null;
+  const svgRadiusLine = document.getElementById('svg-radius-line') as SVGLineElement | null;
+  const svgRadiusTxt = document.getElementById('svg-radius-txt') as SVGTextElement | null;
+  const svgHeightTxt = document.getElementById('svg-height-txt') as SVGTextElement | null;
+
+  let currentMode: CylinderMode = 'radius_height';
+
+  // 1. Mode Switching Logic
+  function switchMode(mode: CylinderMode) {
+    currentMode = mode;
+
+    modeTabs.forEach((tab) => {
+      const isTarget = tab.getAttribute('data-mode') === mode;
+      tab.classList.toggle('active', isTarget);
+      tab.classList.toggle('border-t', isTarget);
+      tab.classList.toggle('border-x', isTarget);
+      tab.classList.toggle('border-slate-300/90', isTarget);
+      tab.classList.toggle('bg-white', isTarget);
+      tab.classList.toggle('text-slate-900', isTarget);
+      tab.classList.toggle('shadow-2xs', isTarget);
+      tab.classList.toggle('-mb-px', isTarget);
+      tab.classList.toggle('dark:border-slate-700', isTarget);
+      tab.classList.toggle('dark:bg-slate-900', isTarget);
+      tab.classList.toggle('dark:text-white', isTarget);
+
+      tab.classList.toggle('bg-blue-700/90', !isTarget);
+      tab.classList.toggle('text-white', !isTarget);
+      tab.classList.toggle('dark:bg-blue-800', !isTarget);
+      tab.setAttribute('aria-selected', isTarget ? 'true' : 'false');
+    });
+
+    // Reset rows visibility
+    rowRadius.classList.add('hidden');
+    rowDiameter.classList.add('hidden');
+    rowHeight.classList.add('hidden');
+    rowVolumeInput.classList.add('hidden');
+    rowOuterRadius.classList.add('hidden');
+    rowInnerRadius.classList.add('hidden');
+    rowOuterDiameter.classList.add('hidden');
+    rowInnerDiameter.classList.add('hidden');
+    rowObliqueType.classList.add('hidden');
+    rowSlantLength.classList.add('hidden');
+    rowSlantAngle.classList.add('hidden');
+
+    if (mode === 'radius_height') {
+      modeSubtitle.textContent = 'Known: Base Radius r and Perpendicular Height h';
+      rowRadius.classList.remove('hidden');
+      labelRadius.textContent = 'Base Radius (r)';
+      rowHeight.classList.remove('hidden');
+      labelHeight.textContent = 'Height (h)';
+    } else if (mode === 'diameter_height') {
+      modeSubtitle.textContent = 'Known: Base Diameter d and Perpendicular Height h';
+      rowDiameter.classList.remove('hidden');
+      rowHeight.classList.remove('hidden');
+      labelHeight.textContent = 'Height (h)';
+    } else if (mode === 'find_height') {
+      modeSubtitle.textContent = 'Reverse Calculation: Find Height from Known Volume & Radius';
+      rowVolumeInput.classList.remove('hidden');
+      rowRadius.classList.remove('hidden');
+      labelRadius.textContent = 'Base Radius (r)';
+    } else if (mode === 'find_radius') {
+      modeSubtitle.textContent = 'Reverse Calculation: Find Radius & Diameter from Known Volume & Height';
+      rowVolumeInput.classList.remove('hidden');
+      rowHeight.classList.remove('hidden');
+      labelHeight.textContent = 'Height (h)';
+    } else if (mode === 'hollow_radius') {
+      modeSubtitle.textContent = 'Hollow Cylinder Shell: Known Outer Radius R, Inner Radius r, and Height h';
+      rowOuterRadius.classList.remove('hidden');
+      rowInnerRadius.classList.remove('hidden');
+      rowHeight.classList.remove('hidden');
+      labelHeight.textContent = 'Height / Length (h)';
+    } else if (mode === 'hollow_diameter') {
+      modeSubtitle.textContent = 'Hollow Cylinder / Pipe: Known Outer Diameter D, Inner Diameter d, and Height h';
+      rowOuterDiameter.classList.remove('hidden');
+      rowInnerDiameter.classList.remove('hidden');
+      rowHeight.classList.remove('hidden');
+      labelHeight.textContent = 'Height / Length (h)';
+    } else if (mode === 'oblique') {
+      modeSubtitle.textContent = 'Oblique / Slanted Cylinder: Radius and Perpendicular Height or Slant Length';
+      rowRadius.classList.remove('hidden');
+      labelRadius.textContent = 'Base Radius (r)';
+      rowObliqueType.classList.remove('hidden');
+      updateObliqueSubtype();
+    }
+
+    // Hide error banner when switching modes
+    cylinderError.classList.add('hidden');
+  }
+
+  function getSelectedObliqueType(): 'perpendicular_height' | 'slant_angle' {
+    const checked = document.querySelector<HTMLInputElement>('input[name="oblique-type"]:checked');
+    return (checked?.value as 'perpendicular_height' | 'slant_angle') || 'perpendicular_height';
+  }
+
+  function updateObliqueSubtype() {
+    if (currentMode !== 'oblique') return;
+    const type = getSelectedObliqueType();
+    if (type === 'perpendicular_height') {
+      rowHeight.classList.remove('hidden');
+      labelHeight.textContent = 'Perpendicular Height (h)';
+      rowSlantLength.classList.add('hidden');
+      rowSlantAngle.classList.add('hidden');
+    } else {
+      rowHeight.classList.add('hidden');
+      rowSlantLength.classList.remove('hidden');
+      rowSlantAngle.classList.remove('hidden');
+    }
+  }
+
+  modeTabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const mode = tab.getAttribute('data-mode') as CylinderMode;
+      if (mode) switchMode(mode);
+    });
+  });
+
+  document.querySelectorAll('input[name="oblique-type"]').forEach((el) => {
+    el.addEventListener('change', () => {
+      updateObliqueSubtype();
+      if (!resultsCard.classList.contains('hidden')) runCalculation();
+    });
+  });
+
+  // Length unit badge update
+  selectLengthUnit?.addEventListener('change', () => {
+    const unit = selectLengthUnit.value;
+    unitBadges.forEach((b) => (b.textContent = unit));
+    if (!resultsCard.classList.contains('hidden')) runCalculation();
+  });
+
+  selectVolumeUnit?.addEventListener('change', () => {
+    if (!resultsCard.classList.contains('hidden')) runCalculation();
+  });
+
+  // 2. Calculation Execution
+  function runCalculation() {
+    cylinderError.classList.add('hidden');
+    cylinderError.textContent = '';
+
+    const bar = document.getElementById('calc-action-bar-container');
+    if (bar) bar.classList.add('hidden');
+
+    const lengthUnit = (selectLengthUnit.value as LengthUnit) || 'cm';
+    const volumeUnit = (selectVolumeUnit.value as VolumeUnit) || 'cm3';
+    const inputVolumeUnit = (selectInputVolumeUnit?.value as VolumeUnit) || 'cm3';
+
+    try {
+      let result;
+
+      if (currentMode === 'radius_height') {
+        const valR = inputRadius.value.trim();
+        const valH = inputHeight.value.trim();
+
+        if (!valR) {
+          throw new Error('Please enter a value for the base radius (r).');
+        }
+        if (!valH) {
+          throw new Error('Please enter a value for the height (h).');
+        }
+
+        result = calculateCylinderVolume({
+          mode: 'radius_height',
+          lengthUnit,
+          volumeUnit,
+          radius: valR,
+          height: valH,
+        });
+
+      } else if (currentMode === 'diameter_height') {
+        const valD = inputDiameter.value.trim();
+        const valH = inputHeight.value.trim();
+
+        if (!valD) {
+          throw new Error('Please enter a value for the base diameter (d).');
+        }
+        if (!valH) {
+          throw new Error('Please enter a value for the height (h).');
+        }
+
+        result = calculateCylinderVolume({
+          mode: 'diameter_height',
+          lengthUnit,
+          volumeUnit,
+          diameter: valD,
+          height: valH,
+        });
+
+      } else if (currentMode === 'find_height') {
+        const valV = inputVolume.value.trim();
+        const valR = inputRadius.value.trim();
+
+        if (!valV) {
+          throw new Error('Please enter a known volume (V).');
+        }
+        if (!valR) {
+          throw new Error('Please enter the base radius (r).');
+        }
+
+        result = calculateCylinderVolume({
+          mode: 'find_height',
+          lengthUnit,
+          volumeUnit,
+          volume: valV,
+          inputVolumeUnit,
+          radius: valR,
+        });
+
+      } else if (currentMode === 'find_radius') {
+        const valV = inputVolume.value.trim();
+        const valH = inputHeight.value.trim();
+
+        if (!valV) {
+          throw new Error('Please enter a known volume (V).');
+        }
+        if (!valH) {
+          throw new Error('Please enter the cylinder height (h).');
+        }
+
+        result = calculateCylinderVolume({
+          mode: 'find_radius',
+          lengthUnit,
+          volumeUnit,
+          volume: valV,
+          inputVolumeUnit,
+          height: valH,
+        });
+
+      } else if (currentMode === 'hollow_radius') {
+        const valR = inputOuterRadius.value.trim();
+        const valr = inputInnerRadius.value.trim();
+        const valH = inputHeight.value.trim();
+
+        if (!valR) {
+          throw new Error('Please enter the outer radius (R).');
+        }
+        if (!valr) {
+          throw new Error('Please enter the inner radius (r).');
+        }
+        if (!valH) {
+          throw new Error('Please enter the height or length (h).');
+        }
+
+        result = calculateCylinderVolume({
+          mode: 'hollow_radius',
+          lengthUnit,
+          volumeUnit,
+          outerRadius: valR,
+          innerRadius: valr,
+          height: valH,
+        });
+
+      } else if (currentMode === 'hollow_diameter') {
+        const valD = inputOuterDiameter.value.trim();
+        const vald = inputInnerDiameter.value.trim();
+        const valH = inputHeight.value.trim();
+
+        if (!valD) {
+          throw new Error('Please enter the outer diameter (D).');
+        }
+        if (!vald) {
+          throw new Error('Please enter the inner diameter (d).');
+        }
+        if (!valH) {
+          throw new Error('Please enter the height or length (h).');
+        }
+
+        result = calculateCylinderVolume({
+          mode: 'hollow_diameter',
+          lengthUnit,
+          volumeUnit,
+          outerDiameter: valD,
+          innerDiameter: vald,
+          height: valH,
+        });
+
+      } else {
+        // oblique
+        const valR = inputRadius.value.trim();
+        if (!valR) {
+          throw new Error('Please enter the base radius (r).');
+        }
+
+        const obliqueType = getSelectedObliqueType();
+        if (obliqueType === 'slant_angle') {
+          const valL = inputSlantLength.value.trim();
+          const valAngle = inputSlantAngle.value.trim();
+
+          if (!valL) {
+            throw new Error('Please enter the slant side length (L).');
+          }
+          if (!valAngle) {
+            throw new Error('Please enter the slant angle (θ) between 0° and 90°.');
+          }
+
+          result = calculateCylinderVolume({
+            mode: 'oblique',
+            lengthUnit,
+            volumeUnit,
+            radius: valR,
+            obliqueInputType: 'slant_angle',
+            slantLength: valL,
+            slantAngleDeg: valAngle,
+          });
+        } else {
+          const valH = inputHeight.value.trim();
+          if (!valH) {
+            throw new Error('Please enter the perpendicular height (h).');
+          }
+
+          result = calculateCylinderVolume({
+            mode: 'oblique',
+            lengthUnit,
+            volumeUnit,
+            radius: valR,
+            obliqueInputType: 'perpendicular_height',
+            height: valH,
+          });
+        }
+      }
+
+      // Update Result UI
+      if (currentMode === 'find_height') {
+        resPrimaryLabel.textContent = 'Derived Cylinder Height (h)';
+        resPrimaryVal.textContent = formatNum(result.height);
+        resPrimaryUnit.textContent = result.lengthUnit;
+        resSubtitle.textContent = `Required perpendicular height for Volume = ${formatNum(Number(inputVolume.value))} ${selectInputVolumeUnit?.value || ''}`;
+        resModeBadge.textContent = 'Solved Height';
+      } else if (currentMode === 'find_radius') {
+        resPrimaryLabel.textContent = 'Derived Base Radius (r)';
+        resPrimaryVal.textContent = formatNum(result.radius);
+        resPrimaryUnit.textContent = result.lengthUnit;
+        resSubtitle.textContent = `Required radius (Diameter: ${formatNum(result.diameter)} ${result.lengthUnit}) for Volume = ${formatNum(Number(inputVolume.value))} ${selectInputVolumeUnit?.value || ''}`;
+        resModeBadge.textContent = 'Solved Radius';
+      } else {
+        resPrimaryLabel.textContent = result.isHollow ? 'Hollow Cylinder Shell Volume (V)' : 'Cylinder Volume (V)';
+        resPrimaryVal.textContent = formatNum(result.volume);
+        resPrimaryUnit.textContent = VOLUME_UNIT_SYMBOLS[result.displayVolumeUnit] || result.displayVolumeUnit;
+        resSubtitle.textContent = result.isHollow
+          ? `Material volume of shell with wall thickness ${formatNum(result.wallThickness || 0)} ${result.lengthUnit}`
+          : result.isOblique
+          ? `Oblique volume derived with perpendicular separation ${formatNum(result.height)} ${result.lengthUnit}`
+          : `Standard cylinder volume (Base Area × Perpendicular Height)`;
+        resModeBadge.textContent = result.isHollow ? 'Hollow Shell' : result.isOblique ? 'Oblique Cylinder' : 'Right Cylinder';
+      }
+
+      // Secondary summary stats
+      resLitersStat.textContent = `${formatNum(result.volumeConversions.L, 3)} L (${formatNum(result.volumeConversions.mL, 1)} mL)`;
+      resGallonsStat.textContent = `${formatNum(result.volumeConversions.us_gal, 3)} gal (US)`;
+      resWaterWeight.textContent = `${formatNum(result.waterWeightKg, 2)} kg (${formatNum(result.waterWeightLbs, 1)} lbs)`;
+
+      statRadius.textContent = `${formatNum(result.radius)} ${result.lengthUnit}`;
+      statHeight.textContent = `${formatNum(result.height)} ${result.lengthUnit}`;
+      statBaseArea.textContent = `${formatNum(result.baseArea)} ${result.lengthUnit}²`;
+      statTotalSurface.textContent = `${formatNum(result.totalSurfaceArea)} ${result.lengthUnit}²`;
+
+      // Render step by step derivation
+      resSteps.innerHTML = '';
+      result.steps.forEach((step) => {
+        const li = document.createElement('li');
+        li.textContent = step;
+        resSteps.appendChild(li);
+      });
+
+      // Render converted units table
+      tableUnitsBody.innerHTML = '';
+      (Object.keys(result.volumeConversions) as VolumeUnit[]).forEach((u) => {
+        const tr = document.createElement('tr');
+        const isCurrent = u === result.displayVolumeUnit;
+        tr.className = isCurrent
+          ? 'bg-blue-50/70 font-bold dark:bg-blue-950/40'
+          : 'hover:bg-slate-50 dark:hover:bg-slate-900/60';
+        tr.innerHTML = `
+          <td class="p-2 text-slate-800 dark:text-slate-200">${VOLUME_UNIT_NAMES[u]}</td>
+          <td class="p-2 text-right ${isCurrent ? 'text-blue-600 dark:text-blue-400 font-black' : 'text-slate-900 dark:text-white'}">
+            ${formatNum(result.volumeConversions[u], 4)} ${VOLUME_UNIT_SYMBOLS[u]}
+          </td>
+        `;
+        tableUnitsBody.appendChild(tr);
+      });
+
+      // Update proportional SVG diagram preview
+      renderSvgCylinder(result);
+
+      // Reveal Results Card and Action Bar
+      resultsPlaceholder.classList.add('hidden');
+      resultsCard.classList.remove('hidden');
+
+      if (bar) bar.classList.remove('hidden');
+
+    } catch (err: any) {
+      resultsCard.classList.add('hidden');
+      resultsPlaceholder.classList.remove('hidden');
+      if (bar) bar.classList.add('hidden');
+      cylinderError.textContent = err?.message || 'Invalid geometric dimensions entered.';
+      cylinderError.classList.remove('hidden');
+    }
+  }
+
+  function renderSvgCylinder(res: any) {
+    if (!svgTopEllipse || !svgBodyPath || !svgSideLeft || !svgSideRight || !svgBottomFront || !svgBottomHidden || !svgRadiusLine || !svgRadiusTxt || !svgHeightTxt) return;
+
+    const r = res.radius;
+    const h = res.height;
+    const unit = res.lengthUnit;
+
+    // ViewBox is 420 x 250
+    // Center X = 210
+    const centerX = 210;
+    const maxDrawWidth = 180;
+    const maxDrawHeight = 120;
+
+    // Compute aspect scaling
+    const scale = Math.min(maxDrawWidth / (2 * (r || 1)), maxDrawHeight / (h || 1));
+    const drawR = Math.max(28, Math.min(90, r * scale));
+    const drawH = Math.max(30, Math.min(130, h * scale));
+    const drawRy = Math.max(10, Math.min(26, drawR * 0.3));
+
+    const centerYTop = 125 - drawH / 2;
+    const centerYBottom = 125 + drawH / 2;
+
+    const leftX = centerX - drawR;
+    const rightX = centerX + drawR;
+
+    // Oblique horizontal shift if oblique
+    const shiftX = res.isOblique ? 25 : 0;
+    const topCenterX = centerX + shiftX;
+    const topLeftX = leftX + shiftX;
+    const topRightX = rightX + shiftX;
+
+    // Top Base Ellipse
+    svgTopEllipse.setAttribute('cx', String(topCenterX));
+    svgTopEllipse.setAttribute('cy', String(centerYTop));
+    svgTopEllipse.setAttribute('rx', String(drawR));
+    svgTopEllipse.setAttribute('ry', String(drawRy));
+
+    // Bottom Base Curves
+    svgBottomHidden.setAttribute('d', `M ${leftX} ${centerYBottom} A ${drawR} ${drawRy} 0 0 1 ${rightX} ${centerYBottom}`);
+    svgBottomFront.setAttribute('d', `M ${leftX} ${centerYBottom} A ${drawR} ${drawRy} 0 0 0 ${rightX} ${centerYBottom}`);
+
+    // Lateral Surface Body & Edges
+    svgBodyPath.setAttribute(
+      'd',
+      `M ${topLeftX} ${centerYTop} L ${leftX} ${centerYBottom} A ${drawR} ${drawRy} 0 0 0 ${rightX} ${centerYBottom} L ${topRightX} ${centerYTop} Z`
+    );
+    svgSideLeft.setAttribute('x1', String(topLeftX));
+    svgSideLeft.setAttribute('y1', String(centerYTop));
+    svgSideLeft.setAttribute('x2', String(leftX));
+    svgSideLeft.setAttribute('y2', String(centerYBottom));
+
+    svgSideRight.setAttribute('x1', String(topRightX));
+    svgSideRight.setAttribute('y1', String(centerYTop));
+    svgSideRight.setAttribute('x2', String(rightX));
+    svgSideRight.setAttribute('y2', String(centerYBottom));
+
+    // Radius line & text
+    svgRadiusLine.setAttribute('x1', String(topCenterX));
+    svgRadiusLine.setAttribute('y1', String(centerYTop));
+    svgRadiusLine.setAttribute('x2', String(topRightX));
+    svgRadiusLine.setAttribute('y2', String(centerYTop));
+
+    svgRadiusTxt.setAttribute('x', String(topCenterX + drawR / 2));
+    svgRadiusTxt.setAttribute('y', String(centerYTop - 6));
+    svgRadiusTxt.textContent = `r = ${formatNum(r)} ${unit}`;
+
+    // Height text
+    svgHeightTxt.setAttribute('x', String(Math.min(topLeftX, leftX) - 24));
+    svgHeightTxt.setAttribute('y', String(125));
+    svgHeightTxt.textContent = `h = ${formatNum(h)} ${unit}`;
+  }
+
+  // 3. Buttons & Reset Handlers
+  btnCalculate?.addEventListener('click', runCalculation);
+
+  btnClear?.addEventListener('click', () => {
+    // STRICT ZERO DEFAULT VALUES: All numeric fields must be completely empty!
+    inputRadius.value = '';
+    inputDiameter.value = '';
+    inputHeight.value = '';
+    inputVolume.value = '';
+    inputOuterRadius.value = '';
+    inputInnerRadius.value = '';
+    inputOuterDiameter.value = '';
+    inputInnerDiameter.value = '';
+    inputSlantLength.value = '';
+    inputSlantAngle.value = '';
+
+    cylinderError.classList.add('hidden');
+    resultsCard.classList.add('hidden');
+    resultsPlaceholder.classList.remove('hidden');
+
+    const bar = document.getElementById('calc-action-bar-container');
+    if (bar) bar.classList.add('hidden');
+
+    if (currentMode === 'radius_height' || currentMode === 'oblique') inputRadius.focus();
+    else if (currentMode === 'diameter_height') inputDiameter.focus();
+    else if (currentMode === 'find_height' || currentMode === 'find_radius') inputVolume.focus();
+    else if (currentMode === 'hollow_radius') inputOuterRadius.focus();
+    else if (currentMode === 'hollow_diameter') inputOuterDiameter.focus();
+  });
+
+  // Enter key trigger on form inputs
+  document.querySelectorAll('#cylinder-form input').forEach((inp) => {
+    inp.addEventListener('keydown', (e) => {
+      if ((e as KeyboardEvent).key === 'Enter') {
+        e.preventDefault();
+        btnCalculate?.click();
+      }
+    });
+  });
+
+  // CRITICAL AUDIT: EVERY INPUT FIELD STARTS COMPLETELY EMPTY (value="").
+  // NO PREFILLED NUMBERS. RESULTS ARE INITIALLY HIDDEN.
+</script>

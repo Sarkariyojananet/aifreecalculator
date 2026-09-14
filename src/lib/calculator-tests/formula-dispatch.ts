@@ -67,6 +67,8 @@ import {
 } from '../calculators/exponential-function';
 import { calculateExponentialGrowth } from '../calculators/exponential-growth';
 import { calculateRightTriangleArea } from '../calculators/right-triangle-area';
+import { calculateCylinderVolume } from '../calculators/cylinder-volume';
+import { calculateSlope } from '../calculators/slope';
 import type { CalculatorTestCase, CustomTestCaseDefinition } from './types';
 
 /**
@@ -259,6 +261,36 @@ export function executeCalculatorFormula(slug: string, inputs: Record<string, an
         angle: inputs.angle,
         angleType: inputs.angleType,
         angleUnit: inputs.angleUnit,
+      });
+    case 'volume-of-a-cylinder-calculator':
+      return calculateCylinderVolume({
+        mode: inputs.mode || 'radius_height',
+        lengthUnit: inputs.lengthUnit || 'cm',
+        volumeUnit: inputs.volumeUnit || 'cm3',
+        radius: inputs.radius,
+        height: inputs.height,
+        diameter: inputs.diameter,
+        volume: inputs.volume,
+        inputVolumeUnit: inputs.inputVolumeUnit,
+        outerRadius: inputs.outerRadius,
+        innerRadius: inputs.innerRadius,
+        outerDiameter: inputs.outerDiameter,
+        innerDiameter: inputs.innerDiameter,
+        obliqueInputType: inputs.obliqueInputType,
+        slantLength: inputs.slantLength,
+        slantAngleDeg: inputs.slantAngleDeg,
+      });
+    case 'slope-calculator':
+      return calculateSlope({
+        mode: inputs.mode || 'rise_run',
+        unit: inputs.unit || 'm',
+        rise: inputs.rise,
+        run: inputs.run,
+        slopePercentage: inputs.slopePercentage,
+        angleDeg: inputs.angleDeg,
+        pitchX: inputs.pitchX,
+        rafterLength: inputs.rafterLength,
+        targetSlopePercentage: inputs.targetSlopePercentage,
       });
     default:
       throw new Error(`No formula runner registered for calculator slug: ${slug}`);
