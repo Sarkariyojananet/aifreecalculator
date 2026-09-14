@@ -144,29 +144,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
-  // 2b. Universal i18n Calculator Routing
-  // Seamlessly routes /{lang}/{category}/{slug}/ to the full rich calculator page with the selected locale
-  if (!isAdminRoute && !isApiRoute && !isAstroInternal && !isStaticFile && !pathname.includes('.')) {
-    const segments = pathname.split('/').filter(Boolean);
-    if (segments.length >= 3 && isValidLocale(segments[0]) && segments[0] !== 'en') {
-      const reqLocale = segments[0] as Locale;
-      const category = segments[1].toLowerCase();
-      const slug = segments[2].toLowerCase();
-
-      const baseCalc = calculators.find(
-        (c) =>
-          c.slug.toLowerCase() === slug &&
-          (c.category.toLowerCase() === category ||
-            (c.additionalCategories &&
-              c.additionalCategories.some((ac) => ac.toLowerCase() === category)))
-      );
-      if (baseCalc) {
-        (context.locals as any).locale = reqLocale;
-        (context.locals as any).originalPath = pathname;
-        return context.rewrite(`${baseCalc.path}?lang=${reqLocale}`);
-      }
-    }
-  }
 
   // 2c. Canonicalize legacy or query parameter `?lang=xx` to clean path `/{lang}/...`
   if (!isAdminRoute && !isApiRoute && !isAstroInternal && !isStaticFile && !pathname.includes('.')) {

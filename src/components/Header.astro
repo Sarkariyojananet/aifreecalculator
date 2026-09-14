@@ -4,7 +4,6 @@ import LanguageSwitcher from './LanguageSwitcher.astro';
 import { extractLocaleFromPath, getLocalizedPath } from '../i18n/utils';
 import { getCommonTranslations } from '../i18n/translations/common';
 import { CATEGORIES_CONFIG } from '../i18n/translations/categories';
-import { getCalculatorTranslation } from '../i18n/translations/calculators';
 import { isValidLocale, DEFAULT_LOCALE, type Locale } from '../i18n/config';
 
 interface Props {
@@ -40,19 +39,6 @@ const categoryLinks = [
   { name: CATEGORIES_CONFIG.math.names[lang], href: getLocalizedPath('/math/', lang) },
   { name: CATEGORIES_CONFIG.general.names[lang], href: getLocalizedPath('/general/', lang) },
 ];
-const searchDataJson = JSON.stringify(
-  calculators.map((c) => {
-    const calcTrans = getCalculatorTranslation(c.slug, lang);
-    return {
-      name: calcTrans.name,
-      category: calcTrans.categoryLabel || c.category,
-      desc: calcTrans.shortDescription,
-      icon: c.icon,
-      path: getLocalizedPath(c.path, lang),
-      keywords: c.keywords || [],
-    };
-  })
-);
 ---
 
 <header class="sticky top-0 z-40 w-full border-b border-slate-200 bg-white/95 backdrop-blur-xs dark:border-slate-800 dark:bg-slate-900/95 transition-colors">
@@ -392,9 +378,8 @@ const searchDataJson = JSON.stringify(
   </div>
 </div>
 
-<!-- Embedded Search Data -->
-<script is:inline define:vars={{ searchDataJson, activeHeaderLang: lang }}>
-  window.__CALCULATORS_DATA__ = JSON.parse(searchDataJson);
+<!-- Header Language Context -->
+<script is:inline define:vars={{ activeHeaderLang: lang }}>
   window.__ACTIVE_HEADER_LANG__ = activeHeaderLang;
 </script>
 
@@ -485,9 +470,40 @@ const searchDataJson = JSON.stringify(
 
   let activeCategory = 'all';
   let activeIndex = 0;
+  let searchDataLoading = null;
+  let searchDataLoaded = false;
+
+  async function ensureSearchDataLoaded() {
+    if (searchDataLoaded && window.__CALCULATORS_DATA__) {
+      return window.__CALCULATORS_DATA__;
+    }
+    if (searchDataLoading) {
+      return searchDataLoading;
+    }
+    const curLang = window.__ACTIVE_HEADER_LANG__ || 'en';
+    searchDataLoading = fetch(`/api/search-data?lang=${encodeURIComponent(curLang)}`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Search data fetch failed');
+        return res.json();
+      })
+      .then((data) => {
+        window.__CALCULATORS_DATA__ = Array.isArray(data) ? data : [];
+        searchDataLoaded = true;
+        searchDataLoading = null;
+        renderResults();
+        return window.__CALCULATORS_DATA__;
+      })
+      .catch((err) => {
+        console.error('Failed to load search data:', err);
+        searchDataLoading = null;
+        return [];
+      });
+    return searchDataLoading;
+  }
 
   function openSearch() {
     if (!searchModal) return;
+    ensureSearchDataLoaded();
     searchModal.classList.remove('hidden');
     document.body.style.overflow = 'hidden';
     activeIndex = 0;
@@ -506,8 +522,15 @@ const searchDataJson = JSON.stringify(
     document.body.style.overflow = '';
   }
 
-  if (searchBtn) searchBtn.addEventListener('click', openSearch);
-  if (searchMobileBtn) searchMobileBtn.addEventListener('click', openSearch);
+  if (searchBtn) {
+    searchBtn.addEventListener('mouseenter', ensureSearchDataLoaded, { once: true });
+    searchBtn.addEventListener('focus', ensureSearchDataLoaded, { once: true });
+    searchBtn.addEventListener('click', openSearch);
+  }
+  if (searchMobileBtn) {
+    searchMobileBtn.addEventListener('touchstart', ensureSearchDataLoaded, { once: true });
+    searchMobileBtn.addEventListener('click', openSearch);
+  }
   if (closeBtn) closeBtn.addEventListener('click', closeSearch);
 
   // Click outside to close
@@ -521,6 +544,7 @@ const searchDataJson = JSON.stringify(
   window.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
       e.preventDefault();
+      ensureSearchDataLoaded();
       if (searchModal && searchModal.classList.contains('hidden')) {
         openSearch();
       } else {
@@ -535,14 +559,16 @@ const searchDataJson = JSON.stringify(
   // Filter category tabs
   catFilters.forEach((btn) => {
     btn.addEventListener('click', () => {
-      catFilters.forEach((b) => {
-        b.className = 'search-cat-filter rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300';
+      ensureSearchDataLoaded().then(() => {
+        catFilters.forEach((b) => {
+          b.className = 'search-cat-filter rounded-full bg-slate-100 px-2.5 py-1 font-medium text-slate-600 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-300';
+        });
+        btn.className = 'search-cat-filter active rounded-full bg-blue-50 px-2.5 py-1 font-bold text-blue-600 dark:bg-blue-950 dark:text-blue-400';
+        activeCategory = btn.getAttribute('data-cat') || 'all';
+        activeIndex = 0;
+        renderResults();
+        searchInput?.focus();
       });
-      btn.className = 'search-cat-filter active rounded-full bg-blue-50 px-2.5 py-1 font-bold text-blue-600 dark:bg-blue-950 dark:text-blue-400';
-      activeCategory = btn.getAttribute('data-cat') || 'all';
-      activeIndex = 0;
-      renderResults();
-      searchInput?.focus();
     });
   });
 
@@ -564,7 +590,18 @@ const searchDataJson = JSON.stringify(
 
   function renderResults() {
     const q = (searchInput?.value || '').toLowerCase().trim();
-    const data = window.__CALCULATORS_DATA__ || [];
+    const data = window.__CALCULATORS_DATA__;
+
+    if (!data) {
+      if (countLabel) countLabel.textContent = 'Loading calculators...';
+      resultsContainer.innerHTML = `
+        <div class="py-8 text-center text-xs text-slate-400">
+          <div class="inline-block h-6 w-6 animate-spin rounded-full border-2 border-blue-500 border-t-transparent mb-2"></div>
+          <p class="font-bold text-slate-600 dark:text-slate-300">Loading calculators...</p>
+        </div>
+      `;
+      return;
+    }
 
     const filtered = data.filter((item) => {
       const matchCat = activeCategory === 'all' || item.category.toLowerCase() === activeCategory.toLowerCase();
@@ -617,7 +654,7 @@ const searchDataJson = JSON.stringify(
     resultsContainer.innerHTML = filtered
       .map((item, idx) => {
         const cleanItemPath = item.path.startsWith('/') ? item.path : `/${item.path}`;
-        const itemUrl = (curLang && curLang !== 'en')
+        const itemUrl = (curLang && curLang !== 'en' && !cleanItemPath.startsWith(`/${curLang}/`))
           ? `/${curLang}${cleanItemPath}`
           : cleanItemPath;
         return `
@@ -659,9 +696,14 @@ const searchDataJson = JSON.stringify(
   }
 
   if (searchInput) {
+    searchInput.addEventListener('focus', ensureSearchDataLoaded, { once: true });
     searchInput.addEventListener('input', () => {
       activeIndex = 0;
-      renderResults();
+      if (!window.__CALCULATORS_DATA__) {
+        ensureSearchDataLoaded().then(() => renderResults());
+      } else {
+        renderResults();
+      }
     });
 
     // Keyboard navigation in search results

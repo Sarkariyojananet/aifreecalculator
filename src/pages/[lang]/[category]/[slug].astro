@@ -1,0 +1,35 @@
+---
+import { getTranslatedCalculatorStaticPaths } from '../../../i18n/registry';
+import { getLocalizedPath } from '../../../i18n/utils';
+import type { Locale } from '../../../i18n/config';
+
+export function getStaticPaths() {
+  return getTranslatedCalculatorStaticPaths();
+}
+
+const { lang, category, slug } = Astro.params as { lang: Locale; category: string; slug: string };
+
+// Known 301 redirect calculators
+if (category === 'general' && slug === 'percentage-calculator') {
+  return Astro.redirect(getLocalizedPath('/math/percentage-calculator/', lang), 301);
+}
+if (slug === 'date-difference-calculator') {
+  return Astro.redirect(getLocalizedPath('/general/time-calculator/', lang), 301);
+}
+if (slug === 'standard-deviation-calculator') {
+  return Astro.redirect(getLocalizedPath('/math/scientific-calculator/', lang), 301);
+}
+
+const calculatorModules = import.meta.glob<any>('../../**/*.astro');
+const targetKey = `../../${category}/${slug}.astro`;
+const loader = calculatorModules[targetKey];
+
+if (!loader) {
+  return Astro.redirect(getLocalizedPath('/404/', lang));
+}
+
+const mod = await loader();
+const CalculatorComponent = mod.default;
+---
+
+<CalculatorComponent />
