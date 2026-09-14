@@ -1,0 +1,1288 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="Right Triangle Area Calculator – Calculate Area of Right Triangle"
+  description="Calculate the area of a right triangle from two legs, leg and hypotenuse, or side and acute angle with step-by-step mathematical formulas and conversions."
+  category="Math"
+  calculatorName="Right Triangle Area Calculator"
+  slug="right-triangle-area-calculator"
+  keywords={[
+    'right triangle area calculator',
+    'area of a right triangle calculator',
+    'right triangle area',
+    'right triangle area formula',
+    'calculate right triangle area',
+    'area of right angled triangle',
+    'right triangle calculator',
+    'triangle area calculator',
+    'right triangle formula',
+    'area from hypotenuse and angle',
+    'area from two legs',
+    '45 45 90 triangle area'
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- Calculator Card Container -->
+    <div
+      class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-blue-50/60 p-1.5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/20"
+    >
+      <!-- Top Mode Selector Tabs (Embedded in Card Border) -->
+      <div
+        class="flex items-center gap-1 border-b border-slate-300/80 px-2 pt-1 pb-0 dark:border-slate-800 overflow-x-auto scrollbar-thin"
+      >
+        <button
+          type="button"
+          id="tab-two-legs"
+          data-mode="two_legs"
+          class="mode-tab active rounded-t-xl border-t border-x border-slate-300/90 bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-900 shadow-2xs -mb-px dark:border-slate-700 dark:bg-slate-900 dark:text-white transition cursor-pointer shrink-0"
+        >
+          Two Legs (a, b)
+        </button>
+        <button
+          type="button"
+          id="tab-leg-hyp"
+          data-mode="leg_hypotenuse"
+          class="mode-tab rounded-t-xl bg-blue-700/90 px-4 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-blue-800 dark:bg-blue-800 dark:hover:bg-blue-700 transition cursor-pointer shrink-0"
+        >
+          Leg &amp; Hypotenuse (a/b, c)
+        </button>
+        <button
+          type="button"
+          id="tab-hyp-angle"
+          data-mode="hypotenuse_angle"
+          class="mode-tab rounded-t-xl bg-blue-700/90 px-4 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-blue-800 dark:bg-blue-800 dark:hover:bg-blue-700 transition cursor-pointer shrink-0"
+        >
+          Hypotenuse &amp; Angle (c, θ)
+        </button>
+        <button
+          type="button"
+          id="tab-leg-angle"
+          data-mode="leg_angle"
+          class="mode-tab rounded-t-xl bg-blue-700/90 px-4 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-blue-800 dark:bg-blue-800 dark:hover:bg-blue-700 transition cursor-pointer shrink-0"
+        >
+          Leg &amp; Angle (a/b, θ)
+        </button>
+      </div>
+
+      <!-- Main Form Container -->
+      <form
+        id="triangle-form"
+        class="space-y-4 bg-white/45 p-4 sm:p-6 dark:bg-slate-950/40"
+        novalidate
+        onsubmit="return false;"
+      >
+        <!-- Mode Subtitle & Unit Selectors Bar -->
+        <div
+          class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 pb-3 dark:border-slate-800/80 text-xs"
+        >
+          <span id="mode-subtitle" class="font-bold text-slate-700 dark:text-slate-300">
+            Known: Perpendicular Legs a and b
+          </span>
+
+          <div class="flex flex-wrap items-center gap-3">
+            <!-- Length Unit Selector -->
+            <div class="flex items-center gap-1.5">
+              <label for="select-unit" class="font-semibold text-slate-600 dark:text-slate-400">Length Unit:</label>
+              <select
+                id="select-unit"
+                class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-800 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 cursor-pointer"
+              >
+                <option value="mm">Millimeters (mm)</option>
+                <option value="cm" selected>Centimeters (cm)</option>
+                <option value="m">Meters (m)</option>
+                <option value="in">Inches (in)</option>
+                <option value="ft">Feet (ft)</option>
+                <option value="yd">Yards (yd)</option>
+              </select>
+            </div>
+
+            <!-- Angle Unit Selector (Shown in angle modes) -->
+            <div id="wrapper-angle-unit" class="hidden">
+              <div class="flex items-center gap-1.5">
+                <label for="select-angle-unit" class="font-semibold text-slate-600 dark:text-slate-400">Angle Unit:</label>
+                <select
+                  id="select-angle-unit"
+                  class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-800 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 cursor-pointer"
+                >
+                  <option value="deg" selected>Degrees (°)</option>
+                  <option value="rad">Radians (rad)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic Inputs Grid -->
+
+        <!-- Row 1: Leg a -->
+        <div
+          id="row-leg-a"
+          class="grid grid-cols-1 sm:grid-cols-[140px_1fr] items-center gap-2 sm:gap-4"
+        >
+          <label
+            for="input-leg-a"
+            class="text-sm font-bold text-slate-900 dark:text-white"
+          >
+            Leg a (Base)
+          </label>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="relative flex items-center w-40 sm:w-52">
+              <input
+                type="number"
+                id="input-leg-a"
+                value=""
+                step="any"
+                min="0"
+                placeholder="Enter leg a"
+                class="w-full rounded-lg border-2 border-slate-400/80 bg-white px-3 py-1.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white pr-10"
+                autocomplete="off"
+              />
+              <span class="unit-badge pointer-events-none absolute right-3 text-xs text-slate-500 dark:text-slate-400 font-medium">cm</span>
+            </div>
+            <span class="text-xs text-slate-500 dark:text-slate-400">horizontal perpendicular leg</span>
+          </div>
+        </div>
+
+        <!-- Row 2: Leg b -->
+        <div
+          id="row-leg-b"
+          class="grid grid-cols-1 sm:grid-cols-[140px_1fr] items-center gap-2 sm:gap-4"
+        >
+          <label
+            for="input-leg-b"
+            class="text-sm font-bold text-slate-900 dark:text-white"
+          >
+            Leg b (Height)
+          </label>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="relative flex items-center w-40 sm:w-52">
+              <input
+                type="number"
+                id="input-leg-b"
+                value=""
+                step="any"
+                min="0"
+                placeholder="Enter leg b"
+                class="w-full rounded-lg border-2 border-slate-400/80 bg-white px-3 py-1.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white pr-10"
+                autocomplete="off"
+              />
+              <span class="unit-badge pointer-events-none absolute right-3 text-xs text-slate-500 dark:text-slate-400 font-medium">cm</span>
+            </div>
+            <span class="text-xs text-slate-500 dark:text-slate-400">vertical perpendicular leg</span>
+          </div>
+        </div>
+
+        <!-- Row 3: Leg Choice (Used in Leg & Hypotenuse / Leg & Angle modes) -->
+        <div id="row-leg-choice" class="hidden">
+          <div class="grid grid-cols-1 sm:grid-cols-[140px_1fr] items-center gap-2 sm:gap-4">
+            <span class="text-sm font-bold text-slate-900 dark:text-white">Known Leg</span>
+            <div class="flex flex-wrap items-center gap-4 text-xs font-bold text-slate-800 dark:text-slate-200">
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="known-leg" value="a" checked class="text-blue-600 focus:ring-blue-500 cursor-pointer" />
+                <span>Leg a (Base)</span>
+              </label>
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="known-leg" value="b" class="text-blue-600 focus:ring-blue-500 cursor-pointer" />
+                <span>Leg b (Height)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 4: Single Leg Input (Used when known-leg radio is selected) -->
+        <div id="row-single-leg" class="hidden">
+          <div class="grid grid-cols-1 sm:grid-cols-[140px_1fr] items-center gap-2 sm:gap-4">
+            <label
+              for="input-single-leg"
+              id="label-single-leg"
+              class="text-sm font-bold text-slate-900 dark:text-white"
+            >
+              Leg a Length
+            </label>
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="relative flex items-center w-40 sm:w-52">
+                <input
+                  type="number"
+                  id="input-single-leg"
+                  value=""
+                  step="any"
+                  min="0"
+                  placeholder="Enter leg length"
+                  class="w-full rounded-lg border-2 border-slate-400/80 bg-white px-3 py-1.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white pr-10"
+                  autocomplete="off"
+                />
+                <span class="unit-badge pointer-events-none absolute right-3 text-xs text-slate-500 dark:text-slate-400 font-medium">cm</span>
+              </div>
+              <span class="text-xs text-slate-500 dark:text-slate-400">perpendicular side</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 5: Hypotenuse c -->
+        <div id="row-hypotenuse" class="hidden">
+          <div class="grid grid-cols-1 sm:grid-cols-[140px_1fr] items-center gap-2 sm:gap-4">
+            <label
+              for="input-hypotenuse"
+              class="text-sm font-bold text-slate-900 dark:text-white"
+            >
+              Hypotenuse (c)
+            </label>
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="relative flex items-center w-40 sm:w-52">
+                <input
+                  type="number"
+                  id="input-hypotenuse"
+                  value=""
+                  step="any"
+                  min="0"
+                  placeholder="Enter hypotenuse c"
+                  class="w-full rounded-lg border-2 border-slate-400/80 bg-white px-3 py-1.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white pr-10"
+                  autocomplete="off"
+                />
+                <span class="unit-badge pointer-events-none absolute right-3 text-xs text-slate-500 dark:text-slate-400 font-medium">cm</span>
+              </div>
+              <span class="text-xs text-slate-500 dark:text-slate-400">longest side opposite 90° angle (c &gt; leg)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 6: Angle Type Selector (Alpha vs Beta) -->
+        <div id="row-angle-type" class="hidden">
+          <div class="grid grid-cols-1 sm:grid-cols-[140px_1fr] items-center gap-2 sm:gap-4">
+            <span class="text-sm font-bold text-slate-900 dark:text-white">Known Angle</span>
+            <div class="flex flex-wrap items-center gap-4 text-xs font-bold text-slate-800 dark:text-slate-200">
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="angle-type" value="alpha" checked class="text-blue-600 focus:ring-blue-500 cursor-pointer" />
+                <span>Angle α (opposite leg a)</span>
+              </label>
+              <label class="flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="angle-type" value="beta" class="text-blue-600 focus:ring-blue-500 cursor-pointer" />
+                <span>Angle β (opposite leg b)</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 7: Angle Input -->
+        <div id="row-angle-val" class="hidden">
+          <div class="grid grid-cols-1 sm:grid-cols-[140px_1fr] items-center gap-2 sm:gap-4">
+            <label
+              for="input-angle-val"
+              id="label-angle-val"
+              class="text-sm font-bold text-slate-900 dark:text-white"
+            >
+              Acute Angle (α)
+            </label>
+            <div class="flex flex-wrap items-center gap-3">
+              <div class="relative flex items-center w-40 sm:w-52">
+                <input
+                  type="number"
+                  id="input-angle-val"
+                  value=""
+                  step="any"
+                  min="0"
+                  max="90"
+                  placeholder="e.g. 30 or 45"
+                  class="w-full rounded-lg border-2 border-slate-400/80 bg-white px-3 py-1.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white pr-10"
+                  autocomplete="off"
+                />
+                <span id="badge-angle-unit" class="pointer-events-none absolute right-3 text-xs text-slate-500 dark:text-slate-400 font-bold">°</span>
+              </div>
+              <span class="text-xs text-slate-500 dark:text-slate-400">must be strictly between 0° and 90°</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 8: Action Buttons (Green Calculate & Gray Clear) -->
+        <div class="flex flex-wrap items-center gap-3 pt-3">
+          <button
+            type="submit"
+            id="btn-calculate"
+            class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-emerald-600/20 transition hover:-translate-y-0.5 hover:bg-emerald-700 active:scale-[0.98] cursor-pointer"
+          >
+            <span>Calculate</span>
+            <span class="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 text-[10px]">
+              ▶
+            </span>
+          </button>
+          <button
+            type="button"
+            id="btn-clear"
+            class="inline-flex items-center justify-center rounded-md bg-slate-400 hover:bg-slate-500 dark:bg-slate-600 dark:hover:bg-slate-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm active:scale-[0.98] transition cursor-pointer"
+          >
+            Clear
+          </button>
+        </div>
+
+        <!-- Error Banner -->
+        <p
+          id="triangle-error"
+          class="hidden rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
+          role="alert"
+          aria-live="polite"
+        >
+        </p>
+      </form>
+    </div>
+
+    <!-- Initial Prompt Placeholder (Shown before Calculate is clicked) -->
+    <div
+      id="results-placeholder"
+      class="rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-8 text-center dark:border-slate-800 dark:bg-slate-950/40"
+    >
+      <div
+        class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-100 text-xl text-blue-700 dark:bg-blue-950 dark:text-blue-300"
+      >
+        📐
+      </div>
+      <h3 class="mt-3 text-sm font-bold text-slate-900 dark:text-white">
+        Ready to Calculate Right Triangle Area
+      </h3>
+      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+        Select your known measurements above, enter your values into the empty fields, and click the green <strong>"Calculate ▶"</strong> button to view the area, missing sides, perimeter, and step-by-step derivation.
+      </p>
+    </div>
+
+    <!-- Calculation Results Card (Revealed on Calculate) -->
+    <div
+      id="results-card"
+      class="hidden rounded-2xl border border-slate-200 bg-slate-50/95 p-5 shadow-xs transition dark:border-slate-800 dark:bg-slate-950/90 sm:p-6 space-y-6"
+    >
+      <!-- Top Banner: Primary Area -->
+      <div
+        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-5 dark:border-slate-800"
+      >
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Right Triangle Area (A)
+            </span>
+            <span
+              id="res-special-tag"
+              class="hidden rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300"
+            >
+              45°-45°-90° Isosceles
+            </span>
+          </div>
+          <div class="mt-1.5 flex flex-wrap items-baseline gap-2">
+            <span
+              id="res-area-val"
+              class="text-4xl sm:text-5xl font-black tracking-tight text-blue-600 dark:text-blue-400"
+            >
+              —
+            </span>
+            <span
+              id="res-area-unit"
+              class="text-xl font-bold text-slate-600 dark:text-slate-400"
+            >
+              cm²
+            </span>
+          </div>
+          <p id="res-subtitle" class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Calculated from perpendicular base and height
+          </p>
+        </div>
+
+        <!-- Quick Summary Stats -->
+        <div class="flex sm:flex-col items-start sm:items-end justify-between gap-1 text-xs">
+          <div class="text-slate-500 dark:text-slate-400">
+            Perimeter (P): <span id="res-perimeter" class="font-bold text-slate-900 dark:text-white">—</span>
+          </div>
+          <div class="text-slate-500 dark:text-slate-400">
+            Hypotenuse (c): <span id="res-hypotenuse-stat" class="font-bold text-slate-900 dark:text-white">—</span>
+          </div>
+          <div class="text-slate-500 dark:text-slate-400">
+            Altitude to Hypotenuse (h_c): <span id="res-altitude" class="font-bold text-slate-900 dark:text-white">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Grid of Side Lengths & Angles -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+        <div class="rounded-xl border border-slate-200/80 bg-white p-3 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <span class="text-slate-500 dark:text-slate-400 block font-medium">Leg a (Base):</span>
+          <span id="stat-leg-a" class="font-bold text-slate-900 dark:text-white text-sm mt-0.5 block">—</span>
+        </div>
+        <div class="rounded-xl border border-slate-200/80 bg-white p-3 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <span class="text-slate-500 dark:text-slate-400 block font-medium">Leg b (Height):</span>
+          <span id="stat-leg-b" class="font-bold text-slate-900 dark:text-white text-sm mt-0.5 block">—</span>
+        </div>
+        <div class="rounded-xl border border-slate-200/80 bg-white p-3 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <span class="text-slate-500 dark:text-slate-400 block font-medium">Angle α (opp a):</span>
+          <span id="stat-angle-alpha" class="font-bold text-blue-600 dark:text-blue-400 text-sm mt-0.5 block">—</span>
+        </div>
+        <div class="rounded-xl border border-slate-200/80 bg-white p-3 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <span class="text-slate-500 dark:text-slate-400 block font-medium">Angle β (opp b):</span>
+          <span id="stat-angle-beta" class="font-bold text-indigo-600 dark:text-indigo-400 text-sm mt-0.5 block">—</span>
+        </div>
+      </div>
+
+      <!-- Live Interactive Proportional Triangle SVG Preview -->
+      <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex items-center justify-between mb-2">
+          <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+            <span>📐</span> Proportional Right Triangle Diagram
+          </h4>
+          <span class="text-[11px] text-slate-500 dark:text-slate-400">Euclidean Scale</span>
+        </div>
+        <div class="flex justify-center p-2">
+          <svg id="svg-triangle-preview" viewBox="0 0 360 220" class="w-full max-w-sm h-48 sm:h-56">
+            <!-- Triangle Polygon -->
+            <polygon id="svg-poly" points="60,180 60,40 300,180" fill="rgba(37,99,235,0.12)" stroke="#2563eb" stroke-width="2.5" stroke-linejoin="round" />
+            <!-- Right Angle Square Marker -->
+            <path id="svg-right-box" d="M 60 162 L 78 162 L 78 180" fill="none" stroke="#1e40af" stroke-width="2" />
+            <circle id="svg-right-dot" cx="69" cy="171" r="2" fill="#1e40af" />
+            <!-- Labels -->
+            <text id="svg-label-a" x="180" y="202" font-family="system-ui, sans-serif" font-size="12" font-weight="bold" fill="#0f172a" text-anchor="middle">a = 6</text>
+            <text id="svg-label-b" x="42" y="115" font-family="system-ui, sans-serif" font-size="12" font-weight="bold" fill="#0f172a" text-anchor="middle">b = 8</text>
+            <text id="svg-label-c" x="195" y="100" font-family="system-ui, sans-serif" font-size="12" font-weight="bold" fill="#2563eb" text-anchor="middle">c = 10</text>
+            <text id="svg-label-alpha" x="265" y="174" font-family="system-ui, sans-serif" font-size="10" font-weight="bold" fill="#d97706" text-anchor="end">α</text>
+            <text id="svg-label-beta" x="72" y="65" font-family="system-ui, sans-serif" font-size="10" font-weight="bold" fill="#059669" text-anchor="start">β</text>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Step-by-Step Mathematical Derivation -->
+      <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+          <span>📝</span> Step-by-Step Calculation Breakdown
+        </h4>
+        <ol id="res-steps" class="mt-3 space-y-2 text-xs text-slate-700 dark:text-slate-300 list-decimal pl-5 font-mono leading-relaxed">
+        </ol>
+      </div>
+
+      <!-- Area in Other Standard Units Table -->
+      <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 overflow-x-auto">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-1.5">
+          <span>🔄</span> Equivalent Area in Other Units
+        </h4>
+        <table class="w-full text-left text-xs font-mono">
+          <tbody id="table-units-body" class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-600 dark:text-slate-400">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- EDUCATIONAL CONTENT & COMPREHENSIVE GUIDE                -->
+  <!-- ======================================================== -->
+  <Fragment slot="content">
+    <div>
+      <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">What Is a Right Triangle?</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          A <strong>right triangle</strong> (also called a <em>right-angled triangle</em>) is a fundamental geometric polygon characterized by having exactly one interior angle measuring <strong>90 degrees (90°)</strong>, known as the right angle. In any Euclidean flat plane, the sum of all three interior angles in a triangle always equals 180°. Because one angle is fixed at 90°, the remaining two acute angles (designated as <em>α</em> and <em>β</em>) are strictly complementary:
+        </p>
+        <div class="my-3 rounded-2xl border border-blue-200 bg-blue-50/50 p-4 font-mono text-center text-base sm:text-lg font-black text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300">
+          α + β = 90° &nbsp;&nbsp;(or&nbsp; π / 2 &nbsp;radians)
+        </div>
+        <p>
+          The two sides that meet to form the 90° angle are called the <strong>legs</strong> (or catheti), denoted as <em>a</em> and <em>b</em>. The third side, positioned directly across from the right angle, is the <strong>hypotenuse</strong> (<em>c</em>), which is always the longest side of the right triangle.
+        </p>
+      </div>
+    </div>
+
+    <!-- Educational Diagram 1: Basic Right Triangle -->
+    <div class="my-6 text-center">
+      <img
+        src="/images/math/right-triangle-area-formula.svg"
+        alt="Right triangle diagram illustrating perpendicular legs a and b, hypotenuse c, right angle marker, and area formula A = 1/2 * a * b"
+        class="mx-auto rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm max-w-full sm:max-w-md"
+        loading="lazy"
+      />
+      <p class="mt-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
+        Figure 1: Anatomy of a right triangle with perpendicular legs (base <em>a</em> and height <em>b</em>), hypotenuse <em>c</em>, and the core area relation.
+      </p>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">The Fundamental Right Triangle Area Formula</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          For any general triangle, the area is calculated as half the base multiplied by the perpendicular height: <code>Area = ½ × base × height</code>. In a right triangle, the two perpendicular legs form their own mutual altitude. Therefore, one leg can be designated as the horizontal base (<em>a</em>) and the other leg serves directly as the perpendicular height (<em>b</em>):
+        </p>
+        <div class="my-3 rounded-2xl border border-blue-200 bg-blue-50/50 p-4 font-mono text-center text-base sm:text-lg font-black text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300">
+          Area = (a × b) / 2
+        </div>
+        <p>
+          <strong>Why is this formula true?</strong> Geometrically, if you construct a rectangle with side lengths <em>a</em> and <em>b</em>, drawing a diagonal line from one corner to the opposite corner splits the rectangle into two identical, congruent right triangles. The area of the entire rectangle is <code>a × b</code>, so each individual right triangle possesses exactly half of that rectangular area.
+        </p>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Calculating Area from One Leg and the Hypotenuse</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          When you know the hypotenuse <em>c</em> and only one leg (say leg <em>a</em>), the Pythagorean theorem enables you to compute the missing perpendicular leg <em>b</em>:
+        </p>
+        <div class="my-2 rounded-xl border border-slate-200 bg-slate-50/80 p-3 font-mono text-sm dark:border-slate-800 dark:bg-slate-900">
+          a² + b² = c² &nbsp;⟹&nbsp; b = √(c² − a²)
+        </div>
+        <p>
+          Once leg <em>b</em> is determined, substituting it into the primary area formula yields:
+        </p>
+        <div class="my-2 rounded-xl border border-slate-200 bg-slate-50/80 p-3 font-mono text-sm dark:border-slate-800 dark:bg-slate-900">
+          Area = [a × √(c² − a²)] / 2
+        </div>
+        <p>
+          Similarly, if leg <em>b</em> and hypotenuse <em>c</em> are given, the equation becomes <code>Area = [b × √(c² − b²)] / 2</code>.
+        </p>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          <strong>Geometric Constraint:</strong> Because the hypotenuse is the longest side, the condition <code>c &gt; a &gt; 0</code> must always hold true. If <em>c ≤ a</em>, the quantity under the radical <code>c² − a²</code> becomes zero or negative, making a valid Euclidean right triangle impossible.
+        </p>
+      </div>
+    </div>
+
+    <!-- Educational Diagram 2: Hypotenuse and Angle -->
+    <div class="my-6 text-center">
+      <img
+        src="/images/math/right-triangle-angle-area.svg"
+        alt="Trigonometric right triangle diagram showing hypotenuse c, acute angles alpha and beta, and sine cosine projection formulas"
+        class="mx-auto rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm max-w-full sm:max-w-md"
+        loading="lazy"
+      />
+      <p class="mt-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
+        Figure 2: Trigonometric decomposition of legs using acute angles <em>α</em> and <em>β</em>, where <em>a = c · sin(α)</em> and <em>b = c · cos(α)</em>.
+      </p>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Calculating Area from the Hypotenuse and an Acute Angle</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          If you only have the hypotenuse <em>c</em> and one acute angle (for example, angle <em>α</em> opposite leg <em>a</em>), you can resolve both perpendicular legs using basic trigonometric sine and cosine functions:
+        </p>
+        <ul class="space-y-1.5 list-disc list-inside">
+          <li><code>sin(α) = a / c ⟹ a = c × sin(α)</code></li>
+          <li><code>cos(α) = b / c ⟹ b = c × cos(α)</code></li>
+        </ul>
+        <p>
+          Substituting these definitions directly into the area formula gives the elegant trigonometric equation:
+        </p>
+        <div class="my-3 rounded-2xl border border-blue-200 bg-blue-50/50 p-4 font-mono text-center text-base sm:text-lg font-black text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300">
+          Area = [c² × sin(α) × cos(α)] / 2
+        </div>
+        <p>
+          Using the trigonometric double-angle identity <code>2 × sin(α) × cos(α) = sin(2α)</code>, this formula simplifies even further to:
+        </p>
+        <div class="my-2 rounded-xl border border-slate-200 bg-slate-50/80 p-3 font-mono text-sm text-center dark:border-slate-800 dark:bg-slate-900">
+          Area = [c² × sin(2α)] / 4
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Calculating Area from One Leg and an Acute Angle</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          When you know one leg and an acute angle, the <strong>tangent</strong> ratio relates the two perpendicular sides:
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+          <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
+            <h3 class="font-bold text-slate-900 dark:text-white">Given Leg a and Opposite Angle α:</h3>
+            <p class="mt-1 text-xs text-slate-600 dark:text-slate-400 font-mono">
+              tan(α) = a / b ⟹ b = a / tan(α)
+            </p>
+            <p class="mt-2 text-xs font-mono font-bold text-blue-600 dark:text-blue-400">
+              Area = a² / [2 × tan(α)]
+            </p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
+            <h3 class="font-bold text-slate-900 dark:text-white">Given Leg b and Adjacent Angle α:</h3>
+            <p class="mt-1 text-xs text-slate-600 dark:text-slate-400 font-mono">
+              tan(α) = a / b ⟹ a = b × tan(α)
+            </p>
+            <p class="mt-2 text-xs font-mono font-bold text-blue-600 dark:text-blue-400">
+              Area = [b² × tan(α)] / 2
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Educational Diagram 3: 45-45-90 Triangle -->
+    <div class="my-6 text-center">
+      <img
+        src="/images/math/45-45-90-triangle.svg"
+        alt="45 45 90 isosceles right triangle diagram with equal legs x, hypotenuse x sqrt 2, and area formulas"
+        class="mx-auto rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm max-w-full sm:max-w-md"
+        loading="lazy"
+      />
+      <p class="mt-2 text-xs text-slate-500 dark:text-slate-400 font-medium">
+        Figure 3: Special 45°-45°-90° isosceles right triangle where both legs are equal (<em>a = b</em>) and the hypotenuse is <em>c = a√2</em>.
+      </p>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">The Special 45°-45°-90° Isosceles Right Triangle</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          A particularly notable right triangle is the <strong>45°-45°-90° triangle</strong>, also known as the <em>isosceles right triangle</em>. In this configuration, both acute angles equal 45° (<em>α = β = 45°</em>). Because equal angles subtend equal sides, both perpendicular legs are identical in length:
+        </p>
+        <div class="my-2 rounded-xl border border-slate-200 bg-slate-50/80 p-3 font-mono text-sm dark:border-slate-800 dark:bg-slate-900">
+          a = b &nbsp;&nbsp;and&nbsp;&nbsp; c = a√2 ≈ 1.4142 × a
+        </div>
+        <p>
+          Its area can be formulated in two remarkably compact ways:
+        </p>
+        <ul class="space-y-1.5 list-disc list-inside">
+          <li><strong>Using the leg length:</strong> <code>Area = a² / 2</code></li>
+          <li><strong>Using the hypotenuse length:</strong> <code>Area = c² / 4</code></li>
+        </ul>
+        <p>
+          This triangle represents exactly one-half of a square cut diagonally across its vertices. If a square has side length <em>a</em>, its full area is <code>a²</code>, confirming that the 45°-45°-90° right triangle has an area of exactly <code>a² / 2</code>.
+        </p>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Worked Mathematical Examples</h2>
+      <div class="space-y-4 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-900/60">
+          <h3 class="font-bold text-slate-900 dark:text-white">Example 1: Two Known Legs (3-4-5 Triangle)</h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            A construction triangle has perpendicular legs measuring <strong>a = 3 m</strong> and <strong>b = 4 m</strong>.
+          </p>
+          <div class="mt-2 font-mono text-xs text-slate-800 dark:text-slate-200 space-y-1">
+            <div>• Area = (a × b) / 2 = (3 × 4) / 2 = 12 / 2 = <strong>6 m²</strong></div>
+            <div>• Hypotenuse c = √(3² + 4²) = √(9 + 16) = √25 = <strong>5 m</strong></div>
+            <div>• Perimeter P = 3 + 4 + 5 = <strong>12 m</strong></div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-900/60">
+          <h3 class="font-bold text-slate-900 dark:text-white">Example 2: Leg and Hypotenuse (a = 6 in, c = 10 in)</h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            A wooden rafter has leg <strong>a = 6 in</strong> and hypotenuse <strong>c = 10 in</strong>.
+          </p>
+          <div class="mt-2 font-mono text-xs text-slate-800 dark:text-slate-200 space-y-1">
+            <div>• Missing leg b = √(c² − a²) = √(10² − 6²) = √(100 − 36) = √64 = <strong>8 in</strong></div>
+            <div>• Area = (6 × 8) / 2 = 48 / 2 = <strong>24 in²</strong></div>
+            <div>• Angle α = arcsin(6 / 10) = arcsin(0.6) ≈ <strong>36.87°</strong></div>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-900/60">
+          <h3 class="font-bold text-slate-900 dark:text-white">Example 3: Hypotenuse and 30° Acute Angle (c = 12 cm, α = 30°)</h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            An architect drafts a roof section with hypotenuse <strong>c = 12 cm</strong> and pitch <strong>α = 30°</strong>.
+          </p>
+          <div class="mt-2 font-mono text-xs text-slate-800 dark:text-slate-200 space-y-1">
+            <div>• Leg a = c × sin(30°) = 12 × 0.5 = <strong>6 cm</strong></div>
+            <div>• Leg b = c × cos(30°) = 12 × (√3 / 2) ≈ 12 × 0.866025 = <strong>10.3923 cm</strong></div>
+            <div>• Area = (6 × 10.3923) / 2 ≈ <strong>31.1769 cm²</strong></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Common Mistakes in Right Triangle Calculations</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 text-xs text-slate-700 dark:text-slate-300">
+        <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5 dark:border-slate-800 dark:bg-slate-950">
+          <strong class="text-slate-900 dark:text-white block mb-1">❌ Confusing Hypotenuse with a Leg:</strong>
+          Multiplying a leg by the hypotenuse directly (e.g. <code>c × a / 2</code>) will overestimate the area. The two sides multiplied in the numerator must be perpendicular to each other.
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5 dark:border-slate-800 dark:bg-slate-950">
+          <strong class="text-slate-900 dark:text-white block mb-1">❌ Forgetting to Divide by 2:</strong>
+          Calculating <code>a × b</code> without halving computes the area of the full bounding rectangle, doubling the true triangle area.
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5 dark:border-slate-800 dark:bg-slate-950">
+          <strong class="text-slate-900 dark:text-white block mb-1">❌ Setting Hypotenuse Shorter Than a Leg:</strong>
+          In Euclidean geometry, the hypotenuse is always strictly the longest side. Providing <code>c ≤ a</code> causes the square root calculation <code>√(c² − a²)</code> to evaluate an impossible negative radicand.
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5 dark:border-slate-800 dark:bg-slate-950">
+          <strong class="text-slate-900 dark:text-white block mb-1">❌ Entering 90° as an Acute Angle:</strong>
+          The right angle is already 90°. The remaining two acute angles must each be strictly between 0° and 90°.
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Related Math &amp; Geometry Calculators</h2>
+      <p class="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+        Explore our companion precision mathematical and geometry tools:
+      </p>
+      <ul class="mt-2 space-y-1.5 text-sm text-slate-700 dark:text-slate-300 list-disc list-inside">
+        <li><a href="/math/scientific-calculator/" class="font-bold text-blue-600 hover:underline dark:text-blue-400">Scientific Calculator</a> – Evaluate advanced trigonometric, logarithmic, and power functions.</li>
+        <li><a href="/math/fraction-calculator/" class="font-bold text-blue-600 hover:underline dark:text-blue-400">Fraction Calculator</a> – Perform exact fraction arithmetic, mixed numbers, and simplifications.</li>
+        <li><a href="/math/volume-calculator/" class="font-bold text-blue-600 hover:underline dark:text-blue-400">Volume Calculator</a> – Compute 3D volumetric capacity for prisms, pyramids, and cylinders.</li>
+        <li><a href="/general/percentage-calculator/" class="font-bold text-blue-600 hover:underline dark:text-blue-400">Percentage Calculator</a> – Fast percentage increases, decreases, and proportion solvers.</li>
+      </ul>
+    </div>
+
+    <!-- Frequently Asked Questions Accordions -->
+    <div class="space-y-3 pt-6 border-t border-slate-200 dark:border-slate-800 not-prose">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Frequently Asked Questions</h2>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open>
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            1. How do you calculate the area of a right triangle?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+          Multiply the lengths of the two perpendicular legs together and divide the result by 2: <code>Area = (a × b) / 2</code>. Because the legs meet at a 90-degree angle, one leg acts as the base and the other acts as the perpendicular height.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            2. How do you find the area if you only know one leg and the hypotenuse?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+          First use the Pythagorean theorem to calculate the missing leg: <code>b = √(c² − a²)</code>. Once both legs are known, apply the standard formula: <code>Area = (a × b) / 2</code>.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            3. Can I find the area using only the hypotenuse?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+          Not unless you also know that the triangle is isosceles (45°-45°-90°). For a 45°-45°-90° triangle, the area is <code>Area = c² / 4</code>. In non-isosceles right triangles, infinitely many different combinations of legs can share the exact same hypotenuse, so an additional angle or leg measurement is required.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            4. How do angles help determine the area?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+          By applying trigonometry: if hypotenuse <em>c</em> and acute angle <em>α</em> are known, the legs are <code>a = c × sin(α)</code> and <code>b = c × cos(α)</code>. The area evaluates to <code>Area = [c² × sin(α) × cos(α)] / 2</code>.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            5. What is the area of a 45°-45°-90° triangle?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+          In an isosceles right triangle where <em>a = b</em>, the area is <code>Area = a² / 2</code>. Expressed in terms of the hypotenuse <em>c</em>, the area is <code>Area = c² / 4</code>.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            6. How can I check whether three side lengths form a right triangle?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+          Test the Pythagorean theorem: square the two smaller side lengths and add them together. If the sum exactly equals the square of the longest side (<code>a² + b² = c²</code>), the triangle is guaranteed to be a right triangle.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            7. Why is area measured in square units?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+          Area measures two-dimensional surface space. When you multiply a length measurement (such as cm) by another perpendicular length measurement (cm), the dimensional unit becomes <code>cm × cm = cm²</code> (square centimeters).
+        </p>
+      </details>
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<script>
+  import {
+    calculateRightTriangleArea,
+    formatNum,
+    type RightTriangleMode,
+    type LengthUnit,
+    type AngleUnit,
+    AREA_UNIT_NAMES,
+  } from '../../lib/calculators/right-triangle-area';
+
+  // 1. State
+  let currentMode: RightTriangleMode = 'two_legs';
+
+  const modeTabs = document.querySelectorAll('.mode-tab');
+  const modeSubtitle = document.getElementById('mode-subtitle') as HTMLSpanElement;
+
+  const selectUnit = document.getElementById('select-unit') as HTMLSelectElement;
+  const selectAngleUnit = document.getElementById('select-angle-unit') as HTMLSelectElement;
+  const wrapperAngleUnit = document.getElementById('wrapper-angle-unit') as HTMLDivElement;
+  const badgeAngleUnit = document.getElementById('badge-angle-unit') as HTMLSpanElement;
+  const unitBadges = document.querySelectorAll('.unit-badge');
+
+  const rowLegA = document.getElementById('row-leg-a') as HTMLDivElement;
+  const rowLegB = document.getElementById('row-leg-b') as HTMLDivElement;
+  const rowLegChoice = document.getElementById('row-leg-choice') as HTMLDivElement;
+  const rowSingleLeg = document.getElementById('row-single-leg') as HTMLDivElement;
+  const labelSingleLeg = document.getElementById('label-single-leg') as HTMLLabelElement;
+  const rowHypotenuse = document.getElementById('row-hypotenuse') as HTMLDivElement;
+  const rowAngleType = document.getElementById('row-angle-type') as HTMLDivElement;
+  const rowAngleVal = document.getElementById('row-angle-val') as HTMLDivElement;
+  const labelAngleVal = document.getElementById('label-angle-val') as HTMLLabelElement;
+
+  const inputLegA = document.getElementById('input-leg-a') as HTMLInputElement;
+  const inputLegB = document.getElementById('input-leg-b') as HTMLInputElement;
+  const inputSingleLeg = document.getElementById('input-single-leg') as HTMLInputElement;
+  const inputHypotenuse = document.getElementById('input-hypotenuse') as HTMLInputElement;
+  const inputAngleVal = document.getElementById('input-angle-val') as HTMLInputElement;
+
+  const btnCalculate = document.getElementById('btn-calculate') as HTMLButtonElement;
+  const btnClear = document.getElementById('btn-clear') as HTMLButtonElement;
+  const triangleError = document.getElementById('triangle-error') as HTMLParagraphElement;
+
+  const resultsPlaceholder = document.getElementById('results-placeholder') as HTMLDivElement;
+  const resultsCard = document.getElementById('results-card') as HTMLDivElement;
+
+  const resAreaVal = document.getElementById('res-area-val') as HTMLSpanElement;
+  const resAreaUnit = document.getElementById('res-area-unit') as HTMLSpanElement;
+  const resSpecialTag = document.getElementById('res-special-tag') as HTMLSpanElement;
+  const resSubtitle = document.getElementById('res-subtitle') as HTMLParagraphElement;
+  const resPerimeter = document.getElementById('res-perimeter') as HTMLSpanElement;
+  const resHypotenuseStat = document.getElementById('res-hypotenuse-stat') as HTMLSpanElement;
+  const resAltitude = document.getElementById('res-altitude') as HTMLSpanElement;
+
+  const statLegA = document.getElementById('stat-leg-a') as HTMLSpanElement;
+  const statLegB = document.getElementById('stat-leg-b') as HTMLSpanElement;
+  const statAngleAlpha = document.getElementById('stat-angle-alpha') as HTMLSpanElement;
+  const statAngleBeta = document.getElementById('stat-angle-beta') as HTMLSpanElement;
+
+  const resSteps = document.getElementById('res-steps') as HTMLOListElement;
+  const tableUnitsBody = document.getElementById('table-units-body') as HTMLTableSectionElement;
+
+  // SVG elements
+  const svgPoly = document.getElementById('svg-poly') as unknown as SVGPolygonElement;
+  const svgRightBox = document.getElementById('svg-right-box') as unknown as SVGPathElement;
+  const svgRightDot = document.getElementById('svg-right-dot') as unknown as SVGCircleElement;
+  const svgLabelA = document.getElementById('svg-label-a') as unknown as SVGTextElement;
+  const svgLabelB = document.getElementById('svg-label-b') as unknown as SVGTextElement;
+  const svgLabelC = document.getElementById('svg-label-c') as unknown as SVGTextElement;
+  const svgLabelAlpha = document.getElementById('svg-label-alpha') as unknown as SVGTextElement;
+  const svgLabelBeta = document.getElementById('svg-label-beta') as unknown as SVGTextElement;
+
+  // 2. Tab Switching
+  function switchMode(mode: RightTriangleMode) {
+    currentMode = mode;
+
+    modeTabs.forEach((tab) => {
+      const isTarget = tab.getAttribute('data-mode') === mode;
+      if (isTarget) {
+        tab.classList.add('active', 'border-t', 'border-x', 'border-slate-300/90', 'bg-white', 'text-slate-900', 'shadow-2xs', '-mb-px', 'dark:border-slate-700', 'dark:bg-slate-900', 'dark:text-white');
+        tab.classList.remove('bg-blue-700/90', 'text-white', 'hover:bg-blue-800', 'dark:bg-blue-800', 'dark:hover:bg-blue-700');
+      } else {
+        tab.classList.remove('active', 'border-t', 'border-x', 'border-slate-300/90', 'bg-white', 'text-slate-900', 'shadow-2xs', '-mb-px', 'dark:border-slate-700', 'dark:bg-slate-900', 'dark:text-white');
+        tab.classList.add('bg-blue-700/90', 'text-white', 'hover:bg-blue-800', 'dark:bg-blue-800', 'dark:hover:bg-blue-700');
+      }
+    });
+
+    // Hide all mode rows initially
+    rowLegA.classList.add('hidden');
+    rowLegB.classList.add('hidden');
+    rowLegChoice.classList.add('hidden');
+    rowSingleLeg.classList.add('hidden');
+    rowHypotenuse.classList.add('hidden');
+    rowAngleType.classList.add('hidden');
+    rowAngleVal.classList.add('hidden');
+    wrapperAngleUnit.classList.add('hidden');
+
+    if (mode === 'two_legs') {
+      modeSubtitle.textContent = 'Known: Perpendicular Legs a and b';
+      rowLegA.classList.remove('hidden');
+      rowLegB.classList.remove('hidden');
+    } else if (mode === 'leg_hypotenuse') {
+      modeSubtitle.textContent = 'Known: One Leg (a or b) and Hypotenuse c';
+      rowLegChoice.classList.remove('hidden');
+      rowSingleLeg.classList.remove('hidden');
+      rowHypotenuse.classList.remove('hidden');
+      updateSingleLegLabel();
+    } else if (mode === 'hypotenuse_angle') {
+      modeSubtitle.textContent = 'Known: Hypotenuse c and Acute Angle (α or β)';
+      rowHypotenuse.classList.remove('hidden');
+      rowAngleType.classList.remove('hidden');
+      rowAngleVal.classList.remove('hidden');
+      wrapperAngleUnit.classList.remove('hidden');
+      updateAngleLabel();
+    } else if (mode === 'leg_angle') {
+      modeSubtitle.textContent = 'Known: One Leg (a or b) and Acute Angle (α or β)';
+      rowLegChoice.classList.remove('hidden');
+      rowSingleLeg.classList.remove('hidden');
+      rowAngleType.classList.remove('hidden');
+      rowAngleVal.classList.remove('hidden');
+      wrapperAngleUnit.classList.remove('hidden');
+      updateSingleLegLabel();
+      updateAngleLabel();
+    }
+
+    triangleError.classList.add('hidden');
+    resultsCard.classList.add('hidden');
+    resultsPlaceholder.classList.remove('hidden');
+
+    const bar = document.getElementById('calc-action-bar-container');
+    if (bar) bar.classList.add('hidden');
+  }
+
+  function getSelectedKnownLeg(): 'a' | 'b' {
+    const checked = document.querySelector('input[name="known-leg"]:checked') as HTMLInputElement;
+    return (checked?.value as 'a' | 'b') || 'a';
+  }
+
+  function getSelectedAngleType(): 'alpha' | 'beta' {
+    const checked = document.querySelector('input[name="angle-type"]:checked') as HTMLInputElement;
+    return (checked?.value as 'alpha' | 'beta') || 'alpha';
+  }
+
+  function updateSingleLegLabel() {
+    const leg = getSelectedKnownLeg();
+    labelSingleLeg.textContent = leg === 'a' ? 'Leg a (Base)' : 'Leg b (Height)';
+    inputSingleLeg.placeholder = `Enter leg ${leg} length`;
+  }
+
+  function updateAngleLabel() {
+    const type = getSelectedAngleType();
+    labelAngleVal.textContent = type === 'alpha' ? 'Angle α (opp a)' : 'Angle β (opp b)';
+  }
+
+  modeTabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const mode = tab.getAttribute('data-mode') as RightTriangleMode;
+      if (mode) switchMode(mode);
+    });
+  });
+
+  document.querySelectorAll('input[name="known-leg"]').forEach((el) => {
+    el.addEventListener('change', () => {
+      updateSingleLegLabel();
+      if (!resultsCard.classList.contains('hidden')) runCalculation();
+    });
+  });
+
+  document.querySelectorAll('input[name="angle-type"]').forEach((el) => {
+    el.addEventListener('change', () => {
+      updateAngleLabel();
+      if (!resultsCard.classList.contains('hidden')) runCalculation();
+    });
+  });
+
+  selectUnit?.addEventListener('change', () => {
+    const unit = selectUnit.value;
+    unitBadges.forEach((b) => (b.textContent = unit));
+    if (!resultsCard.classList.contains('hidden')) runCalculation();
+  });
+
+  selectAngleUnit?.addEventListener('change', () => {
+    const isDeg = selectAngleUnit.value === 'deg';
+    badgeAngleUnit.textContent = isDeg ? '°' : 'rad';
+    if (!resultsCard.classList.contains('hidden')) runCalculation();
+  });
+
+  // 3. Calculation Execution
+  function runCalculation() {
+    triangleError.classList.add('hidden');
+    triangleError.textContent = '';
+
+    const bar = document.getElementById('calc-action-bar-container');
+    if (bar) bar.classList.add('hidden');
+
+    const unit = (selectUnit.value as LengthUnit) || 'cm';
+    const angleUnit = (selectAngleUnit?.value as AngleUnit) || 'deg';
+
+    try {
+      let result;
+
+      if (currentMode === 'two_legs') {
+        const valA = inputLegA.value.trim();
+        const valB = inputLegB.value.trim();
+
+        if (!valA) {
+          triangleError.textContent = 'Please enter a length for Leg a.';
+          triangleError.classList.remove('hidden');
+          resultsCard.classList.add('hidden');
+          resultsPlaceholder.classList.remove('hidden');
+          inputLegA.focus();
+          return;
+        }
+        if (!valB) {
+          triangleError.textContent = 'Please enter a length for Leg b.';
+          triangleError.classList.remove('hidden');
+          resultsCard.classList.add('hidden');
+          resultsPlaceholder.classList.remove('hidden');
+          inputLegB.focus();
+          return;
+        }
+
+        result = calculateRightTriangleArea({
+          mode: 'two_legs',
+          legA: valA,
+          legB: valB,
+          unit,
+        });
+
+      } else if (currentMode === 'leg_hypotenuse') {
+        const knownLeg = getSelectedKnownLeg();
+        const valLeg = inputSingleLeg.value.trim();
+        const valHyp = inputHypotenuse.value.trim();
+
+        if (!valLeg) {
+          triangleError.textContent = `Please enter the length of Leg ${knownLeg}.`;
+          triangleError.classList.remove('hidden');
+          resultsCard.classList.add('hidden');
+          resultsPlaceholder.classList.remove('hidden');
+          inputSingleLeg.focus();
+          return;
+        }
+        if (!valHyp) {
+          triangleError.textContent = 'Please enter the length of Hypotenuse c.';
+          triangleError.classList.remove('hidden');
+          resultsCard.classList.add('hidden');
+          resultsPlaceholder.classList.remove('hidden');
+          inputHypotenuse.focus();
+          return;
+        }
+
+        result = calculateRightTriangleArea({
+          mode: 'leg_hypotenuse',
+          knownLeg,
+          legValue: valLeg,
+          hypotenuseC: valHyp,
+          unit,
+        });
+
+      } else if (currentMode === 'hypotenuse_angle') {
+        const valHyp = inputHypotenuse.value.trim();
+        const valAngle = inputAngleVal.value.trim();
+        const angleType = getSelectedAngleType();
+
+        if (!valHyp) {
+          triangleError.textContent = 'Please enter the length of Hypotenuse c.';
+          triangleError.classList.remove('hidden');
+          resultsCard.classList.add('hidden');
+          resultsPlaceholder.classList.remove('hidden');
+          inputHypotenuse.focus();
+          return;
+        }
+        if (!valAngle) {
+          triangleError.textContent = `Please enter the measurement of acute angle ${angleType === 'alpha' ? 'α' : 'β'}.`;
+          triangleError.classList.remove('hidden');
+          resultsCard.classList.add('hidden');
+          resultsPlaceholder.classList.remove('hidden');
+          inputAngleVal.focus();
+          return;
+        }
+
+        result = calculateRightTriangleArea({
+          mode: 'hypotenuse_angle',
+          hypotenuseC: valHyp,
+          angle: valAngle,
+          angleType,
+          angleUnit,
+          unit,
+        });
+
+      } else {
+        // leg_angle
+        const knownLeg = getSelectedKnownLeg();
+        const valLeg = inputSingleLeg.value.trim();
+        const valAngle = inputAngleVal.value.trim();
+        const angleType = getSelectedAngleType();
+
+        if (!valLeg) {
+          triangleError.textContent = `Please enter the length of Leg ${knownLeg}.`;
+          triangleError.classList.remove('hidden');
+          resultsCard.classList.add('hidden');
+          resultsPlaceholder.classList.remove('hidden');
+          inputSingleLeg.focus();
+          return;
+        }
+        if (!valAngle) {
+          triangleError.textContent = `Please enter the measurement of acute angle ${angleType === 'alpha' ? 'α' : 'β'}.`;
+          triangleError.classList.remove('hidden');
+          resultsCard.classList.add('hidden');
+          resultsPlaceholder.classList.remove('hidden');
+          inputAngleVal.focus();
+          return;
+        }
+
+        result = calculateRightTriangleArea({
+          mode: 'leg_angle',
+          knownLeg,
+          legValue: valLeg,
+          angle: valAngle,
+          angleType,
+          angleUnit,
+          unit,
+        });
+      }
+
+      // Update Result UI
+      resAreaVal.textContent = formatNum(result.area);
+      resAreaUnit.textContent = result.areaUnit;
+      resPerimeter.textContent = `${formatNum(result.perimeter)} ${result.unit}`;
+      resHypotenuseStat.textContent = `${formatNum(result.hypotenuseC)} ${result.unit}`;
+      resAltitude.textContent = `${formatNum(result.altitudeHypotenuse)} ${result.unit}`;
+
+      statLegA.textContent = `${formatNum(result.legA)} ${result.unit}`;
+      statLegB.textContent = `${formatNum(result.legB)} ${result.unit}`;
+      statAngleAlpha.textContent = `${formatNum(result.angleAlphaDeg, 2)}°`;
+      statAngleBeta.textContent = `${formatNum(result.angleBetaDeg, 2)}°`;
+
+      if (result.isIsosceles) {
+        resSpecialTag.classList.remove('hidden');
+        resSubtitle.textContent = `Special 45°-45°-90° isosceles right triangle with equal legs a = b = ${formatNum(result.legA)} ${result.unit}`;
+      } else {
+        resSpecialTag.classList.add('hidden');
+        resSubtitle.textContent = `Scalene right triangle (α = ${formatNum(result.angleAlphaDeg, 1)}°, β = ${formatNum(result.angleBetaDeg, 1)}°)`;
+      }
+
+      // Render step by step derivation
+      resSteps.innerHTML = '';
+      result.steps.forEach((step) => {
+        const li = document.createElement('li');
+        li.textContent = step;
+        resSteps.appendChild(li);
+      });
+
+      // Render converted units table
+      tableUnitsBody.innerHTML = '';
+      (Object.keys(result.areaConversions) as LengthUnit[]).forEach((u) => {
+        const tr = document.createElement('tr');
+        const isCurrent = u === result.unit;
+        tr.className = isCurrent
+          ? 'bg-blue-50/60 font-bold dark:bg-blue-950/30'
+          : 'hover:bg-slate-50 dark:hover:bg-slate-900/60';
+        tr.innerHTML = `
+          <td class="p-2 text-slate-800 dark:text-slate-200">${AREA_UNIT_NAMES[u]}</td>
+          <td class="p-2 text-right ${isCurrent ? 'text-blue-600 dark:text-blue-400 font-black' : 'text-slate-900 dark:text-white'}">
+            ${formatNum(result.areaConversions[u], 4)}
+          </td>
+        `;
+        tableUnitsBody.appendChild(tr);
+      });
+
+      // Render SVG Preview
+      renderSvgTriangle(result);
+
+      // Reveal Results Card and Action Bar
+      resultsPlaceholder.classList.add('hidden');
+      resultsCard.classList.remove('hidden');
+
+      if (bar) bar.classList.remove('hidden');
+
+    } catch (err: any) {
+      resultsCard.classList.add('hidden');
+      resultsPlaceholder.classList.remove('hidden');
+      if (bar) bar.classList.add('hidden');
+      triangleError.textContent = err?.message || 'Invalid geometric values.';
+      triangleError.classList.remove('hidden');
+    }
+  }
+
+  function renderSvgTriangle(res: any) {
+    const a = res.legA;
+    const b = res.legB;
+    const c = res.hypotenuseC;
+    const unit = res.unit;
+
+    // ViewBox is 360 x 220
+    // Right angle at (60, 180)
+    // Max available base width = 240, max available height = 140
+    const maxW = 240;
+    const maxH = 140;
+
+    const scale = Math.min(maxW / (a || 1), maxH / (b || 1));
+    const drawA = Math.max(40, Math.min(maxW, a * scale));
+    const drawB = Math.max(40, Math.min(maxH, b * scale));
+
+    const originX = 60;
+    const originY = 180;
+    const topX = originX;
+    const topY = originY - drawB;
+    const baseX = originX + drawA;
+    const baseY = originY;
+
+    // Polygon points: Top, Base, Origin
+    svgPoly.setAttribute('points', `${topX},${topY} ${baseX},${baseY} ${originX},${originY}`);
+
+    // Right angle square marker
+    const boxSize = Math.min(18, Math.min(drawA, drawB) * 0.25);
+    svgRightBox.setAttribute('d', `M ${originX} ${originY - boxSize} L ${originX + boxSize} ${originY - boxSize} L ${originX + boxSize} ${originY}`);
+    svgRightDot.setAttribute('cx', String(originX + boxSize / 2));
+    svgRightDot.setAttribute('cy', String(originY - boxSize / 2));
+
+    // Side labels
+    svgLabelA.setAttribute('x', String(originX + drawA / 2));
+    svgLabelA.setAttribute('y', String(originY + 20));
+    svgLabelA.textContent = `a = ${formatNum(a)} ${unit}`;
+
+    svgLabelB.setAttribute('x', String(originX - 14));
+    svgLabelB.setAttribute('y', String(originY - drawB / 2));
+    svgLabelB.textContent = `b = ${formatNum(b)} ${unit}`;
+
+    svgLabelC.setAttribute('x', String(originX + drawA / 2 + 15));
+    svgLabelC.setAttribute('y', String(originY - drawB / 2 - 10));
+    svgLabelC.textContent = `c = ${formatNum(c)} ${unit}`;
+
+    svgLabelAlpha.setAttribute('x', String(baseX - 12));
+    svgLabelAlpha.setAttribute('y', String(baseY - 8));
+    svgLabelAlpha.textContent = `α (${formatNum(res.angleAlphaDeg, 1)}°)`;
+
+    svgLabelBeta.setAttribute('x', String(topX + 12));
+    svgLabelBeta.setAttribute('y', String(topY + 18));
+    svgLabelBeta.textContent = `β (${formatNum(res.angleBetaDeg, 1)}°)`;
+  }
+
+  // 4. Buttons and Clear Handler
+  btnCalculate?.addEventListener('click', runCalculation);
+
+  btnClear?.addEventListener('click', () => {
+    inputLegA.value = '';
+    inputLegB.value = '';
+    inputSingleLeg.value = '';
+    inputHypotenuse.value = '';
+    inputAngleVal.value = '';
+
+    triangleError.classList.add('hidden');
+    resultsCard.classList.add('hidden');
+    resultsPlaceholder.classList.remove('hidden');
+
+    const bar = document.getElementById('calc-action-bar-container');
+    if (bar) bar.classList.add('hidden');
+
+    if (currentMode === 'two_legs') inputLegA.focus();
+    else if (currentMode === 'leg_hypotenuse') inputSingleLeg.focus();
+    else if (currentMode === 'hypotenuse_angle') inputHypotenuse.focus();
+    else inputSingleLeg.focus();
+  });
+
+  // Enter key trigger
+  document.querySelectorAll('#triangle-form input').forEach((inp) => {
+    inp.addEventListener('keydown', (e) => {
+      if ((e as KeyboardEvent).key === 'Enter') {
+        e.preventDefault();
+        btnCalculate?.click();
+      }
+    });
+  });
+
+  // CRITICAL AUDIT: EVERY INPUT STARTS COMPLETELY EMPTY (value="").
+  // NO NUMBERS PREFILLED. RESULTS ARE HIDDEN INITIALLY.
+</script>

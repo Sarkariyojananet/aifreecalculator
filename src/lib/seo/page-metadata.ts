@@ -178,6 +178,18 @@ export const LIVE_PAGE_METADATA: Record<string, PageMetaItem> = {
     "title": "Standard Deviation Calculator - Variance & Sample Math",
     "description": "Calculate sample standard deviation, population standard deviation, variance, mean, and sum of squares for any dataset with step solutions."
   },
+  "exponential-form-calculator": {
+    "title": "Exponential Form Calculator - Convert Numbers, Logs & Exponents",
+    "description": "Convert whole numbers to exponential form via prime factorization, and easily convert between logarithmic and exponential expressions online."
+  },
+  "exponential-function-calculator": {
+    "title": "Exponential Function Calculator – Solve & Evaluate Functions",
+    "description": "Solve an exponential function from two points (a · bˣ or a · eᶜˣ) or evaluate a function at any x-value with step-by-step mathematical solutions."
+  },
+  "exponential-growth-calculator": {
+    "title": "Exponential Growth Calculator – Growth & Decay Calculator",
+    "description": "Calculate exponential growth or decay over time. Solve for final quantity, initial quantity, growth/decay rate, or time periods with step solutions."
+  },
   "category:general": {
     "title": "General Calculators - Everyday Conversion & Math Tools",
     "description": "Free daily calculation tools: Age calculator, BMI, Height and Weight converters, Time calculator, Date difference, and Percentage math."
@@ -197,6 +209,10 @@ export const LIVE_PAGE_METADATA: Record<string, PageMetaItem> = {
   "category:math": {
     "title": "Math Calculators - GPA, Fractions, Scientific & Statistics",
     "description": "Academic and scientific math tools: GPA calculator, Scientific Calculator, Fraction math, Standard Deviation variance, and Random Numbers."
+  },
+  "right-triangle-area-calculator": {
+    "title": "Right Triangle Area Calculator – Calculate Area of Right Triangle",
+    "description": "Calculate the area of a right triangle from two legs, leg and hypotenuse, or side and acute angle with step-by-step mathematical formulas and conversions."
   },
   "core:home": {
     "title": "Free Online Calculators - Finance, Health, Construction & Math",

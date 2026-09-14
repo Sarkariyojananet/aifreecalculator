@@ -1,0 +1,1239 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="Exponential Growth Calculator – Growth & Decay Calculator"
+  description="Calculate exponential growth or decay over time. Solve for final quantity, initial quantity, growth/decay rate, or time periods with step-by-step mathematical solutions."
+  category="Math"
+  calculatorName="Exponential Growth Calculator"
+  slug="exponential-growth-calculator"
+  keywords={[
+    'exponential growth calculator',
+    'exponential decay calculator',
+    'growth rate calculator',
+    'exponential growth formula',
+    'exponential decay formula',
+    'doubling time calculator',
+    'half life calculator',
+    'calculate exponential growth',
+    'exponential growth equation',
+    'continuous growth calculator',
+    'population growth calculator'
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- Calculator Card Container (Matches BMI Calculator Layout) -->
+    <div
+      class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-emerald-50/60 p-1.5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-emerald-950/20"
+    >
+      <!-- Top Solve-For Tabs (Styled exactly like BMI Unit Tabs) -->
+      <div
+        class="flex items-center gap-1 border-b border-slate-300/80 px-2 pt-1 pb-0 dark:border-slate-800 overflow-x-auto scrollbar-thin"
+      >
+        <button
+          type="button"
+          id="tab-final"
+          data-target="final"
+          class="solve-tab active rounded-t-xl border-t border-x border-slate-300/90 bg-white px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-900 shadow-2xs -mb-px dark:border-slate-700 dark:bg-slate-900 dark:text-white transition cursor-pointer shrink-0"
+        >
+          Final Quantity x(t)
+        </button>
+        <button
+          type="button"
+          id="tab-initial"
+          data-target="initial"
+          class="solve-tab rounded-t-xl bg-blue-700/90 px-4 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-blue-800 dark:bg-blue-800 dark:hover:bg-blue-700 transition cursor-pointer shrink-0"
+        >
+          Initial Quantity x₀
+        </button>
+        <button
+          type="button"
+          id="tab-rate"
+          data-target="rate"
+          class="solve-tab rounded-t-xl bg-blue-700/90 px-4 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-blue-800 dark:bg-blue-800 dark:hover:bg-blue-700 transition cursor-pointer shrink-0"
+        >
+          Growth/Decay Rate (r)
+        </button>
+        <button
+          type="button"
+          id="tab-time"
+          data-target="time"
+          class="solve-tab rounded-t-xl bg-blue-700/90 px-4 py-2.5 text-xs sm:text-sm font-bold text-white hover:bg-blue-800 dark:bg-blue-800 dark:hover:bg-blue-700 transition cursor-pointer shrink-0"
+        >
+          Time / Periods (t)
+        </button>
+      </div>
+
+      <!-- Main Inputs Form Box -->
+      <form
+        id="growth-form"
+        class="space-y-4 bg-white/45 p-4 sm:p-6 dark:bg-slate-950/40"
+        novalidate
+        onsubmit="return false;"
+      >
+        <!-- Mode Subtitle & Period Unit Switcher (Matches BMI Classification Switcher) -->
+        <div
+          class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-200/80 pb-3 dark:border-slate-800/80 text-xs"
+        >
+          <span id="solve-mode-subtitle" class="font-bold text-slate-600 dark:text-slate-400">
+            Target: Solve for Final Quantity x(t)
+          </span>
+          <div class="flex items-center gap-2">
+            <label for="select-time-unit" class="font-semibold text-slate-600 dark:text-slate-400">Time Unit:</label>
+            <select
+              id="select-time-unit"
+              class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-800 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 cursor-pointer"
+            >
+              <option value="years">Years</option>
+              <option value="months">Months</option>
+              <option value="days">Days</option>
+              <option value="hours">Hours</option>
+              <option value="periods" selected>Periods</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Row 1: Initial Quantity (x₀) -->
+        <div
+          id="row-x0"
+          class="grid grid-cols-1 sm:grid-cols-[140px_1fr] items-center gap-2 sm:gap-4"
+        >
+          <label
+            for="input-x0"
+            class="text-sm font-bold text-slate-900 dark:text-white"
+          >
+            Initial Quantity (x₀)
+          </label>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="relative flex items-center w-40 sm:w-52">
+              <input
+                type="number"
+                id="input-x0"
+                value=""
+                step="any"
+                placeholder="Enter initial value"
+                class="w-full rounded-lg border-2 border-slate-400/80 bg-white px-3 py-1.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                autocomplete="off"
+              />
+            </div>
+            <span
+              id="badge-x0-target"
+              class="text-xs font-medium text-slate-500 dark:text-slate-400"
+            >
+              baseline quantity at t = 0
+            </span>
+          </div>
+        </div>
+
+        <!-- Row 2: Growth / Decay Rate (r %) -->
+        <div
+          id="row-rate"
+          class="grid grid-cols-1 sm:grid-cols-[140px_1fr] items-center gap-2 sm:gap-4"
+        >
+          <label
+            for="input-rate"
+            class="text-sm font-bold text-slate-900 dark:text-white"
+          >
+            Rate (r %)
+          </label>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="relative flex items-center w-40 sm:w-52">
+              <input
+                type="number"
+                id="input-rate"
+                value=""
+                step="any"
+                placeholder="e.g. 5 or -10"
+                class="w-full rounded-lg border-2 border-slate-400/80 bg-white px-3 py-1.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white pr-9"
+                autocomplete="off"
+              />
+              <span
+                class="pointer-events-none absolute right-3 text-xs font-bold text-slate-500 dark:text-slate-400"
+              >
+                %
+              </span>
+            </div>
+            <span
+              id="badge-rate-target"
+              class="text-xs font-medium text-slate-500 dark:text-slate-400"
+            >
+              positive (+) for growth, negative (−) for decay
+            </span>
+          </div>
+        </div>
+
+        <!-- Row 3: Time / Periods (t) -->
+        <div
+          id="row-time"
+          class="grid grid-cols-1 sm:grid-cols-[140px_1fr] items-center gap-2 sm:gap-4"
+        >
+          <label
+            for="input-time"
+            class="text-sm font-bold text-slate-900 dark:text-white"
+          >
+            Time Periods (t)
+          </label>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="relative flex items-center w-40 sm:w-52">
+              <input
+                type="number"
+                id="input-time"
+                value=""
+                step="any"
+                placeholder="Enter periods"
+                class="w-full rounded-lg border-2 border-slate-400/80 bg-white px-3 py-1.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white pr-16"
+                autocomplete="off"
+              />
+              <span
+                id="unit-label-input"
+                class="pointer-events-none absolute right-3 text-xs text-slate-500 dark:text-slate-400 font-medium"
+              >
+                periods
+              </span>
+            </div>
+            <span
+              id="badge-time-target"
+              class="text-xs font-medium text-slate-500 dark:text-slate-400"
+            >
+              elapsed duration
+            </span>
+          </div>
+        </div>
+
+        <!-- Row 4: Final Quantity (x(t)) -->
+        <div
+          id="row-xt"
+          class="grid grid-cols-1 sm:grid-cols-[140px_1fr] items-center gap-2 sm:gap-4"
+        >
+          <label
+            for="input-xt"
+            class="text-sm font-bold text-slate-900 dark:text-white"
+          >
+            Final Quantity x(t)
+          </label>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="relative flex items-center w-40 sm:w-52">
+              <input
+                type="number"
+                id="input-xt"
+                value=""
+                step="any"
+                placeholder="To be calculated"
+                disabled
+                class="w-full rounded-lg border-2 border-dashed border-slate-300 bg-slate-100/70 px-3 py-1.5 text-sm font-bold text-slate-500 shadow-2xs dark:border-slate-700 dark:bg-slate-900/60 dark:text-slate-500 cursor-not-allowed"
+                autocomplete="off"
+              />
+            </div>
+            <span
+              id="badge-xt-target"
+              class="rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold text-blue-800 dark:bg-blue-950 dark:text-blue-300"
+            >
+              Target to Solve
+            </span>
+          </div>
+        </div>
+
+        <!-- Row 5: Action Buttons (BMI Exact Match: Green Calculate ▶ and Gray Clear) -->
+        <div class="flex flex-wrap items-center gap-3 pt-3">
+          <button
+            type="submit"
+            id="btn-calculate"
+            class="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 py-2.5 text-sm font-extrabold text-white shadow-lg shadow-emerald-600/20 transition hover:-translate-y-0.5 hover:bg-emerald-700 active:scale-[0.98] cursor-pointer"
+          >
+            <span>Calculate</span>
+            <span
+              class="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 text-[10px]"
+            >
+              ▶
+            </span>
+          </button>
+          <button
+            type="button"
+            id="btn-clear"
+            class="inline-flex items-center justify-center rounded-md bg-slate-400 hover:bg-slate-500 dark:bg-slate-600 dark:hover:bg-slate-500 px-5 py-2.5 text-sm font-bold text-white shadow-sm active:scale-[0.98] transition cursor-pointer"
+          >
+            Clear
+          </button>
+        </div>
+
+        <!-- Error Banner -->
+        <p
+          id="growth-error"
+          class="hidden rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300"
+          role="alert"
+          aria-live="polite"
+        >
+        </p>
+      </form>
+    </div>
+
+    <!-- Initial Prompt Placeholder (Shown before Calculate is clicked, exactly like BMI Calculator) -->
+    <div
+      id="results-placeholder"
+      class="rounded-2xl border border-dashed border-slate-300 bg-slate-50/60 p-8 text-center dark:border-slate-800 dark:bg-slate-950/40"
+    >
+      <div
+        class="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-xl text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300"
+      >
+        📈
+      </div>
+      <h3 class="mt-3 text-sm font-bold text-slate-900 dark:text-white">
+        Ready to Calculate Exponential Growth & Decay
+      </h3>
+      <p class="mt-1 text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+        Fill in your parameters above and click the green <strong>"Calculate ▶"</strong> button to view the computed values, trajectory curve, and step-by-step breakdown.
+      </p>
+    </div>
+
+    <!-- Calculation Results Card (Revealed on Submit, matches BMI Calculator Layout) -->
+    <div
+      id="results-card"
+      class="hidden rounded-2xl border border-slate-200 bg-slate-50/95 p-5 shadow-xs transition dark:border-slate-800 dark:bg-slate-950/90 sm:p-6 space-y-6"
+    >
+      <!-- Top Section: Main Output & Classification -->
+      <div
+        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-slate-200 pb-5 dark:border-slate-800"
+      >
+        <div>
+          <div class="flex items-center gap-2">
+            <span
+              id="res-target-label"
+              class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+            >
+              Calculated Final Quantity x(t)
+            </span>
+            <span
+              id="res-doubling-tag"
+              class="rounded-full bg-slate-200 px-2.5 py-0.5 text-[10px] font-bold text-slate-700 dark:bg-slate-800 dark:text-slate-300"
+            >
+              Doubling Time: —
+            </span>
+          </div>
+          <div class="mt-1.5 flex flex-wrap items-baseline gap-3">
+            <span
+              id="res-primary-val"
+              class="text-4xl sm:text-5xl font-black tracking-tight text-emerald-600 dark:text-emerald-400 font-mono"
+            >
+              —
+            </span>
+            <span
+              id="res-nature-badge"
+              class="rounded-full bg-emerald-100 px-3.5 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300"
+            >
+              Exponential Growth ⚡
+            </span>
+          </div>
+          <p id="res-subtitle" class="mt-1 text-xs text-slate-500 dark:text-slate-400 font-mono">
+            Starting from x₀ over t periods
+          </p>
+        </div>
+
+        <div
+          class="flex sm:flex-col items-center sm:items-end justify-between gap-1 text-xs"
+        >
+          <div class="text-slate-500 dark:text-slate-400">
+            Growth Factor (M): <span id="res-factor" class="font-bold text-slate-900 dark:text-white font-mono">—</span>
+          </div>
+          <div class="text-slate-500 dark:text-slate-400">
+            Continuous Rate (k): <span id="res-k" class="font-bold text-slate-900 dark:text-white font-mono">—</span>
+          </div>
+          <div class="text-slate-500 dark:text-slate-400">
+            Total Change: <span id="res-abs-change" class="font-bold text-slate-900 dark:text-white font-mono">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Parameter Summary Cards (like BMI prime/ponderal/healthy weight breakdown) -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block">Initial Value (x₀)</span>
+          <div id="stat-x0" class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white font-mono mt-0.5">—</div>
+          <span class="text-[10px] text-slate-400">Baseline at t = 0</span>
+        </div>
+        <div class="rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block">Periodic Rate (r)</span>
+          <div id="stat-rate" class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white font-mono mt-0.5">—</div>
+          <span class="text-[10px] text-slate-400">Per time unit</span>
+        </div>
+        <div class="rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block">Total Periods (t)</span>
+          <div id="stat-time" class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white font-mono mt-0.5">—</div>
+          <span class="text-[10px] text-slate-400">Duration</span>
+        </div>
+        <div class="rounded-xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block">Overall Change %</span>
+          <div id="stat-pct" class="text-sm sm:text-base font-extrabold text-slate-900 dark:text-white font-mono mt-0.5">—</div>
+          <span class="text-[10px] text-slate-400">Total percentage</span>
+        </div>
+      </div>
+
+      <!-- Trajectory Curve Plot (matches BMI Visual Gauge Card style) -->
+      <div
+        class="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900"
+      >
+        <div
+          class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800/80 mb-3"
+        >
+          <h4
+            class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5"
+          >
+            <span>📈</span> Exponential Trajectory Curve
+          </h4>
+          <span
+            id="curve-range-label"
+            class="rounded-full bg-blue-50 px-2.5 py-0.5 text-[11px] font-semibold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 font-mono"
+          >
+            t = 0 to t
+          </span>
+        </div>
+        <div class="relative w-full h-44 sm:h-52 bg-slate-50 dark:bg-slate-900/50 rounded-xl overflow-hidden border border-slate-200/60 dark:border-slate-800">
+          <svg id="svg-curve" class="w-full h-full" viewBox="0 0 500 200" preserveAspectRatio="none">
+            <line x1="0" y1="50" x2="500" y2="50" stroke="currentColor" class="text-slate-200 dark:text-slate-800" stroke-dasharray="4" />
+            <line x1="0" y1="100" x2="500" y2="100" stroke="currentColor" class="text-slate-200 dark:text-slate-800" stroke-dasharray="4" />
+            <line x1="0" y1="150" x2="500" y2="150" stroke="currentColor" class="text-slate-200 dark:text-slate-800" stroke-dasharray="4" />
+            <path id="svg-path" d="" fill="none" stroke="#10b981" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+            <circle id="svg-dot-start" cx="0" cy="0" r="5" fill="#3b82f6" stroke="#ffffff" stroke-width="2" />
+            <circle id="svg-dot-end" cx="0" cy="0" r="6" fill="#10b981" stroke="#ffffff" stroke-width="2" />
+          </svg>
+        </div>
+        <div class="flex items-center justify-between text-[11px] text-slate-500 mt-2 font-mono">
+          <span id="label-plot-start">Initial (t=0)</span>
+          <span id="label-plot-end">Final (t)</span>
+        </div>
+      </div>
+
+      <!-- Step-by-Step Derivation & Table (matches BMI classification & healthy weight tables) -->
+      <div
+        class="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900"
+      >
+        <div
+          class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800/80 mb-3"
+        >
+          <h4
+            class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5"
+          >
+            <span>📝</span> Step-by-Step Mathematical Solution
+          </h4>
+        </div>
+        <ol id="res-steps" class="space-y-1.5 text-xs text-slate-700 dark:text-slate-300 list-decimal list-inside font-mono leading-relaxed"></ol>
+      </div>
+
+      <!-- Period Table -->
+      <div
+        class="rounded-2xl border border-slate-200/90 bg-white p-4 sm:p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900"
+      >
+        <div
+          class="flex items-center justify-between border-b border-slate-100 pb-3 dark:border-slate-800/80 mb-3"
+        >
+          <div>
+            <h4
+              class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5"
+            >
+              <span>📊</span> Period-by-Period Value Table
+            </h4>
+            <p class="text-[11px] text-slate-500 mt-0.5">Progression increments (capped at 50 rows)</p>
+          </div>
+          <span
+            id="table-badge-rows"
+            class="text-[11px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg"
+          >
+            0 rows
+          </span>
+        </div>
+        <div class="overflow-x-auto max-h-64 scrollbar-thin">
+          <table class="w-full text-left text-xs border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden font-mono">
+            <thead class="bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300 sticky top-0">
+              <tr>
+                <th class="p-2.5">Period (t)</th>
+                <th class="p-2.5">Quantity x(t)</th>
+                <th class="p-2.5">Change (Δ)</th>
+                <th class="p-2.5">% Change</th>
+              </tr>
+            </thead>
+            <tbody id="table-body" class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-600 dark:text-slate-400">
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- EDUCATIONAL CONTENT & COMPREHENSIVE GUIDE                -->
+  <!-- ======================================================== -->
+  <Fragment slot="content">
+    <div>
+      <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">What Is Exponential Growth?</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          <strong>Exponential growth</strong> describes a process where a quantity multiplies by a constant factor over equal intervals of time, rather than adding a fixed numerical amount. Because the increase in each period is directly proportional to the size of the quantity at that moment, exponential growth accelerates over time: the larger the quantity becomes, the faster it expands.
+        </p>
+        <p>
+          In contrast to <em>linear growth</em> (which adds a constant increment such as +10 per year), exponential change compounds repeatedly. An investment growing at 5% per year, a bacterial colony doubling every 20 minutes, or a population expanding steadily all represent exponential multiplication.
+        </p>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">The Core Exponential Growth Formula</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          For discrete intervals (such as annual compounding, monthly growth, or daily reproduction cycles), the governing mathematical equation is:
+        </p>
+        <div class="my-3 rounded-2xl border border-blue-200 bg-blue-50/50 p-4 font-mono text-center text-base sm:text-lg font-black text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-300">
+          x(t) = x₀ × (1 + r / 100)ᵗ
+        </div>
+        <ul class="space-y-1.5 list-disc list-inside">
+          <li><strong>x(t):</strong> The final quantity remaining or accumulated after <em>t</em> periods have elapsed.</li>
+          <li><strong>x₀:</strong> The initial or starting quantity at the reference point (<em>t = 0</em>).</li>
+          <li><strong>r:</strong> The percentage growth or decay rate per unit period (expressed as a percentage, e.g., 5 for 5%).</li>
+          <li><strong>t:</strong> The number of elapsed time periods (years, months, days, or custom intervals).</li>
+          <li><strong>1 + r/100:</strong> The growth factor or multiplier (<em>M</em>). For example, a 5% growth rate yields <em>M = 1.05</em>.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Exponential Growth vs. Exponential Decay</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          The sign and magnitude of the rate parameter <em>r</em> establish whether the system undergoes growth or decay:
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+          <div class="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/20">
+            <h3 class="font-extrabold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+              <span>📈</span> Exponential Growth (r &gt; 0)
+            </h3>
+            <p class="mt-2 text-xs text-emerald-900 dark:text-emerald-200 leading-relaxed">
+              When <em>r &gt; 0</em>, the multiplier <em>1 + r/100 &gt; 1</em>. The quantity increases with compounding rapidity over time. Examples include population expansions, compound interest, and viral reproduction.
+            </p>
+          </div>
+          <div class="rounded-2xl border border-rose-200 bg-rose-50/50 p-4 dark:border-rose-900/60 dark:bg-rose-950/20">
+            <h3 class="font-extrabold text-rose-800 dark:text-rose-300 flex items-center gap-1.5">
+              <span>📉</span> Exponential Decay (−100% &lt; r &lt; 0)
+            </h3>
+            <p class="mt-2 text-xs text-rose-900 dark:text-rose-200 leading-relaxed">
+              When <em>r &lt; 0</em>, the multiplier satisfies <em>0 &lt; 1 + r/100 &lt; 1</em>. The quantity decreases toward zero over successive periods. Examples include radioactive half-life decay, depreciation, and drug clearance in pharmacology.
+            </p>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          <strong>The −100% Limit:</strong> If <em>r = −100%</em>, the multiplier becomes <em>1 + (−100/100) = 0</em>, meaning the quantity is instantly depleted to zero. Rates below −100% would produce a negative base multiplier, which produces non-real complex numbers for fractional time powers and is mathematically invalid for real physical quantities.
+        </p>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">How to Calculate the Time Needed to Reach a Target</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          When you know the initial amount <em>x₀</em>, the final goal <em>x(t)</em>, and the growth rate <em>r</em>, you can solve for the required elapsed time <em>t</em> by applying natural logarithms:
+        </p>
+        <div class="my-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 font-mono text-center text-sm sm:text-base font-bold text-slate-800 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200">
+          t = ln(x(t) / x₀) / ln(1 + r / 100)
+        </div>
+        <p>
+          <strong>Worked Target Example:</strong> Suppose you have an initial investment of 10,000 growing at 5% annually and want to know when it reaches 30,000 (a 3× multiple):
+        </p>
+        <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-xs font-mono dark:border-slate-800 dark:bg-slate-950">
+          t = ln(30,000 / 10,000) / ln(1 + 5/100) = ln(3) / ln(1.05) ≈ 1.09861 / 0.04879 ≈ 22.52 periods (years)
+        </div>
+        <p>
+          Thus, it takes approximately 22.5 years for the capital to triple under constant 5% annual growth.
+        </p>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Can Time (t) Be Negative in Exponential Formulas?</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          <strong>Yes.</strong> Mathematically, time <em>t</em> is not restricted to positive values. A negative time represents <strong>looking backward into the past</strong> prior to the chosen baseline observation time (<em>t = 0</em>).
+        </p>
+        <p>
+          For example, if a population is 121 today with a constant 10% growth rate, setting <em>t = −2</em> evaluates:
+        </p>
+        <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-xs font-mono dark:border-slate-800 dark:bg-slate-950">
+          x(−2) = 121 × (1.10)⁻² = 121 / (1.10)² = 121 / 1.21 = 100
+        </div>
+        <p>
+          This indicates that 2 periods before the reference point, the population was exactly 100.
+        </p>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Continuous Exponential Model: x(t) = x₀ × eᵏᵗ</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          In continuous physical, chemical, and radiological processes, change occurs instantaneously at every moment rather than in distinct annual or daily steps. This continuous model uses Euler's constant <em>e ≈ 2.71828</em>:
+        </p>
+        <div class="my-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 font-mono text-center text-sm sm:text-base font-bold text-slate-800 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200">
+          x(t) = x₀ × eᵏᵗ
+        </div>
+        <p>
+          The exact algebraic equivalence between the periodic percentage rate <em>r</em> and the continuous rate constant <em>k</em> is:
+        </p>
+        <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-3 text-xs font-mono dark:border-slate-800 dark:bg-slate-950 text-center">
+          1 + r / 100 = eᵏ  ⟹  k = ln(1 + r / 100)  and  r = 100 × (eᵏ − 1)
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">How Small Growth Rate Differences Compound Dramatically</h2>
+      <p class="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+        Because compounding works through powers rather than multiplication by a scalar, even minor percentage rate differences yield enormous disparities over extended periods:
+      </p>
+      <div class="overflow-x-auto my-3">
+        <table class="w-full text-left text-xs border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden font-mono">
+          <thead class="bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-300">
+            <tr>
+              <th class="p-3">Growth Rate (r)</th>
+              <th class="p-3">Multiplier (M)</th>
+              <th class="p-3">Value after 10 Periods (x₀ = 100)</th>
+              <th class="p-3">Value after 25 Periods</th>
+              <th class="p-3">Doubling Time</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-600 dark:text-slate-400">
+            <tr>
+              <td class="p-3 font-bold text-slate-900 dark:text-white">1% per period</td>
+              <td class="p-3">1.01</td>
+              <td class="p-3">110.46</td>
+              <td class="p-3">128.24</td>
+              <td class="p-3 text-blue-600 dark:text-blue-400 font-bold">~69.7 periods</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-bold text-slate-900 dark:text-white">3% per period</td>
+              <td class="p-3">1.03</td>
+              <td class="p-3">134.39</td>
+              <td class="p-3">209.38</td>
+              <td class="p-3 text-blue-600 dark:text-blue-400 font-bold">~23.4 periods</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-bold text-slate-900 dark:text-white">5% per period</td>
+              <td class="p-3">1.05</td>
+              <td class="p-3">162.89</td>
+              <td class="p-3">338.64</td>
+              <td class="p-3 text-blue-600 dark:text-blue-400 font-bold">~14.2 periods</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-bold text-slate-900 dark:text-white">10% per period</td>
+              <td class="p-3">1.10</td>
+              <td class="p-3 font-bold text-emerald-600 dark:text-emerald-400">259.37</td>
+              <td class="p-3 font-bold text-emerald-600 dark:text-emerald-400">1,083.47</td>
+              <td class="p-3 text-blue-600 dark:text-blue-400 font-bold">~7.27 periods</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Real-World Applications of Exponential Change</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3 text-xs text-slate-700 dark:text-slate-300">
+        <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5 dark:border-slate-800 dark:bg-slate-950">
+          <strong class="text-slate-900 dark:text-white block mb-1">🧫 Bacterial & Cellular Cultures:</strong>
+          Under optimal lab conditions with abundant nutrients, bacteria reproduce through binary fission, doubling population count on fixed intervals.
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5 dark:border-slate-800 dark:bg-slate-950">
+          <strong class="text-slate-900 dark:text-white block mb-1">☢️ Radioactive Isotope Decay:</strong>
+          Unstable atomic nuclei undergo spontaneous radioactive decay following a constant half-life, critical for carbon dating and nuclear medicine.
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5 dark:border-slate-800 dark:bg-slate-950">
+          <strong class="text-slate-900 dark:text-white block mb-1">💰 Capital & Compound Interest:</strong>
+          Investments that earn interest on both initial principal and previously earned interest follow exponential trajectories over decades.
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-slate-50/60 p-3.5 dark:border-slate-800 dark:bg-slate-950">
+          <strong class="text-slate-900 dark:text-white block mb-1">💊 Pharmacokinetics & Elimination:</strong>
+          The bodily elimination of most pharmaceutical compounds follows first-order exponential decay kinetics based on a metabolic half-life.
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Limitations of Pure Exponential Models</h2>
+      <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        <p>
+          While exponential equations provide elegant local approximations, <strong>unconstrained exponential growth cannot continue indefinitely in any finite physical system</strong>. Environmental boundaries eventually intervene:
+        </p>
+        <ul class="space-y-1.5 list-disc list-inside text-xs text-slate-600 dark:text-slate-400">
+          <li><strong>Carrying Capacity:</strong> Biological populations eventually face resource limits (food, space, predators), transitioning from exponential growth to an S-shaped <em>logistic curve</em>.</li>
+          <li><strong>Market Saturation:</strong> Business customer adoption slows as the addressable market becomes saturated.</li>
+          <li><strong>Depletion Effects:</strong> Decaying substances or declining assets approach asymptotic floors or experience altering physical dynamics.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">Related Math Calculators</h2>
+      <p class="mt-2 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+        Explore our companion precision mathematical and financial tools:
+      </p>
+      <ul class="mt-2 space-y-1.5 text-sm text-slate-700 dark:text-slate-300 list-disc list-inside">
+        <li><a href="/math/exponential-function-calculator/" class="font-bold text-blue-600 hover:underline dark:text-blue-400">Exponential Function Calculator</a> – Determine exponential equations from two coordinate points.</li>
+        <li><a href="/math/exponential-form-calculator/" class="font-bold text-blue-600 hover:underline dark:text-blue-400">Exponential Form Calculator</a> – Convert numbers to prime-factor exponential expressions and switch between log and exp forms.</li>
+        <li><a href="/math/scientific-calculator/" class="font-bold text-blue-600 hover:underline dark:text-blue-400">Scientific Calculator</a> – Evaluate advanced logarithmic, power, and trigonometric expressions.</li>
+        <li><a href="/finance/compound-interest-calculator/" class="font-bold text-blue-600 hover:underline dark:text-blue-400">Compound Interest Calculator</a> – Model long-term capital compounding with regular deposits.</li>
+      </ul>
+    </div>
+
+    <!-- Frequently Asked Questions Accordions -->
+    <div class="space-y-3 pt-6 border-t border-slate-200 dark:border-slate-800 not-prose">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white mb-2">Frequently Asked Questions</h2>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open>
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            1. How do I calculate exponential growth?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+          To calculate exponential growth, divide the percentage growth rate by 100, add 1 to obtain the multiplier, raise that multiplier to the power of the number of elapsed periods, and multiply by the starting quantity: x(t) = x₀ × (1 + r/100)ᵗ.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            2. What is the difference between exponential growth and linear growth?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+          Linear growth adds a constant numerical quantity in every period (e.g. +5 every year), creating a straight-line plot. Exponential growth multiplies the current quantity by a constant factor in every period, creating a curve that steepens progressively.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            3. How do I calculate exponential decay?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+          Exponential decay uses the exact same formula, but with a negative percentage rate r between 0% and -100%. The resulting multiplier (1 + r/100) is a decimal fraction between 0 and 1, causing the quantity to diminish over successive periods.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            4. What happens if the growth rate is -100%?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+          A rate of -100% makes the base multiplier 1 + (-100/100) = 0. The quantity is completely annihilated to zero after the very first period. Rates below -100% are physically meaningless in standard quantity models because they produce negative multipliers.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            5. Can time (t) be negative?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+          Yes. A negative value of t indicates looking backward into the past relative to the baseline starting time t = 0. For example, t = -3 calculates what the quantity was 3 periods before the initial observation.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            6. What is the continuous exponential growth formula?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+          The continuous formula is x(t) = x₀ × e^(kt), where e is Euler's constant (~2.71828) and k is the continuous rate constant, related to the periodic rate r by k = ln(1 + r/100).
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            7. How do I calculate doubling time or half-life?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+          Doubling time for growth is calculated as t_double = ln(2) / ln(1 + r/100). For decay, the half-life is t_half = ln(0.5) / ln(1 + r/100).
+        </p>
+      </details>
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<script>
+  import {
+    calculateExponentialGrowth,
+    formatNum,
+    type SolveForTarget,
+  } from '../../lib/calculators/exponential-growth';
+
+  // 1. Solve-For State & Tabs
+  let currentTarget: SolveForTarget = 'final';
+
+  const solveTabs = document.querySelectorAll('.solve-tab');
+  const solveModeSubtitle = document.getElementById('solve-mode-subtitle') as HTMLSpanElement;
+
+  const inputX0 = document.getElementById('input-x0') as HTMLInputElement;
+  const inputRate = document.getElementById('input-rate') as HTMLInputElement;
+  const inputTime = document.getElementById('input-time') as HTMLInputElement;
+  const inputXt = document.getElementById('input-xt') as HTMLInputElement;
+
+  const badgeX0 = document.getElementById('badge-x0-target') as HTMLSpanElement;
+  const badgeRate = document.getElementById('badge-rate-target') as HTMLSpanElement;
+  const badgeTime = document.getElementById('badge-time-target') as HTMLSpanElement;
+  const badgeXt = document.getElementById('badge-xt-target') as HTMLSpanElement;
+
+  const btnCalculate = document.getElementById('btn-calculate') as HTMLButtonElement;
+  const btnClear = document.getElementById('btn-clear') as HTMLButtonElement;
+  const growthError = document.getElementById('growth-error') as HTMLParagraphElement;
+
+  const resultsPlaceholder = document.getElementById('results-placeholder') as HTMLDivElement;
+  const resultsCard = document.getElementById('results-card') as HTMLDivElement;
+
+  const resTargetLabel = document.getElementById('res-target-label') as HTMLSpanElement;
+  const resPrimaryVal = document.getElementById('res-primary-val') as HTMLSpanElement;
+  const resNatureBadge = document.getElementById('res-nature-badge') as HTMLSpanElement;
+  const resDoublingTag = document.getElementById('res-doubling-tag') as HTMLSpanElement;
+  const resSubtitle = document.getElementById('res-subtitle') as HTMLParagraphElement;
+
+  const resFactor = document.getElementById('res-factor') as HTMLSpanElement;
+  const resK = document.getElementById('res-k') as HTMLSpanElement;
+  const resAbsChange = document.getElementById('res-abs-change') as HTMLSpanElement;
+
+  const statX0 = document.getElementById('stat-x0') as HTMLDivElement;
+  const statRate = document.getElementById('stat-rate') as HTMLDivElement;
+  const statTime = document.getElementById('stat-time') as HTMLDivElement;
+  const statPct = document.getElementById('stat-pct') as HTMLDivElement;
+
+  const selectTimeUnit = document.getElementById('select-time-unit') as HTMLSelectElement;
+  const unitLabelInput = document.getElementById('unit-label-input') as HTMLSpanElement;
+
+  const resSteps = document.getElementById('res-steps') as HTMLOListElement;
+  const tableBody = document.getElementById('table-body') as HTMLTableSectionElement;
+  const tableBadgeRows = document.getElementById('table-badge-rows') as HTMLSpanElement;
+
+  const svgPath = document.getElementById('svg-path') as unknown as SVGPathElement;
+  const svgDotStart = document.getElementById('svg-dot-start') as unknown as SVGCircleElement;
+  const svgDotEnd = document.getElementById('svg-dot-end') as unknown as SVGCircleElement;
+  const curveRangeLabel = document.getElementById('curve-range-label') as HTMLSpanElement;
+  const labelPlotStart = document.getElementById('label-plot-start') as HTMLSpanElement;
+  const labelPlotEnd = document.getElementById('label-plot-end') as HTMLSpanElement;
+
+  function updateTargetMode(target: SolveForTarget) {
+    currentTarget = target;
+
+    solveTabs.forEach((tab) => {
+      const isTarget = tab.getAttribute('data-target') === target;
+      if (isTarget) {
+        tab.classList.add('active', 'border-t', 'border-x', 'border-slate-300/90', 'bg-white', 'text-slate-900', 'shadow-2xs', '-mb-px', 'dark:border-slate-700', 'dark:bg-slate-900', 'dark:text-white');
+        tab.classList.remove('bg-blue-700/90', 'text-white', 'hover:bg-blue-800', 'dark:bg-blue-800', 'dark:hover:bg-blue-700');
+      } else {
+        tab.classList.remove('active', 'border-t', 'border-x', 'border-slate-300/90', 'bg-white', 'text-slate-900', 'shadow-2xs', '-mb-px', 'dark:border-slate-700', 'dark:bg-slate-900', 'dark:text-white');
+        tab.classList.add('bg-blue-700/90', 'text-white', 'hover:bg-blue-800', 'dark:bg-blue-800', 'dark:hover:bg-blue-700');
+      }
+    });
+
+    // Reset all 4 inputs to active style
+    [inputX0, inputRate, inputTime, inputXt].forEach((inp) => {
+      inp.disabled = false;
+      inp.classList.remove('border-dashed', 'bg-slate-100/70', 'dark:bg-slate-900/60', 'cursor-not-allowed', 'text-slate-500');
+      inp.classList.add('bg-white', 'dark:bg-slate-900', 'text-slate-900', 'dark:text-white');
+    });
+
+    badgeX0.textContent = 'baseline quantity at t = 0';
+    badgeX0.className = 'text-xs font-medium text-slate-500 dark:text-slate-400';
+    badgeRate.textContent = 'positive (+) for growth, negative (−) for decay';
+    badgeRate.className = 'text-xs font-medium text-slate-500 dark:text-slate-400';
+    badgeTime.textContent = 'elapsed duration';
+    badgeTime.className = 'text-xs font-medium text-slate-500 dark:text-slate-400';
+    badgeXt.textContent = 'accumulated quantity';
+    badgeXt.className = 'text-xs font-medium text-slate-500 dark:text-slate-400';
+
+    // Disable target input and mark with Target badge
+    let targetInput: HTMLInputElement;
+    let targetBadge: HTMLSpanElement;
+
+    if (target === 'final') {
+      targetInput = inputXt;
+      targetBadge = badgeXt;
+      solveModeSubtitle.textContent = 'Target: Solve for Final Quantity x(t)';
+      resTargetLabel.textContent = 'Calculated Final Quantity x(t)';
+      inputXt.placeholder = 'To be calculated';
+      inputX0.placeholder = 'Enter initial value';
+      inputRate.placeholder = 'e.g. 5 or -10';
+      inputTime.placeholder = 'Enter periods';
+    } else if (target === 'initial') {
+      targetInput = inputX0;
+      targetBadge = badgeX0;
+      solveModeSubtitle.textContent = 'Target: Solve for Initial Quantity x₀';
+      resTargetLabel.textContent = 'Calculated Initial Quantity x₀';
+      inputX0.placeholder = 'To be calculated';
+      inputXt.placeholder = 'Enter final quantity';
+      inputRate.placeholder = 'e.g. 5 or -10';
+      inputTime.placeholder = 'Enter periods';
+    } else if (target === 'rate') {
+      targetInput = inputRate;
+      targetBadge = badgeRate;
+      solveModeSubtitle.textContent = 'Target: Solve for Growth / Decay Rate (r)';
+      resTargetLabel.textContent = 'Calculated Growth / Decay Rate (r)';
+      inputRate.placeholder = 'To be calculated';
+      inputX0.placeholder = 'Enter initial value';
+      inputXt.placeholder = 'Enter final quantity';
+      inputTime.placeholder = 'Enter periods';
+    } else {
+      targetInput = inputTime;
+      targetBadge = badgeTime;
+      solveModeSubtitle.textContent = 'Target: Solve for Time / Periods (t)';
+      resTargetLabel.textContent = 'Calculated Time / Periods (t)';
+      inputTime.placeholder = 'To be calculated';
+      inputX0.placeholder = 'Enter initial value';
+      inputXt.placeholder = 'Enter final quantity';
+      inputRate.placeholder = 'e.g. 5 or -10';
+    }
+
+    targetInput.value = '';
+    targetInput.disabled = true;
+    targetInput.classList.remove('bg-white', 'dark:bg-slate-900', 'text-slate-900', 'dark:text-white');
+    targetInput.classList.add('border-dashed', 'bg-slate-100/70', 'dark:bg-slate-900/60', 'cursor-not-allowed', 'text-slate-500');
+
+    targetBadge.textContent = 'Target to Solve';
+    targetBadge.className = 'rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold text-blue-800 dark:bg-blue-950 dark:text-blue-300';
+
+    growthError.classList.add('hidden');
+    resultsCard.classList.add('hidden');
+    resultsPlaceholder.classList.remove('hidden');
+
+    const bar = document.getElementById('calc-action-bar-container');
+    if (bar) bar.classList.add('hidden');
+  }
+
+  solveTabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const target = tab.getAttribute('data-target') as SolveForTarget;
+      if (target) updateTargetMode(target);
+    });
+  });
+
+  // Unit dropdown update
+  selectTimeUnit?.addEventListener('change', () => {
+    unitLabelInput.textContent = selectTimeUnit.value;
+    if (!resultsCard.classList.contains('hidden')) {
+      runCalculation();
+    }
+  });
+
+  // 2. Perform Calculation
+  function runCalculation() {
+    growthError.classList.add('hidden');
+    growthError.textContent = '';
+    const bar = document.getElementById('calc-action-bar-container');
+    if (bar) bar.classList.add('hidden');
+
+    const x0Val = inputX0.value.trim();
+    const rateVal = inputRate.value.trim();
+    const timeVal = inputTime.value.trim();
+    const xtVal = inputXt.value.trim();
+
+    // Check required fields based on current target
+    if (currentTarget === 'final') {
+      if (!x0Val) {
+        growthError.textContent = 'Please enter the initial quantity (x₀).';
+        growthError.classList.remove('hidden');
+        resultsCard.classList.add('hidden');
+        resultsPlaceholder.classList.remove('hidden');
+        inputX0.focus();
+        return;
+      }
+      if (!rateVal) {
+        growthError.textContent = 'Please enter the growth/decay rate (r %).';
+        growthError.classList.remove('hidden');
+        resultsCard.classList.add('hidden');
+        resultsPlaceholder.classList.remove('hidden');
+        inputRate.focus();
+        return;
+      }
+      if (!timeVal) {
+        growthError.textContent = 'Please enter the time / number of periods (t).';
+        growthError.classList.remove('hidden');
+        resultsCard.classList.add('hidden');
+        resultsPlaceholder.classList.remove('hidden');
+        inputTime.focus();
+        return;
+      }
+    } else if (currentTarget === 'initial') {
+      if (!xtVal) {
+        growthError.textContent = 'Please enter the final quantity x(t).';
+        growthError.classList.remove('hidden');
+        resultsCard.classList.add('hidden');
+        resultsPlaceholder.classList.remove('hidden');
+        inputXt.focus();
+        return;
+      }
+      if (!rateVal) {
+        growthError.textContent = 'Please enter the growth/decay rate (r %).';
+        growthError.classList.remove('hidden');
+        resultsCard.classList.add('hidden');
+        resultsPlaceholder.classList.remove('hidden');
+        inputRate.focus();
+        return;
+      }
+      if (!timeVal) {
+        growthError.textContent = 'Please enter the time / number of periods (t).';
+        growthError.classList.remove('hidden');
+        resultsCard.classList.add('hidden');
+        resultsPlaceholder.classList.remove('hidden');
+        inputTime.focus();
+        return;
+      }
+    } else if (currentTarget === 'rate') {
+      if (!x0Val) {
+        growthError.textContent = 'Please enter the initial quantity (x₀).';
+        growthError.classList.remove('hidden');
+        resultsCard.classList.add('hidden');
+        resultsPlaceholder.classList.remove('hidden');
+        inputX0.focus();
+        return;
+      }
+      if (!xtVal) {
+        growthError.textContent = 'Please enter the final quantity x(t).';
+        growthError.classList.remove('hidden');
+        resultsCard.classList.add('hidden');
+        resultsPlaceholder.classList.remove('hidden');
+        inputXt.focus();
+        return;
+      }
+      if (!timeVal) {
+        growthError.textContent = 'Please enter the time / number of periods (t).';
+        growthError.classList.remove('hidden');
+        resultsCard.classList.add('hidden');
+        resultsPlaceholder.classList.remove('hidden');
+        inputTime.focus();
+        return;
+      }
+    } else if (currentTarget === 'time') {
+      if (!x0Val) {
+        growthError.textContent = 'Please enter the initial quantity (x₀).';
+        growthError.classList.remove('hidden');
+        resultsCard.classList.add('hidden');
+        resultsPlaceholder.classList.remove('hidden');
+        inputX0.focus();
+        return;
+      }
+      if (!xtVal) {
+        growthError.textContent = 'Please enter the target/final quantity x(t).';
+        growthError.classList.remove('hidden');
+        resultsCard.classList.add('hidden');
+        resultsPlaceholder.classList.remove('hidden');
+        inputXt.focus();
+        return;
+      }
+      if (!rateVal) {
+        growthError.textContent = 'Please enter the growth/decay rate (r %).';
+        growthError.classList.remove('hidden');
+        resultsCard.classList.add('hidden');
+        resultsPlaceholder.classList.remove('hidden');
+        inputRate.focus();
+        return;
+      }
+    }
+
+    try {
+      const result = calculateExponentialGrowth({
+        solveFor: currentTarget,
+        initialQuantity: x0Val,
+        growthRate: rateVal,
+        timePeriods: timeVal,
+        finalQuantity: xtVal,
+      });
+
+      // Write back solved value into target field
+      if (currentTarget === 'final') inputXt.value = String(result.finalQuantity);
+      else if (currentTarget === 'initial') inputX0.value = String(result.initialQuantity);
+      else if (currentTarget === 'rate') inputRate.value = String(result.growthRatePercent);
+      else if (currentTarget === 'time') inputTime.value = String(result.timePeriods);
+
+      const timeUnit = selectTimeUnit.value;
+
+      // Update primary banner
+      if (currentTarget === 'final') {
+        resPrimaryVal.textContent = formatNum(result.finalQuantity);
+        resSubtitle.textContent = `Starting from ${formatNum(result.initialQuantity)} over ${formatNum(result.timePeriods)} ${timeUnit}`;
+      } else if (currentTarget === 'initial') {
+        resPrimaryVal.textContent = formatNum(result.initialQuantity);
+        resSubtitle.textContent = `Required to reach ${formatNum(result.finalQuantity)} in ${formatNum(result.timePeriods)} ${timeUnit}`;
+      } else if (currentTarget === 'rate') {
+        resPrimaryVal.textContent = `${result.growthRatePercent > 0 ? '+' : ''}${formatNum(result.growthRatePercent, 4)}%`;
+        resSubtitle.textContent = `Per ${timeUnit.slice(0, -1) || 'period'} to change from ${formatNum(result.initialQuantity)} to ${formatNum(result.finalQuantity)}`;
+      } else {
+        resPrimaryVal.textContent = `${formatNum(result.timePeriods, 4)} ${timeUnit}`;
+        resSubtitle.textContent = `Time elapsed from ${formatNum(result.initialQuantity)} to ${formatNum(result.finalQuantity)} at ${formatNum(result.growthRatePercent)}%`;
+      }
+
+      // Badges
+      if (result.isGrowth) {
+        resNatureBadge.textContent = 'Exponential Growth ⚡';
+        resNatureBadge.className = 'rounded-full bg-emerald-100 px-3.5 py-1 text-xs font-bold text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300';
+      } else if (result.isDecay) {
+        resNatureBadge.textContent = 'Exponential Decay 📉';
+        resNatureBadge.className = 'rounded-full bg-rose-100 px-3.5 py-1 text-xs font-bold text-rose-800 dark:bg-rose-950/80 dark:text-rose-300';
+      } else if (result.isDepleted) {
+        resNatureBadge.textContent = 'Total Depletion (-100%)';
+        resNatureBadge.className = 'rounded-full bg-slate-200 px-3.5 py-1 text-xs font-bold text-slate-800 dark:bg-slate-800 dark:text-slate-200';
+      } else {
+        resNatureBadge.textContent = 'Zero Growth (Constant)';
+        resNatureBadge.className = 'rounded-full bg-slate-100 px-3.5 py-1 text-xs font-bold text-slate-800 dark:bg-slate-800 dark:text-slate-300';
+      }
+
+      resDoublingTag.textContent = result.doublingTimeOrHalfLife.label;
+
+      // Stats
+      resFactor.textContent = formatNum(result.growthFactor, 5);
+      resK.textContent = formatNum(result.continuousRateK, 5);
+      resAbsChange.textContent = `${result.totalChange >= 0 ? '+' : ''}${formatNum(result.totalChange, 4)}`;
+
+      statX0.textContent = formatNum(result.initialQuantity);
+      statRate.textContent = `${result.growthRatePercent >= 0 ? '+' : ''}${formatNum(result.growthRatePercent, 2)}%`;
+      statTime.textContent = `${formatNum(result.timePeriods, 2)} ${timeUnit}`;
+      statPct.textContent = `${result.totalPercentageChange >= 0 ? '+' : ''}${formatNum(result.totalPercentageChange, 2)}%`;
+
+      // Step by step
+      resSteps.innerHTML = '';
+      result.steps.forEach((step) => {
+        const li = document.createElement('li');
+        li.textContent = step;
+        resSteps.appendChild(li);
+      });
+
+      // Table
+      tableBody.innerHTML = '';
+      result.table.forEach((row) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-900/60 transition-colors';
+        tr.innerHTML = `
+          <td class="p-2.5 font-bold text-slate-900 dark:text-white">${row.period}</td>
+          <td class="p-2.5 text-emerald-600 dark:text-emerald-400 font-bold">${row.quantityFormatted}</td>
+          <td class="p-2.5 ${row.changeFromPrevious >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}">${row.changeFromPrevious >= 0 ? '+' : ''}${formatNum(row.changeFromPrevious)}</td>
+          <td class="p-2.5 text-slate-500">${row.percentFromPrevious >= 0 ? '+' : ''}${row.percentFromPrevious}%</td>
+        `;
+        tableBody.appendChild(tr);
+      });
+      tableBadgeRows.textContent = `${result.table.length} rows`;
+
+      // SVG Curve Plot
+      renderSvgPlot(result);
+
+      // Reveal Results Card and hide placeholder
+      resultsPlaceholder.classList.add('hidden');
+      resultsCard.classList.remove('hidden');
+
+      // Reveal "Save or share this calculation" directly below the generated results
+      const bar = document.getElementById('calc-action-bar-container');
+      if (bar) bar.classList.remove('hidden');
+    } catch (err: any) {
+      resultsCard.classList.add('hidden');
+      resultsPlaceholder.classList.remove('hidden');
+      const bar = document.getElementById('calc-action-bar-container');
+      if (bar) bar.classList.add('hidden');
+      growthError.textContent = err?.message || 'Invalid input values.';
+      growthError.classList.remove('hidden');
+    }
+  }
+
+  function renderSvgPlot(res: any) {
+    if (!res.svgPoints || res.svgPoints.length === 0) return;
+
+    const points = res.svgPoints;
+    const minX = points[0].x;
+    const maxX = points[points.length - 1].x;
+    let minY = Infinity;
+    let maxY = -Infinity;
+
+    points.forEach((p: { x: number; y: number }) => {
+      if (p.y < minY) minY = p.y;
+      if (p.y > maxY) maxY = p.y;
+    });
+
+    if (minY === maxY) {
+      minY -= 1;
+      maxY += 1;
+    }
+
+    const padY = (maxY - minY) * 0.1 || 1;
+    const effMinY = minY - padY;
+    const effMaxY = maxY + padY;
+
+    const scaleX = (x: number) => ((x - minX) / (maxX - minX || 1)) * 480 + 10;
+    const scaleY = (y: number) => 190 - ((y - effMinY) / (effMaxY - effMinY || 1)) * 170;
+
+    let pathD = '';
+    points.forEach((p: { x: number; y: number }, idx: number) => {
+      const sx = scaleX(p.x);
+      const sy = scaleY(p.y);
+      if (idx === 0) pathD += `M ${sx.toFixed(1)} ${sy.toFixed(1)}`;
+      else pathD += ` L ${sx.toFixed(1)} ${sy.toFixed(1)}`;
+    });
+
+    svgPath.setAttribute('d', pathD);
+    svgPath.setAttribute('stroke', res.isDecay ? '#e11d48' : '#10b981');
+
+    // Dots for start (t=0) and end (t=timePeriods)
+    const dotStartX = scaleX(0);
+    const dotStartY = scaleY(res.initialQuantity);
+    svgDotStart.setAttribute('cx', String(dotStartX.toFixed(1)));
+    svgDotStart.setAttribute('cy', String(dotStartY.toFixed(1)));
+
+    const dotEndX = scaleX(res.timePeriods);
+    const dotEndY = scaleY(res.finalQuantity);
+    svgDotEnd.setAttribute('cx', String(dotEndX.toFixed(1)));
+    svgDotEnd.setAttribute('cy', String(dotEndY.toFixed(1)));
+    svgDotEnd.setAttribute('fill', res.isDecay ? '#e11d48' : '#10b981');
+
+    const unit = selectTimeUnit.value;
+    curveRangeLabel.textContent = `${formatNum(minX, 1)} to ${formatNum(maxX, 1)} ${unit}`;
+    labelPlotStart.textContent = `t = 0 (x₀ = ${formatNum(res.initialQuantity)})`;
+    labelPlotEnd.textContent = `t = ${formatNum(res.timePeriods, 1)} (x(t) = ${formatNum(res.finalQuantity)})`;
+  }
+
+  btnCalculate?.addEventListener('click', runCalculation);
+
+  btnClear?.addEventListener('click', () => {
+    inputX0.value = '';
+    inputRate.value = '';
+    inputTime.value = '';
+    inputXt.value = '';
+    growthError.classList.add('hidden');
+    resultsCard.classList.add('hidden');
+    resultsPlaceholder.classList.remove('hidden');
+    const bar = document.getElementById('calc-action-bar-container');
+    if (bar) bar.classList.add('hidden');
+    if (currentTarget === 'final') inputX0.focus();
+    else if (currentTarget === 'initial') inputXt.focus();
+    else inputX0.focus();
+  });
+
+  // Enter key listener on inputs
+  document.querySelectorAll('#growth-form input').forEach((inp) => {
+    inp.addEventListener('keydown', (e) => {
+      if ((e as KeyboardEvent).key === 'Enter') {
+        e.preventDefault();
+        btnCalculate?.click();
+      }
+    });
+  });
+
+  // INITIAL STATE: ALL INPUTS ARE EMPTY (value="").
+  // RESULTS PLACEHOLDER IS VISIBLE. RESULTS CARD IS HIDDEN.
+  // NO AUTO-CALCULATION ON LOAD!
+</script>

@@ -104,6 +104,58 @@ const CALCULATOR_ALIASES: Record<string, string[]> = {
     'take home pay',
     'income calculator'
   ],
+  'exponential-form-calculator': [
+    'exponential form',
+    'exponential form calculator',
+    'log to exponential',
+    'exponential to log',
+    'prime factorization exponential form',
+    'exponential notation',
+    'ghat roop',
+    'ghatiya roop',
+    'prime factors exponents',
+    'base and exponent calculator'
+  ],
+  'exponential-function-calculator': [
+    'exponential function calculator',
+    'exponential function solver',
+    'exponential function from two points',
+    'solve exponential function',
+    'exponential equation calculator',
+    'exponential function formula',
+    'evaluate exponential function',
+    'exponential growth calculator',
+    'exponential decay calculator',
+    'ghatiya falan calculator',
+    'falan calculator',
+    'two point exponential',
+    'find exponential equation from two points'
+  ],
+  'exponential-growth-calculator': [
+    'exponential growth calculator',
+    'exponential decay calculator',
+    'growth rate calculator',
+    'exponential growth formula',
+    'exponential decay formula',
+    'ghatiya vriddhi calculator',
+    'ghatiya kshay calculator',
+    'doubling time calculator',
+    'half life calculator',
+    'continuous growth calculator',
+    'population growth calculator'
+  ],
+  'right-triangle-area-calculator': [
+    'right triangle area calculator',
+    'area of a right triangle',
+    'right triangle calculator',
+    'right angled triangle area',
+    'samkon tribhuj ka kshetrafal',
+    'right triangle area formula',
+    'hypotenuse area calculator',
+    '45 45 90 triangle area',
+    'pythagorean triangle area',
+    'triangle area with legs'
+  ]
 };
 
 export const calculators: Calculator[] = (rawCalculators as Calculator[])

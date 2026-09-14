@@ -54,6 +54,19 @@ import { generateMultipleRandomNumbers } from '../calculators/random-number-gene
 import { calculateVolumeComprehensive } from '../calculators/volume';
 import { calculateMarginExtended } from '../calculators/margin';
 import { calculateAnnualIncomeExtended } from '../calculators/annual-income';
+import {
+  calculateWholeNumberExponentialForm,
+  calculateLogToExponential,
+  calculateExponentialToLog,
+} from '../calculators/exponential-form';
+import {
+  solveStandardExponentialFromPoints,
+  solveNaturalExponentialFromPoints,
+  evaluateStandardExponential,
+  evaluateNaturalExponential,
+} from '../calculators/exponential-function';
+import { calculateExponentialGrowth } from '../calculators/exponential-growth';
+import { calculateRightTriangleArea } from '../calculators/right-triangle-area';
 import type { CalculatorTestCase, CustomTestCaseDefinition } from './types';
 
 /**
@@ -188,6 +201,33 @@ export function executeCalculatorFormula(slug: string, inputs: Record<string, an
       });
     case 'volume-calculator':
       return calculateVolumeComprehensive(inputs as any);
+    case 'exponential-form-calculator':
+      if (inputs.mode === 'log_to_exp' || inputs.logArgument !== undefined) {
+        return calculateLogToExponential(inputs.base || 2, inputs.argument || inputs.logArgument || 8, inputs.logValue);
+      }
+      if (inputs.mode === 'exp_to_log' || inputs.exponent !== undefined) {
+        return calculateExponentialToLog(inputs.base || 2, inputs.exponent ?? 5, inputs.resultNumber);
+      }
+      return calculateWholeNumberExponentialForm(inputs.number || inputs.n || inputs.wholeNumber || 250);
+    case 'exponential-function-calculator':
+      if (inputs.mode === 'solve_natural' || inputs.natural) {
+        return solveNaturalExponentialFromPoints(inputs.x1, inputs.y1, inputs.x2, inputs.y2);
+      }
+      if (inputs.mode === 'solve' || (inputs.x1 !== undefined && inputs.x2 !== undefined)) {
+        return solveStandardExponentialFromPoints(inputs.x1, inputs.y1, inputs.x2, inputs.y2);
+      }
+      if (inputs.mode === 'evaluate_natural' || inputs.c !== undefined) {
+        return evaluateNaturalExponential(inputs.a ?? 1, inputs.c ?? 1, inputs.x ?? 1);
+      }
+      return evaluateStandardExponential(inputs.a ?? 1, inputs.b ?? 2, inputs.x ?? 1);
+    case 'exponential-growth-calculator':
+      return calculateExponentialGrowth({
+        solveFor: inputs.solveFor || 'final',
+        initialQuantity: inputs.initialQuantity ?? inputs.x0,
+        growthRate: inputs.growthRate ?? inputs.r,
+        timePeriods: inputs.timePeriods ?? inputs.t,
+        finalQuantity: inputs.finalQuantity ?? inputs.xt,
+      });
     case 'margin-calculator':
       return calculateMarginExtended({
         mode: inputs.mode || (inputs.cost !== undefined && inputs.revenue !== undefined ? 'cost_revenue' : 'cost_margin'),
@@ -206,6 +246,19 @@ export function executeCalculatorFormula(slug: string, inputs: Record<string, an
         grossAnnualIncome: inputs.grossAnnualIncome,
         netAnnualIncome: inputs.netAnnualIncome,
         taxRatePercent: inputs.taxRatePercent,
+      });
+    case 'right-triangle-area-calculator':
+      return calculateRightTriangleArea({
+        mode: inputs.mode || 'two_legs',
+        unit: inputs.unit || 'cm',
+        legA: inputs.legA,
+        legB: inputs.legB,
+        hypotenuseC: inputs.hypotenuseC,
+        knownLeg: inputs.knownLeg,
+        legValue: inputs.legValue,
+        angle: inputs.angle,
+        angleType: inputs.angleType,
+        angleUnit: inputs.angleUnit,
       });
     default:
       throw new Error(`No formula runner registered for calculator slug: ${slug}`);

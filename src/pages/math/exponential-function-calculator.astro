@@ -1,0 +1,1245 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="Exponential Function Calculator – Solve & Evaluate Functions"
+  description="Solve an exponential function from two points (a · bˣ or a · eᶜˣ) or evaluate a function at any x-value with step-by-step mathematical solutions."
+  category="Math"
+  calculatorName="Exponential Function Calculator"
+  slug="exponential-function-calculator"
+  keywords={[
+    'exponential function calculator',
+    'exponential function solver',
+    'exponential function from two points',
+    'solve exponential function',
+    'exponential equation calculator',
+    'exponential function formula',
+    'evaluate exponential function',
+    'exponential growth calculator',
+    'exponential decay calculator',
+    'two points exponential curve',
+    'natural exponential function'
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- MODE SELECTOR TABS -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-2.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-semibold scrollbar-thin">
+        <button
+          type="button"
+          class="btn-mode-tab active shrink-0 rounded-lg bg-blue-600 px-4 py-2 font-bold text-white shadow-xs cursor-pointer transition"
+          data-tab="tab-solve"
+          id="tab-btn-solve"
+        >
+          📈 Mode 1: Solve Function from Two Points
+        </button>
+        <button
+          type="button"
+          class="btn-mode-tab shrink-0 rounded-lg border border-slate-300 bg-white px-4 py-2 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition"
+          data-tab="tab-evaluate"
+          id="tab-btn-evaluate"
+        >
+          ⚡ Mode 2: Evaluate Function at x
+        </button>
+      </div>
+    </div>
+
+    <!-- QUICK EXAMPLE PRESETS BAR -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-center gap-1.5 text-xs">
+        <span class="font-bold text-slate-600 dark:text-slate-400 mr-1 flex items-center gap-1">
+          <span>⚡</span> Quick Presets:
+        </span>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-mode="solve" data-form="standard" data-x1="0" data-y1="2" data-x2="1" data-y2="4">(0, 2) & (1, 4) ➔ 2·2ˣ</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-mode="solve" data-form="standard" data-x1="0" data-y1="4" data-x2="1" data-y2="12">(0, 4) & (1, 12) ➔ 4·3ˣ</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-mode="solve" data-form="standard" data-x1="0" data-y1="-2" data-x2="1" data-y2="-6">(0, -2) & (1, -6) ➔ -2·3ˣ</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-mode="solve" data-form="natural" data-x1="0" data-y1="2" data-x2="2" data-y2="5.43656">(0, 2) & (2, 2e) ➔ 2e^(0.5x)</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-mode="eval" data-form="standard" data-a="2" data-b="3" data-x="2">Eval 2·3² = 18</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-mode="eval" data-form="standard" data-a="5" data-b="2" data-x="3">Eval 5·2³ = 40</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-mode="eval" data-form="natural" data-a="4" data-c="0.5" data-x="2">Eval 4·e^(0.5·2)</button>
+      </div>
+    </div>
+
+    <!-- MAIN CALCULATOR CONTAINER -->
+    <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-blue-50/30 p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/20 sm:p-7">
+
+      <!-- ======================================================== -->
+      <!-- 1. MODE 1 PANEL: SOLVE FUNCTION FROM TWO POINTS          -->
+      <!-- ======================================================== -->
+      <div id="panel-solve" class="calc-panel space-y-5">
+        <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                <span>📈</span> Solve Exponential Function from Two Known Points
+              </h2>
+              <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                Determine parameters a, b, or c from coordinates (x₁, y₁) and (x₂, y₂) with verification and 2D curve plot.
+              </p>
+            </div>
+            <!-- Function Form Selector -->
+            <div class="flex items-center gap-1 rounded-xl bg-slate-200/70 p-1 dark:bg-slate-800 text-xs font-bold">
+              <button
+                type="button"
+                id="btn-solve-form-std"
+                class="solve-form-btn rounded-lg bg-white px-3 py-1.5 text-blue-700 shadow-xs dark:bg-slate-900 dark:text-blue-400 cursor-pointer transition"
+                data-form="standard"
+              >
+                f(x) = a · bˣ
+              </button>
+              <button
+                type="button"
+                id="btn-solve-form-nat"
+                class="solve-form-btn rounded-lg px-3 py-1.5 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer transition"
+                data-form="natural"
+              >
+                f(x) = a · eᶜˣ
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <form id="form-solve" class="space-y-4" novalidate onsubmit="return false;">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            
+            <!-- Point 1 -->
+            <div class="rounded-2xl border border-blue-200/80 bg-blue-50/40 p-4 dark:border-blue-900/40 dark:bg-blue-950/20">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-extrabold text-blue-900 dark:text-blue-300 uppercase tracking-wider flex items-center gap-1">
+                  <span>📍</span> Point 1: (x₁, y₁)
+                </span>
+                <span class="text-[11px] text-blue-600 dark:text-blue-400 font-medium">First Point</span>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label for="solve-x1" class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    x₁ Coordinate
+                  </label>
+                  <input
+                    type="text"
+                    id="solve-x1"
+                    value="0"
+                    placeholder="e.g. 0"
+                    class="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                    autocomplete="off"
+                  />
+                </div>
+                <div>
+                  <label for="solve-y1" class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    y₁ Coordinate
+                  </label>
+                  <input
+                    type="text"
+                    id="solve-y1"
+                    value="2"
+                    placeholder="e.g. 2"
+                    class="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                    autocomplete="off"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Point 2 -->
+            <div class="rounded-2xl border border-emerald-200/80 bg-emerald-50/40 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-extrabold text-emerald-900 dark:text-emerald-300 uppercase tracking-wider flex items-center gap-1">
+                  <span>📍</span> Point 2: (x₂, y₂)
+                </span>
+                <span class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">Second Point</span>
+              </div>
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label for="solve-x2" class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    x₂ Coordinate
+                  </label>
+                  <input
+                    type="text"
+                    id="solve-x2"
+                    value="1"
+                    placeholder="e.g. 1"
+                    class="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-emerald-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                    autocomplete="off"
+                  />
+                </div>
+                <div>
+                  <label for="solve-y2" class="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    y₂ Coordinate
+                  </label>
+                  <input
+                    type="text"
+                    id="solve-y2"
+                    value="4"
+                    placeholder="e.g. 4"
+                    class="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-emerald-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                    autocomplete="off"
+                  />
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Buttons -->
+          <div class="flex items-center gap-2 pt-1">
+            <button
+              type="submit"
+              id="btn-calc-solve"
+              class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer"
+            >
+              Solve Exponential Function →
+            </button>
+            <button
+              type="button"
+              id="btn-clear-solve"
+              class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer"
+            >
+              Clear
+            </button>
+          </div>
+        </form>
+
+        <!-- Error Banner -->
+        <p id="err-solve" class="hidden rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700 dark:border-red-900/50 dark:bg-red-950/50 dark:text-red-300"></p>
+
+        <!-- Solve Results Container -->
+        <div id="res-solve-card" class="hidden space-y-4 pt-2">
+          
+          <!-- Primary Equation Display -->
+          <div class="rounded-2xl border border-blue-200 bg-linear-to-r from-blue-500/10 via-indigo-500/10 to-blue-600/10 p-5 dark:border-blue-900/50 dark:from-blue-950/40 dark:to-indigo-950/40">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-blue-200/60 pb-3 dark:border-blue-800/60">
+              <span class="text-xs font-bold uppercase tracking-wider text-blue-900 dark:text-blue-300">
+                Calculated Function Equation:
+              </span>
+              <div class="flex items-center gap-2">
+                <span id="badge-solve-behavior" class="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-[11px] font-bold text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+                  Exponential Growth
+                </span>
+                <button
+                  type="button"
+                  id="btn-copy-solve-eq"
+                  class="rounded-lg border border-blue-300 bg-white px-2.5 py-1 text-[11px] font-bold text-blue-700 hover:bg-blue-50 dark:border-blue-700 dark:bg-slate-800 dark:text-blue-300 cursor-pointer transition"
+                >
+                  📋 Copy
+                </button>
+              </div>
+            </div>
+
+            <div class="mt-3 flex flex-wrap items-baseline gap-3">
+              <div id="res-solve-equation" class="font-mono text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                f(x) = 2 · 2ˣ
+              </div>
+            </div>
+
+            <!-- Parameters Grid -->
+            <div class="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+              <div class="rounded-xl border border-slate-200/80 bg-white/80 p-2.5 dark:border-slate-800 dark:bg-slate-900/80">
+                <span class="text-slate-500 dark:text-slate-400 block font-medium">Initial Scale Factor (a):</span>
+                <span id="res-solve-param-a" class="font-mono text-sm font-bold text-slate-900 dark:text-white">2</span>
+              </div>
+              <div id="box-solve-param-b" class="rounded-xl border border-slate-200/80 bg-white/80 p-2.5 dark:border-slate-800 dark:bg-slate-900/80">
+                <span class="text-slate-500 dark:text-slate-400 block font-medium">Base (b):</span>
+                <span id="res-solve-param-b" class="font-mono text-sm font-bold text-slate-900 dark:text-white">2</span>
+              </div>
+              <div id="box-solve-param-c" class="hidden rounded-xl border border-slate-200/80 bg-white/80 p-2.5 dark:border-slate-800 dark:bg-slate-900/80">
+                <span class="text-slate-500 dark:text-slate-400 block font-medium">Continuous Rate (c):</span>
+                <span id="res-solve-param-c" class="font-mono text-sm font-bold text-slate-900 dark:text-white">0.5</span>
+              </div>
+              <div class="rounded-xl border border-slate-200/80 bg-white/80 p-2.5 dark:border-slate-800 dark:bg-slate-900/80 col-span-2 sm:col-span-1">
+                <span class="text-slate-500 dark:text-slate-400 block font-medium">y-Intercept:</span>
+                <span id="res-solve-intercept" class="font-mono text-sm font-bold text-slate-900 dark:text-white">(0, 2)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Two-Point Verification Card -->
+          <div class="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-4 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-emerald-900 dark:text-emerald-300 flex items-center gap-1.5">
+              <span>✅</span> Two-Point Solution Verification
+            </h3>
+            <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+              Confirming that the derived function passes exactly through both supplied coordinates:
+            </p>
+            <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs font-mono">
+              <div id="verify-box-p1" class="rounded-xl border border-emerald-200 bg-white p-2.5 dark:border-emerald-900/50 dark:bg-slate-900">
+                <span class="font-bold text-slate-700 dark:text-slate-300">Point 1 Verification:</span>
+                <div id="verify-p1-text" class="text-emerald-700 dark:text-emerald-400 font-bold mt-1">f(0) = 2 (Exact Match ✓)</div>
+              </div>
+              <div id="verify-box-p2" class="rounded-xl border border-emerald-200 bg-white p-2.5 dark:border-emerald-900/50 dark:bg-slate-900">
+                <span class="font-bold text-slate-700 dark:text-slate-300">Point 2 Verification:</span>
+                <div id="verify-p2-text" class="text-emerald-700 dark:text-emerald-400 font-bold mt-1">f(1) = 4 (Exact Match ✓)</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Step-by-Step Algebraic Derivation -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <span>📝</span> Step-by-Step Algebraic Derivation
+            </h3>
+            <ol id="res-solve-steps" class="mt-3 space-y-2 text-xs text-slate-700 dark:text-slate-300 list-decimal pl-5 font-mono leading-relaxed"></ol>
+          </div>
+
+          <!-- 2D Canvas Curve Plot -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <span>📊</span> Interactive 2D Function Curve &amp; Points Plot
+              </h3>
+              <span class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Cartesian Coordinates</span>
+            </div>
+            <div class="flex justify-center overflow-x-auto">
+              <canvas id="solve-canvas" width="560" height="300" class="rounded-xl border border-slate-300 bg-slate-950 dark:border-slate-700 shadow-inner w-full max-w-140"></canvas>
+            </div>
+            <p class="mt-2 text-[11px] text-center text-slate-500 dark:text-slate-400">
+              Blue curve represents f(x). Glowing cyan and amber dots highlight the given coordinates (x₁, y₁) and (x₂, y₂).
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- 2. MODE 2 PANEL: EVALUATE FUNCTION AT X                  -->
+      <!-- ======================================================== -->
+      <div id="panel-evaluate" class="calc-panel hidden space-y-5">
+        <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                <span>⚡</span> Evaluate Exponential Function at Any x-Value
+              </h2>
+              <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                Enter function parameters and an x-coordinate to calculate the corresponding output y = f(x).
+              </p>
+            </div>
+            <!-- Function Form Selector -->
+            <div class="flex items-center gap-1 rounded-xl bg-slate-200/70 p-1 dark:bg-slate-800 text-xs font-bold">
+              <button
+                type="button"
+                id="btn-eval-form-std"
+                class="eval-form-btn rounded-lg bg-white px-3 py-1.5 text-blue-700 shadow-xs dark:bg-slate-900 dark:text-blue-400 cursor-pointer transition"
+                data-form="standard"
+              >
+                f(x) = a · bˣ
+              </button>
+              <button
+                type="button"
+                id="btn-eval-form-nat"
+                class="eval-form-btn rounded-lg px-3 py-1.5 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer transition"
+                data-form="natural"
+              >
+                f(x) = a · eᶜˣ
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <form id="form-evaluate" class="space-y-4" novalidate onsubmit="return false;">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            
+            <!-- Coefficient a -->
+            <div>
+              <label for="eval-a" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Coefficient (a)
+              </label>
+              <input
+                type="text"
+                id="eval-a"
+                value="2"
+                placeholder="e.g. 2, -1, 0.5"
+                class="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                autocomplete="off"
+              />
+              <p class="mt-1 text-[10px] text-slate-500 dark:text-slate-400">Initial multiplier (a ≠ 0)</p>
+            </div>
+
+            <!-- Base b (Standard) OR Rate c (Natural) -->
+            <div id="box-eval-b">
+              <div class="flex items-center justify-between mb-1">
+                <label for="eval-b" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Base (b)
+                </label>
+                <button type="button" id="btn-use-e-base" class="text-[10px] font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer">
+                  Use e (2.718...)
+                </button>
+              </div>
+              <input
+                type="text"
+                id="eval-b"
+                value="3"
+                placeholder="e.g. 3, 2, e"
+                class="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                autocomplete="off"
+              />
+              <p class="mt-1 text-[10px] text-slate-500 dark:text-slate-400">Base constant (b &gt; 0)</p>
+            </div>
+
+            <div id="box-eval-c" class="hidden">
+              <label for="eval-c" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Continuous Rate (c)
+              </label>
+              <input
+                type="text"
+                id="eval-c"
+                value="0.5"
+                placeholder="e.g. 0.5, -0.2"
+                class="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                autocomplete="off"
+              />
+              <p class="mt-1 text-[10px] text-slate-500 dark:text-slate-400">Rate constant with base e</p>
+            </div>
+
+            <!-- Evaluation point x -->
+            <div>
+              <label for="eval-x" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                Evaluate at x =
+              </label>
+              <input
+                type="text"
+                id="eval-x"
+                value="2"
+                placeholder="e.g. 2, -1, 3.5"
+                class="w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-white"
+                autocomplete="off"
+              />
+              <p class="mt-1 text-[10px] text-slate-500 dark:text-slate-400">Exponent evaluation input</p>
+            </div>
+
+          </div>
+
+          <!-- Buttons -->
+          <div class="flex items-center gap-2 pt-1">
+            <button
+              type="submit"
+              id="btn-calc-eval"
+              class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer"
+            >
+              Evaluate Function at x →
+            </button>
+            <button
+              type="button"
+              id="btn-clear-eval"
+              class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer"
+            >
+              Clear
+            </button>
+          </div>
+        </form>
+
+        <!-- Error Banner -->
+        <p id="err-eval" class="hidden rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700 dark:border-red-900/50 dark:bg-red-950/50 dark:text-red-300"></p>
+
+        <!-- Evaluate Results Container -->
+        <div id="res-eval-card" class="hidden space-y-4 pt-2">
+          <div class="rounded-2xl border border-indigo-200 bg-linear-to-r from-indigo-500/10 via-blue-500/10 to-indigo-600/10 p-5 dark:border-indigo-900/50 dark:from-indigo-950/40 dark:to-blue-950/40">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-indigo-200/60 pb-3 dark:border-indigo-800/60">
+              <span class="text-xs font-bold uppercase tracking-wider text-indigo-900 dark:text-indigo-300">
+                Evaluated Output:
+              </span>
+              <span id="badge-eval-behavior" class="inline-flex items-center rounded-full bg-indigo-100 px-2.5 py-0.5 text-[11px] font-bold text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300">
+                Exponential Growth
+              </span>
+            </div>
+
+            <div class="mt-3 flex flex-wrap items-baseline gap-3">
+              <div id="res-eval-result" class="font-mono text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tracking-tight">
+                f(2) = 18
+              </div>
+            </div>
+
+            <div class="mt-3 font-mono text-xs text-slate-600 dark:text-slate-400" id="res-eval-full-eq">
+              f(x) = 2 · 3ˣ  ⟹  f(2) = 2 · 3² = 18
+            </div>
+          </div>
+
+          <!-- Step-by-Step Calculation -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <span>📝</span> Step-by-Step Calculation Breakdown
+            </h3>
+            <ol id="res-eval-steps" class="mt-3 space-y-2 text-xs text-slate-700 dark:text-slate-300 list-decimal pl-5 font-mono leading-relaxed"></ol>
+          </div>
+
+          <!-- 2D Canvas Curve Plot -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <span>📊</span> Function Curve &amp; Evaluated Coordinate
+              </h3>
+              <span class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Cartesian Coordinates</span>
+            </div>
+            <div class="flex justify-center overflow-x-auto">
+              <canvas id="eval-canvas" width="560" height="300" class="rounded-xl border border-slate-300 bg-slate-950 dark:border-slate-700 shadow-inner w-full max-w-140"></canvas>
+            </div>
+            <p class="mt-2 text-[11px] text-center text-slate-500 dark:text-slate-400">
+              Blue curve represents the function. Amber dot marks the evaluated point (x, f(x)).
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ======================================================== -->
+  <!-- EDUCATIONAL CONTENT SLOT                                 -->
+  <!-- ======================================================== -->
+  <Fragment slot="content">
+    <div class="space-y-8">
+      
+      <div>
+        <h2 class="text-2xl font-black text-slate-900 dark:text-white">What Is an Exponential Function?</h2>
+        <p class="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          An <strong>exponential function</strong> is a fundamental mathematical relation in which the independent variable <em>x</em> appears in the exponent rather than in the base. Unlike linear functions that increase by adding a fixed constant with each step, or polynomial functions where a variable is raised to a fixed power, exponential functions grow or decay by multiplying by a constant factor for every unit increase in <em>x</em>.
+        </p>
+        <div class="my-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 font-mono text-center text-sm font-bold text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-white">
+          f(x) = a · bˣ &nbsp;&nbsp;&nbsp;or&nbsp;&nbsp;&nbsp; f(x) = a · eᶜˣ
+        </div>
+        <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          In these standard formulations:
+        </p>
+        <ul class="mt-3 space-y-2 text-sm text-slate-700 dark:text-slate-300 list-disc list-inside">
+          <li><strong>x (The Exponent):</strong> The independent input variable, which can be any real number (positive, negative, fractional, or zero).</li>
+          <li><strong>b (The Base):</strong> A strictly positive real constant (<em>b &gt; 0</em> and <em>b ≠ 1</em>) that governs the rate of multiplication per unit of <em>x</em>.</li>
+          <li><strong>a (The Initial Value / Scale Factor):</strong> The coefficient equal to the vertical intercept <em>f(0)</em> when <em>x = 0</em>. It dictates the amplitude and sign of the function.</li>
+          <li><strong>e (Euler's Constant):</strong> The mathematical constant <em>e ≈ 2.718281828...</em>, which represents continuous compounding growth.</li>
+          <li><strong>c (Continuous Rate Constant):</strong> The proportional growth rate (when <em>c &gt; 0</em>) or decay rate (when <em>c &lt; 0</em>) in natural exponential models.</li>
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="text-2xl font-black text-slate-900 dark:text-white">Standard Forms of Exponential Functions</h2>
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/50">
+            <h3 class="text-base font-bold text-blue-600 dark:text-blue-400">1. Basic Form: f(x) = bˣ</h3>
+            <p class="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+              The simplest exponential curve passing through (0, 1). For example, <em>f(x) = 2ˣ</em> doubles with each unit step of x, while <em>f(x) = (1/2)ˣ</em> halves with each step.
+            </p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/50">
+            <h3 class="text-base font-bold text-blue-600 dark:text-blue-400">2. Scaled Form: f(x) = a · bˣ</h3>
+            <p class="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+              The most common model for practical scenarios. The multiplier <em>a</em> scales the curve vertically, setting the starting value <em>f(0) = a</em> at time zero.
+            </p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/50">
+            <h3 class="text-base font-bold text-emerald-600 dark:text-emerald-400">3. Natural Exponential: f(x) = eᶜˣ</h3>
+            <p class="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+              Uses Euler's number <em>e</em> as the universal base. The constant <em>c</em> specifies the instantaneous, continuous growth or decay velocity.
+            </p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900/50">
+            <h3 class="text-base font-bold text-emerald-600 dark:text-emerald-400">4. Scaled Natural Form: f(x) = a · eᶜˣ</h3>
+            <p class="mt-2 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
+              Universal in differential equations, radioactive isotope decay, pharmacokinetics, and continuous compound interest models.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-2xl font-black text-slate-900 dark:text-white">How to Find an Exponential Function from Two Points</h2>
+        <p class="mt-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          Given any two coordinate points <strong>(x₁, y₁)</strong> and <strong>(x₂, y₂)</strong> lying on the curve of <em>f(x) = a · bˣ</em>, we can solve for the unknown parameters <em>a</em> and <em>b</em> algebraically:
+        </p>
+
+        <div class="mt-4 space-y-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-900/60 font-mono text-xs text-slate-800 dark:text-slate-200">
+          <p><strong>Step 1: Write the system of equations</strong></p>
+          <div class="pl-4 border-l-2 border-blue-500 space-y-1">
+            <p>y₁ = a · b^(x₁)</p>
+            <p>y₂ = a · b^(x₂)</p>
+          </div>
+
+          <p><strong>Step 2: Eliminate parameter 'a' by dividing equation 1 by equation 2</strong></p>
+          <div class="pl-4 border-l-2 border-blue-500 space-y-1">
+            <p>y₁ / y₂ = (a · b^(x₁)) / (a · b^(x₂))</p>
+            <p>y₁ / y₂ = b^(x₁ − x₂)</p>
+          </div>
+
+          <p><strong>Step 3: Solve for the base 'b' by taking the (x₁ − x₂) root</strong></p>
+          <div class="pl-4 border-l-2 border-blue-500 space-y-1">
+            <p class="text-blue-600 dark:text-blue-400 font-bold">b = (y₁ / y₂)^(1 / (x₁ − x₂))</p>
+          </div>
+
+          <p><strong>Step 4: Substitute 'b' into equation 1 to isolate initial value 'a'</strong></p>
+          <div class="pl-4 border-l-2 border-blue-500 space-y-1">
+            <p class="text-emerald-600 dark:text-emerald-400 font-bold">a = y₁ / b^(x₁)</p>
+          </div>
+
+          <p><strong>Step 5: Verify against point 2</strong></p>
+          <div class="pl-4 border-l-2 border-blue-500 space-y-1">
+            <p>Check that a · b^(x₂) = y₂.</p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-2xl font-black text-slate-900 dark:text-white">Exponential Growth vs. Exponential Decay</h2>
+        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <div class="rounded-2xl border border-blue-200 bg-blue-50/50 p-5 dark:border-blue-900/50 dark:bg-blue-950/20">
+            <h3 class="text-sm font-black text-blue-900 dark:text-blue-300 flex items-center gap-1.5">
+              <span>🚀</span> Exponential Growth (b &gt; 1 or c &gt; 0)
+            </h3>
+            <p class="mt-2 leading-relaxed text-slate-700 dark:text-slate-300">
+              When the base <em>b &gt; 1</em> (or continuous rate <em>c &gt; 0</em> for positive <em>a</em>), the function values surge upward at an accelerating rate as <em>x</em> increases.
+            </p>
+            <ul class="mt-3 space-y-1.5 list-disc list-inside text-slate-600 dark:text-slate-400">
+              <li>As x ➔ +∞, f(x) ➔ +∞</li>
+              <li>As x ➔ −∞, f(x) approaches the horizontal asymptote y = 0</li>
+              <li>Real-world examples: Unconstrained bacterial cell division, compounding investments, viral spread.</li>
+            </ul>
+          </div>
+
+          <div class="rounded-2xl border border-amber-200 bg-amber-50/50 p-5 dark:border-amber-900/50 dark:bg-amber-950/20">
+            <h3 class="text-sm font-black text-amber-900 dark:text-amber-300 flex items-center gap-1.5">
+              <span>📉</span> Exponential Decay (0 &lt; b &lt; 1 or c &lt; 0)
+            </h3>
+            <p class="mt-2 leading-relaxed text-slate-700 dark:text-slate-300">
+              When the base is between zero and one (<em>0 &lt; b &lt; 1</em>) or continuous rate <em>c &lt; 0</em> (with positive <em>a</em>), the function diminishes rapidly toward zero.
+            </p>
+            <ul class="mt-3 space-y-1.5 list-disc list-inside text-slate-600 dark:text-slate-400">
+              <li>As x ➔ +∞, f(x) asymptotically approaches y = 0</li>
+              <li>As x ➔ −∞, f(x) ➔ +∞</li>
+              <li>Real-world examples: Radioactive half-life, medication elimination from blood plasma, cooling of hot coffee.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <h2 class="text-2xl font-black text-slate-900 dark:text-white">Handling Special Mathematical Cases: Negative Y, Euler's e, and Equal Y</h2>
+        <div class="space-y-3 mt-3 text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+          <p>
+            <strong>Can Exponential Functions Have Negative Y Values?</strong> Yes. In real analysis, while the base must satisfy <em>b &gt; 0</em>, the initial coefficient <em>a</em> can be negative. For instance, the function <em>f(x) = −2 · 3ˣ</em> produces negative values for every real input <em>x</em>. It represents an exponential growth curve reflected across the x-axis. However, because <em>bˣ &gt; 0</em> for all real <em>x</em>, both points must have the <em>same sign</em> (both positive or both negative). If <em>y₁</em> and <em>y₂</em> have opposite signs, no real exponential function can pass through both points.
+          </p>
+          <p>
+            <strong>What If y₁ = y₂? (b = 1):</strong> If the two points share the same y-value at different x-coordinates (such as (1, 5) and (4, 5)), then <em>y₁ / y₂ = 1</em>, which yields <em>b = 1</em>. Because <em>1ˣ = 1</em> for all real <em>x</em>, the function degenerates into the horizontal constant function <em>f(x) = a</em>. Our calculator correctly identifies and evaluates this as a constant function.
+          </p>
+          <p>
+            <strong>Euler's Number e Mode:</strong> When working with the natural base <em>e ≈ 2.718281828...</em> in the form <em>f(x) = a · eᶜˣ</em>, dividing the equations yields <em>y₁ / y₂ = e^(c(x₁ − x₂))</em>. Taking the natural logarithm (ln) of both sides allows direct calculation of continuous rate <em>c = ln(y₁ / y₂) / (x₁ − x₂)</em>.
+          </p>
+        </div>
+      </div>
+
+      <!-- Related Calculators Internal Links -->
+      <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 dark:border-slate-800 dark:bg-slate-900/60">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white mb-3 flex items-center gap-2">
+          <span>🔗</span> Explore Related Mathematics &amp; Finance Calculators
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5 text-xs">
+          <a href="/math/exponential-form-calculator/" class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 hover:border-blue-500 hover:text-blue-600 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-400 transition font-semibold">
+            <span>⚡</span> Exponential Form Calculator
+          </a>
+          <a href="/math/scientific-calculator/" class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 hover:border-blue-500 hover:text-blue-600 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-400 transition font-semibold">
+            <span>🔬</span> Scientific Calculator
+          </a>
+          <a href="/math/fraction-calculator/" class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 hover:border-blue-500 hover:text-blue-600 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-400 transition font-semibold">
+            <span>➗</span> Fraction Calculator
+          </a>
+          <a href="/finance/compound-interest-calculator/" class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 hover:border-blue-500 hover:text-blue-600 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-400 transition font-semibold">
+            <span>📈</span> Compound Interest Calculator
+          </a>
+          <a href="/finance/sip-calculator/" class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 hover:border-blue-500 hover:text-blue-600 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-400 transition font-semibold">
+            <span>💰</span> SIP Mutual Fund Calculator
+          </a>
+          <a href="/math/standard-deviation-calculator/" class="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 hover:border-blue-500 hover:text-blue-600 dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-400 transition font-semibold">
+            <span>📊</span> Standard Deviation Calculator
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </Fragment>
+
+  <!-- ======================================================== -->
+  <!-- FAQ SLOT                                                 -->
+  <!-- ======================================================== -->
+  <Fragment slot="faq">
+    <div class="space-y-4">
+      
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open>
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            1. What is an exponential function?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+          An exponential function is a mathematical relationship in which an independent variable appears in the exponent, expressed generally as f(x) = a · bˣ or f(x) = a · eᶜˣ, where the base b is a positive real number not equal to 1.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            2. How do you find an exponential function from two points?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+          Substitute both points into y = a · bˣ to form a system of two equations: y₁ = a · b^(x₁) and y₂ = a · b^(x₂). Dividing the two equations eliminates 'a' and gives y₁ / y₂ = b^(x₁ − x₂). Solve for base b = (y₁ / y₂)^(1 / (x₁ − x₂)), then substitute b back into one equation to solve for initial coefficient a = y₁ / b^(x₁).
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            3. Can two points determine an exponential function?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+          Yes, exactly two distinct points (x₁, y₁) and (x₂, y₂) with different x-coordinates (x₁ ≠ x₂) and y-values of the same sign uniquely determine an exponential function of the form f(x) = a · bˣ.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            4. What happens if the two x-values are the same?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+          If x₁ = x₂, the vertical line test is violated unless y₁ = y₂. A single x-value cannot yield two different outputs in a mathematical function, and the formula would divide by zero (x₁ − x₂ = 0). The points must have distinct x-coordinates.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            5. What is the role of the base in an exponential function?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+          The base b dictates the multiplicative factor per unit increase in x. If b &gt; 1, the function demonstrates exponential growth. If 0 &lt; b &lt; 1, the function models exponential decay. If b = 1, it degenerates into a constant function f(x) = a.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            6. What is Euler's number (e)?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+          Euler's number e is an irrational mathematical constant approximately equal to 2.718281828459. It serves as the natural base for continuous exponential growth and decay models in biology, finance, and physics.
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            7. What is the difference between exponential growth and exponential decay?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+          Exponential growth occurs when quantity increases at an accelerating rate proportional to its current value (b &gt; 1 or c &gt; 0). Exponential decay occurs when quantity decreases at a rate proportional to its value, approaching zero asymptotically (0 &lt; b &lt; 1 or c &lt; 0).
+        </p>
+      </details>
+
+      <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <summary class="cursor-pointer list-none">
+          <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
+            8. Can an exponential function have negative y-values?
+            <span class="group-open:rotate-180 transition-transform">▼</span>
+          </h3>
+        </summary>
+        <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed text-sm">
+          Yes. While the base b must remain positive in real analysis (b &gt; 0), the initial multiplier 'a' can be negative (a &lt; 0). A function like f(x) = −2 · 3ˣ produces strictly negative outputs for all real x and is a completely valid real exponential function.
+        </p>
+      </details>
+
+    </div>
+  </Fragment>
+
+</CalculatorLayout>
+
+<script>
+  import {
+    solveStandardExponentialFromPoints,
+    solveNaturalExponentialFromPoints,
+    evaluateStandardExponential,
+    evaluateNaturalExponential,
+    formatFloat,
+  } from '../../lib/calculators/exponential-function';
+
+  // 1. Tab Switching (Mode 1 vs Mode 2)
+  const modeTabs = document.querySelectorAll('.btn-mode-tab');
+  const panels = document.querySelectorAll('.calc-panel');
+
+  function switchModeTab(targetTabId: string) {
+    modeTabs.forEach((tab) => {
+      const isTarget = tab.getAttribute('data-tab') === targetTabId;
+      if (isTarget) {
+        tab.classList.add('active', 'bg-blue-600', 'text-white');
+        tab.classList.remove('border', 'border-slate-300', 'bg-white', 'text-slate-700', 'dark:border-slate-700', 'dark:bg-slate-800', 'dark:text-slate-200');
+      } else {
+        tab.classList.remove('active', 'bg-blue-600', 'text-white');
+        tab.classList.add('border', 'border-slate-300', 'bg-white', 'text-slate-700', 'dark:border-slate-700', 'dark:bg-slate-800', 'dark:text-slate-200');
+      }
+    });
+
+    panels.forEach((panel) => {
+      const panelId = panel.id.replace('panel-', 'tab-');
+      if (panelId === targetTabId) {
+        panel.classList.remove('hidden');
+      } else {
+        panel.classList.add('hidden');
+      }
+    });
+  }
+
+  modeTabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const target = tab.getAttribute('data-tab');
+      if (target) switchModeTab(target);
+    });
+  });
+
+  // 2. Mode 1 (Solve) Elements
+  let activeSolveForm: 'standard' | 'natural' = 'standard';
+  const btnSolveFormStd = document.getElementById('btn-solve-form-std') as HTMLButtonElement;
+  const btnSolveFormNat = document.getElementById('btn-solve-form-nat') as HTMLButtonElement;
+  const solveX1 = document.getElementById('solve-x1') as HTMLInputElement;
+  const solveY1 = document.getElementById('solve-y1') as HTMLInputElement;
+  const solveX2 = document.getElementById('solve-x2') as HTMLInputElement;
+  const solveY2 = document.getElementById('solve-y2') as HTMLInputElement;
+  const btnCalcSolve = document.getElementById('btn-calc-solve') as HTMLButtonElement;
+  const btnClearSolve = document.getElementById('btn-clear-solve') as HTMLButtonElement;
+  const errSolve = document.getElementById('err-solve') as HTMLParagraphElement;
+  const resSolveCard = document.getElementById('res-solve-card') as HTMLDivElement;
+  const resSolveEq = document.getElementById('res-solve-equation') as HTMLDivElement;
+  const badgeSolveBehavior = document.getElementById('badge-solve-behavior') as HTMLSpanElement;
+  const btnCopySolveEq = document.getElementById('btn-copy-solve-eq') as HTMLButtonElement;
+  const resSolveParamA = document.getElementById('res-solve-param-a') as HTMLSpanElement;
+  const boxSolveParamB = document.getElementById('box-solve-param-b') as HTMLDivElement;
+  const resSolveParamB = document.getElementById('res-solve-param-b') as HTMLSpanElement;
+  const boxSolveParamC = document.getElementById('box-solve-param-c') as HTMLDivElement;
+  const resSolveParamC = document.getElementById('res-solve-param-c') as HTMLSpanElement;
+  const resSolveIntercept = document.getElementById('res-solve-intercept') as HTMLSpanElement;
+  const verifyP1Text = document.getElementById('verify-p1-text') as HTMLDivElement;
+  const verifyP2Text = document.getElementById('verify-p2-text') as HTMLDivElement;
+  const resSolveSteps = document.getElementById('res-solve-steps') as HTMLOListElement;
+  const solveCanvas = document.getElementById('solve-canvas') as HTMLCanvasElement;
+
+  function setSolveForm(form: 'standard' | 'natural') {
+    activeSolveForm = form;
+    if (form === 'standard') {
+      btnSolveFormStd.className = 'solve-form-btn rounded-lg bg-white px-3 py-1.5 text-blue-700 shadow-xs dark:bg-slate-900 dark:text-blue-400 cursor-pointer transition';
+      btnSolveFormNat.className = 'solve-form-btn rounded-lg px-3 py-1.5 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer transition';
+      boxSolveParamB.classList.remove('hidden');
+      boxSolveParamC.classList.add('hidden');
+    } else {
+      btnSolveFormNat.className = 'solve-form-btn rounded-lg bg-white px-3 py-1.5 text-blue-700 shadow-xs dark:bg-slate-900 dark:text-blue-400 cursor-pointer transition';
+      btnSolveFormStd.className = 'solve-form-btn rounded-lg px-3 py-1.5 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer transition';
+      boxSolveParamB.classList.add('hidden');
+      boxSolveParamC.classList.remove('hidden');
+    }
+  }
+
+  btnSolveFormStd?.addEventListener('click', () => {
+    setSolveForm('standard');
+    runSolveCalculation();
+  });
+
+  btnSolveFormNat?.addEventListener('click', () => {
+    setSolveForm('natural');
+    runSolveCalculation();
+  });
+
+  // Canvas 2D Plotter helper
+  function drawPlot(
+    canvas: HTMLCanvasElement,
+    fn: (x: number) => number,
+    points: Array<{ x: number; y: number; label: string; color: string }>
+  ) {
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    // Compute coordinate window
+    let minX = -4;
+    let maxX = 4;
+    let minY = -2;
+    let maxY = 10;
+
+    if (points.length > 0) {
+      const xs = points.map((p) => p.x);
+      const ys = points.map((p) => p.y);
+      minX = Math.min(...xs) - 2;
+      maxX = Math.max(...xs) + 2;
+      minY = Math.min(0, ...ys) - 2;
+      maxY = Math.max(2, ...ys) + 3;
+    }
+
+    if (maxX <= minX) maxX = minX + 4;
+    if (maxY <= minY) maxY = minY + 4;
+
+    const scaleX = (w - 60) / (maxX - minX);
+    const scaleY = (h - 60) / (maxY - minY);
+
+    const toPx = (x: number) => 30 + (x - minX) * scaleX;
+    const toPy = (y: number) => h - (30 + (y - minY) * scaleY);
+
+    // Draw grid
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 1;
+
+    const xStep = Math.max(1, Math.round((maxX - minX) / 8));
+    for (let gx = Math.ceil(minX); gx <= Math.floor(maxX); gx += xStep) {
+      const px = toPx(gx);
+      ctx.beginPath();
+      ctx.moveTo(px, 0);
+      ctx.lineTo(px, h);
+      ctx.stroke();
+
+      ctx.fillStyle = '#64748b';
+      ctx.font = '10px monospace';
+      ctx.fillText(String(gx), px - 4, h - 10);
+    }
+
+    const yStep = Math.max(1, Math.round((maxY - minY) / 6));
+    for (let gy = Math.ceil(minY); gy <= Math.floor(maxY); gy += yStep) {
+      const py = toPy(gy);
+      ctx.beginPath();
+      ctx.moveTo(0, py);
+      ctx.lineTo(w, py);
+      ctx.stroke();
+
+      ctx.fillStyle = '#64748b';
+      ctx.font = '10px monospace';
+      ctx.fillText(String(gy), 6, py + 3);
+    }
+
+    // Main Axes
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 1.5;
+    if (minY <= 0 && maxY >= 0) {
+      const py0 = toPy(0);
+      ctx.beginPath();
+      ctx.moveTo(0, py0);
+      ctx.lineTo(w, py0);
+      ctx.stroke();
+    }
+    if (minX <= 0 && maxX >= 0) {
+      const px0 = toPx(0);
+      ctx.beginPath();
+      ctx.moveTo(px0, 0);
+      ctx.lineTo(px0, h);
+      ctx.stroke();
+    }
+
+    // Draw Exponential Curve
+    ctx.strokeStyle = '#38bdf8';
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+
+    let started = false;
+    const stepPx = 2;
+    for (let px = 30; px <= w - 30; px += stepPx) {
+      const x = minX + (px - 30) / scaleX;
+      let y = 0;
+      try {
+        y = fn(x);
+      } catch {
+        continue;
+      }
+
+      if (typeof y === 'number' && isFinite(y)) {
+        const py = toPy(y);
+        // Clamp visually inside reasonable bounds
+        if (py >= -20 && py <= h + 20) {
+          if (!started) {
+            ctx.moveTo(px, py);
+            started = true;
+          } else {
+            ctx.lineTo(px, py);
+          }
+        } else {
+          started = false;
+        }
+      } else {
+        started = false;
+      }
+    }
+    ctx.stroke();
+
+    // Plot Points
+    points.forEach((pt) => {
+      const px = toPx(pt.x);
+      const py = toPy(pt.y);
+
+      // Outer glow
+      ctx.fillStyle = pt.color;
+      ctx.beginPath();
+      ctx.arc(px, py, 6, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(px, py, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Label
+      ctx.fillStyle = '#f8fafc';
+      ctx.font = 'bold 11px monospace';
+      ctx.fillText(pt.label, px + 8, py - 6);
+    });
+  }
+
+  function runSolveCalculation() {
+    errSolve.classList.add('hidden');
+    errSolve.textContent = '';
+
+    try {
+      const x1 = solveX1.value;
+      const y1 = solveY1.value;
+      const x2 = solveX2.value;
+      const y2 = solveY2.value;
+
+      const res =
+        activeSolveForm === 'natural'
+          ? solveNaturalExponentialFromPoints(x1, y1, x2, y2)
+          : solveStandardExponentialFromPoints(x1, y1, x2, y2);
+
+      resSolveEq.textContent = res.equationUnicode;
+      badgeSolveBehavior.textContent = res.behaviorLabel;
+
+      resSolveParamA.textContent = formatFloat(res.a, 6);
+      if (res.b !== undefined) resSolveParamB.textContent = formatFloat(res.b, 6);
+      if (res.c !== undefined) resSolveParamC.textContent = formatFloat(res.c, 6);
+      resSolveIntercept.textContent = `(0, ${formatFloat(res.a, 6)})`;
+
+      verifyP1Text.textContent = `f(${res.verification.x1}) = ${formatFloat(res.verification.calculatedY1, 4)} (Expected: ${res.verification.expectedY1} ✓)`;
+      verifyP2Text.textContent = `f(${res.verification.x2}) = ${formatFloat(res.verification.calculatedY2, 4)} (Expected: ${res.verification.expectedY2} ✓)`;
+
+      resSolveSteps.innerHTML = '';
+      res.steps.forEach((st) => {
+        const li = document.createElement('li');
+        li.textContent = st;
+        resSolveSteps.appendChild(li);
+      });
+
+      // Render Plot
+      if (res.form === 'natural' && res.c !== undefined) {
+        drawPlot(
+          solveCanvas,
+          (x) => res.a * Math.exp(res.c! * x),
+          [
+            { x: res.point1.x, y: res.point1.y, label: `(${res.point1.x}, ${res.point1.y})`, color: '#38bdf8' },
+            { x: res.point2.x, y: res.point2.y, label: `(${res.point2.x}, ${res.point2.y})`, color: '#f59e0b' },
+          ]
+        );
+      } else {
+        drawPlot(
+          solveCanvas,
+          (x) => res.a * Math.pow(res.b, x),
+          [
+            { x: res.point1.x, y: res.point1.y, label: `(${res.point1.x}, ${res.point1.y})`, color: '#38bdf8' },
+            { x: res.point2.x, y: res.point2.y, label: `(${res.point2.x}, ${res.point2.y})`, color: '#f59e0b' },
+          ]
+        );
+      }
+
+      resSolveCard.classList.remove('hidden');
+    } catch (err: any) {
+      resSolveCard.classList.add('hidden');
+      errSolve.textContent = err?.message || 'Invalid coordinates for exponential function.';
+      errSolve.classList.remove('hidden');
+    }
+  }
+
+  btnCalcSolve?.addEventListener('click', runSolveCalculation);
+
+  btnClearSolve?.addEventListener('click', () => {
+    solveX1.value = '0';
+    solveY1.value = '';
+    solveX2.value = '1';
+    solveY2.value = '';
+    errSolve.classList.add('hidden');
+    resSolveCard.classList.add('hidden');
+    solveY1.focus();
+  });
+
+  btnCopySolveEq?.addEventListener('click', () => {
+    const text = resSolveEq.textContent || '';
+    navigator.clipboard.writeText(text).then(() => {
+      btnCopySolveEq.textContent = '✓ Copied!';
+      setTimeout(() => {
+        btnCopySolveEq.textContent = '📋 Copy';
+      }, 2000);
+    });
+  });
+
+  // 3. Mode 2 (Evaluate) Elements
+  let activeEvalForm: 'standard' | 'natural' = 'standard';
+  const btnEvalFormStd = document.getElementById('btn-eval-form-std') as HTMLButtonElement;
+  const btnEvalFormNat = document.getElementById('btn-eval-form-nat') as HTMLButtonElement;
+  const evalA = document.getElementById('eval-a') as HTMLInputElement;
+  const evalB = document.getElementById('eval-b') as HTMLInputElement;
+  const evalC = document.getElementById('eval-c') as HTMLInputElement;
+  const evalX = document.getElementById('eval-x') as HTMLInputElement;
+  const boxEvalB = document.getElementById('box-eval-b') as HTMLDivElement;
+  const boxEvalC = document.getElementById('box-eval-c') as HTMLDivElement;
+  const btnUseEBase = document.getElementById('btn-use-e-base') as HTMLButtonElement;
+  const btnCalcEval = document.getElementById('btn-calc-eval') as HTMLButtonElement;
+  const btnClearEval = document.getElementById('btn-clear-eval') as HTMLButtonElement;
+  const errEval = document.getElementById('err-eval') as HTMLParagraphElement;
+  const resEvalCard = document.getElementById('res-eval-card') as HTMLDivElement;
+  const resEvalResult = document.getElementById('res-eval-result') as HTMLDivElement;
+  const resEvalFullEq = document.getElementById('res-eval-full-eq') as HTMLDivElement;
+  const badgeEvalBehavior = document.getElementById('badge-eval-behavior') as HTMLSpanElement;
+  const resEvalSteps = document.getElementById('res-eval-steps') as HTMLOListElement;
+  const evalCanvas = document.getElementById('eval-canvas') as HTMLCanvasElement;
+
+  function setEvalForm(form: 'standard' | 'natural') {
+    activeEvalForm = form;
+    if (form === 'standard') {
+      btnEvalFormStd.className = 'eval-form-btn rounded-lg bg-white px-3 py-1.5 text-blue-700 shadow-xs dark:bg-slate-900 dark:text-blue-400 cursor-pointer transition';
+      btnEvalFormNat.className = 'eval-form-btn rounded-lg px-3 py-1.5 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer transition';
+      boxEvalB.classList.remove('hidden');
+      boxEvalC.classList.add('hidden');
+    } else {
+      btnEvalFormNat.className = 'eval-form-btn rounded-lg bg-white px-3 py-1.5 text-blue-700 shadow-xs dark:bg-slate-900 dark:text-blue-400 cursor-pointer transition';
+      btnEvalFormStd.className = 'eval-form-btn rounded-lg px-3 py-1.5 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer transition';
+      boxEvalB.classList.add('hidden');
+      boxEvalC.classList.remove('hidden');
+    }
+  }
+
+  btnEvalFormStd?.addEventListener('click', () => {
+    setEvalForm('standard');
+    runEvalCalculation();
+  });
+
+  btnEvalFormNat?.addEventListener('click', () => {
+    setEvalForm('natural');
+    runEvalCalculation();
+  });
+
+  btnUseEBase?.addEventListener('click', () => {
+    evalB.value = 'e';
+    runEvalCalculation();
+  });
+
+  function runEvalCalculation() {
+    errEval.classList.add('hidden');
+    errEval.textContent = '';
+
+    try {
+      const a = evalA.value;
+      const x = evalX.value;
+
+      const res =
+        activeEvalForm === 'natural'
+          ? evaluateNaturalExponential(a, evalC.value, x)
+          : evaluateStandardExponential(a, evalB.value, x);
+
+      resEvalResult.textContent = res.evaluatedEquation;
+      resEvalFullEq.textContent = `${res.equationUnicode}`;
+      badgeEvalBehavior.textContent = res.behaviorLabel;
+
+      resEvalSteps.innerHTML = '';
+      res.steps.forEach((st) => {
+        const li = document.createElement('li');
+        li.textContent = st;
+        resEvalSteps.appendChild(li);
+      });
+
+      // Render Plot
+      if (res.form === 'natural' && res.c !== undefined) {
+        drawPlot(
+          evalCanvas,
+          (t) => res.a * Math.exp(res.c! * t),
+          [
+            { x: res.x, y: res.y, label: `(${formatFloat(res.x, 2)}, ${formatFloat(res.y, 2)})`, color: '#f59e0b' },
+          ]
+        );
+      } else {
+        drawPlot(
+          evalCanvas,
+          (t) => res.a * Math.pow(res.b!, t),
+          [
+            { x: res.x, y: res.y, label: `(${formatFloat(res.x, 2)}, ${formatFloat(res.y, 2)})`, color: '#f59e0b' },
+          ]
+        );
+      }
+
+      resEvalCard.classList.remove('hidden');
+    } catch (err: any) {
+      resEvalCard.classList.add('hidden');
+      errEval.textContent = err?.message || 'Invalid parameters for evaluation.';
+      errEval.classList.remove('hidden');
+    }
+  }
+
+  btnCalcEval?.addEventListener('click', runEvalCalculation);
+
+  btnClearEval?.addEventListener('click', () => {
+    evalA.value = '1';
+    evalB.value = '2';
+    evalC.value = '1';
+    evalX.value = '0';
+    errEval.classList.add('hidden');
+    resEvalCard.classList.add('hidden');
+    evalA.focus();
+  });
+
+  // 4. Presets Click Handlers
+  document.querySelectorAll('.btn-preset').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const mode = btn.getAttribute('data-mode');
+      const form = btn.getAttribute('data-form') as 'standard' | 'natural';
+
+      if (mode === 'solve') {
+        switchModeTab('tab-solve');
+        setSolveForm(form);
+        solveX1.value = btn.getAttribute('data-x1') || '0';
+        solveY1.value = btn.getAttribute('data-y1') || '2';
+        solveX2.value = btn.getAttribute('data-x2') || '1';
+        solveY2.value = btn.getAttribute('data-y2') || '4';
+        runSolveCalculation();
+      } else if (mode === 'eval') {
+        switchModeTab('tab-evaluate');
+        setEvalForm(form);
+        evalA.value = btn.getAttribute('data-a') || '1';
+        evalX.value = btn.getAttribute('data-x') || '0';
+        if (form === 'standard') {
+          evalB.value = btn.getAttribute('data-b') || '2';
+        } else {
+          evalC.value = btn.getAttribute('data-c') || '1';
+        }
+        runEvalCalculation();
+      }
+    });
+  });
+
+  // 5. Enter Key Listeners
+  document.querySelectorAll('input').forEach((input) => {
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        const form = input.closest('form');
+        if (form) {
+          const submitBtn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+          if (submitBtn) submitBtn.click();
+        }
+      }
+    });
+  });
+
+  // Initial Calculation on load
+  runSolveCalculation();
+</script>
