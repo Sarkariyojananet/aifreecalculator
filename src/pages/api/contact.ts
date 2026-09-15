@@ -22,17 +22,57 @@ function escapeHtml(text: string): string {
 // RFC 5322 compliant email validator
 const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
+// Reusable HTTP response headers & static responses
+const JSON_HEADERS = { 'Content-Type': 'application/json' } as const;
+
+const METHOD_NOT_ALLOWED_RESPONSE = new Response(
+  JSON.stringify({ error: 'Method Not Allowed. This endpoint accepts POST requests only.' }),
+  { status: 405, headers: { 'Content-Type': 'application/json', 'Allow': 'POST' } }
+);
+
+const HONEYPOT_SUCCESS_RESPONSE = new Response(
+  JSON.stringify({ success: true, message: 'Your message was sent successfully.' }),
+  { status: 200, headers: JSON_HEADERS }
+);
+
+function buildEmailText(
+  name: string,
+  email: string,
+  safeCategory: string,
+  subject: string,
+  messageId: string,
+  message: string
+): string {
+  return [
+    `New Contact Form Message - AI Free Calculator`,
+    `==============================================`,
+    `From: ${name} <${email}>`,
+    `Category: ${safeCategory}`,
+    `Subject: ${subject}`,
+    `Date: ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })}`,
+    `Message ID: ${messageId}`,
+    ``,
+    `Message:`,
+    `----------------------------------------------`,
+    message,
+    `----------------------------------------------`,
+    `Reply directly to this email to respond to ${name} at ${email}.`,
+  ].join('\n');
+}
+
+function buildEmailHtml(
+  safeName: string,
+  safeEmail: string,
+  safeCategoryHtml: string,
+  safeSubject: string,
+  messageId: string,
+  safeMessage: string
+): string {
+  return `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; background: #ffffff; color: #0f172a;"><div style="background: #2563eb; padding: 24px; color: #ffffff;"><h2 style="margin: 0; font-size: 20px; font-weight: 800;">New Contact Form Message</h2><p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">AI Free Calculator Engineering & Support Desk</p></div><div style="padding: 24px; font-size: 14px; line-height: 1.6;"><table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;"><tr><td style="padding: 8px 0; font-weight: 700; width: 100px; color: #64748b; font-size: 12px; text-transform: uppercase;">From:</td><td style="padding: 8px 0;"><strong>${safeName}</strong> &lt;<a href="mailto:${safeEmail}" style="color: #2563eb;">${safeEmail}</a>&gt;</td></tr><tr><td style="padding: 8px 0; font-weight: 700; color: #64748b; font-size: 12px; text-transform: uppercase;">Category:</td><td style="padding: 8px 0;"><span style="display: inline-block; background: #eff6ff; color: #1d4ed8; padding: 2px 10px; border-radius: 9999px; font-weight: 600; font-size: 12px;">${safeCategoryHtml}</span></td></tr><tr><td style="padding: 8px 0; font-weight: 700; color: #64748b; font-size: 12px; text-transform: uppercase;">Subject:</td><td style="padding: 8px 0; font-weight: 600;">${safeSubject}</td></tr><tr><td style="padding: 8px 0; font-weight: 700; color: #64748b; font-size: 12px; text-transform: uppercase;">Ref ID:</td><td style="padding: 8px 0; font-family: monospace; font-size: 12px; color: #64748b;">${messageId}</td></tr></table><div style="font-weight: 700; color: #64748b; font-size: 12px; text-transform: uppercase; margin-bottom: 8px;">Message:</div><div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; font-size: 13px; line-height: 1.7; color: #1e293b;">${safeMessage}</div><div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;">💡 <em>You can reply directly to this email to respond to <strong>${safeName}</strong> (${safeEmail}).</em></div></div></div>`;
+}
+
 export const GET: APIRoute = async () => {
-  return new Response(
-    JSON.stringify({ error: 'Method Not Allowed. This endpoint accepts POST requests only.' }),
-    {
-      status: 405,
-      headers: {
-        'Content-Type': 'application/json',
-        'Allow': 'POST',
-      },
-    }
-  );
+  return METHOD_NOT_ALLOWED_RESPONSE;
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -58,41 +98,35 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // 1. Anti-spam honeypot detection: silently drop bot submissions
     if (honeypot) {
-      return new Response(
-        JSON.stringify({ success: true, message: 'Your message was sent successfully.' }),
-        {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
+      return HONEYPOT_SUCCESS_RESPONSE;
     }
 
     // 2. Strict Input & Length Validation
     if (!name || name.length < 2 || name.length > 100) {
       return new Response(
         JSON.stringify({ error: 'Name is required and must be between 2 and 100 characters.' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        { status: 400, headers: JSON_HEADERS }
       );
     }
 
     if (!email || email.length > 254 || !EMAIL_REGEX.test(email)) {
       return new Response(
         JSON.stringify({ error: 'Please enter a valid email address (up to 254 characters).' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        { status: 400, headers: JSON_HEADERS }
       );
     }
 
     if (!subject || subject.length < 3 || subject.length > 200) {
       return new Response(
         JSON.stringify({ error: 'Subject is required and must be between 3 and 200 characters.' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        { status: 400, headers: JSON_HEADERS }
       );
     }
 
     if (!message || message.length < 10 || message.length > 5000) {
       return new Response(
         JSON.stringify({ error: 'Message is required and must be between 10 and 5000 characters.' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
+        { status: 400, headers: JSON_HEADERS }
       );
     }
 
@@ -129,59 +163,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const safeMessage = escapeHtml(message).replace(/\n/g, '<br />');
 
     const emailSubject = `[Contact Inquiry] ${subject} - from ${name}`;
-    const textBody = [
-      `New Contact Form Message - AI Free Calculator`,
-      `==============================================`,
-      `From: ${name} <${email}>`,
-      `Category: ${safeCategory}`,
-      `Subject: ${subject}`,
-      `Date: ${new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' })}`,
-      `Message ID: ${messageId}`,
-      ``,
-      `Message:`,
-      `----------------------------------------------`,
-      message,
-      `----------------------------------------------`,
-      `Reply directly to this email to respond to ${name} at ${email}.`,
-    ].join('\n');
-
-    const htmlBody = `
-      <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; background: #ffffff; color: #0f172a;">
-        <div style="background: #2563eb; padding: 24px; color: #ffffff;">
-          <h2 style="margin: 0; font-size: 20px; font-weight: 800;">New Contact Form Message</h2>
-          <p style="margin: 4px 0 0 0; font-size: 13px; opacity: 0.9;">AI Free Calculator Engineering & Support Desk</p>
-        </div>
-        <div style="padding: 24px; font-size: 14px; line-height: 1.6;">
-          <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
-            <tr>
-              <td style="padding: 8px 0; font-weight: 700; width: 100px; color: #64748b; font-size: 12px; text-transform: uppercase;">From:</td>
-              <td style="padding: 8px 0;"><strong>${safeName}</strong> &lt;<a href="mailto:${safeEmail}" style="color: #2563eb;">${safeEmail}</a>&gt;</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; font-weight: 700; color: #64748b; font-size: 12px; text-transform: uppercase;">Category:</td>
-              <td style="padding: 8px 0;"><span style="display: inline-block; background: #eff6ff; color: #1d4ed8; padding: 2px 10px; border-radius: 9999px; font-weight: 600; font-size: 12px;">${safeCategoryHtml}</span></td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; font-weight: 700; color: #64748b; font-size: 12px; text-transform: uppercase;">Subject:</td>
-              <td style="padding: 8px 0; font-weight: 600;">${safeSubject}</td>
-            </tr>
-            <tr>
-              <td style="padding: 8px 0; font-weight: 700; color: #64748b; font-size: 12px; text-transform: uppercase;">Ref ID:</td>
-              <td style="padding: 8px 0; font-family: monospace; font-size: 12px; color: #64748b;">${messageId}</td>
-            </tr>
-          </table>
-
-          <div style="font-weight: 700; color: #64748b; font-size: 12px; text-transform: uppercase; margin-bottom: 8px;">Message:</div>
-          <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; font-size: 13px; line-height: 1.7; color: #1e293b;">
-            ${safeMessage}
-          </div>
-
-          <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;">
-            💡 <em>You can reply directly to this email to respond to <strong>${safeName}</strong> (${safeEmail}).</em>
-          </div>
-        </div>
-      </div>
-    `;
+    const textBody = buildEmailText(name, email, safeCategory, subject, messageId, message);
+    const htmlBody = buildEmailHtml(safeName, safeEmail, safeCategoryHtml, safeSubject, messageId, safeMessage);
 
     // 5. Safely resolve Cloudflare Workers runtime environment and bindings
     const env = await getRuntimeEnv(locals);

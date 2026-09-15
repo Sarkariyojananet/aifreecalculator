@@ -1,8 +1,17 @@
 import type { APIRoute } from 'astro';
 import { recordSearchQuery, deleteSearchQuery, clearAllSearchQueries, getSearchAnalytics } from '../../lib/admin/content-store';
 import { authenticateAdminRequest } from '../../lib/auth';
+import { safeWaitUntil } from '../../lib/cloudflare-env';
 
 export const prerender = false;
+
+const JSON_HEADERS = { 'Content-Type': 'application/json' } as const;
+const SUCCESS_RESPONSE = new Response(JSON.stringify({ success: true }), { status: 200, headers: JSON_HEADERS });
+const FAIL_RESPONSE = new Response(JSON.stringify({ success: false }), { status: 200, headers: JSON_HEADERS });
+const UNAUTHORIZED_RESPONSE = new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: JSON_HEADERS });
+const QUERY_REQUIRED_RESPONSE = new Response(JSON.stringify({ error: 'Query parameter is required' }), { status: 400, headers: JSON_HEADERS });
+const QUERY_REQUIRED_POST_RESPONSE = new Response(JSON.stringify({ error: 'Query is required' }), { status: 400, headers: JSON_HEADERS });
+const EMPTY_LOGS_RESPONSE = new Response(JSON.stringify({ success: true, logs: [] }), { status: 200, headers: JSON_HEADERS });
 
 // Public logging of user search queries & Admin deletion fallback
 export const POST: APIRoute = async ({ request, cookies, locals }) => {
@@ -14,61 +23,39 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     if (action === 'delete') {
       const user = await authenticateAdminRequest(request, cookies);
       if (!user) {
-        return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-          status: 401,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        return UNAUTHORIZED_RESPONSE.clone();
       }
 
       if (clearAll) {
         await clearAllSearchQueries(locals);
-        return new Response(JSON.stringify({ success: true, logs: [] }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        return EMPTY_LOGS_RESPONSE.clone();
       }
 
       if (!query || typeof query !== 'string') {
-        return new Response(JSON.stringify({ error: 'Query parameter is required' }), {
-          status: 400,
-          headers: { 'Content-Type': 'application/json' },
-        });
+        return QUERY_REQUIRED_RESPONSE.clone();
       }
 
       const updated = await deleteSearchQuery(query, locals);
       return new Response(JSON.stringify({ success: true, logs: updated }), {
         status: 200,
-        headers: { 'Content-Type': 'application/json' },
+        headers: JSON_HEADERS,
       });
     }
 
     if (typeof query !== 'string') {
-      return new Response(JSON.stringify({ error: 'Query is required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return QUERY_REQUIRED_POST_RESPONSE.clone();
     }
 
     const cleanQuery = query.trim();
     if (cleanQuery.length >= 2 && cleanQuery.length <= 100) {
       const recordPromise = recordSearchQuery(cleanQuery, Boolean(hasResults), locals).catch(() => {});
-      if (typeof (locals as any)?.runtime?.ctx?.waitUntil === 'function') {
-        (locals as any).runtime.ctx.waitUntil(recordPromise);
-      } else if (typeof (locals as any)?.cfContext?.waitUntil === 'function') {
-        (locals as any).cfContext.waitUntil(recordPromise);
-      }
+      safeWaitUntil(locals, recordPromise);
     }
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return SUCCESS_RESPONSE.clone();
   } catch {
     // Fail silently without disrupting user search
-    return new Response(JSON.stringify({ success: false }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return FAIL_RESPONSE.clone();
   }
 };
 
@@ -76,10 +63,7 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
 export const GET: APIRoute = async ({ request, cookies, locals }) => {
   const user = await authenticateAdminRequest(request, cookies);
   if (!user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return UNAUTHORIZED_RESPONSE.clone();
   }
 
   const logs = await getSearchAnalytics(locals);
@@ -95,10 +79,7 @@ export const GET: APIRoute = async ({ request, cookies, locals }) => {
 export const DELETE: APIRoute = async ({ request, cookies, locals }) => {
   const user = await authenticateAdminRequest(request, cookies);
   if (!user) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    });
+    return UNAUTHORIZED_RESPONSE.clone();
   }
 
   try {
@@ -108,17 +89,11 @@ export const DELETE: APIRoute = async ({ request, cookies, locals }) => {
 
     if (clearAll) {
       await clearAllSearchQueries(locals);
-      return new Response(JSON.stringify({ success: true, logs: [] }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return EMPTY_LOGS_RESPONSE.clone();
     }
 
     if (!query) {
-      return new Response(JSON.stringify({ error: 'Query parameter is required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      return QUERY_REQUIRED_RESPONSE.clone();
     }
 
     const updated = await deleteSearchQuery(query, locals);

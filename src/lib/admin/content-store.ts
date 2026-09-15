@@ -136,15 +136,23 @@ const DEFAULT_FAQS: FAQItem[] = [
 
 const DEFAULT_NO_RESULT_SEARCHES: SearchQueryLog[] = [];
 
-// In-memory cache for D1 site_settings (5 minutes TTL) to eliminate repetitive DB queries
+// In-memory cache for D1 site_settings (1 hour TTL) to eliminate repetitive DB queries
 const inMemorySettingsCache = new Map<string, { value: any; expiry: number }>();
-const SETTINGS_CACHE_TTL = 300_000; // 5 minutes
+const SETTINGS_CACHE_TTL = 3_600_000; // 1 hour (settings are explicitly invalidated on writes)
+
+// Fast O(1) in-memory index for 301/302 redirect rules
+let fastRedirectMap: Map<string, RedirectRule> = new Map();
+let fastRedirectMapLoaded = false;
 
 export function invalidateSettingCache(key?: string): void {
   if (key) {
     inMemorySettingsCache.delete(key);
+    if (key === 'cms_redirects') {
+      fastRedirectMapLoaded = false;
+    }
   } else {
     inMemorySettingsCache.clear();
+    fastRedirectMapLoaded = false;
   }
 }
 
@@ -264,12 +272,44 @@ export async function deleteFAQ(id: string, locals?: any): Promise<FAQItem[]> {
   return filtered;
 }
 
+function rebuildFastRedirectMap(rules: RedirectRule[]): void {
+  const map = new Map<string, RedirectRule>();
+  for (const r of rules) {
+    if (r.active !== false && r.source) {
+      const src = r.source.trim();
+      map.set(src, r);
+      const withSlash = src.endsWith('/') ? src : `${src}/`;
+      const withoutSlash = src.endsWith('/') ? src.slice(0, -1) : src;
+      map.set(withSlash, r);
+      map.set(withoutSlash, r);
+    }
+  }
+  fastRedirectMap = map;
+  fastRedirectMapLoaded = true;
+}
+
+export function getFastRedirect(pathname: string): RedirectRule | null {
+  if (!fastRedirectMapLoaded) return null;
+  return fastRedirectMap.get(pathname) || null;
+}
+
+export function isRedirectMapLoaded(): boolean {
+  return fastRedirectMapLoaded;
+}
+
+export function hasActiveRedirects(): boolean {
+  return fastRedirectMapLoaded && fastRedirectMap.size > 0;
+}
+
 export async function getRedirectRules(locals?: any): Promise<RedirectRule[]> {
-  return await readSetting<RedirectRule[]>('cms_redirects', [], locals);
+  const rules = await readSetting<RedirectRule[]>('cms_redirects', [], locals);
+  rebuildFastRedirectMap(rules);
+  return rules;
 }
 
 export async function saveRedirectRules(rules: RedirectRule[], locals?: any): Promise<void> {
   invalidateSettingCache('cms_redirects');
+  rebuildFastRedirectMap(rules);
   await writeSetting('cms_redirects', rules, locals);
 }
 

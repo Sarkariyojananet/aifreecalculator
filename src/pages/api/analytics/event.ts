@@ -97,56 +97,57 @@ function parseTrafficSource(referer: string | null, origin: string | null): Traf
   }
 }
 
-export const OPTIONS: APIRoute = async () => {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-    },
-  });
-};
+import { safeWaitUntil } from '../../../lib/cloudflare-env';
+
+const OPTIONS_RESPONSE = new Response(null, {
+  status: 204,
+  headers: {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  },
+});
+
+const SILENT_204_RESPONSE = new Response(null, {
+  status: 204,
+  headers: {
+    'Access-Control-Allow-Origin': '*',
+    'Cache-Control': 'no-store, no-cache, must-revalidate',
+  },
+});
+
+export const OPTIONS: APIRoute = async () => OPTIONS_RESPONSE;
 
 export const POST: APIRoute = async ({ request, locals }) => {
-  // Silent 204 response standard for tracking beacons
-  const silent204 = new Response(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Cache-Control': 'no-store, no-cache, must-revalidate',
-    },
-  });
-
   try {
     // Quick payload size guard (< 2KB)
     const len = parseInt(request.headers.get('content-length') ?? '0', 10);
-    if (len > 2048) return silent204;
+    if (len > 2048) return SILENT_204_RESPONSE;
 
     let body: any;
     const text = await request.text();
-    if (!text) return silent204;
+    if (!text) return SILENT_204_RESPONSE;
 
     try {
       body = JSON.parse(text);
     } catch {
-      return silent204;
+      return SILENT_204_RESPONSE;
     }
 
-    if (!body || typeof body !== 'object') return silent204;
+    if (!body || typeof body !== 'object') return SILENT_204_RESPONSE;
 
     const slug = typeof body.slug === 'string' ? body.slug.trim().toLowerCase() : '';
     const event = typeof body.event === 'string' ? (body.event.trim() as AnalyticsEventType) : undefined;
 
     // Validate event and slug against known calculators
-    if (!event || !VALID_EVENTS.has(event)) return silent204;
-    if (!slug || !KNOWN_SLUGS.has(slug)) return silent204;
+    if (!event || !VALID_EVENTS.has(event)) return SILENT_204_RESPONSE;
+    if (!slug || !KNOWN_SLUGS.has(slug)) return SILENT_204_RESPONSE;
 
     const userAgent = request.headers.get('user-agent');
     const device = parseDevice(userAgent, typeof body.device === 'string' ? body.device : undefined);
 
     // Filter out bots from polluting real conversion analytics
-    if (device === 'bot') return silent204;
+    if (device === 'bot') return SILENT_204_RESPONSE;
 
     const referer = typeof body.referrer === 'string' && body.referrer.length > 0 
       ? body.referrer 
@@ -165,15 +166,11 @@ export const POST: APIRoute = async ({ request, locals }) => {
       locals
     ).catch(() => {});
 
-    if (typeof (locals as any)?.runtime?.ctx?.waitUntil === 'function') {
-      (locals as any).runtime.ctx.waitUntil(eventPromise);
-    } else if (typeof (locals as any)?.cfContext?.waitUntil === 'function') {
-      (locals as any).cfContext.waitUntil(eventPromise);
-    }
+    safeWaitUntil(locals, eventPromise);
 
-    return silent204;
+    return SILENT_204_RESPONSE;
   } catch {
     // Analytics failures must never break the client
-    return silent204;
+    return SILENT_204_RESPONSE;
   }
 };

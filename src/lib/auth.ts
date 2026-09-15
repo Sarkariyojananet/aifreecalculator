@@ -40,14 +40,19 @@ function base64UrlDecode(str: string): string {
   return atob(str);
 }
 
+let cachedCryptoKeyPromise: Promise<CryptoKey> | null = null;
+
 async function getCryptoKey(): Promise<CryptoKey> {
-  return await crypto.subtle.importKey(
-    'raw',
-    strToUint8Array(SECRET_KEY) as BufferSource,
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign', 'verify']
-  );
+  if (!cachedCryptoKeyPromise) {
+    cachedCryptoKeyPromise = crypto.subtle.importKey(
+      'raw',
+      strToUint8Array(SECRET_KEY) as BufferSource,
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign', 'verify']
+    );
+  }
+  return await cachedCryptoKeyPromise;
 }
 
 /**

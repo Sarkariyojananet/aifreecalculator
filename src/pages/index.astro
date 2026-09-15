@@ -7,42 +7,20 @@ import HomeFAQ, { homeFaqs } from '../components/home/HomeFAQ.astro';
 import CalculatorCard from '../components/CalculatorCard.astro';
 import AdSlotTop from '../components/ads/AdSlotTop.astro';
 import AdSlotFooter from '../components/ads/AdSlotFooter.astro';
-import { calculators, categories } from '../data/calculators';
+import {
+  calculators,
+  PRECOMPUTED_CATEGORY_PILLS,
+  PRECOMPUTED_HOME_POPULAR_CALCULATORS,
+  STATIC_SEARCH_DATA_JSON,
+} from '../data/calculators';
 import { getCalculatorOverrides } from '../lib/admin/content-store';
 import { getLivePageMeta } from '../lib/seo/page-metadata';
 
-// Category pills with live dynamic counts
-const preferredCategoryOrder = ['Finance', 'Construction', 'Health', 'Math', 'General'];
-const categoryPills = [...categories]
-  .sort((a, b) => {
-    const idxA = preferredCategoryOrder.indexOf(a.name);
-    const idxB = preferredCategoryOrder.indexOf(b.name);
-    return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
-  })
-  .map((cat) => ({
-    name: cat.name,
-    path: cat.path,
-    count: calculators.filter((c) =>
-      c.category.toLowerCase() === cat.name.toLowerCase() ||
-      (c.additionalCategories && c.additionalCategories.some(ac => ac.toLowerCase() === cat.name.toLowerCase()))
-    ).length,
-  }));
+// Category pills with precomputed dynamic counts
+const categoryPills = PRECOMPUTED_CATEGORY_PILLS;
 
-// Focused 8 popular calculators across core categories
-const popularSlugs = [
-  'emi-calculator',
-  'sip-calculator',
-  'income-tax-calculator',
-  'rcc-slab-steel-calculator',
-  'bmi-calculator',
-  'age-calculator',
-  'percentage-calculator',
-  'calorie-calculator',
-];
-
-const popularCalculators = popularSlugs
-  .map((slug) => calculators.find((c) => c.slug === slug))
-  .filter(Boolean) as typeof calculators;
+// Focused 8 popular calculators across core categories (precomputed at module load)
+const popularCalculators = PRECOMPUTED_HOME_POPULAR_CALCULATORS;
 
 const overrides = await getCalculatorOverrides(Astro.locals);
 const override = overrides['core:home'] || {};
@@ -53,18 +31,8 @@ const effectiveDescription = override.metaDescription || liveMeta.description;
 const effectiveCanonical = override.canonicalUrl;
 const effectiveRobots = override.robots;
 
-// Client-side search dataset
-const searchDataJson = JSON.stringify(
-  calculators.map((c) => ({
-    name: c.name,
-    category: c.category,
-    desc: c.description,
-    path: c.path,
-    slug: c.slug,
-    keywords: c.keywords || [],
-    aliases: c.aliases || [],
-  }))
-);
+// Client-side search dataset (pre-serialized at module load)
+const searchDataJson = STATIC_SEARCH_DATA_JSON;
 ---
 
 <BaseLayout

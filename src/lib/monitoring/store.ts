@@ -140,31 +140,21 @@ export async function recordError(
     const fingerprint = createErrorFingerprint(params.category, cleanRoute, cleanMessage);
     const id = `grp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
-    // Try updating existing fingerprint group
-    const updateResult = await db
+    // Atomic UPSERT on fingerprint to avoid race conditions and UNIQUE constraint errors
+    await db
       .prepare(`
-        UPDATE cms_error_groups
-        SET occurrence_count = occurrence_count + 1,
-            last_seen = ?,
-            latest_message = ?,
-            status = CASE WHEN status = 'resolved' THEN 'open' ELSE status END
-        WHERE fingerprint = ?
+        INSERT INTO cms_error_groups (
+          id, fingerprint, route, category, severity,
+          first_seen, last_seen, occurrence_count, latest_message, status
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, 'open')
+        ON CONFLICT(fingerprint) DO UPDATE SET
+          occurrence_count = occurrence_count + 1,
+          last_seen = excluded.last_seen,
+          latest_message = excluded.latest_message,
+          status = CASE WHEN status = 'resolved' THEN 'open' ELSE status END
       `)
-      .bind(now, cleanMessage, fingerprint)
+      .bind(id, fingerprint, cleanRoute, params.category, params.severity, now, now, cleanMessage)
       .run();
-
-    if ((updateResult as any)?.meta?.changes === 0 || !(updateResult as any)?.changes) {
-      // Not found, insert new group
-      await db
-        .prepare(`
-          INSERT INTO cms_error_groups (
-            id, fingerprint, route, category, severity,
-            first_seen, last_seen, occurrence_count, latest_message, status
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, 1, ?, 'open')
-        `)
-        .bind(id, fingerprint, cleanRoute, params.category, params.severity, now, now, cleanMessage)
-        .run();
-    }
 
     // Evaluate for incident trigger if critical severity
     if (params.severity === 'critical') {

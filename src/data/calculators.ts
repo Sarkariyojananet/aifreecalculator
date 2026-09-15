@@ -236,81 +236,97 @@ export const categories: { name: CalculatorCategory; icon: string; description: 
   },
 ];
 
-export function getCalculatorBySlug(slug: string): Calculator | undefined {
-  return calculators.find(
-    (c) => c.slug === slug || c.slug === `${slug}-calculator` || c.slug.replace('-calculator', '') === slug.replace('-calculator', '')
+// Cold-start O(1) Index Maps and Precomputed Lists
+const calculatorBySlugMap = new Map<string, Calculator>();
+for (const c of calculators) {
+  calculatorBySlugMap.set(c.slug, c);
+  const withoutSuffix = c.slug.replace('-calculator', '');
+  if (!calculatorBySlugMap.has(withoutSuffix)) {
+    calculatorBySlugMap.set(withoutSuffix, c);
+  }
+  if (!c.slug.endsWith('-calculator')) {
+    calculatorBySlugMap.set(`${c.slug}-calculator`, c);
+  }
+}
+
+const calculatorsByCategoryMap = new Map<string, Calculator[]>();
+for (const cat of categories) {
+  const catLower = cat.name.toLowerCase();
+  const list = calculators.filter(
+    (c) =>
+      c.category.toLowerCase() === catLower ||
+      (c.additionalCategories && c.additionalCategories.some((ac) => ac.toLowerCase() === catLower))
   );
+  calculatorsByCategoryMap.set(catLower, list);
+}
+
+const featuredCalculatorsList = calculators.filter((c) => c.featured);
+
+export function getCalculatorBySlug(slug: string): Calculator | undefined {
+  if (!slug) return undefined;
+  const match = calculatorBySlugMap.get(slug);
+  if (match) return match;
+  return calculatorBySlugMap.get(slug.replace('-calculator', ''));
 }
 
 export function getCalculatorsByCategory(category: CalculatorCategory): Calculator[] {
-  const catLower = category.toLowerCase();
-  return calculators.filter(
-    (c) =>
-      c.category.toLowerCase() === catLower ||
-      (c.additionalCategories &&
-        c.additionalCategories.some((ac) => ac.toLowerCase() === catLower))
-  );
+  return calculatorsByCategoryMap.get(category.toLowerCase()) || [];
 }
 
 export function getFeaturedCalculators(): Calculator[] {
-  return calculators.filter((c) => c.featured);
+  return featuredCalculatorsList;
 }
+
+// Precomputed Popular Calculators List
+const prioritySlugs = [
+  'emi-calculator',
+  'sip-calculator',
+  'rcc-slab-steel-calculator',
+  'income-tax-calculator',
+  'bmi-calculator',
+  'age-calculator',
+  'percentage-calculator',
+  'steel-weight-calculator',
+];
+
+const precomputedPopularCalculators: Calculator[] = [];
+for (const slug of prioritySlugs) {
+  const calc = getCalculatorBySlug(slug);
+  if (calc && !precomputedPopularCalculators.some((m) => m.slug === calc.slug)) {
+    precomputedPopularCalculators.push(calc);
+  }
+}
+const extraPopular = calculators.filter((c) => c.isPopular && !precomputedPopularCalculators.some((m) => m.slug === c.slug));
+precomputedPopularCalculators.push(...extraPopular);
 
 export function getPopularCalculators(limit: number = 6): Calculator[] {
-  // Ordered priority of high-value tools for user discovery
-  const prioritySlugs = [
-    'emi-calculator',
-    'sip-calculator',
-    'rcc-slab-steel-calculator',
-    'income-tax-calculator',
-    'bmi-calculator',
-    'age-calculator',
-    'percentage-calculator',
-    'steel-weight-calculator',
-  ];
-
-  const matched: Calculator[] = [];
-  for (const slug of prioritySlugs) {
-    const calc = getCalculatorBySlug(slug);
-    if (calc && !matched.some((m) => m.slug === calc.slug)) {
-      matched.push(calc);
-    }
-  }
-
-  if (matched.length < limit) {
-    const others = calculators.filter((c) => c.isPopular && !matched.some((m) => m.slug === c.slug));
-    matched.push(...others.slice(0, limit - matched.length));
-  }
-
-  return matched.slice(0, limit);
+  return precomputedPopularCalculators.slice(0, limit);
 }
 
+// Precomputed Construction Spotlight Calculators List
+const constructionPriority = [
+  'rcc-slab-steel-calculator',
+  'rcc-beam-steel-calculator',
+  'rcc-column-steel-calculator',
+  'rcc-footing-steel-calculator',
+  'steel-weight-calculator',
+  'concrete-material-breakup-calculator',
+  'brickwork-calculator',
+  'plaster-calculator',
+];
+
+const precomputedConstructionSpotlight: Calculator[] = [];
+for (const slug of constructionPriority) {
+  const calc = getCalculatorBySlug(slug);
+  if (calc && !precomputedConstructionSpotlight.some((m) => m.slug === calc.slug)) {
+    precomputedConstructionSpotlight.push(calc);
+  }
+}
+const extraConstruction = calculators.filter((c) => c.category === 'Construction' && !precomputedConstructionSpotlight.some((m) => m.slug === c.slug));
+precomputedConstructionSpotlight.push(...extraConstruction);
+
 export function getConstructionSpotlightCalculators(limit: number = 8): Calculator[] {
-  const constructionPriority = [
-    'rcc-slab-steel-calculator',
-    'rcc-beam-steel-calculator',
-    'rcc-column-steel-calculator',
-    'rcc-footing-steel-calculator',
-    'steel-weight-calculator',
-    'concrete-material-breakup-calculator',
-    'brickwork-calculator',
-    'plaster-calculator',
-  ];
-
-  const matched: Calculator[] = [];
-  for (const slug of constructionPriority) {
-    const calc = getCalculatorBySlug(slug);
-    if (calc && !matched.some((m) => m.slug === calc.slug)) {
-      matched.push(calc);
-    }
-  }
-
-  if (matched.length < limit) {
-    const others = calculators.filter((c) => c.category === 'Construction' && !matched.some((m) => m.slug === c.slug));
-    matched.push(...others.slice(0, limit - matched.length));
-  }
-
-  return matched.slice(0, limit);
+  return precomputedConstructionSpotlight.slice(0, limit);
 }
 
 export function searchCalculators(query: string): Calculator[] {
@@ -325,3 +341,45 @@ export function searchCalculators(query: string): Calculator[] {
       (c.aliases && c.aliases.some((a) => a.toLowerCase().includes(q)))
   );
 }
+
+// Precomputed Homepage Category Pills with Live Counts (Zero per-request overhead)
+const preferredCategoryOrder = ['Finance', 'Construction', 'Health', 'Math', 'General'];
+export const PRECOMPUTED_CATEGORY_PILLS = [...categories]
+  .sort((a, b) => {
+    const idxA = preferredCategoryOrder.indexOf(a.name);
+    const idxB = preferredCategoryOrder.indexOf(b.name);
+    return (idxA === -1 ? 999 : idxA) - (idxB === -1 ? 999 : idxB);
+  })
+  .map((cat) => ({
+    name: cat.name,
+    path: cat.path,
+    count: calculatorsByCategoryMap.get(cat.name.toLowerCase())?.length || 0,
+  }));
+
+// Precomputed Focused 8 Popular Calculators for Homepage
+const homePopularSlugs = [
+  'emi-calculator',
+  'sip-calculator',
+  'income-tax-calculator',
+  'rcc-slab-steel-calculator',
+  'bmi-calculator',
+  'age-calculator',
+  'percentage-calculator',
+  'calorie-calculator',
+];
+export const PRECOMPUTED_HOME_POPULAR_CALCULATORS = homePopularSlugs
+  .map((slug) => getCalculatorBySlug(slug))
+  .filter(Boolean) as Calculator[];
+
+// Pre-serialized client-side search dataset for instant zero-CPU inline delivery
+export const STATIC_SEARCH_DATA_JSON = JSON.stringify(
+  calculators.map((c) => ({
+    name: c.name,
+    category: c.category,
+    desc: c.description,
+    path: c.path,
+    slug: c.slug,
+    keywords: c.keywords || [],
+    aliases: c.aliases || [],
+  }))
+);

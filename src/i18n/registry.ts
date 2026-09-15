@@ -39,44 +39,49 @@ const CATEGORY_SLUGS = [
   'general',
 ] as const;
 
+const STATIC_SLUG_PATHS = new Set(STATIC_SLUGS.map((s) => `/${s}/`));
+const CATEGORY_SLUG_PATHS = new Set(CATEGORY_SLUGS.map((s) => `/${s}/`));
+const CATEGORY_SLUGS_SET = new Set<string>(CATEGORY_SLUGS);
+const ALL_LOCALES_ARRAY: Locale[] = [...LOCALES];
+const EN_ONLY_ARRAY: Locale[] = ['en'];
+
 /**
  * Returns list of locales where a given path is officially translated.
  * Guarantees 'en' is always included.
  */
 export function getAvailableLocalesForPath(pathname: string): Locale[] {
   const norm = normalizePath(pathname);
-  const { lang, cleanPath } = extractLocaleFromPath(norm);
+  const { cleanPath } = extractLocaleFromPath(norm);
 
   // 1. Homepage
   if (cleanPath === '/') {
-    return [...LOCALES];
+    return ALL_LOCALES_ARRAY;
   }
 
   // 2. Static Content Pages
-  for (const staticSlug of STATIC_SLUGS) {
-    if (cleanPath === `/${staticSlug}/`) {
-      return [...LOCALES];
-    }
+  if (STATIC_SLUG_PATHS.has(cleanPath)) {
+    return ALL_LOCALES_ARRAY;
   }
 
   // 3. Category Landing Pages
-  for (const catSlug of CATEGORY_SLUGS) {
-    if (cleanPath === `/${catSlug}/`) {
-      return [...LOCALES];
-    }
+  if (CATEGORY_SLUG_PATHS.has(cleanPath)) {
+    return ALL_LOCALES_ARRAY;
   }
 
   // 4. Calculator Pages (/category/slug/)
-  const segments = cleanPath.split('/').filter(Boolean);
-  if (segments.length === 2) {
-    const [cat, slug] = segments;
-    if (CATEGORY_SLUGS.includes(cat as any)) {
-      return [...LOCALES];
+  const slash1 = cleanPath.indexOf('/', 1);
+  if (slash1 !== -1) {
+    const slash2 = cleanPath.indexOf('/', slash1 + 1);
+    if (slash2 !== -1 && slash2 === cleanPath.length - 1) {
+      const cat = cleanPath.slice(1, slash1);
+      if (CATEGORY_SLUGS_SET.has(cat)) {
+        return ALL_LOCALES_ARRAY;
+      }
     }
   }
 
   // Fallback (e.g. dynamic admin, api, or untranslated custom routes)
-  return ['en'];
+  return EN_ONLY_ARRAY;
 }
 
 /**

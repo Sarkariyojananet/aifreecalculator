@@ -5,7 +5,13 @@ import AdSlotTop from '../components/ads/AdSlotTop.astro';
 import AdSlotInline from '../components/ads/AdSlotInline.astro';
 import AdSlotSidebar from '../components/ads/AdSlotSidebar.astro';
 import AdSlotFooter from '../components/ads/AdSlotFooter.astro';
-import { calculators, type CalculatorCategory } from '../data/calculators';
+import {
+  type CalculatorCategory,
+  type Calculator,
+  getCalculatorBySlug,
+  getCalculatorsByCategory,
+  getFeaturedCalculators,
+} from '../data/calculators';
 import { getInternalLinks, getCalculatorOverrides } from '../lib/admin/content-store';
 import { buildCalculatorGraphSchema } from '../lib/seo/schema-builder';
 import { extractLocaleFromPath, getLocalizedPath } from '../i18n/utils';
@@ -66,19 +72,19 @@ const allInternalLinks = await getInternalLinks(Astro.locals);
 const customRelatedSlugs = allInternalLinks[slug] || [];
 
 let relatedCalculators = customRelatedSlugs
-  .map((s) => calculators.find((c) => c.slug === s))
-  .filter(Boolean) as typeof calculators;
+  .map((s) => getCalculatorBySlug(s))
+  .filter(Boolean) as Calculator[];
 
 // 2. Fallback to same-category calculators if no custom links defined
 if (relatedCalculators.length === 0) {
-  relatedCalculators = calculators
-    .filter((c) => c.category === category && c.slug !== slug)
+  relatedCalculators = getCalculatorsByCategory(category)
+    .filter((c) => c.slug !== slug)
     .slice(0, 6);
 }
 
 // Top popular tools across site for quick reference
-const popularCrossCategory = calculators
-  .filter((c) => c.featured && c.slug !== slug)
+const popularCrossCategory = getFeaturedCalculators()
+  .filter((c) => c.slug !== slug)
   .slice(0, 5);
 
 const categoryKey = category.toLowerCase() as keyof typeof CATEGORIES_CONFIG;

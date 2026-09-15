@@ -85,19 +85,28 @@ async function writeLocalFileStorage(key: string, value: string): Promise<void> 
 }
 
 
+let cachedDbInstance: D1Database | null = null;
+
 /**
  * Get Cloudflare D1 Database binding or simulated DB
  */
 export function getDb(locals?: any): D1Database {
+  // Return cached instance if available and locals does not provide a different direct DB
+  if (cachedDbInstance && (!locals || (!locals.DB && !locals.env?.DB))) {
+    return cachedDbInstance;
+  }
+
   // 1. Direct or env DB binding on locals (without touching deprecated throwing runtime proxy)
   if (locals && typeof locals === 'object' && !Array.isArray(locals)) {
     try {
       if (locals.DB) {
+        cachedDbInstance = locals.DB;
         return locals.DB;
       }
     } catch {}
     try {
       if (locals.env?.DB) {
+        cachedDbInstance = locals.env.DB;
         return locals.env.DB;
       }
     } catch {}
@@ -107,6 +116,7 @@ export function getDb(locals?: any): D1Database {
   try {
     const cfEnv = getRuntimeEnvSync(locals);
     if (cfEnv?.DB) {
+      cachedDbInstance = cfEnv.DB;
       return cfEnv.DB;
     }
   } catch {}
@@ -114,12 +124,15 @@ export function getDb(locals?: any): D1Database {
   // 3. Check globalThis env bindings
   const g = typeof globalThis !== 'undefined' ? (globalThis as any) : null;
   if (g?.env?.DB) {
+    cachedDbInstance = g.env.DB;
     return g.env.DB;
   }
   if (g?.__env?.DB) {
+    cachedDbInstance = g.__env.DB;
     return g.__env.DB;
   }
   if (g?.DB) {
+    cachedDbInstance = g.DB;
     return g.DB;
   }
 

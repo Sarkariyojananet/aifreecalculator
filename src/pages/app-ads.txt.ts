@@ -2,7 +2,15 @@ import type { APIRoute } from 'astro';
 import { type AdsConfig } from '../lib/ads-config';
 import { readSettings } from './api/adsense-config';
 
+import { safeWaitUntil } from '../lib/cloudflare-env';
+
 export const prerender = false;
+
+const APP_ADS_HEADERS = {
+  'Content-Type': 'text/plain; charset=utf-8',
+  'Cache-Control': 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400',
+  'Cloudflare-CDN-Cache-Control': 'max-age=604800, stale-while-revalidate=86400',
+} as const;
 
 export const GET: APIRoute = async ({ request, locals }) => {
   const cache = typeof caches !== 'undefined' && (caches as any).default ? ((caches as any).default as Cache) : null;
@@ -39,19 +47,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   const response = new Response(output ? output + '\n' : '', {
     status: 200,
-    headers: {
-      'Content-Type': 'text/plain; charset=utf-8',
-      'Cache-Control': 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400',
-      'Cloudflare-CDN-Cache-Control': 'max-age=604800, stale-while-revalidate=86400',
-    },
+    headers: APP_ADS_HEADERS,
   });
 
   if (cache) {
-    try {
-      if (typeof (locals as any)?.runtime?.ctx?.waitUntil === 'function') {
-        (locals as any).runtime.ctx.waitUntil(cache.put(cacheKey, response.clone()));
-      }
-    } catch {}
+    safeWaitUntil(locals, cache.put(cacheKey, response.clone()));
   }
 
   return response;

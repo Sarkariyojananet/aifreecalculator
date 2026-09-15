@@ -130,6 +130,14 @@ export async function readSettings(locals: App.Locals): Promise<AdsConfig> {
   return DEFAULT_ADS_CONFIG;
 }
 
+import { safeWaitUntil } from '../../lib/cloudflare-env';
+
+const ADSENSE_CONFIG_HEADERS = {
+  'Content-Type': 'application/json; charset=utf-8',
+  'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
+  'Cloudflare-CDN-Cache-Control': 'max-age=86400, stale-while-revalidate=604800',
+} as const;
+
 export const GET: APIRoute = async ({ request, locals }) => {
   const cache = typeof caches !== 'undefined' && (caches as any).default ? ((caches as any).default as Cache) : null;
   const cacheKey = request.url;
@@ -144,19 +152,11 @@ export const GET: APIRoute = async ({ request, locals }) => {
   const config = await readSettings(locals);
   const response = new Response(JSON.stringify(config), {
     status: 200,
-    headers: {
-      'Content-Type': 'application/json; charset=utf-8',
-      'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
-      'Cloudflare-CDN-Cache-Control': 'max-age=86400, stale-while-revalidate=604800',
-    },
+    headers: ADSENSE_CONFIG_HEADERS,
   });
 
   if (cache) {
-    try {
-      if (typeof (locals as any)?.runtime?.ctx?.waitUntil === 'function') {
-        (locals as any).runtime.ctx.waitUntil(cache.put(cacheKey, response.clone()));
-      }
-    } catch {}
+    safeWaitUntil(locals, cache.put(cacheKey, response.clone()));
   }
 
   return response;
