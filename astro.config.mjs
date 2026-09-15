@@ -39,7 +39,14 @@ export default defineConfig({
     },
     optimizeDeps: {
       include: ['astro/assets/services/noop', 'astro/app/manifest'],
-      exclude: ['@astrojs/cloudflare', '@astrojs/cloudflare/cache'],
+      exclude: [
+        '@astrojs/cloudflare',
+        '@astrojs/cloudflare/cache',
+        '@astrojs/cloudflare/entrypoints/server',
+      ],
+    },
+    ssr: {
+      external: ['@astrojs/cloudflare'],
     },
   },
 

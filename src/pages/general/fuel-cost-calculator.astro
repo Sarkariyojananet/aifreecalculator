@@ -1,0 +1,1249 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+---
+
+<CalculatorLayout
+  title="Fuel Cost Calculator – Calculate Trip Fuel Cost, Petrol & Diesel Expense"
+  description="Calculate total fuel required in litres, trip fuel cost, cost per km, cost per mile, and distance from budget for cars, bikes, and road trips in India, UK, and worldwide."
+  category="General"
+  calculatorName="Fuel Cost Calculator"
+  slug="fuel-cost-calculator"
+  keywords={[
+    'fuel cost calculator',
+    'fuel cost calculator india',
+    'fuel cost calculator km india',
+    'trip fuel cost calculator india',
+    'fuel cost calculator uk',
+    'journey fuel cost calculator',
+    'fuel cost per km',
+    'fuel cost per mile',
+    'trip fuel cost',
+    'journey fuel cost',
+    'calculate fuel cost',
+    'petrol cost calculator',
+    'diesel cost calculator',
+    'car fuel cost calculator',
+    'road trip fuel cost calculator',
+    'fuel consumption calculator',
+    'fuel economy calculator',
+    'fuel cost per km calculator',
+    'fuel cost per mile calculator',
+    'petrol cost per km',
+    'diesel cost per km',
+    'fuel cost calculator for trip'
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- REGION / PRESET BAR -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-center justify-between gap-2 text-xs">
+        <div class="flex flex-wrap items-center gap-1.5">
+          <span class="font-bold text-slate-600 dark:text-slate-400 mr-1">🌍 Quick Region Presets:</span>
+          <button type="button" id="preset-india" class="btn-preset-region active rounded-lg border border-amber-500 bg-amber-50 px-3 py-1.5 font-bold text-amber-800 hover:bg-amber-100 dark:border-amber-600 dark:bg-amber-950/40 dark:text-amber-300 cursor-pointer transition">🇮🇳 India (₹ INR • km • km/L)</button>
+          <button type="button" id="preset-uk" class="btn-preset-region rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-semibold text-slate-700 hover:border-amber-500 hover:text-amber-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition">🇬🇧 UK (£ GBP • miles • UK MPG)</button>
+          <button type="button" id="preset-us" class="btn-preset-region rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-semibold text-slate-700 hover:border-amber-500 hover:text-amber-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition">🇺🇸 US ($ USD • miles • US MPG)</button>
+          <button type="button" id="preset-eu" class="btn-preset-region rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-semibold text-slate-700 hover:border-amber-500 hover:text-amber-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition">🇪🇺 Europe (€ EUR • km • L/100 km)</button>
+        </div>
+        <span class="text-[11px] font-medium text-slate-500 italic">Enter current pump price below</span>
+      </div>
+    </div>
+
+    <!-- CALCULATION MODE TABS -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-2.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs font-semibold scrollbar-thin">
+        <button type="button" class="btn-fuel-mode active shrink-0 rounded-lg bg-amber-500 px-3.5 py-2 font-bold text-white shadow-xs cursor-pointer transition" data-mode="trip">
+          🚗 Trip Fuel Cost (Distance + Efficiency)
+        </button>
+        <button type="button" class="btn-fuel-mode shrink-0 rounded-lg border border-slate-300 bg-white px-3.5 py-2 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-mode="fuel-used">
+          ⛽ Known Fuel Used (Distance + Litres)
+        </button>
+        <button type="button" class="btn-fuel-mode shrink-0 rounded-lg border border-slate-300 bg-white px-3.5 py-2 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-mode="budget">
+          💰 Budget to Distance (Reverse)
+        </button>
+        <button type="button" class="btn-fuel-mode shrink-0 rounded-lg border border-slate-300 bg-white px-3.5 py-2 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition" data-mode="target-economy">
+          🎯 Target Efficiency (Budget + Distance)
+        </button>
+      </div>
+    </div>
+
+    <!-- MAIN FORM PANEL -->
+    <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-amber-50/20 to-orange-50/20 p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-amber-950/10 sm:p-7">
+      
+      <!-- MODE 1: TRIP / DISTANCE + EFFICIENCY -->
+      <div id="panel-trip" class="fuel-panel space-y-5">
+        <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+          <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🚗</span> Trip & Journey Fuel Cost Calculator
+          </h2>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            Calculate total fuel cost, litres required, and cost per kilometre or mile based on trip distance, vehicle mileage, and fuel price.
+          </p>
+        </div>
+
+        <form id="form-fuel-trip" class="space-y-4" novalidate onsubmit="return false;">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            
+            <!-- Distance Input & Unit -->
+            <div>
+              <div class="flex items-center justify-between">
+                <label for="trip-distance" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Trip Distance *
+                </label>
+                <div class="flex items-center gap-1 text-[11px] font-semibold">
+                  <button type="button" class="unit-dist-toggle text-amber-600 dark:text-amber-400 underline font-bold cursor-pointer" data-unit="km">km</button>
+                  <span class="text-slate-400">|</span>
+                  <button type="button" class="unit-dist-toggle text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer" data-unit="miles">miles</button>
+                </div>
+              </div>
+              <div class="relative mt-1.5">
+                <input
+                  type="number"
+                  id="trip-distance"
+                  placeholder="Enter distance (e.g. 500)"
+                  step="any"
+                  min="0.01"
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-14 text-sm font-bold text-slate-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+                <span id="trip-dist-label" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">km</span>
+              </div>
+            </div>
+
+            <!-- Fuel Efficiency & Unit -->
+            <div>
+              <div class="flex items-center justify-between">
+                <label for="trip-economy" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Fuel Economy / Mileage *
+                </label>
+                <select id="trip-economy-unit" class="text-[11px] font-bold text-amber-700 dark:text-amber-400 bg-transparent border-none cursor-pointer focus:ring-0 p-0">
+                  <option value="kml">km/L</option>
+                  <option value="l100km">L/100 km</option>
+                  <option value="ukmpg">MPG (UK)</option>
+                  <option value="usmpg">MPG (US)</option>
+                </select>
+              </div>
+              <div class="relative mt-1.5">
+                <input
+                  type="number"
+                  id="trip-economy"
+                  placeholder="Enter mileage (e.g. 15)"
+                  step="any"
+                  min="0.01"
+                  class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-18 text-sm font-bold text-slate-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+                <span id="trip-econ-label" class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">km/L</span>
+              </div>
+            </div>
+
+            <!-- Fuel Price & Currency -->
+            <div>
+              <div class="flex items-center justify-between">
+                <label for="trip-price" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  Fuel Price (per litre) *
+                </label>
+                <select id="trip-currency" class="text-[11px] font-bold text-amber-700 dark:text-amber-400 bg-transparent border-none cursor-pointer focus:ring-0 p-0">
+                  <option value="₹">₹ INR</option>
+                  <option value="£">£ GBP</option>
+                  <option value="$">$ USD</option>
+                  <option value="€">€ EUR</option>
+                </select>
+              </div>
+              <div class="relative mt-1.5">
+                <span id="trip-curr-prefix" class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-500">₹</span>
+                <input
+                  type="number"
+                  id="trip-price"
+                  placeholder="Enter price per litre (e.g. 100)"
+                  step="any"
+                  min="0"
+                  class="w-full rounded-xl border border-slate-300 bg-white pl-8 pr-14 p-2.5 text-sm font-bold text-slate-900 focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">/ litre</span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Secondary Options: Round Trip & Fuel Type -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <div class="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-800">
+              <input
+                type="checkbox"
+                id="trip-roundtrip"
+                class="h-4 w-4 rounded border-slate-300 text-amber-600 focus:ring-amber-500 cursor-pointer"
+              />
+              <label for="trip-roundtrip" class="text-xs font-semibold text-slate-800 dark:text-slate-200 cursor-pointer">
+                🔁 Round trip (Doubles distance for return journey)
+              </label>
+            </div>
+
+            <div class="flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 dark:border-slate-700 dark:bg-slate-800">
+              <label for="trip-fuel-type" class="text-xs font-semibold text-slate-700 dark:text-slate-300">Fuel Type (Optional Label):</label>
+              <select id="trip-fuel-type" class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-800 dark:border-slate-600 dark:bg-slate-700 dark:text-slate-200 cursor-pointer">
+                <option value="petrol">Petrol / Gasoline</option>
+                <option value="diesel">Diesel</option>
+                <option value="cng">CNG / Other</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Error Message Container -->
+          <div id="trip-error" class="hidden rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-400"></div>
+
+          <!-- Action Buttons -->
+          <div class="flex items-center gap-2 pt-2">
+            <button
+              type="submit"
+              id="btn-trip-calc"
+              class="flex-1 rounded-xl bg-amber-500 hover:bg-amber-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-amber-500/25 transition active:scale-[0.98] cursor-pointer"
+            >
+              Calculate Fuel Cost →
+            </button>
+            <button
+              type="button"
+              id="btn-trip-reset"
+              class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer"
+            >
+              Reset (✕)
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- MODE 2: KNOWN FUEL USED -->
+      <div id="panel-fuel-used" class="fuel-panel hidden space-y-5">
+        <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+          <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <span>⛽</span> Calculate Cost from Total Fuel Filled
+          </h2>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            If you already know exactly how many litres you filled at the fuel station, calculate total expense, effective mileage, and cost per km.
+          </p>
+        </div>
+
+        <form id="form-fuel-used" class="space-y-4" novalidate onsubmit="return false;">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <label for="used-distance" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Total Distance Travelled *</label>
+              <div class="relative mt-1.5">
+                <input type="number" id="used-distance" placeholder="Enter distance" step="any" min="0.01" class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-12 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">km</span>
+              </div>
+            </div>
+            <div>
+              <label for="used-litres" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Total Fuel Consumed / Filled *</label>
+              <div class="relative mt-1.5">
+                <input type="number" id="used-litres" placeholder="Enter litres filled" step="any" min="0.01" class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-14 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">Litres</span>
+              </div>
+            </div>
+            <div>
+              <label for="used-price" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Fuel Price (per litre) *</label>
+              <div class="relative mt-1.5">
+                <span id="used-curr-prefix" class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-500">₹</span>
+                <input type="number" id="used-price" placeholder="Price per litre" step="any" min="0" class="w-full rounded-xl border border-slate-300 bg-white pl-8 pr-12 p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">/ L</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="used-error" class="hidden rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-400"></div>
+
+          <div class="flex items-center gap-2 pt-2">
+            <button type="submit" id="btn-used-calc" class="flex-1 rounded-xl bg-amber-500 hover:bg-amber-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-amber-500/25 transition active:scale-[0.98] cursor-pointer">Calculate Cost & Mileage →</button>
+            <button type="button" id="btn-used-reset" class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer">Reset (✕)</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- MODE 3: BUDGET TO DISTANCE -->
+      <div id="panel-budget" class="fuel-panel hidden space-y-5">
+        <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+          <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <span>💰</span> Calculate Distance from Fuel Budget
+          </h2>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            Have a fixed amount of money for petrol or diesel? Find out how many litres you can buy and how far you can drive.
+          </p>
+        </div>
+
+        <form id="form-fuel-budget" class="space-y-4" novalidate onsubmit="return false;">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <label for="budget-amount" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Total Fuel Budget *</label>
+              <div class="relative mt-1.5">
+                <span id="budget-curr-prefix" class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-500">₹</span>
+                <input type="number" id="budget-amount" placeholder="Enter budget (e.g. 2000)" step="any" min="0.01" class="w-full rounded-xl border border-slate-300 bg-white pl-8 p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+              </div>
+            </div>
+            <div>
+              <label for="budget-price" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Fuel Price (per litre) *</label>
+              <div class="relative mt-1.5">
+                <span id="budget-price-prefix" class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-500">₹</span>
+                <input type="number" id="budget-price" placeholder="Price per litre (e.g. 100)" step="any" min="0.01" class="w-full rounded-xl border border-slate-300 bg-white pl-8 pr-12 p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">/ L</span>
+              </div>
+            </div>
+            <div>
+              <label for="budget-economy" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Vehicle Mileage (km/L) *</label>
+              <div class="relative mt-1.5">
+                <input type="number" id="budget-economy" placeholder="Mileage (e.g. 20)" step="any" min="0.01" class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-14 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">km/L</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="budget-error" class="hidden rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-400"></div>
+
+          <div class="flex items-center gap-2 pt-2">
+            <button type="submit" id="btn-budget-calc" class="flex-1 rounded-xl bg-amber-500 hover:bg-amber-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-amber-500/25 transition active:scale-[0.98] cursor-pointer">Calculate Travel Distance →</button>
+            <button type="button" id="btn-budget-reset" class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer">Reset (✕)</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- MODE 4: TARGET EFFICIENCY -->
+      <div id="panel-target-economy" class="fuel-panel hidden space-y-5">
+        <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
+          <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🎯</span> Required Fuel Economy for Target Budget
+          </h2>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            Calculate the minimum mileage (km/L) your car or bike must achieve to complete a specific distance within a capped fuel budget.
+          </p>
+        </div>
+
+        <form id="form-fuel-target" class="space-y-4" novalidate onsubmit="return false;">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <label for="target-dist" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Total Distance to Cover (km) *</label>
+              <div class="relative mt-1.5">
+                <input type="number" id="target-dist" placeholder="Distance in km" step="any" min="0.01" class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-12 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">km</span>
+              </div>
+            </div>
+            <div>
+              <label for="target-budget" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Max Budget Available *</label>
+              <div class="relative mt-1.5">
+                <span id="target-curr-prefix" class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-500">₹</span>
+                <input type="number" id="target-budget" placeholder="Max budget" step="any" min="0.01" class="w-full rounded-xl border border-slate-300 bg-white pl-8 p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+              </div>
+            </div>
+            <div>
+              <label for="target-price" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">Fuel Price (per litre) *</label>
+              <div class="relative mt-1.5">
+                <span id="target-price-prefix" class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-500">₹</span>
+                <input type="number" id="target-price" placeholder="Price per litre" step="any" min="0.01" class="w-full rounded-xl border border-slate-300 bg-white pl-8 pr-12 p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-500">/ L</span>
+              </div>
+            </div>
+          </div>
+
+          <div id="target-error" class="hidden rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-400"></div>
+
+          <div class="flex items-center gap-2 pt-2">
+            <button type="submit" id="btn-target-calc" class="flex-1 rounded-xl bg-amber-500 hover:bg-amber-600 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-amber-500/25 transition active:scale-[0.98] cursor-pointer">Calculate Required Mileage →</button>
+            <button type="button" id="btn-target-reset" class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer">Reset (✕)</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- RESULTS SECTION -->
+      <div id="fuel-results" class="hidden mt-7 space-y-5">
+        
+        <!-- Hero Card -->
+        <div class="overflow-hidden rounded-3xl border border-amber-200 bg-linear-to-br from-white via-amber-50/40 to-orange-100/50 p-5 shadow-lg shadow-amber-500/5 dark:border-amber-900/60 dark:from-slate-950 dark:via-slate-900 dark:to-amber-950/30 sm:p-7">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-amber-200/80 pb-4 dark:border-slate-800">
+            <div>
+              <span id="hero-title-label" class="text-xs font-bold uppercase tracking-wider text-amber-700 dark:text-amber-300">
+                ⛽ Estimated Total Fuel Cost
+              </span>
+              <div id="res-main-cost" class="mt-1 text-4xl sm:text-5xl font-black text-amber-600 dark:text-amber-400">
+                ₹0.00
+              </div>
+            </div>
+            <div class="sm:text-right">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Trip Distance:</span>
+              <div id="res-total-dist" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white">
+                0 km
+              </div>
+              <span id="res-roundtrip-badge" class="hidden mt-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
+                Round Trip Included
+              </span>
+            </div>
+          </div>
+
+          <!-- Secondary Result Metric Cards -->
+          <div class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="rounded-xl border border-amber-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 font-semibold">Fuel Required</div>
+              <div id="res-fuel-litres" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">0.00 L</div>
+              <div id="res-fuel-gallons" class="text-[11px] text-slate-400 font-medium">0.00 gal (US)</div>
+            </div>
+            <div class="rounded-xl border border-amber-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 font-semibold">Cost per KM</div>
+              <div id="res-cost-per-km" class="mt-1 text-sm sm:text-base font-bold text-amber-600 dark:text-amber-400">₹0.00/km</div>
+            </div>
+            <div class="rounded-xl border border-amber-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 font-semibold">Cost per Mile</div>
+              <div id="res-cost-per-mile" class="mt-1 text-sm sm:text-base font-bold text-amber-600 dark:text-amber-400">₹0.00/mi</div>
+            </div>
+            <div class="rounded-xl border border-amber-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div class="text-slate-500 font-semibold">Fuel Economy</div>
+              <div id="res-effective-economy" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">0 km/L</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Dynamic Calculation Steps (Using User's Entered Numbers) -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+            <span>📝</span> Step-by-Step Calculation Breakdown
+          </h3>
+          <div id="res-steps-container" class="mt-3 space-y-2 text-xs font-mono text-slate-700 dark:text-slate-300">
+            <!-- Dynamic calculation steps injected by client-side JS -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- SEO EDUCATIONAL CONTENT (Placed cleanly in slot="content" so Save/Share, Report Issue & AdSense appear directly below the calculator results) -->
+  <Fragment slot="content">
+    <section class="fuel-content space-y-8">
+      
+      <header class="border-b border-slate-200 pb-6 dark:border-slate-800">
+        <h1 class="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-slate-900 dark:text-white">
+          Fuel Cost Calculator: Calculate Petrol, Diesel & Trip Expenses Accurately
+        </h1>
+        <p class="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
+          Whether you are planning a weekend road trip, calculating daily office commute expenses, sharing travel costs with friends, or managing corporate mileage reimbursements, this <strong>fuel cost calculator</strong> helps you estimate total fuel consumption, trip expenses, and cost per kilometre or mile in seconds.
+        </p>
+      </header>
+
+      <!-- How to Calculate Fuel Cost -->
+      <section class="space-y-3">
+        <h2>How to Calculate Fuel Cost for Any Journey</h2>
+        <p>Calculating the cost of fuel for any car, motorcycle, or commercial vehicle requires three essential figures:</p>
+        <ol>
+          <li><strong>Total Travel Distance:</strong> The total length of your journey in kilometres (km) or miles (including the return leg if you are doing a round trip).</li>
+          <li><strong>Vehicle Fuel Economy (Mileage):</strong> How far your vehicle can travel on a specific quantity of fuel (commonly expressed as <em>km/L</em>, <em>L/100 km</em>, or <em>MPG</em>).</li>
+          <li><strong>Current Fuel Price:</strong> The actual pump price per litre or gallon for petrol (gasoline) or diesel at your local fuel station.</li>
+        </ol>
+      </section>
+
+      <!-- Fuel Cost Formula -->
+      <section class="space-y-3">
+        <h2>The Universal Fuel Cost Formula</h2>
+        <p>The core mathematical equation connects distance, vehicle mileage, and price per litre into two simple steps:</p>
+        <div class="rounded-2xl bg-slate-50 p-4 border border-slate-200 dark:bg-slate-800/60 dark:border-slate-700 font-mono text-xs sm:text-sm space-y-2">
+          <div class="font-bold text-amber-700 dark:text-amber-400">Step 1: Total Fuel Required (Litres)</div>
+          <div>Fuel Required (L) = Distance ÷ Fuel Economy (km/L)</div>
+          <div class="pt-2 font-bold text-amber-700 dark:text-amber-400">Step 2: Total Fuel Cost</div>
+          <div>Total Fuel Cost = Fuel Required (L) × Fuel Price (per litre)</div>
+          <div class="pt-2 font-bold text-slate-900 dark:text-white">Combined Formula:</div>
+          <div class="text-amber-600 dark:text-amber-400 font-bold">Total Fuel Cost = (Distance ÷ Fuel Economy) × Fuel Price</div>
+        </div>
+        <p class="text-xs text-slate-500">
+          For European vehicles where consumption is measured in <strong>L/100 km</strong>, the formula adjusts to:
+          <code>Fuel (L) = (Distance × L/100 km) ÷ 100</code>.
+        </p>
+      </section>
+
+      <!-- How to Calculate Fuel Cost Per KM -->
+      <section class="space-y-3">
+        <h2>How to Calculate Fuel Cost Per KM (Kilometre)</h2>
+        <p>Knowing your vehicle's <strong>fuel cost per km</strong> is invaluable for tracking running costs, comparing public transit vs driving, and billing client travel.</p>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-800/50">
+          <div class="font-bold text-xs uppercase tracking-wider text-slate-500">Formula:</div>
+          <div class="mt-1 font-mono text-sm font-bold text-slate-900 dark:text-white">
+            Fuel Cost per km = Fuel Price per Litre ÷ Fuel Economy in km/L
+          </div>
+          <div class="mt-2 text-xs text-slate-600 dark:text-slate-400">
+            <em>Educational Example:</em> If petrol costs ₹100 per litre and your vehicle delivers 20 km/L, your running fuel cost is <strong>₹100 ÷ 20 = ₹5.00 per km</strong>.
+          </div>
+        </div>
+        <p>Similarly, your <strong>fuel cost per mile</strong> can be determined directly by multiplying cost per km by <strong>1.609344</strong>.</p>
+      </section>
+
+      <!-- How to Calculate Fuel Cost for a Trip & Round Trip -->
+      <section class="space-y-3">
+        <h2>How to Calculate Fuel Cost for a Trip or Journey</h2>
+        <p>When planning a road trip or carpool journey, one of the most common oversights is calculating only the one-way distance while forgetting the return journey.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs not-prose">
+          <div class="rounded-xl border border-slate-200 p-3.5 bg-white dark:border-slate-800 dark:bg-slate-950">
+            <div class="font-bold text-slate-800 dark:text-slate-200 text-sm">One-Way Journey</div>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Total distance equals the one-way odometer distance between starting point and destination.
+            </p>
+            <div class="mt-2 font-mono text-amber-600 font-bold">Total Distance = One-Way Distance</div>
+          </div>
+          <div class="rounded-xl border border-amber-200 p-3.5 bg-amber-50/50 dark:border-amber-900/60 dark:bg-amber-950/20">
+            <div class="font-bold text-amber-800 dark:text-amber-300 text-sm">Round Trip (Return Journey)</div>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">
+              Going and returning along the same route doubles fuel consumption and total expenditure.
+            </p>
+            <div class="mt-2 font-mono text-amber-700 dark:text-amber-400 font-bold">Total Distance = One-Way Distance × 2</div>
+          </div>
+        </div>
+        <p class="text-xs text-slate-500">
+          Our calculator includes an instant <strong>Round Trip</strong> toggle so you never accidentally underestimate your travel budget.
+        </p>
+      </section>
+
+      <!-- Fuel Cost Calculator for India -->
+      <section class="space-y-3">
+        <h2>Fuel Cost Calculator for India (Petrol & Diesel in ₹ INR)</h2>
+        <p>In India, drivers naturally measure travel in <strong>kilometres (km)</strong>, fuel volume in <strong>litres (L)</strong>, vehicle efficiency in <strong>kilometres per litre (km/L)</strong>, and fuel pricing in <strong>Indian Rupees per litre (₹/L)</strong>.</p>
+        <p>Because fuel prices vary across Indian states and union territories (due to state VAT and cess differences between Delhi, Mumbai, Bengaluru, UP, etc.), our tool requires you to input your current local fuel rate rather than relying on outdated assumptions.</p>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-800/40 text-xs text-slate-700 dark:text-slate-300 not-prose">
+          <span class="font-bold text-slate-900 dark:text-white">Typical Indian Vehicle Mileage Ranges:</span>
+          <ul class="list-disc pl-5 mt-2 space-y-1">
+            <li><strong>Commuter Motorcycles / Scooters:</strong> 45 – 65 km/L</li>
+            <li><strong>Hatchbacks (Petrol):</strong> 14 – 20 km/L</li>
+            <li><strong>Sedans / Compact SUVs (Petrol):</strong> 12 – 16 km/L</li>
+            <li><strong>Diesel SUVs:</strong> 13 – 18 km/L</li>
+          </ul>
+        </div>
+      </section>
+
+      <!-- Fuel Cost Calculator for the UK -->
+      <section class="space-y-3">
+        <h2>Fuel Cost Calculator for the UK (£ GBP & UK MPG)</h2>
+        <p>In the United Kingdom, motorists encounter a unique blend of units: road signs and trip distances are measured in <strong>miles</strong>, fuel economy is advertised in <strong>Miles Per Gallon (MPG)</strong>, but petrol and diesel at the pump are sold in <strong>Pence or Pounds per Litre (£/L)</strong>.</p>
+        <p>This creates widespread confusion when manually calculating journey expenses. Our calculator handles the imperial-to-metric conversions automatically using the exact UK imperial gallon standard:</p>
+        <div class="rounded-xl bg-slate-50 p-3.5 border border-slate-200 dark:bg-slate-800/50 dark:border-slate-700 font-mono text-xs">
+          1 UK Imperial Gallon = 4.54609 Litres | 1 Mile = 1.609344 km
+        </div>
+      </section>
+
+      <!-- Understanding km/L, L/100 km and MPG -->
+      <section class="space-y-3">
+        <h2>Understanding km/L, L/100 km, UK MPG, and US MPG</h2>
+        <p>Different countries report fuel economy using different metrics. Here is how they compare and why confusing them leads to large calculation errors:</p>
+        <div class="overflow-x-auto not-prose">
+          <table class="w-full text-left text-xs border border-slate-200 dark:border-slate-800">
+            <thead class="bg-slate-100 dark:bg-slate-800 font-bold text-slate-700 dark:text-slate-300">
+              <tr>
+                <th class="p-2.5">Unit System</th>
+                <th class="p-2.5">Where Used</th>
+                <th class="p-2.5">Higher Number Means</th>
+                <th class="p-2.5">Conversion to km/L</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-800 text-slate-600 dark:text-slate-400">
+              <tr>
+                <td class="p-2.5 font-semibold text-slate-900 dark:text-white">km/L</td>
+                <td class="p-2.5">India, Japan, Latin America</td>
+                <td class="p-2.5 text-emerald-600 font-bold">Better Efficiency</td>
+                <td class="p-2.5 font-mono">1.0 × km/L</td>
+              </tr>
+              <tr>
+                <td class="p-2.5 font-semibold text-slate-900 dark:text-white">L/100 km</td>
+                <td class="p-2.5">Europe, Canada, Australia</td>
+                <td class="p-2.5 text-amber-600 font-bold">Worse (Lower is Better)</td>
+                <td class="p-2.5 font-mono">100 ÷ (L/100 km)</td>
+              </tr>
+              <tr>
+                <td class="p-2.5 font-semibold text-slate-900 dark:text-white">UK MPG</td>
+                <td class="p-2.5">United Kingdom</td>
+                <td class="p-2.5 text-emerald-600 font-bold">Better Efficiency</td>
+                <td class="p-2.5 font-mono">UK MPG × 0.3540</td>
+              </tr>
+              <tr>
+                <td class="p-2.5 font-semibold text-slate-900 dark:text-white">US MPG</td>
+                <td class="p-2.5">United States</td>
+                <td class="p-2.5 text-emerald-600 font-bold">Better Efficiency</td>
+                <td class="p-2.5 font-mono">US MPG × 0.4251</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Practical Fuel Saving Tips -->
+      <section class="space-y-3">
+        <h2>Practical Ways to Reduce Fuel Costs on Road Trips</h2>
+        <p>While calculating costs helps you budget, reducing actual consumption puts money back into your pocket. Follow these proven fuel efficiency strategies:</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs not-prose">
+          <div class="rounded-xl border border-slate-200 p-3 bg-white dark:border-slate-800 dark:bg-slate-950">
+            <span class="font-bold text-slate-900 dark:text-white">1. Maintain Moderate Highway Speeds</span>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">Aerodynamic drag increases exponentially above 80 km/h (50 mph). Cruising at 90 km/h instead of 120 km/h can save up to 20% in fuel.</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3 bg-white dark:border-slate-800 dark:bg-slate-950">
+            <span class="font-bold text-slate-900 dark:text-white">2. Check Tyre Pressures Cold</span>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">Under-inflated tyres increase rolling resistance, reducing your vehicle's fuel economy by 2% to 4%.</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3 bg-white dark:border-slate-800 dark:bg-slate-950">
+            <span class="font-bold text-slate-900 dark:text-white">3. Smooth Acceleration & Deceleration</span>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">Aggressive braking and rapid acceleration burn significantly more fuel in stop-and-go traffic.</p>
+          </div>
+          <div class="rounded-xl border border-slate-200 p-3 bg-white dark:border-slate-800 dark:bg-slate-950">
+            <span class="font-bold text-slate-900 dark:text-white">4. Shed Unnecessary Weight</span>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">Every extra 50 kg of unnecessary baggage or roof rack clutter reduces overall fuel mileage.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Common Mistakes -->
+      <section class="space-y-3">
+        <h2>Common Fuel Cost Calculation Mistakes to Avoid</h2>
+        <ul>
+          <li><strong>Forgetting the Return Journey:</strong> Only typing one-way distance into the calculator without activating the round trip option.</li>
+          <li><strong>Relying on Manufacturer ARAI/EPA Ratings:</strong> Lab ratings are conducted under ideal conditions. Real-world city driving mileage is typically 15% to 25% lower than the brochure figure.</li>
+          <li><strong>Confusing UK MPG with US MPG:</strong> A vehicle achieving 40 MPG in Britain delivers approximately 33.3 MPG in the United States because an imperial gallon is 20% larger.</li>
+          <li><strong>Entering Gallon Prices Instead of Litre Prices:</strong> Always verify whether fuel price is entered per litre or per gallon.</li>
+          <li><strong>Ignoring City Stop-and-Go Delays:</strong> Long idling in traffic jams and continuous air-conditioner usage consume fuel while adding zero distance to your odometer.</li>
+        </ul>
+      </section>
+
+      <!-- Related Calculators -->
+      <section class="space-y-3 border-t border-slate-200 pt-6 dark:border-slate-800">
+        <h2>Related Travel & Financial Calculators</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs not-prose">
+          <a href="/finance/auto-loan-calculator/" class="rounded-xl border border-slate-200 p-3 bg-slate-50/50 hover:border-amber-500 hover:text-amber-600 dark:border-slate-800 dark:bg-slate-800/40 dark:hover:text-amber-400 transition font-bold block">
+            🚗 Auto Loan Calculator →
+          </a>
+          <a href="/finance/emi-calculator/" class="rounded-xl border border-slate-200 p-3 bg-slate-50/50 hover:border-amber-500 hover:text-amber-600 dark:border-slate-800 dark:bg-slate-800/40 dark:hover:text-amber-400 transition font-bold block">
+            💳 Loan EMI Calculator →
+          </a>
+          <a href="/general/unit-converter/" class="rounded-xl border border-slate-200 p-3 bg-slate-50/50 hover:border-amber-500 hover:text-amber-600 dark:border-slate-800 dark:bg-slate-800/40 dark:hover:text-amber-400 transition font-bold block">
+            🔄 Unit Converter →
+          </a>
+          <a href="/general/time-calculator/" class="rounded-xl border border-slate-200 p-3 bg-slate-50/50 hover:border-amber-500 hover:text-amber-600 dark:border-slate-800 dark:bg-slate-800/40 dark:hover:text-amber-400 transition font-bold block">
+            ⏱️ Time & Duration Calculator →
+          </a>
+        </div>
+      </section>
+
+      <!-- FAQs -->
+      <section class="space-y-4 border-t border-slate-200 pt-6 dark:border-slate-800">
+        <h2>Frequently Asked Questions (FAQs)</h2>
+        <div class="space-y-3 text-sm not-prose">
+          <details class="group rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-800/30">
+            <summary class="font-bold text-slate-900 dark:text-white cursor-pointer list-none flex items-center justify-between">
+              <span>How do I calculate fuel cost for a road trip?</span>
+              <span class="text-amber-600 font-bold transition group-open:rotate-180">▼</span>
+            </summary>
+            <p class="mt-2 text-slate-600 dark:text-slate-400 text-xs sm:text-sm leading-relaxed">
+              Take the total distance of your trip (doubled if you are returning), divide it by your car or bike's real-world fuel economy (km per litre), and multiply the resulting litres by the current fuel price per litre.
+            </p>
+          </details>
+
+          <details class="group rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-800/30">
+            <summary class="font-bold text-slate-900 dark:text-white cursor-pointer list-none flex items-center justify-between">
+              <span>How do I calculate fuel cost per km in India?</span>
+              <span class="text-amber-600 font-bold transition group-open:rotate-180">▼</span>
+            </summary>
+            <p class="mt-2 text-slate-600 dark:text-slate-400 text-xs sm:text-sm leading-relaxed">
+              Divide the petrol or diesel price per litre by your vehicle's mileage (km/L). For instance, if petrol is ₹100 per litre and your motorcycle gives 50 km/L, your running fuel cost is ₹100 ÷ 50 = ₹2.00 per kilometre.
+            </p>
+          </details>
+
+          <details class="group rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-800/30">
+            <summary class="font-bold text-slate-900 dark:text-white cursor-pointer list-none flex items-center justify-between">
+              <span>Why are UK MPG and US MPG different?</span>
+              <span class="text-amber-600 font-bold transition group-open:rotate-180">▼</span>
+            </summary>
+            <p class="mt-2 text-slate-600 dark:text-slate-400 text-xs sm:text-sm leading-relaxed">
+              The United Kingdom uses imperial gallons (4.546 litres), while the United States uses US liquid gallons (3.785 litres). Because an imperial gallon contains approximately 20% more fuel, the resulting numerical MPG in the UK is always higher for the identical vehicle.
+            </p>
+          </details>
+
+          <details class="group rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-800/30">
+            <summary class="font-bold text-slate-900 dark:text-white cursor-pointer list-none flex items-center justify-between">
+              <span>Does air conditioning significantly increase fuel consumption?</span>
+              <span class="text-amber-600 font-bold transition group-open:rotate-180">▼</span>
+            </summary>
+            <p class="mt-2 text-slate-600 dark:text-slate-400 text-xs sm:text-sm leading-relaxed">
+              Yes. Running the air conditioner compressor can increase fuel consumption by 5% to 15% in hot weather, especially during urban slow-speed driving. At highway speeds over 80 km/h, however, running the AC is often more fuel-efficient than driving with open windows due to aerodynamic drag.
+            </p>
+          </details>
+        </div>
+      </section>
+
+    </section>
+  </Fragment>
+
+</CalculatorLayout>
+
+<!-- PURE CLIENT-SIDE JAVASCRIPT LOGIC (0 CLOUDFLARE WORKER NETWORK CALLS) -->
+<script is:inline>
+(function() {
+  // Conversion Constants
+  var KM_TO_MILES = 0.621371192;
+  var MILES_TO_KM = 1.609344;
+  var LITRES_TO_US_GAL = 0.264172052;
+
+  // Active State
+  var currentDistanceUnit = 'km'; // 'km' | 'miles'
+  var currentCurrency = '₹';
+
+  // Format Helper
+  function formatMoney(amount, currency) {
+    if (isNaN(amount) || !isFinite(amount)) return currency + '0.00';
+    return currency + Number(amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function formatNum(num, dec) {
+    if (isNaN(num) || !isFinite(num)) return '0';
+    return Number(num).toLocaleString(undefined, { minimumFractionDigits: dec !== undefined ? dec : 2, maximumFractionDigits: dec !== undefined ? dec : 2 });
+  }
+
+  // --- TAB NAVIGATION ---
+  var modeButtons = document.querySelectorAll('.btn-fuel-mode');
+  var panels = {
+    'trip': document.getElementById('panel-trip'),
+    'fuel-used': document.getElementById('panel-fuel-used'),
+    'budget': document.getElementById('panel-budget'),
+    'target-economy': document.getElementById('panel-target-economy')
+  };
+
+  modeButtons.forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var targetMode = btn.getAttribute('data-mode');
+      
+      modeButtons.forEach(function(b) {
+        b.classList.remove('active', 'bg-amber-500', 'text-white');
+        b.classList.add('border', 'border-slate-300', 'bg-white', 'text-slate-700');
+      });
+      btn.classList.add('active', 'bg-amber-500', 'text-white');
+      btn.classList.remove('border', 'border-slate-300', 'bg-white', 'text-slate-700');
+
+      Object.keys(panels).forEach(function(key) {
+        if (panels[key]) {
+          if (key === targetMode) {
+            panels[key].classList.remove('hidden');
+          } else {
+            panels[key].classList.add('hidden');
+          }
+        }
+      });
+    });
+  });
+
+  // --- REGION PRESET HANDLERS ---
+  var presetIndia = document.getElementById('preset-india');
+  var presetUk = document.getElementById('preset-uk');
+  var presetUs = document.getElementById('preset-us');
+  var presetEu = document.getElementById('preset-eu');
+
+  function updateRegionPresets(currency, distUnit, econUnit) {
+    currentCurrency = currency;
+    currentDistanceUnit = distUnit;
+
+    // Update Currency Selectors
+    var currSelect = document.getElementById('trip-currency');
+    if (currSelect) currSelect.value = currency;
+
+    var econSelect = document.getElementById('trip-economy-unit');
+    if (econSelect) econSelect.value = econUnit;
+
+    // Update prefixes and labels
+    var tripCurrPrefix = document.getElementById('trip-curr-prefix');
+    if (tripCurrPrefix) tripCurrPrefix.textContent = currency;
+    var usedCurrPrefix = document.getElementById('used-curr-prefix');
+    if (usedCurrPrefix) usedCurrPrefix.textContent = currency;
+    var budgetCurrPrefix = document.getElementById('budget-curr-prefix');
+    if (budgetCurrPrefix) budgetCurrPrefix.textContent = currency;
+    var budgetPricePrefix = document.getElementById('budget-price-prefix');
+    if (budgetPricePrefix) budgetPricePrefix.textContent = currency;
+    var targetCurrPrefix = document.getElementById('target-curr-prefix');
+    if (targetCurrPrefix) targetCurrPrefix.textContent = currency;
+    var targetPricePrefix = document.getElementById('target-price-prefix');
+    if (targetPricePrefix) targetPricePrefix.textContent = currency;
+
+    var tripDistLabel = document.getElementById('trip-dist-label');
+    if (tripDistLabel) tripDistLabel.textContent = distUnit;
+
+    var tripEconLabel = document.getElementById('trip-econ-label');
+    if (tripEconLabel) {
+      if (econUnit === 'kml') tripEconLabel.textContent = 'km/L';
+      else if (econUnit === 'l100km') tripEconLabel.textContent = 'L/100km';
+      else if (econUnit === 'ukmpg') tripEconLabel.textContent = 'UK MPG';
+      else if (econUnit === 'usmpg') tripEconLabel.textContent = 'US MPG';
+    }
+
+    // Update unit toggle buttons
+    var toggles = document.querySelectorAll('.unit-dist-toggle');
+    toggles.forEach(function(t) {
+      if (t.getAttribute('data-unit') === distUnit) {
+        t.className = 'unit-dist-toggle text-amber-600 dark:text-amber-400 underline font-bold cursor-pointer';
+      } else {
+        t.className = 'unit-dist-toggle text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer';
+      }
+    });
+  }
+
+  if (presetIndia) {
+    presetIndia.addEventListener('click', function() {
+      setActivePreset(presetIndia);
+      updateRegionPresets('₹', 'km', 'kml');
+    });
+  }
+  if (presetUk) {
+    presetUk.addEventListener('click', function() {
+      setActivePreset(presetUk);
+      updateRegionPresets('£', 'miles', 'ukmpg');
+    });
+  }
+  if (presetUs) {
+    presetUs.addEventListener('click', function() {
+      setActivePreset(presetUs);
+      updateRegionPresets('$', 'miles', 'usmpg');
+    });
+  }
+  if (presetEu) {
+    presetEu.addEventListener('click', function() {
+      setActivePreset(presetEu);
+      updateRegionPresets('€', 'km', 'l100km');
+    });
+  }
+
+  function setActivePreset(activeBtn) {
+    var allPresets = document.querySelectorAll('.btn-preset-region');
+    allPresets.forEach(function(p) {
+      p.className = 'btn-preset-region rounded-lg border border-slate-300 bg-white px-3 py-1.5 font-semibold text-slate-700 hover:border-amber-500 hover:text-amber-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition';
+    });
+    activeBtn.className = 'btn-preset-region active rounded-lg border border-amber-500 bg-amber-50 px-3 py-1.5 font-bold text-amber-800 hover:bg-amber-100 dark:border-amber-600 dark:bg-amber-950/40 dark:text-amber-300 cursor-pointer transition';
+  }
+
+  // Unit Dist Toggle
+  var distToggles = document.querySelectorAll('.unit-dist-toggle');
+  distToggles.forEach(function(dt) {
+    dt.addEventListener('click', function() {
+      var unit = dt.getAttribute('data-unit');
+      currentDistanceUnit = unit;
+      var tripDistLabel = document.getElementById('trip-dist-label');
+      if (tripDistLabel) tripDistLabel.textContent = unit;
+
+      distToggles.forEach(function(t) {
+        if (t === dt) {
+          t.className = 'unit-dist-toggle text-amber-600 dark:text-amber-400 underline font-bold cursor-pointer';
+        } else {
+          t.className = 'unit-dist-toggle text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 cursor-pointer';
+        }
+      });
+    });
+  });
+
+  // Currency select change
+  var tripCurrencySelect = document.getElementById('trip-currency');
+  if (tripCurrencySelect) {
+    tripCurrencySelect.addEventListener('change', function() {
+      currentCurrency = tripCurrencySelect.value;
+      var tripCurrPrefix = document.getElementById('trip-curr-prefix');
+      if (tripCurrPrefix) tripCurrPrefix.textContent = currentCurrency;
+    });
+  }
+
+  // Economy select change
+  var tripEconomyUnitSelect = document.getElementById('trip-economy-unit');
+  if (tripEconomyUnitSelect) {
+    tripEconomyUnitSelect.addEventListener('change', function() {
+      var val = tripEconomyUnitSelect.value;
+      var label = document.getElementById('trip-econ-label');
+      if (label) {
+        if (val === 'kml') label.textContent = 'km/L';
+        else if (val === 'l100km') label.textContent = 'L/100km';
+        else if (val === 'ukmpg') label.textContent = 'UK MPG';
+        else if (val === 'usmpg') label.textContent = 'US MPG';
+      }
+    });
+  }
+
+  // --- RESULT DISPLAY HELPER ---
+  var resultsWrapper = document.getElementById('fuel-results');
+  var resMainCost = document.getElementById('res-main-cost');
+  var resTotalDist = document.getElementById('res-total-dist');
+  var resRoundtripBadge = document.getElementById('res-roundtrip-badge');
+  var resFuelLitres = document.getElementById('res-fuel-litres');
+  var resFuelGallons = document.getElementById('res-fuel-gallons');
+  var resCostPerKm = document.getElementById('res-cost-per-km');
+  var resCostPerMile = document.getElementById('res-cost-per-mile');
+  var resEffectiveEconomy = document.getElementById('res-effective-economy');
+  var resStepsContainer = document.getElementById('res-steps-container');
+  var heroTitleLabel = document.getElementById('hero-title-label');
+
+  function showResults(data) {
+    if (!resultsWrapper) return;
+    resultsWrapper.classList.remove('hidden');
+
+    if (heroTitleLabel) heroTitleLabel.textContent = data.heroTitle || 'Estimated Total Fuel Cost';
+    if (resMainCost) resMainCost.textContent = data.mainCostFormatted;
+    if (resTotalDist) resTotalDist.textContent = data.totalDistFormatted;
+    
+    if (resRoundtripBadge) {
+      if (data.isRoundTrip) resRoundtripBadge.classList.remove('hidden');
+      else resRoundtripBadge.classList.add('hidden');
+    }
+
+    if (resFuelLitres) resFuelLitres.textContent = formatNum(data.fuelLitres) + ' L';
+    if (resFuelGallons) resFuelGallons.textContent = formatNum(data.fuelLitres * LITRES_TO_US_GAL) + ' gal (US)';
+    
+    if (resCostPerKm) resCostPerKm.textContent = formatMoney(data.costPerKm, data.currency) + '/km';
+    if (resCostPerMile) resCostPerMile.textContent = formatMoney(data.costPerMile, data.currency) + '/mi';
+    if (resEffectiveEconomy) resEffectiveEconomy.textContent = data.effectiveEconomyFormatted;
+
+    // Steps
+    if (resStepsContainer && data.steps && data.steps.length > 0) {
+      resStepsContainer.innerHTML = '';
+      data.steps.forEach(function(step) {
+        var p = document.createElement('div');
+        p.className = 'p-2 rounded bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700';
+        p.innerHTML = '<span class="text-amber-600 dark:text-amber-400 font-bold">' + step.label + ':</span> ' + step.calc;
+        resStepsContainer.appendChild(p);
+      });
+    }
+
+    // Smooth scroll to results on mobile
+    if (window.innerWidth < 640) {
+      resultsWrapper.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+
+  function hideResults() {
+    if (resultsWrapper) resultsWrapper.classList.add('hidden');
+  }
+
+  // --- MODE 1: TRIP FORM SUBMIT ---
+  var formTrip = document.getElementById('form-fuel-trip');
+  var tripError = document.getElementById('trip-error');
+  var btnTripReset = document.getElementById('btn-trip-reset');
+
+  if (formTrip) {
+    formTrip.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (tripError) tripError.classList.add('hidden');
+
+      var distInput = document.getElementById('trip-distance');
+      var econInput = document.getElementById('trip-economy');
+      var priceInput = document.getElementById('trip-price');
+      var roundtripCheck = document.getElementById('trip-roundtrip');
+      var econUnit = document.getElementById('trip-economy-unit').value;
+      var currency = document.getElementById('trip-currency').value;
+
+      var rawDist = parseFloat(distInput ? distInput.value : '');
+      var rawEcon = parseFloat(econInput ? econInput.value : '');
+      var rawPrice = parseFloat(priceInput ? priceInput.value : '');
+      var isRoundTrip = roundtripCheck ? roundtripCheck.checked : false;
+
+      // Validation
+      if (isNaN(rawDist) || rawDist <= 0) {
+        showError(tripError, 'Please enter a valid trip distance greater than 0.');
+        return;
+      }
+      if (isNaN(rawEcon) || rawEcon <= 0) {
+        showError(tripError, 'Please enter a valid vehicle fuel economy greater than 0.');
+        return;
+      }
+      if (isNaN(rawPrice) || rawPrice < 0) {
+        showError(tripError, 'Please enter a valid fuel price (0 or greater).');
+        return;
+      }
+
+      // 1. Normalize Distance to Kilometres
+      var distanceKm = currentDistanceUnit === 'miles' ? rawDist * MILES_TO_KM : rawDist;
+      var totalDistanceKm = isRoundTrip ? distanceKm * 2 : distanceKm;
+      var totalDisplayDistance = isRoundTrip ? rawDist * 2 : rawDist;
+
+      // 2. Normalize Fuel Economy to km/L
+      var economyKmL = 0;
+      if (econUnit === 'kml') {
+        economyKmL = rawEcon;
+      } else if (econUnit === 'l100km') {
+        economyKmL = 100 / rawEcon;
+      } else if (econUnit === 'ukmpg') {
+        economyKmL = rawEcon * (MILES_TO_KM / 4.54609);
+      } else if (econUnit === 'usmpg') {
+        economyKmL = rawEcon * (MILES_TO_KM / 3.785411784);
+      }
+
+      if (economyKmL <= 0 || !isFinite(economyKmL)) {
+        showError(tripError, 'Invalid fuel economy configuration. Please check your inputs.');
+        return;
+      }
+
+      // 3. Compute Fuel Required & Total Cost
+      var fuelRequiredLitres = totalDistanceKm / economyKmL;
+      var totalFuelCost = fuelRequiredLitres * rawPrice;
+      var costPerKm = totalDistanceKm > 0 ? totalFuelCost / totalDistanceKm : 0;
+      var costPerMile = costPerKm * MILES_TO_KM;
+
+      // 4. Generate dynamic calculation steps using user's actual entered values
+      var steps = [];
+      if (isRoundTrip) {
+        steps.push({
+          label: 'Total Distance',
+          calc: rawDist + ' ' + currentDistanceUnit + ' × 2 (Round trip) = ' + totalDisplayDistance + ' ' + currentDistanceUnit + ' (' + formatNum(totalDistanceKm) + ' km)'
+        });
+      } else {
+        steps.push({
+          label: 'Total Distance',
+          calc: totalDisplayDistance + ' ' + currentDistanceUnit + (currentDistanceUnit === 'miles' ? ' (' + formatNum(totalDistanceKm) + ' km)' : '')
+        });
+      }
+
+      if (econUnit === 'l100km') {
+        steps.push({
+          label: 'Fuel Required (L/100 km)',
+          calc: '(' + formatNum(totalDistanceKm) + ' km × ' + rawEcon + ' L/100km) ÷ 100 = ' + formatNum(fuelRequiredLitres, 4) + ' Litres'
+        });
+      } else if (econUnit === 'kml') {
+        steps.push({
+          label: 'Fuel Required',
+          calc: formatNum(totalDistanceKm) + ' km ÷ ' + rawEcon + ' km/L = ' + formatNum(fuelRequiredLitres, 4) + ' Litres'
+        });
+      } else {
+        steps.push({
+          label: 'Fuel Required',
+          calc: formatNum(totalDistanceKm) + ' km ÷ ' + formatNum(economyKmL, 4) + ' km/L (' + rawEcon + ' ' + econUnit.toUpperCase() + ') = ' + formatNum(fuelRequiredLitres, 4) + ' Litres'
+        });
+      }
+
+      steps.push({
+        label: 'Total Fuel Cost',
+        calc: formatNum(fuelRequiredLitres, 4) + ' Litres × ' + formatMoney(rawPrice, currency) + '/L = ' + formatMoney(totalFuelCost, currency)
+      });
+
+      steps.push({
+        label: 'Cost per Kilometre',
+        calc: formatMoney(rawPrice, currency) + ' ÷ ' + formatNum(economyKmL, 2) + ' km/L = ' + formatMoney(costPerKm, currency) + '/km'
+      });
+
+      showResults({
+        heroTitle: 'Estimated Total Fuel Cost',
+        mainCostFormatted: formatMoney(totalFuelCost, currency),
+        totalDistFormatted: formatNum(totalDisplayDistance) + ' ' + currentDistanceUnit,
+        isRoundTrip: isRoundTrip,
+        fuelLitres: fuelRequiredLitres,
+        costPerKm: costPerKm,
+        costPerMile: costPerMile,
+        currency: currency,
+        effectiveEconomyFormatted: formatNum(economyKmL, 2) + ' km/L',
+        steps: steps
+      });
+    });
+  }
+
+  if (btnTripReset) {
+    btnTripReset.addEventListener('click', function() {
+      if (formTrip) formTrip.reset();
+      // Ensure all fields are explicitly cleared to empty strings
+      var distInput = document.getElementById('trip-distance');
+      if (distInput) distInput.value = '';
+      var econInput = document.getElementById('trip-economy');
+      if (econInput) econInput.value = '';
+      var priceInput = document.getElementById('trip-price');
+      if (priceInput) priceInput.value = '';
+      var roundtripCheck = document.getElementById('trip-roundtrip');
+      if (roundtripCheck) roundtripCheck.checked = false;
+
+      if (tripError) tripError.classList.add('hidden');
+      hideResults();
+    });
+  }
+
+  // --- MODE 2: KNOWN FUEL USED FORM SUBMIT ---
+  var formFuelUsed = document.getElementById('form-fuel-used');
+  var usedError = document.getElementById('used-error');
+  var btnUsedReset = document.getElementById('btn-used-reset');
+
+  if (formFuelUsed) {
+    formFuelUsed.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (usedError) usedError.classList.add('hidden');
+
+      var dist = parseFloat(document.getElementById('used-distance').value);
+      var litres = parseFloat(document.getElementById('used-litres').value);
+      var price = parseFloat(document.getElementById('used-price').value);
+
+      if (isNaN(dist) || dist <= 0) {
+        showError(usedError, 'Please enter a valid distance greater than 0.');
+        return;
+      }
+      if (isNaN(litres) || litres <= 0) {
+        showError(usedError, 'Please enter valid litres filled greater than 0.');
+        return;
+      }
+      if (isNaN(price) || price < 0) {
+        showError(usedError, 'Please enter a valid fuel price per litre.');
+        return;
+      }
+
+      var totalCost = litres * price;
+      var economyKmL = dist / litres;
+      var costPerKm = totalCost / dist;
+      var costPerMile = costPerKm * MILES_TO_KM;
+
+      var steps = [
+        { label: 'Total Fuel Cost', calc: litres + ' Litres × ' + formatMoney(price, currentCurrency) + '/L = ' + formatMoney(totalCost, currentCurrency) },
+        { label: 'Actual Mileage Achieved', calc: dist + ' km ÷ ' + litres + ' Litres = ' + formatNum(economyKmL, 2) + ' km/L' },
+        { label: 'Cost per Kilometre', calc: formatMoney(totalCost, currentCurrency) + ' ÷ ' + dist + ' km = ' + formatMoney(costPerKm, currentCurrency) + '/km' }
+      ];
+
+      showResults({
+        heroTitle: 'Total Fuel Cost',
+        mainCostFormatted: formatMoney(totalCost, currentCurrency),
+        totalDistFormatted: formatNum(dist) + ' km',
+        isRoundTrip: false,
+        fuelLitres: litres,
+        costPerKm: costPerKm,
+        costPerMile: costPerMile,
+        currency: currentCurrency,
+        effectiveEconomyFormatted: formatNum(economyKmL, 2) + ' km/L',
+        steps: steps
+      });
+    });
+  }
+
+  if (btnUsedReset) {
+    btnUsedReset.addEventListener('click', function() {
+      if (formFuelUsed) formFuelUsed.reset();
+      document.getElementById('used-distance').value = '';
+      document.getElementById('used-litres').value = '';
+      document.getElementById('used-price').value = '';
+      if (usedError) usedError.classList.add('hidden');
+      hideResults();
+    });
+  }
+
+  // --- MODE 3: BUDGET TO DISTANCE FORM SUBMIT ---
+  var formFuelBudget = document.getElementById('form-fuel-budget');
+  var budgetError = document.getElementById('budget-error');
+  var btnBudgetReset = document.getElementById('btn-budget-reset');
+
+  if (formFuelBudget) {
+    formFuelBudget.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (budgetError) budgetError.classList.add('hidden');
+
+      var budget = parseFloat(document.getElementById('budget-amount').value);
+      var price = parseFloat(document.getElementById('budget-price').value);
+      var econ = parseFloat(document.getElementById('budget-economy').value);
+
+      if (isNaN(budget) || budget <= 0) {
+        showError(budgetError, 'Please enter a valid budget amount greater than 0.');
+        return;
+      }
+      if (isNaN(price) || price <= 0) {
+        showError(budgetError, 'Please enter a valid fuel price per litre greater than 0.');
+        return;
+      }
+      if (isNaN(econ) || econ <= 0) {
+        showError(budgetError, 'Please enter a valid fuel economy in km/L greater than 0.');
+        return;
+      }
+
+      var fuelAvailableLitres = budget / price;
+      var maxDistanceKm = fuelAvailableLitres * econ;
+      var costPerKm = price / econ;
+      var costPerMile = costPerKm * MILES_TO_KM;
+
+      var steps = [
+        { label: 'Fuel Purchased with Budget', calc: formatMoney(budget, currentCurrency) + ' ÷ ' + formatMoney(price, currentCurrency) + '/L = ' + formatNum(fuelAvailableLitres, 2) + ' Litres' },
+        { label: 'Maximum Travel Distance', calc: formatNum(fuelAvailableLitres, 2) + ' Litres × ' + econ + ' km/L = ' + formatNum(maxDistanceKm, 2) + ' km (' + formatNum(maxDistanceKm * KM_TO_MILES, 2) + ' miles)' },
+        { label: 'Cost per Kilometre', calc: formatMoney(price, currentCurrency) + ' ÷ ' + econ + ' km/L = ' + formatMoney(costPerKm, currentCurrency) + '/km' }
+      ];
+
+      showResults({
+        heroTitle: 'Maximum Distance You Can Travel',
+        mainCostFormatted: formatNum(maxDistanceKm, 1) + ' km',
+        totalDistFormatted: formatNum(maxDistanceKm, 1) + ' km (' + formatNum(maxDistanceKm * KM_TO_MILES, 1) + ' mi)',
+        isRoundTrip: false,
+        fuelLitres: fuelAvailableLitres,
+        costPerKm: costPerKm,
+        costPerMile: costPerMile,
+        currency: currentCurrency,
+        effectiveEconomyFormatted: formatNum(econ, 2) + ' km/L',
+        steps: steps
+      });
+    });
+  }
+
+  if (btnBudgetReset) {
+    btnBudgetReset.addEventListener('click', function() {
+      if (formFuelBudget) formFuelBudget.reset();
+      document.getElementById('budget-amount').value = '';
+      document.getElementById('budget-price').value = '';
+      document.getElementById('budget-economy').value = '';
+      if (budgetError) budgetError.classList.add('hidden');
+      hideResults();
+    });
+  }
+
+  // --- MODE 4: TARGET ECONOMY SUBMIT ---
+  var formFuelTarget = document.getElementById('form-fuel-target');
+  var targetError = document.getElementById('target-error');
+  var btnTargetReset = document.getElementById('btn-target-reset');
+
+  if (formFuelTarget) {
+    formFuelTarget.addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (targetError) targetError.classList.add('hidden');
+
+      var dist = parseFloat(document.getElementById('target-dist').value);
+      var budget = parseFloat(document.getElementById('target-budget').value);
+      var price = parseFloat(document.getElementById('target-price').value);
+
+      if (isNaN(dist) || dist <= 0) {
+        showError(targetError, 'Please enter a valid distance in km greater than 0.');
+        return;
+      }
+      if (isNaN(budget) || budget <= 0) {
+        showError(targetError, 'Please enter a valid max budget greater than 0.');
+        return;
+      }
+      if (isNaN(price) || price <= 0) {
+        showError(targetError, 'Please enter a valid fuel price per litre greater than 0.');
+        return;
+      }
+
+      var maxLitres = budget / price;
+      var requiredKmL = dist / maxLitres;
+      var costPerKm = budget / dist;
+      var costPerMile = costPerKm * MILES_TO_KM;
+
+      var steps = [
+        { label: 'Max Fuel Affordable', calc: formatMoney(budget, currentCurrency) + ' ÷ ' + formatMoney(price, currentCurrency) + '/L = ' + formatNum(maxLitres, 2) + ' Litres' },
+        { label: 'Required Fuel Economy', calc: dist + ' km ÷ ' + formatNum(maxLitres, 2) + ' Litres = ' + formatNum(requiredKmL, 2) + ' km/L' },
+        { label: 'Target Running Cost', calc: formatMoney(budget, currentCurrency) + ' ÷ ' + dist + ' km = ' + formatMoney(costPerKm, currentCurrency) + '/km' }
+      ];
+
+      showResults({
+        heroTitle: 'Minimum Required Fuel Economy',
+        mainCostFormatted: formatNum(requiredKmL, 2) + ' km/L',
+        totalDistFormatted: formatNum(dist) + ' km',
+        isRoundTrip: false,
+        fuelLitres: maxLitres,
+        costPerKm: costPerKm,
+        costPerMile: costPerMile,
+        currency: currentCurrency,
+        effectiveEconomyFormatted: formatNum(requiredKmL, 2) + ' km/L',
+        steps: steps
+      });
+    });
+  }
+
+  if (btnTargetReset) {
+    btnTargetReset.addEventListener('click', function() {
+      if (formFuelTarget) formFuelTarget.reset();
+      document.getElementById('target-dist').value = '';
+      document.getElementById('target-budget').value = '';
+      document.getElementById('target-price').value = '';
+      if (targetError) targetError.classList.add('hidden');
+      hideResults();
+    });
+  }
+
+  function showError(el, msg) {
+    if (!el) return;
+    el.textContent = msg;
+    el.classList.remove('hidden');
+  }
+
+})();
+</script>

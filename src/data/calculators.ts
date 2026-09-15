@@ -189,6 +189,26 @@ const CALCULATOR_ALIASES: Record<string, string[]> = {
     'rafter length calculator',
     'calculate ramp length',
     'grade percentage calculator'
+  ],
+  'fuel-cost-calculator': [
+    'fuel cost calculator',
+    'fuel cost calculator india',
+    'fuel cost calculator km india',
+    'trip fuel cost calculator india',
+    'fuel cost calculator uk',
+    'journey fuel cost calculator',
+    'petrol cost calculator',
+    'diesel cost calculator',
+    'fuel cost per km',
+    'fuel cost per mile',
+    'trip fuel cost',
+    'journey fuel cost',
+    'car fuel cost calculator',
+    'road trip fuel cost calculator',
+    'fuel consumption calculator',
+    'petrol kharch calculator',
+    'diesel kharcha',
+    'fuel budget calculator'
   ]
 };
 
