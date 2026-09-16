@@ -97,9 +97,16 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // 1. STATIC ASSET BYPASS: _astro/, /assets/, .css, .js, fonts, images
   // Completely bypass ALL Worker HTML caching logic, redirects, and header modifications.
   if (isStaticAsset(pathname)) {
-    // If request is for a stylesheet, guarantee Content-Type: text/css is intact
+    // If request is for a stylesheet, guarantee Content-Type: text/css and handle stale chunk fallback
     if (pathname.endsWith('.css')) {
       const assetResponse = await next();
+
+      // If an old CSS chunk was requested (e.g. from a stale edge-cached HTML page) and returned 404,
+      // dynamically redirect to the active CSS bundle so styles never break!
+      if (assetResponse.status === 404 && pathname.startsWith('/_astro/global.')) {
+        return context.redirect('/_astro/global.BO1HgYUr.css', 302);
+      }
+
       const contentType = assetResponse.headers.get('content-type');
       if (!contentType || !contentType.includes('text/css')) {
         const headers = new Headers(assetResponse.headers);
@@ -246,14 +253,14 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return response;
   }
 
-  // Public HTML & Pages: Maximize Cloudflare Edge Cache Hit Rate with SWR
-  // Strictly only apply caches.default to standard GET requests for HTML pages, not to internal Vite/Astro asset chunks
+  // Public HTML & Pages: Sensible Edge Cache with SWR
+  // Use short edge cache (5 min) so deployments take effect promptly without locking stale HTML for 7 days
   if (isCacheablePage && response.status === 200) {
     const isHtml = response.headers.get('content-type')?.includes('text/html') ?? true;
     if (isHtml) {
-      response.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400');
-      response.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=604800, stale-while-revalidate=86400');
-      response.headers.set('CDN-Cache-Control', 'max-age=604800, stale-while-revalidate=86400');
+      response.headers.set('Cache-Control', 'public, max-age=0, s-maxage=300, stale-while-revalidate=600');
+      response.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=300, stale-while-revalidate=600');
+      response.headers.set('CDN-Cache-Control', 'max-age=300, stale-while-revalidate=600');
       response.headers.set('Vary', 'Accept-Encoding');
       response.headers.set('X-Worker-Cache', 'MISS');
 
