@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { type AdsConfig } from '../lib/ads-config';
 import { readSettings } from './api/adsense-config';
-import { safeWaitUntil } from '../lib/cloudflare-env';
+import { safeWaitUntil, getRuntimeEnvSync } from '../lib/cloudflare-env';
 
 export const prerender = false;
 
@@ -47,7 +47,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
   // 4. Default Fallback Guarantee: Never return empty ads.txt
   if (lines.length === 0) {
-    const envClientId = (locals?.runtime?.env as any)?.PUBLIC_ADSENSE_CLIENT_ID || 'ca-pub-4283234479329006';
+    const env = getRuntimeEnvSync(locals);
+    const envClientId = (env?.PUBLIC_ADSENSE_CLIENT_ID as string) || 'ca-pub-4283234479329006';
     const pubId = envClientId.replace(/^ca-/, '');
     lines.push(`google.com, ${pubId}, DIRECT, f08c47fec0942fa0`);
   }
