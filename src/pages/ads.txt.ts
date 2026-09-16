@@ -45,14 +45,21 @@ export const GET: APIRoute = async ({ request, locals }) => {
     lines.push(custom);
   }
 
+  // 4. Default Fallback Guarantee: Never return empty ads.txt
+  if (lines.length === 0) {
+    const envClientId = (locals?.runtime?.env as any)?.PUBLIC_ADSENSE_CLIENT_ID || 'ca-pub-4283234479329006';
+    const pubId = envClientId.replace(/^ca-/, '');
+    lines.push(`google.com, ${pubId}, DIRECT, f08c47fec0942fa0`);
+  }
+
   const output = lines.join('\n').trim();
 
-  const response = new Response(output ? output + '\n' : '', {
+  const response = new Response(output + '\n', {
     status: 200,
     headers: TEXT_PLAIN_HEADERS,
   });
 
-  if (cache) {
+  if (cache && output) {
     safeWaitUntil(locals, cache.put(cacheKey, response.clone()));
   }
 

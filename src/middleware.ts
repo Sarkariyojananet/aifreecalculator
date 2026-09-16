@@ -39,6 +39,9 @@ function isStaticAsset(pathname: string): boolean {
   return (
     pathname.startsWith('/_astro/') ||
     pathname.startsWith('/assets/') ||
+    pathname === '/ads.txt' ||
+    pathname === '/app-ads.txt' ||
+    pathname === '/robots.txt' ||
     STATIC_ASSET_REGEX.test(pathname)
   );
 }
