@@ -64,7 +64,7 @@ const effectiveRobots = override.robots;
 const effectiveKeywords = Array.isArray(override.keywords) && override.keywords.length > 0 ? override.keywords : keywords;
 
 // Default to category-specific 1200x630 OG banner if custom one is not provided
-const categorySlug = (category || 'general').toLowerCase();
+const categorySlug = (category || 'general').toLowerCase().replace(/\s+/g, '-');
 const resolvedOgImage = override.ogImage || ogImage || `/og/${categorySlug}.png`;
 
 // 1. Fetch custom curated internal links (if configured in Admin CMS)
@@ -87,12 +87,12 @@ const popularCrossCategory = getFeaturedCalculators()
   .filter((c) => c.slug !== slug)
   .slice(0, 5);
 
-const categoryKey = category.toLowerCase() as keyof typeof CATEGORIES_CONFIG;
+const categoryKey = categorySlug as keyof typeof CATEGORIES_CONFIG;
 const localizedCategoryName = CATEGORIES_CONFIG[categoryKey]?.names[lang];
 if (!localizedCategoryName) throw new Error(`[i18n] Missing category name for "${categoryKey}" in "${lang}"`);
 
 const homeHref = getLocalizedPath('/', lang);
-const categoryPath = getLocalizedPath(`/${categoryKey}/`, lang);
+const categoryPath = getLocalizedPath(`/${categorySlug}/`, lang);
 
 // Build interconnected Schema.org @graph (WebApplication + BreadcrumbList + HowTo)
 const graphSchema = buildCalculatorGraphSchema({
@@ -330,7 +330,7 @@ const graphSchema = buildCalculatorGraphSchema({
             <div class="mt-3 divide-y divide-slate-100 dark:divide-slate-800/60">
               {popularCrossCategory.map((c) => {
                 const popTrans = getCalculatorTranslation(c.slug, lang);
-                const catKey = c.category.toLowerCase() as keyof typeof CATEGORIES_CONFIG;
+                const catKey = c.category.toLowerCase().replace(/\s+/g, '-') as keyof typeof CATEGORIES_CONFIG;
                 const popCatName = CATEGORIES_CONFIG[catKey]?.names[lang];
                 if (!popCatName) throw new Error(`[i18n] Missing category name for "${catKey}" in "${lang}"`);
                 return (

@@ -5,7 +5,8 @@ export type CalculatorCategory =
   | 'Construction'
   | 'Finance'
   | 'Health'
-  | 'Math';
+  | 'Math'
+  | 'Free Online Tools';
 
 export interface Calculator {
   slug: string;
@@ -254,6 +255,12 @@ export const categories: { name: CalculatorCategory; icon: string; description: 
     description: 'Academic and scientific tools for GPA, standard deviation, fractions, scientific math, and RNG.',
     path: '/math/',
   },
+  {
+    name: 'Free Online Tools',
+    icon: '🛠️',
+    description: 'Free online browser-based utility tools for image compression, file conversion, text analysis, and developer utilities.',
+    path: '/free-online-tools/',
+  },
 ];
 
 // Cold-start O(1) Index Maps and Precomputed Lists
@@ -278,6 +285,10 @@ for (const cat of categories) {
       (c.additionalCategories && c.additionalCategories.some((ac) => ac.toLowerCase() === catLower))
   );
   calculatorsByCategoryMap.set(catLower, list);
+  const slugified = catLower.replace(/\s+/g, '-');
+  if (!calculatorsByCategoryMap.has(slugified)) {
+    calculatorsByCategoryMap.set(slugified, list);
+  }
 }
 
 const featuredCalculatorsList = calculators.filter((c) => c.featured);
@@ -363,7 +374,7 @@ export function searchCalculators(query: string): Calculator[] {
 }
 
 // Precomputed Homepage Category Pills with Live Counts (Zero per-request overhead)
-const preferredCategoryOrder = ['Finance', 'Construction', 'Health', 'Math', 'General'];
+const preferredCategoryOrder = ['Finance', 'Construction', 'Health', 'Math', 'General', 'Free Online Tools'];
 export const PRECOMPUTED_CATEGORY_PILLS = [...categories]
   .sort((a, b) => {
     const idxA = preferredCategoryOrder.indexOf(a.name);

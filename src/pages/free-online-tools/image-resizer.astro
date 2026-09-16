@@ -1,0 +1,1041 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+
+// FAQ Schema for Search Engines
+const faqs = [
+  {
+    question: "What is an image resizer?",
+    answer: "An image resizer is an online tool that adjusts the dimensional resolution (pixels, centimeters, or inches) and file weight (KB or MB) of digital photos to fit specific screen, print, or web upload requirements."
+  },
+  {
+    question: "How can I resize an image online?",
+    answer: "Select or drag and drop your image into our free online image resizer. Choose your preferred mode—pixels, centimeters, or target file size in KB—enter your target values, and download your resized picture instantly."
+  },
+  {
+    question: "Can I resize an image to 50KB?",
+    answer: "Yes. Switch to the 'Target File Size' tab and click the '50 KB' button. The tool will automatically calculate the best balance between dimensions and image quality to keep the final output at or below 50KB."
+  },
+  {
+    question: "Can I resize an image in KB?",
+    answer: "Yes. Our image resizer in KB mode lets you choose presets like 20KB, 50KB, 100KB, or 200KB, or enter any custom KB target. The algorithm iteratively optimizes encoding to meet your target."
+  },
+  {
+    question: "Can I resize an image in CM?",
+    answer: "Yes. In the 'Centimeters (cm)' tab, enter your desired width and height in centimeters alongside your target DPI (such as 96 DPI for screen or 300 DPI for high-quality printing). The tool converts physical measurements to exact pixel dimensions."
+  },
+  {
+    question: "What is DPI when resizing an image?",
+    answer: "DPI (Dots Per Inch) defines how many pixels exist within one linear inch of an image. Higher DPI values (such as 300 DPI) produce denser, sharper physical prints, while 72 to 96 DPI is standard for computer screens and smartphones."
+  },
+  {
+    question: "Can I resize JPG, PNG and WebP images?",
+    answer: "Yes. Our tool natively supports JPG/JPEG, PNG, and WebP formats. You can also cross-convert between these formats during the resizing process."
+  },
+  {
+    question: "Will resizing reduce image quality?",
+    answer: "Downscaling dimensions (making an image smaller) actually increases perceived pixel density without loss of visual sharpness. Upscaling (making an image larger) can cause pixelation if stretched beyond original sensor resolution."
+  },
+  {
+    question: "Is this image resizer free?",
+    answer: "Yes, our image resizer is 100% free with no subscriptions, registration, watermarks, or usage limits."
+  },
+  {
+    question: "Are my images uploaded to a server?",
+    answer: "No. All resizing and encoding happen 100% locally inside your browser using HTML5 Canvas and Blob APIs. Your photos never leave your device."
+  }
+];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqs.map((faq) => ({
+    "@type": "Question",
+    "name": faq.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": faq.answer
+    }
+  }))
+};
+---
+
+<CalculatorLayout
+  title="Image Resizer - Resize Images Online for Free"
+  description="Resize images online for free by pixels, centimeters, or target file size in KB. Fast, client-side, and private image resizer with aspect ratio lock."
+  category="Free Online Tools"
+  calculatorName="Image Resizer"
+  slug="image-resizer"
+  keywords={[
+    'image resizer',
+    'image resizer in kb',
+    'online image resizer',
+    'image resizer online',
+    'simple image resizer',
+    'image resizer in cm',
+    'image resizer 50kb',
+    'canva image resizer',
+    'resize image',
+    'resize photo',
+    'scale image'
+  ]}
+>
+  <!-- Injected FAQPage Schema for Search Engines -->
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <!-- MAIN INTERACTIVE IMAGE RESIZER TOOL WIDGET -->
+  <div class="space-y-6">
+
+    <!-- Privacy & Security Guarantee Banner -->
+    <div class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5 text-xs text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300">
+      <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold">
+        🛡️
+      </div>
+      <div>
+        <span class="font-bold">100% Client-Side Privacy:</span>
+        Your images are processed locally in your browser and are not uploaded to our server. Photos remain strictly confidential on your device.
+      </div>
+    </div>
+
+    <!-- Alert / Error Box (Hidden by default) -->
+    <div id="ir-alert-box" class="hidden rounded-2xl border p-4 text-xs transition-all" role="alert">
+      <div class="flex items-start gap-2.5">
+        <span class="text-base shrink-0">⚠️</span>
+        <div id="ir-alert-text" class="flex-1 font-medium leading-relaxed"></div>
+      </div>
+    </div>
+
+    <!-- Transparency Notice (Hidden by default) -->
+    <div id="ir-transparency-notice" class="hidden rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300">
+    </div>
+
+    <!-- SECTION 1: UPLOAD DROP ZONE (Visible when no image loaded) -->
+    <section id="ir-upload-section" class="transition-all">
+      <div
+        id="ir-drop-zone"
+        tabindex="0"
+        role="button"
+        aria-label="Upload image area: Click or drag and drop an image to resize"
+        class="group relative flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-8 text-center transition-all duration-200 hover:border-blue-500 hover:bg-blue-50/40 focus:border-blue-500 focus:outline-hidden focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-blue-500 dark:hover:bg-blue-950/20 sm:p-12 cursor-pointer"
+      >
+        <input
+          type="file"
+          id="ir-file-input"
+          accept="image/jpeg,image/png,image/webp"
+          class="sr-only"
+          aria-hidden="true"
+        />
+
+        <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100/80 text-3xl text-blue-600 transition group-hover:scale-105 group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-950/60 dark:text-blue-400 dark:group-hover:bg-blue-600 dark:group-hover:text-white">
+          📐
+        </div>
+
+        <h2 class="mt-4 text-lg font-bold text-slate-900 dark:text-white sm:text-xl">
+          Choose an image or drag & drop here
+        </h2>
+
+        <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400 sm:text-sm max-w-md">
+          Resize by <strong>Pixels, Centimeters (cm), or Target File Size (KB)</strong>. Works with JPG, PNG, and WebP files.
+        </p>
+
+        <div class="mt-5 flex flex-wrap items-center justify-center gap-2">
+          <button
+            type="button"
+            id="ir-select-file-btn"
+            class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-blue-700 focus:ring-2 focus:ring-blue-500/30 cursor-pointer sm:text-sm"
+          >
+            <span>📁 Select Image</span>
+          </button>
+          <span class="text-xs text-slate-400 dark:text-slate-500">or paste from clipboard (Ctrl+V)</span>
+        </div>
+
+        <div class="mt-6 flex items-center gap-4 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+          <span class="flex items-center gap-1">✓ Supports JPG / PNG / WebP</span>
+          <span>•</span>
+          <span class="flex items-center gap-1">✓ Up to 50 MB</span>
+          <span>•</span>
+          <span class="flex items-center gap-1">✓ Local Browser Execution</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: WORKSPACE & CONTROLS (Visible when image loaded) -->
+    <section id="ir-workspace-section" class="hidden space-y-6">
+
+      <!-- Original Image Overview Header Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200/90 bg-slate-50/70 p-3.5 text-xs dark:border-slate-800 dark:bg-slate-900/60">
+        <div class="flex items-center gap-2">
+          <span class="font-bold text-slate-700 dark:text-slate-200">Original Resolution:</span>
+          <span id="ir-stat-orig-dim" class="font-mono font-black text-blue-600 dark:text-blue-400">-</span>
+        </div>
+        <div class="flex items-center gap-4 text-slate-500 dark:text-slate-400">
+          <span>File Size: <strong id="ir-stat-orig-size" class="text-slate-800 dark:text-slate-200 font-mono">-</strong></span>
+          <span>•</span>
+          <span>Aspect Ratio: <strong id="ir-stat-orig-ratio" class="text-slate-800 dark:text-slate-200 font-mono">-</strong></span>
+        </div>
+      </div>
+
+      <!-- Resizing Mode Tabs Bar -->
+      <div class="rounded-2xl border border-slate-200/90 bg-white shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+        <div class="flex border-b border-slate-100 px-4 dark:border-slate-800 text-xs font-bold">
+          <button
+            type="button"
+            id="ir-tab-pixels"
+            class="active border-b-2 border-blue-600 px-4 py-3 text-blue-600 dark:text-blue-400 cursor-pointer transition"
+          >
+            Pixels (px)
+          </button>
+          <button
+            type="button"
+            id="ir-tab-cm"
+            class="px-4 py-3 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer transition"
+          >
+            Centimeters (cm)
+          </button>
+          <button
+            type="button"
+            id="ir-tab-kb"
+            class="px-4 py-3 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer transition"
+          >
+            Target File Size (KB)
+          </button>
+        </div>
+
+        <div class="p-5">
+
+          <!-- PANEL A: PIXELS (px) -->
+          <div id="ir-panel-pixels" class="space-y-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div>
+                <label for="ir-width-px" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Width (Pixels)
+                </label>
+                <div class="relative mt-1">
+                  <input
+                    type="number"
+                    id="ir-width-px"
+                    min="1"
+                    max="15000"
+                    class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 pr-10 font-mono text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                  <span class="absolute right-3 top-2.5 text-xs font-bold text-slate-400">px</span>
+                </div>
+              </div>
+
+              <div>
+                <label for="ir-height-px" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Height (Pixels)
+                </label>
+                <div class="relative mt-1">
+                  <input
+                    type="number"
+                    id="ir-height-px"
+                    min="1"
+                    max="15000"
+                    class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 pr-10 font-mono text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                  <span class="absolute right-3 top-2.5 text-xs font-bold text-slate-400">px</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lock Aspect Ratio & Quick Scale Buttons -->
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 border-t border-slate-100 dark:border-slate-800">
+              <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                <input type="checkbox" id="ir-lock-aspect" checked class="h-4 w-4 rounded accent-blue-600" />
+                <span>Lock Aspect Ratio (Maintain Proportions)</span>
+              </label>
+
+              <div class="flex items-center gap-1 text-xs">
+                <span class="font-semibold text-slate-400 mr-1">Quick Scale:</span>
+                <button type="button" data-pct="25" class="ir-preset-pct rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">25%</button>
+                <button type="button" data-pct="50" class="ir-preset-pct rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">50%</button>
+                <button type="button" data-pct="75" class="ir-preset-pct rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">75%</button>
+                <button type="button" data-pct="100" class="ir-preset-pct rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">100%</button>
+                <button type="button" data-pct="200" class="ir-preset-pct rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">200%</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- PANEL B: CENTIMETERS (cm + DPI) -->
+          <div id="ir-panel-cm" class="hidden space-y-4">
+            <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div>
+                <label for="ir-width-cm" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Width (Centimeters)
+                </label>
+                <div class="relative mt-1">
+                  <input
+                    type="number"
+                    id="ir-width-cm"
+                    step="0.1"
+                    min="0.1"
+                    class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 pr-10 font-mono text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                  <span class="absolute right-3 top-2.5 text-xs font-bold text-slate-400">cm</span>
+                </div>
+              </div>
+
+              <div>
+                <label for="ir-height-cm" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  Height (Centimeters)
+                </label>
+                <div class="relative mt-1">
+                  <input
+                    type="number"
+                    id="ir-height-cm"
+                    step="0.1"
+                    min="0.1"
+                    class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 pr-10 font-mono text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                  <span class="absolute right-3 top-2.5 text-xs font-bold text-slate-400">cm</span>
+                </div>
+              </div>
+
+              <div>
+                <label for="ir-dpi" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                  DPI (Print / Screen Resolution)
+                </label>
+                <div class="relative mt-1">
+                  <input
+                    type="number"
+                    id="ir-dpi"
+                    value="96"
+                    min="10"
+                    max="1200"
+                    class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 pr-10 font-mono text-sm font-bold text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                  <span class="absolute right-3 top-2.5 text-xs font-bold text-slate-400">DPI</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1 border-t border-slate-100 dark:border-slate-800">
+              <label class="flex items-center gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
+                <input type="checkbox" id="ir-lock-aspect-cm" checked class="h-4 w-4 rounded accent-blue-600" />
+                <span>Lock Aspect Ratio</span>
+              </label>
+
+              <div class="flex items-center gap-1.5 text-xs">
+                <span class="font-semibold text-slate-400">DPI Presets:</span>
+                <button type="button" data-dpi="72" class="ir-dpi-preset rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">72 (Web)</button>
+                <button type="button" data-dpi="96" class="ir-dpi-preset rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">96 (Screen)</button>
+                <button type="button" data-dpi="150" class="ir-dpi-preset rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">150 (Draft)</button>
+                <button type="button" data-dpi="300" class="ir-dpi-preset rounded-lg border border-slate-200 bg-slate-50 px-2 py-1 font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">300 (Print)</button>
+              </div>
+            </div>
+
+            <!-- Dynamic CM to Pixel Resolution Display -->
+            <div id="ir-cm-calc-notice" class="rounded-xl bg-blue-50/80 p-3 font-mono text-xs font-bold text-blue-900 dark:bg-blue-950/40 dark:text-blue-200">
+              Calculated Dimensions: - × - px (at 96 DPI)
+            </div>
+          </div>
+
+          <!-- PANEL C: FILE SIZE (KB) -->
+          <div id="ir-panel-kb" class="hidden space-y-4">
+            <div>
+              <span class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Choose Target File Size:
+              </span>
+              <div class="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                <button
+                  type="button"
+                  data-kb="20"
+                  class="ir-kb-preset flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-bold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition"
+                >
+                  <span>20 KB</span>
+                  <span class="text-[10px] font-normal text-slate-400">Signatures</span>
+                </button>
+                <button
+                  type="button"
+                  data-kb="50"
+                  class="ir-kb-preset active flex flex-col items-center justify-center rounded-xl border border-blue-600 bg-blue-600 p-2.5 text-xs font-bold text-white shadow-xs cursor-pointer transition"
+                >
+                  <span>50 KB</span>
+                  <span class="text-[10px] font-normal opacity-90">Resize Image to 50KB</span>
+                </button>
+                <button
+                  type="button"
+                  data-kb="100"
+                  class="ir-kb-preset flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-bold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition"
+                >
+                  <span>100 KB</span>
+                  <span class="text-[10px] font-normal text-slate-400">Certificates</span>
+                </button>
+                <button
+                  type="button"
+                  data-kb="200"
+                  class="ir-kb-preset flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-bold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer transition"
+                >
+                  <span>200 KB</span>
+                  <span class="text-[10px] font-normal text-slate-400">High Clarity</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Custom KB Input -->
+            <div class="flex items-center gap-2 pt-1 text-xs">
+              <label for="ir-custom-kb" class="font-semibold text-slate-600 dark:text-slate-400 shrink-0">Custom Target Size:</label>
+              <div class="relative flex items-center">
+                <input
+                  type="number"
+                  id="ir-custom-kb"
+                  min="5"
+                  max="10000"
+                  placeholder="e.g. 75"
+                  class="w-24 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 pr-8 font-mono text-xs font-bold text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                />
+                <span class="absolute right-2 text-[10px] font-bold text-slate-400">KB</span>
+              </div>
+              <button
+                type="button"
+                id="ir-apply-custom-kb"
+                class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer"
+              >
+                Apply
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Shared Format & Quality Toolbar -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-t border-slate-100 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-800/30">
+          
+          <!-- Format Selector -->
+          <div class="flex items-center gap-2 text-xs">
+            <label for="ir-format-select" class="font-bold text-slate-700 dark:text-slate-300 shrink-0">Output Format:</label>
+            <select
+              id="ir-format-select"
+              class="rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-semibold text-slate-800 shadow-2xs focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+            >
+              <option value="auto" selected>Auto (Preserve)</option>
+              <option value="image/jpeg">JPG / JPEG</option>
+              <option value="image/png">PNG</option>
+              <option value="image/webp">WebP</option>
+            </select>
+          </div>
+
+          <!-- Quality Slider -->
+          <div class="flex items-center gap-3 text-xs flex-1 max-w-sm">
+            <span class="font-bold text-slate-700 dark:text-slate-300 shrink-0">
+              Quality: <span id="ir-quality-val" class="font-mono text-blue-600 dark:text-blue-400">85%</span> <span id="ir-quality-label" class="text-[11px] text-slate-400">(High)</span>
+            </span>
+            <input
+              type="range"
+              id="ir-quality-slider"
+              min="10"
+              max="100"
+              value="85"
+              class="w-full accent-blue-600 cursor-pointer"
+            />
+          </div>
+
+          <!-- Re-apply Button -->
+          <button
+            type="button"
+            id="ir-apply-resize-btn"
+            class="inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition cursor-pointer"
+          >
+            <span>🔄 Resize Now</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Before / After Stats Comparison -->
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Resized Resolution</div>
+          <div id="ir-stat-resized-dim" class="mt-1 font-mono text-base font-black text-slate-900 dark:text-white sm:text-lg">-</div>
+          <div class="text-[11px] text-slate-500">Output pixel dimensions</div>
+        </div>
+
+        <div class="rounded-2xl border border-blue-200 bg-blue-50/40 p-3.5 shadow-2xs dark:border-blue-900/40 dark:bg-blue-950/20">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">New File Size</div>
+          <div id="ir-stat-resized-size" class="mt-1 font-mono text-base font-black text-blue-700 dark:text-blue-300 sm:text-lg">-</div>
+          <div class="text-[11px] text-blue-600/80 dark:text-blue-400/80">Compressed on client</div>
+        </div>
+
+        <div class="col-span-2 sm:col-span-1 rounded-2xl border border-emerald-200 bg-emerald-50/40 p-3.5 shadow-2xs dark:border-emerald-900/40 dark:bg-emerald-950/20">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Size Difference</div>
+          <div id="ir-stat-change-ratio" class="mt-1 font-mono text-base font-black text-emerald-700 dark:text-emerald-300 sm:text-lg">-</div>
+          <div class="text-[11px] text-emerald-600/80 dark:text-emerald-400/80">Relative to original</div>
+        </div>
+      </div>
+
+      <!-- Side-by-Side Responsive Previews -->
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        
+        <!-- Original Preview Card -->
+        <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <div class="flex items-center justify-between border-b border-slate-100 bg-slate-50/70 px-4 py-2.5 text-xs dark:border-slate-800 dark:bg-slate-800/40">
+            <span class="font-bold text-slate-700 dark:text-slate-200">Original Image</span>
+            <span id="ir-badge-orig" class="rounded-md bg-slate-200/70 px-2 py-0.5 font-mono text-[10px] text-slate-700 dark:bg-slate-700 dark:text-slate-300">-</span>
+          </div>
+          <div class="flex min-h-55 max-h-95 items-center justify-center p-3 bg-slate-100/50 dark:bg-slate-950/50">
+            <img
+              id="ir-preview-orig"
+              alt="Original uploaded photo preview"
+              class="max-h-87.5 max-w-full rounded-lg object-contain shadow-2xs"
+            />
+          </div>
+        </div>
+
+        <!-- Resized Preview Card -->
+        <div class="overflow-hidden rounded-2xl border border-blue-200 bg-white dark:border-blue-900/60 dark:bg-slate-900">
+          <div class="flex items-center justify-between border-b border-blue-100 bg-blue-50/70 px-4 py-2.5 text-xs dark:border-blue-950/50 dark:bg-blue-950/30">
+            <span class="font-bold text-blue-900 dark:text-blue-200">Resized Output</span>
+            <span id="ir-badge-resized" class="rounded-md bg-blue-200/70 px-2 py-0.5 font-mono text-[10px] font-bold text-blue-800 dark:bg-blue-900/60 dark:text-blue-300">-</span>
+          </div>
+          <div class="flex min-h-55 max-h-95 items-center justify-center p-3 bg-slate-100/50 dark:bg-slate-950/50">
+            <img
+              id="ir-preview-resized"
+              alt="Resized image preview"
+              class="max-h-87.5 max-w-full rounded-lg object-contain shadow-2xs"
+            />
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Action Buttons Bar -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+        <button
+          type="button"
+          id="ir-reset-btn"
+          class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
+        >
+          <span>🔄 Resize Another Image</span>
+        </button>
+
+        <button
+          type="button"
+          id="ir-download-btn"
+          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-md hover:from-blue-700 hover:to-indigo-700 focus:ring-4 focus:ring-blue-500/20 transition transform active:scale-98 cursor-pointer"
+        >
+          <span>📥 Download Resized Image</span>
+        </button>
+      </div>
+
+    </section>
+
+    <!-- LOADING SPINNER OVERLAY -->
+    <div
+      id="ir-loading-overlay"
+      class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 backdrop-blur-xs"
+      aria-live="polite"
+    >
+      <div class="flex flex-col items-center rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800 text-center max-w-xs mx-4">
+        <div class="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+        <div class="mt-3 font-bold text-slate-900 dark:text-white text-sm">Resizing Image</div>
+        <div id="ir-loading-text" class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Processing in browser...
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SEO EDUCATIONAL CONTENT (Richly styled with modern CSS cards and typography) -->
+  <Fragment slot="content">
+    <div class="space-y-12 not-prose">
+      
+      <!-- Section 1: Online Image Resizer Intro Banner -->
+      <section class="space-y-6">
+        <div class="rounded-3xl border border-blue-100 bg-linear-to-br from-blue-50/80 via-white to-slate-50 p-6 shadow-xs dark:border-blue-950/60 dark:from-slate-900 dark:via-slate-900/80 dark:to-blue-950/20 sm:p-8">
+          <div class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-100/60 px-3 py-1 text-xs font-bold text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/70 dark:text-blue-300">
+            <span class="h-2 w-2 rounded-full bg-blue-600 animate-pulse"></span>
+            Browser-Based Precision Resizer
+          </div>
+
+          <h2 class="mt-4 text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+            Online Image Resizer
+          </h2>
+
+          <p class="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-4xl">
+            Our free <strong>online image resizer</strong> provides a quick, secure way to scale picture dimensions and reduce file size without installing desktop software. Whether you need to calibrate exact pixel boundaries for a website banner, prepare photos for physical print in centimeters, or shrink heavy smartphone photos to an exact kilobyte cap, our tool delivers instantaneous results directly in your browser.
+          </p>
+
+          <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div class="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/80 p-3 shadow-2xs backdrop-blur-xs dark:border-slate-800 dark:bg-slate-800/60">
+              <span class="text-xl">📐</span>
+              <div>
+                <div class="text-xs font-bold text-slate-900 dark:text-white">Pixel Scaling</div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400">Lock aspect ratio</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/80 p-3 shadow-2xs backdrop-blur-xs dark:border-slate-800 dark:bg-slate-800/60">
+              <span class="text-xl">📏</span>
+              <div>
+                <div class="text-xs font-bold text-slate-900 dark:text-white">Centimeters (cm)</div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400">Custom DPI control</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/80 p-3 shadow-2xs backdrop-blur-xs dark:border-slate-800 dark:bg-slate-800/60">
+              <span class="text-xl">🗜️</span>
+              <div>
+                <div class="text-xs font-bold text-slate-900 dark:text-white">Target KB Mode</div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400">20KB, 50KB, 100KB</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/80 p-3 shadow-2xs backdrop-blur-xs dark:border-slate-800 dark:bg-slate-800/60">
+              <span class="text-xl">🔒</span>
+              <div>
+                <div class="text-xs font-bold text-slate-900 dark:text-white">100% Client-Side</div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400">Zero cloud uploads</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 2: Resize Image in KB & Image Resizer 50KB Cards -->
+      <section class="space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Weight & Dimension Optimization</span>
+          <h2 class="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            Resize Image in KB
+          </h2>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 max-w-3xl">
+            Changing pixel dimensions is only half the battle. Government portals, university exam forms, and job application systems routinely demand files that conform strictly to a maximum kilobyte threshold.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          
+          <!-- KB Optimization Card -->
+          <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex items-center justify-between">
+              <span class="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 font-mono text-xs font-bold text-blue-900 dark:bg-blue-950/70 dark:text-blue-300">
+                Binary Search Algorithm
+              </span>
+              <span class="text-xs text-slate-400 font-medium">Smart Weight Reduction</span>
+            </div>
+            <h3 class="mt-4 text-lg font-bold text-slate-900 dark:text-white">
+              How the KB Resizer Works
+            </h3>
+            <p class="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              When you use an <strong>image resizer in kb</strong>, reducing the file size requires an intelligent trade-off between pixel dimensions and lossy compression tables. If you select a target like 100KB, our algorithm adjusts quantization quality in binary steps. If quality compression alone cannot meet the requested size, it proportionally scales the canvas dimensions so your photo easily passes portal limits without ugly artifacts.
+            </p>
+          </div>
+
+          <!-- 50KB Special Card -->
+          <div class="rounded-3xl border border-emerald-200/80 bg-linear-to-b from-emerald-50/40 via-white to-white p-6 shadow-xs dark:border-emerald-900/50 dark:from-emerald-950/20 dark:via-slate-900 dark:to-slate-900">
+            <div class="flex items-center justify-between">
+              <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 font-mono text-xs font-bold text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-300">
+                1-Click Preset
+              </span>
+              <span class="text-xs text-emerald-700 dark:text-emerald-300 font-semibold">Standard ID Requirement</span>
+            </div>
+            <h2 class="mt-4 text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <span>👤</span> Image Resizer 50KB
+            </h2>
+            <p class="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              The 50 KB benchmark is the most widely requested image restriction worldwide. Whether uploading your passport photo, a government employee verification badge, or a college admissions profile, our <strong>image resizer 50kb</strong> mode allows you to reach a verified size at or below 50KB with a single tap.
+            </p>
+            <div class="mt-4 rounded-xl border border-emerald-200/60 bg-white/80 p-3 text-xs text-emerald-900 dark:border-emerald-900/40 dark:bg-slate-800/80 dark:text-emerald-200">
+              <strong>Actual Output:</strong> Target sizes typically settle around 46KB–49.5KB, ensuring your file stays safely under the portal ceiling without rejection.
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Section 3: Resize Image in CM + DPI Formula -->
+      <section class="space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Physical Print Measurements</span>
+          <h2 class="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            Resize Image in CM
+          </h2>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 max-w-3xl">
+            Digital screens operate in pixels, but the physical world functions in centimeters and inches. Using an <strong>image resizer in cm</strong> allows graphic designers, photographers, and document applicants to scale artwork to exact physical print specifications.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          
+          <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+            <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <span class="text-blue-600 dark:text-blue-400">📐</span> The CM to Pixel Conversion Formula
+            </h3>
+            <p class="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              Because 1 inch equals exactly 2.54 centimeters, converting centimeters to digital pixels requires knowing the target Dots Per Inch (DPI):
+            </p>
+
+            <div class="my-4 rounded-xl border border-blue-200 bg-blue-50/70 p-4 font-mono text-xs sm:text-sm font-bold text-blue-950 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-200">
+              Pixels = (Centimeters ÷ 2.54) × DPI
+            </div>
+
+            <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+              <em>Educational Example:</em> If an official passport form requests an image measuring <strong>3.5 cm × 4.5 cm</strong> at <strong>300 DPI</strong>:
+              <br />
+              • Width: (3.5 ÷ 2.54) × 300 = <strong>413 pixels</strong>
+              <br />
+              • Height: (4.5 ÷ 2.54) × 300 = <strong>531 pixels</strong>
+            </p>
+          </div>
+
+          <!-- Common CM Print Dimensions Table -->
+          <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">
+              Common Centimeter Presets (at 300 DPI)
+            </h3>
+            <div class="mt-4 overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="border-b border-slate-100 text-slate-400 dark:border-slate-800">
+                    <th class="pb-2 font-bold">Standard Document</th>
+                    <th class="pb-2 font-bold">Size (cm)</th>
+                    <th class="pb-2 font-bold">Pixels (300 DPI)</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 text-slate-700 dark:divide-slate-800 dark:text-slate-300">
+                  <tr>
+                    <td class="py-2.5 font-semibold">Standard Passport Photo</td>
+                    <td class="py-2.5 font-mono">3.5 × 4.5 cm</td>
+                    <td class="py-2.5 font-mono text-blue-600 dark:text-blue-400">413 × 531 px</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2.5 font-semibold">Square Visa Photograph</td>
+                    <td class="py-2.5 font-mono">5.0 × 5.0 cm</td>
+                    <td class="py-2.5 font-mono text-blue-600 dark:text-blue-400">591 × 591 px</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2.5 font-semibold">Indian PAN Card Photo</td>
+                    <td class="py-2.5 font-mono">2.5 × 3.5 cm</td>
+                    <td class="py-2.5 font-mono text-blue-600 dark:text-blue-400">295 × 413 px</td>
+                  </tr>
+                  <tr>
+                    <td class="py-2.5 font-semibold">Small Wallet Print (3R)</td>
+                    <td class="py-2.5 font-mono">8.9 × 12.7 cm</td>
+                    <td class="py-2.5 font-mono text-blue-600 dark:text-blue-400">1051 × 1500 px</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Section 4: Simple Image Resizer Workflow -->
+      <section class="space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Instant Utility</span>
+          <h2 class="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            Simple Image Resizer
+          </h2>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 max-w-3xl">
+            You don't need complex graphic editing software just to adjust an image size. As a <strong>simple image resizer</strong>, this tool lets you finish the task in seconds:
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 text-center">
+            <div class="mx-auto flex h-8 w-8 items-center justify-center rounded-xl bg-blue-100 font-mono text-xs font-black text-blue-700 dark:bg-blue-950 dark:text-blue-300">1</div>
+            <div class="mt-2.5 font-bold text-xs text-slate-900 dark:text-white">Upload</div>
+            <div class="mt-1 text-[11px] text-slate-500">Pick or drop image</div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 text-center">
+            <div class="mx-auto flex h-8 w-8 items-center justify-center rounded-xl bg-blue-100 font-mono text-xs font-black text-blue-700 dark:bg-blue-950 dark:text-blue-300">2</div>
+            <div class="mt-2.5 font-bold text-xs text-slate-900 dark:text-white">Enter Dimensions</div>
+            <div class="mt-1 text-[11px] text-slate-500">Specify Width / Height</div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 text-center">
+            <div class="mx-auto flex h-8 w-8 items-center justify-center rounded-xl bg-blue-100 font-mono text-xs font-black text-blue-700 dark:bg-blue-950 dark:text-blue-300">3</div>
+            <div class="mt-2.5 font-bold text-xs text-slate-900 dark:text-white">Lock Aspect</div>
+            <div class="mt-1 text-[11px] text-slate-500">Keep proportions safe</div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 text-center">
+            <div class="mx-auto flex h-8 w-8 items-center justify-center rounded-xl bg-blue-100 font-mono text-xs font-black text-blue-700 dark:bg-blue-950 dark:text-blue-300">4</div>
+            <div class="mt-2.5 font-bold text-xs text-slate-900 dark:text-white">Preview</div>
+            <div class="mt-1 text-[11px] text-slate-500">Check clarity & size</div>
+          </div>
+
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 text-center">
+            <div class="mx-auto flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-100 font-mono text-xs font-black text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">5</div>
+            <div class="mt-2.5 font-bold text-xs text-slate-900 dark:text-white">Download</div>
+            <div class="mt-1 text-[11px] text-slate-500">Instant file export</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 5: Image Resizer vs Canva Image Resizer (Objective Comparison) -->
+      <section class="space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Tool Comparison</span>
+          <h2 class="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            Image Resizer vs Canva Image Resizer
+          </h2>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 max-w-3xl">
+            When choosing between specialized online utilities and broad graphic suites like <strong>Canva image resizer</strong>, it helps to understand how their features and workflows compare:
+          </p>
+        </div>
+
+        <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs sm:text-sm">
+              <thead class="border-b border-slate-200 bg-slate-50/70 text-slate-700 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-300">
+                <tr>
+                  <th class="p-4 font-bold">Feature / Capability</th>
+                  <th class="p-4 font-bold text-blue-600 dark:text-blue-400">Our Image Resizer</th>
+                  <th class="p-4 font-bold text-slate-500">Canva Image Resizer</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-slate-600 dark:divide-slate-800 dark:text-slate-300">
+                <tr>
+                  <td class="p-4 font-semibold text-slate-900 dark:text-white">Primary Purpose</td>
+                  <td class="p-4 text-blue-600 dark:text-blue-400 font-medium">Dedicated browser-based image scaling & KB reduction</td>
+                  <td class="p-4">Comprehensive graphic design & multi-layer layout platform</td>
+                </tr>
+                <tr>
+                  <td class="p-4 font-semibold text-slate-900 dark:text-white">Account / Registration</td>
+                  <td class="p-4 text-emerald-600 dark:text-emerald-400 font-bold">No sign-up required</td>
+                  <td class="p-4">Account login required</td>
+                </tr>
+                <tr>
+                  <td class="p-4 font-semibold text-slate-900 dark:text-white">Privacy Architecture</td>
+                  <td class="p-4 text-emerald-600 dark:text-emerald-400 font-bold">100% Client-side (no server uploads)</td>
+                  <td class="p-4">Images uploaded to cloud servers</td>
+                </tr>
+                <tr>
+                  <td class="p-4 font-semibold text-slate-900 dark:text-white">Exact Target KB Resizing</td>
+                  <td class="p-4 text-emerald-600 dark:text-emerald-400 font-bold">Yes (20KB, 50KB, 100KB, Custom KB)</td>
+                  <td class="p-4">General download quality settings</td>
+                </tr>
+                <tr>
+                  <td class="p-4 font-semibold text-slate-900 dark:text-white">Physical CM & DPI Conversion</td>
+                  <td class="p-4 text-emerald-600 dark:text-emerald-400 font-bold">Built-in calculator (cm + DPI to px)</td>
+                  <td class="p-4">Custom canvas dimensions available</td>
+                </tr>
+                <tr>
+                  <td class="p-4 font-semibold text-slate-900 dark:text-white">Design & Template Editing</td>
+                  <td class="p-4">Focused purely on dimensional resizing</td>
+                  <td class="p-4 text-purple-600 dark:text-purple-400 font-bold">Full templates, typography, & vector graphics</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 6: How to Resize an Image Online (Detailed Steps) -->
+      <section class="space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Step-by-Step Guide</span>
+          <h2 class="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            How to Resize an Image Online
+          </h2>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 max-w-3xl">
+            Follow this clear six-step procedure to scale, compress, and download any picture:
+          </p>
+        </div>
+
+        <div class="space-y-3">
+          <div class="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 font-mono text-sm font-black text-white shadow-xs">1</div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Upload Your Image</h3>
+              <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Click inside the upload zone to choose an image from your computer or phone, drag and drop an existing file, or paste directly using <kbd class="rounded border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-xs font-mono font-bold dark:border-slate-700 dark:bg-slate-800">Ctrl+V</kbd>.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 font-mono text-sm font-black text-white shadow-xs">2</div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Select Your Resizing Mode</h3>
+              <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Choose between <strong>Pixels (px)</strong> for web layouts, <strong>Centimeters (cm)</strong> for document printing, or <strong>Target File Size (KB)</strong> to pass upload restrictions.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 font-mono text-sm font-black text-white shadow-xs">3</div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Enter Target Dimensions or File Size</h3>
+              <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Type in desired dimensions or click quick presets like 50%, 75%, 20KB, or 50KB.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 font-mono text-sm font-black text-white shadow-xs">4</div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Keep Aspect Ratio Enabled</h3>
+              <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Ensure <strong>Lock Aspect Ratio</strong> remains checked so your image scales proportionally without squishing or stretching faces.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 font-mono text-sm font-black text-white shadow-xs">5</div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Preview the Result</h3>
+              <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Examine before and after previews side-by-side. Verify the output resolution and file weight before downloading.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 font-mono text-sm font-black text-white shadow-xs">6</div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Download the Resized Image</h3>
+              <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Click <strong>Download Resized Image</strong> to save the optimized file directly to your local drive.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 7: Why Resize an Image? -->
+      <section class="space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Key Benefits</span>
+          <h2 class="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            Why Resize an Image?
+          </h2>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+            Scaling your photos properly is essential for performance, visual presentation, and seamless sharing:
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="flex items-start gap-3.5 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <span class="text-2xl">⚡</span>
+            <div>
+              <div class="text-sm font-bold text-slate-900 dark:text-white">Accelerate Page Loading</div>
+              <p class="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Serving correctly dimensioned images prevents mobile browsers from downloading excessive multi-megabyte payloads, improving Core Web Vitals.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3.5 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <span class="text-2xl">📋</span>
+            <div>
+              <div class="text-sm font-bold text-slate-900 dark:text-white">Meet Portal Specifications</div>
+              <p class="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Admissions, passport, and job portals reject images that fail strict pixel or KB criteria. Resizing beforehand guarantees acceptance.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3.5 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <span class="text-2xl">🖨️</span>
+            <div>
+              <div class="text-sm font-bold text-slate-900 dark:text-white">Prepare for Crisp Printing</div>
+              <p class="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Adjusting physical centimeter dimensions alongside 300 DPI ensures photos print sharp without blurriness or unintended borders.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3.5 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <span class="text-2xl">💾</span>
+            <div>
+              <div class="text-sm font-bold text-slate-900 dark:text-white">Conserve Disk & Cloud Storage</div>
+              <p class="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Downscaling high-resolution camera archives frees up gigabytes on Google Drive, iCloud, and smartphone memory cards.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 8: Is Image Resizing Done Online? (Privacy Statement) -->
+      <section class="space-y-4">
+        <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+          Is Image Resizing Done Online?
+        </h2>
+        <div class="rounded-3xl border border-emerald-200 bg-emerald-50/50 p-6 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+          <p class="text-sm text-emerald-900 dark:text-emerald-200 leading-relaxed">
+            While this tool is accessed over the web, the actual image computation is executed 100% locally inside your browser. <strong>Images are processed locally in your browser and are not uploaded to our server.</strong> No remote cloud processing, database storage, or third-party tracking is ever involved.
+          </p>
+        </div>
+      </section>
+
+      <!-- Section 9: Related Tools Navigation Cards -->
+      <section class="space-y-4 border-t border-slate-200 pt-8 dark:border-slate-800">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Explore More Free Online Tools
+          </h2>
+          <a href="/free-online-tools/" class="text-xs font-bold text-blue-600 hover:underline dark:text-blue-400">
+            View All Tools →
+          </a>
+        </div>
+        
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <a
+            href="/free-online-tools/image-compressor/"
+            class="group flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-2xs transition hover:border-blue-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500"
+          >
+            <span class="text-2xl transition group-hover:scale-110">🗜️</span>
+            <span class="mt-2 font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">Image Compressor</span>
+            <span class="mt-0.5 text-[10px] text-slate-400">Compress to KB target</span>
+          </a>
+
+          <a
+            href="/free-online-tools/jpg-to-png/"
+            class="group flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-2xs transition hover:border-blue-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500"
+          >
+            <span class="text-2xl transition group-hover:scale-110">🖼️</span>
+            <span class="mt-2 font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">JPG to PNG</span>
+            <span class="mt-0.5 text-[10px] text-slate-400">Lossless conversion</span>
+          </a>
+
+          <a
+            href="/free-online-tools/png-to-jpg/"
+            class="group flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-2xs transition hover:border-blue-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500"
+          >
+            <span class="text-2xl transition group-hover:scale-110">🔄</span>
+            <span class="mt-2 font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">PNG to JPG</span>
+            <span class="mt-0.5 text-[10px] text-slate-400">Compact photo export</span>
+          </a>
+
+          <a
+            href="/free-online-tools/"
+            class="group flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-2xs transition hover:border-blue-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500"
+          >
+            <span class="text-2xl transition group-hover:scale-110">🧰</span>
+            <span class="mt-2 font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">All Free Tools</span>
+            <span class="mt-0.5 text-[10px] text-slate-400">PDF, Text & QR tools</span>
+          </a>
+        </div>
+      </section>
+
+    </div>
+  </Fragment>
+
+  <!-- FAQ SLOT -->
+  <Fragment slot="faq">
+    <div class="space-y-3 text-sm not-prose">
+      {faqs.map((faq) => (
+        <details class="group rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-800/30 transition">
+          <summary class="font-bold text-slate-900 dark:text-white cursor-pointer list-none flex items-center justify-between">
+            <span>{faq.question}</span>
+            <span class="text-blue-600 font-bold transition group-open:rotate-180">▼</span>
+          </summary>
+          <p class="mt-2 text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
+            {faq.answer}
+          </p>
+        </details>
+      ))}
+    </div>
+  </Fragment>
+
+</CalculatorLayout>
+
+<!-- Modular Client-Side Image Resizer Script (Cached external module) -->
+<script src="/js/tools/image-resizer.js" defer></script>

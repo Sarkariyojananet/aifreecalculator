@@ -6,7 +6,7 @@
 import type { Locale } from '../config';
 import type { CategoryTranslation } from '../types';
 
-export type CategoryKey = 'general' | 'finance' | 'construction' | 'health' | 'math';
+export type CategoryKey = 'general' | 'finance' | 'construction' | 'health' | 'math' | 'free-online-tools';
 
 export const CATEGORIES_LIST: CategoryKey[] = [
   'general',
@@ -14,6 +14,7 @@ export const CATEGORIES_LIST: CategoryKey[] = [
   'construction',
   'health',
   'math',
+  'free-online-tools',
 ];
 
 export const CATEGORY_TRANSLATIONS: Record<CategoryKey, Record<Locale, CategoryTranslation>> = {
@@ -481,14 +482,114 @@ export const CATEGORY_TRANSLATIONS: Record<CategoryKey, Record<Locale, CategoryT
       heroBadge: 'MATEMATICA & SCIENZA',
     },
   },
+  'free-online-tools': {
+    en: {
+      locale: 'en',
+      status: 'translated',
+      name: 'Free Online Tools',
+      metaTitle: 'Free Online Tools - Image, PDF, Text & Developer Utilities',
+      metaDescription: 'Free online browser-based utility tools for image compression, image resizing, file conversion, text analysis, JSON formatting, and PDF merge.',
+      h1: 'Free Online Tools',
+      description: 'Fast, secure, and private browser-based utilities for image editing, file conversion, text processing, and developer tasks.',
+      heroBadge: 'ONLINE TOOLS SUITE',
+    },
+    hi: {
+      locale: 'hi',
+      status: 'translated',
+      name: 'मुफ़्त ऑनलाइन टूल्स',
+      metaTitle: 'मुफ़्त ऑनलाइन टूल्स - इमेज, पीडीएफ, टेक्स्ट और डेवलपर टूल्स',
+      metaDescription: 'इमेज कंप्रेशन, इमेज रीसाइज़िंग, फाइल कन्वर्जन, टेक्स्ट एनालिसिस, JSON फॉर्मेटिंग और PDF मर्ज के लिए मुफ्त ऑनलाइन टूल्स।',
+      h1: 'मुफ़्त ऑनलाइन टूल्स',
+      description: 'इमेज एडिटिंग, फाइल कन्वर्जन, टेक्स्ट प्रोसेसिंग और डेवलपर कार्यों के लिए तेज़, सुरक्षित और मुफ़्त ऑनलाइन टूल्स।',
+      heroBadge: 'ऑनलाइन टूल्स',
+    },
+    es: {
+      locale: 'es',
+      status: 'translated',
+      name: 'Herramientas en línea gratuitas',
+      metaTitle: 'Herramientas en línea gratuitas - Imagen, PDF, texto y desarrollo',
+      metaDescription: 'Utilidades gratuitas en el navegador: compresión y redimensión de imágenes, conversión de archivos, análisis de texto, JSON y combinación de PDF.',
+      h1: 'Herramientas en línea gratuitas',
+      description: 'Utilidades web rápidas y seguras para editar imágenes, convertir formatos, analizar textos y herramientas de desarrollo.',
+      heroBadge: 'SUITE DE HERRAMIENTAS',
+    },
+    ja: {
+      locale: 'ja',
+      status: 'translated',
+      name: '無料オンラインツール',
+      metaTitle: '無料オンラインツール - 画像・PDF・テキスト・開発者ユーティリティ',
+      metaDescription: '画像圧縮、画像リサイズ、形式変換、文字数カウント、JSON整形、PDF結合など、ブラウザ上で完結する便利な無料オンラインツール群。',
+      h1: '無料オンラインツール一覧',
+      description: '画像編集、ファイル変換、テキスト解析、開発者向け作業をブラウザで素早く安全に行える無料ツール。',
+      heroBadge: '実用ツール',
+    },
+    fr: {
+      locale: 'fr',
+      status: 'translated',
+      name: 'Outils en ligne gratuits',
+      metaTitle: 'Outils en ligne gratuits - Image, PDF, texte et utilitaires web',
+      metaDescription: 'Outils en ligne gratuits : compression et redimensionnement d’images, conversion de fichiers, analyse de texte, formatage JSON et fusion PDF.',
+      h1: 'Outils en ligne gratuits',
+      description: 'Des utilitaires rapides, sécurisés et respectueux de votre vie privée pour traiter images, documents et données dans votre navigateur.',
+      heroBadge: 'OUTILS EN LIGNE',
+    },
+    de: {
+      locale: 'de',
+      status: 'translated',
+      name: 'Kostenlose Online-Tools',
+      metaTitle: 'Kostenlose Online-Tools - Bild, PDF, Text & Entwicklertools',
+      metaDescription: 'Kostenlose Web-Tools für Bildkomprimierung, Bildskalierung, Dateikonvertierung, Textanalyse, JSON-Formatierung und PDF-Zusammenführung.',
+      h1: 'Kostenlose Online-Tools',
+      description: 'Schnelle und sichere Browser-Tools für Bildbearbeitung, Dateikonvertierung, Textverarbeitung und Entwickleraufgaben.',
+      heroBadge: 'ONLINE-WERKZEUGE',
+    },
+    pt: {
+      locale: 'pt',
+      status: 'translated',
+      name: 'Ferramentas online gratuitas',
+      metaTitle: 'Ferramentas online gratuitas - Imagem, PDF, texto e desenvolvedores',
+      metaDescription: 'Ferramentas gratuitas no navegador para compressão e redimensionamento de imagens, conversão de formatos, análise de texto e junção de PDFs.',
+      h1: 'Ferramentas online gratuitas',
+      description: 'Utilitários web rápidos e seguros para edição de imagens, conversão de arquivos, análise textual e tarefas de programação.',
+      heroBadge: 'FERRAMENTAS ÚTEIS',
+    },
+    ko: {
+      locale: 'ko',
+      status: 'translated',
+      name: '무료 온라인 도구',
+      metaTitle: '무료 온라인 도구 - 이미지, PDF, 텍스트 및 개발자 유틸리티',
+      metaDescription: '이미지 압축, 크기 조정, 파일 형식 변환, 글자수 세기, JSON 포맷팅, PDF 병합 등 브라우저에서 바로 사용하는 무료 웹 도구 모음.',
+      h1: '무료 온라인 도구 모음',
+      description: '이미지 편집, 문서 변환, 텍스트 분석 및 개발자 작업을 브라우저에서 빠르고 안전하게 처리하는 무료 유틸리티.',
+      heroBadge: '온라인 도구',
+    },
+    it: {
+      locale: 'it',
+      status: 'translated',
+      name: 'Strumenti online gratuiti',
+      metaTitle: 'Strumenti online gratuiti - Immagini, PDF, testo e sviluppatori',
+      metaDescription: 'Strumenti web gratuiti per compressione e ridimensionamento immagini, conversione formati, conteggio parole, formattatore JSON e unione PDF.',
+      h1: 'Strumenti online gratuiti',
+      description: 'Utility veloci e sicure per modificare immagini, convertire file, analizzare testi e supportare le attività di sviluppo.',
+      heroBadge: 'STRUMENTI ONLINE',
+    },
+  },
 };
 
 export function getCategoryTranslation(category: string, locale: Locale): CategoryTranslation {
-  const key = category.toLowerCase() as CategoryKey;
-  if (key in CATEGORY_TRANSLATIONS) {
-    const t = CATEGORY_TRANSLATIONS[key][locale];
+  const normalized = category.toLowerCase().replace(/\s+/g, '-') as CategoryKey;
+  if (normalized in CATEGORY_TRANSLATIONS) {
+    const t = CATEGORY_TRANSLATIONS[normalized][locale];
     if (!t) {
-      throw new Error(`[i18n] Missing required category translation for "${key}" in locale "${locale}"`);
+      throw new Error(`[i18n] Missing required category translation for "${normalized}" in locale "${locale}"`);
+    }
+    return t;
+  }
+  const rawKey = category.toLowerCase() as CategoryKey;
+  if (rawKey in CATEGORY_TRANSLATIONS) {
+    const t = CATEGORY_TRANSLATIONS[rawKey][locale];
+    if (!t) {
+      throw new Error(`[i18n] Missing required category translation for "${rawKey}" in locale "${locale}"`);
     }
     return t;
   }
@@ -515,5 +616,13 @@ export const CATEGORIES_CONFIG = {
   math: {
     names: Object.fromEntries(Object.entries(CATEGORY_TRANSLATIONS.math).map(([lang, t]) => [lang, t.name])) as Record<Locale, string>,
     descriptions: Object.fromEntries(Object.entries(CATEGORY_TRANSLATIONS.math).map(([lang, t]) => [lang, t.description])) as Record<Locale, string>,
+  },
+  'free-online-tools': {
+    names: Object.fromEntries(Object.entries(CATEGORY_TRANSLATIONS['free-online-tools']).map(([lang, t]) => [lang, t.name])) as Record<Locale, string>,
+    descriptions: Object.fromEntries(Object.entries(CATEGORY_TRANSLATIONS['free-online-tools']).map(([lang, t]) => [lang, t.description])) as Record<Locale, string>,
+  },
+  'free online tools': {
+    names: Object.fromEntries(Object.entries(CATEGORY_TRANSLATIONS['free-online-tools']).map(([lang, t]) => [lang, t.name])) as Record<Locale, string>,
+    descriptions: Object.fromEntries(Object.entries(CATEGORY_TRANSLATIONS['free-online-tools']).map(([lang, t]) => [lang, t.description])) as Record<Locale, string>,
   },
 };

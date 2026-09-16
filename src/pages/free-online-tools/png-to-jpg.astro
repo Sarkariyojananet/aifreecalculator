@@ -1,0 +1,767 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+
+// FAQ Schema for Search Engines
+const faqs = [
+  {
+    question: "How do I convert PNG to JPG?",
+    answer: "Upload or drag and drop your PNG image into our converter, choose your preferred JPG quality and background fill color, and click 'Convert to JPG'. You can then preview the converted image and click 'Download JPG'."
+  },
+  {
+    question: "What is a PNG to JPG converter?",
+    answer: "A PNG to JPG converter is an online tool that decodes the lossless pixel data of a Portable Network Graphics (PNG) file, composites any transparent regions over a solid background color, and re-encodes the image into the JPEG (JPG) format."
+  },
+  {
+    question: "Can I convert PNG to JPG online?",
+    answer: "Yes. Our tool allows you to convert PNG to JPG online directly in your web browser without installing any desktop software or mobile apps."
+  },
+  {
+    question: "What happens to transparent areas when PNG is converted to JPG?",
+    answer: "Because the JPG format does not support transparency, all transparent regions must be filled with a solid color. Our tool lets you choose white (default), black, or any custom background color to ensure your image looks natural."
+  },
+  {
+    question: "Can I choose the JPG quality?",
+    answer: "Yes. You can adjust the output quality from 10% to 100% using the built-in slider (90% is default for an optimal balance between visual clarity and compact file weight)."
+  },
+  {
+    question: "Is JPG smaller than PNG?",
+    answer: "For real-world photographs and complex gradient images, JPG is typically 50% to 80% smaller than PNG. However, for simple icons, flat logos, or solid color illustrations, PNG may occasionally be comparable or smaller."
+  },
+  {
+    question: "Does converting PNG to JPG reduce quality?",
+    answer: "JPEG uses lossy compression, which discards subtle chromatic nuances that the human eye cannot easily discern. At high quality settings (85%–95%), any quality difference is virtually imperceptible."
+  },
+  {
+    question: "Can I convert multiple PNG images to JPG?",
+    answer: "Yes. You can select or drag multiple PNG files simultaneously. Our tool converts all images in your browser and provides individual download links as well as a 'Download All JPGs' option."
+  },
+  {
+    question: "Are my PNG images uploaded to a server?",
+    answer: "No. All conversion is executed 100% locally in your browser using HTML5 Canvas APIs. Your photos never leave your device."
+  }
+];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqs.map((faq) => ({
+    "@type": "Question",
+    "name": faq.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": faq.answer
+    }
+  }))
+};
+---
+
+<CalculatorLayout
+  title="PNG to JPG Converter - Convert PNG to JPG Online Free"
+  description="Convert PNG to JPG online for free. Transform PNG images to JPEG format with customizable background color and quality directly in your browser."
+  category="Free Online Tools"
+  calculatorName="PNG to JPG"
+  slug="png-to-jpg"
+  keywords={[
+    'png to jpg',
+    'png to jpg converter',
+    'convert png to jpg',
+    'change png to jpg',
+    'how to convert png to jpg',
+    'convert png to jpg online',
+    'png to jpeg',
+    'image format converter'
+  ]}
+>
+  <!-- Injected FAQPage Schema for Search Engines -->
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <!-- MAIN INTERACTIVE PNG TO JPG CONVERTER TOOL WIDGET -->
+  <div class="space-y-6">
+
+    <!-- Privacy & Security Guarantee Banner -->
+    <div class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5 text-xs text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300">
+      <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold">
+        🛡️
+      </div>
+      <div>
+        <span class="font-bold">100% Client-Side Privacy:</span>
+        Your images are processed locally in your browser and are not uploaded to our server. Photos remain confidential on your device.
+      </div>
+    </div>
+
+    <!-- Alert / Error Notification Box -->
+    <div id="p2j-alert-box" class="hidden rounded-2xl border p-4 text-xs transition-all" role="alert">
+      <div class="flex items-start gap-2.5">
+        <span class="text-base shrink-0">⚠️</span>
+        <div id="p2j-alert-text" class="flex-1 font-medium leading-relaxed"></div>
+      </div>
+    </div>
+
+    <!-- Transparency Detection Alert (Hidden by default) -->
+    <div id="p2j-transparency-notice" class="hidden rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-xs text-amber-900 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-200">
+    </div>
+
+    <!-- SECTION 1: UPLOAD DROP ZONE (Visible when no images loaded) -->
+    <section id="p2j-upload-section" class="transition-all">
+      <div
+        id="p2j-drop-zone"
+        tabindex="0"
+        role="button"
+        aria-label="Upload PNG files: Click or drag and drop PNG images to convert to JPG"
+        class="group relative flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-8 text-center transition-all duration-200 hover:border-blue-500 hover:bg-blue-50/40 focus:border-blue-500 focus:outline-hidden focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-blue-500 dark:hover:bg-blue-950/20 sm:p-12 cursor-pointer"
+      >
+        <input
+          type="file"
+          id="p2j-file-input"
+          accept=".png,image/png"
+          multiple
+          class="sr-only"
+          aria-hidden="true"
+        />
+
+        <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100/80 text-3xl text-blue-600 transition group-hover:scale-105 group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-950/60 dark:text-blue-400 dark:group-hover:bg-blue-600 dark:group-hover:text-white">
+          🔄
+        </div>
+
+        <h2 class="mt-4 text-lg font-bold text-slate-900 dark:text-white sm:text-xl">
+          Choose PNG image or drag & drop here
+        </h2>
+
+        <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400 sm:text-sm max-w-md">
+          Supported format: <strong>PNG</strong>. Instant client-side conversion with customizable background fill color and quality.
+        </p>
+
+        <div class="mt-5 flex flex-wrap items-center justify-center gap-2">
+          <button
+            type="button"
+            id="p2j-select-file-btn"
+            class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-blue-700 focus:ring-2 focus:ring-blue-500/30 cursor-pointer sm:text-sm"
+          >
+            <span>📁 Select PNG Image(s)</span>
+          </button>
+          <span class="text-xs text-slate-400 dark:text-slate-500">or paste from clipboard (Ctrl+V)</span>
+        </div>
+
+        <div class="mt-6 flex items-center gap-4 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+          <span class="flex items-center gap-1">✓ Supported Format: PNG</span>
+          <span>•</span>
+          <span class="flex items-center gap-1">✓ Background Color Control</span>
+          <span>•</span>
+          <span class="flex items-center gap-1">✓ Up to 50 MB</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: WORKSPACE (SINGLE IMAGE CONVERSION RESULT) -->
+    <section id="p2j-workspace-single" class="hidden space-y-6">
+
+      <!-- Settings & Controls Bar -->
+      <div class="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 sm:p-5 space-y-4">
+        
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 dark:border-slate-800">
+          
+          <!-- Background Color Control (Crucial for transparent PNGs) -->
+          <div>
+            <label class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+              Background Color (for Transparency):
+            </label>
+            <div class="mt-2 flex items-center gap-2 text-xs">
+              <button
+                type="button"
+                id="p2j-bg-white"
+                class="flex items-center gap-1.5 rounded-xl border-2 border-blue-600 bg-white px-3 py-1.5 font-bold text-slate-800 shadow-2xs ring-2 ring-blue-500/30 transition cursor-pointer"
+              >
+                <span class="h-3.5 w-3.5 rounded-full border border-slate-300 bg-white shadow-2xs"></span>
+                White (Default)
+              </button>
+
+              <button
+                type="button"
+                id="p2j-bg-black"
+                class="flex items-center gap-1.5 rounded-xl border-2 border-slate-200 bg-white px-3 py-1.5 font-bold text-slate-800 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer"
+              >
+                <span class="h-3.5 w-3.5 rounded-full bg-black shadow-2xs"></span>
+                Black
+              </button>
+
+              <div class="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-2.5 py-1 dark:border-slate-700 dark:bg-slate-800">
+                <input
+                  type="color"
+                  id="p2j-bg-custom-color"
+                  value="#ffffff"
+                  class="h-6 w-6 rounded cursor-pointer border-0 p-0 bg-transparent"
+                  aria-label="Pick custom background color"
+                />
+                <span id="p2j-bg-custom-hex" class="font-mono text-[11px] font-bold text-slate-600 dark:text-slate-300">#FFFFFF</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quality Slider -->
+          <div class="flex flex-col gap-1 min-w-50">
+            <div class="flex items-center justify-between text-xs">
+              <label for="p2j-quality-slider" class="font-bold text-slate-700 dark:text-slate-300">
+                JPG Quality:
+              </label>
+              <span class="font-mono font-bold text-blue-600 dark:text-blue-400">
+                <span id="p2j-quality-val">90%</span> <span id="p2j-quality-label" class="text-[11px] text-slate-400 font-normal">(High)</span>
+              </span>
+            </div>
+            <input
+              type="range"
+              id="p2j-quality-slider"
+              min="10"
+              max="100"
+              value="90"
+              class="w-full accent-blue-600 cursor-pointer"
+            />
+          </div>
+
+        </div>
+
+        <!-- Convert Trigger Button -->
+        <div class="flex items-center justify-between">
+          <span class="text-xs text-slate-500 dark:text-slate-400">
+            Output format: <strong class="text-slate-800 dark:text-slate-200 font-mono">image/jpeg (.jpg)</strong>
+          </span>
+          <button
+            type="button"
+            id="p2j-convert-btn"
+            class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-blue-700 transition cursor-pointer"
+          >
+            <span>🔄 Re-convert to JPG</span>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- File Details Comparison Cards -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        
+        <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Original PNG</div>
+          <div id="p2j-stat-orig-name" class="mt-1 truncate font-bold text-xs text-slate-800 dark:text-slate-200">-</div>
+          <div class="mt-0.5 text-[11px] font-mono text-slate-500">
+            <span id="p2j-stat-orig-size">-</span> • <span id="p2j-stat-orig-dim">-</span>
+          </div>
+          <div class="text-[10px] text-slate-400 mt-0.5">
+            Ratio: <span id="p2j-stat-orig-ratio">-</span>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-blue-200 bg-blue-50/40 p-3.5 shadow-2xs dark:border-blue-900/40 dark:bg-blue-950/20">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Converted JPG</div>
+          <div id="p2j-stat-jpg-name" class="mt-1 truncate font-bold text-xs text-blue-900 dark:text-blue-200">-</div>
+          <div class="mt-0.5 text-[11px] font-mono text-blue-700 dark:text-blue-300">
+            <span id="p2j-stat-jpg-size">-</span> • <span id="p2j-stat-jpg-dim">-</span>
+          </div>
+          <div class="text-[10px] text-blue-600/80 dark:text-blue-400/80 mt-0.5">
+            JPEG Compression
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Size Difference</div>
+          <div id="p2j-stat-size-diff" class="mt-1 font-mono text-xs font-bold text-slate-800 dark:text-slate-200 sm:text-sm">-</div>
+        </div>
+
+      </div>
+
+      <!-- Side-by-Side Responsive Previews -->
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        
+        <!-- Original PNG Card -->
+        <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <div class="flex items-center justify-between border-b border-slate-100 bg-slate-50/70 px-4 py-2.5 text-xs dark:border-slate-800 dark:bg-slate-800/40">
+            <span class="font-bold text-slate-700 dark:text-slate-200">Original PNG</span>
+            <span id="p2j-badge-orig" class="rounded-md bg-slate-200/70 px-2 py-0.5 font-mono text-[10px] text-slate-700 dark:bg-slate-700 dark:text-slate-300">-</span>
+          </div>
+          <div class="flex min-h-55 max-h-95 items-center justify-center p-3 bg-slate-100/50 dark:bg-slate-950/50">
+            <img
+              id="p2j-preview-orig"
+              alt="Original PNG image preview"
+              class="max-h-87.5 max-w-full rounded-lg object-contain shadow-2xs"
+            />
+          </div>
+        </div>
+
+        <!-- Converted JPG Card -->
+        <div class="overflow-hidden rounded-2xl border border-blue-200 bg-white dark:border-blue-900/60 dark:bg-slate-900">
+          <div class="flex items-center justify-between border-b border-blue-100 bg-blue-50/70 px-4 py-2.5 text-xs dark:border-blue-950/50 dark:bg-blue-950/30">
+            <span class="font-bold text-blue-900 dark:text-blue-200">Converted JPG</span>
+            <span id="p2j-badge-jpg" class="rounded-md bg-blue-200/70 px-2 py-0.5 font-mono text-[10px] font-bold text-blue-800 dark:bg-blue-900/60 dark:text-blue-300">-</span>
+          </div>
+          <div class="flex min-h-55 max-h-95 items-center justify-center p-3 bg-slate-100/50 dark:bg-slate-950/50">
+            <img
+              id="p2j-preview-jpg"
+              alt="Converted JPG image preview"
+              class="max-h-87.5 max-w-full rounded-lg object-contain shadow-2xs"
+            />
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Action Buttons Bar -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+        <button
+          type="button"
+          id="p2j-reset-single"
+          class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
+        >
+          <span>🔄 Convert Another PNG</span>
+        </button>
+
+        <button
+          type="button"
+          id="p2j-download-single"
+          class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-md hover:from-blue-700 hover:to-indigo-700 focus:ring-4 focus:ring-blue-500/20 transition transform active:scale-98 cursor-pointer"
+        >
+          <span>📥 Download JPG</span>
+        </button>
+      </div>
+
+    </section>
+
+    <!-- SECTION 3: WORKSPACE (BATCH / MULTIPLE IMAGES CONVERSION RESULT) -->
+    <section id="p2j-workspace-batch" class="hidden space-y-6">
+      
+      <div class="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-blue-200 bg-blue-50/70 p-4 text-xs dark:border-blue-900/50 dark:bg-blue-950/30">
+        <div class="flex items-center gap-2">
+          <span class="text-base">🎉</span>
+          <span id="p2j-batch-count" class="font-bold text-blue-900 dark:text-blue-200">Batch Converted Successfully</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            id="p2j-batch-reset"
+            class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer"
+          >
+            Convert More
+          </button>
+          <button
+            type="button"
+            id="p2j-batch-download-all"
+            class="rounded-xl bg-blue-600 px-4 py-1.5 font-bold text-white shadow-xs hover:bg-blue-700 transition cursor-pointer"
+          >
+            📥 Download All JPGs
+          </button>
+        </div>
+      </div>
+
+      <!-- Batch Converted Items List -->
+      <div id="p2j-batch-list" class="space-y-3">
+        <!-- Rendered dynamically by script -->
+      </div>
+
+    </section>
+
+    <!-- LOADING SPINNER OVERLAY -->
+    <div
+      id="p2j-loading-overlay"
+      class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 backdrop-blur-xs"
+      aria-live="polite"
+    >
+      <div class="flex flex-col items-center rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800 text-center max-w-xs mx-4">
+        <div class="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+        <div class="mt-3 font-bold text-slate-900 dark:text-white text-sm">Converting to JPG</div>
+        <div id="p2j-loading-text" class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Compositing background and encoding in browser...
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SEO EDUCATIONAL CONTENT (Richly styled with modern CSS cards and typography) -->
+  <Fragment slot="content">
+    <div class="space-y-12 not-prose">
+      
+      <!-- Section 1: Intro Banner -->
+      <section class="space-y-6">
+        <div class="rounded-3xl border border-blue-100 bg-linear-to-br from-blue-50/80 via-white to-slate-50 p-6 shadow-xs dark:border-blue-950/60 dark:from-slate-900 dark:via-slate-900/80 dark:to-blue-950/20 sm:p-8">
+          <div class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-100/60 px-3 py-1 text-xs font-bold text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/70 dark:text-blue-300">
+            <span class="h-2 w-2 rounded-full bg-blue-600 animate-pulse"></span>
+            Browser-Based Client-Side Conversion
+          </div>
+
+          <h2 class="mt-4 text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+            PNG to JPG Converter
+          </h2>
+
+          <p class="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-4xl">
+            Welcome to our free <strong>PNG to JPG converter</strong> designed to transform heavy PNG images into lightweight, universally compatible JPEG files. Because conversion is powered entirely by your device's browser using HTML5 Canvas APIs, your images are converted instantaneously with customizable background colors and zero server uploads.
+          </p>
+
+          <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div class="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/80 p-3 shadow-2xs backdrop-blur-xs dark:border-slate-800 dark:bg-slate-800/60">
+              <span class="text-xl">🎨</span>
+              <div>
+                <div class="text-xs font-bold text-slate-900 dark:text-white">Custom Background</div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400">White, black, or custom hex</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/80 p-3 shadow-2xs backdrop-blur-xs dark:border-slate-800 dark:bg-slate-800/60">
+              <span class="text-xl">🎚️</span>
+              <div>
+                <div class="text-xs font-bold text-slate-900 dark:text-white">Quality Control</div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400">10% to 100% slider</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/80 p-3 shadow-2xs backdrop-blur-xs dark:border-slate-800 dark:bg-slate-800/60">
+              <span class="text-xl">🔒</span>
+              <div>
+                <div class="text-xs font-bold text-slate-900 dark:text-white">100% Client-Side</div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400">Zero cloud uploads</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/80 p-3 shadow-2xs backdrop-blur-xs dark:border-slate-800 dark:bg-slate-800/60">
+              <span class="text-xl">💎</span>
+              <div>
+                <div class="text-xs font-bold text-slate-900 dark:text-white">Free Forever</div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400">No account or watermark</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 2: How to Convert PNG to JPG -->
+      <section class="space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Step-by-Step Tutorial</span>
+          <h2 class="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            How to Convert PNG to JPG
+          </h2>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 max-w-3xl">
+            Follow these six simple steps to convert any PNG into a high-quality JPEG:
+          </p>
+        </div>
+
+        <div class="space-y-3">
+          <div class="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 font-mono text-sm font-black text-white shadow-xs">1</div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Upload or Drag Your PNG Image</h3>
+              <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Click inside the upload zone to browse files from your computer or smartphone, drag and drop an existing PNG, or paste directly with <kbd class="rounded border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-xs font-mono font-bold dark:border-slate-700 dark:bg-slate-800">Ctrl+V</kbd>.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 font-mono text-sm font-black text-white shadow-xs">2</div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Choose the JPG Quality</h3>
+              <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Adjust the quality slider between 10% and 100%. Our default 90% provides sharp, artifact-free photos with significant byte reduction.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 font-mono text-sm font-black text-white shadow-xs">3</div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Select Background Fill Color</h3>
+              <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                If your PNG contains transparent regions, choose White, Black, or a custom color picker to fill the background seamlessly.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 font-mono text-sm font-black text-white shadow-xs">4</div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Click Convert to JPG</h3>
+              <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                The browser canvas compositor decodes the PNG and applies DCT quantization in real time.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 font-mono text-sm font-black text-white shadow-xs">5</div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Preview the Converted Image</h3>
+              <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Review before and after previews side-by-side, inspect output resolution, and compare file weight savings.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 font-mono text-sm font-black text-white shadow-xs">6</div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Download the JPG File</h3>
+              <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Click <strong>Download JPG</strong> to immediately save your converted image with the updated <code>.jpg</code> extension.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 3: Convert PNG to JPG Online -->
+      <section class="space-y-4">
+        <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+          Convert PNG to JPG Online
+        </h2>
+        <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          Downloading desktop photo editing software just to convert an image format wastes time and memory. When you <strong>convert png to jpg online</strong> with our browser utility, the conversion executes locally at hardware speeds without sending your files over the network or waiting in server queues.
+        </p>
+      </section>
+
+      <!-- Section 4: Change PNG to JPG (Real conversion vs renaming) -->
+      <section class="space-y-4">
+        <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+          Change PNG to JPG: True Decoding vs Renaming
+        </h2>
+        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-3">
+          <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            When you want to <strong>change png to jpg</strong>, simply renaming a file from <code>photo.png</code> to <code>photo.jpg</code> in your operating system's file manager does not actually change its internal data structure. It merely misleads software applications, which can cause upload rejections on government portals or website errors.
+          </p>
+          <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            A genuine conversion requires decoding the lossless PNG scanlines, constructing an uncompressed bitmap array, rendering transparency onto a chosen background, and encoding the pixel matrix through Discrete Cosine Transform (DCT) tables into valid standard JPEG byte headers. Our tool performs this complete cryptographic-safe pipeline in milliseconds.
+          </p>
+        </div>
+      </section>
+
+      <!-- Section 5: PNG vs JPG Comparison Matrix -->
+      <section class="space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Format Comparison</span>
+          <h2 class="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            PNG vs JPG
+          </h2>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 max-w-3xl">
+            Comparing the core characteristics of Portable Network Graphics and Joint Photographic Experts Group:
+          </p>
+        </div>
+
+        <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs sm:text-sm">
+              <thead class="border-b border-slate-200 bg-slate-50/70 text-slate-700 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-300">
+                <tr>
+                  <th class="p-4 font-bold">Property</th>
+                  <th class="p-4 font-bold text-blue-600 dark:text-blue-400">PNG</th>
+                  <th class="p-4 font-bold text-amber-700 dark:text-amber-400">JPG / JPEG</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-slate-600 dark:divide-slate-800 dark:text-slate-300">
+                <tr>
+                  <td class="p-4 font-semibold text-slate-900 dark:text-white">Compression Architecture</td>
+                  <td class="p-4 font-medium text-blue-600 dark:text-blue-400">Lossless (Deflate LZ77)</td>
+                  <td class="p-4">Lossy (DCT frequency discard)</td>
+                </tr>
+                <tr>
+                  <td class="p-4 font-semibold text-slate-900 dark:text-white">Alpha Transparency</td>
+                  <td class="p-4 font-bold text-emerald-600 dark:text-emerald-400">Supported (8-bit alpha)</td>
+                  <td class="p-4 text-red-600 dark:text-red-400">Not supported (solid background only)</td>
+                </tr>
+                <tr>
+                  <td class="p-4 font-semibold text-slate-900 dark:text-white">Photographic File Weight</td>
+                  <td class="p-4 text-amber-700 dark:text-amber-400">Heavy (stores all spatial frequencies)</td>
+                  <td class="p-4 font-bold text-emerald-600 dark:text-emerald-400">Very compact (50%–80% smaller)</td>
+                </tr>
+                <tr>
+                  <td class="p-4 font-semibold text-slate-900 dark:text-white">Ideal Applications</td>
+                  <td class="p-4">Logos, UI badges, text screenshots, diagrams</td>
+                  <td class="p-4">Real-world photographs, e-commerce, web banners</td>
+                </tr>
+                <tr>
+                  <td class="p-4 font-semibold text-slate-900 dark:text-white">Universal Compatibility</td>
+                  <td class="p-4">High</td>
+                  <td class="p-4 font-bold text-emerald-600 dark:text-emerald-400">100% Universal (all devices, screens & printers)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 6: What Happens to Transparent PNG Backgrounds? -->
+      <section class="space-y-4">
+        <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+          What Happens to Transparent PNG Backgrounds?
+        </h2>
+        <div class="rounded-3xl border border-amber-200/80 bg-amber-50/50 p-6 dark:border-amber-900/40 dark:bg-amber-950/20 space-y-3">
+          <p class="text-sm text-amber-950 dark:text-amber-200 leading-relaxed">
+            The JPEG format specification contains no channel for transparency. Every pixel in a JPEG must possess a defined red, green, and blue color value.
+          </p>
+          <p class="text-sm text-amber-950 dark:text-amber-200 leading-relaxed">
+            When basic utilities convert transparent PNGs to JPG without compositing, transparent pixels often turn pitch black. <strong>Our converter solves this problem</strong> by allowing you to choose your desired background fill color—white, black, or any custom color—before encoding, guaranteeing a clean and professional appearance.
+          </p>
+        </div>
+      </section>
+
+      <!-- Section 7: Does PNG to JPG Conversion Reduce Quality? -->
+      <section class="space-y-4">
+        <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+          Does PNG to JPG Conversion Reduce Quality?
+        </h2>
+        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-3">
+          <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Because JPEG is a lossy compression format, converting from lossless PNG to JPG does involve discarding subtle color nuances. However, by selecting a high quality setting (such as 90% or above), the visual difference is virtually imperceptible to the human eye on desktop and mobile displays.
+          </p>
+          <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Converting to JPG is designed to dramatically reduce file weight for faster web loading and easier email sharing, not to improve photographic sharpness beyond the original image.
+          </p>
+        </div>
+      </section>
+
+      <!-- Section 8: Why Convert PNG to JPG? -->
+      <section class="space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Practical Applications</span>
+          <h2 class="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            Why Convert PNG to JPG?
+          </h2>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+            Key real-world benefits of converting your PNG images into JPEG:
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="flex items-start gap-3.5 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <span class="text-2xl">⚡</span>
+            <div>
+              <div class="text-sm font-bold text-slate-900 dark:text-white">Massive File Size Reduction</div>
+              <p class="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Photos saved as PNG can easily balloon to 5MB–10MB. Converting them to JPG frequently slashes weight by 60%–80% without visible loss in clarity.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3.5 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <span class="text-2xl">📋</span>
+            <div>
+              <div class="text-sm font-bold text-slate-900 dark:text-white">Pass Portal Upload Restrictions</div>
+              <p class="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Many university exam portals, banking KYC systems, and government forms explicitly reject PNGs and require JPEG submissions.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3.5 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <span class="text-2xl">✉️</span>
+            <div>
+              <div class="text-sm font-bold text-slate-900 dark:text-white">Frictionless Email & Chat Sharing</div>
+              <p class="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Smaller JPG files upload and send quickly over cellular connections, avoiding email attachment size limits and bounce-backs.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3.5 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <span class="text-2xl">🌐</span>
+            <div>
+              <div class="text-sm font-bold text-slate-900 dark:text-white">100% Universal Compatibility</div>
+              <p class="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Every smartphone, legacy operating system, digital camera, and e-reader natively renders standard JPEG files.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 9: Free & Safe Reassurance -->
+      <section class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+        <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>💎</span> Is This PNG to JPG Converter Free?
+          </h3>
+          <p class="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Yes, this converter is completely free to use. There are no daily conversion limits, hidden subscriptions, or watermarks placed on your downloaded files.
+          </p>
+        </div>
+
+        <div class="rounded-3xl border border-emerald-200 bg-emerald-50/50 p-6 shadow-xs dark:border-emerald-900/40 dark:bg-emerald-950/20">
+          <h3 class="text-base font-bold text-emerald-950 dark:text-emerald-200 flex items-center gap-2">
+            <span>🔒</span> Is PNG to JPG Conversion Safe?
+          </h3>
+          <p class="mt-2 text-xs sm:text-sm text-emerald-900 dark:text-emerald-300 leading-relaxed">
+            Yes. <strong>Images are processed locally in your browser and are not uploaded to our server.</strong> Your sensitive documents, receipts, and personal photos stay on your device at all times.
+          </p>
+        </div>
+      </section>
+
+      <!-- Section 10: Related Tools Navigation Cards (Including JPG to PNG) -->
+      <section class="space-y-4 border-t border-slate-200 pt-8 dark:border-slate-800">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+              Explore More Free Online Tools
+            </h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+              Need the opposite conversion? Try <a href="/free-online-tools/jpg-to-png/" class="font-bold text-blue-600 hover:underline dark:text-blue-400">JPG to PNG</a>.
+            </p>
+          </div>
+          <a href="/free-online-tools/" class="text-xs font-bold text-blue-600 hover:underline dark:text-blue-400">
+            View All Tools →
+          </a>
+        </div>
+        
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <a
+            href="/free-online-tools/jpg-to-png/"
+            class="group flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-2xs transition hover:border-blue-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500"
+          >
+            <span class="text-2xl transition group-hover:scale-110">🖼️</span>
+            <span class="mt-2 font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">JPG to PNG</span>
+            <span class="mt-0.5 text-[10px] text-slate-400">Opposite conversion</span>
+          </a>
+
+          <a
+            href="/free-online-tools/image-compressor/"
+            class="group flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-2xs transition hover:border-blue-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500"
+          >
+            <span class="text-2xl transition group-hover:scale-110">🗜️</span>
+            <span class="mt-2 font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">Image Compressor</span>
+            <span class="mt-0.5 text-[10px] text-slate-400">Reduce size to KB</span>
+          </a>
+
+          <a
+            href="/free-online-tools/image-resizer/"
+            class="group flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-2xs transition hover:border-blue-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500"
+          >
+            <span class="text-2xl transition group-hover:scale-110">📐</span>
+            <span class="mt-2 font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">Image Resizer</span>
+            <span class="mt-0.5 text-[10px] text-slate-400">Pixels & CM scaling</span>
+          </a>
+
+          <a
+            href="/free-online-tools/"
+            class="group flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-2xs transition hover:border-blue-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500"
+          >
+            <span class="text-2xl transition group-hover:scale-110">🧰</span>
+            <span class="mt-2 font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">All Free Tools</span>
+            <span class="mt-0.5 text-[10px] text-slate-400">PDF, Text & QR tools</span>
+          </a>
+        </div>
+      </section>
+
+    </div>
+  </Fragment>
+
+  <!-- FAQ SLOT -->
+  <Fragment slot="faq">
+    <div class="space-y-3 text-sm not-prose">
+      {faqs.map((faq) => (
+        <details class="group rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-800/30 transition">
+          <summary class="font-bold text-slate-900 dark:text-white cursor-pointer list-none flex items-center justify-between">
+            <span>{faq.question}</span>
+            <span class="text-blue-600 font-bold transition group-open:rotate-180">▼</span>
+          </summary>
+          <p class="mt-2 text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
+            {faq.answer}
+          </p>
+        </details>
+      ))}
+    </div>
+  </Fragment>
+
+</CalculatorLayout>
+
+<!-- Client-Side PNG to JPG Script (Cached external module) -->
+<script src="/js/tools/png-to-jpg.js" defer></script>

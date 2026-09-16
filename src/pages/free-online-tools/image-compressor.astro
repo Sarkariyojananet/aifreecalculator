@@ -1,0 +1,805 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+
+// FAQ Schema data for structured data injection
+const faqs = [
+  {
+    question: "What is an image compressor?",
+    answer: "An image compressor is a utility that reduces the file size of digital pictures by optimizing encoding parameters, eliminating redundant metadata, and adjusting compression quality or dimensions while maintaining visual clarity."
+  },
+  {
+    question: "How can I compress an image online for free?",
+    answer: "Select or drag and drop your image into our free image compressor, choose your target size (such as 20KB, 50KB, 100KB, or 200KB), and our tool will optimize the image directly in your browser. Once finished, click Download Compressed Image."
+  },
+  {
+    question: "Can I compress an image to 50KB?",
+    answer: "Yes. Select the '50 KB' target option. The compressor will perform an iterative binary search to balance encoding quality and dimensions so the resulting output stays at or below 50KB."
+  },
+  {
+    question: "Can I compress an image to 100KB?",
+    answer: "Yes. 100KB is a standard upload requirement for employment portals, exam forms, and CMS platforms. Select the '100 KB' quick button or enter 100 in the custom target field."
+  },
+  {
+    question: "Can I compress an image to 20KB?",
+    answer: "Yes. 20KB is commonly required for government portals, signatures, and passport photo uploads. Because 20KB is a very small file size, the compressor may proportionally downscale dimensions if quality reduction alone cannot satisfy the threshold."
+  },
+  {
+    question: "Can I compress an image to 200KB?",
+    answer: "Yes. 200KB is ideal for website banners, e-commerce listings, and high-resolution blog images, preserving crisp detail while reducing mobile bandwidth usage."
+  },
+  {
+    question: "Does image compression reduce quality?",
+    answer: "Lossy compression (such as standard JPEG and WebP encoding) selectively removes subtle pixel data that the human eye cannot easily distinguish. At moderate compression levels, the quality difference is virtually imperceptible. Extremely aggressive compression (like reducing a 10MB photo to 20KB) may introduce noticeable softness or artifacts."
+  },
+  {
+    question: "Are my images uploaded to a server?",
+    answer: "No. Your images are never uploaded to any server or external cloud service. The entire compression process occurs 100% locally inside your browser using HTML5 Canvas and Blob APIs."
+  },
+  {
+    question: "Which image formats are supported?",
+    answer: "Our online image compressor supports JPG, JPEG, PNG, and WebP images. You can also convert between these formats during compression."
+  }
+];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqs.map(faq => ({
+    "@type": "Question",
+    "name": faq.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": faq.answer
+    }
+  }))
+};
+---
+
+<CalculatorLayout
+  title="Image Compressor - Compress Images Online for Free"
+  description="Compress your images online for free and reduce file size without uploading your photos to a server. Select an image, choose your target size, and download directly."
+  category="Free Online Tools"
+  calculatorName="Image Compressor"
+  slug="image-compressor"
+  keywords={[
+    'image compressor',
+    'online image compressor',
+    'image compressor free',
+    'free image compressor',
+    'image compressor to 50kb',
+    'image compressor to 100kb',
+    'image compressor to 20kb',
+    'image compressor to 200kb',
+    'reduce image size',
+    'compress jpg',
+    'compress png',
+    'compress webp',
+    'client side image compressor'
+  ]}
+>
+  <!-- FAQPage Schema for Search Engines -->
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <!-- MAIN INTERACTIVE IMAGE COMPRESSOR WIDGET -->
+  <div class="space-y-6">
+
+    <!-- Privacy & Security Guarantee Banner -->
+    <div class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5 text-xs text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300">
+      <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold">
+        🛡️
+      </div>
+      <div>
+        <span class="font-bold">100% Client-Side Privacy:</span>
+        Your images are processed locally in your browser and are not uploaded to our server. Your photos stay completely private on your device.
+      </div>
+    </div>
+
+    <!-- Alert / Notice Box (Hidden by default) -->
+    <div id="ic-alert-box" class="hidden rounded-2xl border p-4 text-xs transition-all" role="alert">
+      <div class="flex items-start gap-2.5">
+        <span class="text-base shrink-0">⚠️</span>
+        <div id="ic-alert-text" class="flex-1 font-medium leading-relaxed"></div>
+      </div>
+    </div>
+
+    <!-- Transparency Notice (Hidden by default) -->
+    <div id="ic-transparency-notice" class="hidden rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-300">
+    </div>
+
+    <!-- SECTION 1: UPLOAD DROP ZONE (Visible when no image loaded) -->
+    <section id="ic-upload-section" class="transition-all">
+      <div
+        id="ic-drop-zone"
+        tabindex="0"
+        role="button"
+        aria-label="Upload image area: Click or drag and drop an image to compress"
+        class="group relative flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-8 text-center transition-all duration-200 hover:border-blue-500 hover:bg-blue-50/40 focus:border-blue-500 focus:outline-hidden focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-blue-500 dark:hover:bg-blue-950/20 sm:p-12 cursor-pointer"
+      >
+        <input
+          type="file"
+          id="ic-file-input"
+          accept="image/jpeg,image/png,image/webp"
+          class="sr-only"
+          aria-hidden="true"
+        />
+
+        <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100/80 text-3xl text-blue-600 transition group-hover:scale-105 group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-950/60 dark:text-blue-400 dark:group-hover:bg-blue-600 dark:group-hover:text-white">
+          🗜️
+        </div>
+
+        <h2 class="mt-4 text-lg font-bold text-slate-900 dark:text-white sm:text-xl">
+          Choose an image or drag & drop here
+        </h2>
+
+        <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400 sm:text-sm max-w-md">
+          Works with <strong>JPG, JPEG, PNG, and WebP</strong> files. Compression is instantaneous and runs entirely in your browser.
+        </p>
+
+        <div class="mt-5 flex flex-wrap items-center justify-center gap-2">
+          <button
+            type="button"
+            id="ic-select-file-btn"
+            class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-blue-700 focus:ring-2 focus:ring-blue-500/30 cursor-pointer sm:text-sm"
+          >
+            <span>📁 Select Image</span>
+          </button>
+          <span class="text-xs text-slate-400 dark:text-slate-500">or paste from clipboard (Ctrl+V)</span>
+        </div>
+
+        <div class="mt-6 flex items-center gap-4 text-[11px] font-semibold text-slate-400 dark:text-slate-500">
+          <span class="flex items-center gap-1">✓ Supports JPG / PNG / WebP</span>
+          <span>•</span>
+          <span class="flex items-center gap-1">✓ Up to 50 MB</span>
+          <span>•</span>
+          <span class="flex items-center gap-1">✓ Instant Processing</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- SECTION 2: WORKSPACE & COMPRESSION CONTROLS (Hidden until image selected) -->
+    <section id="ic-workspace-section" class="hidden space-y-6">
+
+      <!-- Top Compression Toolbar -->
+      <div class="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 sm:p-5">
+        
+        <!-- Mode Switch: Target Size vs Manual Quality -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 dark:border-slate-800">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Optimization Goal</span>
+            <div class="mt-1.5 flex items-center gap-4 text-xs font-semibold text-slate-700 dark:text-slate-300">
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="ic-mode" id="ic-mode-target" value="target" checked class="accent-blue-600" />
+                <span>Target File Size (Recommended)</span>
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer">
+                <input type="radio" name="ic-mode" id="ic-mode-quality" value="quality" class="accent-blue-600" />
+                <span>Manual Quality Slider</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Format Selector -->
+          <div class="flex items-center gap-2 text-xs">
+            <label for="ic-format-select" class="font-bold text-slate-600 dark:text-slate-300 shrink-0">Output Format:</label>
+            <select
+              id="ic-format-select"
+              class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 font-semibold text-slate-800 shadow-2xs transition focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+            >
+              <option value="auto" selected>Auto (Best Match)</option>
+              <option value="image/jpeg">JPG / JPEG</option>
+              <option value="image/webp">WebP (Modern)</option>
+              <option value="image/png">PNG</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Target Size Controls -->
+        <div id="ic-target-controls" class="pt-4 space-y-3">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <span class="text-xs font-bold text-slate-700 dark:text-slate-300">
+              Select Target Size:
+            </span>
+            <span class="text-[11px] text-slate-500 dark:text-slate-400">
+              Target: <strong id="ic-stat-target-size" class="text-blue-600 dark:text-blue-400">100 KB</strong>
+            </span>
+          </div>
+
+          <!-- Quick Presets Buttons (20KB, 50KB, 100KB, 200KB) -->
+          <div class="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <button
+              type="button"
+              data-kb="20"
+              class="ic-preset-btn flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-bold text-slate-700 transition hover:border-blue-500 hover:text-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+            >
+              <span>20 KB</span>
+              <span class="text-[10px] font-normal text-slate-400">Forms & Signatures</span>
+            </button>
+            <button
+              type="button"
+              data-kb="50"
+              class="ic-preset-btn flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-bold text-slate-700 transition hover:border-blue-500 hover:text-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+            >
+              <span>50 KB</span>
+              <span class="text-[10px] font-normal text-slate-400">Thumbnails & IDs</span>
+            </button>
+            <button
+              type="button"
+              data-kb="100"
+              class="ic-preset-btn active flex flex-col items-center justify-center rounded-xl border border-blue-600 bg-blue-600 p-2.5 text-xs font-bold text-white shadow-xs transition focus:outline-hidden cursor-pointer"
+            >
+              <span>100 KB</span>
+              <span class="text-[10px] font-normal opacity-90">Web Standard</span>
+            </button>
+            <button
+              type="button"
+              data-kb="200"
+              class="ic-preset-btn flex flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-2.5 text-xs font-bold text-slate-700 transition hover:border-blue-500 hover:text-blue-600 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+            >
+              <span>200 KB</span>
+              <span class="text-[10px] font-normal text-slate-400">High Clarity</span>
+            </button>
+          </div>
+
+          <!-- Custom Target Size Input -->
+          <div class="flex items-center gap-2 pt-1 text-xs">
+            <label for="ic-custom-kb" class="font-semibold text-slate-600 dark:text-slate-400 shrink-0">Custom Target Size:</label>
+            <div class="relative flex items-center">
+              <input
+                type="number"
+                id="ic-custom-kb"
+                min="5"
+                max="10000"
+                placeholder="e.g. 75"
+                class="w-24 rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 pr-8 font-mono text-xs font-bold text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              />
+              <span class="absolute right-2 text-[10px] font-bold text-slate-400">KB</span>
+            </div>
+            <button
+              type="button"
+              id="ic-apply-custom-btn"
+              class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer"
+            >
+              Apply
+            </button>
+          </div>
+        </div>
+
+        <!-- Manual Quality Controls (Hidden when in Target mode) -->
+        <div id="ic-quality-controls" class="hidden pt-4 space-y-3">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-slate-700 dark:text-slate-300">Compression Quality:</span>
+            <span id="ic-quality-val" class="font-mono font-bold text-blue-600 dark:text-blue-400">80%</span>
+          </div>
+          <input
+            type="range"
+            id="ic-quality-slider"
+            min="5"
+            max="100"
+            value="80"
+            class="w-full accent-blue-600 cursor-pointer"
+          />
+          <div class="flex justify-between text-[10px] text-slate-400">
+            <span>Smallest File (5%)</span>
+            <span>Balanced (80%)</span>
+            <span>Maximum Quality (100%)</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Compression Stat Cards Grid -->
+      <div class="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        
+        <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Original Size</div>
+          <div id="ic-stat-orig-size" class="mt-1 font-mono text-base font-black text-slate-900 dark:text-white sm:text-lg">-</div>
+          <div id="ic-stat-orig-dim" class="text-[11px] text-slate-500">-</div>
+        </div>
+
+        <div class="rounded-2xl border border-blue-200 bg-blue-50/40 p-3.5 shadow-2xs dark:border-blue-900/40 dark:bg-blue-950/20">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Compressed Size</div>
+          <div id="ic-stat-comp-size" class="mt-1 font-mono text-base font-black text-blue-700 dark:text-blue-300 sm:text-lg">-</div>
+          <div id="ic-stat-comp-dim" class="text-[11px] text-blue-600/80 dark:text-blue-400/80">-</div>
+        </div>
+
+        <div class="rounded-2xl border border-emerald-200 bg-emerald-50/40 p-3.5 shadow-2xs dark:border-emerald-900/40 dark:bg-emerald-950/20">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Space Saved</div>
+          <div id="ic-stat-reduction" class="mt-1 font-mono text-base font-black text-emerald-700 dark:text-emerald-300 sm:text-lg">-</div>
+          <div class="text-[11px] text-emerald-600/80 dark:text-emerald-400/80">Bandwidth & Storage</div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-center">
+          <div class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Target Status</div>
+          <div id="ic-status-badge" class="inline-flex items-center text-xs font-semibold text-slate-700 dark:text-slate-300">
+            Analyzing...
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Before / After Responsive Image Preview Grid -->
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        
+        <!-- Original Preview Card -->
+        <div class="overflow-hidden rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+          <div class="flex items-center justify-between border-b border-slate-100 bg-slate-50/70 px-4 py-2.5 text-xs dark:border-slate-800 dark:bg-slate-800/40">
+            <span class="font-bold text-slate-700 dark:text-slate-200">Original Image</span>
+            <span id="ic-preview-orig-badge" class="rounded-md bg-slate-200/70 px-2 py-0.5 font-mono text-[10px] text-slate-700 dark:bg-slate-700 dark:text-slate-300">-</span>
+          </div>
+          <div class="flex min-h-55 max-h-95 items-center justify-center p-3 bg-slate-100/50 dark:bg-slate-950/50">
+            <img
+              id="ic-preview-orig"
+              alt="Original uploaded image preview"
+              class="max-h-87.5 max-w-full rounded-lg object-contain shadow-2xs"
+            />
+          </div>
+        </div>
+
+        <!-- Compressed Preview Card -->
+        <div class="overflow-hidden rounded-2xl border border-blue-200 bg-white dark:border-blue-900/60 dark:bg-slate-900">
+          <div class="flex items-center justify-between border-b border-blue-100 bg-blue-50/70 px-4 py-2.5 text-xs dark:border-blue-950/50 dark:bg-blue-950/30">
+            <span class="font-bold text-blue-900 dark:text-blue-200">Compressed Output</span>
+            <span id="ic-preview-comp-badge" class="rounded-md bg-blue-200/70 px-2 py-0.5 font-mono text-[10px] font-bold text-blue-800 dark:bg-blue-900/60 dark:text-blue-300">-</span>
+          </div>
+          <div class="flex min-h-55 max-h-95 items-center justify-center p-3 bg-slate-100/50 dark:bg-slate-950/50">
+            <img
+              id="ic-preview-comp"
+              alt="Compressed image preview"
+              class="max-h-87.5 max-w-full rounded-lg object-contain shadow-2xs"
+            />
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Action Buttons Bar -->
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+        <button
+          type="button"
+          id="ic-reset-btn"
+          class="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
+        >
+          <span>🔄 Compress Another Image</span>
+        </button>
+
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <button
+            type="button"
+            id="ic-recompress-btn"
+            class="hidden sm:inline-flex items-center justify-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer"
+          >
+            Re-calculate
+          </button>
+          
+          <button
+            type="button"
+            id="ic-download-btn"
+            class="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-bold text-white shadow-md hover:from-blue-700 hover:to-indigo-700 focus:ring-4 focus:ring-blue-500/20 transition transform active:scale-98 cursor-pointer"
+          >
+            <span>📥 Download Compressed Image</span>
+          </button>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- LOADING SPINNER OVERLAY -->
+    <div
+      id="ic-loading-overlay"
+      class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/40 backdrop-blur-xs"
+      aria-live="polite"
+    >
+      <div class="flex flex-col items-center rounded-2xl bg-white p-6 shadow-xl dark:bg-slate-800 text-center max-w-xs mx-4">
+        <div class="h-10 w-10 animate-spin rounded-full border-4 border-blue-600 border-t-transparent"></div>
+        <div class="mt-3 font-bold text-slate-900 dark:text-white text-sm">Processing Locally</div>
+        <div id="ic-loading-text" class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Optimizing image encoding...
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- SEO EDUCATIONAL CONTENT (Rich H2 / H3 guide inside content slot) -->
+  <Fragment slot="content">
+    <div class="space-y-12 not-prose">
+      
+      <!-- Section 1: Free Image Compressor Online Intro & Key Highlights -->
+      <section class="space-y-6">
+        <div class="rounded-3xl border border-blue-100 bg-linear-to-br from-blue-50/80 via-white to-slate-50 p-6 shadow-xs dark:border-blue-950/60 dark:from-slate-900 dark:via-slate-900/80 dark:to-blue-950/20 sm:p-8">
+          <div class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-100/60 px-3 py-1 text-xs font-bold text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/70 dark:text-blue-300">
+            <span class="h-2 w-2 rounded-full bg-blue-600 animate-pulse"></span>
+            100% Client-Side Engine
+          </div>
+
+          <h2 class="mt-4 text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+            Free Image Compressor Online
+          </h2>
+
+          <p class="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-4xl">
+            Welcome to our free <strong>online image compressor</strong> designed to help you reduce image file size quickly, securely, and without watermarks or upload limits. Unlike traditional converters that transmit private photos across third-party networks, our utility runs entirely client-side directly within your browser.
+          </p>
+
+          <!-- Highlight Badges Grid -->
+          <div class="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div class="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/80 p-3 shadow-2xs backdrop-blur-xs dark:border-slate-800 dark:bg-slate-800/60">
+              <span class="text-xl">🔒</span>
+              <div>
+                <div class="text-xs font-bold text-slate-900 dark:text-white">Zero Server Uploads</div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400">Photos stay on your device</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/80 p-3 shadow-2xs backdrop-blur-xs dark:border-slate-800 dark:bg-slate-800/60">
+              <span class="text-xl">⚡</span>
+              <div>
+                <div class="text-xs font-bold text-slate-900 dark:text-white">Real-Time Speed</div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400">Sub-second local encoding</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/80 p-3 shadow-2xs backdrop-blur-xs dark:border-slate-800 dark:bg-slate-800/60">
+              <span class="text-xl">🎯</span>
+              <div>
+                <div class="text-xs font-bold text-slate-900 dark:text-white">Target KB Precision</div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400">Iterative binary search</div>
+              </div>
+            </div>
+            <div class="flex items-center gap-3 rounded-2xl border border-slate-200/80 bg-white/80 p-3 shadow-2xs backdrop-blur-xs dark:border-slate-800 dark:bg-slate-800/60">
+              <span class="text-xl">💎</span>
+              <div>
+                <div class="text-xs font-bold text-slate-900 dark:text-white">100% Free Forever</div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400">No account or watermark</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 2: Target Size Scenarios (H2 per requirement) -->
+      <section class="space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Preset Scenarios</span>
+          <h2 class="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            Popular Target Size Limits Explained
+          </h2>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 max-w-3xl">
+            Online portals, government registries, and job application systems enforce stringent file-size ceilings. Select the scenario below to understand how our <strong>image compressor free</strong> engine meets exact criteria:
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          
+          <!-- 20 KB Card -->
+          <div class="group relative overflow-hidden rounded-3xl border border-amber-200/80 bg-linear-to-b from-amber-50/40 via-white to-white p-6 shadow-xs transition hover:border-amber-400 hover:shadow-md dark:border-amber-900/50 dark:from-amber-950/20 dark:via-slate-900 dark:to-slate-900">
+            <div class="flex items-center justify-between">
+              <span class="inline-flex items-center gap-1.5 rounded-full bg-amber-100 px-3 py-1 font-mono text-xs font-black text-amber-900 dark:bg-amber-950/70 dark:text-amber-300">
+                ⚡ Ultra Compact
+              </span>
+              <span class="text-xs font-semibold text-slate-400">Target: ≤ 20 KB</span>
+            </div>
+            <h2 class="mt-4 text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <span>✍️</span> Compress Image to 20KB
+            </h2>
+            <p class="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              When applying for competitive examinations, civil service forms, or state government registrations, upload fields frequently require applicants to <strong>compress image to 20kb</strong> for signature and thumbnail verification.
+            </p>
+            <div class="mt-4 rounded-xl border border-amber-200/60 bg-white/80 p-3 text-xs text-amber-900 dark:border-amber-900/40 dark:bg-slate-800/80 dark:text-amber-200">
+              <strong>Best For:</strong> Candidate digital signatures, miniature thumb impressions, and matriculation exam application portals.
+            </div>
+          </div>
+
+          <!-- 50 KB Card -->
+          <div class="group relative overflow-hidden rounded-3xl border border-blue-200/80 bg-linear-to-b from-blue-50/40 via-white to-white p-6 shadow-xs transition hover:border-blue-400 hover:shadow-md dark:border-blue-900/50 dark:from-blue-950/20 dark:via-slate-900 dark:to-slate-900">
+            <div class="flex items-center justify-between">
+              <span class="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 font-mono text-xs font-black text-blue-900 dark:bg-blue-950/70 dark:text-blue-300">
+                👤 ID Photo Standard
+              </span>
+              <span class="text-xs font-semibold text-slate-400">Target: ≤ 50 KB</span>
+            </div>
+            <h2 class="mt-4 text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <span>📸</span> Compress Image to 50KB
+            </h2>
+            <p class="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              A 50KB limit represents the global gold standard for passport-style headshots, university admissions, and visa issuance platforms. Choosing to <strong>compress image to 50kb</strong> preserves facial features and natural contrast while comfortably passing automated portal filters.
+            </p>
+            <div class="mt-4 rounded-xl border border-blue-200/60 bg-white/80 p-3 text-xs text-blue-900 dark:border-blue-900/40 dark:bg-slate-800/80 dark:text-blue-200">
+              <strong>Best For:</strong> Passport & Visa photographs, employee badges, driver's licenses, and student identity verification.
+            </div>
+          </div>
+
+          <!-- 100 KB Card -->
+          <div class="group relative overflow-hidden rounded-3xl border border-indigo-200/80 bg-linear-to-b from-indigo-50/40 via-white to-white p-6 shadow-xs transition hover:border-indigo-400 hover:shadow-md dark:border-indigo-900/50 dark:from-indigo-950/20 dark:via-slate-900 dark:to-slate-900">
+            <div class="flex items-center justify-between">
+              <span class="inline-flex items-center gap-1.5 rounded-full bg-indigo-100 px-3 py-1 font-mono text-xs font-black text-indigo-900 dark:bg-indigo-950/70 dark:text-indigo-300">
+                📑 Document Ceiling
+              </span>
+              <span class="text-xs font-semibold text-slate-400">Target: ≤ 100 KB</span>
+            </div>
+            <h2 class="mt-4 text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <span>📄</span> Compress Image to 100KB
+            </h2>
+            <p class="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              Corporate HR systems, job boards, and academic transcript uploaders typically enforce a 100KB ceiling. Using our tool to <strong>compress image to 100kb</strong> keeps scanned certificates, diplomas, and resumes sharp without rejection by automated applicant tracking systems.
+            </p>
+            <div class="mt-4 rounded-xl border border-indigo-200/60 bg-white/80 p-3 text-xs text-indigo-900 dark:border-indigo-900/40 dark:bg-slate-800/80 dark:text-indigo-200">
+              <strong>Best For:</strong> Scanned diplomas, grade mark sheets, tax receipts, and resume profile portraits.
+            </div>
+          </div>
+
+          <!-- 200 KB Card -->
+          <div class="group relative overflow-hidden rounded-3xl border border-emerald-200/80 bg-linear-to-b from-emerald-50/40 via-white to-white p-6 shadow-xs transition hover:border-emerald-400 hover:shadow-md dark:border-emerald-900/50 dark:from-emerald-950/20 dark:via-slate-900 dark:to-slate-900">
+            <div class="flex items-center justify-between">
+              <span class="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-3 py-1 font-mono text-xs font-black text-emerald-900 dark:bg-emerald-950/70 dark:text-emerald-300">
+                🌐 Web & Retina
+              </span>
+              <span class="text-xs font-semibold text-slate-400">Target: ≤ 200 KB</span>
+            </div>
+            <h2 class="mt-4 text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <span>🖼️</span> Compress Image to 200KB
+            </h2>
+            <p class="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              For webmasters, digital marketers, and bloggers, choosing to <strong>compress image to 200kb</strong> provides an ideal balance between vibrant high-resolution display and ultra-fast page rendering on mobile connections.
+            </p>
+            <div class="mt-4 rounded-xl border border-emerald-200/60 bg-white/80 p-3 text-xs text-emerald-900 dark:border-emerald-900/40 dark:bg-slate-800/80 dark:text-emerald-200">
+              <strong>Best For:</strong> Blog featured headers, e-commerce storefront banners, and newsletter image assets.
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Section 3: Step-by-Step Stepper -->
+      <section class="space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Simple Workflow</span>
+          <h2 class="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            How to Compress an Image
+          </h2>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+            Follow these five straightforward steps to optimize and download your picture in seconds:
+          </p>
+        </div>
+
+        <div class="space-y-3">
+          
+          <div class="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 font-mono text-sm font-black text-white shadow-xs">
+              1
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Select or Drag Your Image</h3>
+              <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Click inside the upload zone to browse from your device, drop a file directly, or paste from clipboard using <kbd class="rounded border border-slate-300 bg-slate-100 px-1.5 py-0.5 text-xs font-mono font-bold dark:border-slate-700 dark:bg-slate-800">Ctrl+V</kbd>. Supported formats include <strong>JPG, JPEG, PNG, and WebP</strong>.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 font-mono text-sm font-black text-white shadow-xs">
+              2
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Choose Your Target Size</h3>
+              <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Click one of our instant presets (<strong>20 KB</strong>, <strong>50 KB</strong>, <strong>100 KB</strong>, or <strong>200 KB</strong>) or specify an exact custom threshold in the custom input box.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 font-mono text-sm font-black text-white shadow-xs">
+              3
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Browser Encodes Locally</h3>
+              <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                The client-side binary search algorithm calculates optimal quantization tables and dimensions without uploading a single byte to external servers.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-600 font-mono text-sm font-black text-white shadow-xs">
+              4
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Preview & Verify Dimensions</h3>
+              <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Inspect before and after previews side-by-side. Review original size, compressed size, and percentage reduced.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs transition hover:border-blue-300 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-600 font-mono text-sm font-black text-white shadow-xs">
+              5
+            </div>
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Download Compressed Image</h3>
+              <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                Hit <strong>Download Compressed Image</strong> to instantly save the compressed file directly to your downloads folder with a clean naming convention.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Section 4: How Does an Image Compressor Work -->
+      <section class="space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Technical Foundation</span>
+          <h2 class="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            How Does an Image Compressor Work?
+          </h2>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 max-w-3xl">
+            Modern smartphone and camera sensors record excessive raw chromatic frequencies and metadata, resulting in massive 5MB to 15MB files. Our tool achieves significant byte reduction through dual optimization layers:
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+          
+          <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-2xl text-blue-600 dark:bg-blue-950/60 dark:text-blue-400">
+              📊
+            </div>
+            <h3 class="mt-4 text-lg font-bold text-slate-900 dark:text-white">
+              1. Lossy Encoding & Perceptual Quantization
+            </h3>
+            <p class="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              Standard image formats like JPEG and WebP employ Discrete Cosine Transform (DCT) and spatial block encoding. These algorithms discard minute color gradations that human vision cannot distinguish, allowing file weight to drop by 60%–90% while appearing virtually identical.
+            </p>
+          </div>
+
+          <div class="rounded-3xl border border-slate-200 bg-white p-6 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-indigo-50 text-2xl text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+              📐
+            </div>
+            <h3 class="mt-4 text-lg font-bold text-slate-900 dark:text-white">
+              2. Intelligent Dimension Scaling
+            </h3>
+            <p class="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              When a user specifies an aggressive threshold (e.g. compressing a 4K photo down to 20KB), quality adjustments alone hit a mathematical compression limit. Our engine calculates scale factors based on target bytes and downscales canvas dimensions smoothly, preserving sharpness and exact aspect ratio.
+            </p>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Section 5: Why Compress Images Grid -->
+      <section class="space-y-6">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">Core Advantages</span>
+          <h2 class="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+            Why Compress Images?
+          </h2>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-400">
+            Optimizing digital imagery provides critical benefits across personal, academic, and professional computing:
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          
+          <div class="flex items-start gap-3.5 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-100/70 text-lg text-blue-700 dark:bg-blue-950/70 dark:text-blue-300">
+              ⚡
+            </div>
+            <div>
+              <div class="text-sm font-bold text-slate-900 dark:text-white">Boost Web Speed & Core Web Vitals</div>
+              <p class="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Images represent over 60% of total webpage payload. Smaller files drastically reduce Largest Contentful Paint (LCP) times and improve search engine rankings.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3.5 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-100/70 text-lg text-amber-700 dark:bg-amber-950/70 dark:text-amber-300">
+              📋
+            </div>
+            <div>
+              <div class="text-sm font-bold text-slate-900 dark:text-white">Pass Strict Portal File Quotas</div>
+              <p class="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Eliminate frustrating submission errors on banking, university, and employment sites that enforce rigid 20KB, 50KB, or 100KB file caps.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3.5 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100/70 text-lg text-emerald-700 dark:bg-emerald-950/70 dark:text-emerald-300">
+              💾
+            </div>
+            <div>
+              <div class="text-sm font-bold text-slate-900 dark:text-white">Save Storage Space</div>
+              <p class="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Save valuable capacity on Google Drive, iCloud, Dropbox, and local mobile storage by maintaining compressed picture archives.
+              </p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3.5 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-indigo-100/70 text-lg text-indigo-700 dark:bg-indigo-950/70 dark:text-indigo-300">
+              ✉️
+            </div>
+            <div>
+              <div class="text-sm font-bold text-slate-900 dark:text-white">Smooth Email & Messaging Delivery</div>
+              <p class="mt-1 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                Most email providers restrict attachments to 20MB–25MB. Compressing attachments prevents delivery failure and bounces.
+              </p>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Section 6: Related Tools Navigation Cards -->
+      <section class="space-y-4 border-t border-slate-200 pt-8 dark:border-slate-800">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Explore More Free Online Tools
+          </h2>
+          <a href="/free-online-tools/" class="text-xs font-bold text-blue-600 hover:underline dark:text-blue-400">
+            View All Tools →
+          </a>
+        </div>
+        
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <a
+            href="/free-online-tools/image-resizer/"
+            class="group flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-2xs transition hover:border-blue-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500"
+          >
+            <span class="text-2xl transition group-hover:scale-110">📐</span>
+            <span class="mt-2 font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">Image Resizer</span>
+            <span class="mt-0.5 text-[10px] text-slate-400">Change pixels & ratio</span>
+          </a>
+
+          <a
+            href="/free-online-tools/jpg-to-png/"
+            class="group flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-2xs transition hover:border-blue-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500"
+          >
+            <span class="text-2xl transition group-hover:scale-110">🖼️</span>
+            <span class="mt-2 font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">JPG to PNG</span>
+            <span class="mt-0.5 text-[10px] text-slate-400">Lossless conversion</span>
+          </a>
+
+          <a
+            href="/free-online-tools/png-to-jpg/"
+            class="group flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-2xs transition hover:border-blue-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500"
+          >
+            <span class="text-2xl transition group-hover:scale-110">🔄</span>
+            <span class="mt-2 font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">PNG to JPG</span>
+            <span class="mt-0.5 text-[10px] text-slate-400">Compact photo export</span>
+          </a>
+
+          <a
+            href="/free-online-tools/"
+            class="group flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-2xs transition hover:border-blue-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500"
+          >
+            <span class="text-2xl transition group-hover:scale-110">🧰</span>
+            <span class="mt-2 font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400">All Free Tools</span>
+            <span class="mt-0.5 text-[10px] text-slate-400">PDF, Text & QR tools</span>
+          </a>
+        </div>
+      </section>
+
+    </div>
+  </Fragment>
+
+  <!-- FAQ SLOT -->
+  <Fragment slot="faq">
+    <div class="space-y-3 text-sm not-prose">
+      {faqs.map((faq) => (
+        <details class="group rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-800/30 transition">
+          <summary class="font-bold text-slate-900 dark:text-white cursor-pointer list-none flex items-center justify-between">
+            <span>{faq.question}</span>
+            <span class="text-blue-600 font-bold transition group-open:rotate-180">▼</span>
+          </summary>
+          <p class="mt-2 text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
+            {faq.answer}
+          </p>
+        </details>
+      ))}
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<!-- Load Client-Side Compression Script (Cached external module) -->
+<script src="/js/tools/image-compressor.js" defer></script>

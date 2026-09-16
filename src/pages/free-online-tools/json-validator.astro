@@ -1,0 +1,778 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+
+// FAQ Schema for Search Engines
+const faqs = [
+  {
+    question: "What is a JSON validator?",
+    answer: "A JSON validator is a developer tool that analyzes structured text against the official RFC 8259 JSON grammar. It verifies that keys are enclosed in double quotes, delimiters like commas and colons are properly placed, brackets and braces are balanced, and data types (objects, arrays, strings, numbers, booleans, and null) are strictly valid."
+  },
+  {
+    question: "How can I validate JSON online?",
+    answer: "Paste or type your raw JSON into the input editor and click 'Validate JSON'. The browser's native parser evaluates the text immediately, outputting 'Valid JSON ✓' with data statistics if valid, or pinpointing the exact error, line number, and column number if invalid."
+  },
+  {
+    question: "Is this JSON validator free?",
+    answer: "Yes. Our JSON validator is 100% free with no usage limits, no credit card requirements, and no account registration needed."
+  },
+  {
+    question: "How do I know if my JSON is valid?",
+    answer: "When you click 'Validate JSON', a clear validation status card appears. If valid, you will see a green 'Valid JSON ✓' badge alongside the detected root type, character count, line count, and payload size. If invalid, a red 'Invalid JSON ✕' badge appears with the parser error message and line coordinates."
+  },
+  {
+    question: "Why does my JSON have a syntax error?",
+    answer: "Common causes of JSON syntax errors include missing or trailing commas, using single quotes instead of double quotes, unclosed curly braces or square brackets, unquoted object keys, or trailing comments (which standard JSON does not allow)."
+  },
+  {
+    question: "Does JSON allow single quotes?",
+    answer: "No. According to standard JSON specifications (ECMA-404 and RFC 8259), all strings and object keys must be enclosed in double quotes (\"). Single quotes ('') are not valid in standard JSON and will trigger a parsing error."
+  },
+  {
+    question: "Are trailing commas allowed in JSON?",
+    answer: "No. Unlike modern JavaScript or Python, standard JSON does not permit trailing commas after the last element in an array or the last property in an object. For example, {\"item\": 1,} is invalid."
+  },
+  {
+    question: "Can this validator show where the error is?",
+    answer: "Yes. Whenever your browser's native JSON engine reports a position or line/column offset, our validator computes the exact line and column numbers and highlights the problematic line so you can immediately locate and fix the mistake."
+  },
+  {
+    question: "What is the difference between a JSON validator and JSON formatter?",
+    answer: "A JSON validator inspects syntax to ensure text conforms strictly to JSON grammar rules and reports errors if parsing fails. A JSON formatter takes valid JSON and arranges it with customizable indentation and line breaks to make it human-readable."
+  },
+  {
+    question: "Is my JSON uploaded to a server?",
+    answer: "No. All JSON parsing, validation, formatting, and file generation happen entirely in your browser using client-side JavaScript. No data is ever transmitted, logged, or stored on external servers."
+  }
+];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqs.map((faq) => ({
+    "@type": "Question",
+    "name": faq.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": faq.answer
+    }
+  }))
+};
+
+const webAppSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "JSON Validator",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "All",
+  "browserRequirements": "Requires JavaScript. Requires HTML5.",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "description": "Free client-side online JSON validator. Inspect syntax errors with line and column numbers, format, minify, and download valid JSON."
+};
+---
+
+<CalculatorLayout
+  title="JSON Validator - Validate JSON Online"
+  description="Validate JSON syntax and detect errors with our free JSON validator. Check JSON online, locate line and column errors, format, and minify directly in your browser."
+  category="Free Online Tools"
+  calculatorName="JSON Validator"
+  slug="json-validator"
+  keywords={[
+    'JSON Validator',
+    'json validator online',
+    'validate json online',
+    'json syntax checker',
+    'check json syntax',
+    'json linter',
+    'validate json'
+  ]}
+>
+  <!-- Injected Structured Data -->
+  <script type="application/ld+json" set:html={JSON.stringify(webAppSchema)} />
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <!-- MAIN INTERACTIVE JSON VALIDATOR TOOL WIDGET (Default Slot) -->
+  <div class="space-y-6">
+
+    <!-- Header & SEO Introduction -->
+    <div class="text-center max-w-3xl mx-auto space-y-3">
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/80 text-blue-700 dark:text-blue-300 text-xs font-semibold tracking-wide">
+        <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <span>Syntax Checker • Line & Column Diagnostics • Formatter</span>
+      </div>
+
+      <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
+        Verify your data syntax with our high-speed <strong>JSON Validator</strong>. Easily test and debug payloads using this <strong>json validator online</strong> to pinpoint missing commas, unquoted keys, and syntax exceptions directly inside your browser.
+      </p>
+
+      <!-- Local Processing Privacy Guarantee Banner -->
+      <div class="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 px-4 py-2 rounded-xl text-left shadow-xs">
+        <svg class="w-5 h-5 shrink-0 text-emerald-600 dark:text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+        <span><strong>100% Client-Side Privacy:</strong> Your JSON is processed locally in your browser and is not uploaded to our server.</span>
+      </div>
+    </div>
+
+    <!-- MAIN TOOL WORKSPACE CONTAINER -->
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl overflow-hidden">
+      
+      <!-- MASTER CONTROLS TOOLBAR -->
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 p-3 bg-slate-50 dark:bg-slate-950/60">
+        
+        <!-- Left: Tool Title & Indicator -->
+        <div class="flex items-center gap-2">
+          <span class="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600 text-white font-bold text-xs shadow-xs">
+            &#123; &#125;
+          </span>
+          <span class="text-xs sm:text-sm font-bold text-slate-800 dark:text-slate-200">
+            JSON Syntax Linter
+          </span>
+        </div>
+
+        <!-- Right: Utility Controls (Indent, Load Example, Clear) -->
+        <div class="flex flex-wrap items-center gap-2">
+          
+          <!-- Indentation Selector -->
+          <div class="flex items-center gap-1.5 text-xs">
+            <label for="jvIndentSelect" class="text-slate-500 font-medium">Format Indent:</label>
+            <select
+              id="jvIndentSelect"
+              class="px-2.5 py-1 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 font-semibold cursor-pointer"
+            >
+              <option value="2" selected>2 Spaces</option>
+              <option value="4">4 Spaces</option>
+              <option value="tab">Tabs</option>
+            </select>
+          </div>
+
+          <button
+            type="button"
+            id="jvLoadExampleBtn"
+            class="px-2.5 py-1 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+            title="Load realistic sample JSON payload"
+          >
+            Load Example
+          </button>
+
+          <button
+            type="button"
+            id="jvClearBtn"
+            class="px-2.5 py-1 text-xs font-semibold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer"
+          >
+            Clear
+          </button>
+        </div>
+
+      </div>
+
+      <!-- TWO-PANEL WORKSPACE (Left: JSON Input, Right: Validation & Output) -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-slate-200 dark:divide-slate-800">
+        
+        <!-- LEFT PANEL: JSON INPUT -->
+        <div class="flex flex-col h-full bg-slate-50/40 dark:bg-slate-950/20">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-slate-200/80 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60">
+            <label for="jvInput" class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              JSON Input
+            </label>
+            <span id="jvInputCharCount" class="text-[11px] font-mono text-slate-400">
+              0 chars
+            </span>
+          </div>
+
+          <div class="p-2 sm:p-3 flex-1 flex flex-col">
+            <textarea
+              id="jvInput"
+              rows="16"
+              placeholder="Paste your JSON here..."
+              spellcheck="false"
+              class="w-full flex-1 p-3 text-xs sm:text-sm font-mono leading-relaxed bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-2 focus:ring-blue-500 focus:outline-none resize-y min-h-80"
+            ></textarea>
+          </div>
+
+          <!-- Primary Action Buttons Bar -->
+          <div class="flex flex-wrap items-center gap-2 p-3 border-t border-slate-200/80 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60">
+            <!-- PROMINENT VALIDATE JSON BUTTON -->
+            <button
+              type="button"
+              id="jvValidateBtn"
+              class="flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-600/20 transition cursor-pointer flex items-center justify-center gap-2"
+            >
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span>Validate JSON</span>
+            </button>
+
+            <!-- Format JSON Button -->
+            <button
+              type="button"
+              id="jvFormatBtn"
+              class="py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition cursor-pointer"
+              title="Beautify and indent valid JSON"
+            >
+              Format JSON
+            </button>
+
+            <!-- Minify JSON Button -->
+            <button
+              type="button"
+              id="jvMinifyBtn"
+              class="py-2.5 px-3 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 transition cursor-pointer"
+              title="Compact into single line removing whitespace"
+            >
+              Minify JSON
+            </button>
+          </div>
+        </div>
+
+        <!-- RIGHT PANEL: VALIDATION RESULT & OUTPUT -->
+        <div class="flex flex-col h-full bg-slate-50/40 dark:bg-slate-950/20">
+          
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-slate-200/80 dark:border-slate-800 bg-white/60 dark:bg-slate-900/60">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Validation Result & Output
+            </span>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                id="jvCopyBtn"
+                disabled
+                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-blue-50 text-blue-600 hover:bg-blue-100 dark:bg-blue-950/60 dark:text-blue-300 dark:hover:bg-blue-900/60 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                </svg>
+                Copy
+              </button>
+
+              <button
+                type="button"
+                id="jvDownloadBtn"
+                disabled
+                class="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                title="Download validated.json"
+              >
+                <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download .json
+              </button>
+            </div>
+          </div>
+
+          <div class="p-3 sm:p-4 space-y-3 flex-1 flex flex-col">
+            
+            <!-- Dynamic Status Banner -->
+            <div id="jvStatusCard" class="p-3.5 sm:p-4 rounded-2xl border transition-all duration-200 bg-slate-50 dark:bg-slate-900/60 border-slate-200 dark:border-slate-800">
+              <div class="flex items-start justify-between gap-3">
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2">
+                    <span id="jvStatusBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-300 dark:border-slate-700 shrink-0">
+                      <span class="w-2 h-2 rounded-full bg-slate-400"></span> Waiting for Input
+                    </span>
+                  </div>
+                  <h2 id="jvStatusTitle" class="text-sm font-bold text-slate-800 dark:text-slate-200">
+                    Ready to Validate
+                  </h2>
+                  <p id="jvStatusDesc" class="text-xs text-slate-500 dark:text-slate-400">
+                    Paste or type JSON into the input area and click "Validate JSON".
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Error Diagnostic Panel (Revealed upon syntax failure) -->
+            <div id="jvErrorPanel" class="hidden rounded-xl border border-rose-200 dark:border-rose-900/80 bg-rose-50/60 dark:bg-rose-950/30 p-3.5 space-y-2.5">
+              <div class="flex items-center justify-between gap-2">
+                <span class="text-xs font-bold text-rose-800 dark:text-rose-300 uppercase tracking-wide flex items-center gap-1.5">
+                  <svg class="w-4 h-4 text-rose-600 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                  Diagnostic Details
+                </span>
+                <div class="flex items-center gap-1.5">
+                  <span id="jvErrorLineBadge" class="hidden px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-rose-200 text-rose-800 dark:bg-rose-900/80 dark:text-rose-200"></span>
+                  <span id="jvErrorColBadge" class="hidden px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-rose-200 text-rose-800 dark:bg-rose-900/80 dark:text-rose-200"></span>
+                </div>
+              </div>
+
+              <div class="p-2.5 rounded-lg bg-white dark:bg-slate-950 border border-rose-200 dark:border-rose-900 font-mono text-xs text-rose-700 dark:text-rose-300 break-all" id="jvErrorMessage">
+                <!-- Parser error message -->
+              </div>
+
+              <div id="jvErrorSnippet" class="hidden space-y-1">
+                <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Problematic Code Line:</span>
+                <div class="p-2 rounded-lg bg-slate-900 text-rose-300 font-mono text-xs overflow-x-auto" id="jvErrorSnippetLine"></div>
+              </div>
+            </div>
+
+            <!-- Output Preview / Formatted Code Display -->
+            <div class="flex-1 flex flex-col relative min-h-45">
+              <label for="jvOutput" class="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">
+                Processed JSON Output:
+              </label>
+              <textarea
+                id="jvOutput"
+                rows="10"
+                readonly
+                placeholder="Formatted JSON will appear here after validation..."
+                spellcheck="false"
+                class="w-full flex-1 p-3 text-xs sm:text-sm font-mono leading-relaxed bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-slate-900 dark:text-white placeholder:text-slate-400 focus:ring-0 focus:outline-none resize-y"
+              ></textarea>
+
+              <!-- Toast Feedback -->
+              <div id="jvCopyToast" class="absolute bottom-4 right-4 transition-all duration-300 transform opacity-0 translate-y-2 pointer-events-none text-xs font-semibold text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/90 border border-emerald-200 dark:border-emerald-800 px-3.5 py-1.5 rounded-xl shadow-md">
+                Copied!
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- BOTTOM METRICS & CODE STATS PANEL -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 divide-x divide-slate-200 dark:divide-slate-800 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 text-center text-xs">
+        <div class="p-2.5">
+          <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Root Type</span>
+          <span id="jvStatType" class="font-mono font-bold text-slate-800 dark:text-slate-200">—</span>
+        </div>
+        <div class="p-2.5">
+          <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Characters</span>
+          <span id="jvStatChars" class="font-mono font-bold text-slate-800 dark:text-slate-200">0</span>
+        </div>
+        <div class="p-2.5">
+          <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Lines</span>
+          <span id="jvStatLines" class="font-mono font-bold text-slate-800 dark:text-slate-200">0</span>
+        </div>
+        <div class="p-2.5">
+          <span class="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Approx. Size</span>
+          <span id="jvStatSize" class="font-mono font-bold text-slate-800 dark:text-slate-200">0 B</span>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- Client-side Tool Logic Controller -->
+  <script defer src="/js/tools/json-validator.js"></script>
+
+  <!-- ================= SEO EDUCATIONAL CONTENT SLOT ================= -->
+  <!-- Renders directly below <AdSlotInline /> in CalculatorLayout -->
+  <Fragment slot="content">
+    <div class="space-y-12 text-slate-700 dark:text-slate-300 not-prose">
+
+      <!-- SECTION 1: JSON Validator Online -->
+      <section class="space-y-4">
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+          JSON Validator Online
+        </h2>
+        <p class="leading-relaxed">
+          In modern web development, JavaScript Object Notation (JSON) has become the ubiquitous language for data interchange, configuration files, and RESTful API communications. However, because JSON requires strict formatting rules, a single missing comma or accidental single quote can cause an entire application or microservice to crash. An online <strong>JSON Validator</strong> provides an immediate, browser-based inspection system that evaluates your syntax against the official ECMA-404 and RFC 8259 JSON standards.
+        </p>
+        <p class="leading-relaxed">
+          Using our <strong>json validator online</strong>, developers, system administrators, and software testers can verify whether incoming or outgoing payloads are completely syntactically valid before deployment. Rather than sending confidential payload strings over the network to external backend endpoints, this validator executes native browser JavaScript, maintaining complete privacy while delivering millisecond diagnostics.
+        </p>
+      </section>
+
+      <!-- SECTION 2: What Is a JSON Validator? -->
+      <section class="space-y-4">
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+          What Is a JSON Validator?
+        </h2>
+        <p class="leading-relaxed">
+          A JSON validator is an automated diagnostic utility that takes a raw text string and attempts to parse it according to the strict grammatical specifications of JSON. Unlike tolerant programming languages like JavaScript or Python that support flexible syntax, JSON is a strict data transport format that accepts only six core primitive and composite data types:
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 my-6">
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-1.5">
+            <span class="px-2 py-0.5 text-xs font-bold rounded-md bg-blue-100 text-blue-800 dark:bg-blue-900/60 dark:text-blue-300">Objects</span>
+            <p class="text-xs text-slate-600 dark:text-slate-400">Unordered collections of zero or more key/value pairs enclosed in curly braces <code>&#123;&#125;</code>.</p>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-1.5">
+            <span class="px-2 py-0.5 text-xs font-bold rounded-md bg-emerald-100 text-emerald-800 dark:bg-emerald-900/60 dark:text-emerald-300">Arrays</span>
+            <p class="text-xs text-slate-600 dark:text-slate-400">Ordered sequences of zero or more values separated by commas and enclosed in square brackets <code>[]</code>.</p>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-1.5">
+            <span class="px-2 py-0.5 text-xs font-bold rounded-md bg-purple-100 text-purple-800 dark:bg-purple-900/60 dark:text-purple-300">Strings</span>
+            <p class="text-xs text-slate-600 dark:text-slate-400">Sequences of zero or more Unicode characters wrapped strictly in double quotation marks (<code>"..."</code>).</p>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-1.5">
+            <span class="px-2 py-0.5 text-xs font-bold rounded-md bg-amber-100 text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">Numbers</span>
+            <p class="text-xs text-slate-600 dark:text-slate-400">Standard base-10 integers or floating-point values. Hexadecimal and leading zeroes are disallowed.</p>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-1.5">
+            <span class="px-2 py-0.5 text-xs font-bold rounded-md bg-cyan-100 text-cyan-800 dark:bg-cyan-900/60 dark:text-cyan-300">Booleans</span>
+            <p class="text-xs text-slate-600 dark:text-slate-400">Literal lowercase values representing binary state: exactly <code>true</code> or <code>false</code>.</p>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs space-y-1.5">
+            <span class="px-2 py-0.5 text-xs font-bold rounded-md bg-rose-100 text-rose-800 dark:bg-rose-900/60 dark:text-rose-300">Null</span>
+            <p class="text-xs text-slate-600 dark:text-slate-400">The explicit empty value literal represented strictly by the lowercase keyword <code>null</code>.</p>
+          </div>
+        </div>
+
+        <p class="leading-relaxed">
+          If any character violates these boundaries, a JSON validator immediately catches the syntax violation, prevents transmission errors, and displays helpful error diagnostics.
+        </p>
+      </section>
+
+      <!-- SECTION 3: How to Validate JSON -->
+      <section class="space-y-4">
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+          How to Validate JSON
+        </h2>
+        <p class="leading-relaxed">
+          Validating complex datasets takes only seconds using the step-by-step workflow below:
+        </p>
+
+        <div class="space-y-3 my-6">
+          <div class="flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">1</span>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">Step 1: Paste or Type JSON</h3>
+              <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">Enter your payload into the <strong>JSON Input</strong> text editor. You can also click <em>Load Example</em> to see a reference structure.</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">2</span>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">Step 2: Click Validate JSON</h3>
+              <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">Press the prominent blue <strong>Validate JSON</strong> button to trigger immediate parsing through your browser's native engine.</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">3</span>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">Step 3: Review the Validation Result</h3>
+              <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">If valid, the tool displays a green <strong>Valid JSON ✓</strong> confirmation card alongside payload metrics such as root type and byte size.</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">4</span>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">Step 4: Troubleshoot Syntax Errors</h3>
+              <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">If invalid, review the diagnostic panel showing the parser error message and the exact line and column where the failure occurred.</p>
+            </div>
+          </div>
+
+          <div class="flex items-start gap-3 p-3.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-blue-600 text-xs font-bold text-white">5</span>
+            <div>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">Step 5: Correct and Validate Again</h3>
+              <p class="text-xs text-slate-600 dark:text-slate-400 mt-0.5">Fix the highlighted mistake in the input editor, re-click <strong>Validate JSON</strong>, and format or download your clean file.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 4: Common JSON Syntax Errors -->
+      <section class="space-y-4">
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+          Common JSON Syntax Errors
+        </h2>
+        <p class="leading-relaxed">
+          Because JSON is derived from JavaScript object syntax, developers frequently make assumptions based on JavaScript's looser syntax rules. Below are the four most frequent JSON mistakes:
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
+          
+          <!-- Error 1: Missing Commas -->
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="text-rose-600 dark:text-rose-400 font-bold text-base">✕</span>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Missing Commas</h3>
+            </div>
+            <p class="text-xs text-slate-600 dark:text-slate-400">
+              A comma is required between every key-value property and array member. Omitting a comma between keys produces a syntax error.
+            </p>
+            <div class="rounded-lg bg-slate-950 p-3 text-xs font-mono text-rose-300 overflow-x-auto">
+              <code>&#123;<br />&nbsp;&nbsp;"name": "John"<br />&nbsp;&nbsp;"age": 30<br />&#125;</code>
+            </div>
+            <p class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+              Fix: Place a comma after <code>"John",</code> to separate properties.
+            </p>
+          </div>
+
+          <!-- Error 2: Single Quotes -->
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="text-rose-600 dark:text-rose-400 font-bold text-base">✕</span>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Single Quotes Instead of Double</h3>
+            </div>
+            <p class="text-xs text-slate-600 dark:text-slate-400">
+              In JavaScript and Python, single quotes are valid for strings. In standard JSON, all keys and string values must strictly use double quotes.
+            </p>
+            <div class="rounded-lg bg-slate-950 p-3 text-xs font-mono text-rose-300 overflow-x-auto">
+              <code>&#123; 'status': 'active' &#125;</code>
+            </div>
+            <p class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+              Fix: Replace single quotes with standard double quotes: <code>&#123; "status": "active" &#125;</code>.
+            </p>
+          </div>
+
+          <!-- Error 3: Trailing Commas -->
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="text-rose-600 dark:text-rose-400 font-bold text-base">✕</span>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Trailing Commas</h3>
+            </div>
+            <p class="text-xs text-slate-600 dark:text-slate-400">
+              Placing a comma after the last property or array item is valid in modern ECMAScript, but completely invalid in standard JSON.
+            </p>
+            <div class="rounded-lg bg-slate-950 p-3 text-xs font-mono text-rose-300 overflow-x-auto">
+              <code>&#123;<br />&nbsp;&nbsp;"name": "John",<br />&#125;</code>
+            </div>
+            <p class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+              Fix: Delete the trailing comma after the final property.
+            </p>
+          </div>
+
+          <!-- Error 4: Unclosed Brackets -->
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
+            <div class="flex items-center gap-2">
+              <span class="text-rose-600 dark:text-rose-400 font-bold text-base">✕</span>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Unclosed Brackets &amp; Braces</h3>
+            </div>
+            <p class="text-xs text-slate-600 dark:text-slate-400">
+              Every opening brace <code>&#123;</code> must have a matching closing brace <code>&#125;</code>, and every opening bracket <code>[</code> must match a closing <code>]</code>.
+            </p>
+            <div class="rounded-lg bg-slate-950 p-3 text-xs font-mono text-rose-300 overflow-x-auto">
+              <code>&#123; "items": [ "alpha", "beta" &#125;</code>
+            </div>
+            <p class="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+              Fix: Ensure brackets are correctly balanced: <code>&#123; "items": [ "alpha", "beta" ] &#125;</code>.
+            </p>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- SECTION 5: Valid JSON Example -->
+      <section class="space-y-4">
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+          Valid JSON Example
+        </h2>
+        <p class="leading-relaxed">
+          Here is an example of a well-formed JSON object adhering to RFC 8259 syntax specifications:
+        </p>
+
+        <div class="rounded-xl border border-emerald-300 dark:border-emerald-800/60 bg-emerald-50/20 dark:bg-emerald-950/20 p-4">
+          <div class="flex items-center justify-between pb-2 border-b border-emerald-200 dark:border-emerald-900 mb-2">
+            <span class="text-xs font-bold text-emerald-800 dark:text-emerald-300">Valid Syntax Representation</span>
+            <span class="text-[11px] font-mono text-emerald-700 dark:text-emerald-400">Passes validation ✓</span>
+          </div>
+          <pre class="text-xs sm:text-sm font-mono text-slate-800 dark:text-slate-200 leading-relaxed overflow-x-auto"><code>&#123;
+  "name": "John",
+  "age": 30,
+  "active": true
+&#125;</code></pre>
+        </div>
+        <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+          <strong>Why this is valid:</strong> All keys (<code>"name"</code>, <code>"age"</code>, <code>"active"</code>) are enclosed in double quotes, properties are delimited by commas without trailing commas, values match valid primitives (string, number, boolean), and the outer braces are balanced.
+        </p>
+      </section>
+
+      <!-- SECTION 6: Invalid JSON Example -->
+      <section class="space-y-4">
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+          Invalid JSON Example
+        </h2>
+        <p class="leading-relaxed">
+          Examining malformed JSON demonstrates how subtle syntax deviations cause parsing failures:
+        </p>
+
+        <div class="rounded-xl border border-rose-300 dark:border-rose-800/60 bg-rose-50/20 dark:bg-rose-950/20 p-4">
+          <div class="flex items-center justify-between pb-2 border-b border-rose-200 dark:border-rose-900 mb-2">
+            <span class="text-xs font-bold text-rose-800 dark:text-rose-300">Malformed JSON Snippet</span>
+            <span class="text-[11px] font-mono text-rose-700 dark:text-rose-400">Fails validation ✕</span>
+          </div>
+          <pre class="text-xs sm:text-sm font-mono text-rose-800 dark:text-rose-300 leading-relaxed overflow-x-auto"><code>&#123;
+  name: "John",
+  "age": 30,
+&#125;</code></pre>
+        </div>
+        <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+          <strong>Why this fails:</strong> First, the property key <code>name</code> is unquoted, which violates the strict JSON key grammar. Second, there is an illegal trailing comma after <code>30,</code> right before the closing brace. Our validator will flag these mistakes immediately.
+        </p>
+      </section>
+
+      <!-- SECTION 7: JSON Validator vs JSON Formatter -->
+      <section class="space-y-4">
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+          JSON Validator vs JSON Formatter
+        </h2>
+        <p class="leading-relaxed">
+          While developers often use validation and formatting interchangeably, each tool serves a distinct technical role in the data development lifecycle:
+        </p>
+
+        <div class="overflow-x-auto my-4">
+          <table class="w-full text-left text-xs sm:text-sm border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+            <thead class="bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white font-bold">
+              <tr>
+                <th class="p-3">Feature</th>
+                <th class="p-3">JSON Validator</th>
+                <th class="p-3">JSON Formatter</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-900">
+              <tr>
+                <td class="p-3 font-semibold text-slate-800 dark:text-slate-200">Core Purpose</td>
+                <td class="p-3">Validates syntax correctness against RFC 8259 grammar</td>
+                <td class="p-3">Re-indents and styles valid JSON for human readability</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-semibold text-slate-800 dark:text-slate-200">Invalid Input Behavior</td>
+                <td class="p-3">Pinpoints exact error message, line, and column</td>
+                <td class="p-3">Displays parse failure alert and blocks formatting</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-semibold text-slate-800 dark:text-slate-200">Typical Use Case</td>
+                <td class="p-3">Debugging broken API responses and broken payloads</td>
+                <td class="p-3">Cleaning up messy minified JSON strings for documentation</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p class="leading-relaxed">
+          Need to format valid JSON? Try our dedicated <a href="/free-online-tools/json-formatter/" class="font-bold text-blue-600 underline dark:text-blue-400">JSON Formatter</a> to adjust indentation, beautify nested structures, or convert XML documents to JSON.
+        </p>
+      </section>
+
+      <!-- SECTION 8: JSON Validator for API Responses -->
+      <section class="space-y-4">
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+          JSON Validator for API Responses
+        </h2>
+        <p class="leading-relaxed">
+          When integrating third-party APIs, microservices, or webhooks, unexpected network truncations or server-side 500 error pages returning HTML can break client parsing. A <strong>JSON Validator</strong> is essential when:
+        </p>
+
+        <ul class="space-y-2 list-disc pl-5 text-sm">
+          <li><strong>Inspecting API payloads:</strong> Verify whether a webhook or endpoint response is returning pure JSON rather than malformed markup or truncated strings.</li>
+          <li><strong>Validating configuration files:</strong> Audit <code>package.json</code>, <code>tsconfig.json</code>, or Docker settings before committing them to source control.</li>
+          <li><strong>Data migration checks:</strong> Test database export records before seeding staging or production NoSQL databases like MongoDB.</li>
+          <li><strong>Testing webhooks:</strong> Confirm that webhook test payloads conform to expected syntax standards during integration testing.</li>
+        </ul>
+
+        <div class="p-4 rounded-xl border border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/20 text-xs leading-relaxed text-blue-900 dark:text-blue-200">
+          <strong>Note on Semantic Validation:</strong> A JSON syntax validator proves that a document follows grammatical JSON standards. It does not certify that your payload conforms to a specific business schema (such as JSON Schema or OpenAPI definitions).
+        </div>
+      </section>
+
+      <!-- SECTION 9: Is This JSON Validator Free? -->
+      <section class="space-y-4">
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+          Is This JSON Validator Free?
+        </h2>
+        <p class="leading-relaxed">
+          Yes, our online <strong>JSON Validator</strong> is completely free to use. There are no daily validation caps, no software installations, and no required registrations. Whether you are inspecting a three-line configuration file or debugging a multi-megabyte API response, you can validate, format, minify, and download files at zero cost.
+        </p>
+      </section>
+
+      <!-- SECTION 10: Is My JSON Private? -->
+      <section class="space-y-4">
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+          Is My JSON Private?
+        </h2>
+        <p class="leading-relaxed">
+          Yes. Security and data confidentiality are critical when inspecting API responses containing authorization tokens, client records, or private configurations. Our tool is built with a strictly client-side architecture:
+        </p>
+
+        <div class="p-4 rounded-2xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50/60 dark:bg-emerald-950/30 space-y-2">
+          <div class="flex items-center gap-2 text-emerald-800 dark:text-emerald-300 font-bold text-sm">
+            <svg class="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+            </svg>
+            <span>Complete On-Device Processing Guarantee</span>
+          </div>
+          <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+            All parsing and validation logic executes directly in your browser's JavaScript V8/JavaScriptCore engine. Your JSON payload is never transmitted across the network, never stored in Cloudflare Worker logs, and never saved on remote databases.
+          </p>
+        </div>
+      </section>
+
+      <!-- RELATED DEVELOPER TOOLS -->
+      <section class="space-y-4 pt-4 border-t border-slate-200 dark:border-slate-800">
+        <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+          Explore More Free Online Developer Tools
+        </h3>
+        <div class="flex flex-wrap gap-2 text-xs font-semibold">
+          <a
+            href="/free-online-tools/json-formatter/"
+            class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          >
+            JSON Formatter &amp; XML to JSON →
+          </a>
+          <a
+            href="/free-online-tools/word-counter/"
+            class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          >
+            Word Counter →
+          </a>
+          <a
+            href="/free-online-tools/qr-code-generator/"
+            class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          >
+            QR Code Generator →
+          </a>
+          <a
+            href="/free-online-tools/image-compressor/"
+            class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          >
+            Image Compressor →
+          </a>
+          <a
+            href="/free-online-tools/png-to-jpg/"
+            class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          >
+            PNG to JPG Converter →
+          </a>
+          <a
+            href="/free-online-tools/"
+            class="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
+          >
+            All Free Online Tools →
+          </a>
+        </div>
+      </section>
+
+    </div>
+  </Fragment>
+
+  <!-- ================= FAQ SECTION SLOT ================= -->
+  <!-- Positioned inside the native CalculatorLayout FAQ container -->
+  <Fragment slot="faq">
+    <div class="space-y-3">
+      {faqs.map((faq, index) => (
+        <details
+          class="group rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/70 p-4 transition-colors [&_summary::-webkit-details-marker]:hidden"
+          open={index === 0}
+        >
+          <summary class="flex cursor-pointer items-center justify-between gap-1.5 text-slate-900 dark:text-white font-semibold text-sm sm:text-base">
+            <span>{faq.question}</span>
+            <span class="shrink-0 transition duration-300 group-open:-rotate-180 text-blue-600 dark:text-blue-400">
+              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </span>
+          </summary>
+          <p class="mt-3 text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+            {faq.answer}
+          </p>
+        </details>
+      ))}
+    </div>
+  </Fragment>
+</CalculatorLayout>

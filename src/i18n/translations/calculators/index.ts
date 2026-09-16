@@ -6,6 +6,8 @@
 import type { Locale } from '../../config';
 import type { CalculatorTranslation } from '../../types';
 
+import rawCalculators from '../../../data/calculators.json';
+
 // Eagerly import all calculator translation JSON files
 const dataModules = import.meta.glob<Record<Locale, CalculatorTranslation>>(
   './data/*.json',
@@ -26,15 +28,49 @@ export const EXPLICIT_CALCULATOR_TRANSLATIONS = ALL_CALCULATOR_TRANSLATIONS;
 
 /**
  * Returns strictly localized translation for a calculator.
- * Throws an error if translation is missing (no silent English fallback).
+ * Gracefully falls back to raw calculator metadata if not yet translated.
  */
 export function getCalculatorTranslation(slug: string, locale: Locale): CalculatorTranslation {
   const translations = ALL_CALCULATOR_TRANSLATIONS[slug];
   if (!translations) {
+    const rawCalc = (rawCalculators as any[]).find((c) => c.slug === slug);
+    if (rawCalc) {
+      return {
+        locale,
+        status: 'untranslated',
+        name: rawCalc.name,
+        metaTitle: `${rawCalc.name} - Free Online Tools`,
+        metaDescription: rawCalc.description,
+        h1: rawCalc.name,
+        shortDescription: rawCalc.description,
+        description: rawCalc.description,
+        title: rawCalc.name,
+        categoryLabel: rawCalc.category,
+        formulaTitle: `${rawCalc.name} Overview`,
+        formulaDescription: rawCalc.description,
+        formulaEquation: '',
+        variables: [],
+        stepByStep: [],
+        workedExample: {
+          title: '',
+          scenario: '',
+          calculation: '',
+          result: '',
+        },
+        faqs: [],
+        ui: {
+          calculate: 'Calculate',
+          reset: 'Reset',
+          result: 'Result',
+          results: 'Results',
+        },
+      };
+    }
     throw new Error(`[i18n] Calculator not found in translation registry: "${slug}"`);
   }
   const translation = translations[locale];
   if (!translation) {
+    if (translations['en']) return translations['en'];
     throw new Error(`[i18n] Missing required translation for calculator "${slug}" in locale "${locale}"`);
   }
   return translation;

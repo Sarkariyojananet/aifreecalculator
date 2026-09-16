@@ -37,6 +37,7 @@ const CATEGORY_SLUGS = [
   'health',
   'math',
   'general',
+  'free-online-tools',
 ] as const;
 
 const STATIC_SLUG_PATHS = new Set(STATIC_SLUGS.map((s) => `/${s}/`));
@@ -110,7 +111,7 @@ export function getTranslatedCalculatorStaticPaths() {
   }> = [];
 
   for (const calc of calculators) {
-    const catSlug = calc.category.toLowerCase();
+    const catSlug = calc.category.toLowerCase().replace(/\s+/g, '-');
     for (const lang of nonEnLocales) {
       if (isCalculatorTranslated(calc.slug, lang)) {
         const translation = getCalculatorTranslation(calc.slug, lang);

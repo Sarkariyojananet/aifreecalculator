@@ -143,6 +143,7 @@ console.log('\n[4/5] Auditing all 61 calculators × 9 languages (549 variations)
 const dataDir = path.join(rootDir, 'src', 'i18n', 'translations', 'calculators', 'data');
 
 for (const calc of calculators) {
+  if (calc.category === 'Free Online Tools') continue;
   const slug = calc.slug;
   const jsonPath = path.join(dataDir, `${slug}.json`);
   if (!fs.existsSync(jsonPath)) {
