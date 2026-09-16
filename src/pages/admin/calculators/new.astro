@@ -2,7 +2,14 @@
 export const prerender = false;
 
 import AdminLayout from '../../../layouts/AdminLayout.astro';
-import { calculators, categories } from '../../../data/calculators';
+import { calculators, categories } from '../../../data/calculators';
+import { authenticateAdminRequest } from '../../../lib/auth';
+
+// Server-side auth guard — prevents unauthenticated access even with JS disabled
+const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
+if (!user) {
+  return Astro.redirect(`/admin/barwalaoffice/?redirect=${encodeURIComponent(Astro.url.pathname)}`);
+}
 ---
 
 <AdminLayout title="Calculator Editor | Calculator CMS" sectionTitle="Calculator Editor" activeSection="calculators">

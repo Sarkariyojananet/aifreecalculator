@@ -6,12 +6,14 @@ import { safeWaitUntil } from '../../lib/cloudflare-env';
 export const prerender = false;
 
 const JSON_HEADERS = { 'Content-Type': 'application/json' } as const;
-const SUCCESS_RESPONSE = new Response(JSON.stringify({ success: true }), { status: 200, headers: JSON_HEADERS });
-const FAIL_RESPONSE = new Response(JSON.stringify({ success: false }), { status: 200, headers: JSON_HEADERS });
-const UNAUTHORIZED_RESPONSE = new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: JSON_HEADERS });
-const QUERY_REQUIRED_RESPONSE = new Response(JSON.stringify({ error: 'Query parameter is required' }), { status: 400, headers: JSON_HEADERS });
-const QUERY_REQUIRED_POST_RESPONSE = new Response(JSON.stringify({ error: 'Query is required' }), { status: 400, headers: JSON_HEADERS });
-const EMPTY_LOGS_RESPONSE = new Response(JSON.stringify({ success: true, logs: [] }), { status: 200, headers: JSON_HEADERS });
+
+// Factory functions — always return a fresh Response (singleton + .clone() causes "Body is unusable" 500 errors)
+const successRes       = () => new Response(JSON.stringify({ success: true }),                         { status: 200, headers: JSON_HEADERS });
+const failRes          = () => new Response(JSON.stringify({ success: false }),                        { status: 200, headers: JSON_HEADERS });
+const unauthorizedRes  = () => new Response(JSON.stringify({ error: 'Unauthorized' }),                 { status: 401, headers: JSON_HEADERS });
+const queryRequiredRes = () => new Response(JSON.stringify({ error: 'Query parameter is required' }), { status: 400, headers: JSON_HEADERS });
+const queryReqPostRes  = () => new Response(JSON.stringify({ error: 'Query is required' }),            { status: 400, headers: JSON_HEADERS });
+const emptyLogsRes     = () => new Response(JSON.stringify({ success: true, logs: [] }),               { status: 200, headers: JSON_HEADERS });
 
 // Public logging of user search queries & Admin deletion fallback
 export const POST: APIRoute = async ({ request, cookies, locals }) => {
@@ -23,16 +25,16 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     if (action === 'delete') {
       const user = await authenticateAdminRequest(request, cookies);
       if (!user) {
-        return UNAUTHORIZED_RESPONSE.clone();
+        return unauthorizedRes();
       }
 
       if (clearAll) {
         await clearAllSearchQueries(locals);
-        return EMPTY_LOGS_RESPONSE.clone();
+        return emptyLogsRes();
       }
 
       if (!query || typeof query !== 'string') {
-        return QUERY_REQUIRED_RESPONSE.clone();
+        return queryRequiredRes();
       }
 
       const updated = await deleteSearchQuery(query, locals);
@@ -43,7 +45,7 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     }
 
     if (typeof query !== 'string') {
-      return QUERY_REQUIRED_POST_RESPONSE.clone();
+      return queryReqPostRes();
     }
 
     const cleanQuery = query.trim();
@@ -52,18 +54,18 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
       safeWaitUntil(locals, recordPromise);
     }
 
-    return SUCCESS_RESPONSE.clone();
+    return successRes();
   } catch {
     // Fail silently without disrupting user search
-    return FAIL_RESPONSE.clone();
+    return failRes();
   }
 };
 
-// Admin endpoint to delete a search query or fetch logs
+// Admin endpoint to fetch search analytics logs
 export const GET: APIRoute = async ({ request, cookies, locals }) => {
   const user = await authenticateAdminRequest(request, cookies);
   if (!user) {
-    return UNAUTHORIZED_RESPONSE.clone();
+    return unauthorizedRes();
   }
 
   const logs = await getSearchAnalytics(locals);
@@ -76,10 +78,11 @@ export const GET: APIRoute = async ({ request, cookies, locals }) => {
   });
 };
 
+// Admin endpoint to delete a specific search query or clear all
 export const DELETE: APIRoute = async ({ request, cookies, locals }) => {
   const user = await authenticateAdminRequest(request, cookies);
   if (!user) {
-    return UNAUTHORIZED_RESPONSE.clone();
+    return unauthorizedRes();
   }
 
   try {
@@ -89,11 +92,11 @@ export const DELETE: APIRoute = async ({ request, cookies, locals }) => {
 
     if (clearAll) {
       await clearAllSearchQueries(locals);
-      return EMPTY_LOGS_RESPONSE.clone();
+      return emptyLogsRes();
     }
 
     if (!query) {
-      return QUERY_REQUIRED_RESPONSE.clone();
+      return queryRequiredRes();
     }
 
     const updated = await deleteSearchQuery(query, locals);

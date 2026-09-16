@@ -13,6 +13,7 @@ import type { APIRoute } from 'astro';
 import { recordCalculatorAnalyticsEvent } from '../../../lib/analytics/store';
 import type { AnalyticsEventType, DeviceCategory, TrafficSourceCategory } from '../../../lib/analytics/types';
 import { calculators } from '../../../data/calculators';
+import { safeWaitUntil } from '../../../lib/cloudflare-env';
 
 export const prerender = false;
 
@@ -97,57 +98,61 @@ function parseTrafficSource(referer: string | null, origin: string | null): Traf
   }
 }
 
-import { safeWaitUntil } from '../../../lib/cloudflare-env';
+function createOptionsResponse(): Response {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'POST, OPTIONS, GET, HEAD',
+      'Access-Control-Allow-Headers': 'Content-Type',
+    },
+  });
+}
 
-const OPTIONS_RESPONSE = new Response(null, {
-  status: 204,
-  headers: {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type',
-  },
-});
+function create204Response(): Response {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Cache-Control': 'no-store, no-cache, must-revalidate',
+    },
+  });
+}
 
-const SILENT_204_RESPONSE = new Response(null, {
-  status: 204,
-  headers: {
-    'Access-Control-Allow-Origin': '*',
-    'Cache-Control': 'no-store, no-cache, must-revalidate',
-  },
-});
-
-export const OPTIONS: APIRoute = async () => OPTIONS_RESPONSE;
+export const OPTIONS: APIRoute = async () => createOptionsResponse();
+export const GET: APIRoute = async () => create204Response();
+export const HEAD: APIRoute = async () => create204Response();
 
 export const POST: APIRoute = async ({ request, locals }) => {
   try {
     // Quick payload size guard (< 2KB)
     const len = parseInt(request.headers.get('content-length') ?? '0', 10);
-    if (len > 2048) return SILENT_204_RESPONSE;
+    if (len > 2048) return create204Response();
 
     let body: any;
     const text = await request.text();
-    if (!text) return SILENT_204_RESPONSE;
+    if (!text) return create204Response();
 
     try {
       body = JSON.parse(text);
     } catch {
-      return SILENT_204_RESPONSE;
+      return create204Response();
     }
 
-    if (!body || typeof body !== 'object') return SILENT_204_RESPONSE;
+    if (!body || typeof body !== 'object') return create204Response();
 
     const slug = typeof body.slug === 'string' ? body.slug.trim().toLowerCase() : '';
     const event = typeof body.event === 'string' ? (body.event.trim() as AnalyticsEventType) : undefined;
 
     // Validate event and slug against known calculators
-    if (!event || !VALID_EVENTS.has(event)) return SILENT_204_RESPONSE;
-    if (!slug || !KNOWN_SLUGS.has(slug)) return SILENT_204_RESPONSE;
+    if (!event || !VALID_EVENTS.has(event)) return create204Response();
+    if (!slug || !KNOWN_SLUGS.has(slug)) return create204Response();
 
     const userAgent = request.headers.get('user-agent');
     const device = parseDevice(userAgent, typeof body.device === 'string' ? body.device : undefined);
 
     // Filter out bots from polluting real conversion analytics
-    if (device === 'bot') return SILENT_204_RESPONSE;
+    if (device === 'bot') return create204Response();
 
     const referer = typeof body.referrer === 'string' && body.referrer.length > 0 
       ? body.referrer 
@@ -168,9 +173,9 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     safeWaitUntil(locals, eventPromise);
 
-    return SILENT_204_RESPONSE;
+    return create204Response();
   } catch {
     // Analytics failures must never break the client
-    return SILENT_204_RESPONSE;
+    return create204Response();
   }
 };

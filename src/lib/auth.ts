@@ -4,9 +4,9 @@
  */
 
 const envObj = (typeof import.meta !== 'undefined' && import.meta.env) ? import.meta.env : (typeof process !== 'undefined' ? process.env : {});
-const SECRET_KEY = (envObj as any)?.ADMIN_JWT_SECRET || 'aifreecalculator-super-secret-jwt-key-2026';
-const ADMIN_USER = (envObj as any)?.ADMIN_USERNAME || 'admin';
-const ADMIN_PASS = (envObj as any)?.ADMIN_PASSWORD_HASH || 'admin123';
+const SECRET_KEY = (envObj as any)?.ADMIN_JWT_SECRET || '';
+const ADMIN_USER = (envObj as any)?.ADMIN_USERNAME || '';
+const ADMIN_PASS = (envObj as any)?.ADMIN_PASSWORD_HASH || '';
 
 export interface AdminUser {
   username: string;

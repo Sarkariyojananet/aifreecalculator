@@ -1,6 +1,13 @@
 ---
 export const prerender = false;
+import { authenticateAdminRequest } from '../../../lib/auth';
 
-// Google AdSense API integration decommissioned as requested.
+// Server-side auth guard — prevents unauthenticated access even with JS disabled
+const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
+if (!user) {
+  return Astro.redirect(`/admin/barwalaoffice/?redirect=${encodeURIComponent(Astro.url.pathname)}`);
+}
+
+// Google AdSense API integration — redirects to combined settings page.
 return Astro.redirect('/admin/settings/');
 ---

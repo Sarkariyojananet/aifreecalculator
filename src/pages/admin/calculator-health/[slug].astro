@@ -93,7 +93,14 @@ const enrichedTestCases = [
   }),
 ];
 
-const publicUrl = `/${calc.category.toLowerCase()}/${calc.slug}/`;
+const publicUrl = `/${calc.category.toLowerCase()}/${calc.slug}/`;
+import { authenticateAdminRequest } from '../../../lib/auth';
+
+// Server-side auth guard — prevents unauthenticated access even with JS disabled
+const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
+if (!user) {
+  return Astro.redirect(`/admin/barwalaoffice/?redirect=${encodeURIComponent(Astro.url.pathname)}`);
+}
 ---
 
 <AdminLayout title={`${calc.name} Health & Formula Test Manager | Calculator CMS`} sectionTitle="Calculator Health" activeSection="calculator-health">

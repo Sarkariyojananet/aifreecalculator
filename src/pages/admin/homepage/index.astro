@@ -4,6 +4,15 @@ import { getHomepageSections } from '../../../lib/admin/content-store';
 import { calculators } from '../../../data/calculators';
 
 const sections = await getHomepageSections(Astro.locals);
+import { authenticateAdminRequest } from '../../../lib/auth';
+
+export const prerender = false;
+
+// Server-side auth guard — prevents unauthenticated access even with JS disabled
+const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
+if (!user) {
+  return Astro.redirect(`/admin/barwalaoffice/?redirect=${encodeURIComponent(Astro.url.pathname)}`);
+}
 ---
 
 <AdminLayout title="Homepage Section Manager | Calculator CMS" sectionTitle="Homepage Sections" activeSection="homepage">

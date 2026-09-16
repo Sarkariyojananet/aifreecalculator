@@ -56,7 +56,14 @@ const enrichedTests = allTestsCombined.map((tc) => {
     actualValue: matchResult?.actualValue,
     expectedValue: matchResult?.expectedValue,
   };
-});
+});
+import { authenticateAdminRequest } from '../../../lib/auth';
+
+// Server-side auth guard — prevents unauthenticated access even with JS disabled
+const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
+if (!user) {
+  return Astro.redirect(`/admin/barwalaoffice/?redirect=${encodeURIComponent(Astro.url.pathname)}`);
+}
 ---
 
 <AdminLayout title="Calculator Test Suite | Calculator CMS" sectionTitle="Test Suite" activeSection="calculator-health">

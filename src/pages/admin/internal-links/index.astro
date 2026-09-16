@@ -7,6 +7,13 @@ import { getInternalLinks } from '../../../lib/admin/content-store';
 
 const internalLinks = await getInternalLinks(Astro.locals);
 const totalCustomLinks = Object.values(internalLinks).reduce((acc, list) => acc + (list?.length || 0), 0);
+import { authenticateAdminRequest } from '../../../lib/auth';
+
+// Server-side auth guard — prevents unauthenticated access even with JS disabled
+const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
+if (!user) {
+  return Astro.redirect(`/admin/barwalaoffice/?redirect=${encodeURIComponent(Astro.url.pathname)}`);
+}
 ---
 
 <AdminLayout title="Internal Link & Cluster Manager | Calculator CMS" sectionTitle="Internal Links" activeSection="internal-links">

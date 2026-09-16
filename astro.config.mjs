@@ -1,4 +1,5 @@
 import { defineConfig } from 'astro/config';
+import { execSync } from 'child_process';
 import tailwindcss from '@tailwindcss/vite';
 import cloudflare from '@astrojs/cloudflare';
 import { cacheCloudflare } from '@astrojs/cloudflare/cache';
@@ -32,8 +33,89 @@ export default defineConfig({
   },
 
   vite: {
-    plugins: [tailwindcss()],
+    plugins: [
+      tailwindcss(),
+      // Build-time git-info plugin: injects PUBLIC_GIT_* env vars
+      (function gitInfoPlugin() {
+        function readGitInfo() {
+          try {
+            const hash    = execSync('git rev-parse --short HEAD').toString().trim();
+            const fullHash = execSync('git rev-parse HEAD').toString().trim();
+            const message = execSync('git log -1 --pretty=%s').toString().trim();
+            const author  = execSync('git log -1 --pretty=%an').toString().trim();
+            const date    = execSync('git log -1 --pretty=%ai').toString().trim();
+            return { hash, fullHash, message, author, date };
+          } catch {
+            return { hash: 'unknown', fullHash: 'unknown', message: 'unknown', author: 'unknown', date: new Date().toISOString() };
+          }
+        }
+        const info = readGitInfo();
+        return {
+          name: 'vite-plugin-git-info',
+          config() {
+            return {
+              define: {
+                'import.meta.env.PUBLIC_GIT_COMMIT_HASH':    JSON.stringify(info.hash),
+                'import.meta.env.PUBLIC_GIT_COMMIT_FULL':    JSON.stringify(info.fullHash),
+                'import.meta.env.PUBLIC_GIT_COMMIT_MESSAGE': JSON.stringify(info.message),
+                'import.meta.env.PUBLIC_GIT_COMMIT_AUTHOR':  JSON.stringify(info.author),
+                'import.meta.env.PUBLIC_GIT_COMMIT_DATE':    JSON.stringify(info.date),
+              },
+            };
+          },
+        };
+      }()),
+      // Security shield plugin: blocks direct HTTP access to project root files, configs and secrets in dev server
+      {
+        name: 'vite-plugin-security-shield',
+        configureServer(server) {
+          server.middlewares.use((req, res, next) => {
+            const rawUrl = req.url || '';
+            const urlPath = rawUrl.split('?')[0].toLowerCase();
+            if (
+              urlPath.startsWith('/.') ||
+              urlPath === '/package.json' ||
+              urlPath === '/package-lock.json' ||
+              urlPath === '/tsconfig.json' ||
+              urlPath === '/astro.config.mjs' ||
+              urlPath === '/wrangler.toml' ||
+              urlPath.startsWith('/scratch/') ||
+              urlPath.startsWith('/src/lib/') ||
+              urlPath.startsWith('/src/pages/api/admin/') ||
+              urlPath.startsWith('/src/data/') ||
+              urlPath.endsWith('.env') ||
+              urlPath.endsWith('.sql') ||
+              urlPath.endsWith('.sqlite') ||
+              urlPath.endsWith('.db') ||
+              urlPath.endsWith('.bak') ||
+              urlPath.endsWith('.backup') ||
+              urlPath.endsWith('.log')
+            ) {
+              res.statusCode = 403;
+              res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+              res.setHeader('X-Content-Type-Options', 'nosniff');
+              res.end('403 Forbidden: Direct access to this resource is prohibited.');
+              return;
+            }
+            next();
+          });
+        },
+      },
+    ],
     server: {
+      fs: {
+        deny: [
+          '.env',
+          '.env.*',
+          '.site-settings.json',
+          'package.json',
+          'package-lock.json',
+          'tsconfig.json',
+          'astro.config.mjs',
+          'wrangler.toml',
+          'scratch/**',
+        ],
+      },
       watch: {
         ignored: ['**/.wrangler/**', '**/.astro/**'],
       },

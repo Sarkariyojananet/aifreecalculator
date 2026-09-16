@@ -97,6 +97,56 @@ function getNormalizedCacheKey(url: URL): string {
 export const onRequest = defineMiddleware(async (context, next) => {
   const pathname = context.url.pathname;
 
+  // 0. SECURITY FIREWALL: Block any unauthorized direct access to dotfiles, sensitive configs, databases, source code, and backups
+  const rawPath = context.url.pathname;
+  let lowerPath = rawPath.toLowerCase();
+  try {
+    lowerPath = decodeURIComponent(rawPath).toLowerCase();
+  } catch {}
+
+  // Block path traversal and null-byte injection attempts
+  if (lowerPath.includes('..') || lowerPath.includes('\0') || lowerPath.includes('%00')) {
+    return new Response('403 Forbidden', {
+      status: 403,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Content-Type-Options': 'nosniff' },
+    });
+  }
+
+  const isBlockedSensitivePath =
+    (lowerPath.startsWith('/.') && !lowerPath.startsWith('/.well-known/')) ||
+    lowerPath.includes('/.') ||
+    lowerPath === '/package.json' ||
+    lowerPath === '/package-lock.json' ||
+    lowerPath === '/tsconfig.json' ||
+    lowerPath === '/wrangler.toml' ||
+    lowerPath === '/astro.config.mjs' ||
+    lowerPath.endsWith('.env') ||
+    lowerPath.includes('.env.') ||
+    lowerPath.endsWith('.sql') ||
+    lowerPath.endsWith('.sqlite') ||
+    lowerPath.endsWith('.db') ||
+    lowerPath.endsWith('.bak') ||
+    lowerPath.endsWith('.backup') ||
+    lowerPath.endsWith('.key') ||
+    lowerPath.endsWith('.pem') ||
+    lowerPath.endsWith('.log') ||
+    lowerPath.startsWith('/scratch/') ||
+    lowerPath.startsWith('/src/lib/') ||
+    lowerPath.startsWith('/src/pages/api/admin/') ||
+    lowerPath.startsWith('/src/data/') ||
+    (!import.meta.env.DEV && lowerPath.startsWith('/src/'));
+
+  if (isBlockedSensitivePath) {
+    return new Response('403 Forbidden: Access to this resource is prohibited.', {
+      status: 403,
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'X-Content-Type-Options': 'nosniff',
+        'Cache-Control': 'no-store, private',
+      },
+    });
+  }
+
   // 1. STATIC ASSET BYPASS: _astro/, /assets/, .css, .js, fonts, images
   // Completely bypass ALL Worker HTML caching logic, redirects, and header modifications.
   if (isStaticAsset(pathname)) {

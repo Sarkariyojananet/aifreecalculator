@@ -4,6 +4,15 @@ import { getFAQs } from '../../../lib/admin/content-store';
 import { categories, calculators } from '../../../data/calculators';
 
 const faqs = await getFAQs(Astro.locals);
+import { authenticateAdminRequest } from '../../../lib/auth';
+
+export const prerender = false;
+
+// Server-side auth guard — prevents unauthenticated access even with JS disabled
+const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
+if (!user) {
+  return Astro.redirect(`/admin/barwalaoffice/?redirect=${encodeURIComponent(Astro.url.pathname)}`);
+}
 ---
 
 <AdminLayout title="FAQ Manager | Calculator CMS" sectionTitle="FAQ Manager" activeSection="faqs">

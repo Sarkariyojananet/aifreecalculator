@@ -6,6 +6,13 @@ import SEOHealthCard from '../../../components/admin/SEOHealthCard.astro';
 import { getFullSEOHealthSummary } from '../../../lib/admin/seo-health';
 
 const summary = getFullSEOHealthSummary();
+import { authenticateAdminRequest } from '../../../lib/auth';
+
+// Server-side auth guard — prevents unauthenticated access even with JS disabled
+const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
+if (!user) {
+  return Astro.redirect(`/admin/barwalaoffice/?redirect=${encodeURIComponent(Astro.url.pathname)}`);
+}
 ---
 
 <AdminLayout title="SEO Health Audit | Calculator CMS" sectionTitle="SEO Health" activeSection="seo-health">

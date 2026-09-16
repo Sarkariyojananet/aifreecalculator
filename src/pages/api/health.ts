@@ -25,7 +25,7 @@ export const GET: APIRoute = async ({ locals }) => {
   const responseBody = {
     status: dbStatus === 'healthy' ? 'ok' : 'degraded',
     timestamp: new Date().toISOString(),
-    version: 'e4c5278',
+    version: import.meta.env.PUBLIC_GIT_COMMIT_HASH || 'unknown',
     database: dbStatus,
     latencyMs: Date.now() - startTime,
   };
@@ -34,7 +34,8 @@ export const GET: APIRoute = async ({ locals }) => {
     status: dbStatus === 'healthy' ? 200 : 503,
     headers: {
       'Content-Type': 'application/json',
-      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      // Cache at Cloudflare edge for 15 s — absorbs bot floods without hitting D1 on every request
+      'Cache-Control': 'public, max-age=15, s-maxage=15',
     },
   });
 };

@@ -227,6 +227,14 @@ export async function updateErrorGroupStatus(
     await initMonitoringTables(locals);
     const db = getDb(locals);
 
+    if (id === 'all') {
+      const res = await db
+        .prepare('UPDATE cms_error_groups SET status = ?')
+        .bind(status)
+        .run();
+      return Boolean((res as any)?.meta?.changes !== undefined || (res as any)?.changes !== undefined || true);
+    }
+
     const res = await db
       .prepare('UPDATE cms_error_groups SET status = ? WHERE id = ?')
       .bind(status, id)
@@ -235,6 +243,18 @@ export async function updateErrorGroupStatus(
     return Boolean((res as any)?.meta?.changes || (res as any)?.changes);
   } catch (err) {
     console.error('Failed to update error group status:', err);
+    return false;
+  }
+}
+
+export async function clearAllErrorGroups(locals: any): Promise<boolean> {
+  try {
+    await initMonitoringTables(locals);
+    const db = getDb(locals);
+    await db.prepare('DELETE FROM cms_error_groups').run();
+    return true;
+  } catch (err) {
+    console.error('Failed to clear error groups:', err);
     return false;
   }
 }
@@ -465,6 +485,14 @@ export async function updateIncidentStatus(
     const db = getDb(locals);
     const now = new Date().toISOString();
 
+    if (id === 'all') {
+      const res = await db
+        .prepare('UPDATE cms_incidents SET status = ?, updated_at = ?')
+        .bind(status, now)
+        .run();
+      return Boolean((res as any)?.meta?.changes !== undefined || (res as any)?.changes !== undefined || true);
+    }
+
     const res = await db
       .prepare('UPDATE cms_incidents SET status = ?, updated_at = ? WHERE id = ?')
       .bind(status, now, id)
@@ -484,6 +512,11 @@ export async function deleteIncident(locals: any, id: string): Promise<boolean> 
   try {
     await initMonitoringTables(locals);
     const db = getDb(locals);
+
+    if (id === 'all') {
+      const res = await db.prepare('DELETE FROM cms_incidents').run();
+      return Boolean((res as any)?.meta?.changes !== undefined || (res as any)?.changes !== undefined || true);
+    }
 
     const res = await db
       .prepare('DELETE FROM cms_incidents WHERE id = ?')

@@ -31,23 +31,41 @@ if (typeof globalThis !== 'undefined') {
  * middleware, API routes, or background runners without throwing.
  */
 export function safeWaitUntil(target: any, promise: Promise<unknown>): void {
-  if (!target) {
+  try {
+    if (!target) {
+      promise.catch(() => {});
+      return;
+    }
+    if (typeof target.waitUntil === 'function') {
+      target.waitUntil(promise);
+      return;
+    }
+    if (typeof target.locals?.waitUntil === 'function') {
+      target.locals.waitUntil(promise);
+      return;
+    }
+    if (typeof target.locals?.cfContext?.waitUntil === 'function') {
+      target.locals.cfContext.waitUntil(promise);
+      return;
+    }
+    if (typeof target.cfContext?.waitUntil === 'function') {
+      target.cfContext.waitUntil(promise);
+      return;
+    }
+    try {
+      if (typeof target.locals?.runtime?.ctx?.waitUntil === 'function') {
+        target.locals.runtime.ctx.waitUntil(promise);
+        return;
+      }
+    } catch {}
+    try {
+      if (typeof target.runtime?.ctx?.waitUntil === 'function') {
+        target.runtime.ctx.waitUntil(promise);
+        return;
+      }
+    } catch {}
     promise.catch(() => {});
-    return;
-  }
-  if (typeof target.waitUntil === 'function') {
-    target.waitUntil(promise);
-  } else if (typeof target.locals?.waitUntil === 'function') {
-    target.locals.waitUntil(promise);
-  } else if (typeof target.locals?.cfContext?.waitUntil === 'function') {
-    target.locals.cfContext.waitUntil(promise);
-  } else if (typeof target.locals?.runtime?.ctx?.waitUntil === 'function') {
-    target.locals.runtime.ctx.waitUntil(promise);
-  } else if (typeof target.cfContext?.waitUntil === 'function') {
-    target.cfContext.waitUntil(promise);
-  } else if (typeof target.runtime?.ctx?.waitUntil === 'function') {
-    target.runtime.ctx.waitUntil(promise);
-  } else {
+  } catch {
     promise.catch(() => {});
   }
 }

@@ -10,6 +10,29 @@ import { getCalculatorHealthSummaries, getTestRunHistory } from '../../lib/calcu
 import { get404Logs } from '../../lib/redirects/store';
 import { getCalculatorsFunnelMetrics } from '../../lib/analytics/store';
 import { detectUnderperformingCalculators } from '../../lib/analytics/scorer';
+import { authenticateAdminRequest } from '../../lib/auth';
+
+// Server-side auth guard — prevents unauthenticated access even with JS disabled
+const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
+if (!user) {
+  return Astro.redirect(`/admin/barwalaoffice/?redirect=${encodeURIComponent(Astro.url.pathname)}`);
+}
+
+export const prerender = false;
+
+// Build-time git commit info (injected by Vite plugin in astro.config.mjs)
+const gitHash    = import.meta.env.PUBLIC_GIT_COMMIT_HASH    || 'unknown';
+const gitFull    = import.meta.env.PUBLIC_GIT_COMMIT_FULL    || '';
+const gitMessage = import.meta.env.PUBLIC_GIT_COMMIT_MESSAGE || 'No commit message';
+const gitAuthor  = import.meta.env.PUBLIC_GIT_COMMIT_AUTHOR  || 'Unknown';
+const gitDate    = import.meta.env.PUBLIC_GIT_COMMIT_DATE    || '';
+const gitDateObj = gitDate ? new Date(gitDate) : null;
+const gitDateFmt = gitDateObj
+  ? gitDateObj.toLocaleString('en-IN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Kolkata' })
+  : 'Unknown';
+const githubUrl = gitFull && gitFull !== 'unknown'
+  ? `https://github.com/Sarkariyojananet/aifreecalculator/commit/${gitFull}`
+  : null;
 
 const stats = await getCalculatorStats();
 const totalCalculators = calculators.length;
@@ -99,6 +122,37 @@ const attentionItems = seoSummary.audits
           <span>🌐</span> Site Monitoring
         </a>
       </div>
+    </div>
+
+    <!-- Latest Commit / Build Summary -->
+    <div class="flex flex-wrap items-center gap-x-5 gap-y-2 rounded-2xl border border-slate-200/80 bg-slate-50/70 px-4 py-3 text-xs dark:border-slate-800/80 dark:bg-slate-900/60">
+      <span class="flex items-center gap-1.5 font-semibold text-slate-500 dark:text-slate-400 shrink-0">
+        <span>🔖</span> Latest Deploy
+      </span>
+      <span class="flex items-center gap-1.5">
+        {githubUrl ? (
+          <a
+            href={githubUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="font-mono font-bold text-blue-600 hover:underline dark:text-blue-400"
+          >
+            {gitHash}
+          </a>
+        ) : (
+          <span class="font-mono font-bold text-slate-700 dark:text-slate-200">{gitHash}</span>
+        )}
+      </span>
+      <span class="hidden sm:inline text-slate-300 dark:text-slate-700">|</span>
+      <span class="font-medium text-slate-700 dark:text-slate-200 max-w-xs truncate" title={gitMessage}>
+        {gitMessage}
+      </span>
+      <span class="hidden sm:inline text-slate-300 dark:text-slate-700">|</span>
+      <span class="text-slate-500 dark:text-slate-400 shrink-0">
+        <span class="font-semibold text-slate-600 dark:text-slate-300">{gitAuthor}</span>
+        &nbsp;&middot;&nbsp;
+        {gitDateFmt}
+      </span>
     </div>
 
     <!-- 1. Top Stat KPI Cards (1-col mobile, 2-col tablet, 4-col desktop) -->
@@ -470,12 +524,24 @@ const attentionItems = seoSummary.audits
             Real visitor search requests: identify popular tools and discover missing calculators to build next.
           </p>
         </div>
-        <a
-          href="/admin/analytics/"
-          class="text-xs font-bold text-blue-600 hover:underline dark:text-blue-400 shrink-0"
-        >
-          Full Search Intelligence →
-        </a>
+        <div class="flex items-center gap-3 shrink-0">
+          {searchLogs.length > 0 && (
+            <button
+              type="button"
+              id="btn-dashboard-clear-queries"
+              class="text-xs font-bold text-red-600 hover:text-red-700 dark:text-red-400 hover:underline cursor-pointer"
+              title="Delete all search keywords"
+            >
+              🗑️ Clear All
+            </button>
+          )}
+          <a
+            href="/admin/analytics/"
+            class="text-xs font-bold text-blue-600 hover:underline dark:text-blue-400"
+          >
+            Full Search Intelligence →
+          </a>
+        </div>
       </div>
 
       {searchLogs.length === 0 ? (
@@ -529,4 +595,39 @@ const attentionItems = seoSummary.audits
     <QuickActions />
 
   </div>
+
+  <script is:inline>
+    document.getElementById('btn-dashboard-clear-queries')?.addEventListener('click', async () => {
+      if (!confirm('Are you sure you want to delete ALL search keywords and logs? This cannot be undone.')) return;
+
+      try {
+        const token = localStorage.getItem('admin_token') || '';
+        const headers = { 'Content-Type': 'application/json' };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        let res = await fetch('/api/search-log?clearAll=true', {
+          method: 'DELETE',
+          credentials: 'include',
+          headers,
+        }).catch(() => null);
+
+        if (!res || !res.ok) {
+          res = await fetch('/api/search-log', {
+            method: 'POST',
+            credentials: 'include',
+            headers,
+            body: JSON.stringify({ action: 'delete', clearAll: true }),
+          }).catch(() => null);
+        }
+
+        if (res && res.ok) {
+          window.location.reload();
+        } else {
+          alert('Failed to clear search keywords.');
+        }
+      } catch {
+        alert('Network error while clearing search keywords.');
+      }
+    });
+  </script>
 </AdminLayout>

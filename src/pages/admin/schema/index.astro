@@ -1,6 +1,15 @@
 ---
 import AdminLayout from "../../../layouts/AdminLayout.astro";
 import { calculators } from "../../../data/calculators";
+import { authenticateAdminRequest } from '../../../lib/auth';
+
+export const prerender = false;
+
+// Server-side auth guard — prevents unauthenticated access even with JS disabled
+const user = await authenticateAdminRequest(Astro.request, Astro.cookies);
+if (!user) {
+  return Astro.redirect(`/admin/barwalaoffice/?redirect=${encodeURIComponent(Astro.url.pathname)}`);
+}
 ---
 
 <AdminLayout
