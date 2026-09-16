@@ -32,8 +32,16 @@ const TRACKING_QUERY_PARAMS = new Set([
   'source',
 ]);
 
-// Pre-compiled regex for static asset identification
-const STATIC_FILE_REGEX = /\.(?:css|js|mjs|png|jpg|jpeg|gif|webp|svg|ico|woff|woff2|ttf|eot|xml|txt|json)$/i;
+// Pre-compiled regex for static asset identification (CSS, JS, fonts, images, media, maps)
+const STATIC_ASSET_REGEX = /\.(?:css|js|mjs|woff2?|ttf|eot|otf|svg|png|jpe?g|gif|webp|avif|ico|map|webmanifest)$/i;
+
+function isStaticAsset(pathname: string): boolean {
+  return (
+    pathname.startsWith('/_astro/') ||
+    pathname.startsWith('/assets/') ||
+    STATIC_ASSET_REGEX.test(pathname)
+  );
+}
 
 // Reusable HTTP security headers tuple
 const SECURITY_HEADERS: readonly [string, string][] = [
@@ -85,57 +93,52 @@ function getNormalizedCacheKey(url: URL): string {
 
 export const onRequest = defineMiddleware(async (context, next) => {
   const pathname = context.url.pathname;
+
+  // 1. STATIC ASSET BYPASS: _astro/, /assets/, .css, .js, fonts, images
+  // Completely bypass ALL Worker HTML caching logic, redirects, and header modifications.
+  if (isStaticAsset(pathname)) {
+    // If request is for a stylesheet, guarantee Content-Type: text/css is intact
+    if (pathname.endsWith('.css')) {
+      const assetResponse = await next();
+      const contentType = assetResponse.headers.get('content-type');
+      if (!contentType || !contentType.includes('text/css')) {
+        const headers = new Headers(assetResponse.headers);
+        headers.set('Content-Type', 'text/css; charset=utf-8');
+        return new Response(assetResponse.body, {
+          status: assetResponse.status,
+          statusText: assetResponse.statusText,
+          headers,
+        });
+      }
+      return assetResponse;
+    }
+
+    // For all other static assets, return next() immediately without modifying headers, running cache operations, or transforming
+    return next();
+  }
+
   const isGetOrHead = context.request.method === 'GET' || context.request.method === 'HEAD';
   const isAdminRoute = pathname.startsWith('/admin') || pathname.startsWith('/api/admin');
   const isApiRoute = pathname.startsWith('/api/');
-  const isAstroInternal = pathname.startsWith('/_astro/');
 
   // Ultra-fast cookie presence check without parsing entire cookie jar
   const cookieHeader = context.request.headers.get('cookie') || '';
   const hasAdminCookie = cookieHeader.includes('admin_session=');
 
-  // Fast-path: Content-hashed immutable static assets (_astro bundle chunks, CSS, JS)
-  if (isAstroInternal && isGetOrHead) {
-    const assetResponse = await next();
-    assetResponse.headers.set('Cache-Control', 'public, max-age=31536000, s-maxage=31536000, immutable');
-    assetResponse.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=31536000');
-    return assetResponse;
-  }
-
   const cache = typeof caches !== 'undefined' && (caches as any).default ? ((caches as any).default as Cache) : null;
 
-  // Fast-path: Public static files (images, icons, fonts, robots.txt, sitemaps)
-  const isStaticFile = !isAstroInternal && !isApiRoute && STATIC_FILE_REGEX.test(pathname);
-  if (isStaticFile && isGetOrHead && !isAdminRoute) {
-    if (cache) {
-      try {
-        const cachedStatic = await cache.match(context.url.href);
-        if (cachedStatic) return cachedStatic;
-      } catch {}
-    }
-
-    const staticResponse = await next();
-    if (staticResponse.status === 200) {
-      staticResponse.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400');
-      staticResponse.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=604800, stale-while-revalidate=86400');
-      if (cache) {
-        safeWaitUntil(context, cache.put(context.url.href, staticResponse.clone()));
-      }
-    }
-    return staticResponse;
-  }
-
-  // 1. Check Cloudflare Worker Cache API for public GET requests
-  // Strips tracking query parameters so social/campaign traffic immediately hits cache
-  const isWorkerCacheEligible = isGetOrHead && !isAdminRoute && !isApiRoute && !isAstroInternal && !hasAdminCookie && !import.meta.env.DEV;
-  const isCacheablePage = isGetOrHead && !isAdminRoute && !isApiRoute && !isAstroInternal && !hasAdminCookie;
+  // Standard HTML page identification (strictly exclude admin, API, static assets, and paths with file extensions)
+  const isHtmlPagePath = !isAdminRoute && !isApiRoute && !pathname.includes('.');
+  const isWorkerCacheEligible = isGetOrHead && isHtmlPagePath && !hasAdminCookie && !import.meta.env.DEV;
+  const isCacheablePage = isGetOrHead && isHtmlPagePath && !hasAdminCookie;
   const cacheKey = isWorkerCacheEligible ? getNormalizedCacheKey(context.url) : null;
 
+  // 1. Check Cloudflare Worker Cache API for public HTML GET requests
+  // Strips tracking query parameters so social/campaign traffic immediately hits cache
   if (cache && cacheKey && isWorkerCacheEligible) {
     try {
       const cachedResponse = await cache.match(cacheKey);
       if (cachedResponse) {
-        // Zero-copy return: response was pre-stamped with X-Worker-Cache: HIT and security headers
         return cachedResponse;
       }
     } catch {
@@ -143,8 +146,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
-  // 2. Check dynamic 301/302 redirects managed in Admin CMS (Exclude admin, api, astro internal, static assets)
-  if (!isAdminRoute && !isApiRoute && !isAstroInternal && !pathname.includes('.')) {
+  // 2. Check dynamic 301/302 redirects managed in Admin CMS (strictly on HTML page routes)
+  if (isHtmlPagePath) {
     try {
       let rule = isRedirectMapLoaded() ? getFastRedirect(pathname) : null;
 
@@ -173,7 +176,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // 2c. Canonicalize legacy query parameter `?lang=xx` to clean path `/{lang}/...`
   // Fast path: Only parse if query string actually contains 'lang='
-  if (!isAdminRoute && !isApiRoute && !isAstroInternal && !isStaticFile && !pathname.includes('.') && context.url.search?.includes('lang=')) {
+  if (isHtmlPagePath && context.url.search?.includes('lang=')) {
     const queryLang = context.url.searchParams.get('lang');
     if (queryLang && isValidLocale(queryLang) && queryLang !== 'en') {
       const segments = pathname.split('/').filter(Boolean);
@@ -208,7 +211,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   // Record 5xx responses during live runtime
-  if (response.status >= 500 && !isAstroInternal && !pathname.startsWith('/500')) {
+  if (response.status >= 500 && !pathname.startsWith('/500')) {
     safeWaitUntil(
       context,
       recordError(context.locals, {
@@ -244,23 +247,27 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   // Public HTML & Pages: Maximize Cloudflare Edge Cache Hit Rate with SWR
+  // Strictly only apply caches.default to standard GET requests for HTML pages, not to internal Vite/Astro asset chunks
   if (isCacheablePage && response.status === 200) {
-    response.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400');
-    response.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=604800, stale-while-revalidate=86400');
-    response.headers.set('CDN-Cache-Control', 'max-age=604800, stale-while-revalidate=86400');
-    response.headers.set('Vary', 'Accept-Encoding');
-    response.headers.set('X-Worker-Cache', 'MISS');
+    const isHtml = response.headers.get('content-type')?.includes('text/html') ?? true;
+    if (isHtml) {
+      response.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=604800, stale-while-revalidate=86400');
+      response.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=604800, stale-while-revalidate=86400');
+      response.headers.set('CDN-Cache-Control', 'max-age=604800, stale-while-revalidate=86400');
+      response.headers.set('Vary', 'Accept-Encoding');
+      response.headers.set('X-Worker-Cache', 'MISS');
 
-    // Store in Cloudflare Worker Cache with pre-stamped X-Worker-Cache: HIT
-    if (cache && cacheKey && isWorkerCacheEligible) {
-      const cacheClone = response.clone();
-      cacheClone.headers.set('X-Worker-Cache', 'HIT');
-      safeWaitUntil(context, cache.put(cacheKey, cacheClone));
+      // Store in Cloudflare Worker Cache with pre-stamped X-Worker-Cache: HIT
+      if (cache && cacheKey && isWorkerCacheEligible) {
+        const cacheClone = response.clone();
+        cacheClone.headers.set('X-Worker-Cache', 'HIT');
+        safeWaitUntil(context, cache.put(cacheKey, cacheClone));
+      }
     }
   }
 
   // 5. Genuine 404 Detection & Monitoring
-  if (response.status === 404 && isGetOrHead && !isAdminRoute && !isApiRoute && !isAstroInternal) {
+  if (response.status === 404 && isGetOrHead && !isAdminRoute && !isApiRoute) {
     safeWaitUntil(context, record404Hit(context.url, context.request, context.locals));
     response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     response.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=300');
