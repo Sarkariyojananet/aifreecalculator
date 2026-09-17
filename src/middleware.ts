@@ -189,9 +189,14 @@ export const onRequest = defineMiddleware(async (context, next) => {
 
   // Standard HTML page identification (strictly exclude admin, API, static assets, and paths with file extensions)
   const isHtmlPagePath = !isAdminRoute && !isApiRoute && !pathname.includes('.');
-  const isWorkerCacheEligible = isGetOrHead && isHtmlPagePath && !hasAdminCookie && !import.meta.env.DEV;
+  const isPrerenderOrBuild =
+    Boolean((context as any).isPrerendered) ||
+    (typeof process !== 'undefined' && Array.isArray(process.argv) && process.argv.includes('build'));
+  const isLocalHost = context.url.hostname === 'localhost' || context.url.hostname === '127.0.0.1';
+  const isWorkerCacheEligible = !isPrerenderOrBuild && isGetOrHead && isHtmlPagePath && !hasAdminCookie && !import.meta.env.DEV && !isLocalHost;
   const isCacheablePage = isGetOrHead && isHtmlPagePath && !hasAdminCookie;
-  const cacheKey = isWorkerCacheEligible ? getNormalizedCacheKey(context.url) : null;
+  const deployVer = import.meta.env.PUBLIC_GIT_COMMIT_HASH || 'v1';
+  const cacheKey = isWorkerCacheEligible ? `${getNormalizedCacheKey(context.url)}?__cf_ver=${deployVer}` : null;
 
   // 1. Check Cloudflare Worker Cache API for public HTML GET requests
   // Strips tracking query parameters so social/campaign traffic immediately hits cache

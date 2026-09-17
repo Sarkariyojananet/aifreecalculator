@@ -218,7 +218,14 @@ export async function getCMSCategories(locals?: any): Promise<CategoryItem[]> {
     path: c.path,
     slug: c.name.toLowerCase(),
   }));
-  return await readSetting<CategoryItem[]>('cms_categories', defaultCats, locals);
+  const stored = await readSetting<CategoryItem[]>('cms_categories', defaultCats, locals);
+  const missingBuiltins = defaultCats.filter(
+    (def) => !stored.some((s) => s.name.toLowerCase() === def.name.toLowerCase())
+  );
+  if (missingBuiltins.length > 0) {
+    return [...stored, ...missingBuiltins];
+  }
+  return stored;
 }
 
 export async function saveCMSCategories(cats: CategoryItem[], locals?: any): Promise<void> {
