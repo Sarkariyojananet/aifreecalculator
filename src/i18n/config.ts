@@ -120,7 +120,7 @@ export const LOCALES_CONFIG: Record<Locale, LocaleConfig> = {
 export const LOCALES_MAP = LOCALES_CONFIG;
 
 export function isValidLocale(code: string): code is Locale {
-  return SUPPORTED_LOCALES.includes(code as Locale);
+  return (SUPPORTED_LOCALES as readonly string[]).includes(code);
 }
 
 export function getLocaleConfig(locale: string): LocaleConfig {
