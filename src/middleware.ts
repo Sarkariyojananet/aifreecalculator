@@ -181,6 +181,17 @@ export const onRequest = defineMiddleware(async (context, next) => {
   const isAdminRoute = pathname.startsWith('/admin') || pathname.startsWith('/api/admin');
   const isApiRoute = pathname.startsWith('/api/');
 
+  // Redirect legacy non-English language routes to canonical English URLs (301 Permanent Redirect)
+  // This prevents AdSense / Googlebot thin and duplicate content penalties
+  const legacyLocaleMatch = pathname.match(/^\/(?:hi|es|ja|fr|de|pt|ko|it)(\/.*)?$/i);
+  if (legacyLocaleMatch && !isAdminRoute && !isApiRoute) {
+    let cleanPath = legacyLocaleMatch[1] || '/';
+    if (!cleanPath.startsWith('/')) cleanPath = '/' + cleanPath;
+    if (!cleanPath.endsWith('/') && !cleanPath.includes('.')) cleanPath += '/';
+    const redirectUrl = new URL(cleanPath + context.url.search, context.url.origin);
+    return context.redirect(redirectUrl.toString(), 301);
+  }
+
   // Ultra-fast cookie presence check without parsing entire cookie jar
   const cookieHeader = context.request.headers.get('cookie') || '';
   const hasAdminCookie = cookieHeader.includes('admin_session=');

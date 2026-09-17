@@ -3,7 +3,7 @@
  * aifreecalculator.com
  */
 
-export const SUPPORTED_LOCALES = [
+export const ALL_LOCALES = [
   'en',
   'hi',
   'es',
@@ -15,9 +15,11 @@ export const SUPPORTED_LOCALES = [
   'it',
 ] as const;
 
+export const SUPPORTED_LOCALES = ['en'] as const;
+
 export const LOCALES = SUPPORTED_LOCALES;
 
-export type Locale = (typeof SUPPORTED_LOCALES)[number];
+export type Locale = (typeof ALL_LOCALES)[number];
 
 export const DEFAULT_LOCALE: Locale = 'en';
 

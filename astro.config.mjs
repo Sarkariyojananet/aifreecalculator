@@ -15,7 +15,7 @@ export default defineConfig({
 
   i18n: {
     defaultLocale: 'en',
-    locales: ['en', 'hi', 'es', 'ja', 'fr', 'de', 'pt', 'ko', 'it'],
+    locales: ['en'],
     routing: {
       prefixDefaultLocale: false,
     },
@@ -141,7 +141,8 @@ export default defineConfig({
         !page.includes('/sitemap') &&
         !page.includes('/404') &&
         !page.includes('/500') &&
-        !page.includes('/brickwork-calculator'),
+        !page.includes('/brickwork-calculator') &&
+        !/\/(hi|es|ja|fr|de|pt|ko|it)\//.test(page),
       changefreq: 'weekly',
       priority: 0.8,
       lastmod: new Date(),
@@ -154,7 +155,8 @@ export default defineConfig({
           item.url.includes('/finance/') ||
           item.url.includes('/health/') ||
           item.url.includes('/math/') ||
-          item.url.includes('/general/')
+          item.url.includes('/general/') ||
+          item.url.includes('/free-online-tools/')
         ) {
           item.priority = 0.9;
           item.changefreq = 'weekly';

@@ -52,6 +52,7 @@ export interface AdsConfig {
   testMode: boolean;
   autoAds: boolean;
   isConfigured: boolean;
+  approvalMode?: boolean; // When true: only loads Google AdSense verification script in <head>, suppresses all manual ad slots to avoid policy violations during review
   gaMeasurementId?: string;
   includeGoogleAdsTxt?: boolean;
   thirdPartyAdsTxt?: string;
@@ -62,7 +63,7 @@ export interface AdsConfig {
   slots: Record<AdSlotKey, AdSlotConfig>;
 }
 
-const rawClientId = import.meta.env.PUBLIC_ADSENSE_CLIENT_ID || '';
+const rawClientId = import.meta.env.PUBLIC_ADSENSE_CLIENT_ID || 'ca-pub-4283234479329006';
 const rawGaId = import.meta.env.PUBLIC_GA_ID || '';
 const isConfigured = Boolean(
   rawClientId &&
@@ -73,9 +74,10 @@ const isConfigured = Boolean(
 
 export const DEFAULT_ADS_CONFIG: AdsConfig = {
   enabled: isConfigured,
+  approvalMode: true, // Review / Approval mode is ON by default: hides empty/manual ad slots during AdSense review
   clientId: rawClientId,
   testMode: false,
-  autoAds: false,
+  autoAds: true,
   isConfigured,
   gaMeasurementId: rawGaId,
   includeGoogleAdsTxt: true,

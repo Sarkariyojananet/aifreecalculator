@@ -86,6 +86,10 @@ export function buildHreflangCluster(
   availableLocales: Locale[],
   origin: string = SITE_ORIGIN
 ): HreflangItem[] {
+  if (availableLocales.length <= 1) {
+    return [];
+  }
+
   const cleanOrigin = origin.replace(/\/$/, '');
   const items: HreflangItem[] = [];
 

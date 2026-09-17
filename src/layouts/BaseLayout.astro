@@ -435,6 +435,17 @@ const resolvedOgImage = ogImage.startsWith('http')
             return;
           }
 
+          // 1.5. AdSense Approval / Review Mode
+          // When approvalMode is active, the site keeps only the official Google AdSense script
+          // and completely hides/suppresses all manual ad slots to prevent policy violations (blank placeholders, low content ratio)
+          if (config.approvalMode) {
+            if (config.clientId && config.clientId.startsWith('ca-pub-')) {
+              loadGoogleScript(config.clientId);
+            }
+            allSlots.forEach(hideSlot);
+            return;
+          }
+
           // 2. Real Live Mode (enabled = true, testMode = false)
           if (config.enabled) {
             // Load Google AdSense library if publisher client ID is present and adsense is used

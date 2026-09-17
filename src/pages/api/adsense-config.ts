@@ -29,6 +29,7 @@ function normalizeSettings(stored: any): AdsConfig {
   const enabled = typeof stored.enabled === 'boolean' ? stored.enabled : (isConfigured && stored.enabled !== false);
   const testMode = stored.testMode === true;
   const autoAds = stored.autoAds === true;
+  const approvalMode = stored.approvalMode !== undefined ? Boolean(stored.approvalMode) : (defaults.approvalMode ?? true);
 
   const gaMeasurementId = typeof stored.gaMeasurementId === 'string' ? stored.gaMeasurementId.trim() : (defaults.gaMeasurementId || '');
   const includeGoogleAdsTxt = stored.includeGoogleAdsTxt !== undefined ? Boolean(stored.includeGoogleAdsTxt) : (defaults.includeGoogleAdsTxt !== false);
@@ -90,6 +91,7 @@ function normalizeSettings(stored: any): AdsConfig {
     clientId,
     testMode,
     autoAds,
+    approvalMode,
     isConfigured,
     gaMeasurementId,
     includeGoogleAdsTxt,
