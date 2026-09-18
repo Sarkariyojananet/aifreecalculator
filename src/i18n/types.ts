@@ -67,6 +67,7 @@ export interface CalculatorTranslation {
   workedExample: WorkedExample;
   faqs: CalculatorFaq[];
   ui: CalculatorUiStrings;
+  contentHtml?: string;
   additionalContentHtml?: string;
 }
 

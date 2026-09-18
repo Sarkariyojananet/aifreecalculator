@@ -15,7 +15,7 @@ export const ALL_LOCALES = [
   'it',
 ] as const;
 
-export const SUPPORTED_LOCALES = ['en'] as const;
+export const SUPPORTED_LOCALES = ALL_LOCALES;
 
 export const LOCALES = SUPPORTED_LOCALES;
 

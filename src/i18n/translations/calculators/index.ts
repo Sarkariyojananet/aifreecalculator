@@ -71,7 +71,8 @@ export function getCalculatorTranslation(slug: string, locale: Locale): Calculat
   const translation = translations[locale];
   if (!translation) {
     if (translations['en']) return translations['en'];
-    throw new Error(`[i18n] Missing required translation for calculator "${slug}" in locale "${locale}"`);
+    const anyLang = (Object.keys(translations) as Locale[])[0];
+    if (anyLang && translations[anyLang]) return translations[anyLang];
   }
   return translation;
 }

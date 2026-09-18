@@ -15,7 +15,7 @@ export default defineConfig({
 
   i18n: {
     defaultLocale: 'en',
-    locales: ['en'],
+    locales: ['en', 'hi', 'es', 'ja', 'fr', 'de', 'pt', 'ko', 'it'],
     routing: {
       prefixDefaultLocale: false,
     },
@@ -141,8 +141,7 @@ export default defineConfig({
         !page.includes('/sitemap') &&
         !page.includes('/404') &&
         !page.includes('/500') &&
-        !page.includes('/brickwork-calculator') &&
-        !/\/(hi|es|ja|fr|de|pt|ko|it)\//.test(page),
+        !page.includes('/brickwork-calculator'),
       changefreq: 'weekly',
       priority: 0.8,
       lastmod: new Date(),

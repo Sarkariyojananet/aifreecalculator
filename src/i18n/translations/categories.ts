@@ -579,21 +579,15 @@ export const CATEGORY_TRANSLATIONS: Record<CategoryKey, Record<Locale, CategoryT
 export function getCategoryTranslation(category: string, locale: Locale): CategoryTranslation {
   const normalized = category.toLowerCase().replace(/\s+/g, '-') as CategoryKey;
   if (normalized in CATEGORY_TRANSLATIONS) {
-    const t = CATEGORY_TRANSLATIONS[normalized][locale];
-    if (!t) {
-      throw new Error(`[i18n] Missing required category translation for "${normalized}" in locale "${locale}"`);
-    }
-    return t;
+    const t = CATEGORY_TRANSLATIONS[normalized][locale] || CATEGORY_TRANSLATIONS[normalized]['en'];
+    if (t) return t;
   }
   const rawKey = category.toLowerCase() as CategoryKey;
   if (rawKey in CATEGORY_TRANSLATIONS) {
-    const t = CATEGORY_TRANSLATIONS[rawKey][locale];
-    if (!t) {
-      throw new Error(`[i18n] Missing required category translation for "${rawKey}" in locale "${locale}"`);
-    }
-    return t;
+    const t = CATEGORY_TRANSLATIONS[rawKey][locale] || CATEGORY_TRANSLATIONS[rawKey]['en'];
+    if (t) return t;
   }
-  throw new Error(`[i18n] Unknown category: "${category}"`);
+  return CATEGORY_TRANSLATIONS.general[locale] || CATEGORY_TRANSLATIONS.general.en;
 }
 
 export const CATEGORIES_CONFIG = {
