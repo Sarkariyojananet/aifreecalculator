@@ -5,12 +5,9 @@
  */
 
 import type { APIRoute } from 'astro';
-import { calculators } from '../../data/calculators';
-import { getCalculatorTranslation } from '../../i18n/translations/calculators';
-import { getLocalizedPath } from '../../i18n/utils';
 import { isValidLocale, DEFAULT_LOCALE, type Locale } from '../../i18n/config';
-
 import { safeWaitUntil } from '../../lib/cloudflare-env';
+import searchIndexData from '../../data/search-index.json';
 
 export const prerender = false;
 
@@ -44,28 +41,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     let jsonStr = cachedSearchIndices.get(lang);
     if (!jsonStr) {
-      const data = calculators.map((c) => {
-        try {
-          const calcTrans = getCalculatorTranslation(c.slug, lang);
-          return {
-            name: calcTrans?.name || c.name,
-            category: calcTrans?.categoryLabel || c.category,
-            desc: calcTrans?.shortDescription || c.description,
-            icon: c.icon,
-            path: getLocalizedPath(c.path, lang),
-            keywords: c.keywords || [],
-          };
-        } catch {
-          return {
-            name: c.name,
-            category: c.category,
-            desc: c.description,
-            icon: c.icon,
-            path: c.path,
-            keywords: c.keywords || [],
-          };
-        }
-      });
+      const indexMap = searchIndexData as Record<string, any[]>;
+      const data = indexMap[lang] || indexMap[DEFAULT_LOCALE] || [];
       jsonStr = JSON.stringify(data);
       cachedSearchIndices.set(lang, jsonStr);
     }
@@ -84,14 +61,8 @@ export const GET: APIRoute = async ({ request, locals }) => {
     return response;
   } catch {
     // Failsafe fallback: never 500, always return valid JSON search array
-    const fallback = calculators.map((c) => ({
-      name: c.name,
-      category: c.category,
-      desc: c.description,
-      icon: c.icon,
-      path: c.path,
-      keywords: c.keywords || [],
-    }));
+    const indexMap = searchIndexData as Record<string, any[]>;
+    const fallback = indexMap[DEFAULT_LOCALE] || [];
     return new Response(JSON.stringify(fallback), {
       status: 200,
       headers: SEARCH_RESPONSE_HEADERS,
