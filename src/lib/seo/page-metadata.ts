@@ -254,6 +254,22 @@ export const LIVE_PAGE_METADATA: Record<string, PageMetaItem> = {
     "title": "PDF Merge - Combine PDF Files Online Free",
     "description": "Combine and merge multiple PDF documents into a single organized file in your browser securely without file uploads."
   },
+  "pdf-split": {
+    "title": "PDF Split - Split PDF Pages Online Free",
+    "description": "Split PDF online free. Extract specific PDF pages, split by custom ranges, or separate every page into individual PDFs with 100% client-side privacy."
+  },
+  "pdf-compress": {
+    "title": "PDF Compress - Compress PDF Online Free (Under 200KB)",
+    "description": "Compress PDF online for free. Reduce PDF file size to 200kb, 100kb, or smaller with adjustable compression presets. Fast, 100% private, and no watermarks."
+  },
+  "pdf-to-image": {
+    "title": "PDF to Image Converter - Convert PDF to Image Online Free",
+    "description": "Convert PDF to image high quality (PNG or JPG) with our free online PDF to image converter. 100% private, instant client-side rendering with no file uploads."
+  },
+  "image-to-pdf": {
+    "title": "Image to PDF - Convert JPG/PNG to PDF Online Free",
+    "description": "Convert JPG, PNG, GIF, and WebP images into a combined PDF document in your browser."
+  },
   "right-triangle-area-calculator": {
     "title": "Right Triangle Area Calculator – Calculate Area of Right Triangle",
     "description": "Calculate the area of a right triangle from two legs, leg and hypotenuse, or side and acute angle with step-by-step mathematical formulas and conversions."

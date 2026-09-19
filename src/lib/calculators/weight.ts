@@ -185,6 +185,8 @@ export function formatWeightNumber(num: number, decimals: number = 3): string {
   else if (abs < 0.001) effectiveDecimals = Math.max(4, decimals);
 
   const rounded = Number(num.toFixed(effectiveDecimals));
+  // Never render a non-zero mass as "0" — fall back to significant digits
+  if (rounded === 0) return num.toPrecision(3);
   const parts = rounded.toString().split('.');
   parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
   return parts.join('.');
@@ -216,7 +218,10 @@ export function convertWeight(
       formulaStep = `${value} ${fromDef.symbol} = ${value} ${fromDef.symbol}`;
     } else {
       const ratio = fromDef.toKg / unitDef.toKg;
-      formulaStep = `${value} × ${ratio >= 1 ? ratio.toFixed(4) : (1 / ratio).toFixed(4)} = ${formatted} ${unitDef.symbol}`;
+      formulaStep =
+        ratio >= 1
+          ? `${value} ${fromDef.symbol} × ${ratio.toFixed(4)} = ${formatted} ${unitDef.symbol}`
+          : `${value} ${fromDef.symbol} ÷ ${(1 / ratio).toFixed(4)} = ${formatted} ${unitDef.symbol}`;
     }
 
     conversions[unitKey] = {
@@ -319,10 +324,14 @@ export function calculateHeightWeightBmi(heightCm: number, weightKg: number): Bm
     categoryColor = 'text-red-600 dark:text-red-400';
   }
 
-  const healthyMinKg = Number((18.5 * heightM * heightM).toFixed(1));
-  const healthyMaxKg = Number((24.9 * heightM * heightM).toFixed(1));
-  const healthyMinLbs = Number((healthyMinKg * 2.20462).toFixed(1));
-  const healthyMaxLbs = Number((healthyMaxKg * 2.20462).toFixed(1));
+  const healthyMinKgRaw = 18.5 * heightM * heightM;
+  const healthyMaxKgRaw = 24.9 * heightM * heightM;
+  const healthyMinKg = Number(healthyMinKgRaw.toFixed(1));
+  const healthyMaxKg = Number(healthyMaxKgRaw.toFixed(1));
+  // Derive the imperial range from the exact kg bounds, using the exact lb↔kg ratio
+  const LB_PER_KG = 1 / 0.45359237;
+  const healthyMinLbs = Number((healthyMinKgRaw * LB_PER_KG).toFixed(1));
+  const healthyMaxLbs = Number((healthyMaxKgRaw * LB_PER_KG).toFixed(1));
 
   return {
     bmi,

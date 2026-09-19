@@ -460,26 +460,43 @@ const webAppSchema = {
         </p>
       </section>
 
-      <!-- SECTION 7 -->
-      <section class="space-y-3">
-        <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
-          How Does PDF Merging Work?
-        </h2>
-        <p class="leading-relaxed">
-          When you click Merge PDFs, the browser reads each selected file using the FileReader API and loads its bytes into the pdf-lib PDF parser. The tool then creates a new, empty PDF document and copies the pages from each source PDF into it in the order shown in your file list. Once all pages have been added, the combined document is serialized to a byte array and made available as a downloadable file using a Blob URL.
-        </p>
-        <p class="leading-relaxed">
-          Pages are copied as PDF page objects, not rasterized to images. This means the text remains selectable, the vector graphics remain sharp, and embedded images retain their original quality in the output document.
-        </p>
-        <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 font-mono text-xs text-slate-600 dark:text-slate-400 space-y-1 overflow-x-auto">
-          <p class="text-slate-400 dark:text-slate-500">// Simplified overview of the merge process</p>
-          <p>const merged = await PDFDocument.create();</p>
-          <p>for (const file of selectedFiles) {'{'}</p>
-          <p>&nbsp;&nbsp;const src = await PDFDocument.load(fileBytes);</p>
-          <p>&nbsp;&nbsp;const pages = await merged.copyPages(src, pageIndices);</p>
-          <p>&nbsp;&nbsp;pages.forEach(p =&gt; merged.addPage(p));</p>
-          <p>{'}'}</p>
-          <p>const blob = new Blob([await merged.save()]);</p>
+      <!-- SECTION 7: How Does PDF Merging Work -->
+      <section class="space-y-5">
+        <div class="space-y-2">
+          <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white tracking-tight">
+            How Does PDF Merging Work?
+          </h2>
+          <p class="leading-relaxed text-base">
+            When you click <strong>Merge PDFs</strong>, the browser reads each selected file using the FileReader API and loads its raw binary bytes into the <code>pdf-lib</code> client-side parser. The engine instantiates a new, empty PDF document and copies individual page objects from each source document in the exact sequence shown in your list. Once all pages are compiled, the combined document is serialized into a byte array and exposed as an instant, downloadable Blob URL.
+          </p>
+          <p class="leading-relaxed text-sm text-slate-600 dark:text-slate-400">
+            Pages are copied directly as native PDF page dictionaries and vector streams, not rasterized to flat bitmap images. This ensures that text remains 100% selectable and searchable, vector graphics remain sharp at any zoom level, and embedded images retain their full original resolution and color profiles.
+          </p>
+        </div>
+
+        <!-- Architecture Pillars -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-1">
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 space-y-1.5">
+            <span class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400">1. In-Memory Parsing</span>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">ArrayBuffer Stream</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Files are loaded directly into browser memory. Zero document data is sent to an external server.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 space-y-1.5">
+            <span class="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">2. Lossless Cloning</span>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Page Object Tree</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              <code>copyPages()</code> clones fonts, annotations, and vector streams directly without re-compression.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/60 space-y-1.5">
+            <span class="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">3. Fast Assembly</span>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Client Blob URL</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              The compiled byte buffer is wrapped in an <code>application/pdf</code> Blob for instant 1-click download.
+            </p>
+          </div>
         </div>
       </section>
 

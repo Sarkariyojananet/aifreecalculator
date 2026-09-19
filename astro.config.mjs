@@ -26,6 +26,7 @@ export default defineConfig({
     '/brickwork-calculator': '/construction/brickwork-calculator',
     '/finance/loan-calculator': '/finance/emi-calculator/?type=personal',
     '/tools': '/free-online-tools/',
+    '/weight-calculator': '/general/weight-calculator/',
   },
 
   cache: {

@@ -210,6 +210,54 @@ const CALCULATOR_ALIASES: Record<string, string[]> = {
     'petrol kharch calculator',
     'diesel kharcha',
     'fuel budget calculator'
+  ],
+  'pdf-merge': [
+    'pdf merge',
+    'merge pdf',
+    'combine pdf',
+    'join pdf',
+    'pdf joiner',
+    'pdf jodna'
+  ],
+  'pdf-split': [
+    'pdf split',
+    'pdf split online',
+    'pdf split pages',
+    'pdf split online free',
+    'split pdf',
+    'extract pdf',
+    'separate pdf pages',
+    'pdf cut',
+    'pdf alag karna'
+  ],
+  'pdf-compress': [
+    'pdf compress',
+    'pdf compress online',
+    'pdf compress 200kb',
+    'compress pdf',
+    'reduce pdf size',
+    'pdf chota karna',
+    'shrink pdf',
+    'pdf size kam karna'
+  ],
+  'pdf-to-image': [
+    'pdf to image',
+    'pdf to image converter',
+    'convert pdf to image',
+    'pdf to image converter online',
+    'pdf to image high quality',
+    'pdf to png',
+    'pdf to jpg',
+    'pdf to photo',
+    'pdf image converter',
+    'pdf se photo banana'
+  ],
+  'image-to-pdf': [
+    'image to pdf',
+    'jpg to pdf',
+    'png to pdf',
+    'photo to pdf',
+    'photo se pdf banana'
   ]
 };
 
