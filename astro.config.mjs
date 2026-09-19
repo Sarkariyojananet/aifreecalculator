@@ -27,6 +27,7 @@ export default defineConfig({
     '/finance/loan-calculator': '/finance/emi-calculator/?type=personal',
     '/tools': '/free-online-tools/',
     '/weight-calculator': '/general/weight-calculator/',
+    '/age-calculator': '/general/age-calculator/',
   },
 
   cache: {

@@ -10,82 +10,557 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
   slug="age-calculator"
   keywords={['age calculator', 'age calculator online', 'calculate age', 'age calculator by date of birth', 'chronological age', 'birthday countdown']}
 >
-  <form id="age-calculator-form" class="space-y-6" novalidate>
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
-      <!-- Date of Birth Input -->
-      <div>
-        <label for="input-dob" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-          Date of Birth
-        </label>
-        <input
-          type="date"
-          id="input-dob"
-          required
-          class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-        />
-      </div>
-
-      <!-- Target / Current Date Input -->
-      <div>
-        <label for="input-target-date" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
-          Age as on Date
-        </label>
-        <input
-          type="date"
-          id="input-target-date"
-          required
-          class="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
-        />
-      </div>
-    </div>
-
-    <div class="flex flex-wrap gap-3">
-      <button type="submit" class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900">
-        Calculate Age
+  <div class="space-y-6">
+    <!-- Mode Tabs Navigation -->
+    <div class="flex flex-wrap items-center gap-1.5 rounded-2xl border border-slate-200 bg-slate-100/80 p-1.5 dark:border-slate-800 dark:bg-slate-900/90 text-xs sm:text-sm font-bold" role="tablist" aria-label="Age Calculator Tools">
+      <button
+        type="button"
+        role="tab"
+        id="tab-btn-audit"
+        aria-selected="true"
+        aria-controls="panel-audit"
+        data-tab="audit"
+        class="tab-nav-btn active flex items-center gap-2 rounded-xl px-4 py-2.5 transition-all focus:outline-none"
+      >
+        <span>🎂</span>
+        <span>Exact Age & Life Audit</span>
       </button>
-      <button type="button" id="clear-age-calculator" class="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:ring-offset-slate-900">
-        Clear
+      <button
+        type="button"
+        role="tab"
+        id="tab-btn-diff"
+        aria-selected="false"
+        aria-controls="panel-diff"
+        data-tab="diff"
+        class="tab-nav-btn flex items-center gap-2 rounded-xl px-4 py-2.5 transition-all text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white focus:outline-none"
+      >
+        <span>👥</span>
+        <span>Age Difference</span>
+      </button>
+      <button
+        type="button"
+        role="tab"
+        id="tab-btn-exam"
+        aria-selected="false"
+        aria-controls="panel-exam"
+        data-tab="exam"
+        class="tab-nav-btn flex items-center gap-2 rounded-xl px-4 py-2.5 transition-all text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white focus:outline-none"
+      >
+        <span>🎓</span>
+        <span>Exam & Job Eligibility</span>
+      </button>
+      <button
+        type="button"
+        role="tab"
+        id="tab-btn-milestone"
+        aria-selected="false"
+        aria-controls="panel-milestone"
+        data-tab="milestone"
+        class="tab-nav-btn flex items-center gap-2 rounded-xl px-4 py-2.5 transition-all text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white focus:outline-none"
+      >
+        <span>⏳</span>
+        <span>Milestones & DOB Finder</span>
       </button>
     </div>
 
-    <p id="age-form-error" class="hidden text-sm font-semibold text-red-600 dark:text-red-400" role="alert"></p>
-
-    <!-- Result is shown only after form submission. -->
-    <div id="age-result" class="hidden rounded-2xl border border-slate-200 bg-slate-50/80 p-5 dark:border-slate-800 dark:bg-slate-950" aria-live="polite">
-      <div class="border-b border-slate-200/80 pb-4 dark:border-slate-800">
-        <span id="res-age-label" class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Current Exact Age</span>
-        <div id="res-main-age" class="mt-1 text-2xl sm:text-3xl font-black text-blue-600 dark:text-blue-400">
-          -- Years, -- Months, -- Days
-        </div>
+    <!-- ========================================================================= -->
+    <!-- PANEL 1: PRIMARY EXACT AGE & LIFE AUDIT -->
+    <!-- ========================================================================= -->
+    <div id="panel-audit" role="tabpanel" aria-labelledby="tab-btn-audit" class="space-y-6">
+      <!-- Quick Preset Sample Bar -->
+      <div class="flex flex-wrap items-center gap-2 text-xs">
+        <span class="font-semibold text-slate-500 dark:text-slate-400">Quick Presets:</span>
+        <button type="button" class="btn-preset rounded-lg border border-slate-200 bg-white px-2.5 py-1 font-medium text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-400" data-preset-dob="2000-01-01">Born 2000 (Gen Z)</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-200 bg-white px-2.5 py-1 font-medium text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-400" data-preset-dob="1995-08-15">Born 1995 (Millennial)</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-200 bg-white px-2.5 py-1 font-medium text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-400" data-preset-dob="1980-06-20">Born 1980 (Gen X)</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-200 bg-white px-2.5 py-1 font-medium text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-400" data-preset-dob="2023-01-01">Toddler</button>
       </div>
 
-      <!-- Detailed Breakdown Grid -->
-      <div class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 text-xs">
-        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
-          <div class="text-slate-500 dark:text-slate-400">Total Days</div>
-          <div id="res-total-days" class="mt-1 text-base font-bold text-slate-900 dark:text-white">--</div>
-        </div>
-        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
-          <div class="text-slate-500 dark:text-slate-400">Total Weeks</div>
-          <div id="res-total-weeks" class="mt-1 text-base font-bold text-slate-900 dark:text-white">--</div>
-        </div>
-        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
-          <div class="text-slate-500 dark:text-slate-400">Total Hours</div>
-          <div id="res-total-hours" class="mt-1 text-base font-bold text-slate-900 dark:text-white">--</div>
-        </div>
-        <div class="rounded-xl border border-slate-200/60 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
-          <div class="text-slate-500 dark:text-slate-400">Day of Birth</div>
-          <div id="res-day-born" class="mt-1 text-base font-bold text-slate-900 dark:text-white">--</div>
-        </div>
-      </div>
+      <form id="age-calculator-form" class="space-y-6" novalidate>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <!-- Date of Birth Input Card -->
+          <div class="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900/60">
+            <div class="flex items-center justify-between">
+              <label for="input-dob" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Date of Birth
+              </label>
+              <button type="button" id="btn-toggle-time" class="text-xs font-semibold text-blue-600 hover:underline dark:text-blue-400">
+                + Add Birth Time
+              </button>
+            </div>
+            <input
+              type="date"
+              id="input-dob"
+              required
+              class="mt-2.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+            />
+            <!-- Collapsible Birth Time Input -->
+            <div id="wrapper-birth-time" class="hidden mt-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+              <label for="input-dob-time" class="block text-xs font-medium text-slate-500 dark:text-slate-400">
+                Exact Time of Birth (Optional)
+              </label>
+              <input
+                type="time"
+                id="input-dob-time"
+                value="00:00"
+                class="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+              />
+            </div>
+          </div>
 
-      <!-- Birthday Countdown -->
-      <div class="mt-4 rounded-xl bg-blue-50/70 p-3.5 text-xs text-blue-900 dark:bg-blue-950/40 dark:text-blue-200 flex items-center justify-between">
-        <span>🎉 Next Birthday Countdown:</span>
-        <span id="res-next-bday" class="font-bold text-sm text-blue-700 dark:text-blue-300">-- days left</span>
+          <!-- Target Date Input Card -->
+          <div class="rounded-2xl border border-slate-200/90 bg-white p-4 shadow-xs dark:border-slate-800 dark:bg-slate-900/60">
+            <div class="flex items-center justify-between">
+              <label for="input-target-date" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Age as on Date
+              </label>
+              <button type="button" id="btn-set-today" class="text-xs font-semibold text-blue-600 hover:underline dark:text-blue-400">
+                Set to Today
+              </button>
+            </div>
+            <input
+              type="date"
+              id="input-target-date"
+              required
+              class="mt-2.5 w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm font-semibold text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+            />
+            <div class="mt-2 flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+              <span>Standard: Today's reference date</span>
+              <button type="button" id="btn-next-new-year" class="hover:text-blue-600 dark:hover:text-blue-400">Next Jan 1</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap gap-2.5">
+            <button type="submit" class="rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900">
+              Calculate Age
+            </button>
+            <button type="button" id="clear-age-calculator" class="rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:ring-offset-2 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:focus:ring-offset-slate-900">
+              Clear
+            </button>
+          </div>
+          <div class="flex items-center gap-2">
+            <button type="button" id="btn-copy-summary" class="hidden inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800">
+              <span>📋</span> Copy Summary
+            </button>
+            <button type="button" id="btn-print-summary" class="hidden inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2 text-xs font-bold text-slate-700 transition hover:bg-slate-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800">
+              <span>🖨️</span> Print
+            </button>
+          </div>
+        </div>
+
+        <p id="age-form-error" class="hidden text-sm font-semibold text-red-600 dark:text-red-400" role="alert"></p>
+
+        <!-- ========================================================================= -->
+        <!-- LIVE RESULT TERMINAL DASHBOARD -->
+        <!-- ========================================================================= -->
+        <div id="age-result" class="hidden space-y-5 rounded-2xl border border-slate-200/90 bg-slate-50/70 p-5 sm:p-6 dark:border-slate-800 dark:bg-slate-950/70" aria-live="polite">
+          <!-- Main Hero Age Digital Card -->
+          <div class="rounded-2xl border border-blue-200/60 bg-gradient-to-br from-blue-50/90 via-white to-indigo-50/70 p-5 dark:border-blue-900/40 dark:from-blue-950/40 dark:via-slate-900 dark:to-indigo-950/30">
+            <div class="flex flex-wrap items-center justify-between gap-2 border-b border-blue-100 pb-3 dark:border-blue-900/40">
+              <span id="res-age-label" class="text-xs font-bold uppercase tracking-wider text-blue-900 dark:text-blue-300">
+                Current Exact Age
+              </span>
+              <div class="flex items-center gap-1.5">
+                <span class="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span id="res-live-clock" class="font-mono text-xs font-semibold text-slate-600 dark:text-slate-300">Age: 0.0000 yrs</span>
+              </div>
+            </div>
+
+            <!-- 3 Digital Counter Blocks -->
+            <div class="mt-4 grid grid-cols-3 gap-2.5 sm:gap-4 text-center">
+              <div class="rounded-xl border border-blue-200/80 bg-white/90 p-3 shadow-xs dark:border-blue-900/50 dark:bg-slate-900/80">
+                <div id="res-hero-years" class="font-mono text-2xl sm:text-4xl md:text-5xl font-black text-blue-600 dark:text-blue-400">0</div>
+                <div class="mt-1 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Years</div>
+              </div>
+              <div class="rounded-xl border border-blue-200/80 bg-white/90 p-3 shadow-xs dark:border-blue-900/50 dark:bg-slate-900/80">
+                <div id="res-hero-months" class="font-mono text-2xl sm:text-4xl md:text-5xl font-black text-indigo-600 dark:text-indigo-400">0</div>
+                <div class="mt-1 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Months</div>
+              </div>
+              <div class="rounded-xl border border-blue-200/80 bg-white/90 p-3 shadow-xs dark:border-blue-900/50 dark:bg-slate-900/80">
+                <div id="res-hero-days" class="font-mono text-2xl sm:text-4xl md:text-5xl font-black text-cyan-600 dark:text-cyan-400">0</div>
+                <div class="mt-1 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">Days</div>
+              </div>
+            </div>
+
+            <!-- Time Line (if active) -->
+            <div id="res-time-ext" class="hidden mt-3 text-center font-mono text-xs font-semibold text-slate-600 dark:text-slate-300">
+              Exact Time: <span id="res-hero-hours">0</span> Hours, <span id="res-hero-mins">0</span> Minutes
+            </div>
+
+            <!-- Legacy Screen Reader / String fallback -->
+            <div id="res-main-age" class="sr-only">-- Years, -- Months, -- Days</div>
+
+            <!-- Identity Badges Bar -->
+            <div class="mt-4 flex flex-wrap items-center justify-center gap-2 text-xs font-medium text-slate-700 dark:text-slate-300">
+              <span class="inline-flex items-center gap-1 rounded-lg bg-white/80 px-2.5 py-1 border border-slate-200/60 dark:bg-slate-900/80 dark:border-slate-800">
+                <span>🗓️</span> Born on <strong id="res-born-day-name" class="font-bold">--</strong>
+              </span>
+              <span class="inline-flex items-center gap-1 rounded-lg bg-white/80 px-2.5 py-1 border border-slate-200/60 dark:bg-slate-900/80 dark:border-slate-800">
+                <span>✨</span> <span id="res-zodiac-pill">--</span>
+              </span>
+              <span class="inline-flex items-center gap-1 rounded-lg bg-white/80 px-2.5 py-1 border border-slate-200/60 dark:bg-slate-900/80 dark:border-slate-800">
+                <span id="res-chinese-emoji">🐉</span> <span id="res-chinese-pill">--</span>
+              </span>
+              <span class="inline-flex items-center gap-1 rounded-lg bg-white/80 px-2.5 py-1 border border-slate-200/60 dark:bg-slate-900/80 dark:border-slate-800">
+                <span>👥</span> <strong id="res-generation-pill" class="font-bold">--</strong>
+              </span>
+            </div>
+          </div>
+
+          <!-- Birthday Celebration or Countdown Banner -->
+          <div id="banner-birthday-today" class="hidden rounded-xl border border-amber-300 bg-amber-50 p-4 text-center text-amber-900 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-200">
+            <span class="text-2xl">🎉 🎂</span>
+            <div class="text-base font-black">HAPPY BIRTHDAY!</div>
+            <div class="text-xs font-medium">Wishing you health, happiness, and an extraordinary year ahead!</div>
+          </div>
+
+          <div id="banner-birthday-countdown" class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div class="flex items-center gap-2">
+                <span class="text-xl">🎁</span>
+                <div>
+                  <div class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Next Birthday Countdown</div>
+                  <div id="res-next-bday-detail" class="text-sm font-bold text-slate-900 dark:text-white">-- Days Remaining</div>
+                </div>
+              </div>
+              <div class="text-xs text-right sm:text-right">
+                <span id="res-next-bday" class="font-bold text-blue-600 dark:text-blue-400">-- days left</span>
+                <div id="res-next-bday-day" class="text-slate-500 dark:text-slate-400">Turning -- yrs</div>
+              </div>
+            </div>
+            <div class="mt-2.5 pt-2.5 border-t border-slate-100 text-xs flex flex-wrap items-center justify-between text-slate-600 dark:border-slate-800 dark:text-slate-400">
+              <span>🌓 Half-Birthday: <strong id="res-half-bday" class="font-semibold text-slate-800 dark:text-slate-200">--</strong></span>
+              <span id="res-weekend-alert" class="hidden text-emerald-600 dark:text-emerald-400 font-bold">🎉 Weekend Birthday!</span>
+            </div>
+          </div>
+
+          <!-- Comprehensive Life Matrix (10 Equivalents) -->
+          <div>
+            <div class="mb-2 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+              Total Life Time Lived Equivalents
+            </div>
+            <div class="grid grid-cols-2 gap-2.5 sm:grid-cols-3 md:grid-cols-4 text-xs font-mono">
+              <div class="rounded-xl border border-slate-200/80 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+                <div class="text-slate-500 font-sans dark:text-slate-400">Total Months</div>
+                <div id="res-total-months" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">--</div>
+              </div>
+              <div class="rounded-xl border border-slate-200/80 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+                <div class="text-slate-500 font-sans dark:text-slate-400">Total Weeks</div>
+                <div id="res-total-weeks" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">--</div>
+              </div>
+              <div class="rounded-xl border border-slate-200/80 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+                <div class="text-slate-500 font-sans dark:text-slate-400">Total Days</div>
+                <div id="res-total-days" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">--</div>
+              </div>
+              <div class="rounded-xl border border-slate-200/80 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+                <div class="text-slate-500 font-sans dark:text-slate-400">Total Hours</div>
+                <div id="res-total-hours" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">--</div>
+              </div>
+              <div class="rounded-xl border border-slate-200/80 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+                <div class="text-slate-500 font-sans dark:text-slate-400">Total Minutes</div>
+                <div id="res-total-minutes" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">--</div>
+              </div>
+              <div class="rounded-xl border border-slate-200/80 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+                <div class="text-slate-500 font-sans dark:text-slate-400">Total Seconds</div>
+                <div id="res-total-seconds" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">--</div>
+              </div>
+              <div class="rounded-xl border border-slate-200/80 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+                <div class="text-slate-500 font-sans dark:text-slate-400">Heartbeats (~75 bpm)</div>
+                <div id="res-approx-heartbeats" class="mt-1 text-sm sm:text-base font-bold text-rose-600 dark:text-rose-400">--</div>
+              </div>
+              <div class="rounded-xl border border-slate-200/80 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/60">
+                <div class="text-slate-500 font-sans dark:text-slate-400">Breaths (~16 / min)</div>
+                <div id="res-approx-breaths" class="mt-1 text-sm sm:text-base font-bold text-sky-600 dark:text-sky-400">--</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Life Journey Benchmark & Progress Bar -->
+          <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-bold text-slate-700 dark:text-slate-300">Life Journey Progress (80-Year Average Lifespan)</span>
+              <span id="res-life-pct" class="font-mono font-bold text-blue-600 dark:text-blue-400">0%</span>
+            </div>
+            <div class="mt-2 h-3 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+              <div id="res-life-progress-bar" class="h-full rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-600 transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <div class="mt-2 flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400">
+              <span>0 yrs (Birth)</span>
+              <span>20 yrs (Youth)</span>
+              <span>40 yrs (Midlife)</span>
+              <span>60 yrs (Wisdom)</span>
+              <span>80 yrs (Century Goal)</span>
+            </div>
+          </div>
+
+          <!-- Next 5 Birthdays Roadmap -->
+          <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/60">
+            <div class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 mb-3">
+              Upcoming Birthdays Day-of-Week Schedule
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left text-xs">
+                <thead>
+                  <tr class="border-b border-slate-200 text-slate-500 dark:border-slate-800 dark:text-slate-400">
+                    <th class="pb-2 font-semibold">Birthday Year</th>
+                    <th class="pb-2 font-semibold">Exact Date</th>
+                    <th class="pb-2 font-semibold">Day of Week</th>
+                    <th class="pb-2 font-semibold">Age</th>
+                  </tr>
+                </thead>
+                <tbody id="res-bday-table-body" class="divide-y divide-slate-100 dark:divide-slate-800/60">
+                  <!-- Injected via JavaScript -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- PANEL 2: AGE DIFFERENCE & COMPARISON -->
+    <!-- ========================================================================= -->
+    <div id="panel-diff" role="tabpanel" aria-labelledby="tab-btn-diff" class="hidden space-y-6">
+      <div class="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900/60">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+          Compare Two People's Ages
+        </h3>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Find the exact age difference between two individuals and discover the special "Double Age" milestone.
+        </p>
+
+        <form id="age-diff-form" class="mt-5 space-y-5" novalidate>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <!-- Person 1 -->
+            <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+              <label for="diff-p1-name" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Person 1 Name</label>
+              <input type="text" id="diff-p1-name" value="Person 1" class="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+
+              <label for="diff-p1-dob" class="block mt-3 text-xs font-bold text-slate-700 dark:text-slate-300">Date of Birth</label>
+              <input type="date" id="diff-p1-dob" required class="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+            </div>
+
+            <!-- Person 2 -->
+            <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-950/40">
+              <label for="diff-p2-name" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Person 2 Name</label>
+              <input type="text" id="diff-p2-name" value="Person 2" class="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+
+              <label for="diff-p2-dob" class="block mt-3 text-xs font-bold text-slate-700 dark:text-slate-300">Date of Birth</label>
+              <input type="date" id="diff-p2-dob" required class="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+            </div>
+          </div>
+
+          <div class="flex gap-3">
+            <button type="submit" class="rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700">
+              Compare Ages
+            </button>
+            <button type="button" id="btn-diff-reset" class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300">
+              Reset
+            </button>
+          </div>
+        </form>
+
+        <!-- Difference Results -->
+        <div id="diff-result-box" class="hidden mt-6 space-y-4 rounded-xl border border-blue-200 bg-blue-50/60 p-4 dark:border-blue-900/50 dark:bg-blue-950/30">
+          <div class="text-xs font-bold uppercase tracking-wider text-blue-900 dark:text-blue-300">Age Comparison Result</div>
+          <div id="diff-hero-text" class="text-lg sm:text-xl font-black text-blue-950 dark:text-white">
+            -- is older by --
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 text-xs font-mono">
+            <div class="rounded-lg bg-white p-3 dark:bg-slate-900">
+              <div class="text-slate-500 font-sans dark:text-slate-400">Total Days Gap</div>
+              <div id="diff-res-days" class="mt-1 font-bold text-slate-900 dark:text-white">--</div>
+            </div>
+            <div class="rounded-lg bg-white p-3 dark:bg-slate-900">
+              <div class="text-slate-500 font-sans dark:text-slate-400">Total Weeks Gap</div>
+              <div id="diff-res-weeks" class="mt-1 font-bold text-slate-900 dark:text-white">--</div>
+            </div>
+            <div class="rounded-lg bg-white p-3 dark:bg-slate-900">
+              <div class="text-slate-500 font-sans dark:text-slate-400">Total Hours Gap</div>
+              <div id="diff-res-hours" class="mt-1 font-bold text-slate-900 dark:text-white">--</div>
+            </div>
+          </div>
+
+          <!-- Double Age Milestone Feature -->
+          <div class="rounded-lg border border-purple-200 bg-purple-50/80 p-3.5 text-xs text-purple-900 dark:border-purple-900/40 dark:bg-purple-950/40 dark:text-purple-200">
+            <div class="font-bold flex items-center gap-1.5">
+              <span>✨</span> Double Age Milestone (2× Age Date):
+            </div>
+            <p id="diff-double-age-text" class="mt-1">
+              On --, the older person was/will be exactly twice the age of the younger person.
+            </p>
+          </div>
+        </div>
       </div>
     </div>
-  </form>
+
+    <!-- ========================================================================= -->
+    <!-- PANEL 3: EXAM & JOB ELIGIBILITY CHECKER -->
+    <!-- ========================================================================= -->
+    <div id="panel-exam" role="tabpanel" aria-labelledby="tab-btn-exam" class="hidden space-y-6">
+      <div class="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900/60">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+          Competitive Exam & Job Age Eligibility Checker
+        </h3>
+        <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          Verify your exact age against official exam cutoffs (UPSC, SSC, Banking, Defense, School Admission) including category age relaxations.
+        </p>
+
+        <!-- Exam Presets -->
+        <div class="mt-4 flex flex-wrap items-center gap-1.5 text-xs">
+          <span class="font-semibold text-slate-500 dark:text-slate-400">Exam Presets:</span>
+          <button type="button" class="btn-exam-preset rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 font-medium text-slate-700 hover:border-blue-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300" data-min="21" data-max="32" data-cutoff="08-01" data-name="UPSC Civil Services (21-32 yrs, Cutoff 1 Aug)">UPSC CSE</button>
+          <button type="button" class="btn-exam-preset rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 font-medium text-slate-700 hover:border-blue-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300" data-min="18" data-max="30" data-cutoff="01-01" data-name="SSC CGL (18-30 yrs, Cutoff 1 Jan)">SSC CGL</button>
+          <button type="button" class="btn-exam-preset rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 font-medium text-slate-700 hover:border-blue-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300" data-min="20" data-max="30" data-cutoff="08-01" data-name="Bank PO / IBPS (20-30 yrs)">Bank PO</button>
+          <button type="button" class="btn-exam-preset rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 font-medium text-slate-700 hover:border-blue-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300" data-min="3" data-max="6" data-cutoff="04-01" data-name="School Class 1 / Nursery (3-6 yrs, Cutoff 1 Apr)">School Admission</button>
+        </div>
+
+        <form id="exam-checker-form" class="mt-5 space-y-4" novalidate>
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label for="exam-input-dob" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Candidate Date of Birth</label>
+              <input type="date" id="exam-input-dob" required class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+            </div>
+            <div>
+              <label for="exam-input-cutoff" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Exam Cutoff / Crucial Date</label>
+              <input type="date" id="exam-input-cutoff" required class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <label for="exam-min-age" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Minimum Age Limit (Years)</label>
+              <input type="number" id="exam-min-age" value="21" min="1" max="100" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+            </div>
+            <div>
+              <label for="exam-max-age" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Base Maximum Age (Years)</label>
+              <input type="number" id="exam-max-age" value="32" min="1" max="100" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+            </div>
+            <div>
+              <label for="exam-category-relax" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Category Relaxation</label>
+              <select id="exam-category-relax" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+                <option value="0">General / UR (0 Years)</option>
+                <option value="3">OBC Non-Creamy Layer (+3 Years)</option>
+                <option value="5">SC / ST (+5 Years)</option>
+                <option value="10">PwBD / Ex-Servicemen (+10 Years)</option>
+              </select>
+            </div>
+          </div>
+
+          <button type="submit" class="rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-sm transition hover:bg-blue-700">
+            Check Eligibility
+          </button>
+        </form>
+
+        <!-- Eligibility Result Box -->
+        <div id="exam-result-box" class="hidden mt-6 rounded-2xl border p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <span id="exam-status-badge" class="rounded-full px-3 py-1 text-xs font-black uppercase tracking-wider">
+              ELIGIBLE
+            </span>
+            <span id="exam-age-cutoff-pill" class="text-xs font-mono font-bold text-slate-600 dark:text-slate-300">
+              Age on Cutoff: --
+            </span>
+          </div>
+          <div id="exam-status-title" class="text-base font-bold text-slate-900 dark:text-white">--</div>
+          <p id="exam-status-desc" class="text-xs text-slate-600 dark:text-slate-300">--</p>
+          <div class="pt-3 border-t border-slate-200/60 dark:border-slate-800 text-xs flex flex-wrap justify-between text-slate-500 dark:text-slate-400">
+            <span>Effective Max Allowed: <strong id="exam-res-eff-max" class="text-slate-900 dark:text-white font-bold">-- yrs</strong></span>
+            <span>Est. Remaining Eligible Years: <strong id="exam-res-years-left" class="text-slate-900 dark:text-white font-bold">--</strong></span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- PANEL 4: MILESTONES & REVERSE DOB FINDER -->
+    <!-- ========================================================================= -->
+    <div id="panel-milestone" role="tabpanel" aria-labelledby="tab-btn-milestone" class="hidden space-y-6">
+      <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+        <!-- Milestone Age Date Finder -->
+        <div class="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900/60">
+          <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+            When Will I Turn Age X?
+          </h3>
+          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Find the exact calendar date and day of the week when you will reach a milestone age (30, 50, 60, 65, 100).
+          </p>
+
+          <div class="mt-4 space-y-3">
+            <div>
+              <label for="turn-dob-input" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Your Date of Birth</label>
+              <input type="date" id="turn-dob-input" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+            </div>
+            <div>
+              <label for="turn-target-age" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Target Milestone Age</label>
+              <select id="turn-target-age" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white">
+                <option value="18">18 Years (Legal Adulthood)</option>
+                <option value="21">21 Years (Full Majority)</option>
+                <option value="30">30 Years</option>
+                <option value="40">40 Years</option>
+                <option value="50" selected>50 Years (Golden Jubilee)</option>
+                <option value="60">60 Years (Senior / Retirement)</option>
+                <option value="65">65 Years</option>
+                <option value="75">75 Years (Platinum)</option>
+                <option value="100">100 Years (Centenarian)</option>
+              </select>
+            </div>
+            <button type="button" id="btn-calc-turn-date" class="w-full rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700">
+              Calculate Milestone Date
+            </button>
+          </div>
+
+          <div id="turn-result-card" class="hidden mt-4 rounded-xl border border-blue-200 bg-blue-50/70 p-3.5 text-xs text-blue-950 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-100">
+            <div class="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[11px]">Milestone Date</div>
+            <div id="turn-result-date" class="mt-1 text-sm font-black text-blue-700 dark:text-blue-300">--</div>
+          </div>
+        </div>
+
+        <!-- Reverse DOB Finder from Age -->
+        <div class="rounded-2xl border border-slate-200/90 bg-white p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900/60">
+          <h3 class="text-sm font-bold uppercase tracking-wider text-slate-900 dark:text-white">
+            Reverse DOB Finder (Age to DOB)
+          </h3>
+          <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
+            Know your age in years/months on a specific date? Find your exact calculated Date of Birth.
+          </p>
+
+          <div class="mt-4 space-y-3">
+            <div>
+              <label for="rev-as-of-date" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Reference Date</label>
+              <input type="date" id="rev-as-of-date" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              <div>
+                <label for="rev-age-y" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Years</label>
+                <input type="number" id="rev-age-y" value="25" min="0" max="120" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+              </div>
+              <div>
+                <label for="rev-age-m" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Months</label>
+                <input type="number" id="rev-age-m" value="6" min="0" max="11" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+              </div>
+              <div>
+                <label for="rev-age-d" class="block text-xs font-bold text-slate-700 dark:text-slate-300">Days</label>
+                <input type="number" id="rev-age-d" value="0" min="0" max="31" class="mt-1 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-900 dark:border-slate-700 dark:bg-slate-950 dark:text-white" />
+              </div>
+            </div>
+            <button type="button" id="btn-calc-rev-dob" class="w-full rounded-xl bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-sm hover:bg-blue-700">
+              Find Estimated Date of Birth
+            </button>
+          </div>
+
+          <div id="rev-result-card" class="hidden mt-4 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5 text-xs text-emerald-950 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100">
+            <div class="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-[11px]">Calculated Date of Birth</div>
+            <div id="rev-result-dob" class="mt-1 text-sm font-black text-emerald-700 dark:text-emerald-300">--</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <Fragment slot="content">
     <section class="age-calculator-content">
@@ -180,6 +655,17 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
 </CalculatorLayout>
 
 <style>
+  .tab-nav-btn.active {
+    background-color: #ffffff;
+    color: #2563eb;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  }
+  :global(.dark) .tab-nav-btn.active {
+    background-color: #1e293b;
+    color: #60a5fa;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+  }
+
   .age-calculator-content h2 {
     margin-top: 2.5rem;
     margin-bottom: 1rem;
@@ -228,38 +714,181 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
 </style>
 
 <script is:inline>
-  const ageCalculatorForm = document.getElementById('age-calculator-form');
+  // DOM Elements - Tabs
+  const tabButtons = document.querySelectorAll('.tab-nav-btn');
+  const tabPanels = {
+    audit: document.getElementById('panel-audit'),
+    diff: document.getElementById('panel-diff'),
+    exam: document.getElementById('panel-exam'),
+    milestone: document.getElementById('panel-milestone'),
+  };
+
+  // Tab switching logic
+  tabButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const targetTab = btn.getAttribute('data-tab');
+      tabButtons.forEach((b) => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+      });
+      btn.classList.add('active');
+      btn.setAttribute('aria-selected', 'true');
+
+      Object.keys(tabPanels).forEach((key) => {
+        if (key === targetTab) {
+          tabPanels[key].classList.remove('hidden');
+        } else {
+          tabPanels[key].classList.add('hidden');
+        }
+      });
+    });
+  });
+
+  // DOM Elements - Main Audit Form
+  const ageForm = document.getElementById('age-calculator-form');
   const dobInput = document.getElementById('input-dob');
+  const dobTimeInput = document.getElementById('input-dob-time');
   const targetDateInput = document.getElementById('input-target-date');
-  const clearAgeCalculator = document.getElementById('clear-age-calculator');
+  const clearBtn = document.getElementById('clear-age-calculator');
   const ageResult = document.getElementById('age-result');
   const ageFormError = document.getElementById('age-form-error');
-  const resMainAge = document.getElementById('res-main-age');
-  const resAgeLabel = document.getElementById('res-age-label');
-  const resTotalDays = document.getElementById('res-total-days');
-  const resTotalWeeks = document.getElementById('res-total-weeks');
-  const resTotalHours = document.getElementById('res-total-hours');
-  const resDayBorn = document.getElementById('res-day-born');
-  const resNextBday = document.getElementById('res-next-bday');
+  const btnToggleTime = document.getElementById('btn-toggle-time');
+  const wrapperBirthTime = document.getElementById('wrapper-birth-time');
+  const btnSetToday = document.getElementById('btn-set-today');
+  const btnNextNewYear = document.getElementById('btn-next-new-year');
+  const btnCopySummary = document.getElementById('btn-copy-summary');
+  const btnPrintSummary = document.getElementById('btn-print-summary');
 
-  // Keep date-only inputs in the visitor's local timezone.
+  // Hero Display Elements
+  const resAgeLabel = document.getElementById('res-age-label');
+  const resHeroYears = document.getElementById('res-hero-years');
+  const resHeroMonths = document.getElementById('res-hero-months');
+  const resHeroDays = document.getElementById('res-hero-days');
+  const resTimeExt = document.getElementById('res-time-ext');
+  const resHeroHours = document.getElementById('res-hero-hours');
+  const resHeroMins = document.getElementById('res-hero-mins');
+  const resMainAge = document.getElementById('res-main-age');
+  const resLiveClock = document.getElementById('res-live-clock');
+
+  // Identity Badges
+  const resBornDayName = document.getElementById('res-born-day-name');
+  const resZodiacPill = document.getElementById('res-zodiac-pill');
+  const resChinesePill = document.getElementById('res-chinese-pill');
+  const resChineseEmoji = document.getElementById('res-chinese-emoji');
+  const resGenerationPill = document.getElementById('res-generation-pill');
+
+  // Birthday Countdown Elements
+  const bannerBirthdayToday = document.getElementById('banner-birthday-today');
+  const bannerBirthdayCountdown = document.getElementById('banner-birthday-countdown');
+  const resNextBday = document.getElementById('res-next-bday');
+  const resNextBdayDetail = document.getElementById('res-next-bday-detail');
+  const resNextBdayDay = document.getElementById('res-next-bday-day');
+  const resHalfBday = document.getElementById('res-half-bday');
+  const resWeekendAlert = document.getElementById('res-weekend-alert');
+  const resBdayTableBody = document.getElementById('res-bday-table-body');
+
+  // Equivalents Matrix Elements
+  const resTotalMonths = document.getElementById('res-total-months');
+  const resTotalWeeks = document.getElementById('res-total-weeks');
+  const resTotalDays = document.getElementById('res-total-days');
+  const resTotalHours = document.getElementById('res-total-hours');
+  const resTotalMinutes = document.getElementById('res-total-minutes');
+  const resTotalSeconds = document.getElementById('res-total-seconds');
+  const resApproxHeartbeats = document.getElementById('res-approx-heartbeats');
+  const resApproxBreaths = document.getElementById('res-approx-breaths');
+  const resLifePct = document.getElementById('res-life-pct');
+  const resLifeProgressBar = document.getElementById('res-life-progress-bar');
+
+  // Helper: Date parsing & formatting
   const toDateInputValue = (date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   };
-  const parseDateInput = (value) => {
-    const [year, month, day] = value.split('-').map(Number);
-    return new Date(year, month - 1, day);
-  };
-  const today = toDateInputValue(new Date());
-  targetDateInput.value = today;
 
-  function showError(message) {
-    ageFormError.textContent = message;
+  const parseDateInput = (val, timeVal) => {
+    const [year, month, day] = val.split('-').map(Number);
+    let hours = 0;
+    let mins = 0;
+    if (timeVal) {
+      const [th, tm] = timeVal.split(':').map(Number);
+      if (!isNaN(th)) hours = th;
+      if (!isNaN(tm)) mins = tm;
+    }
+    return new Date(year, month - 1, day, hours, mins, 0, 0);
+  };
+
+  const todayStr = toDateInputValue(new Date());
+  targetDateInput.value = todayStr;
+
+  // Initialize other forms with today
+  const diffP1Dob = document.getElementById('diff-p1-dob');
+  const diffP2Dob = document.getElementById('diff-p2-dob');
+  const examInputDob = document.getElementById('exam-input-dob');
+  const examInputCutoff = document.getElementById('exam-input-cutoff');
+  const turnDobInput = document.getElementById('turn-dob-input');
+  const revAsOfDate = document.getElementById('rev-as-of-date');
+
+  if (examInputCutoff) examInputCutoff.value = `${new Date().getFullYear()}-08-01`;
+  if (revAsOfDate) revAsOfDate.value = todayStr;
+
+  // Western Zodiac
+  function getWesternZodiac(m, d) {
+    if ((m === 3 && d >= 21) || (m === 4 && d <= 19)) return { sign: 'Aries', symbol: '♈ Aries (Fire)' };
+    if ((m === 4 && d >= 20) || (m === 5 && d <= 20)) return { sign: 'Taurus', symbol: '♉ Taurus (Earth)' };
+    if ((m === 5 && d >= 21) || (m === 6 && d <= 20)) return { sign: 'Gemini', symbol: '♊ Gemini (Air)' };
+    if ((m === 6 && d >= 21) || (m === 7 && d <= 22)) return { sign: 'Cancer', symbol: '♋ Cancer (Water)' };
+    if ((m === 7 && d >= 23) || (m === 8 && d <= 22)) return { sign: 'Leo', symbol: '♌ Leo (Fire)' };
+    if ((m === 8 && d >= 23) || (m === 9 && d <= 22)) return { sign: 'Virgo', symbol: '♍ Virgo (Earth)' };
+    if ((m === 9 && d >= 23) || (m === 10 && d <= 22)) return { sign: 'Libra', symbol: '♎ Libra (Air)' };
+    if ((m === 10 && d >= 23) || (m === 11 && d <= 21)) return { sign: 'Scorpio', symbol: '♏ Scorpio (Water)' };
+    if ((m === 11 && d >= 22) || (m === 12 && d <= 21)) return { sign: 'Sagittarius', symbol: '♐ Sagittarius (Fire)' };
+    if ((m === 12 && d >= 22) || (m === 1 && d <= 19)) return { sign: 'Capricorn', symbol: '♑ Capricorn (Earth)' };
+    if ((m === 1 && d >= 20) || (m === 2 && d <= 18)) return { sign: 'Aquarius', symbol: '♒ Aquarius (Air)' };
+    return { sign: 'Pisces', symbol: '♓ Pisces (Water)' };
+  }
+
+  // Chinese Zodiac
+  function getChineseZodiac(year) {
+    const animals = [
+      { name: 'Rat', emoji: '🐀' },
+      { name: 'Ox', emoji: '🐂' },
+      { name: 'Tiger', emoji: '🐅' },
+      { name: 'Rabbit', emoji: '🐇' },
+      { name: 'Dragon', emoji: '🐉' },
+      { name: 'Snake', emoji: '🐍' },
+      { name: 'Horse', emoji: '🐎' },
+      { name: 'Goat', emoji: '🐐' },
+      { name: 'Monkey', emoji: '🐒' },
+      { name: 'Rooster', emoji: '🐓' },
+      { name: 'Dog', emoji: '🐕' },
+      { name: 'Pig', emoji: '🐖' },
+    ];
+    return animals[Math.abs((year - 1900) % 12)];
+  }
+
+  // Generation
+  function getGeneration(year) {
+    if (year >= 2025) return 'Gen Beta';
+    if (year >= 2013) return 'Gen Alpha (2013-2024)';
+    if (year >= 1997) return 'Gen Z (1997-2012)';
+    if (year >= 1981) return 'Millennial (1981-1996)';
+    if (year >= 1965) return 'Gen X (1965-1980)';
+    if (year >= 1946) return 'Baby Boomer (1946-1964)';
+    if (year >= 1928) return 'Silent Gen (1928-1945)';
+    return 'Greatest Generation';
+  }
+
+  let liveTickerInterval = null;
+
+  function showError(msg) {
+    ageFormError.textContent = msg;
     ageFormError.classList.remove('hidden');
     ageResult.classList.add('hidden');
+    btnCopySummary.classList.add('hidden');
+    btnPrintSummary.classList.add('hidden');
+    if (liveTickerInterval) clearInterval(liveTickerInterval);
   }
 
   function hideError() {
@@ -270,17 +899,16 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
   function updateAge() {
     const dobVal = dobInput.value;
     const targetVal = targetDateInput.value;
+    const hasTime = !wrapperBirthTime.classList.contains('hidden');
+    const timeVal = hasTime ? dobTimeInput.value : '00:00';
+
     if (!dobVal || !targetVal) {
-      showError('Please enter both your date of birth and the calculation date.');
+      showError('Please enter your date of birth and calculation date.');
       return;
     }
 
-    const birth = parseDateInput(dobVal);
-    const target = parseDateInput(targetVal);
-
-    resAgeLabel.textContent = targetVal === today
-      ? 'Current Exact Age'
-      : `Exact Age on ${target.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`;
+    const birth = parseDateInput(dobVal, timeVal);
+    const target = parseDateInput(targetVal, '00:00');
 
     if (birth > target) {
       showError('The date of birth cannot be later than the calculation date.');
@@ -289,10 +917,21 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
 
     hideError();
 
+    // Standard Calendar Subtraction
     let y = target.getFullYear() - birth.getFullYear();
     let m = target.getMonth() - birth.getMonth();
     let d = target.getDate() - birth.getDate();
+    let h = target.getHours() - birth.getHours();
+    let mins = target.getMinutes() - birth.getMinutes();
 
+    if (mins < 0) {
+      h--;
+      mins += 60;
+    }
+    if (h < 0) {
+      d--;
+      h += 24;
+    }
     if (d < 0) {
       m--;
       const prevMonthDays = new Date(target.getFullYear(), target.getMonth(), 0).getDate();
@@ -303,33 +942,483 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
       m += 12;
     }
 
+    // Populate Hero Digits
+    resHeroYears.textContent = y;
+    resHeroMonths.textContent = m;
+    resHeroDays.textContent = d;
     resMainAge.textContent = `${y} Years, ${m} Months, ${d} Days`;
 
+    if (hasTime) {
+      resTimeExt.classList.remove('hidden');
+      resHeroHours.textContent = h;
+      resHeroMins.textContent = mins;
+    } else {
+      resTimeExt.classList.add('hidden');
+    }
+
+    resAgeLabel.textContent = targetVal === todayStr
+      ? 'Current Exact Age'
+      : `Exact Age on ${target.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })}`;
+
+    // Total Time Lived Equivalents
     const diffMs = target.getTime() - birth.getTime();
     const totalDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    const totalWeeks = Math.floor(totalDays / 7);
+    const totalHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const totalMinutes = Math.floor(diffMs / (1000 * 60));
+    const totalSeconds = Math.floor(diffMs / 1000);
+    const totalMonths = y * 12 + m;
+
+    resTotalMonths.textContent = totalMonths.toLocaleString();
+    resTotalWeeks.textContent = totalWeeks.toLocaleString();
     resTotalDays.textContent = totalDays.toLocaleString();
-    resTotalWeeks.textContent = Math.floor(totalDays / 7).toLocaleString();
-    resTotalHours.textContent = (totalDays * 24).toLocaleString();
+    resTotalHours.textContent = totalHours.toLocaleString();
+    resTotalMinutes.textContent = totalMinutes.toLocaleString();
+    resTotalSeconds.textContent = totalSeconds.toLocaleString();
 
+    // Health Estimates
+    resApproxHeartbeats.textContent = `~${Math.round(totalMinutes * 75).toLocaleString()}`;
+    resApproxBreaths.textContent = `~${Math.round(totalMinutes * 16).toLocaleString()}`;
+
+    // Life Progress Bar (Benchmark 80 years)
+    const lifeProgress = Math.min(100, Number(((totalDays / (80 * 365.25)) * 100).toFixed(1)));
+    resLifePct.textContent = `${lifeProgress}% Lived`;
+    resLifeProgressBar.style.width = `${lifeProgress}%`;
+
+    // Identity Badges
     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    resDayBorn.textContent = daysOfWeek[birth.getDay()];
+    resBornDayName.textContent = daysOfWeek[birth.getDay()];
 
-    const nextBday = new Date(target.getFullYear(), birth.getMonth(), birth.getDate());
-    if (nextBday < target) nextBday.setFullYear(target.getFullYear() + 1);
-    const daysLeft = Math.ceil((nextBday.getTime() - target.getTime()) / (1000 * 60 * 60 * 24));
-    resNextBday.textContent = `${daysLeft} days remaining`;
+    const zodiac = getWesternZodiac(birth.getMonth() + 1, birth.getDate());
+    resZodiacPill.textContent = zodiac.symbol;
+
+    const chineseZodiac = getChineseZodiac(birth.getFullYear());
+    resChinesePill.textContent = `Year of the ${chineseZodiac.name}`;
+    resChineseEmoji.textContent = chineseZodiac.emoji;
+
+    resGenerationPill.textContent = getGeneration(birth.getFullYear());
+
+    // Next Birthday Calculations
+    const birthMonth = birth.getMonth();
+    const birthDateNum = birth.getDate();
+    let nextBdayYear = target.getFullYear();
+    let nextBdayDate = new Date(nextBdayYear, birthMonth, birthDateNum);
+
+    const isBdayToday =
+      target.getFullYear() === nextBdayYear &&
+      target.getMonth() === birthMonth &&
+      target.getDate() === birthDateNum;
+
+    if (isBdayToday) {
+      bannerBirthdayToday.classList.remove('hidden');
+      bannerBirthdayCountdown.classList.add('hidden');
+    } else {
+      bannerBirthdayToday.classList.add('hidden');
+      bannerBirthdayCountdown.classList.remove('hidden');
+
+      if (nextBdayDate < target) {
+        nextBdayYear += 1;
+        nextBdayDate = new Date(nextBdayYear, birthMonth, birthDateNum);
+      }
+
+      const daysLeft = Math.ceil((nextBdayDate.getTime() - target.getTime()) / (1000 * 60 * 60 * 24));
+      resNextBday.textContent = `${daysLeft} days left`;
+      resNextBdayDetail.textContent = `${daysLeft} Days (${nextBdayDate.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })})`;
+      const turningAge = nextBdayYear - birth.getFullYear();
+      resNextBdayDay.textContent = `Turning ${turningAge} on a ${daysOfWeek[nextBdayDate.getDay()]}`;
+
+      if (nextBdayDate.getDay() === 0 || nextBdayDate.getDay() === 6) {
+        resWeekendAlert.classList.remove('hidden');
+      } else {
+        resWeekendAlert.classList.add('hidden');
+      }
+    }
+
+    // Half Birthday
+    const halfBdayMonth = (birthMonth + 6) % 12;
+    const halfBdayYear = birthMonth + 6 >= 12 ? nextBdayYear : nextBdayYear - 1;
+    const halfBday = new Date(halfBdayYear, halfBdayMonth, birthDateNum);
+    resHalfBday.textContent = halfBday.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+
+    // Upcoming 5 Birthdays Roadmap Table
+    resBdayTableBody.innerHTML = '';
+    const startRoadmapYear = isBdayToday ? target.getFullYear() + 1 : nextBdayYear;
+    for (let i = 0; i < 5; i++) {
+      const uYear = startRoadmapYear + i;
+      const uDate = new Date(uYear, birthMonth, birthDateNum);
+      const uDay = daysOfWeek[uDate.getDay()];
+      const isWeekend = uDate.getDay() === 0 || uDate.getDay() === 6;
+      const rowAge = uYear - birth.getFullYear();
+
+      const tr = document.createElement('tr');
+      tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-900/40';
+      tr.innerHTML = `
+        <td class="py-2.5 font-bold text-slate-900 dark:text-white">${uYear}</td>
+        <td class="py-2.5 text-slate-700 dark:text-slate-300">${uDate.toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</td>
+        <td class="py-2.5">
+          <span class="inline-flex items-center gap-1 rounded-md px-2 py-0.5 font-medium ${isWeekend ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300 font-bold' : 'text-slate-700 dark:text-slate-300'}">
+            ${isWeekend ? '🎉 ' : ''}${uDay}
+          </span>
+        </td>
+        <td class="py-2.5 font-mono text-slate-600 dark:text-slate-400">${rowAge} yrs</td>
+      `;
+      resBdayTableBody.appendChild(tr);
+    }
+
+    // Start Live Clock Ticker
+    if (liveTickerInterval) clearInterval(liveTickerInterval);
+    const updateTicker = () => {
+      const now = new Date();
+      const liveDiff = now.getTime() - birth.getTime();
+      const liveYears = (liveDiff / (1000 * 60 * 60 * 24 * 365.2425)).toFixed(6);
+      resLiveClock.textContent = `Age: ${liveYears} yrs`;
+    };
+    updateTicker();
+    if (targetVal === todayStr) {
+      liveTickerInterval = setInterval(updateTicker, 100);
+    }
+
     ageResult.classList.remove('hidden');
+    btnCopySummary.classList.remove('hidden');
+    btnPrintSummary.classList.remove('hidden');
   }
 
-  ageCalculatorForm.addEventListener('submit', (event) => {
-    event.preventDefault();
+  // Event Listeners - Primary Form
+  ageForm.addEventListener('submit', (e) => {
+    e.preventDefault();
     updateAge();
   });
 
-  clearAgeCalculator.addEventListener('click', () => {
-    ageCalculatorForm.reset();
+  dobInput.addEventListener('change', updateAge);
+  targetDateInput.addEventListener('change', updateAge);
+  dobTimeInput.addEventListener('change', updateAge);
+
+  clearBtn.addEventListener('click', () => {
+    ageForm.reset();
+    targetDateInput.value = todayStr;
     ageResult.classList.add('hidden');
+    btnCopySummary.classList.add('hidden');
+    btnPrintSummary.classList.add('hidden');
     hideError();
+    if (liveTickerInterval) clearInterval(liveTickerInterval);
     dobInput.focus();
   });
+
+  btnToggleTime.addEventListener('click', () => {
+    wrapperBirthTime.classList.toggle('hidden');
+    if (wrapperBirthTime.classList.contains('hidden')) {
+      btnToggleTime.textContent = '+ Add Birth Time';
+    } else {
+      btnToggleTime.textContent = '− Hide Birth Time';
+      dobTimeInput.focus();
+    }
+    if (dobInput.value) updateAge();
+  });
+
+  btnSetToday.addEventListener('click', () => {
+    targetDateInput.value = todayStr;
+    if (dobInput.value) updateAge();
+  });
+
+  btnNextNewYear.addEventListener('click', () => {
+    const nextYear = new Date().getFullYear() + 1;
+    targetDateInput.value = `${nextYear}-01-01`;
+    if (dobInput.value) updateAge();
+  });
+
+  // Presets
+  document.querySelectorAll('.btn-preset').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const pDob = btn.getAttribute('data-preset-dob');
+      dobInput.value = pDob;
+      targetDateInput.value = todayStr;
+      updateAge();
+    });
+  });
+
+  // Copy Summary Action
+  btnCopySummary.addEventListener('click', () => {
+    const summaryText = `🎂 Age Summary Report:
+• Exact Age: ${resHeroYears.textContent} Years, ${resHeroMonths.textContent} Months, ${resHeroDays.textContent} Days
+• Born On: ${resBornDayName.textContent}
+• Western Zodiac: ${resZodiacPill.textContent}
+• Generation: ${resGenerationPill.textContent}
+• Total Days Lived: ${resTotalDays.textContent} Days (${resTotalWeeks.textContent} Weeks)
+• Total Hours Lived: ${resTotalHours.textContent} Hours
+• Next Birthday: ${resNextBday.textContent}
+Calculated on: ${new Date().toLocaleDateString()} via aifreecalculator.com/general/age-calculator/`;
+
+    navigator.clipboard.writeText(summaryText).then(() => {
+      const original = btnCopySummary.innerHTML;
+      btnCopySummary.innerHTML = '<span>✅</span> Copied!';
+      setTimeout(() => {
+        btnCopySummary.innerHTML = original;
+      }, 2000);
+    });
+  });
+
+  btnPrintSummary.addEventListener('click', () => {
+    window.print();
+  });
+
+  // =========================================================================
+  // TAB 2: AGE DIFFERENCE ENGINE
+  // =========================================================================
+  const ageDiffForm = document.getElementById('age-diff-form');
+  const diffResultBox = document.getElementById('diff-result-box');
+  const diffHeroText = document.getElementById('diff-hero-text');
+  const diffResDays = document.getElementById('diff-res-days');
+  const diffResWeeks = document.getElementById('diff-res-weeks');
+  const diffResHours = document.getElementById('diff-res-hours');
+  const diffDoubleAgeText = document.getElementById('diff-double-age-text');
+  const btnDiffReset = document.getElementById('btn-diff-reset');
+
+  function calculateAgeDifference() {
+    const p1Name = document.getElementById('diff-p1-name').value || 'Person 1';
+    const p2Name = document.getElementById('diff-p2-name').value || 'Person 2';
+    const d1Str = diffP1Dob.value;
+    const d2Str = diffP2Dob.value;
+
+    if (!d1Str || !d2Str) return;
+
+    const d1 = parseDateInput(d1Str);
+    const d2 = parseDateInput(d2Str);
+
+    let olderName = p1Name;
+    let youngerName = p2Name;
+    let olderDate = d1;
+    let youngerDate = d2;
+
+    if (d1 > d2) {
+      olderName = p2Name;
+      youngerName = p1Name;
+      olderDate = d2;
+      youngerDate = d1;
+    } else if (d1.getTime() === d2.getTime()) {
+      diffHeroText.textContent = `${p1Name} and ${p2Name} are born on the exact same date!`;
+      diffResDays.textContent = '0';
+      diffResWeeks.textContent = '0';
+      diffResHours.textContent = '0';
+      diffDoubleAgeText.textContent = 'Both persons were born on the same date, so there is no age difference.';
+      diffResultBox.classList.remove('hidden');
+      return;
+    }
+
+    let y = youngerDate.getFullYear() - olderDate.getFullYear();
+    let m = youngerDate.getMonth() - olderDate.getMonth();
+    let d = youngerDate.getDate() - olderDate.getDate();
+
+    if (d < 0) {
+      m--;
+      const prevMonthDays = new Date(youngerDate.getFullYear(), youngerDate.getMonth(), 0).getDate();
+      d += prevMonthDays;
+    }
+    if (m < 0) {
+      y--;
+      m += 12;
+    }
+
+    diffHeroText.textContent = `${olderName} is older than ${youngerName} by ${y} Years, ${m} Months, ${d} Days`;
+
+    const diffMs = youngerDate.getTime() - olderDate.getTime();
+    const totalDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    diffResDays.textContent = totalDays.toLocaleString();
+    diffResWeeks.textContent = Math.floor(totalDays / 7).toLocaleString();
+    diffResHours.textContent = (totalDays * 24).toLocaleString();
+
+    // Double Age Date: Date = youngerDate + diffMs
+    const doubleAgeDateObj = new Date(youngerDate.getTime() + diffMs);
+    const doubleAgeDateStr = doubleAgeDateObj.toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric' });
+    const isPast = doubleAgeDateObj < new Date();
+
+    diffDoubleAgeText.textContent = `On ${doubleAgeDateStr}, ${olderName} ${isPast ? 'was' : 'will be'} exactly twice the age of ${youngerName}!`;
+    diffResultBox.classList.remove('hidden');
+  }
+
+  ageDiffForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    calculateAgeDifference();
+  });
+  diffP1Dob.addEventListener('change', calculateAgeDifference);
+  diffP2Dob.addEventListener('change', calculateAgeDifference);
+
+  btnDiffReset.addEventListener('click', () => {
+    ageDiffForm.reset();
+    diffResultBox.classList.add('hidden');
+  });
+
+  // =========================================================================
+  // TAB 3: EXAM & JOB ELIGIBILITY CHECKER
+  // =========================================================================
+  const examCheckerForm = document.getElementById('exam-checker-form');
+  const examMinAge = document.getElementById('exam-min-age');
+  const examMaxAge = document.getElementById('exam-max-age');
+  const examCategoryRelax = document.getElementById('exam-category-relax');
+  const examResultBox = document.getElementById('exam-result-box');
+  const examStatusBadge = document.getElementById('exam-status-badge');
+  const examAgeCutoffPill = document.getElementById('exam-age-cutoff-pill');
+  const examStatusTitle = document.getElementById('exam-status-title');
+  const examStatusDesc = document.getElementById('exam-status-desc');
+  const examResEffMax = document.getElementById('exam-res-eff-max');
+  const examResYearsLeft = document.getElementById('exam-res-years-left');
+
+  function checkExamEligibility() {
+    const dobStr = examInputDob.value;
+    const cutoffStr = examInputCutoff.value;
+    const minAge = Number(examMinAge.value) || 0;
+    const baseMax = Number(examMaxAge.value) || 0;
+    const relax = Number(examCategoryRelax.value) || 0;
+
+    if (!dobStr || !cutoffStr) return;
+
+    const birth = parseDateInput(dobStr);
+    const cutoff = parseDateInput(cutoffStr);
+
+    if (birth > cutoff) return;
+
+    let y = cutoff.getFullYear() - birth.getFullYear();
+    let m = cutoff.getMonth() - birth.getMonth();
+    let d = cutoff.getDate() - birth.getDate();
+
+    if (d < 0) {
+      m--;
+      const prevMonthDays = new Date(cutoff.getFullYear(), cutoff.getMonth(), 0).getDate();
+      d += prevMonthDays;
+    }
+    if (m < 0) {
+      y--;
+      m += 12;
+    }
+
+    const effMax = baseMax + relax;
+    examResEffMax.textContent = `${effMax} Years (${baseMax} + ${relax} relax)`;
+    examAgeCutoffPill.textContent = `Age on Cutoff: ${y} yrs, ${m} mos, ${d} days`;
+
+    examResultBox.classList.remove('border-emerald-300', 'bg-emerald-50/60', 'border-red-300', 'bg-red-50/60', 'border-amber-300', 'bg-amber-50/60');
+
+    if (y < minAge) {
+      // Underage
+      examStatusBadge.className = 'rounded-full px-3 py-1 text-xs font-black uppercase tracking-wider bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+      examStatusBadge.textContent = '❌ UNDERAGE';
+      examResultBox.classList.add('border-amber-300', 'bg-amber-50/60', 'dark:border-amber-900', 'dark:bg-amber-950/40');
+      examStatusTitle.textContent = `You are underage for this examination as of ${cutoff.toLocaleDateString()}.`;
+      examStatusDesc.textContent = `Minimum required age is ${minAge} years. You need ${minAge - 1 - y} years and ${11 - m} months more.`;
+      examResYearsLeft.textContent = '0 (Underage)';
+    } else if (y > effMax || (y === effMax && (m > 0 || d > 0))) {
+      // Overage
+      examStatusBadge.className = 'rounded-full px-3 py-1 text-xs font-black uppercase tracking-wider bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300';
+      examStatusBadge.textContent = '❌ OVERAGE';
+      examResultBox.classList.add('border-red-300', 'bg-red-50/60', 'dark:border-red-900', 'dark:bg-red-950/40');
+      examStatusTitle.textContent = `You have exceeded the maximum permissible age limit (${effMax} yrs).`;
+      examStatusDesc.textContent = `Candidate age on cutoff date is ${y} yrs, ${m} mos (${y - effMax} years over the limit).`;
+      examResYearsLeft.textContent = '0 (Exceeded)';
+    } else {
+      // Eligible
+      examStatusBadge.className = 'rounded-full px-3 py-1 text-xs font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+      examStatusBadge.textContent = '✅ ELIGIBLE';
+      examResultBox.classList.add('border-emerald-300', 'bg-emerald-50/60', 'dark:border-emerald-900', 'dark:bg-emerald-950/40');
+      examStatusTitle.textContent = `Eligible: You satisfy the age criteria on ${cutoff.toLocaleDateString()}.`;
+      const remainYears = effMax - 1 - y;
+      const remainMonths = 11 - m;
+      examStatusDesc.textContent = `You have approximately ${remainYears} years and ${remainMonths} months remaining before reaching the maximum age limit (${effMax} yrs).`;
+      examResYearsLeft.textContent = `${effMax - y} years approx.`;
+    }
+
+    examResultBox.classList.remove('hidden');
+  }
+
+  examCheckerForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    checkExamEligibility();
+  });
+  examInputDob.addEventListener('change', checkExamEligibility);
+  examInputCutoff.addEventListener('change', checkExamEligibility);
+  examMinAge.addEventListener('input', checkExamEligibility);
+  examMaxAge.addEventListener('input', checkExamEligibility);
+  examCategoryRelax.addEventListener('change', checkExamEligibility);
+
+  // Exam presets
+  document.querySelectorAll('.btn-exam-preset').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const min = btn.getAttribute('data-min');
+      const max = btn.getAttribute('data-max');
+      const cutoffSuffix = btn.getAttribute('data-cutoff');
+      examMinAge.value = min;
+      examMaxAge.value = max;
+      examInputCutoff.value = `${new Date().getFullYear()}-${cutoffSuffix}`;
+      if (examInputDob.value) checkExamEligibility();
+    });
+  });
+
+  // =========================================================================
+  // TAB 4: MILESTONES & REVERSE DOB FINDER
+  // =========================================================================
+  const btnCalcTurnDate = document.getElementById('btn-calc-turn-date');
+  const turnResultCard = document.getElementById('turn-result-card');
+  const turnResultDate = document.getElementById('turn-result-date');
+  const turnTargetAge = document.getElementById('turn-target-age');
+
+  btnCalcTurnDate.addEventListener('click', () => {
+    const dobVal = turnDobInput.value || dobInput.value;
+    if (!dobVal) return;
+    const birth = parseDateInput(dobVal);
+    const age = Number(turnTargetAge.value);
+    const targetYear = birth.getFullYear() + age;
+    const targetDate = new Date(targetYear, birth.getMonth(), birth.getDate());
+
+    turnResultDate.textContent = targetDate.toLocaleDateString(undefined, {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    turnResultCard.classList.remove('hidden');
+  });
+
+  const btnCalcRevDob = document.getElementById('btn-calc-rev-dob');
+  const revResultCard = document.getElementById('rev-result-card');
+  const revResultDob = document.getElementById('rev-result-dob');
+  const revAgeY = document.getElementById('rev-age-y');
+  const revAgeM = document.getElementById('rev-age-m');
+  const revAgeD = document.getElementById('rev-age-d');
+
+  btnCalcRevDob.addEventListener('click', () => {
+    const asOfStr = revAsOfDate.value;
+    if (!asOfStr) return;
+    const target = parseDateInput(asOfStr);
+    const y = Number(revAgeY.value) || 0;
+    const m = Number(revAgeM.value) || 0;
+    const d = Number(revAgeD.value) || 0;
+
+    let bYear = target.getFullYear() - y;
+    let bMonth = target.getMonth() - m;
+    let bDay = target.getDate() - d;
+
+    if (bDay < 1) {
+      bMonth--;
+      const prevMonthDays = new Date(bYear, bMonth + 1, 0).getDate();
+      bDay += prevMonthDays;
+    }
+    if (bMonth < 0) {
+      bYear--;
+      bMonth += 12;
+    }
+
+    const estDob = new Date(bYear, bMonth, bDay);
+    revResultDob.textContent = estDob.toLocaleDateString(undefined, {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    revResultCard.classList.remove('hidden');
+  });
+
+  // Auto-fill default DOB if available from query or prefill
+  const urlParams = new URLSearchParams(window.location.search);
+  const paramDob = urlParams.get('dob');
+  if (paramDob) {
+    dobInput.value = paramDob;
+    updateAge();
+  }
 </script>
