@@ -104,7 +104,111 @@ export function resolveDateIntervals(range: AnalyticsDateRange): {
 }
 
 /**
+ * Maps an analytics event type onto its daily counter column.
+ * Returns null for unknown events so callers can safely skip them.
+ */
+function resolveEventColumn(eventType: AnalyticsEventType): string | null {
+  switch (eventType) {
+    case 'page_view':
+      return 'page_views';
+    case 'calculator_start':
+      return 'calculator_starts';
+    case 'calculate_click':
+      return 'calculate_clicks';
+    case 'calculation_success':
+      return 'successful_calculations';
+    case 'calculation_error':
+      return 'calculation_errors';
+    case 'result_copy':
+      return 'result_copies';
+    case 'result_share':
+      return 'result_shares';
+    case 'calculator_reset':
+      return 'resets';
+    default:
+      return null;
+  }
+}
+
+/**
+ * Resolves the device counter column.
+ */
+function resolveDeviceColumn(device?: DeviceCategory): 'mobile_count' | 'tablet_count' | 'desktop_count' {
+  if (device === 'mobile') return 'mobile_count';
+  if (device === 'tablet') return 'tablet_count';
+  return 'desktop_count';
+}
+
+/**
+ * Resolves the traffic source counter column.
+ */
+function resolveSourceColumn(
+  source?: TrafficSourceCategory
+): 'organic_count' | 'direct_count' | 'social_count' | 'referral_count' {
+  if (source === 'organic') return 'organic_count';
+  if (source === 'direct') return 'direct_count';
+  if (source === 'social') return 'social_count';
+  return 'referral_count';
+}
+
+/**
+ * Builds the atomic upsert statement that adds `count` to one daily bucket.
+ * Shared by the single-event and batch paths so both write identically.
+ */
+function buildEventUpsert(
+  cleanSlug: string,
+  today: string,
+  col: string,
+  devCol: string,
+  srcCol: string,
+  count: number,
+  now: string
+): { query: string; bindings: (string | number)[] } {
+  const query = `
+    INSERT INTO cms_calc_daily_analytics (
+      id, calculator_slug, date, ${col}, ${devCol}, ${srcCol}, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(id) DO UPDATE SET
+      ${col} = ${col} + ?,
+      ${devCol} = ${devCol} + ?,
+      ${srcCol} = ${srcCol} + ?,
+      updated_at = excluded.updated_at
+  `;
+
+  const id = `${cleanSlug}_${today}`;
+  return {
+    query,
+    bindings: [id, cleanSlug, today, count, count, count, now, count, count, count],
+  };
+}
+
+/**
+ * Runs an upsert, self-healing once if the analytics table has not been created yet.
+ */
+async function runUpsertWithHealing(
+  db: any,
+  query: string,
+  bindings: (string | number)[],
+  locals?: any
+): Promise<void> {
+  try {
+    await db.prepare(query).bind(...bindings).run();
+  } catch (err: any) {
+    if (err?.message && String(err.message).includes('no such table')) {
+      try {
+        await initAnalyticsStore(locals);
+        await db.prepare(query).bind(...bindings).run();
+      } catch {}
+    }
+    // Fail safely; analytics must never throw
+  }
+}
+
+/**
  * Records a single calculator analytics event atomically into daily aggregated buckets.
+ *
+ * @param params.count How many times this event occurred. Defaults to 1 so all
+ *   existing single-event callers keep their exact current behaviour.
  */
 export async function recordCalculatorAnalyticsEvent(
   params: {
@@ -112,6 +216,7 @@ export async function recordCalculatorAnalyticsEvent(
     eventType: AnalyticsEventType;
     device?: DeviceCategory;
     source?: TrafficSourceCategory;
+    count?: number;
   },
   locals?: any
 ): Promise<void> {
@@ -119,58 +224,110 @@ export async function recordCalculatorAnalyticsEvent(
 
   const cleanSlug = params.slug.trim().toLowerCase();
   const today = formatDateKey(new Date());
-  const id = `${cleanSlug}_${today}`;
   const now = new Date().toISOString();
 
-  // Determine which column to increment
-  let col = 'page_views';
-  if (params.eventType === 'calculator_start') col = 'calculator_starts';
-  else if (params.eventType === 'calculate_click') col = 'calculate_clicks';
-  else if (params.eventType === 'calculation_success') col = 'successful_calculations';
-  else if (params.eventType === 'calculation_error') col = 'calculation_errors';
-  else if (params.eventType === 'result_copy') col = 'result_copies';
-  else if (params.eventType === 'result_share') col = 'result_shares';
-  else if (params.eventType === 'calculator_reset') col = 'resets';
+  const col = resolveEventColumn(params.eventType);
+  if (!col) return;
 
-  // Device column
-  const devCol =
-    params.device === 'mobile'
-      ? 'mobile_count'
-      : params.device === 'tablet'
-      ? 'tablet_count'
-      : 'desktop_count';
+  const count = Math.max(1, Math.floor(params.count ?? 1));
 
-  // Source column
-  const srcCol =
-    params.source === 'organic'
-      ? 'organic_count'
-      : params.source === 'direct'
-      ? 'direct_count'
-      : params.source === 'social'
-      ? 'social_count'
-      : 'referral_count';
+  const { query, bindings } = buildEventUpsert(
+    cleanSlug,
+    today,
+    col,
+    resolveDeviceColumn(params.device),
+    resolveSourceColumn(params.source),
+    count,
+    now
+  );
 
-  const query = `
-    INSERT INTO cms_calc_daily_analytics (
-      id, calculator_slug, date, ${col}, ${devCol}, ${srcCol}, updated_at
-    ) VALUES (?, ?, ?, 1, 1, 1, ?)
-    ON CONFLICT(id) DO UPDATE SET
-      ${col} = ${col} + 1,
-      ${devCol} = ${devCol} + 1,
-      ${srcCol} = ${srcCol} + 1,
-      updated_at = excluded.updated_at
-  `;
+  await runUpsertWithHealing(db, query, bindings, locals);
+}
+
+/**
+ * Records a batch of calculator analytics events in a single D1 round trip.
+ *
+ * Events are grouped by (slug, eventType, device, source) and each group is
+ * written as one atomic upsert with a summed count. This collapses what used
+ * to be N sequential D1 writes into a handful of statements executed via
+ * `db.batch()`, cutting Worker invocations and D1 write load substantially
+ * while keeping every counter numerically identical to the per-event path.
+ */
+export async function recordCalculatorAnalyticsBatch(
+  events: Array<{
+    slug: string;
+    eventType: AnalyticsEventType;
+    device?: DeviceCategory;
+    source?: TrafficSourceCategory;
+    count?: number;
+  }>,
+  locals?: any
+): Promise<void> {
+  if (!Array.isArray(events) || events.length === 0) return;
+
+  const db = getDb(locals);
+
+  const today = formatDateKey(new Date());
+  const now = new Date().toISOString();
+
+  // Group identical buckets so one day/slug/event/device/source == one statement
+  const groups = new Map<string, { query: string; bindings: (string | number)[] }>();
+
+  for (const evt of events) {
+    if (!evt || typeof evt.slug !== 'string') continue;
+    const col = resolveEventColumn(evt.eventType);
+    if (!col) continue;
+
+    const cleanSlug = evt.slug.trim().toLowerCase();
+    if (!cleanSlug) continue;
+
+    const count = Math.max(1, Math.floor(evt.count ?? 1));
+    const devCol = resolveDeviceColumn(evt.device);
+    const srcCol = resolveSourceColumn(evt.source);
+    const groupKey = `${cleanSlug}|${col}|${devCol}|${srcCol}`;
+
+    const existing = groups.get(groupKey);
+    if (existing) {
+      // Same bucket already queued — accumulate the count in place.
+      // Bindings layout: [id, slug, date, col, dev, src, updated_at, col+, dev+, src+]
+      // Both the INSERT values (3,4,5) and the ON CONFLICT increments (7,8,9)
+      // must carry the summed count so a brand-new row lands correct too.
+      const merged = existing.bindings.slice();
+      merged[3] = (merged[3] as number) + count;
+      merged[4] = (merged[4] as number) + count;
+      merged[5] = (merged[5] as number) + count;
+      merged[7] = (merged[7] as number) + count;
+      merged[8] = (merged[8] as number) + count;
+      merged[9] = (merged[9] as number) + count;
+      existing.bindings = merged;
+      continue;
+    }
+
+    const built = buildEventUpsert(cleanSlug, today, col, devCol, srcCol, count, now);
+    groups.set(groupKey, built);
+  }
+
+  if (groups.size === 0) return;
+
+  const statements = Array.from(groups.values()).map((g) => db.prepare(g.query).bind(...g.bindings));
 
   try {
-    await db.prepare(query).bind(id, cleanSlug, today, now).run();
+    await db.batch(statements);
   } catch (err: any) {
+    // Self-heal once if the analytics table is missing on a cold database
     if (err?.message && String(err.message).includes('no such table')) {
       try {
         await initAnalyticsStore(locals);
-        await db.prepare(query).bind(id, cleanSlug, today, now).run();
+        await db.batch(statements);
+        return;
       } catch {}
     }
-    // Fail safely; analytics must never throw
+    // Fall back to sequential writes so no event is silently dropped
+    for (const statement of statements) {
+      try {
+        await statement.run();
+      } catch {}
+    }
   }
 }
 

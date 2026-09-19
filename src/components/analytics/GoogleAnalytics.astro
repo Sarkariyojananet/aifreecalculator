@@ -1,6 +1,11 @@
 ---
 /**
  * Google Analytics 4 (GA4) Tag Component
+ *
+ * Performance: the ~90KB gtag.js library is NOT loaded during page render.
+ * The standard gtag queue (window.dataLayer + window.gtag) is installed
+ * immediately so any gtag() call is buffered exactly like Google's official
+ * snippet, then the library itself is fetched once the page is interactive.
  */
 
 interface Props {
@@ -16,32 +21,55 @@ const normalizedMeasurementId = measurementId.trim();
 const isValidId =
   /^G-[A-Z0-9]+$/i.test(normalizedMeasurementId) &&
   !normalizedMeasurementId.includes('XXXX');
+
+const gtagSrc = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(normalizedMeasurementId)}`;
 ---
 
 {
   isValidId && (
-    <>
-      <!-- Google tag (gtag.js) -->
-      <script
-        is:inline
-        async
-        src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(normalizedMeasurementId)}`}
-      ></script>
-
-      <script
-        is:inline
-        define:vars={{ measurementId: normalizedMeasurementId }}
-      >
+    <script is:inline define:vars={{ gaId: normalizedMeasurementId, gaSrc: gtagSrc }}>
+      (function () {
+        // 1. Install the Google gtag queue right away — identical to the
+        //    official snippet. Calls made before the library arrives are
+        //    buffered in dataLayer and replayed when it loads, so no
+        //    analytics events are ever dropped.
         window.dataLayer = window.dataLayer || [];
+        window.gtag =
+          window.gtag ||
+          function () {
+            window.dataLayer.push(arguments);
+          };
 
-        function gtag() {
-          window.dataLayer.push(arguments);
+        window.gtag('js', new Date());
+        window.gtag('config', gaId);
+
+        var loaded = false;
+
+        function loadGA() {
+          try {
+            if (loaded) return;
+            loaded = true;
+            // Guard against a second copy being injected by the runtime
+            // AdSense/monetization config loader.
+            if (document.querySelector('script[src*="googletagmanager.com/gtag/js"]')) return;
+
+            var s = document.createElement('script');
+            s.async = true;
+            s.src = gaSrc;
+            document.head.appendChild(s);
+          } catch (e) {}
         }
 
-        gtag('js', new Date());
+        // Exposed for manual / programmatic triggering if ever needed.
+        window.__afcLoadGA = loadGA;
 
-        gtag('config', measurementId);
-      </script>
-    </>
+        // 2. Defer the library fetch off the critical path.
+        if (window.__afcDefer) {
+          window.__afcDefer(loadGA);
+        } else {
+          loadGA();
+        }
+      })();
+    </script>
   )
 }

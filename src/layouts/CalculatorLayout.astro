@@ -382,21 +382,52 @@ const graphSchema = buildCalculatorGraphSchema({
     (function() {
       if (typeof window === 'undefined') return;
 
-      // Safe lightweight event dispatcher (SendBeacon / fetch keepalive)
-      function trackAnalytics(eventName) {
-        try {
-          var deviceType = 'desktop';
-          var width = window.innerWidth || document.documentElement.clientWidth || 1024;
-          if (width < 768) {
-            deviceType = 'mobile';
-          } else if (width < 1024) {
-            deviceType = 'tablet';
-          }
+      // =========================================================
+      // BATCHED TELEMETRY DISPATCHER
+      // Events are accumulated client-side and flushed as ONE request instead of
+      // one Worker invocation + D1 write per event. Counters stay numerically
+      // identical because each event carries an explicit repeat count.
+      // =========================================================
+      var eventQueue = Object.create(null);
+      var queuedTotal = 0;
+      var flushTimer = null;
+      var FLUSH_AFTER_EVENTS = 12;
+      var FLUSH_AFTER_MS = 15000;
 
+      var deviceType = 'desktop';
+      try {
+        var vw = window.innerWidth || document.documentElement.clientWidth || 1024;
+        if (vw < 768) deviceType = 'mobile';
+        else if (vw < 1024) deviceType = 'tablet';
+      } catch (e) {}
+
+      function flushAnalytics() {
+        if (flushTimer) {
+          clearTimeout(flushTimer);
+          flushTimer = null;
+        }
+        if (queuedTotal === 0) return;
+
+        var events = [];
+        for (var name in eventQueue) {
+          if (eventQueue[name] > 0) {
+            events.push({
+              slug: slug,
+              event: name,
+              device: deviceType,
+              count: eventQueue[name]
+            });
+          }
+        }
+
+        // Reset the queue BEFORE sending so a beacon retry can never double-count
+        eventQueue = Object.create(null);
+        queuedTotal = 0;
+        if (events.length === 0) return;
+
+        try {
           var payload = JSON.stringify({
-            slug: slug,
-            event: eventName,
-            device: deviceType,
+            events: events,
             referrer: document.referrer || ''
           });
 
@@ -412,6 +443,33 @@ const graphSchema = buildCalculatorGraphSchema({
           }
         } catch (e) {}
       }
+
+      function trackAnalytics(eventName) {
+        try {
+          eventQueue[eventName] = (eventQueue[eventName] || 0) + 1;
+          queuedTotal++;
+
+          // Flush promptly once a page has generated enough activity
+          if (queuedTotal >= FLUSH_AFTER_EVENTS) {
+            flushAnalytics();
+            return;
+          }
+
+          // Otherwise coalesce for a while, so bursts collapse into one request
+          if (!flushTimer) {
+            flushTimer = setTimeout(flushAnalytics, FLUSH_AFTER_MS);
+          }
+        } catch (e) {}
+      }
+
+      // Never lose queued events when the page is being backgrounded or unloaded
+      try {
+        document.addEventListener('visibilitychange', function() {
+          if (document.visibilityState === 'hidden') flushAnalytics();
+        });
+        window.addEventListener('pagehide', flushAnalytics);
+        window.addEventListener('beforeunload', flushAnalytics);
+      } catch (e) {}
 
       window.__trackCalculatorEvent = trackAnalytics;
 
@@ -590,6 +648,31 @@ const graphSchema = buildCalculatorGraphSchema({
           }
         }
 
+        // A single Calculate press fires BOTH a `click` and a `submit` event.
+        // These guards make sure one user action is counted once and that the
+        // outcome scroll/telemetry pass only runs a single time.
+        var lastCalcTriggerAt = 0;
+        var lastOutcomeCheckAt = 0;
+        var CALC_DEDUPE_MS = 600;
+
+        function registerCalcTrigger() {
+          var now = Date.now();
+          if (now - lastCalcTriggerAt > CALC_DEDUPE_MS) {
+            lastCalcTriggerAt = now;
+            trackAnalytics('calculate_click');
+          }
+          scheduleOutcomeCheck();
+        }
+
+        function scheduleOutcomeCheck() {
+          setTimeout(function() {
+            var now = Date.now();
+            if (now - lastOutcomeCheckAt <= CALC_DEDUPE_MS) return;
+            lastOutcomeCheckAt = now;
+            checkCalculationOutcomeAndScroll();
+          }, 150);
+        }
+
         // Listen for Calculate button clicks & action bar buttons across all forms and widgets
         document.addEventListener('click', function(e) {
           var btn = e.target.closest('button, input[type="submit"], input[type="button"], a');
@@ -635,16 +718,13 @@ const graphSchema = buildCalculatorGraphSchema({
                               cls.includes('btn-calculate');
 
           if (isCalcTrigger) {
-            trackAnalytics('calculate_click');
-            // Give calculation engine 150ms to compute and render results
-            setTimeout(checkCalculationOutcomeAndScroll, 150);
+            registerCalcTrigger();
           }
         }, true);
 
         // Listen for form submissions (e.g. hitting Enter in input field)
         document.addEventListener('submit', function() {
-          trackAnalytics('calculate_click');
-          setTimeout(checkCalculationOutcomeAndScroll, 150);
+          registerCalcTrigger();
         }, true);
       })();
     })();
