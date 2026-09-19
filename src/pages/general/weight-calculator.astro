@@ -1938,11 +1938,11 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
 
   // Reset the terminal to its dormant state
   function resetReadouts() {
-    resPrimaryVal.textContent = '--';
-    resPrimarySymbol.textContent = UNIT_SYMBOLS[resolveTarget(selectFromUnit.value, selectToUnit.value)];
-    resRateText.textContent = `1 ${UNIT_SYMBOLS[selectFromUnit.value]} = --`;
-    resPrimaryFormula.textContent = '--';
-    resStoneCompound.textContent = '--';
+    if (resPrimaryVal) resPrimaryVal.textContent = '--';
+    if (resPrimarySymbol && selectFromUnit && selectToUnit) resPrimarySymbol.textContent = UNIT_SYMBOLS[resolveTarget(selectFromUnit.value, selectToUnit.value)] || '';
+    if (resRateText && selectFromUnit) resRateText.textContent = `1 ${UNIT_SYMBOLS[selectFromUnit.value] || ''} = --`;
+    if (resPrimaryFormula) resPrimaryFormula.textContent = '--';
+    if (resStoneCompound) resStoneCompound.textContent = '--';
 
     Object.keys(TO_KG).forEach((key) => {
       const valEl = document.getElementById(`card-val-${key}`);
@@ -1960,6 +1960,7 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
 
   // Perform Main Weight Conversion (live + on submit)
   function executeWeightConversion() {
+    if (!inputWeightVal || !selectFromUnit || !selectToUnit) return;
     const rawValStr = inputWeightVal.value.trim();
 
     if (!rawValStr) {
@@ -1991,10 +1992,10 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
     const primaryConverted = baseKg / targetFactor;
     const primaryFormatted = formatNum(primaryConverted, UNIT_DECIMALS[primaryTarget]);
 
-    resRateText.textContent = `1 ${UNIT_SYMBOLS[fromUnit]} = ${formatNum(targetFactor ? fromFactor / targetFactor : 0, 6)} ${UNIT_SYMBOLS[primaryTarget]}`;
-    resPrimaryVal.textContent = primaryFormatted;
-    resPrimarySymbol.textContent = UNIT_SYMBOLS[primaryTarget];
-    resPrimaryFormula.textContent = buildStep(val, fromUnit, primaryTarget, fromFactor, targetFactor, primaryFormatted);
+    if (resRateText) resRateText.textContent = `1 ${UNIT_SYMBOLS[fromUnit]} = ${formatNum(targetFactor ? fromFactor / targetFactor : 0, 6)} ${UNIT_SYMBOLS[primaryTarget]}`;
+    if (resPrimaryVal) resPrimaryVal.textContent = primaryFormatted;
+    if (resPrimarySymbol) resPrimarySymbol.textContent = UNIT_SYMBOLS[primaryTarget];
+    if (resPrimaryFormula) resPrimaryFormula.textContent = buildStep(val, fromUnit, primaryTarget, fromFactor, targetFactor, primaryFormatted);
 
     // Populate every readout row + rail stop
     let summaryText = `Weight Conversion for ${val} ${UNIT_SYMBOLS[fromUnit]}:\n`;
@@ -2036,50 +2037,52 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
     const totalLbs = baseKg / TO_KG.lb;
     const stPart = Math.floor(totalLbs / 14);
     const lbsRemainder = Number((totalLbs % 14).toFixed(2));
-    resStoneCompound.textContent = `${stPart} st ${lbsRemainder} lbs`;
+    if (resStoneCompound) resStoneCompound.textContent = `${stPart} st ${lbsRemainder} lbs`;
 
     if (railRead) {
       railRead.textContent = `${formatNum(val, 3)} ${UNIT_SYMBOLS[fromUnit]} — ${magnitudeLabel(baseKg)}`;
     }
 
-    btnCopySummary.dataset.summary = summaryText;
+    if (btnCopySummary) btnCopySummary.dataset.summary = summaryText;
   }
 
   function showWeightError(msg) {
+    if (!weightError) return;
     weightError.textContent = msg;
     weightError.classList.remove('hidden');
   }
 
   function hideWeightError() {
+    if (!weightError) return;
     weightError.textContent = '';
     weightError.classList.add('hidden');
   }
 
   function clearWeightCalculator() {
-    inputWeightVal.value = '';
-    selectFromUnit.value = 'kg';
-    selectToUnit.value = 'auto';
+    if (inputWeightVal) inputWeightVal.value = '';
+    if (selectFromUnit) selectFromUnit.value = 'kg';
+    if (selectToUnit) selectToUnit.value = 'auto';
     hideWeightError();
     resetReadouts();
-    inputWeightVal.focus();
+    inputWeightVal?.focus();
   }
 
   buildRail();
   resetReadouts();
 
   // Event Listeners - Main Tool
-  btnConvert.addEventListener('click', (e) => {
+  btnConvert?.addEventListener('click', (e) => {
     e.preventDefault();
     executeWeightConversion();
-    inputWeightVal.focus();
+    inputWeightVal?.focus();
   });
 
   // Live conversion
-  inputWeightVal.addEventListener('input', executeWeightConversion);
-  selectFromUnit.addEventListener('change', executeWeightConversion);
-  selectToUnit.addEventListener('change', executeWeightConversion);
+  inputWeightVal?.addEventListener('input', executeWeightConversion);
+  selectFromUnit?.addEventListener('change', executeWeightConversion);
+  selectToUnit?.addEventListener('change', executeWeightConversion);
 
-  inputWeightVal.addEventListener('keydown', (e) => {
+  inputWeightVal?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       executeWeightConversion();
@@ -2087,30 +2090,31 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
   });
 
   // Swap source and target units
-  btnSwapUnits.addEventListener('click', () => {
+  btnSwapUnits?.addEventListener('click', () => {
+    if (!selectFromUnit || !selectToUnit) return;
     const from = selectFromUnit.value;
     const to = resolveTarget(from, selectToUnit.value);
     selectFromUnit.value = to;
     selectToUnit.value = from;
-    if (!inputWeightVal.value.trim()) {
+    if (!inputWeightVal?.value.trim()) {
       resetReadouts();
       return;
     }
     executeWeightConversion();
   });
 
-  btnClear.addEventListener('click', clearWeightCalculator);
+  btnClear?.addEventListener('click', clearWeightCalculator);
 
   // Quick Preset Chips
   document.querySelectorAll('.btn-preset').forEach((btn) => {
     btn.addEventListener('click', () => {
       const val = btn.getAttribute('data-val');
       const unit = btn.getAttribute('data-unit');
-      inputWeightVal.value = val;
-      selectFromUnit.value = unit;
-      selectToUnit.value = 'auto';
+      if (inputWeightVal && val) inputWeightVal.value = val;
+      if (selectFromUnit && unit) selectFromUnit.value = unit;
+      if (selectToUnit) selectToUnit.value = 'auto';
       executeWeightConversion();
-      inputWeightVal.focus();
+      inputWeightVal?.focus();
     });
   });
 
@@ -2119,20 +2123,21 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
     railTrack.addEventListener('click', (e) => {
       const pick = e.target.closest('[data-rail-pick]');
       if (!pick) return;
-      selectToUnit.value = pick.getAttribute('data-rail-pick');
+      const unit = pick.getAttribute('data-rail-pick');
+      if (selectToUnit && unit) selectToUnit.value = unit;
       executeWeightConversion();
     });
   }
 
   // Copy Summary Handler
-  btnCopySummary.addEventListener('click', async () => {
+  btnCopySummary?.addEventListener('click', async () => {
     const text = btnCopySummary.dataset.summary || '';
     if (!text) return;
     try {
       await navigator.clipboard.writeText(text);
-      copySummaryText.textContent = 'Copied! ✓';
+      if (copySummaryText) copySummaryText.textContent = 'Copied! ✓';
       setTimeout(() => {
-        copySummaryText.textContent = 'Copy Results';
+        if (copySummaryText) copySummaryText.textContent = 'Copy Results';
       }, 2000);
     } catch (err) {
       console.error('Clipboard copy failed', err);
@@ -2157,25 +2162,30 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
   const goldResTola = document.getElementById('gold-res-tola');
 
   function executeGoldConversion() {
+    if (!inputGoldVal || !selectGoldUnit) return;
     const rawValStr = inputGoldVal.value.trim();
     if (!rawValStr) {
-      goldError.textContent = 'Please enter a gold weight value.';
-      goldError.classList.remove('hidden');
-      goldResultsBox.classList.add('hidden');
+      if (goldError) {
+        goldError.textContent = 'Please enter a gold weight value.';
+        goldError.classList.remove('hidden');
+      }
+      goldResultsBox?.classList.add('hidden');
       inputGoldVal.focus();
       return;
     }
 
     const val = parseFloat(rawValStr);
     if (isNaN(val) || val < 0) {
-      goldError.textContent = 'Please enter a valid positive weight.';
-      goldError.classList.remove('hidden');
-      goldResultsBox.classList.add('hidden');
+      if (goldError) {
+        goldError.textContent = 'Please enter a valid positive weight.';
+        goldError.classList.remove('hidden');
+      }
+      goldResultsBox?.classList.add('hidden');
       inputGoldVal.focus();
       return;
     }
 
-    goldError.classList.add('hidden');
+    goldError?.classList.add('hidden');
 
     const unit = selectGoldUnit.value;
     let grams = 0;
@@ -2191,32 +2201,32 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
     const mg = grams * 1000;
     const tola = grams / 11.6638038;
 
-    goldResTroy.textContent = `${formatNum(troyOz, 4)} oz t`;
-    goldResGrams.textContent = `${formatNum(grams, 3)} g`;
-    goldResKg.textContent = `${formatNum(kg, 5)} kg`;
-    goldResMg.textContent = `${formatNum(mg, 1)} mg`;
-    goldResTola.textContent = `${formatNum(tola, 4)} tolas`;
+    if (goldResTroy) goldResTroy.textContent = `${formatNum(troyOz, 4)} oz t`;
+    if (goldResGrams) goldResGrams.textContent = `${formatNum(grams, 3)} g`;
+    if (goldResKg) goldResKg.textContent = `${formatNum(kg, 5)} kg`;
+    if (goldResMg) goldResMg.textContent = `${formatNum(mg, 1)} mg`;
+    if (goldResTola) goldResTola.textContent = `${formatNum(tola, 4)} tolas`;
 
-    goldResultsBox.classList.remove('hidden');
+    goldResultsBox?.classList.remove('hidden');
   }
 
-  btnGoldConvert.addEventListener('click', (e) => {
+  btnGoldConvert?.addEventListener('click', (e) => {
     e.preventDefault();
     executeGoldConversion();
   });
 
-  inputGoldVal.addEventListener('keydown', (e) => {
+  inputGoldVal?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
       executeGoldConversion();
     }
   });
 
-  btnGoldClear.addEventListener('click', () => {
-    inputGoldVal.value = '';
-    selectGoldUnit.value = 'troy_oz';
-    goldError.classList.add('hidden');
-    goldResultsBox.classList.add('hidden');
+  btnGoldClear?.addEventListener('click', () => {
+    if (inputGoldVal) inputGoldVal.value = '';
+    if (selectGoldUnit) selectGoldUnit.value = 'troy_oz';
+    goldError?.classList.add('hidden');
+    goldResultsBox?.classList.add('hidden');
   });
 
 
@@ -2247,24 +2257,24 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
   const hwResRangeKg = document.getElementById('hw-res-range-kg');
   const hwResRangeLbs = document.getElementById('hw-res-range-lbs');
 
-  hwTabMetric.addEventListener('click', () => {
+  hwTabMetric?.addEventListener('click', () => {
     currentHwSystem = 'metric';
-    hwTabMetric.className = 'hw-tab active rounded-lg bg-emerald-600 px-3 py-1 font-bold text-white shadow-xs cursor-pointer';
-    hwTabUs.className = 'hw-tab rounded-lg border border-slate-300 bg-white px-3 py-1 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer';
-    hwMetricHeightCol.classList.remove('hidden');
-    hwUsHeightCol.classList.add('hidden');
-    hwWeightLabel.textContent = 'Weight (kg)';
-    inputHwWeight.placeholder = 'e.g. 70';
+    if (hwTabMetric) hwTabMetric.className = 'hw-tab active rounded-lg bg-emerald-600 px-3 py-1 font-bold text-white shadow-xs cursor-pointer';
+    if (hwTabUs) hwTabUs.className = 'hw-tab rounded-lg border border-slate-300 bg-white px-3 py-1 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer';
+    hwMetricHeightCol?.classList.remove('hidden');
+    hwUsHeightCol?.classList.add('hidden');
+    if (hwWeightLabel) hwWeightLabel.textContent = 'Weight (kg)';
+    if (inputHwWeight) inputHwWeight.placeholder = 'e.g. 70';
   });
 
-  hwTabUs.addEventListener('click', () => {
+  hwTabUs?.addEventListener('click', () => {
     currentHwSystem = 'us';
-    hwTabUs.className = 'hw-tab active rounded-lg bg-emerald-600 px-3 py-1 font-bold text-white shadow-xs cursor-pointer';
-    hwTabMetric.className = 'hw-tab rounded-lg border border-slate-300 bg-white px-3 py-1 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer';
-    hwMetricHeightCol.classList.add('hidden');
-    hwUsHeightCol.classList.remove('hidden');
-    hwWeightLabel.textContent = 'Weight (lbs)';
-    inputHwWeight.placeholder = 'e.g. 154';
+    if (hwTabUs) hwTabUs.className = 'hw-tab active rounded-lg bg-emerald-600 px-3 py-1 font-bold text-white shadow-xs cursor-pointer';
+    if (hwTabMetric) hwTabMetric.className = 'hw-tab rounded-lg border border-slate-300 bg-white px-3 py-1 font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer';
+    hwMetricHeightCol?.classList.add('hidden');
+    hwUsHeightCol?.classList.remove('hidden');
+    if (hwWeightLabel) hwWeightLabel.textContent = 'Weight (lbs)';
+    if (inputHwWeight) inputHwWeight.placeholder = 'e.g. 154';
   });
 
   function executeHwCalculation() {
@@ -2272,22 +2282,22 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
     let weightKg = 0;
 
     if (currentHwSystem === 'metric') {
-      const cm = parseFloat(inputHwHeightCm.value);
+      const cm = parseFloat(inputHwHeightCm?.value);
       if (isNaN(cm) || cm <= 0) {
         showHwError('Please enter a valid height in centimeters.');
         return;
       }
       heightM = cm / 100;
 
-      const kg = parseFloat(inputHwWeight.value);
+      const kg = parseFloat(inputHwWeight?.value);
       if (isNaN(kg) || kg <= 0) {
         showHwError('Please enter a valid weight in kilograms.');
         return;
       }
       weightKg = kg;
     } else {
-      const ft = parseFloat(inputHwHeightFt.value) || 0;
-      const inches = parseFloat(inputHwHeightIn.value) || 0;
+      const ft = parseFloat(inputHwHeightFt?.value) || 0;
+      const inches = parseFloat(inputHwHeightIn?.value) || 0;
       const totalInches = ft * 12 + inches;
       if (totalInches <= 0) {
         showHwError('Please enter a valid height in feet and inches.');
@@ -2295,7 +2305,7 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
       }
       heightM = (totalInches * 2.54) / 100;
 
-      const lbs = parseFloat(inputHwWeight.value);
+      const lbs = parseFloat(inputHwWeight?.value);
       if (isNaN(lbs) || lbs <= 0) {
         showHwError('Please enter a valid weight in pounds.');
         return;
@@ -2303,7 +2313,7 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
       weightKg = lbs * 0.45359237;
     }
 
-    hwError.classList.add('hidden');
+    hwError?.classList.add('hidden');
 
     const bmi = Number((weightKg / (heightM * heightM)).toFixed(1));
     const healthyMinKgRaw = 18.5 * heightM * heightM;
@@ -2315,46 +2325,50 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
     const healthyMinLbs = Number((healthyMinKgRaw * LB_PER_KG).toFixed(1));
     const healthyMaxLbs = Number((healthyMaxKgRaw * LB_PER_KG).toFixed(1));
 
-    hwResBmi.textContent = bmi.toString();
+    if (hwResBmi) hwResBmi.textContent = bmi.toString();
 
-    if (bmi < 18.5) {
-      hwResBadge.textContent = 'Underweight';
-      hwResBadge.className = 'rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold text-blue-800 dark:bg-blue-950 dark:text-blue-300';
-    } else if (bmi >= 18.5 && bmi <= 24.9) {
-      hwResBadge.textContent = 'Normal Weight';
-      hwResBadge.className = 'rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
-    } else if (bmi >= 25.0 && bmi <= 29.9) {
-      hwResBadge.textContent = 'Overweight';
-      hwResBadge.className = 'rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-950 dark:text-amber-300';
-    } else {
-      hwResBadge.textContent = 'Obese';
-      hwResBadge.className = 'rounded-full bg-red-100 px-2.5 py-0.5 text-[10px] font-bold text-red-800 dark:bg-red-950 dark:text-red-300';
+    if (hwResBadge) {
+      if (bmi < 18.5) {
+        hwResBadge.textContent = 'Underweight';
+        hwResBadge.className = 'rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold text-blue-800 dark:bg-blue-950 dark:text-blue-300';
+      } else if (bmi >= 18.5 && bmi <= 24.9) {
+        hwResBadge.textContent = 'Normal Weight';
+        hwResBadge.className = 'rounded-full bg-emerald-100 px-2.5 py-0.5 text-[10px] font-bold text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+      } else if (bmi >= 25.0 && bmi <= 29.9) {
+        hwResBadge.textContent = 'Overweight';
+        hwResBadge.className = 'rounded-full bg-amber-100 px-2.5 py-0.5 text-[10px] font-bold text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+      } else {
+        hwResBadge.textContent = 'Obese';
+        hwResBadge.className = 'rounded-full bg-red-100 px-2.5 py-0.5 text-[10px] font-bold text-red-800 dark:bg-red-950 dark:text-red-300';
+      }
     }
 
-    hwResRangeKg.textContent = `${healthyMinKg} - ${healthyMaxKg} kg`;
-    hwResRangeLbs.textContent = `${healthyMinLbs} - ${healthyMaxLbs} lbs`;
+    if (hwResRangeKg) hwResRangeKg.textContent = `${healthyMinKg} - ${healthyMaxKg} kg`;
+    if (hwResRangeLbs) hwResRangeLbs.textContent = `${healthyMinLbs} - ${healthyMaxLbs} lbs`;
 
-    hwResultsBox.classList.remove('hidden');
+    hwResultsBox?.classList.remove('hidden');
   }
 
   function showHwError(msg) {
-    hwError.textContent = msg;
-    hwError.classList.remove('hidden');
-    hwResultsBox.classList.add('hidden');
+    if (hwError) {
+      hwError.textContent = msg;
+      hwError.classList.remove('hidden');
+    }
+    hwResultsBox?.classList.add('hidden');
   }
 
-  btnHwCalculate.addEventListener('click', (e) => {
+  btnHwCalculate?.addEventListener('click', (e) => {
     e.preventDefault();
     executeHwCalculation();
   });
 
-  btnHwClear.addEventListener('click', () => {
-    inputHwHeightCm.value = '';
-    inputHwHeightFt.value = '';
-    inputHwHeightIn.value = '';
-    inputHwWeight.value = '';
-    hwError.classList.add('hidden');
-    hwResultsBox.classList.add('hidden');
+  btnHwClear?.addEventListener('click', () => {
+    if (inputHwHeightCm) inputHwHeightCm.value = '';
+    if (inputHwHeightFt) inputHwHeightFt.value = '';
+    if (inputHwHeightIn) inputHwHeightIn.value = '';
+    if (inputHwWeight) inputHwWeight.value = '';
+    hwError?.classList.add('hidden');
+    hwResultsBox?.classList.add('hidden');
   });
 
 </script>

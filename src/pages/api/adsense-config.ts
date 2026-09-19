@@ -10,6 +10,7 @@ import {
 import { getDb } from '../../lib/db';
 import { verifyAdminToken } from '../../lib/auth';
 import { logAuditEvent, saveSettingsSnapshot } from '../../lib/admin/audit-store';
+import { safeWaitUntil } from '../../lib/cloudflare-env';
 
 export const prerender = false;
 
@@ -132,7 +133,6 @@ export async function readSettings(locals: App.Locals): Promise<AdsConfig> {
   return DEFAULT_ADS_CONFIG;
 }
 
-import { safeWaitUntil } from '../../lib/cloudflare-env';
 
 const ADSENSE_CONFIG_HEADERS = {
   'Content-Type': 'application/json; charset=utf-8',
@@ -141,27 +141,36 @@ const ADSENSE_CONFIG_HEADERS = {
 } as const;
 
 export const GET: APIRoute = async ({ request, locals }) => {
-  const cache = typeof caches !== 'undefined' && (caches as any).default ? ((caches as any).default as Cache) : null;
-  const cacheKey = request.url;
+  try {
+    const cache = typeof caches !== 'undefined' && (caches as any).default ? ((caches as any).default as Cache) : null;
+    const cacheKey = request.url;
 
-  if (cache) {
-    try {
-      const cached = await cache.match(cacheKey);
-      if (cached) return cached;
-    } catch {}
+    if (cache) {
+      try {
+        const cached = await cache.match(cacheKey);
+        if (cached) return new Response(cached.body, cached);
+      } catch {}
+    }
+
+    const config = await readSettings(locals);
+    const response = new Response(JSON.stringify(config), {
+      status: 200,
+      headers: ADSENSE_CONFIG_HEADERS,
+    });
+
+    if (cache) {
+      try {
+        safeWaitUntil(locals, cache.put(cacheKey, response.clone()).catch(() => {}));
+      } catch {}
+    }
+
+    return response;
+  } catch {
+    return new Response(JSON.stringify(DEFAULT_ADS_CONFIG), {
+      status: 200,
+      headers: ADSENSE_CONFIG_HEADERS,
+    });
   }
-
-  const config = await readSettings(locals);
-  const response = new Response(JSON.stringify(config), {
-    status: 200,
-    headers: ADSENSE_CONFIG_HEADERS,
-  });
-
-  if (cache) {
-    safeWaitUntil(locals, cache.put(cacheKey, response.clone()));
-  }
-
-  return response;
 };
 
 

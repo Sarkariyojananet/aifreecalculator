@@ -289,9 +289,22 @@ export const onRequest = defineMiddleware(async (context, next) => {
     );
   }
 
-  // 3. Attach industry-standard HTTP security headers via static tuple loop
-  for (let i = 0; i < SECURITY_HEADERS.length; i++) {
-    response.headers.set(SECURITY_HEADERS[i][0], SECURITY_HEADERS[i][1]);
+  // 3. Ensure response has mutable headers (e.g. if returned from Cache API) and attach security headers
+  try {
+    for (let i = 0; i < SECURITY_HEADERS.length; i++) {
+      response.headers.set(SECURITY_HEADERS[i][0], SECURITY_HEADERS[i][1]);
+    }
+  } catch {
+    // If response headers are immutable (e.g. from Cache API match), reconstruct Response with mutable headers
+    const mutableHeaders = new Headers(response.headers);
+    for (let i = 0; i < SECURITY_HEADERS.length; i++) {
+      mutableHeaders.set(SECURITY_HEADERS[i][0], SECURITY_HEADERS[i][1]);
+    }
+    response = new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers: mutableHeaders,
+    });
   }
 
   // 4. Cache-Control Header Policy:

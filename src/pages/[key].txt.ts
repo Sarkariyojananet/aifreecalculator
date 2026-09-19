@@ -33,7 +33,9 @@ export const GET: APIRoute = async ({ request, params, locals }) => {
     });
 
     if (cache) {
-      safeWaitUntil(locals, cache.put(cacheKey, response.clone()));
+      try {
+        safeWaitUntil(locals, cache.put(cacheKey, response.clone()).catch(() => {}));
+      } catch {}
     }
 
     return response;
