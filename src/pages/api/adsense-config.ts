@@ -106,7 +106,7 @@ function normalizeSettings(stored: any): AdsConfig {
 }
 
 let inMemoryAdsConfig: { data: AdsConfig; expiry: number } | null = null;
-const ADS_CONFIG_TTL = 300_000; // 5 minutes
+const ADS_CONFIG_TTL = 15_000; // 15 seconds
 
 export function invalidateAdsConfigCache(): void {
   inMemoryAdsConfig = null;
@@ -136,8 +136,8 @@ export async function readSettings(locals: App.Locals): Promise<AdsConfig> {
 
 const ADSENSE_CONFIG_HEADERS = {
   'Content-Type': 'application/json; charset=utf-8',
-  'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
-  'Cloudflare-CDN-Cache-Control': 'max-age=86400, stale-while-revalidate=604800',
+  'Cache-Control': 'public, max-age=10, s-maxage=30, stale-while-revalidate=120',
+  'Cloudflare-CDN-Cache-Control': 'max-age=30, stale-while-revalidate=120',
 } as const;
 
 export const GET: APIRoute = async ({ request, locals }) => {
@@ -226,6 +226,8 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     const edgeCache = typeof caches !== 'undefined' && (caches as any).default ? ((caches as any).default as Cache) : null;
     if (edgeCache) {
       try {
+        const url = new URL(request.url);
+        await edgeCache.delete(url.origin + '/api/adsense-config');
         await edgeCache.delete(request.url);
       } catch {}
     }

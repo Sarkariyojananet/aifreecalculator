@@ -264,29 +264,48 @@ const resolvedOgImage = ogImage.startsWith('http')
         async function fetchAdConfig() {
           try {
             const CACHE_KEY = 'adsense_cfg';
-            const ONE_DAY_MS = 86_400_000; // 24 hours
-            let cached = null;
-            try {
-              cached = localStorage.getItem(CACHE_KEY) || sessionStorage.getItem(CACHE_KEY);
-            } catch {}
+            const CACHE_TTL = 30_000; // 30 seconds fresh cache
 
-            if (cached) {
+            // Allow URL override for instant testing/previewing: ?preview_ads=1, ?test_ads=1, ?preview=ads
+            const urlParams = new URLSearchParams(window.location.search);
+            const forcePreview =
+              urlParams.has('preview_ads') ||
+              urlParams.has('test_ads') ||
+              urlParams.get('preview') === 'ads' ||
+              urlParams.get('ad_mode') === 'test';
+
+            if (!forcePreview) {
+              let cached = null;
               try {
-                const parsed = JSON.parse(cached);
-                if (parsed && parsed.expiry > Date.now() && parsed.data) {
-                  return parsed.data;
-                }
+                cached = localStorage.getItem(CACHE_KEY) || sessionStorage.getItem(CACHE_KEY);
               } catch {}
+
+              if (cached) {
+                try {
+                  const parsed = JSON.parse(cached);
+                  if (parsed && parsed.expiry > Date.now() && parsed.data) {
+                    return parsed.data;
+                  }
+                } catch {}
+              }
             }
-            const res = await fetch('/api/adsense-config');
+
+            const res = await fetch(
+              '/api/adsense-config?t=' + (forcePreview ? Date.now() : Math.floor(Date.now() / 30000))
+            );
             if (!res.ok) return null;
             const data = await res.json();
+
+            if (forcePreview && data) {
+              data.testMode = true;
+            }
+
             try {
-              const payload = JSON.stringify({ data, expiry: Date.now() + ONE_DAY_MS });
+              const payload = JSON.stringify({ data, expiry: Date.now() + CACHE_TTL });
               localStorage.setItem(CACHE_KEY, payload);
             } catch {
               try {
-                sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data, expiry: Date.now() + ONE_DAY_MS }));
+                sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data, expiry: Date.now() + CACHE_TTL }));
               } catch {}
             }
             return data;
@@ -444,10 +463,14 @@ const resolvedOgImage = ogImage.startsWith('http')
 
           function hideSlot(el) {
             el.style.display = 'none';
+            el.setAttribute('hidden', '');
+            el.classList.add('hidden');
           }
 
           function showSlot(el) {
             el.style.display = 'block';
+            el.removeAttribute('hidden');
+            el.classList.remove('hidden');
           }
 
           // If no config or globally disabled AND Test Mode is OFF
@@ -473,8 +496,12 @@ const resolvedOgImage = ogImage.startsWith('http')
           // 1. If TEST MODE is explicitly TRUE
           if (config.testMode === true) {
             slotElements.forEach((el) => {
-              const location = el.getAttribute('data-ad-slot-location');
-              const slotConfig = config.slots?.[location] || {};
+              const rawLocation = el.getAttribute('data-ad-slot-location') || '';
+              const location = rawLocation.toLowerCase();
+              const locationAlt = location.includes('-')
+                ? location.replace(/-/g, '_')
+                : location.replace(/_/g, '-');
+              const slotConfig = config.slots?.[location] || config.slots?.[locationAlt] || {};
               const slotId = el.getAttribute('data-prop-slot-id') || slotConfig.slotId || '1234567890';
               const label = slotConfig.label || `${location.toUpperCase()} Ad Slot`;
               const isEnabled = slotConfig.enabled !== false;
@@ -490,20 +517,24 @@ const resolvedOgImage = ogImage.startsWith('http')
 
               let networkLabel = 'GOOGLE ADSENSE';
               let networkDetails = `Ad Unit Slot ID: <strong>${escapeText(slotId)}</strong>`;
-              let badgeColor = 'border-amber-400 bg-amber-50/80 text-amber-800 dark:border-amber-600 dark:bg-amber-950/40 dark:text-amber-300';
+              let badgeColor =
+                'border-amber-400 bg-amber-50/90 text-amber-900 dark:border-amber-600 dark:bg-amber-950/60 dark:text-amber-200';
 
               if (net === 'adx') {
                 networkLabel = 'GOOGLE ADX / CUSTOM SCRIPT';
                 networkDetails = `Custom Ad Tag Configured | Placement: <code>${escapeText(location)}</code>`;
-                badgeColor = 'border-purple-400 bg-purple-50/80 text-purple-800 dark:border-purple-600 dark:bg-purple-950/40 dark:text-purple-300';
+                badgeColor =
+                  'border-purple-400 bg-purple-50/90 text-purple-900 dark:border-purple-600 dark:bg-purple-950/60 dark:text-purple-200';
               } else if (net === 'direct_sponsor') {
                 networkLabel = 'DIRECT SPONSOR BANNER';
                 networkDetails = `Target: <span class="font-mono text-xs">${escapeText(slotConfig.sponsorTargetUrl || 'https://sponsor-link.com')}</span>`;
-                badgeColor = 'border-emerald-400 bg-emerald-50/80 text-emerald-800 dark:border-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-300';
+                badgeColor =
+                  'border-emerald-400 bg-emerald-50/90 text-emerald-900 dark:border-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-200';
               } else if (net === 'affiliate') {
                 networkLabel = 'AFFILIATE CREATIVE';
                 networkDetails = `Affiliate URL: <span class="font-mono text-xs">${escapeText(slotConfig.sponsorTargetUrl || 'https://affiliate-link.com')}</span>`;
-                badgeColor = 'border-blue-400 bg-blue-50/80 text-blue-800 dark:border-blue-600 dark:bg-blue-950/40 dark:text-blue-300';
+                badgeColor =
+                  'border-blue-400 bg-blue-50/90 text-blue-900 dark:border-blue-600 dark:bg-blue-950/60 dark:text-blue-200';
               }
 
               container.innerHTML = `
@@ -537,18 +568,27 @@ const resolvedOgImage = ogImage.startsWith('http')
           // 2. Real Live Mode (enabled = true, testMode = false)
           if (config.enabled) {
             // Load Google AdSense library if publisher client ID is present and adsense is used
-            const hasAdsenseSlot = Object.values(config.slots || {}).some((s) => !s.adNetwork || s.adNetwork === 'adsense');
+            const hasAdsenseSlot = Object.values(config.slots || {}).some(
+              (s) => !s.adNetwork || s.adNetwork === 'adsense'
+            );
             if (hasAdsenseSlot && config.clientId && config.clientId.startsWith('ca-pub-')) {
               loadGoogleScript(config.clientId);
             }
 
             const isMobile = window.innerWidth < 768;
-            const maxMobile = (throttling.enabled && typeof throttling.maxMobileAds === 'number') ? throttling.maxMobileAds : 0;
+            const maxMobile =
+              throttling.enabled && typeof throttling.maxMobileAds === 'number'
+                ? throttling.maxMobileAds
+                : 0;
             let mobileRenderedCount = 0;
 
             function renderSlotElement(el) {
-              const location = el.getAttribute('data-ad-slot-location');
-              const slotConfig = config.slots?.[location] || {};
+              const rawLocation = el.getAttribute('data-ad-slot-location') || '';
+              const location = rawLocation.toLowerCase();
+              const locationAlt = location.includes('-')
+                ? location.replace(/-/g, '_')
+                : location.replace(/_/g, '-');
+              const slotConfig = config.slots?.[location] || config.slots?.[locationAlt] || {};
               const isEnabled = slotConfig.enabled !== false;
               const net = slotConfig.adNetwork || 'adsense';
               const customCode = (slotConfig.customCode || '').trim();
@@ -574,8 +614,11 @@ const resolvedOgImage = ogImage.startsWith('http')
 
                 const targetUrl = slotConfig.sponsorTargetUrl || '#';
                 const bannerUrl = slotConfig.sponsorBannerUrl || '';
-                const altText = slotConfig.sponsorAltText || (net === 'affiliate' ? 'Recommended Partner' : 'Sponsored');
-                const badge = slotConfig.sponsorBadgeText || (net === 'affiliate' ? 'Partner' : 'Sponsored');
+                const altText =
+                  slotConfig.sponsorAltText ||
+                  (net === 'affiliate' ? 'Recommended Partner' : 'Sponsored');
+                const badge =
+                  slotConfig.sponsorBadgeText || (net === 'affiliate' ? 'Partner' : 'Sponsored');
                 const openInNew = slotConfig.sponsorOpenInNewTab !== false;
                 const rel = slotConfig.sponsorRel || 'sponsored nofollow noopener';
 
@@ -633,15 +676,19 @@ const resolvedOgImage = ogImage.startsWith('http')
 
             // Lazy loading via IntersectionObserver if enabled
             if (throttling.enabled && throttling.lazyLoadWithMargin && 'IntersectionObserver' in window) {
-              const margin = typeof throttling.lazyLoadMarginPx === 'number' ? throttling.lazyLoadMarginPx : 300;
-              const observer = new IntersectionObserver((entries, obs) => {
-                entries.forEach((entry) => {
-                  if (entry.isIntersecting) {
-                    renderSlotElement(entry.target);
-                    obs.unobserve(entry.target);
-                  }
-                });
-              }, { rootMargin: `${margin}px` });
+              const margin =
+                typeof throttling.lazyLoadMarginPx === 'number' ? throttling.lazyLoadMarginPx : 300;
+              const observer = new IntersectionObserver(
+                (entries, obs) => {
+                  entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                      renderSlotElement(entry.target);
+                      obs.unobserve(entry.target);
+                    }
+                  });
+                },
+                { rootMargin: `${margin}px` }
+              );
 
               slotElements.forEach((el) => observer.observe(el));
             } else {
@@ -652,13 +699,34 @@ const resolvedOgImage = ogImage.startsWith('http')
           }
         }
 
+        // Global debug & programmatic hooks
+        window.__refreshAdsConfig = function () {
+          try {
+            localStorage.removeItem('adsense_cfg');
+            sessionStorage.removeItem('adsense_cfg');
+          } catch (e) {}
+          renderAdSlots();
+        };
+
+        window.__showAdPreview = function (enable) {
+          try {
+            localStorage.removeItem('adsense_cfg');
+            sessionStorage.removeItem('adsense_cfg');
+          } catch (e) {}
+          fetchAdConfig().then((cfg) => {
+            if (cfg) {
+              cfg.testMode = enable !== false;
+              renderAdSlots();
+            }
+          });
+        };
+
         if (document.readyState === 'loading') {
           document.addEventListener('DOMContentLoaded', renderAdSlots);
         } else {
           renderAdSlots();
         }
       })();
-
     </script>
 
     <!-- Scroll to Top Button -->
@@ -673,12 +741,12 @@ const resolvedOgImage = ogImage.startsWith('http')
       </svg>
     </button>
 
-    <script is:inline>
+    <script>
       (function () {
-        var btn = document.getElementById('scroll-to-top');
+        const btn = document.getElementById('scroll-to-top');
         if (!btn) return;
 
-        function updateVisibility() {
+        const updateVisibility = () => {
           if (window.scrollY > 300) {
             btn.classList.remove('opacity-0', 'translate-y-4', 'pointer-events-none');
             btn.classList.add('opacity-100', 'translate-y-0');
@@ -686,12 +754,12 @@ const resolvedOgImage = ogImage.startsWith('http')
             btn.classList.add('opacity-0', 'translate-y-4', 'pointer-events-none');
             btn.classList.remove('opacity-100', 'translate-y-0');
           }
-        }
+        };
 
         window.addEventListener('scroll', updateVisibility, { passive: true });
         updateVisibility();
 
-        btn.addEventListener('click', function () {
+        btn.addEventListener('click', () => {
           window.scrollTo({ top: 0, behavior: 'smooth' });
         });
       })();

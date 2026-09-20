@@ -6,12 +6,12 @@ import WhyChooseUs from '../components/home/WhyChooseUs.astro';
 import HomeFAQ, { homeFaqs } from '../components/home/HomeFAQ.astro';
 import CalculatorCard from '../components/CalculatorCard.astro';
 import AdSlotTop from '../components/ads/AdSlotTop.astro';
+import AdSlotInline from '../components/ads/AdSlotInline.astro';
 import AdSlotFooter from '../components/ads/AdSlotFooter.astro';
 import {
   calculators,
   PRECOMPUTED_CATEGORY_PILLS,
   PRECOMPUTED_HOME_POPULAR_CALCULATORS,
-  STATIC_SEARCH_DATA_JSON,
 } from '../data/calculators';
 import { getCalculatorOverrides } from '../lib/admin/content-store';
 import { getLivePageMeta } from '../lib/seo/page-metadata';
@@ -30,9 +30,6 @@ const effectiveTitle = override.metaTitle || liveMeta.title;
 const effectiveDescription = override.metaDescription || liveMeta.description;
 const effectiveCanonical = override.canonicalUrl;
 const effectiveRobots = override.robots;
-
-// Client-side search dataset (pre-serialized at module load)
-const searchDataJson = STATIC_SEARCH_DATA_JSON;
 ---
 
 <BaseLayout
@@ -182,6 +179,11 @@ const searchDataJson = STATIC_SEARCH_DATA_JSON;
     </div>
   </section>
 
+  <!-- Middle Ad Slot -->
+  <div class="mx-auto max-w-7xl px-4 py-4">
+    <AdSlotInline />
+  </div>
+
   <!-- 6. Why Use This Website -->
   <WhyChooseUs />
 
@@ -208,13 +210,8 @@ const searchDataJson = STATIC_SEARCH_DATA_JSON;
     <AdSlotFooter />
   </div>
 
-  <!-- Embedded Search Data -->
-  <script is:inline define:vars={{ searchDataJson }}>
-    window.__CALCULATORS_SEARCH_DATA__ = JSON.parse(searchDataJson);
-  </script>
-
   <!-- Client-side Smart Search & Recent History Engine -->
-  <script is:inline>
+  <script>
     (function initHomeSearch() {
       const searchInput = document.getElementById('home-main-search');
       const searchClear = document.getElementById('home-search-clear');
@@ -223,7 +220,44 @@ const searchDataJson = STATIC_SEARCH_DATA_JSON;
       const matchCountLabel = document.getElementById('home-match-count');
       const quickTags = document.querySelectorAll('.home-quick-tag');
 
-      const data = window.__CALCULATORS_SEARCH_DATA__ || [];
+      let searchDataPromise = null;
+      let data = window.__CALCULATORS_SEARCH_DATA__ || window.__CALCULATORS_DATA__ || [];
+
+      function getSearchData() {
+        if (data && data.length > 0) return Promise.resolve(data);
+        if (window.__CALCULATORS_SEARCH_DATA__ && window.__CALCULATORS_SEARCH_DATA__.length > 0) {
+          data = window.__CALCULATORS_SEARCH_DATA__;
+          return Promise.resolve(data);
+        }
+        if (window.__CALCULATORS_DATA__ && window.__CALCULATORS_DATA__.length > 0) {
+          data = window.__CALCULATORS_DATA__;
+          window.__CALCULATORS_SEARCH_DATA__ = data;
+          return Promise.resolve(data);
+        }
+        if (searchDataPromise) return searchDataPromise;
+
+        searchDataPromise = fetch('/api/search-data?lang=en')
+          .then((res) => {
+            if (!res.ok) throw new Error('Failed to load search data');
+            return res.json();
+          })
+          .then((items) => {
+            data = Array.isArray(items) ? items : [];
+            window.__CALCULATORS_SEARCH_DATA__ = data;
+            window.__CALCULATORS_DATA__ = data;
+            loadRecentlyUsed();
+            return data;
+          })
+          .catch(() => []);
+        return searchDataPromise;
+      }
+
+      // Prefetch search data during idle frame to ensure instant response on typing
+      if ('requestIdleCallback' in window) {
+        window.requestIdleCallback(getSearchData, { timeout: 3000 });
+      } else {
+        setTimeout(getSearchData, 2000);
+      }
 
       let searchLogTimer = null;
       function logSearch(query, hasResults) {
@@ -254,6 +288,20 @@ const searchDataJson = STATIC_SEARCH_DATA_JSON;
         if (searchClear) {
           searchClear.classList.remove('hidden');
           searchClear.classList.add('flex');
+        }
+
+        if (!data || data.length === 0) {
+          if (dropdownItems) {
+            dropdownItems.innerHTML = `
+              <div class="py-6 text-center text-xs text-slate-400">
+                <div class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent mb-2"></div>
+                <p class="font-medium text-slate-600 dark:text-slate-300">Searching calculators...</p>
+              </div>
+            `;
+          }
+          if (searchDropdown) searchDropdown.classList.remove('hidden');
+          getSearchData().then(() => filterSearch(query));
+          return;
         }
 
         const matches = data.filter((item) => {
@@ -310,10 +358,11 @@ const searchDataJson = STATIC_SEARCH_DATA_JSON;
       }
 
       if (searchInput) {
-        searchInput.addEventListener('input', (e) => filterSearch(e.target.value));
         searchInput.addEventListener('focus', () => {
+          getSearchData();
           if (searchInput.value.trim()) filterSearch(searchInput.value);
         });
+        searchInput.addEventListener('input', (e) => filterSearch(e.target.value));
       }
 
       if (searchClear) {
@@ -351,40 +400,46 @@ const searchDataJson = STATIC_SEARCH_DATA_JSON;
       });
 
       // 2. Recently Used Calculators (Localstorage)
-      const recentsSection = document.getElementById('recently-used-section');
-      const recentsGrid = document.getElementById('recently-used-grid');
-      const btnClearRecents = document.getElementById('btn-clear-recents');
+      function loadRecentlyUsed() {
+        const recentsSection = document.getElementById('recently-used-section');
+        const recentsGrid = document.getElementById('recently-used-grid');
+        if (!recentsSection || !recentsGrid || !data || data.length === 0) return;
 
-      try {
-        const rawHistory = localStorage.getItem('recent_calculators');
-        if (rawHistory && recentsSection && recentsGrid) {
-          const recentSlugs = JSON.parse(rawHistory);
-          if (Array.isArray(recentSlugs) && recentSlugs.length > 0) {
-            const matchedTools = recentSlugs
-              .map((slug) => data.find((d) => d.slug === slug || d.slug === `${slug}-calculator`))
-              .filter(Boolean)
-              .slice(0, 5);
+        try {
+          const rawHistory = localStorage.getItem('recent_calculators');
+          if (rawHistory) {
+            const recentSlugs = JSON.parse(rawHistory);
+            if (Array.isArray(recentSlugs) && recentSlugs.length > 0) {
+              const matchedTools = recentSlugs
+                .map((slug) => data.find((d) => d.slug === slug || d.slug === `${slug}-calculator`))
+                .filter(Boolean)
+                .slice(0, 5);
 
-            if (matchedTools.length > 0) {
-              recentsGrid.innerHTML = matchedTools.map((t) => `
-                <a
-                  href="${t.path}"
-                  class="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-2.5 shadow-2xs hover:border-blue-400 dark:border-slate-800 dark:bg-slate-900 transition group"
-                >
-                  <div class="min-w-0 pr-2">
-                    <div class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">${t.name}</div>
-                    <div class="text-[10px] text-slate-400">${t.category}</div>
-                  </div>
-                  <span class="text-slate-400 text-xs shrink-0 group-hover:translate-x-0.5 transition-transform">→</span>
-                </a>
-              `).join('');
+              if (matchedTools.length > 0) {
+                recentsGrid.innerHTML = matchedTools.map((t) => `
+                  <a
+                    href="${t.path}"
+                    class="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-2.5 shadow-2xs hover:border-blue-400 dark:border-slate-800 dark:bg-slate-900 transition group"
+                  >
+                    <div class="min-w-0 pr-2">
+                      <div class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">${t.name}</div>
+                      <div class="text-[10px] text-slate-400">${t.category}</div>
+                    </div>
+                    <span class="text-slate-400 text-xs shrink-0 group-hover:translate-x-0.5 transition-transform">→</span>
+                  </a>
+                `).join('');
 
-              recentsSection.classList.remove('hidden');
+                recentsSection.classList.remove('hidden');
+              }
             }
           }
-        }
-      } catch {}
+        } catch {}
+      }
 
+      loadRecentlyUsed();
+
+      const btnClearRecents = document.getElementById('btn-clear-recents');
+      const recentsSection = document.getElementById('recently-used-section');
       btnClearRecents?.addEventListener('click', () => {
         try {
           localStorage.removeItem('recent_calculators');
