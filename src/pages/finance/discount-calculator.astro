@@ -3,8 +3,8 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
 ---
 
 <CalculatorLayout
-  title="Discount & Sale Price Calculator – Calculate Discount and Final Price"
-  description="Calculate the discount amount, amount saved, and final sale price using a percentage or fixed discount."
+  title="Discount & Sale Price Calculator – Calculate Discount, Savings & Final Price"
+  description="Calculate sale price, discount percentage, money saved, original price, multiple stacked discounts, and Buy X Get Y (BOGO) bundles with optional sales tax."
   category="Finance"
   calculatorName="Discount & Sale Price Calculator"
   slug="discount-calculator"
@@ -17,30 +17,36 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
     'calculate discount',
     'discount amount calculator',
     'multiple discount calculator',
-    'sale price after discount',
-    'original price calculator'
+    'stacked discount calculator',
+    'bogo calculator',
+    'buy one get one calculator',
+    'original price calculator',
+    'reverse discount calculator'
   ]}
 >
   <div class="space-y-6">
 
-    <!-- CALCULATION MODE SELECTOR TABS -->
-    <div class="rounded-2xl border border-slate-200/90 bg-white p-3 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
-      <div class="flex items-center justify-between gap-2">
-        <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 hidden sm:inline">
+    <!-- CALCULATION MODE SELECTOR TABS (5 MODES) -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-2.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <span class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 hidden lg:inline px-1">
           Mode:
         </span>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-1.5 w-full sm:w-auto text-xs font-bold">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1.5 w-full text-xs font-bold">
           <button type="button" class="btn-disc-mode active rounded-xl border border-blue-600 bg-blue-50 px-3 py-2 text-blue-700 dark:border-blue-500 dark:bg-blue-950/60 dark:text-blue-300 transition cursor-pointer text-center" data-mode="sale_price">
-            🏷️ Find Sale Price
+            🏷️ Sale Price
           </button>
           <button type="button" class="btn-disc-mode rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 hover:border-slate-400 transition cursor-pointer text-center" data-mode="discount_pct">
-            ％ Find Discount %
+            ％ Discount %
           </button>
           <button type="button" class="btn-disc-mode rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 hover:border-slate-400 transition cursor-pointer text-center" data-mode="original_price">
-            🔄 Find Original Price
+            🔄 Original Price
           </button>
           <button type="button" class="btn-disc-mode rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 hover:border-slate-400 transition cursor-pointer text-center" data-mode="multiple">
-            ✨ Multiple Discounts
+            ✨ Stacked (Multi)
+          </button>
+          <button type="button" class="btn-disc-mode rounded-xl border border-slate-300 bg-white px-3 py-2 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 hover:border-slate-400 transition cursor-pointer text-center col-span-2 sm:col-span-1" data-mode="bogo">
+            🎁 Buy X Get Y (BOGO)
           </button>
         </div>
       </div>
@@ -48,31 +54,53 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
 
     <!-- MAIN CALCULATOR FORM CONTAINER -->
     <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-blue-50/30 p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/20 sm:p-7">
-      
-      <div class="border-b border-slate-200/80 pb-3 dark:border-slate-800">
-        <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-          <span>🏷️</span> Discount & Sale Price Calculator
-        </h2>
-        <p id="txt-disc-subtitle" class="mt-1 text-xs text-slate-600 dark:text-slate-400">
-          Calculate the discount amount, amount saved, and final sale price using a percentage or fixed discount.
-        </p>
+
+      <!-- Top Title & Global Currency Row -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-200/80 pb-4 dark:border-slate-800">
+        <div>
+          <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+            <span id="txt-disc-title-icon">🏷️</span> <span id="txt-disc-title">Discount & Sale Price Calculator</span>
+          </h2>
+          <p id="txt-disc-subtitle" class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            Calculate the discount amount, money saved, and final sale price using percentage or fixed discounts.
+          </p>
+        </div>
+
+        <!-- Global Currency Selector -->
+        <div class="flex items-center gap-2 self-start sm:self-auto">
+          <label for="sel-disc-currency" class="text-xs font-bold text-slate-600 dark:text-slate-400 shrink-0">Currency:</label>
+          <select id="sel-disc-currency" class="rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer">
+            <option value="$">$ USD / CAD / AUD</option>
+            <option value="₹">₹ INR (Rupees)</option>
+            <option value="€">€ EUR (Euro)</option>
+            <option value="£">£ GBP (Pound)</option>
+            <option value="¥">¥ JPY / CNY (Yen/Yuan)</option>
+            <option value="₩">₩ KRW (Won)</option>
+            <option value="R$">R$ BRL (Real)</option>
+            <option value="kr">kr SEK/NOK/DKK</option>
+            <option value="₱">₱ PHP (Peso)</option>
+            <option value="د.إ">د.إ AED (Dirham)</option>
+          </select>
+        </div>
       </div>
 
       <form id="form-discount" class="mt-4 space-y-4" novalidate onsubmit="return false;">
-        
-        <!-- SECTION 1: DYNAMIC INPUT CONTROLS ACCORDING TO MODE -->
-        
-        <!-- Mode A: Find Sale Price Inputs -->
+
+        <!-- ================================================================= -->
+        <!-- MODE 1: FIND SALE PRICE                                           -->
+        <!-- ================================================================= -->
         <div id="sec-disc-mode-saleprice" class="space-y-4">
-          <div class="rounded-2xl border border-slate-200/80 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/50 space-y-3">
+          <div class="rounded-2xl border border-slate-200/80 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-900/60 space-y-3">
             <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
               <span>💰</span> Price & Discount Value
             </span>
 
             <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label for="inp-disc-orig-price" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Original Retail Price ($ / ₹)</label>
-                <input type="number" id="inp-disc-orig-price" value="1000" step="10" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="1,000" />
+                <label for="inp-disc-orig-price" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Original Retail Price (<span class="lbl-curr-sym">$</span>)
+                </label>
+                <input type="number" id="inp-disc-orig-price" value="1000" step="10" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="1000" />
               </div>
 
               <div>
@@ -82,7 +110,7 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
                     Percentage (%) Off
                   </button>
                   <button type="button" id="btn-type-fixed" class="rounded-xl border border-slate-300 bg-white py-2.5 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 hover:border-slate-400 transition cursor-pointer">
-                    Fixed Amount ($ / ₹)
+                    Fixed Markdown (<span class="lbl-curr-sym">$</span>)
                   </button>
                 </div>
               </div>
@@ -95,121 +123,215 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
               </div>
 
               <div id="box-disc-fixed-input" class="hidden">
-                <label for="inp-disc-val-fixed" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Fixed Discount Amount ($ / ₹)</label>
+                <label for="inp-disc-val-fixed" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Fixed Discount Amount (<span class="lbl-curr-sym">$</span>)</label>
                 <input type="number" id="inp-disc-val-fixed" value="200" step="10" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="200" />
               </div>
 
-              <!-- Quick Discount Presets -->
+              <!-- Quantity Multiplier -->
               <div>
-                <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Quick Discount Presets</label>
-                <div class="mt-1 flex flex-wrap gap-1.5">
-                  <button type="button" class="btn-disc-quick-pct rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-pct="10">10%</button>
-                  <button type="button" class="btn-disc-quick-pct rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-pct="15">15%</button>
-                  <button type="button" class="btn-disc-quick-pct rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-pct="20">20%</button>
-                  <button type="button" class="btn-disc-quick-pct rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-pct="25">25%</button>
-                  <button type="button" class="btn-disc-quick-pct rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-pct="30">30%</button>
-                  <button type="button" class="btn-disc-quick-pct rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-pct="40">40%</button>
-                  <button type="button" class="btn-disc-quick-pct rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-xs font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-pct="50">50%</button>
-                </div>
+                <label for="inp-disc-qty-sale" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Item Quantity (Units)</label>
+                <input type="number" id="inp-disc-qty-sale" value="1" step="1" min="1" max="10000" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="1" />
+              </div>
+            </div>
+
+            <!-- Quick Discount Presets -->
+            <div id="box-disc-presets" class="pt-1">
+              <label class="block text-[11px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1.5">Quick Discount Presets</label>
+              <div class="flex flex-wrap gap-1.5">
+                <button type="button" class="btn-disc-quick-pct rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-pct="5">5%</button>
+                <button type="button" class="btn-disc-quick-pct rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-pct="10">10%</button>
+                <button type="button" class="btn-disc-quick-pct rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-pct="15">15%</button>
+                <button type="button" class="btn-disc-quick-pct rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-pct="20">20%</button>
+                <button type="button" class="btn-disc-quick-pct rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-pct="25">25%</button>
+                <button type="button" class="btn-disc-quick-pct rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-pct="30">30%</button>
+                <button type="button" class="btn-disc-quick-pct rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-pct="40">40%</button>
+                <button type="button" class="btn-disc-quick-pct rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-pct="50">50%</button>
+                <button type="button" class="btn-disc-quick-pct rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-pct="60">60%</button>
+                <button type="button" class="btn-disc-quick-pct rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-pct="70">70%</button>
+                <button type="button" class="btn-disc-quick-pct rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-bold hover:bg-blue-50 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-pct="75">75%</button>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Mode B: Find Discount Percentage Inputs -->
+        <!-- ================================================================= -->
+        <!-- MODE 2: FIND DISCOUNT PERCENTAGE                                  -->
+        <!-- ================================================================= -->
         <div id="sec-disc-mode-pct" class="hidden space-y-4">
-          <div class="rounded-2xl border border-slate-200/80 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/50 space-y-3">
+          <div class="rounded-2xl border border-slate-200/80 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-900/60 space-y-3">
             <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
               <span>🔍</span> Calculate Discount % from Prices
             </span>
 
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div>
-                <label for="inp-disc-calc-orig" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Original Retail Price ($ / ₹)</label>
+                <label for="inp-disc-calc-orig" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Original Retail Price (<span class="lbl-curr-sym">$</span>)
+                </label>
                 <input type="number" id="inp-disc-calc-orig" value="100" step="5" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="100" />
               </div>
 
               <div>
-                <label for="inp-disc-calc-sale" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Final Sale Price ($ / ₹)</label>
+                <label for="inp-disc-calc-sale" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Discounted Sale Price (<span class="lbl-curr-sym">$</span>)
+                </label>
                 <input type="number" id="inp-disc-calc-sale" value="75" step="5" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="75" />
+              </div>
+
+              <div>
+                <label for="inp-disc-qty-pct" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Quantity (Units)</label>
+                <input type="number" id="inp-disc-qty-pct" value="1" step="1" min="1" max="10000" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="1" />
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Mode C: Find Original Price Inputs -->
+        <!-- ================================================================= -->
+        <!-- MODE 3: FIND ORIGINAL PRICE                                       -->
+        <!-- ================================================================= -->
         <div id="sec-disc-mode-orig" class="hidden space-y-4">
-          <div class="rounded-2xl border border-slate-200/80 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/50 space-y-3">
+          <div class="rounded-2xl border border-slate-200/80 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-900/60 space-y-3">
             <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
               <span>🔄</span> Reverse Original Price from Sale Price
             </span>
 
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div>
-                <label for="inp-disc-rev-sale" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Current Sale Price ($ / ₹)</label>
+                <label for="inp-disc-rev-sale" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Current Sale Price (<span class="lbl-curr-sym">$</span>)
+                </label>
                 <input type="number" id="inp-disc-rev-sale" value="800" step="10" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="800" />
               </div>
 
               <div>
-                <label for="inp-disc-rev-pct" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Discount Percentage Applied (% off)</label>
+                <label for="inp-disc-rev-pct" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Discount Percentage (% off)</label>
                 <input type="number" id="inp-disc-rev-pct" value="20" step="1" min="0" max="99.99" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="20" />
+              </div>
+
+              <div>
+                <label for="inp-disc-qty-orig" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Quantity (Units)</label>
+                <input type="number" id="inp-disc-qty-orig" value="1" step="1" min="1" max="10000" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="1" />
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Mode D: Multiple Discounts Inputs -->
+        <!-- ================================================================= -->
+        <!-- MODE 4: MULTIPLE SEQUENTIAL DISCOUNTS                             -->
+        <!-- ================================================================= -->
         <div id="sec-disc-mode-multi" class="hidden space-y-4">
-          <div class="rounded-2xl border border-slate-200/80 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/50 space-y-3">
-            <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-              <span>✨</span> Sequential Stacked Discounts
-            </span>
+          <div class="rounded-2xl border border-slate-200/80 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-900/60 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <span>✨</span> Sequential Stacked Discounts
+              </span>
+              <span class="text-[11px] text-blue-600 dark:text-blue-400 font-semibold">Compounding arithmetic</span>
+            </div>
 
-            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              <div>
-                <label for="inp-disc-multi-orig" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Original Price ($ / ₹)</label>
-                <input type="number" id="inp-disc-multi-orig" value="1000" step="10" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="1,000" />
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-4">
+              <div class="sm:col-span-2">
+                <label for="inp-disc-multi-orig" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Original Price (<span class="lbl-curr-sym">$</span>)
+                </label>
+                <input type="number" id="inp-disc-multi-orig" value="1000" step="10" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="1000" />
               </div>
 
               <div>
-                <label for="inp-disc-multi-d1" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Primary Discount 1 (%)</label>
+                <label for="inp-disc-qty-multi" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Quantity (Units)</label>
+                <input type="number" id="inp-disc-qty-multi" value="1" step="1" min="1" max="10000" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="1" />
+              </div>
+
+              <div>
+                <label for="inp-disc-multi-d1" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Discount 1 (% off)</label>
                 <input type="number" id="inp-disc-multi-d1" value="20" step="1" min="0" max="100" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="20" />
-              </div>
-
-              <div>
-                <label for="inp-disc-multi-d2" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Secondary Discount 2 (%)</label>
-                <input type="number" id="inp-disc-multi-d2" value="10" step="1" min="0" max="100" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="10" />
               </div>
             </div>
 
-            <!-- Optional 3rd discount row -->
-            <div id="row-disc-multi-d3" class="hidden pt-2 border-t border-slate-100 dark:border-slate-800">
-              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div class="sm:col-span-2">
-                  <label for="inp-disc-multi-d3" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Additional Promo Discount 3 (%)</label>
-                  <input type="number" id="inp-disc-multi-d3" value="5" step="1" min="0" max="100" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="5" />
-                </div>
-                <div class="flex items-end">
-                  <button type="button" id="btn-remove-d3" class="w-full rounded-xl border border-red-200 bg-red-50 p-2.5 text-xs font-bold text-red-600 hover:bg-red-100 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300 cursor-pointer">
-                    ✕ Remove 3rd Discount
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div>
+                <label for="inp-disc-multi-d2" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Discount 2 (Secondary % off)</label>
+                <input type="number" id="inp-disc-multi-d2" value="10" step="1" min="0" max="100" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="10" />
+              </div>
+
+              <!-- Optional 3rd discount row -->
+              <div id="row-disc-multi-d3" class="hidden">
+                <div class="flex gap-2 items-end">
+                  <div class="flex-1">
+                    <label for="inp-disc-multi-d3" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Discount 3 (Promo % off)</label>
+                    <input type="number" id="inp-disc-multi-d3" value="5" step="1" min="0" max="100" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="5" />
+                  </div>
+                  <button type="button" id="btn-remove-d3" class="rounded-xl border border-red-200 bg-red-50 p-2.5 text-xs font-bold text-red-600 hover:bg-red-100 dark:border-red-900/40 dark:bg-red-950/20 dark:text-red-300 cursor-pointer" title="Remove 3rd discount">
+                    ✕
                   </button>
                 </div>
               </div>
-            </div>
 
-            <div id="box-btn-add-d3">
-              <button type="button" id="btn-add-d3" class="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline cursor-pointer flex items-center gap-1">
-                <span>➕ Add Another Discount (%)</span>
-              </button>
+              <div id="box-btn-add-d3" class="flex items-end">
+                <button type="button" id="btn-add-d3" class="w-full rounded-xl border border-dashed border-blue-300 dark:border-blue-700 bg-blue-50/50 dark:bg-blue-950/30 p-2.5 text-xs font-bold text-blue-600 dark:text-blue-400 hover:bg-blue-50 cursor-pointer flex items-center justify-center gap-1">
+                  <span>➕ Add 3rd Discount (%)</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- OPTIONAL SALES TAX SECTION (Accordion) -->
+        <!-- ================================================================= -->
+        <!-- MODE 5: BUY X GET Y (BOGO / BUNDLE)                               -->
+        <!-- ================================================================= -->
+        <div id="sec-disc-mode-bogo" class="hidden space-y-4">
+          <div class="rounded-2xl border border-slate-200/80 bg-white/80 p-4 dark:border-slate-800 dark:bg-slate-900/60 space-y-3">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+              <span>🎁</span> Buy X Get Y Free / Discounted Bundle
+            </span>
+
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div>
+                <label for="inp-disc-bogo-price" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Individual Unit Retail Price (<span class="lbl-curr-sym">$</span>)
+                </label>
+                <input type="number" id="inp-disc-bogo-price" value="50" step="5" min="0" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="50" />
+              </div>
+
+              <div>
+                <label for="inp-disc-bogo-total-qty" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">
+                  Total Items You Want to Buy (Units)
+                </label>
+                <input type="number" id="inp-disc-bogo-total-qty" value="4" step="1" min="1" max="10000" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="4" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 pt-2 border-t border-slate-100 dark:border-slate-800">
+              <div>
+                <label for="inp-disc-bogo-buy" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Buy X Items (at Full Price)</label>
+                <input type="number" id="inp-disc-bogo-buy" value="1" step="1" min="1" max="100" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="1" />
+              </div>
+
+              <div>
+                <label for="inp-disc-bogo-get" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Get Y Items (at Discount)</label>
+                <input type="number" id="inp-disc-bogo-get" value="1" step="1" min="1" max="100" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="1" />
+              </div>
+
+              <div>
+                <label for="sel-disc-bogo-discount" class="block text-xs font-semibold text-slate-700 dark:text-slate-300">Discount on "Get Y" Items</label>
+                <select id="sel-disc-bogo-discount" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                  <option value="100">100% Off (Free - BOGO)</option>
+                  <option value="50">50% Off (Buy 1 Get 1 at 50% Off)</option>
+                  <option value="40">40% Off</option>
+                  <option value="30">30% Off</option>
+                  <option value="25">25% Off</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- OPTIONAL SALES TAX / VAT SECTION                                  -->
+        <!-- ================================================================= -->
         <details class="group rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
           <summary class="cursor-pointer list-none flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
             <span class="flex items-center gap-1.5">
-              <span>🧾</span> Optional: Apply Sales Tax After Discount
+              <span>🧾</span> Optional: Apply Sales Tax / VAT After Discount
             </span>
             <span class="text-blue-600 dark:text-blue-400 font-semibold text-[11px] group-open:rotate-180 transition-transform">▼ Expand</span>
           </summary>
@@ -217,70 +339,115 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
             <div class="flex items-center gap-2 pt-2">
               <input type="checkbox" id="chk-apply-tax" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-800 cursor-pointer" />
               <label for="chk-apply-tax" class="font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
-                Enable Sales Tax Calculation
+                Enable Sales Tax / VAT Calculation
               </label>
             </div>
 
             <div>
-              <label for="inp-disc-tax-rate" class="block font-bold text-slate-700 dark:text-slate-300">Sales Tax Rate (% percentage)</label>
-              <input type="number" id="inp-disc-tax-rate" value="7.5" step="0.1" min="0" max="35" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="7.5" />
+              <label for="inp-disc-tax-rate" class="block font-bold text-slate-700 dark:text-slate-300">Sales Tax / VAT Rate (%)</label>
+              <input type="number" id="inp-disc-tax-rate" value="7.5" step="0.1" min="0" max="50" class="mt-1 w-full rounded-xl border border-slate-300 bg-white p-2 font-bold dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="7.5" />
             </div>
           </div>
         </details>
 
         <!-- ACTION BUTTONS -->
         <div class="flex items-center gap-2 pt-2">
-          <button type="submit" id="btn-calc-disc" class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer">
+          <button type="submit" id="btn-calc-disc" class="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700 px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-blue-600/25 transition active:scale-[0.98] cursor-pointer">
             Calculate Discount →
           </button>
-          <button type="button" id="btn-clear-disc" class="rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer">
-            Clear All (✕)
+          <button type="button" id="btn-clear-disc" class="rounded-xl border border-slate-300 bg-white px-4 py-3.5 text-sm font-bold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 transition cursor-pointer">
+            Clear (✕)
           </button>
         </div>
 
-        <!-- ACCESSIBLE ERROR -->
-        <p id="err-disc" class="hidden rounded-xl border border-red-200 bg-red-50 p-2.5 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300" role="alert" aria-live="polite"></p>
+        <!-- ACCESSIBLE ERROR BANNER -->
+        <p id="err-disc" class="hidden rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300" role="alert" aria-live="polite"></p>
 
       </form>
 
-      <!-- RESULTS PRESENTATION SECTION (Hidden initially) -->
+      <!-- ================================================================= -->
+      <!-- RESULTS PRESENTATION SECTION (Strictly Hidden on Load)            -->
+      <!-- ================================================================= -->
       <div id="disc-results-section" class="hidden mt-6 space-y-6">
-        
-        <!-- 1. MAIN RESULT HERO CARD -->
+
+        <!-- 1. MAIN RESULT HERO CARD WITH VISUAL PROPORTION BAR -->
         <div class="overflow-hidden rounded-3xl border border-blue-200 bg-linear-to-br from-white via-blue-50/40 to-blue-100/50 p-5 shadow-lg shadow-blue-500/5 dark:border-blue-900/60 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/30 sm:p-7">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-blue-200/80 pb-4 dark:border-slate-800">
             <div>
               <span id="lbl-disc-hero-title" class="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">FINAL SALE PRICE</span>
-              <div id="res-disc-hero-amount" class="mt-1 text-3xl sm:text-4xl lg:text-5xl font-black text-blue-600 dark:text-blue-400">$ 800.00</div>
-              <div id="res-disc-hero-subtitle" class="text-xs font-semibold text-slate-500 dark:text-slate-400 mt-0.5">20% Discount Applied</div>
+              <div id="res-disc-hero-amount" class="mt-1 text-3xl sm:text-4xl lg:text-5xl font-black text-blue-600 dark:text-blue-400">$800.00</div>
+              <div id="res-disc-hero-subtitle" class="text-xs font-semibold text-slate-600 dark:text-slate-400 mt-1">20% Discount Applied</div>
             </div>
             <div class="sm:text-right">
               <span id="lbl-disc-hero-secondary" class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Money Saved:</span>
-              <div id="res-disc-hero-secondary" class="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">$ 200.00</div>
+              <div id="res-disc-hero-secondary" class="text-2xl sm:text-3xl font-black text-emerald-600 dark:text-emerald-400">$200.00</div>
+              <div id="res-disc-hero-secondary-sub" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 mt-0.5">20.0% Off Original</div>
             </div>
           </div>
 
-          <div id="grid-disc-summary" class="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
-            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
-              <div id="lbl-disc-grid-1" class="text-slate-500 dark:text-slate-400 font-semibold">Original Price</div>
-              <div id="res-disc-grid-1" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">$ 1,000.00</div>
+          <!-- Visual Savings vs Paid Proportion Bar -->
+          <div class="mt-4 pt-1">
+            <div class="flex items-center justify-between text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1.5">
+              <span>You Pay: <strong id="txt-bar-paid-pct" class="text-blue-600 dark:text-blue-400">80%</strong></span>
+              <span>You Save: <strong id="txt-bar-saved-pct" class="text-emerald-600 dark:text-emerald-400">20%</strong></span>
             </div>
-            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="h-3 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-800 flex">
+              <div id="bar-paid-fill" class="bg-blue-600 dark:bg-blue-500 transition-all duration-300" style="width: 80%;"></div>
+              <div id="bar-saved-fill" class="bg-emerald-500 transition-all duration-300" style="width: 20%;"></div>
+            </div>
+          </div>
+
+          <!-- 4-Metric Breakdown Grid -->
+          <div id="grid-disc-summary" class="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="rounded-2xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+              <div id="lbl-disc-grid-1" class="text-slate-500 dark:text-slate-400 font-semibold">Original Price</div>
+              <div id="res-disc-grid-1" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">$1,000.00</div>
+            </div>
+            <div class="rounded-2xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
               <div id="lbl-disc-grid-2" class="text-slate-500 dark:text-slate-400 font-semibold">Discount</div>
               <div id="res-disc-grid-2" class="mt-1 text-sm sm:text-base font-bold text-blue-600 dark:text-blue-400">20%</div>
             </div>
-            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="rounded-2xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
               <div id="lbl-disc-grid-3" class="text-slate-500 dark:text-slate-400 font-semibold">Discount Amount</div>
-              <div id="res-disc-grid-3" class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">$ 200.00</div>
+              <div id="res-disc-grid-3" class="mt-1 text-sm sm:text-base font-bold text-emerald-600 dark:text-emerald-400">$200.00</div>
             </div>
-            <div class="rounded-xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
+            <div class="rounded-2xl border border-blue-200/60 bg-white/80 p-3 dark:border-slate-800 dark:bg-slate-900/70">
               <div id="lbl-disc-grid-4" class="text-slate-500 dark:text-slate-400 font-semibold">Final Sale Price</div>
-              <div id="res-disc-grid-4" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">$ 800.00</div>
+              <div id="res-disc-grid-4" class="mt-1 text-sm sm:text-base font-bold text-slate-900 dark:text-white">$800.00</div>
             </div>
           </div>
         </div>
 
-        <!-- 2. STEP-BY-STEP CALCULATION BREAKDOWN -->
+        <!-- 2. BOGO / BUNDLE BREAKDOWN CARD (Visible in BOGO mode) -->
+        <div id="box-disc-bogo-details" class="hidden rounded-3xl border border-emerald-200 bg-emerald-50/40 p-5 dark:border-emerald-900/50 dark:bg-emerald-950/20 space-y-3">
+          <h3 class="text-xs font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
+            <span>🎁</span> Buy X Get Y Itemized Breakdown
+          </h3>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+            <div class="rounded-xl border border-emerald-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+              <div class="text-slate-500 dark:text-slate-400">Full Price Items</div>
+              <div id="res-bogo-full-count" class="mt-1 font-bold text-slate-900 dark:text-white">2 items</div>
+              <div id="res-bogo-full-price" class="text-[11px] text-slate-500">$100.00</div>
+            </div>
+            <div class="rounded-xl border border-emerald-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+              <div class="text-slate-500 dark:text-slate-400">Discounted Items</div>
+              <div id="res-bogo-disc-count" class="mt-1 font-bold text-emerald-600 dark:text-emerald-400">2 items</div>
+              <div id="res-bogo-disc-price" class="text-[11px] text-slate-500">$0.00</div>
+            </div>
+            <div class="rounded-xl border border-emerald-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+              <div class="text-slate-500 dark:text-slate-400">Avg Cost per Item</div>
+              <div id="res-bogo-unit-price" class="mt-1 font-bold text-blue-600 dark:text-blue-400">$25.00</div>
+              <div class="text-[11px] text-slate-500">Effective rate</div>
+            </div>
+            <div class="rounded-xl border border-emerald-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900">
+              <div class="text-slate-500 dark:text-slate-400">True Bundle Savings</div>
+              <div id="res-bogo-eff-discount" class="mt-1 font-bold text-emerald-600 dark:text-emerald-400">50.0% Off</div>
+              <div class="text-[11px] text-slate-500">Overall order</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. STEP-BY-STEP CALCULATION BREAKDOWN -->
         <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 space-y-3">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-200 pb-3 dark:border-slate-800">
             <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
@@ -291,25 +458,25 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
             </span>
           </div>
 
-          <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/40 space-y-2 text-xs font-mono">
+          <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-4 dark:border-slate-800 dark:bg-slate-950/40 space-y-2 text-xs font-mono">
             <div class="text-slate-600 dark:text-slate-400">Formula: <strong id="txt-disc-breakdown-formula" class="text-slate-900 dark:text-white font-mono">Discount = Price × (Rate ÷ 100)</strong></div>
-            <div class="pt-1 border-t border-slate-200/80 dark:border-slate-800 space-y-1">
-              <div>Step 1: <span id="txt-disc-breakdown-step1" class="font-bold text-emerald-600 dark:text-emerald-400">$1,000.00 × 0.20 = $200.00 Saved</span></div>
+            <div class="pt-2 border-t border-slate-200/80 dark:border-slate-800 space-y-1.5">
+              <div>Step 1: <span id="txt-disc-breakdown-step1" class="font-bold text-emerald-600 dark:text-emerald-400">$1,000.00 × (20% ÷ 100) = $200.00 Saved</span></div>
               <div>Step 2: <span id="txt-disc-breakdown-step2" class="font-bold text-slate-900 dark:text-white">$1,000.00 − $200.00 = $800.00 Final Sale Price</span></div>
-              <div id="box-disc-breakdown-step3" class="hidden text-blue-600 dark:text-blue-400">Step 3: <span id="txt-disc-breakdown-step3" class="font-bold">+ Tax</span></div>
+              <div id="box-disc-breakdown-step3" class="hidden text-blue-600 dark:text-blue-400">Step 3: <span id="txt-disc-breakdown-step3" class="font-bold">+ Sales Tax</span></div>
             </div>
           </div>
         </div>
 
-        <!-- 3. DISCOUNT COMPARISON TABLE & PDF DOWNLOAD -->
+        <!-- 4. DISCOUNT COMPARISON TABLE & PDF DOWNLOAD -->
         <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 space-y-3">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-2">
             <div>
               <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
-                <span>📊</span> Discount Comparison
+                <span>📊</span> Discount Comparison Matrix
               </h3>
               <p class="text-[11px] text-slate-500 dark:text-slate-400">
-                Compare potential sale prices and savings across standard discount tiers.
+                Compare potential sale prices and savings across standard discount tiers. Click any row to load into calculator.
               </p>
             </div>
 
@@ -344,155 +511,112 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
   <!-- EDUCATIONAL CONTENT SLOT -->
   <Fragment slot="content">
     <section class="disc-content">
-      
+
       <!-- 1. HOW TO USE THE CALCULATOR -->
       <h2>How to Use the Discount & Sale Price Calculator</h2>
       <p>
-        Finding accurate discount amounts, percentage savings, or pre-discount retail values is simple with our multi-mode tool:
+        Finding accurate discount amounts, percentage savings, stacked coupon totals, or pre-discount retail values is simple with our comprehensive multi-mode calculator:
       </p>
       <ol>
-        <li><strong>Select the type of discount calculation:</strong> Choose between <em>Find Sale Price</em> (standard % or fixed discount), <em>Find Discount %</em> (reverse rate from sale price), <em>Find Original Price</em> (restore pre-discount value), or <em>Multiple Discounts</em> (stacked promotional codes).</li>
-        <li><strong>Enter the original price or sale price:</strong> Type the retail amount in your local currency.</li>
-        <li><strong>Enter the discount percentage or fixed discount amount:</strong> Specify the promotional percentage (e.g. 20%) or cash markdown ($50).</li>
-        <li><strong>Add additional discounts if needed:</strong> In multiple discount mode, enter secondary and tertiary coupon rates.</li>
-        <li><strong>Enable sales tax if you want to estimate the final price after tax:</strong> Toggle the tax option and input your local tax percentage.</li>
-        <li><strong>Click Calculate Discount:</strong> Review the itemized savings, checkout total, and mathematical breakdown.</li>
-        <li><strong>Download the result as a PDF:</strong> Save a branded PDF report for your shopping budget or retail invoices.</li>
+        <li><strong>Select your calculation mode:</strong> Choose from <em>Sale Price</em> (calculate final tag price with % or fixed cash markdown), <em>Discount %</em> (calculate rate off from sale price), <em>Original Price</em> (restore MSRP tag price), <em>Stacked (Multi)</em> (sequential promotional discounts), or <em>Buy X Get Y (BOGO)</em>.</li>
+        <li><strong>Select your preferred currency:</strong> Choose between $, ₹, €, £, ¥, ₩, R$, or custom symbols.</li>
+        <li><strong>Enter the price and discount values:</strong> Enter the retail price, discount percentage (or cash markdown), and item quantity.</li>
+        <li><strong>Enable sales tax / VAT if desired:</strong> Toggle the tax option and specify your local sales tax percentage to calculate the final checkout total.</li>
+        <li><strong>Click Calculate Discount:</strong> Review the itemized savings, checkout total, visual paid/saved bar, and mathematical breakdown.</li>
+        <li><strong>Download PDF Report or Save:</strong> Export a clean branded PDF summary or save your calculation for shopping budgets.</li>
       </ol>
 
       <!-- 2. HOW TO CALCULATE A DISCOUNT -->
       <h2>How to Calculate a Discount</h2>
       <p>
-        Calculating a standard percentage discount involves two simple arithmetic steps:
+        Calculating a standard commercial percentage discount involves two arithmetic steps:
       </p>
       <p>
         <code>Discount Amount = Original Price × (Discount Percentage ÷ 100)</code><br />
         <code>Sale Price = Original Price − Discount Amount</code>
       </p>
       <p>
-        For instance, if an item originally costs <strong>$500.00</strong> with a <strong>20% discount</strong>:
+        For instance, if a designer jacket originally retails at <strong>$500.00</strong> with a <strong>20% discount</strong>:
       </p>
       <ul>
-        <li><code>Discount Amount = $500 × 0.20 = $100.00 Saved</code></li>
+        <li><code>Discount Amount = $500 × (20 ÷ 100) = $100.00 Saved</code></li>
         <li><code>Final Sale Price = $500 − $100 = $400.00</code></li>
       </ul>
       <p class="text-xs text-slate-500 italic">
-        * This example is for illustration. Actual point-of-sale totals may vary depending on local sales tax and merchant checkout rounding rules.
+        * Example shown before state or local sales taxes.
       </p>
 
       <!-- 3. HOW TO CALCULATE DISCOUNT PERCENTAGE -->
       <h2>How to Calculate Discount Percentage</h2>
       <p>
-        When you know the original tag price and the discounted price on a receipt, you can calculate the exact percentage saved using:
+        When you know the original tag price and the discounted price on a receipt, you can determine the exact percentage saved using the reverse discount formula:
       </p>
       <p>
         <code>Discount Percentage = ((Original Price − Sale Price) ÷ Original Price) × 100</code>
       </p>
       <p>
-        For example, if a jacket marked down from $120.00 is sold for $90.00:
+        For example, if a smartphone marked down from $800.00 is sold for $600.00:
       </p>
       <ul>
-        <li><code>Discount Amount = $120 − $90 = $30.00</code></li>
-        <li><code>Discount % = ($30 ÷ $120) × 100 = 25% Off</code></li>
+        <li><code>Money Saved = $800 − $600 = $200.00</code></li>
+        <li><code>Discount % = ($200 ÷ $800) × 100 = 25.0% Off</code></li>
       </ul>
 
       <!-- 4. HOW MULTIPLE DISCOUNTS WORK -->
-      <h2>How Multiple Discounts Work</h2>
+      <h2>How Multiple (Stacked) Discounts Work</h2>
       <p>
-        A frequent misconception in retail shopping is that stacked discounts add together linearly. For example, a <strong>20% storewide sale</strong> combined with an <strong>extra 10% coupon code</strong> does not equal a 30% discount.
+        A frequent misconception in retail shopping is that stacked promotional discounts add together linearly. For example, a <strong>20% storewide clearance</strong> combined with an <strong>extra 10% loyalty coupon</strong> does not equal a 30% discount.
       </p>
       <p>
-        Sequential discounts are calculated compounding off the already reduced subtotal:
+        Sequential discounts are calculated compounding off the declining intermediate subtotal:
       </p>
       <ul>
         <li><strong>Original Price:</strong> $1,000.00</li>
-        <li><strong>After 20% Store Discount:</strong> $1,000 − $200 = $800.00</li>
-        <li><strong>After Extra 10% Coupon:</strong> $800 − (10% of $800) = $800 − $80 = <strong>$720.00</strong></li>
+        <li><strong>Step 1 (20% Clearance):</strong> $1,000 − $200 = $800.00</li>
+        <li><strong>Step 2 (Extra 10% Coupon):</strong> $800 − (10% of $800) = $800 − $80 = <strong>$720.00</strong></li>
         <li><strong>Total Money Saved:</strong> $280.00</li>
-        <li><strong>Effective Overall Discount:</strong> <code>($280 ÷ $1,000) × 100 = 28.0%</code> (not 30.0%)</li>
+        <li><strong>Effective Compounded Discount:</strong> <code>($280 ÷ $1,000) × 100 = 28.0%</code> (not 30.0%)</li>
       </ul>
 
-      <!-- 5. DISCOUNT VS SALE PRICE -->
-      <h2>Discount vs Sale Price</h2>
+      <!-- 5. BUY X GET Y (BOGO) EXPLAINED -->
+      <h2>Buy X Get Y (BOGO) Bundle Arithmetic</h2>
       <p>
-        Understanding core retail pricing terms ensures accurate budgeting:
+        "Buy 1 Get 1 Free" or "Buy 2 Get 1 at 50% Off" offers have different effective discount percentages depending on bundle sizes:
       </p>
       <ul>
-        <li><strong>Original Price (MSRP / List Price):</strong> The baseline retail sticker price before any promotional reductions.</li>
-        <li><strong>Discount Amount:</strong> The monetary value deducted from the original price (what you save).</li>
-        <li><strong>Discount Percentage:</strong> The markdown rate expressed as a percentage of the original price.</li>
-        <li><strong>Sale Price:</strong> The reduced price before applicable taxes and post-sale fees.</li>
-        <li><strong>Final Price Including Tax:</strong> The actual out-of-pocket checkout total after applying statutory sales taxes.</li>
+        <li><strong>Buy 1 Get 1 Free (BOGO):</strong> 2 items total, 1 paid at full price. Effective discount = <strong>50.0% off</strong>.</li>
+        <li><strong>Buy 1 Get 1 at 50% Off:</strong> 2 items total. Item 1 = 100%, Item 2 = 50%. Total = 150% for 2 items. Effective discount = <strong>25.0% off</strong>.</li>
+        <li><strong>Buy 2 Get 1 Free:</strong> 3 items total, 2 paid at full price. Effective discount = <code>(1 ÷ 3) × 100 = 33.33% off</code>.</li>
       </ul>
 
       <!-- 6. SALES TAX AFTER DISCOUNT -->
       <h2>Is Sales Tax Calculated Before or After a Discount?</h2>
       <p>
-        In most US states and international retail jurisdictions, statutory sales tax is calculated on the <strong>net discounted sale price</strong> rather than the original manufacturer list price.
+        In most jurisdictions (including US states and European VAT systems), statutory sales tax is applied to the <strong>net discounted sale price</strong> paid by the customer, rather than the original manufacturer MSRP list price.
       </p>
       <p>
-        However, certain exceptions apply:
+        However, if you use a manufacturer rebate or cash voucher that is reimbursed to the retailer by a third party, tax may be assessed on the pre-rebate subtotal depending on regional statutes.
       </p>
-      <ul>
-        <li><strong>Store Discounts & Instant Coupons:</strong> Tax is assessed on the lower sale price paid by the customer.</li>
-        <li><strong>Manufacturer Coupons / Rebates:</strong> In some jurisdictions, because the manufacturer reimburses the retailer for the coupon value, sales tax is assessed on the pre-coupon full price.</li>
-      </ul>
 
       <!-- 7. PRACTICAL EXAMPLES -->
       <h2>Discount & Sale Price Examples</h2>
 
-      <h3>Example 1: Percentage Discount</h3>
+      <h3>Example 1: Fixed Markdown</h3>
       <p>
-        A flat-screen TV listed at $800.00 is offered at 15% off during a holiday weekend. Discount amount is $800 × 0.15 = $120.00, resulting in a sale price of <strong>$680.00</strong>.
+        An appliance listed for $450.00 has an instant cash voucher of $75.00. The sale price is $450 − $75 = <strong>$375.00</strong>, representing an effective 16.67% markdown.
       </p>
 
-      <h3>Example 2: Fixed Amount Discount</h3>
+      <h3>Example 2: Reverse MSRP Restoration</h3>
       <p>
-        A smartphone retailing for $650.00 has an instant cash markdown coupon of $75.00. The sale price is $650 − $75 = <strong>$575.00</strong> (representing an effective 11.54% savings).
+        A watch bought on Black Friday for $240.00 was sold at 40% off. The original price before discount was $240 ÷ (1 − 0.40) = <strong>$400.00</strong>.
       </p>
 
-      <h3>Example 3: Multiple Sequential Discounts</h3>
-      <p>
-        A designer coat priced at $400.00 receives a 25% clearance markdown ($300.00 subtotal) and an additional 15% VIP member loyalty discount. The final price is $300 − (15% of $300) = $300 − $45 = <strong>$255.00</strong>, yielding a total saving of $145.00 (36.25% effective discount).
-      </p>
-
-      <!-- 8. COMMON MISTAKES -->
-      <h2>Common Mistakes When Calculating Discounts</h2>
-
-      <h3>Adding Multiple Discounts Together</h3>
-      <p>
-        Adding percentage discounts directly (e.g. 30% + 20% = 50%) overestimates your savings. Sequential markdowns apply only to the declining intermediate balance.
-      </p>
-
-      <h3>Calculating the Discount From the Wrong Price</h3>
-      <p>
-        Always clarify whether additional promo codes apply to the original list price or the current clearance sale price.
-      </p>
-
-      <h3>Forgetting Sales Tax</h3>
-      <p>
-        The final cash register amount paid includes state, county, and municipal sales taxes added to the discounted subtotal.
-      </p>
-
-      <h3>Confusing Discount Amount With Discount Percentage</h3>
-      <p>
-        A $30 markdown on a $500 item is a 6% discount, whereas a 30% discount on a $500 item is a $150 reduction.
-      </p>
-
-      <h3>Ignoring Rounding</h3>
-      <p>
-        Retail checkout systems round fractional cents at each item line, which can lead to minor penny differences compared to rounded estimates.
-      </p>
-
-      <!-- 9. IMPORTANT INFORMATION AND DISCLAIMER -->
-      <h2>Important Information</h2>
-      <p>
-        Please keep the following principles in mind when reviewing your discount calculations:
-      </p>
+      <!-- 8. IMPORTANT INFORMATION AND DISCLAIMER -->
+      <h2>Important Information & Disclaimers</h2>
       <ul>
-        <li><strong>Mathematical Simulation:</strong> Projections use exact commercial arithmetic and percentage compounding formulas.</li>
-        <li><strong>Merchant Policy Variations:</strong> Retailers may apply coupons, store credits, gift cards, and promotional codes in differing sequences according to their specific terms of sale.</li>
-        <li><strong>Tax & Legal Disclaimer:</strong> Tax treatments vary across jurisdictions. This tool provides estimates for shopping budgeting and educational reference.</li>
+        <li><strong>Rounding Discrepancies:</strong> Commercial point-of-sale registers round fractional cents at each item line, which may produce minor penny variations.</li>
+        <li><strong>Merchant Coupon Terms:</strong> Retailers may apply coupons, rewards points, and promotional codes in differing sequences according to their specific checkout terms.</li>
+        <li><strong>Educational Reference:</strong> This calculator provides mathematical estimates for personal shopping, budgeting, and commercial reference.</li>
       </ul>
 
     </section>
@@ -501,7 +625,7 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
   <!-- FAQ SECTION SLOT (EXACTLY 6 FAQs AS REQUIRED) -->
   <Fragment slot="faq">
     <div class="space-y-4 text-xs sm:text-sm">
-      
+
       <details class="group rounded-xl border border-slate-200 p-4 dark:border-slate-800" open>
         <summary class="cursor-pointer list-none">
           <h3 class="flex items-center justify-between font-bold text-slate-900 dark:text-white">
@@ -688,11 +812,12 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
   ]
 })} />
 
-<!-- CLIENT-SIDE SCRIPT LOGIC -->
+<!-- CLIENT-SIDE CALCULATION ENGINE & UI LOGIC -->
 <script is:inline>
   // State
-  let activeDiscountMode = 'sale_price'; // 'sale_price' | 'discount_pct' | 'original_price' | 'multiple'
+  let activeDiscountMode = 'sale_price'; // 'sale_price' | 'discount_pct' | 'original_price' | 'multiple' | 'bogo'
   let activeDiscountType = 'percentage'; // 'percentage' | 'fixed'
+  let activeCurrency = '$';
   let lastCalculatedDiscount = null;
 
   // Mode Containers
@@ -700,9 +825,14 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
   const secModePct = document.getElementById('sec-disc-mode-pct');
   const secModeOrig = document.getElementById('sec-disc-mode-orig');
   const secModeMulti = document.getElementById('sec-disc-mode-multi');
-  const txtDiscSubtitle = document.getElementById('txt-disc-subtitle');
+  const secModeBogo = document.getElementById('sec-disc-mode-bogo');
 
-  // Input Elements - Mode A
+  const txtDiscTitleIcon = document.getElementById('txt-disc-title-icon');
+  const txtDiscTitle = document.getElementById('txt-disc-title');
+  const txtDiscSubtitle = document.getElementById('txt-disc-subtitle');
+  const selCurrency = document.getElementById('sel-disc-currency');
+
+  // Input Elements - Mode 1: Sale Price
   const inpOrigPrice = document.getElementById('inp-disc-orig-price');
   const btnTypePct = document.getElementById('btn-type-pct');
   const btnTypeFixed = document.getElementById('btn-type-fixed');
@@ -710,24 +840,35 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
   const boxFixedInput = document.getElementById('box-disc-fixed-input');
   const inpValPct = document.getElementById('inp-disc-val-pct');
   const inpValFixed = document.getElementById('inp-disc-val-fixed');
+  const inpQtySale = document.getElementById('inp-disc-qty-sale');
 
-  // Input Elements - Mode B
+  // Input Elements - Mode 2: Discount %
   const inpCalcOrig = document.getElementById('inp-disc-calc-orig');
   const inpCalcSale = document.getElementById('inp-disc-calc-sale');
+  const inpQtyPct = document.getElementById('inp-disc-qty-pct');
 
-  // Input Elements - Mode C
+  // Input Elements - Mode 3: Original Price
   const inpRevSale = document.getElementById('inp-disc-rev-sale');
   const inpRevPct = document.getElementById('inp-disc-rev-pct');
+  const inpQtyOrig = document.getElementById('inp-disc-qty-orig');
 
-  // Input Elements - Mode D
+  // Input Elements - Mode 4: Multiple Discounts
   const inpMultiOrig = document.getElementById('inp-disc-multi-orig');
   const inpMultiD1 = document.getElementById('inp-disc-multi-d1');
   const inpMultiD2 = document.getElementById('inp-disc-multi-d2');
   const inpMultiD3 = document.getElementById('inp-disc-multi-d3');
+  const inpQtyMulti = document.getElementById('inp-disc-qty-multi');
   const rowMultiD3 = document.getElementById('row-disc-multi-d3');
   const btnAddD3 = document.getElementById('btn-add-d3');
   const btnRemoveD3 = document.getElementById('btn-remove-d3');
   const boxBtnAddD3 = document.getElementById('box-btn-add-d3');
+
+  // Input Elements - Mode 5: BOGO / Bundle
+  const inpBogoPrice = document.getElementById('inp-disc-bogo-price');
+  const inpBogoTotalQty = document.getElementById('inp-disc-bogo-total-qty');
+  const inpBogoBuy = document.getElementById('inp-disc-bogo-buy');
+  const inpBogoGet = document.getElementById('inp-disc-bogo-get');
+  const selBogoDiscount = document.getElementById('sel-disc-bogo-discount');
 
   // Sales Tax Elements
   const chkApplyTax = document.getElementById('chk-apply-tax');
@@ -745,7 +886,15 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
   const resDiscHeroSubtitle = document.getElementById('res-disc-hero-subtitle');
   const lblDiscHeroSecondary = document.getElementById('lbl-disc-hero-secondary');
   const resDiscHeroSecondary = document.getElementById('res-disc-hero-secondary');
+  const resDiscHeroSecondarySub = document.getElementById('res-disc-hero-secondary-sub');
 
+  // Visual Bar Elements
+  const txtBarPaidPct = document.getElementById('txt-bar-paid-pct');
+  const txtBarSavedPct = document.getElementById('txt-bar-saved-pct');
+  const barPaidFill = document.getElementById('bar-paid-fill');
+  const barSavedFill = document.getElementById('bar-saved-fill');
+
+  // 4 Grid Elements
   const lblDiscGrid1 = document.getElementById('lbl-disc-grid-1');
   const resDiscGrid1 = document.getElementById('res-disc-grid-1');
   const lblDiscGrid2 = document.getElementById('lbl-disc-grid-2');
@@ -755,6 +904,16 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
   const lblDiscGrid4 = document.getElementById('lbl-disc-grid-4');
   const resDiscGrid4 = document.getElementById('res-disc-grid-4');
 
+  // BOGO Extra Details Card Elements
+  const boxDiscBogoDetails = document.getElementById('box-disc-bogo-details');
+  const resBogoFullCount = document.getElementById('res-bogo-full-count');
+  const resBogoFullPrice = document.getElementById('res-bogo-full-price');
+  const resBogoDiscCount = document.getElementById('res-bogo-disc-count');
+  const resBogoDiscPrice = document.getElementById('res-bogo-disc-price');
+  const resBogoUnitPrice = document.getElementById('res-bogo-unit-price');
+  const resBogoEffDiscount = document.getElementById('res-bogo-eff-discount');
+
+  // Breakdown Text Elements
   const txtDiscFormulaName = document.getElementById('txt-disc-formula-name');
   const txtDiscBreakdownFormula = document.getElementById('txt-disc-breakdown-formula');
   const txtDiscBreakdownStep1 = document.getElementById('txt-disc-breakdown-step1');
@@ -762,16 +921,32 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
   const boxDiscBreakdownStep3 = document.getElementById('box-disc-breakdown-step3');
   const txtDiscBreakdownStep3 = document.getElementById('txt-disc-breakdown-step3');
 
+  // Comparison Table & PDF
   const tblDiscComparison = document.getElementById('tbl-disc-comparison');
   const btnDiscDownloadPdf = document.getElementById('btn-disc-download-pdf');
   const txtBtnDiscPdf = document.getElementById('txt-btn-disc-pdf');
 
-  // Currency Formatter
+  // Format Money helper
   function formatMoney(val) {
     const num = Number(val);
-    if (isNaN(num)) return '$0.00';
-    return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    if (isNaN(num)) return `${activeCurrency}0.00`;
+    return `${activeCurrency}${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
   }
+
+  // Update Currency Labels
+  function updateCurrencySymbols() {
+    document.querySelectorAll('.lbl-curr-sym').forEach((el) => {
+      el.textContent = activeCurrency;
+    });
+  }
+
+  selCurrency.addEventListener('change', () => {
+    activeCurrency = selCurrency.value;
+    updateCurrencySymbols();
+    if (!discResultsSection.classList.contains('hidden') && lastCalculatedDiscount) {
+      executeDiscountCalculation();
+    }
+  });
 
   // Mode Switcher Handler
   document.querySelectorAll('.btn-disc-mode').forEach((btn) => {
@@ -783,25 +958,40 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
 
       activeDiscountMode = btn.getAttribute('data-mode') || 'sale_price';
       discResultsSection.classList.add('hidden');
+      errDisc.classList.add('hidden');
       lastCalculatedDiscount = null;
 
       secModeSalePrice.classList.add('hidden');
       secModePct.classList.add('hidden');
       secModeOrig.classList.add('hidden');
       secModeMulti.classList.add('hidden');
+      secModeBogo.classList.add('hidden');
 
       if (activeDiscountMode === 'sale_price') {
         secModeSalePrice.classList.remove('hidden');
-        txtDiscSubtitle.textContent = 'Calculate the discount amount, amount saved, and final sale price using a percentage or fixed discount.';
+        txtDiscTitleIcon.textContent = '🏷️';
+        txtDiscTitle.textContent = 'Discount & Sale Price Calculator';
+        txtDiscSubtitle.textContent = 'Calculate the discount amount, money saved, and final sale price using percentage or fixed discounts.';
       } else if (activeDiscountMode === 'discount_pct') {
         secModePct.classList.remove('hidden');
+        txtDiscTitleIcon.textContent = '％';
+        txtDiscTitle.textContent = 'Find Discount Percentage';
         txtDiscSubtitle.textContent = 'Find the exact percentage saved based on the original retail price and discounted sale price.';
       } else if (activeDiscountMode === 'original_price') {
         secModeOrig.classList.remove('hidden');
+        txtDiscTitleIcon.textContent = '🔄';
+        txtDiscTitle.textContent = 'Reverse Original Price Calculator';
         txtDiscSubtitle.textContent = 'Reverse calculate the original pre-discount sticker price from the sale price and discount percentage.';
-      } else {
+      } else if (activeDiscountMode === 'multiple') {
         secModeMulti.classList.remove('hidden');
-        txtDiscSubtitle.textContent = 'Model sequential stacked discounts (e.g. 20% sale + extra 10% coupon) and calculate the effective total discount.';
+        txtDiscTitleIcon.textContent = '✨';
+        txtDiscTitle.textContent = 'Multiple Stacked Discounts Calculator';
+        txtDiscSubtitle.textContent = 'Model sequential stacked discounts (e.g. 20% sale + extra 10% coupon) and calculate the true compounding discount.';
+      } else {
+        secModeBogo.classList.remove('hidden');
+        txtDiscTitleIcon.textContent = '🎁';
+        txtDiscTitle.textContent = 'Buy X Get Y (BOGO) Bundle Calculator';
+        txtDiscSubtitle.textContent = 'Calculate total costs, effective unit prices, and true percentage savings for Buy X Get Y offers and bundles.';
       }
     });
   });
@@ -813,6 +1003,7 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
     btnTypeFixed.className = 'rounded-xl border border-slate-300 bg-white py-2.5 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 hover:border-slate-400 transition cursor-pointer';
     boxPctInput.classList.remove('hidden');
     boxFixedInput.classList.add('hidden');
+    document.getElementById('box-disc-presets').classList.remove('hidden');
   });
 
   btnTypeFixed.addEventListener('click', () => {
@@ -821,9 +1012,10 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
     btnTypePct.className = 'rounded-xl border border-slate-300 bg-white py-2.5 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 hover:border-slate-400 transition cursor-pointer';
     boxFixedInput.classList.remove('hidden');
     boxPctInput.classList.add('hidden');
+    document.getElementById('box-disc-presets').classList.add('hidden');
   });
 
-  // Quick Percentage Buttons
+  // Quick Percentage Preset Buttons
   document.querySelectorAll('.btn-disc-quick-pct').forEach((btn) => {
     btn.addEventListener('click', () => {
       btnTypePct.click();
@@ -851,10 +1043,14 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
     const taxRate = isTaxEnabled ? Math.max(0, parseFloat(inpTaxRate.value) || 0) : 0;
 
     let originalPrice = 0;
+    let qty = 1;
+    let originalTotal = 0;
     let salePrice = 0;
+    let saleTotal = 0;
     let discountAmount = 0;
     let discountPercentage = 0;
     let amountSaved = 0;
+    let unitPriceAfterDiscount = 0;
     let salesTaxAmount = 0;
     let finalPriceWithTax = 0;
     let effectiveDiscountPercent = 0;
@@ -865,14 +1061,20 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
     let step2Text = '';
     let step3Text = '';
 
+    let bogoData = null;
+
     if (activeDiscountMode === 'sale_price') {
       originalPrice = parseFloat(inpOrigPrice.value);
+      qty = Math.max(1, parseInt(inpQtySale.value) || 1);
+
       if (isNaN(originalPrice) || originalPrice < 0) {
-        errDisc.textContent = 'Please enter a valid original price (0 or greater).';
+        errDisc.textContent = 'Please enter a valid original retail price (0 or greater).';
         errDisc.classList.remove('hidden');
         discResultsSection.classList.add('hidden');
         return;
       }
+
+      originalTotal = Number((originalPrice * qty).toFixed(2));
 
       if (activeDiscountType === 'percentage') {
         discountPercentage = parseFloat(inpValPct.value);
@@ -883,72 +1085,82 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
           return;
         }
 
-        discountAmount = Number(((originalPrice * discountPercentage) / 100).toFixed(2));
-        salePrice = Number((originalPrice - discountAmount).toFixed(2));
+        const unitDiscount = Number(((originalPrice * discountPercentage) / 100).toFixed(2));
+        salePrice = Number((originalPrice - unitDiscount).toFixed(2));
+        unitPriceAfterDiscount = salePrice;
+        saleTotal = Number((salePrice * qty).toFixed(2));
+        discountAmount = Number((unitDiscount * qty).toFixed(2));
         amountSaved = discountAmount;
 
         formulaName = 'Standard Percentage Discount Formula';
-        formulaText = 'Discount Amount = Price × (Discount % ÷ 100) | Sale Price = Price − Discount';
-        step1Text = `${formatMoney(originalPrice)} × (${discountPercentage}% ÷ 100) = ${formatMoney(discountAmount)} Saved`;
-        step2Text = `${formatMoney(originalPrice)} − ${formatMoney(discountAmount)} = ${formatMoney(salePrice)} Final Sale Price`;
+        formulaText = 'Discount Amount = Original Price × (Discount % ÷ 100) | Sale Price = Original Price − Discount';
+        step1Text = `${formatMoney(originalPrice)} × (${discountPercentage}% ÷ 100) = ${formatMoney(unitDiscount)} Saved per unit (${formatMoney(discountAmount)} for ${qty} unit${qty > 1 ? 's' : ''})`;
+        step2Text = `${formatMoney(originalTotal)} − ${formatMoney(discountAmount)} = ${formatMoney(saleTotal)} Final Sale Price`;
       } else {
-        const fixedVal = parseFloat(inpValFixed.value);
-        if (isNaN(fixedVal) || fixedVal < 0) {
+        const rawFixed = parseFloat(inpValFixed.value);
+        if (isNaN(rawFixed) || rawFixed < 0) {
           errDisc.textContent = 'Fixed discount amount must be 0 or greater.';
           errDisc.classList.remove('hidden');
           discResultsSection.classList.add('hidden');
           return;
         }
 
-        discountAmount = Math.min(originalPrice, fixedVal);
-        salePrice = Number((originalPrice - discountAmount).toFixed(2));
+        const unitDiscount = Math.min(originalPrice, rawFixed);
+        salePrice = Number((originalPrice - unitDiscount).toFixed(2));
+        unitPriceAfterDiscount = salePrice;
+        discountAmount = Number((unitDiscount * qty).toFixed(2));
+        saleTotal = Number((salePrice * qty).toFixed(2));
         amountSaved = discountAmount;
-        discountPercentage = originalPrice > 0 ? Number(((discountAmount / originalPrice) * 100).toFixed(2)) : 0;
+        discountPercentage = originalPrice > 0 ? Number(((unitDiscount / originalPrice) * 100).toFixed(2)) : 0;
 
-        formulaName = 'Fixed Amount Discount Formula';
+        formulaName = 'Fixed Cash Discount Formula';
         formulaText = 'Sale Price = Original Price − Fixed Discount Amount';
-        step1Text = `Fixed Cash Markdown: ${formatMoney(discountAmount)} (${discountPercentage.toFixed(1)}% equivalent)`;
-        step2Text = `${formatMoney(originalPrice)} − ${formatMoney(discountAmount)} = ${formatMoney(salePrice)} Final Sale Price`;
+        step1Text = `Fixed Cash Markdown: ${formatMoney(unitDiscount)} per unit (${discountPercentage.toFixed(1)}% equivalent)`;
+        step2Text = `${formatMoney(originalTotal)} − ${formatMoney(discountAmount)} = ${formatMoney(saleTotal)} Final Sale Price`;
       }
 
       if (isTaxEnabled && taxRate > 0) {
-        salesTaxAmount = Number(((salePrice * taxRate) / 100).toFixed(2));
-        finalPriceWithTax = Number((salePrice + salesTaxAmount).toFixed(2));
-        step3Text = `Sales Tax (${taxRate}%): ${formatMoney(salePrice)} × ${taxRate}% = ${formatMoney(salesTaxAmount)} | Total with Tax = ${formatMoney(finalPriceWithTax)}`;
+        salesTaxAmount = Number(((saleTotal * taxRate) / 100).toFixed(2));
+        finalPriceWithTax = Number((saleTotal + salesTaxAmount).toFixed(2));
+        step3Text = `Sales Tax (${taxRate}%): ${formatMoney(saleTotal)} × ${taxRate}% = ${formatMoney(salesTaxAmount)} | Total with Tax = ${formatMoney(finalPriceWithTax)}`;
       } else {
-        finalPriceWithTax = salePrice;
+        finalPriceWithTax = saleTotal;
       }
 
-      lblDiscHeroTitle.textContent = 'FINAL SALE PRICE';
-      resDiscHeroAmount.textContent = formatMoney(salePrice);
+      lblDiscHeroTitle.textContent = qty > 1 ? 'TOTAL FINAL SALE PRICE' : 'FINAL SALE PRICE';
+      resDiscHeroAmount.textContent = formatMoney(isTaxEnabled && taxRate > 0 ? finalPriceWithTax : saleTotal);
       resDiscHeroSubtitle.textContent = activeDiscountType === 'percentage'
-        ? `${discountPercentage}% Discount Applied`
-        : `${formatMoney(discountAmount)} Fixed Discount Applied (${discountPercentage.toFixed(1)}%)`;
+        ? `${discountPercentage}% Off applied to ${qty} unit${qty > 1 ? 's' : ''} (${formatMoney(salePrice)}/item)`
+        : `${formatMoney(discountAmount)} Markdown applied to ${qty} unit${qty > 1 ? 's' : ''} (${discountPercentage.toFixed(1)}% equivalent)`;
       lblDiscHeroSecondary.textContent = 'Total Money Saved:';
       resDiscHeroSecondary.textContent = formatMoney(amountSaved);
+      resDiscHeroSecondarySub.textContent = `${discountPercentage.toFixed(1)}% Off Original`;
 
-      lblDiscGrid1.textContent = 'Original Price';
-      resDiscGrid1.textContent = formatMoney(originalPrice);
-      lblDiscGrid2.textContent = 'Discount';
+      lblDiscGrid1.textContent = qty > 1 ? `Original (${qty} units)` : 'Original Price';
+      resDiscGrid1.textContent = formatMoney(originalTotal);
+      lblDiscGrid2.textContent = 'Discount Rate';
       resDiscGrid2.textContent = activeDiscountType === 'percentage' ? `${discountPercentage}%` : formatMoney(discountAmount);
-      lblDiscGrid3.textContent = isTaxEnabled && taxRate > 0 ? `Sales Tax (${taxRate}%)` : 'Discount Amount';
+      lblDiscGrid3.textContent = isTaxEnabled && taxRate > 0 ? `Tax (${taxRate}%)` : 'Discount Amount';
       resDiscGrid3.textContent = isTaxEnabled && taxRate > 0 ? formatMoney(salesTaxAmount) : formatMoney(discountAmount);
-      lblDiscGrid4.textContent = isTaxEnabled && taxRate > 0 ? 'Total with Tax' : 'Sale Price';
-      resDiscGrid4.textContent = isTaxEnabled && taxRate > 0 ? formatMoney(finalPriceWithTax) : formatMoney(salePrice);
+      lblDiscGrid4.textContent = isTaxEnabled && taxRate > 0 ? 'Total with Tax' : 'Final Sale Price';
+      resDiscGrid4.textContent = formatMoney(finalPriceWithTax);
+
+      boxDiscBogoDetails.classList.add('hidden');
 
     } else if (activeDiscountMode === 'discount_pct') {
       originalPrice = parseFloat(inpCalcOrig.value);
       salePrice = parseFloat(inpCalcSale.value);
+      qty = Math.max(1, parseInt(inpQtyPct.value) || 1);
 
       if (isNaN(originalPrice) || originalPrice <= 0) {
-        errDisc.textContent = 'Original price must be greater than 0.';
+        errDisc.textContent = 'Original retail price must be greater than 0.';
         errDisc.classList.remove('hidden');
         discResultsSection.classList.add('hidden');
         return;
       }
 
       if (isNaN(salePrice) || salePrice < 0) {
-        errDisc.textContent = 'Sale price must be 0 or greater.';
+        errDisc.textContent = 'Discounted sale price must be 0 or greater.';
         errDisc.classList.remove('hidden');
         discResultsSection.classList.add('hidden');
         return;
@@ -961,34 +1173,49 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
         return;
       }
 
-      discountAmount = Number((originalPrice - salePrice).toFixed(2));
+      originalTotal = Number((originalPrice * qty).toFixed(2));
+      saleTotal = Number((salePrice * qty).toFixed(2));
+      const unitSaved = Number((originalPrice - salePrice).toFixed(2));
+      discountAmount = Number((unitSaved * qty).toFixed(2));
       amountSaved = discountAmount;
-      discountPercentage = Number(((discountAmount / originalPrice) * 100).toFixed(2));
-      finalPriceWithTax = salePrice;
+      discountPercentage = Number(((unitSaved / originalPrice) * 100).toFixed(2));
+      unitPriceAfterDiscount = salePrice;
 
-      formulaName = 'Discount Percentage Formula';
+      if (isTaxEnabled && taxRate > 0) {
+        salesTaxAmount = Number(((saleTotal * taxRate) / 100).toFixed(2));
+        finalPriceWithTax = Number((saleTotal + salesTaxAmount).toFixed(2));
+        step3Text = `Sales Tax (${taxRate}%): ${formatMoney(saleTotal)} × ${taxRate}% = ${formatMoney(salesTaxAmount)} | Total with Tax = ${formatMoney(finalPriceWithTax)}`;
+      } else {
+        finalPriceWithTax = saleTotal;
+      }
+
+      formulaName = 'Reverse Discount Percentage Formula';
       formulaText = 'Discount % = ((Original Price − Sale Price) ÷ Original Price) × 100';
-      step1Text = `${formatMoney(originalPrice)} − ${formatMoney(salePrice)} = ${formatMoney(discountAmount)} Money Saved`;
-      step2Text = `(${formatMoney(discountAmount)} ÷ ${formatMoney(originalPrice)}) × 100 = ${discountPercentage}% Discount`;
+      step1Text = `${formatMoney(originalPrice)} − ${formatMoney(salePrice)} = ${formatMoney(unitSaved)} Saved per unit (${formatMoney(amountSaved)} total)`;
+      step2Text = `(${formatMoney(amountSaved)} ÷ ${formatMoney(originalTotal)}) × 100 = ${discountPercentage}% Total Discount Rate`;
 
-      lblDiscHeroTitle.textContent = 'DISCOUNT PERCENTAGE';
-      resDiscHeroAmount.textContent = `${discountPercentage}%`;
-      resDiscHeroSubtitle.textContent = `Calculated from ${formatMoney(originalPrice)} down to ${formatMoney(salePrice)}`;
-      lblDiscHeroSecondary.textContent = 'Amount Saved:';
+      lblDiscHeroTitle.textContent = 'DISCOUNT PERCENTAGE SAVED';
+      resDiscHeroAmount.textContent = `${discountPercentage}% OFF`;
+      resDiscHeroSubtitle.textContent = `Calculated from ${formatMoney(originalPrice)} down to ${formatMoney(salePrice)} per unit`;
+      lblDiscHeroSecondary.textContent = 'Total Money Saved:';
       resDiscHeroSecondary.textContent = formatMoney(amountSaved);
+      resDiscHeroSecondarySub.textContent = `${formatMoney(saleTotal)} Net Sale Total`;
 
-      lblDiscGrid1.textContent = 'Original Price';
-      resDiscGrid1.textContent = formatMoney(originalPrice);
-      lblDiscGrid2.textContent = 'Sale Price';
-      resDiscGrid2.textContent = formatMoney(salePrice);
-      lblDiscGrid3.textContent = 'Amount Saved';
+      lblDiscGrid1.textContent = qty > 1 ? `Original (${qty} units)` : 'Original MSRP';
+      resDiscGrid1.textContent = formatMoney(originalTotal);
+      lblDiscGrid2.textContent = qty > 1 ? `Sale (${qty} units)` : 'Sale Price';
+      resDiscGrid2.textContent = formatMoney(saleTotal);
+      lblDiscGrid3.textContent = 'Total Savings';
       resDiscGrid3.textContent = formatMoney(amountSaved);
-      lblDiscGrid4.textContent = 'Discount Percentage';
+      lblDiscGrid4.textContent = 'Discount Rate';
       resDiscGrid4.textContent = `${discountPercentage}%`;
+
+      boxDiscBogoDetails.classList.add('hidden');
 
     } else if (activeDiscountMode === 'original_price') {
       salePrice = parseFloat(inpRevSale.value);
       discountPercentage = parseFloat(inpRevPct.value);
+      qty = Math.max(1, parseInt(inpQtyOrig.value) || 1);
 
       if (isNaN(salePrice) || salePrice <= 0) {
         errDisc.textContent = 'Sale price must be greater than 0.';
@@ -1005,33 +1232,48 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
       }
 
       originalPrice = Number((salePrice / (1 - discountPercentage / 100)).toFixed(2));
-      discountAmount = Number((originalPrice - salePrice).toFixed(2));
+      originalTotal = Number((originalPrice * qty).toFixed(2));
+      saleTotal = Number((salePrice * qty).toFixed(2));
+      discountAmount = Number(((originalPrice - salePrice) * qty).toFixed(2));
       amountSaved = discountAmount;
-      finalPriceWithTax = salePrice;
+      unitPriceAfterDiscount = salePrice;
 
-      formulaName = 'Reverse Original Price Formula';
+      if (isTaxEnabled && taxRate > 0) {
+        salesTaxAmount = Number(((saleTotal * taxRate) / 100).toFixed(2));
+        finalPriceWithTax = Number((saleTotal + salesTaxAmount).toFixed(2));
+        step3Text = `Sales Tax (${taxRate}%): ${formatMoney(saleTotal)} × ${taxRate}% = ${formatMoney(salesTaxAmount)} | Total with Tax = ${formatMoney(finalPriceWithTax)}`;
+      } else {
+        finalPriceWithTax = saleTotal;
+      }
+
+      formulaName = 'Reverse MSRP Original Price Formula';
       formulaText = 'Original Price = Sale Price ÷ (1 − Discount % ÷ 100)';
-      step1Text = `${formatMoney(salePrice)} ÷ (1 − ${discountPercentage / 100}) = ${formatMoney(originalPrice)} Original Price`;
-      step2Text = `${formatMoney(originalPrice)} − ${formatMoney(salePrice)} = ${formatMoney(discountAmount)} Discount Amount`;
+      step1Text = `${formatMoney(salePrice)} ÷ (1 − ${discountPercentage / 100}) = ${formatMoney(originalPrice)} Original MSRP per unit`;
+      step2Text = `${formatMoney(originalTotal)} − ${formatMoney(saleTotal)} = ${formatMoney(discountAmount)} Total Discount Deducted`;
 
-      lblDiscHeroTitle.textContent = 'ESTIMATED ORIGINAL PRICE';
-      resDiscHeroAmount.textContent = formatMoney(originalPrice);
-      resDiscHeroSubtitle.textContent = `Restored from ${formatMoney(salePrice)} at ${discountPercentage}% Discount`;
-      lblDiscHeroSecondary.textContent = 'Discount Amount:';
+      lblDiscHeroTitle.textContent = qty > 1 ? 'ESTIMATED ORIGINAL TOTAL' : 'ESTIMATED ORIGINAL PRICE';
+      resDiscHeroAmount.textContent = formatMoney(originalTotal);
+      resDiscHeroSubtitle.textContent = `Restored from ${formatMoney(salePrice)} at ${discountPercentage}% discount (${formatMoney(originalPrice)}/unit MSRP)`;
+      lblDiscHeroSecondary.textContent = 'Total Discount Value:';
       resDiscHeroSecondary.textContent = formatMoney(discountAmount);
+      resDiscHeroSecondarySub.textContent = `${discountPercentage}% Off Pre-Discount MSRP`;
 
-      lblDiscGrid1.textContent = 'Sale Price';
-      resDiscGrid1.textContent = formatMoney(salePrice);
-      lblDiscGrid2.textContent = 'Discount Percentage';
+      lblDiscGrid1.textContent = qty > 1 ? `Sale Total (${qty} units)` : 'Current Sale Price';
+      resDiscGrid1.textContent = formatMoney(saleTotal);
+      lblDiscGrid2.textContent = 'Discount Rate';
       resDiscGrid2.textContent = `${discountPercentage}%`;
-      lblDiscGrid3.textContent = 'Discount Amount';
+      lblDiscGrid3.textContent = 'Discount Value';
       resDiscGrid3.textContent = formatMoney(discountAmount);
-      lblDiscGrid4.textContent = 'Original Price';
-      resDiscGrid4.textContent = formatMoney(originalPrice);
+      lblDiscGrid4.textContent = qty > 1 ? 'Original MSRP Total' : 'Original Price';
+      resDiscGrid4.textContent = formatMoney(originalTotal);
 
-    } else {
-      // Multiple Sequential Discounts
+      boxDiscBogoDetails.classList.add('hidden');
+
+    } else if (activeDiscountMode === 'multiple') {
+      // Multiple Stacked Sequential Discounts
       originalPrice = parseFloat(inpMultiOrig.value);
+      qty = Math.max(1, parseInt(inpQtyMulti.value) || 1);
+
       if (isNaN(originalPrice) || originalPrice <= 0) {
         errDisc.textContent = 'Original price must be greater than 0.';
         errDisc.classList.remove('hidden');
@@ -1043,46 +1285,154 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
       const d2 = Math.min(100, Math.max(0, parseFloat(inpMultiD2.value) || 0));
       const d3 = !rowMultiD3.classList.contains('hidden') ? Math.min(100, Math.max(0, parseFloat(inpMultiD3.value) || 0)) : 0;
 
-      const discounts = [d1, d2];
-      if (d3 > 0) discounts.push(d3);
+      const rawDiscounts = [d1, d2];
+      if (d3 > 0) rawDiscounts.push(d3);
 
-      let curP = originalPrice;
+      originalTotal = Number((originalPrice * qty).toFixed(2));
+      let curUnitPrice = originalPrice;
       const stepDescs = [];
 
-      discounts.forEach((pct, idx) => {
-        const saved = Number(((curP * pct) / 100).toFixed(2));
-        const nextP = Number((curP - saved).toFixed(2));
-        stepDescs.push(`D${idx + 1} (${pct}%): ${formatMoney(curP)} → ${formatMoney(nextP)} (-${formatMoney(saved)})`);
-        curP = nextP;
+      rawDiscounts.forEach((pct, idx) => {
+        const saved = Number(((curUnitPrice * pct) / 100).toFixed(2));
+        const nextP = Number((curUnitPrice - saved).toFixed(2));
+        stepDescs.push(`D${idx + 1} (${pct}%): ${formatMoney(curUnitPrice)} → ${formatMoney(nextP)} (-${formatMoney(saved)})`);
+        curUnitPrice = nextP;
       });
 
-      salePrice = curP;
-      amountSaved = Number((originalPrice - salePrice).toFixed(2));
+      salePrice = curUnitPrice;
+      unitPriceAfterDiscount = salePrice;
+      saleTotal = Number((salePrice * qty).toFixed(2));
+      amountSaved = Number((originalTotal - saleTotal).toFixed(2));
       discountAmount = amountSaved;
-      effectiveDiscountPercent = Number(((amountSaved / originalPrice) * 100).toFixed(2));
+      effectiveDiscountPercent = originalTotal > 0 ? Number(((amountSaved / originalTotal) * 100).toFixed(2)) : 0;
       discountPercentage = effectiveDiscountPercent;
-      finalPriceWithTax = salePrice;
 
+      if (isTaxEnabled && taxRate > 0) {
+        salesTaxAmount = Number(((saleTotal * taxRate) / 100).toFixed(2));
+        finalPriceWithTax = Number((saleTotal + salesTaxAmount).toFixed(2));
+        step3Text = `Sales Tax (${taxRate}%): ${formatMoney(saleTotal)} × ${taxRate}% = ${formatMoney(salesTaxAmount)} | Total with Tax = ${formatMoney(finalPriceWithTax)}`;
+      } else {
+        finalPriceWithTax = saleTotal;
+      }
+
+      const naiveSum = rawDiscounts.reduce((a, b) => a + b, 0);
       formulaName = 'Sequential Compounding Formula';
-      formulaText = 'Price_n = Price_{n-1} × (1 − Discount_n ÷ 100) | Effective % = (Saved ÷ Original) × 100';
+      formulaText = 'Price_n = Price_{n-1} × (1 − Discount_n ÷ 100) | Effective % = (Total Saved ÷ Original) × 100';
       step1Text = stepDescs.join(' | ');
-      step2Text = `Total Saved: ${formatMoney(amountSaved)} | Effective Overall Discount: ${effectiveDiscountPercent}%`;
+      step2Text = `Total Saved: ${formatMoney(amountSaved)} | True Effective Compounding Discount: ${effectiveDiscountPercent}% (vs ${naiveSum.toFixed(1)}% naive sum)`;
 
-      lblDiscHeroTitle.textContent = 'FINAL SALE PRICE';
-      resDiscHeroAmount.textContent = formatMoney(salePrice);
-      resDiscHeroSubtitle.textContent = `Effective Total Discount: ${effectiveDiscountPercent}% (${discounts.join('% + ')}%)`;
-      lblDiscHeroSecondary.textContent = 'Total Amount Saved:';
+      lblDiscHeroTitle.textContent = qty > 1 ? 'FINAL STACKED SALE PRICE' : 'FINAL SALE PRICE';
+      resDiscHeroAmount.textContent = formatMoney(isTaxEnabled && taxRate > 0 ? finalPriceWithTax : saleTotal);
+      resDiscHeroSubtitle.textContent = `Effective Compounding Discount: ${effectiveDiscountPercent}% (${rawDiscounts.join('% + ')}% stacked)`;
+      lblDiscHeroSecondary.textContent = 'Total Money Saved:';
       resDiscHeroSecondary.textContent = formatMoney(amountSaved);
+      resDiscHeroSecondarySub.textContent = `${effectiveDiscountPercent}% True Discount`;
 
-      lblDiscGrid1.textContent = 'Original Price';
-      resDiscGrid1.textContent = formatMoney(originalPrice);
-      lblDiscGrid2.textContent = 'Discounts Stacked';
-      resDiscGrid2.textContent = discounts.map(d => `${d}%`).join(' + ');
-      lblDiscGrid3.textContent = 'Total Saved';
-      resDiscGrid3.textContent = formatMoney(amountSaved);
-      lblDiscGrid4.textContent = 'Effective Discount';
-      resDiscGrid4.textContent = `${effectiveDiscountPercent}%`;
+      lblDiscGrid1.textContent = qty > 1 ? `Original (${qty} units)` : 'Original Price';
+      resDiscGrid1.textContent = formatMoney(originalTotal);
+      lblDiscGrid2.textContent = 'Stacked Discounts';
+      resDiscGrid2.textContent = rawDiscounts.map(d => `${d}%`).join(' + ');
+      lblDiscGrid3.textContent = isTaxEnabled && taxRate > 0 ? `Tax (${taxRate}%)` : 'Total Saved';
+      resDiscGrid3.textContent = isTaxEnabled && taxRate > 0 ? formatMoney(salesTaxAmount) : formatMoney(amountSaved);
+      lblDiscGrid4.textContent = isTaxEnabled && taxRate > 0 ? 'Total with Tax' : 'Final Sale Price';
+      resDiscGrid4.textContent = formatMoney(finalPriceWithTax);
+
+      boxDiscBogoDetails.classList.add('hidden');
+
+    } else {
+      // Mode 5: Buy X Get Y (BOGO / Bundle)
+      const unitPrice = Math.max(0, parseFloat(inpBogoPrice.value) || 0);
+      const buyX = Math.max(1, parseInt(inpBogoBuy.value) || 1);
+      const getY = Math.max(1, parseInt(inpBogoGet.value) || 1);
+      const bogoDiscPct = Math.min(100, Math.max(0, parseFloat(selBogoDiscount.value) || 100));
+      const totalItems = Math.max(buyX + getY, parseInt(inpBogoTotalQty.value) || (buyX + getY));
+
+      if (isNaN(unitPrice) || unitPrice <= 0) {
+        errDisc.textContent = 'Individual unit price must be greater than 0.';
+        errDisc.classList.remove('hidden');
+        discResultsSection.classList.add('hidden');
+        return;
+      }
+
+      const bundleSize = buyX + getY;
+      const fullBundles = Math.floor(totalItems / bundleSize);
+      const remainder = totalItems % bundleSize;
+
+      const fullPriceItems = (fullBundles * buyX) + remainder;
+      const discountedItems = fullBundles * getY;
+
+      const fullPriceTotal = fullPriceItems * unitPrice;
+      const discountedUnit = unitPrice * (1 - bogoDiscPct / 100);
+      const discountedTotal = discountedItems * discountedUnit;
+
+      originalPrice = unitPrice;
+      originalTotal = Number((totalItems * unitPrice).toFixed(2));
+      saleTotal = Number((fullPriceTotal + discountedTotal).toFixed(2));
+      salePrice = totalItems > 0 ? Number((saleTotal / totalItems).toFixed(2)) : 0;
+      unitPriceAfterDiscount = salePrice;
+      amountSaved = Number((originalTotal - saleTotal).toFixed(2));
+      discountAmount = amountSaved;
+      effectiveDiscountPercent = originalTotal > 0 ? Number(((amountSaved / originalTotal) * 100).toFixed(2)) : 0;
+      discountPercentage = effectiveDiscountPercent;
+
+      if (isTaxEnabled && taxRate > 0) {
+        salesTaxAmount = Number(((saleTotal * taxRate) / 100).toFixed(2));
+        finalPriceWithTax = Number((saleTotal + salesTaxAmount).toFixed(2));
+        step3Text = `Sales Tax (${taxRate}%): ${formatMoney(saleTotal)} × ${taxRate}% = ${formatMoney(salesTaxAmount)} | Total with Tax = ${formatMoney(finalPriceWithTax)}`;
+      } else {
+        finalPriceWithTax = saleTotal;
+      }
+
+      formulaName = `Buy ${buyX} Get ${getY} (${bogoDiscPct}% Off) Bundle Formula`;
+      formulaText = 'Bundle Subtotal = (Full Price Units × Unit Price) + (Discounted Units × Unit Price × (1 − Discount % ÷ 100))';
+      step1Text = `${fullPriceItems} item${fullPriceItems > 1 ? 's' : ''} at full price (${formatMoney(fullPriceTotal)}) + ${discountedItems} item${discountedItems > 1 ? 's' : ''} with ${bogoDiscPct}% off (${formatMoney(discountedTotal)})`;
+      step2Text = `Total Paid: ${formatMoney(saleTotal)} (${formatMoney(salePrice)}/item avg) | Total Saved: ${formatMoney(amountSaved)} (${effectiveDiscountPercent}% off)`;
+
+      lblDiscHeroTitle.textContent = `BUNDLE TOTAL FOR ${totalItems} ITEMS`;
+      resDiscHeroAmount.textContent = formatMoney(isTaxEnabled && taxRate > 0 ? finalPriceWithTax : saleTotal);
+      resDiscHeroSubtitle.textContent = `Effective Unit Price: ${formatMoney(salePrice)}/item (${effectiveDiscountPercent}% overall discount)`;
+      lblDiscHeroSecondary.textContent = 'Total Money Saved:';
+      resDiscHeroSecondary.textContent = formatMoney(amountSaved);
+      resDiscHeroSecondarySub.textContent = `${effectiveDiscountPercent}% Off Regular Total`;
+
+      lblDiscGrid1.textContent = `Original (${totalItems} items)`;
+      resDiscGrid1.textContent = formatMoney(originalTotal);
+      lblDiscGrid2.textContent = 'Avg Price/Item';
+      resDiscGrid2.textContent = formatMoney(salePrice);
+      lblDiscGrid3.textContent = isTaxEnabled && taxRate > 0 ? `Tax (${taxRate}%)` : 'Total Saved';
+      resDiscGrid3.textContent = isTaxEnabled && taxRate > 0 ? formatMoney(salesTaxAmount) : formatMoney(amountSaved);
+      lblDiscGrid4.textContent = isTaxEnabled && taxRate > 0 ? 'Total with Tax' : 'Bundle Total';
+      resDiscGrid4.textContent = formatMoney(finalPriceWithTax);
+
+      // Populate BOGO details box
+      bogoData = {
+        fullPriceItems,
+        discountedItems,
+        fullPriceTotal,
+        discountedTotal,
+        effectiveUnitPrice: salePrice,
+        effectiveDiscountPercent,
+        totalItems,
+      };
+
+      resBogoFullCount.textContent = `${fullPriceItems} item${fullPriceItems > 1 ? 's' : ''}`;
+      resBogoFullPrice.textContent = formatMoney(fullPriceTotal);
+      resBogoDiscCount.textContent = `${discountedItems} item${discountedItems > 1 ? 's' : ''} (${bogoDiscPct}% off)`;
+      resBogoDiscPrice.textContent = formatMoney(discountedTotal);
+      resBogoUnitPrice.textContent = `${formatMoney(salePrice)}/item`;
+      resBogoEffDiscount.textContent = `${effectiveDiscountPercent}% Off`;
+
+      boxDiscBogoDetails.classList.remove('hidden');
     }
+
+    // Update Visual Proportions Bar
+    const paidPct = originalTotal > 0 ? Math.min(100, Math.max(0, Number(((saleTotal / originalTotal) * 100).toFixed(1)))) : 100;
+    const savedPct = Number((100 - paidPct).toFixed(1));
+
+    txtBarPaidPct.textContent = `${paidPct}%`;
+    txtBarSavedPct.textContent = `${savedPct}%`;
+    barPaidFill.style.width = `${paidPct}%`;
+    barSavedFill.style.width = `${savedPct}%`;
 
     // Step-by-Step UI Update
     txtDiscFormulaName.textContent = formulaName;
@@ -1097,9 +1447,9 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
       boxDiscBreakdownStep3.classList.add('hidden');
     }
 
-    // Discount Comparison Matrix
-    const baseForComp = originalPrice > 0 ? originalPrice : 1000;
-    const stdPercentages = [10, 20, 25, 30, 40, 50];
+    // Comparison Matrix Generation
+    const baseForComp = originalTotal > 0 ? originalTotal : (originalPrice > 0 ? originalPrice : 1000);
+    const stdPercentages = [5, 10, 15, 20, 25, 30, 40, 50, 60, 70, 75, 80, 90];
     const roundedActivePct = Math.round(discountPercentage);
     if (roundedActivePct > 0 && roundedActivePct < 100 && !stdPercentages.includes(roundedActivePct)) {
       stdPercentages.push(roundedActivePct);
@@ -1112,9 +1462,10 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
       const isCur = Math.abs(pct - discountPercentage) < 0.01;
 
       return `
-        <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 ${isCur ? 'bg-blue-50/50 dark:bg-blue-950/30 font-bold' : ''}">
-          <td class="p-2.5 font-sans font-bold text-slate-900 dark:text-white">
-            ${pct}% ${isCur ? '<span class="text-blue-600 dark:text-blue-400 text-[11px]">(Current)</span>' : ''}
+        <tr class="hover:bg-blue-50/50 dark:hover:bg-slate-800/60 cursor-pointer transition ${isCur ? 'bg-blue-50/80 dark:bg-blue-950/40 font-bold' : ''}" data-comp-pct="${pct}" title="Click to apply ${pct}% discount">
+          <td class="p-2.5 font-sans font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+            <span>${pct}%</span>
+            ${isCur ? '<span class="rounded bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-1.5 py-0.2 text-[10px] font-extrabold">Active</span>' : ''}
           </td>
           <td class="p-2.5 text-right text-emerald-600 dark:text-emerald-400 font-semibold">${formatMoney(saved)}</td>
           <td class="p-2.5 text-right font-bold text-slate-900 dark:text-white">${formatMoney(finalP)}</td>
@@ -1122,11 +1473,29 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
       `;
     }).join('');
 
-    // Save State
+    // Add interactive click to comparison rows
+    tblDiscComparison.querySelectorAll('tr[data-comp-pct]').forEach((row) => {
+      row.addEventListener('click', () => {
+        const compPct = row.getAttribute('data-comp-pct');
+        if (compPct) {
+          const saleBtn = document.querySelector('.btn-disc-mode[data-mode="sale_price"]');
+          if (saleBtn) saleBtn.click();
+          btnTypePct.click();
+          inpValPct.value = compPct;
+          executeDiscountCalculation();
+        }
+      });
+    });
+
+    // Save State for PDF and Action Bar
     lastCalculatedDiscount = {
       mode: activeDiscountMode,
+      currency: activeCurrency,
       originalPrice,
+      originalTotal,
+      quantity: qty,
       salePrice,
+      saleTotal,
       discountAmount,
       discountPercentage,
       amountSaved,
@@ -1135,6 +1504,9 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
       salesTaxAmount,
       finalPriceWithTax,
       effectiveDiscountPercent,
+      paidPercentage: paidPct,
+      savedPercentage: savedPct,
+      bogoData,
       comparisonList: stdPercentages.map((pct) => ({
         pct,
         saved: Number(((baseForComp * pct) / 100).toFixed(2)),
@@ -1143,10 +1515,14 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
       })),
     };
 
+    // Show Results Section (Strict Gated Display)
     discResultsSection.classList.remove('hidden');
+
+    // Notify Action Bar
+    document.dispatchEvent(new CustomEvent('calculator:updated', { detail: lastCalculatedDiscount }));
   }
 
-  // Clear All Button
+  // Clear All Form Fields & Hide Results
   btnClearDisc.addEventListener('click', () => {
     const saleModeBtn = document.querySelector('.btn-disc-mode[data-mode="sale_price"]');
     if (saleModeBtn) saleModeBtn.click();
@@ -1155,18 +1531,28 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
     btnTypePct.click();
     inpValPct.value = '20';
     inpValFixed.value = '200';
+    inpQtySale.value = '1';
 
     inpCalcOrig.value = '100';
     inpCalcSale.value = '75';
+    inpQtyPct.value = '1';
 
     inpRevSale.value = '800';
     inpRevPct.value = '20';
+    inpQtyOrig.value = '1';
 
     inpMultiOrig.value = '1000';
     inpMultiD1.value = '20';
     inpMultiD2.value = '10';
     inpMultiD3.value = '5';
+    inpQtyMulti.value = '1';
     btnRemoveD3.click();
+
+    inpBogoPrice.value = '50';
+    inpBogoTotalQty.value = '4';
+    inpBogoBuy.value = '1';
+    inpBogoGet.value = '1';
+    selBogoDiscount.value = '100';
 
     chkApplyTax.checked = false;
     inpTaxRate.value = '7.5';
@@ -1174,12 +1560,15 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
     errDisc.classList.add('hidden');
     discResultsSection.classList.add('hidden');
     lastCalculatedDiscount = null;
+
+    // Notify Action Bar
+    document.dispatchEvent(new CustomEvent('calculator:updated', { detail: null }));
   });
 
-  // Calculate Button
+  // Calculate Button click triggers calculation
   btnCalcDisc.addEventListener('click', executeDiscountCalculation);
 
-  // Enter Key Triggers Calculation
+  // Form inputs trigger calculation on Enter key
   document.querySelectorAll('form').forEach((form) => {
     form.querySelectorAll('input, select').forEach((el) => {
       el.addEventListener('keydown', (e) => {
@@ -1222,9 +1611,10 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
       const dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+      const sym = lastCalculatedDiscount.currency || '$';
 
       // 1. Header Branding
-      doc.setFillColor(37, 99, 235); // Blue #2563eb
+      doc.setFillColor(37, 99, 235); // #2563eb
       doc.rect(0, 0, 210, 20, 'F');
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(15);
@@ -1233,7 +1623,7 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
 
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      doc.text('Free Online Calculator Tools', 210 - 14, 13, { align: 'right' });
+      doc.text('Free Online Financial Calculator Tools', 210 - 14, 13, { align: 'right' });
 
       // 2. Document Title
       let docTitle = 'Discount & Sale Price Calculation';
@@ -1242,7 +1632,9 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
       } else if (lastCalculatedDiscount.mode === 'original_price') {
         docTitle = 'Original Price Calculation';
       } else if (lastCalculatedDiscount.mode === 'multiple') {
-        docTitle = 'Multiple Discount Calculation';
+        docTitle = 'Multiple Stacked Discount Calculation';
+      } else if (lastCalculatedDiscount.mode === 'bogo') {
+        docTitle = 'Buy X Get Y (BOGO) Bundle Calculation';
       }
 
       doc.setTextColor(15, 23, 42);
@@ -1258,7 +1650,7 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
       // 3. Calculation Summary Box
       doc.setDrawColor(226, 232, 240);
       doc.setFillColor(248, 250, 252);
-      doc.roundedRect(14, 33, 182, 32, 2, 2, 'FD');
+      doc.roundedRect(14, 33, 182, 34, 2, 2, 'FD');
 
       doc.setFontSize(8);
       doc.setFont('helvetica', 'bold');
@@ -1268,33 +1660,38 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(71, 85, 105);
 
-      doc.text(`Original Price: $${lastCalculatedDiscount.originalPrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 18, 44);
+      doc.text(`Original Retail Total: ${sym}${lastCalculatedDiscount.originalTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 18, 44);
       doc.text(`Discount Rate: ${lastCalculatedDiscount.discountPercentage.toFixed(1)}%`, 18, 49);
-      doc.text(`Money Saved: $${lastCalculatedDiscount.amountSaved.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 18, 54);
+      doc.text(`Total Money Saved: ${sym}${lastCalculatedDiscount.amountSaved.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 18, 54);
+      doc.text(`Quantity: ${lastCalculatedDiscount.quantity} unit${lastCalculatedDiscount.quantity > 1 ? 's' : ''}`, 18, 59);
 
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(16, 185, 129);
-      doc.text(`Final Sale Price: $${lastCalculatedDiscount.salePrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 100, 44);
+      doc.text(`Final Sale Price: ${sym}${lastCalculatedDiscount.saleTotal.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 105, 44);
 
       if (lastCalculatedDiscount.isTaxEnabled && lastCalculatedDiscount.taxRate > 0) {
         doc.setFont('helvetica', 'normal');
         doc.setTextColor(71, 85, 105);
-        doc.text(`Sales Tax (${lastCalculatedDiscount.taxRate}%): $${lastCalculatedDiscount.salesTaxAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 100, 49);
+        doc.text(`Sales Tax (${lastCalculatedDiscount.taxRate}%): ${sym}${lastCalculatedDiscount.salesTaxAmount.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 105, 49);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(37, 99, 235);
-        doc.text(`Total with Tax: $${lastCalculatedDiscount.finalPriceWithTax.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 100, 54);
+        doc.text(`Total with Tax: ${sym}${lastCalculatedDiscount.finalPriceWithTax.toLocaleString('en-US', { minimumFractionDigits: 2 })}`, 105, 54);
+      } else {
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(71, 85, 105);
+        doc.text(`Unit Price: ${sym}${lastCalculatedDiscount.salePrice.toLocaleString('en-US', { minimumFractionDigits: 2 })}/item`, 105, 49);
       }
 
       // 4. Comparison Table
       const tableHead = [['Discount Percentage', 'Total Amount Saved', 'Final Sale Price']];
       const tableData = lastCalculatedDiscount.comparisonList.map((r) => [
-        `${r.pct}% ${r.isCurrent ? '(Selected)' : ''}`,
-        `$${r.saved.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
-        `$${r.finalP.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
+        `${r.pct}% ${r.isCurrent ? '(Active)' : ''}`,
+        `${sym}${r.saved.toLocaleString('en-US', { minimumFractionDigits: 2 })}`,
+        `${sym}${r.finalP.toLocaleString('en-US', { minimumFractionDigits: 2 })}`
       ]);
 
       doc.autoTable({
-        startY: 70,
+        startY: 72,
         head: tableHead,
         body: tableData,
         theme: 'grid',
@@ -1312,7 +1709,7 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
         },
         styles: {
           fontSize: 7.5,
-          cellPadding: 2.2,
+          cellPadding: 2,
           font: 'helvetica'
         },
         alternateRowStyles: {
@@ -1333,7 +1730,7 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
       });
 
       const todayStr = new Date().toISOString().split('T')[0];
-      doc.save(`discount-sale-price-calculation-${todayStr}.pdf`);
+      doc.save(`discount-calculation-report-${todayStr}.pdf`);
     } catch (err) {
       console.error('PDF Generation Error:', err);
       alert('An error occurred while generating the PDF. Please try again.');

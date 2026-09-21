@@ -8,16 +8,20 @@ import AdSlotFooter from '../../../components/ads/AdSlotFooter.astro';
 import { getTranslatedCategoryStaticPaths } from '../../../i18n/registry';
 import { getCalculatorsByCategory, categories } from '../../../data/calculators';
 import { getCalculatorTranslation } from '../../../i18n/translations/calculators';
+import { getCategoryTranslation } from '../../../i18n/translations/categories';
 import { getCommonTranslations } from '../../../i18n/translations/common';
 import { getLocalizedPath } from '../../../i18n/utils';
-import type { Locale } from '../../../i18n/config';
+import { isValidLocale, DEFAULT_LOCALE, type Locale } from '../../../i18n/config';
 
 export function getStaticPaths() {
   return getTranslatedCategoryStaticPaths();
 }
 
-const { lang, category } = Astro.params as { lang: Locale; category: string };
-const { categoryData } = Astro.props;
+const rawLang = (Astro.params as { lang: Locale; category: string })?.lang;
+const category = (Astro.params as { lang: Locale; category: string })?.category || 'general';
+const lang: Locale = isValidLocale(rawLang) ? rawLang : DEFAULT_LOCALE;
+const { categoryData: propsCategoryData } = Astro.props;
+const categoryData = propsCategoryData || getCategoryTranslation(category, lang);
 
 const tCommon = getCommonTranslations(lang);
 
@@ -26,10 +30,10 @@ const capitalizedCategory = category.charAt(0).toUpperCase() + category.slice(1)
 const categoryCalculators = getCalculatorsByCategory(capitalizedCategory as any);
 const currentCategoryInfo = categories.find((c) => c.name.toLowerCase() === category.toLowerCase() || c.path === `/${category}/` || c.name.toLowerCase().replace(/\s+/g, '-') === category.toLowerCase());
 const categoryIcon = currentCategoryInfo?.icon || '📊';
-const heroBadge = categoryData.heroBadge || tCommon.sections.calculatorTools;
+const heroBadge = categoryData?.heroBadge || tCommon.sections.calculatorTools;
 
-const pageTitle = `${categoryData.metaTitle} | AI Free Calculator`;
-const pageDescription = categoryData.metaDescription;
+const pageTitle = `${categoryData?.metaTitle || capitalizedCategory} | AI Free Calculator`;
+const pageDescription = categoryData?.metaDescription || '';
 const ogImage = `/og/${category.toLowerCase()}.png`;
 ---
 

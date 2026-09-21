@@ -56,18 +56,27 @@
 </style>
 
 <script>
+  declare global {
+    interface Window {
+      __showProgressBar?: () => void;
+      __hideProgressBar?: () => void;
+      __resetProgressBar?: () => void;
+      __globalProgressBarListenersAttached?: boolean;
+    }
+  }
+
   (function initGlobalProgressBar() {
     if (typeof window === 'undefined') return;
 
-    var container = null;
-    var bar = null;
-    var currentProgress = 0;
-    var trickleTimer = null;
-    var safetyTimeout = null;
-    var isRunning = false;
-    var STORAGE_KEY = '__global_nav_active';
+    let container: HTMLElement | null = null;
+    let bar: HTMLElement | null = null;
+    let currentProgress = 0;
+    let trickleTimer: ReturnType<typeof setInterval> | null = null;
+    let safetyTimeout: ReturnType<typeof setTimeout> | null = null;
+    let isRunning = false;
+    const STORAGE_KEY = '__global_nav_active';
 
-    function getElements() {
+    function getElements(): boolean {
       if (!container || !bar) {
         container = document.getElementById('global-nav-progress');
         bar = document.getElementById('global-nav-progress-bar');
@@ -75,15 +84,15 @@
       return Boolean(container && bar);
     }
 
-    function setProgress(val) {
-      if (!getElements()) return;
+    function setProgress(val: number) {
+      if (!getElements() || !bar || !container) return;
       currentProgress = Math.min(100, Math.max(0, val));
       bar.style.width = currentProgress + '%';
-      container.setAttribute('aria-valuenow', Math.round(currentProgress));
+      container.setAttribute('aria-valuenow', String(Math.round(currentProgress)));
     }
 
     function start() {
-      if (!getElements()) return;
+      if (!getElements() || !container) return;
       if (isRunning) return;
       isRunning = true;
 
@@ -114,7 +123,7 @@
     }
 
     function finish() {
-      if (!getElements()) return;
+      if (!getElements() || !container) return;
       clearTimers();
       setProgress(100);
 
@@ -137,7 +146,7 @@
     function reset() {
       clearTimers();
       isRunning = false;
-      if (getElements()) {
+      if (getElements() && container && bar) {
         container.classList.remove('opacity-100');
         container.classList.add('opacity-0');
         bar.style.width = '0%';
@@ -167,17 +176,20 @@
 
     // Check if previous page initiated a navigation
     try {
-      var navTimestamp = sessionStorage.getItem(STORAGE_KEY);
+      const navTimestamp = sessionStorage.getItem(STORAGE_KEY);
       if (navTimestamp && Date.now() - parseInt(navTimestamp, 10) < 10000) {
         sessionStorage.removeItem(STORAGE_KEY);
         // Seamless transition into completion on destination page
         if (getElements()) {
-          setProgress(75);
-          container.classList.remove('opacity-0');
-          container.classList.add('opacity-100');
-          setTimeout(function () {
-            finish();
-          }, 80);
+          const navContainer = container as HTMLElement | null;
+          if (navContainer) {
+            setProgress(75);
+            navContainer.classList.remove('opacity-0');
+            navContainer.classList.add('opacity-100');
+            setTimeout(function () {
+              finish();
+            }, 80);
+          }
         }
       }
     } catch (e) {}
@@ -192,11 +204,11 @@
       if (evt.button !== 0) return; // Only primary mouse clicks
       if (evt.metaKey || evt.ctrlKey || evt.shiftKey || evt.altKey) return; // Ignore modifier clicks
 
-      var target = evt.target;
-      var link = target && target.closest ? target.closest('a') : null;
+      const target = evt.target instanceof Element ? evt.target : null;
+      const link = target?.closest('a') || null;
       if (!link) return;
 
-      var rawHref = link.getAttribute('href');
+      const rawHref = link.getAttribute('href');
       if (!rawHref) return;
 
       // Ignore anchor jumps on current page
@@ -209,11 +221,11 @@
       if (link.hasAttribute('download')) return;
 
       // Ignore new tabs/windows
-      var targetAttr = link.getAttribute('target');
+      const targetAttr = link.getAttribute('target');
       if (targetAttr && targetAttr.toLowerCase() !== '_self') return;
 
       // Parse absolute URL
-      var destinationUrl;
+      let destinationUrl: URL;
       try {
         destinationUrl = new URL(link.href, window.location.href);
       } catch (e) {

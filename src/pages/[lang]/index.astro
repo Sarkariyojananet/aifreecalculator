@@ -8,15 +8,16 @@ import { calculators, categories } from '../../data/calculators';
 import { getTranslatedHomeStaticPaths } from '../../i18n/registry';
 import { getCalculatorTranslation } from '../../i18n/translations/calculators';
 import { getCommonTranslations } from '../../i18n/translations/common';
-import { CATEGORIES_CONFIG } from '../../i18n/translations/categories';
+import { CATEGORIES_CONFIG, getCategoryTranslation } from '../../i18n/translations/categories';
 import { getLocalizedPath } from '../../i18n/utils';
-import type { Locale } from '../../i18n/config';
+import { isValidLocale, DEFAULT_LOCALE, type Locale } from '../../i18n/config';
 
 export function getStaticPaths() {
   return getTranslatedHomeStaticPaths();
 }
 
-const { lang } = Astro.params as { lang: Locale };
+const rawLang = (Astro.params as { lang: Locale })?.lang;
+const lang: Locale = isValidLocale(rawLang) ? rawLang : DEFAULT_LOCALE;
 const tCommon = getCommonTranslations(lang);
 
 const preferredCategoryOrder = ['Finance', 'Construction', 'Health', 'Math', 'General', 'Free Online Tools'];
@@ -29,11 +30,9 @@ const categoryPills = [...categories]
   .map((cat) => {
     const slugId = cat.name.toLowerCase().replace(/\s+/g, '-');
     const catKey = slugId as keyof typeof CATEGORIES_CONFIG;
-    const catName = CATEGORIES_CONFIG[catKey]?.names[lang];
-    const catDesc = CATEGORIES_CONFIG[catKey]?.descriptions[lang];
-    if (!catName || !catDesc) {
-      throw new Error(`[i18n] Missing category translation for ${catKey} in ${lang}`);
-    }
+    const catTrans = getCategoryTranslation(cat.name, lang);
+    const catName = CATEGORIES_CONFIG[catKey]?.names[lang] || catTrans?.name || cat.name;
+    const catDesc = CATEGORIES_CONFIG[catKey]?.descriptions[lang] || catTrans?.description || '';
     return {
       name: catName,
       description: catDesc,
@@ -88,11 +87,8 @@ const heroSubtitleMap: Record<Locale, string> = {
   it: 'Strumenti immediati e riservati per finanza, edilizia, salute, matematica e vita quotidiana.',
 };
 
-const heroTitle = heroTitleMap[lang];
-const heroSubtitle = heroSubtitleMap[lang];
-if (!heroTitle || !heroSubtitle) {
-  throw new Error(`[i18n] Missing hero texts for language "${lang}"`);
-}
+const heroTitle = heroTitleMap[lang] || heroTitleMap['en'] || 'Free Online Calculators for Everyone';
+const heroSubtitle = heroSubtitleMap[lang] || heroSubtitleMap['en'] || 'Fast, private, client-side tools for finance, construction, health, math, and daily utilities.';
 
 const pageTitle = `${heroTitle} | AI Free Calculator`;
 const pageDescription = heroSubtitle;

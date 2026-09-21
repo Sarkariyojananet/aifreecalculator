@@ -8,15 +8,18 @@ import { getTranslatedStaticPagePaths } from '../../i18n/registry';
 import { getCalculatorTranslation } from '../../i18n/translations/calculators';
 import { getLocalizedPath } from '../../i18n/utils';
 import { getCommonTranslations } from '../../i18n/translations/common';
-import { CATEGORIES_CONFIG } from '../../i18n/translations/categories';
-import type { Locale } from '../../i18n/config';
+import { CATEGORIES_CONFIG, getCategoryTranslation } from '../../i18n/translations/categories';
+import { STATIC_PAGE_TRANSLATIONS } from '../../i18n/translations/static-pages';
+import { isValidLocale, DEFAULT_LOCALE, type Locale } from '../../i18n/config';
 
 export function getStaticPaths() {
   return getTranslatedStaticPagePaths('all-calculators');
 }
 
-const { lang } = Astro.params as { lang: Locale };
-const { pageData } = Astro.props;
+const rawLang = (Astro.params as { lang: Locale })?.lang;
+const lang: Locale = isValidLocale(rawLang) ? rawLang : DEFAULT_LOCALE;
+const { pageData: propsPageData } = Astro.props;
+const pageData = propsPageData || STATIC_PAGE_TRANSLATIONS['all-calculators'][lang] || STATIC_PAGE_TRANSLATIONS['all-calculators']['en'];
 const tCommon = getCommonTranslations(lang);
 const totalCount = calculators.length;
 
@@ -81,8 +84,7 @@ const noResultsDesc = tCommon.directory.noResultsDesc;
         {categories.map((cat) => {
           const slugId = cat.name.toLowerCase().replace(/\s+/g, '-');
           const catKey = slugId as keyof typeof CATEGORIES_CONFIG;
-          const localizedName = CATEGORIES_CONFIG[catKey]?.names[lang];
-          if (!localizedName) throw new Error(`[i18n] Missing category name for ${catKey} in ${lang}`);
+          const localizedName = CATEGORIES_CONFIG[catKey]?.names[lang] || getCategoryTranslation(cat.name, lang)?.name || cat.name;
           const count = calculators.filter((c) =>
             c.category.toLowerCase() === cat.name.toLowerCase() ||
             (c.additionalCategories && c.additionalCategories.some(ac => ac.toLowerCase() === cat.name.toLowerCase()))

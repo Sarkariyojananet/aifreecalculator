@@ -66,7 +66,37 @@ export function getCalculatorTranslation(slug: string, locale: Locale): Calculat
         },
       };
     }
-    throw new Error(`[i18n] Calculator not found in translation registry: "${slug}"`);
+    const fallbackTitle = slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    return {
+      locale,
+      status: 'untranslated',
+      name: fallbackTitle,
+      metaTitle: `${fallbackTitle} - Free Online Tools`,
+      metaDescription: `Free online ${fallbackTitle} calculator tool.`,
+      h1: fallbackTitle,
+      shortDescription: `Free online ${fallbackTitle} calculator tool.`,
+      description: `Free online ${fallbackTitle} calculator tool.`,
+      title: fallbackTitle,
+      categoryLabel: 'Calculators',
+      formulaTitle: `${fallbackTitle} Overview`,
+      formulaDescription: '',
+      formulaEquation: '',
+      variables: [],
+      stepByStep: [],
+      workedExample: {
+        title: '',
+        scenario: '',
+        calculation: '',
+        result: '',
+      },
+      faqs: [],
+      ui: {
+        calculate: 'Calculate',
+        reset: 'Reset',
+        result: 'Result',
+        results: 'Results',
+      },
+    };
   }
   const translation = translations[locale];
   if (!translation) {

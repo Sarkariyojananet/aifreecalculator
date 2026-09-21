@@ -3,14 +3,17 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import { getTranslatedStaticPagePaths } from '../../i18n/registry';
 import { getLocalizedPath } from '../../i18n/utils';
 import { getCommonTranslations } from '../../i18n/translations/common';
-import type { Locale } from '../../i18n/config';
+import { STATIC_PAGE_TRANSLATIONS } from '../../i18n/translations/static-pages';
+import { isValidLocale, DEFAULT_LOCALE, type Locale } from '../../i18n/config';
 
 export function getStaticPaths() {
   return getTranslatedStaticPagePaths('contact');
 }
 
-const { lang } = Astro.params as { lang: Locale };
-const { pageData } = Astro.props;
+const rawLang = (Astro.params as { lang: Locale })?.lang;
+const lang: Locale = isValidLocale(rawLang) ? rawLang : DEFAULT_LOCALE;
+const { pageData: propsPageData } = Astro.props;
+const pageData = propsPageData || STATIC_PAGE_TRANSLATIONS['contact'][lang] || STATIC_PAGE_TRANSLATIONS['contact']['en'];
 const tCommon = getCommonTranslations(lang);
 ---
 

@@ -17,7 +17,7 @@ import { getInternalLinks, getCalculatorOverrides } from '../lib/admin/content-s
 import { buildCalculatorGraphSchema } from '../lib/seo/schema-builder';
 import { extractLocaleFromPath, getLocalizedPath } from '../i18n/utils';
 import { getCommonTranslations } from '../i18n/translations/common';
-import { CATEGORIES_CONFIG } from '../i18n/translations/categories';
+import { CATEGORIES_CONFIG, getCategoryTranslation } from '../i18n/translations/categories';
 import { isValidLocale, type Locale } from '../i18n/config';
 import { getCalculatorTranslation } from '../i18n/translations/calculators';
 import {
@@ -111,11 +111,11 @@ const popularCrossCategory = getFeaturedCalculators()
   .slice(0, 5);
 
 const categoryKey = categorySlug as keyof typeof CATEGORIES_CONFIG;
-const localizedCategoryName = CATEGORIES_CONFIG[categoryKey]?.names[lang];
-if (!localizedCategoryName) throw new Error(`[i18n] Missing category name for "${categoryKey}" in "${lang}"`);
+const localizedCategoryName = CATEGORIES_CONFIG[categoryKey]?.names[lang] || getCategoryTranslation(category, lang).name || category;
 
 const homeHref = getLocalizedPath('/', lang);
 const categoryPath = getLocalizedPath(`/${categorySlug}/`, lang);
+const contactHref = `${getLocalizedPath('/contact/', lang)}?calc=${encodeURIComponent(slug)}&name=${encodeURIComponent(effectiveName)}&type=bug`;
 
 // Build interconnected Schema.org @graph (WebApplication + BreadcrumbList + HowTo)
 const resolvedFaqs = (hasTranslatedFaqs && calcTranslation?.faqs)
@@ -206,11 +206,11 @@ const graphSchema = buildCalculatorGraphSchema({
           <div class="flex items-center gap-2.5 text-slate-700 dark:text-slate-300">
             <span class="text-base shrink-0">💬</span>
             <span>
-              <strong>Found an issue?</strong> If a calculator is not working as expected or you spot an error, please <a href={`/contact/?calc=${encodeURIComponent(slug)}&name=${encodeURIComponent(effectiveName)}&type=bug`} class="font-bold text-blue-600 underline dark:text-blue-400">contact us</a> so we can help.
+              <strong>Found an issue?</strong> If a calculator is not working as expected or you spot an error, please <a href={contactHref} class="font-bold text-blue-600 underline dark:text-blue-400">contact us</a> so we can help.
             </span>
           </div>
           <a
-            href={`/contact/?calc=${encodeURIComponent(slug)}&name=${encodeURIComponent(effectiveName)}&type=bug`}
+            href={contactHref}
             class="shrink-0 inline-flex items-center justify-center gap-1 rounded-xl bg-blue-600 px-3.5 py-1.5 font-bold text-white shadow-xs hover:bg-blue-700 transition"
           >
             Contact Support →
@@ -239,13 +239,13 @@ const graphSchema = buildCalculatorGraphSchema({
         </div>
 
         <!-- FAQs Section -->
-        {(!useSlotContent && hasTranslatedFaqs && calcTranslation?.faqs && calcTranslation.faqs.length > 0) ? (
+        {(!useSlotContent && resolvedFaqs && resolvedFaqs.length > 0) ? (
           <div class="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/60 sm:p-8">
             <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white mb-6 flex items-center gap-2">
               <span>❓</span> {tCommon.sections.faq}
             </h2>
             <div class="space-y-4">
-              {calcTranslation.faqs.map((faq) => (
+              {resolvedFaqs.map((faq) => (
                 <details class="group rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
                   <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
                     {faq.question}
@@ -264,24 +264,6 @@ const graphSchema = buildCalculatorGraphSchema({
                 <span>❓</span> {tCommon.sections.faq}
               </h2>
               <slot name="faq" />
-            </div>
-          ) : (calcTranslation?.faqs && calcTranslation.faqs.length > 0) ? (
-            <div class="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/60 sm:p-8">
-              <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                <span>❓</span> {tCommon.sections.faq}
-              </h2>
-              <div class="space-y-4">
-                {calcTranslation.faqs.map((faq) => (
-                  <details class="group rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
-                    <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
-                      {faq.question}
-                    </summary>
-                    <p class="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                      {faq.answer}
-                    </p>
-                  </details>
-                ))}
-              </div>
             </div>
           ) : null
         )}
@@ -344,8 +326,7 @@ const graphSchema = buildCalculatorGraphSchema({
                 const popTrans = getCalculatorTranslation(c.slug, lang);
                 const popName = (lang !== 'en' && popTrans?.name?.trim()) ? popTrans.name : c.name;
                 const catKey = c.category.toLowerCase().replace(/\s+/g, '-') as keyof typeof CATEGORIES_CONFIG;
-                const popCatName = CATEGORIES_CONFIG[catKey]?.names[lang];
-                if (!popCatName) throw new Error(`[i18n] Missing category name for "${catKey}" in "${lang}"`);
+                const popCatName = CATEGORIES_CONFIG[catKey]?.names[lang] || getCategoryTranslation(c.category, lang).name || c.category;
                 return (
                   <a
                     href={getLocalizedPath(c.path, lang)}
@@ -630,7 +611,8 @@ const graphSchema = buildCalculatorGraphSchema({
                   }
 
                   var headerOffset = 80;
-                  var targetY = window.pageYOffset + rect.top - headerOffset;
+                  var scrollY = window.scrollY !== undefined ? window.scrollY : (window.pageYOffset || document.documentElement.scrollTop || 0);
+                  var targetY = scrollY + rect.top - headerOffset;
 
                   window.scrollTo({
                     top: Math.max(0, targetY),

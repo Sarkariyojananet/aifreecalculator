@@ -604,8 +604,7 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
 export function getCommonTranslations(locale: Locale): CommonTranslations {
   const trans = COMMON_TRANSLATIONS[locale];
   if (!trans) {
-    if (COMMON_TRANSLATIONS['en']) return COMMON_TRANSLATIONS['en'];
-    throw new Error(`[i18n] Missing required common translations for locale: "${locale}"`);
+    return COMMON_TRANSLATIONS['en'];
   }
   return trans;
 }
