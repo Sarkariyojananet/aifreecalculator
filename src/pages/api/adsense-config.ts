@@ -105,17 +105,17 @@ function normalizeSettings(stored: any): AdsConfig {
   };
 }
 
-let inMemoryAdsConfig: { data: AdsConfig; expiry: number } | null = null;
-const ADS_CONFIG_TTL = 15_000; // 15 seconds
+let inMemoryAdsConfig: { data: AdsConfig; json: string; expiry: number } | null = null;
+const ADS_CONFIG_TTL = 600_000; // 10 minutes in-memory edge isolate cache
 
 export function invalidateAdsConfigCache(): void {
   inMemoryAdsConfig = null;
 }
 
-export async function readSettings(locals: App.Locals): Promise<AdsConfig> {
+export async function readSettingsWithJson(locals: App.Locals): Promise<{ data: AdsConfig; json: string }> {
   const now = Date.now();
   if (inMemoryAdsConfig && inMemoryAdsConfig.expiry > now) {
-    return inMemoryAdsConfig.data;
+    return inMemoryAdsConfig;
   }
   const db = getDb(locals);
   try {
@@ -123,45 +123,65 @@ export async function readSettings(locals: App.Locals): Promise<AdsConfig> {
     if (row?.value) {
       const parsed = JSON.parse(row.value);
       const normalized = normalizeSettings(parsed);
-      inMemoryAdsConfig = { data: normalized, expiry: now + ADS_CONFIG_TTL };
-      return normalized;
+      const jsonStr = JSON.stringify(normalized);
+      inMemoryAdsConfig = { data: normalized, json: jsonStr, expiry: now + ADS_CONFIG_TTL };
+      return inMemoryAdsConfig;
     }
   } catch {
     // Database fallback
   }
-  inMemoryAdsConfig = { data: DEFAULT_ADS_CONFIG, expiry: now + ADS_CONFIG_TTL };
-  return DEFAULT_ADS_CONFIG;
+  const defaultJson = JSON.stringify(DEFAULT_ADS_CONFIG);
+  inMemoryAdsConfig = { data: DEFAULT_ADS_CONFIG, json: defaultJson, expiry: now + ADS_CONFIG_TTL };
+  return inMemoryAdsConfig;
 }
 
+export async function readSettings(locals: App.Locals): Promise<AdsConfig> {
+  const result = await readSettingsWithJson(locals);
+  return result.data;
+}
 
 const ADSENSE_CONFIG_HEADERS = {
   'Content-Type': 'application/json; charset=utf-8',
-  'Cache-Control': 'public, max-age=10, s-maxage=30, stale-while-revalidate=120',
-  'Cloudflare-CDN-Cache-Control': 'max-age=30, stale-while-revalidate=120',
+  'Cache-Control': 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400',
+  'Cloudflare-CDN-Cache-Control': 'max-age=3600, stale-while-revalidate=86400',
 } as const;
 
 export const GET: APIRoute = async ({ request, locals }) => {
   try {
-    const cache = typeof caches !== 'undefined' && (caches as any).default ? ((caches as any).default as Cache) : null;
-    const cacheKey = request.url;
+    const url = new URL(request.url);
+    const isPreview =
+      url.searchParams.has('preview_ads') ||
+      url.searchParams.has('test_ads') ||
+      url.searchParams.get('preview') === 'ads' ||
+      url.searchParams.get('ad_mode') === 'test';
 
-    if (cache) {
+    const cache = typeof caches !== 'undefined' && (caches as any).default ? ((caches as any).default as Cache) : null;
+    const canonicalKey = url.origin + '/api/adsense-config';
+
+    if (cache && !isPreview) {
       try {
-        const cached = await cache.match(cacheKey);
+        const cached = await cache.match(canonicalKey);
         if (cached) return new Response(cached.body, cached);
-      } catch {}
+      } catch { }
     }
 
-    const config = await readSettings(locals);
-    const response = new Response(JSON.stringify(config), {
+    const { json } = await readSettingsWithJson(locals);
+    const headers = isPreview
+      ? {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      }
+      : ADSENSE_CONFIG_HEADERS;
+
+    const response = new Response(json, {
       status: 200,
-      headers: ADSENSE_CONFIG_HEADERS,
+      headers,
     });
 
-    if (cache) {
+    if (cache && !isPreview) {
       try {
-        safeWaitUntil(locals, cache.put(cacheKey, response.clone()).catch(() => {}));
-      } catch {}
+        safeWaitUntil(locals, cache.put(canonicalKey, response.clone()).catch(() => { }));
+      } catch { }
     }
 
     return response;
@@ -228,8 +248,9 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
       try {
         const url = new URL(request.url);
         await edgeCache.delete(url.origin + '/api/adsense-config');
+        await edgeCache.delete(url.origin + '/api/adsense-config/');
         await edgeCache.delete(request.url);
-      } catch {}
+      } catch { }
     }
 
     // Log audit event

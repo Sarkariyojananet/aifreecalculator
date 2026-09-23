@@ -264,7 +264,7 @@ const resolvedOgImage = ogImage.startsWith('http')
         async function fetchAdConfig() {
           try {
             const CACHE_KEY = 'adsense_cfg';
-            const CACHE_TTL = 30_000; // 30 seconds fresh cache
+            const CACHE_TTL = 600_000; // 10 minutes client cache
 
             // Allow URL override for instant testing/previewing: ?preview_ads=1, ?test_ads=1, ?preview=ads
             const urlParams = new URLSearchParams(window.location.search);
@@ -290,9 +290,11 @@ const resolvedOgImage = ogImage.startsWith('http')
               }
             }
 
-            const res = await fetch(
-              '/api/adsense-config?t=' + (forcePreview ? Date.now() : Math.floor(Date.now() / 30000))
-            );
+            const fetchUrl = forcePreview
+              ? '/api/adsense-config?t=' + Date.now()
+              : '/api/adsense-config';
+
+            const res = await fetch(fetchUrl);
             if (!res.ok) return null;
             const data = await res.json();
 
