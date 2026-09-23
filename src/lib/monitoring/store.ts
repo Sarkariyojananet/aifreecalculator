@@ -329,14 +329,14 @@ export async function recordUptimeCheck(
 }
 
 /**
- * Automatically resolves previous false incidents triggered by Cloudflare 522 or monitoring loop limitations
+ * Automatically resolves previous incidents for a route when verified operational (200 OK)
  */
 async function autoResolveFalseIncidents(locals: any, route: string): Promise<void> {
   try {
     const db = getDb(locals);
     const now = new Date().toISOString();
 
-    // Find any open or investigating incidents for this route that mention 522 or probe timeout
+    // Find any open or investigating incidents for this route
     const incidents = await db
       .prepare(`
         SELECT id, summary FROM cms_incidents
@@ -347,31 +347,28 @@ async function autoResolveFalseIncidents(locals: any, route: string): Promise<vo
 
     const rows = incidents.results || [];
     for (const row of rows) {
-      if (
-        row.summary.includes('522') ||
-        row.summary.includes('loop') ||
-        row.summary.includes('Probe timed out') ||
-        row.summary.includes('monitoring infrastructure') ||
-        row.summary.includes('self-probe')
-      ) {
-        await db
-          .prepare(`
-            UPDATE cms_incidents
-            SET status = 'resolved',
-                updated_at = ?,
-                summary = ?
-            WHERE id = ?
-          `)
-          .bind(
-            now,
-            `${row.summary} [Resolved: Public route verified operational via authentic HTTP probe]`,
-            row.id
-          )
-          .run();
-      }
+      await db
+        .prepare(`
+          UPDATE cms_incidents
+          SET status = 'resolved',
+              updated_at = ?,
+              resolved_at = ?,
+              auto_mitigated = 1,
+              summary = ?
+          WHERE id = ?
+        `)
+        .bind(
+          now,
+          now,
+          row.summary.includes('[Resolved')
+            ? row.summary
+            : `${row.summary} [Resolved: Verified operational via authentic HTTP probe]`,
+          row.id
+        )
+        .run();
     }
   } catch (err) {
-    console.error('Failed to auto-resolve false incidents:', err);
+    console.error('Failed to auto-resolve incidents:', err);
   }
 }
 
