@@ -54,3 +54,15 @@ for (const loc of locales) {
 fs.writeFileSync(outputPath, JSON.stringify(searchIndex), 'utf8');
 const sizeKb = (Buffer.byteLength(JSON.stringify(searchIndex), 'utf8') / 1024).toFixed(2);
 console.log(`[search-index] Generated ${outputPath} (${sizeKb} KB) for ${calcs.length} tools across ${locales.length} languages.`);
+
+const publicSearchDir = path.join(rootDir, 'public', 'search-data');
+if (!fs.existsSync(publicSearchDir)) {
+  fs.mkdirSync(publicSearchDir, { recursive: true });
+}
+
+for (const loc of locales) {
+  const locFilePath = path.join(publicSearchDir, `${loc}.json`);
+  fs.writeFileSync(locFilePath, JSON.stringify(searchIndex[loc]), 'utf8');
+}
+console.log(`[search-index] Generated static per-language JSON files in ${publicSearchDir} for ${locales.join(', ')}.`);
+
