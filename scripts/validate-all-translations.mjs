@@ -20,6 +20,10 @@ const TARGET_PAGES = [
   { slug: 'json-validator', name: 'JSON Validator', category: 'Free Online Tools', expectedFaqs: 10 },
   { slug: 'password-generator', name: 'Password Generator', category: 'Free Online Tools', expectedFaqs: 11 },
   { slug: 'pdf-merge', name: 'PDF Merge', category: 'Free Online Tools', expectedFaqs: 10 },
+  { slug: 'pdf-split', name: 'PDF Split', category: 'Free Online Tools', expectedFaqs: 8 },
+  { slug: 'pdf-compress', name: 'PDF Compress', category: 'Free Online Tools', expectedFaqs: 8 },
+  { slug: 'pdf-to-image', name: 'PDF to Image', category: 'Free Online Tools', expectedFaqs: 8 },
+  { slug: 'image-to-pdf', name: 'Images to PDF', category: 'Free Online Tools', expectedFaqs: 8 },
 ];
 
 console.log('================================================================================================');
