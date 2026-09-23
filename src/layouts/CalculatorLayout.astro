@@ -376,9 +376,9 @@ const graphSchema = buildCalculatorGraphSchema({
       // one Worker invocation + D1 write per event. Counters stay numerically
       // identical because each event carries an explicit repeat count.
       // =========================================================
-      var eventQueue = Object.create(null);
+      var eventQueue: Record<string, number> = Object.create(null);
       var queuedTotal = 0;
-      var flushTimer = null;
+      var flushTimer: ReturnType<typeof setTimeout> | null = null;
       var FLUSH_AFTER_EVENTS = 12;
       var FLUSH_AFTER_MS = 15000;
 
@@ -396,11 +396,11 @@ const graphSchema = buildCalculatorGraphSchema({
         }
         if (queuedTotal === 0) return;
 
-        var events = [];
+        var events: Array<{ slug: string; event: string; device: string; count: number }> = [];
         for (var name in eventQueue) {
           if (eventQueue[name] > 0) {
             events.push({
-              slug: slug,
+              slug: slug || '',
               event: name,
               device: deviceType,
               count: eventQueue[name]
@@ -432,7 +432,7 @@ const graphSchema = buildCalculatorGraphSchema({
         } catch (e) {}
       }
 
-      function trackAnalytics(eventName) {
+      function trackAnalytics(eventName: string) {
         try {
           eventQueue[eventName] = (eventQueue[eventName] || 0) + 1;
           queuedTotal++;
@@ -459,7 +459,7 @@ const graphSchema = buildCalculatorGraphSchema({
         window.addEventListener('beforeunload', flushAnalytics);
       } catch (e) {}
 
-      window.__trackCalculatorEvent = trackAnalytics;
+      (window as any).__trackCalculatorEvent = trackAnalytics;
 
       // 1. Funnel Step: Page View (Deduplicated per session)
       try {
@@ -474,9 +474,9 @@ const graphSchema = buildCalculatorGraphSchema({
 
       // 2. Funnel Step: Calculator Started (Triggered on first input interaction)
       var hasStarted = false;
-      function onFirstInteraction(e) {
+      function onFirstInteraction(e: Event) {
         if (hasStarted) return;
-        var target = e.target;
+        var target = e.target as HTMLElement | null;
         if (!target || !target.tagName) return;
         var tag = target.tagName.toUpperCase();
         if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') {
@@ -534,7 +534,7 @@ const graphSchema = buildCalculatorGraphSchema({
       });
 
       // Global hook for calculator script handlers to report NaN / Infinite results
-      window.__reportCalculatorAnomaly = function(type, details) {
+      (window as any).__reportCalculatorAnomaly = function(type: string, details?: unknown) {
         trackAnalytics('calculation_error');
         try {
           var payload = JSON.stringify({
@@ -576,8 +576,8 @@ const graphSchema = buildCalculatorGraphSchema({
             '[role="alert"]:not(.hidden), [id*="error"]:not(.hidden), [id*="err"]:not(.hidden)'
           );
           for (var i = 0; i < errorCandidates.length; i++) {
-            var err = errorCandidates[i];
-            if (err && err.offsetParent !== null && err.textContent.trim().length > 0) {
+            var err = errorCandidates[i] as HTMLElement;
+            if (err && err.offsetParent !== null && (err.textContent || '').trim().length > 0) {
               trackAnalytics('calculation_error');
               err.scrollIntoView({ behavior: 'smooth', block: 'center' });
               return;
@@ -589,7 +589,7 @@ const graphSchema = buildCalculatorGraphSchema({
           for (var j = 0; j < resultSelectors.length; j++) {
             var candidateEls = document.querySelectorAll(resultSelectors[j]);
             for (var c = 0; c < candidateEls.length; c++) {
-              var resultEl = candidateEls[c];
+              var resultEl = candidateEls[c] as HTMLElement;
               if (
                 resultEl &&
                 resultEl.offsetParent !== null &&
@@ -628,8 +628,8 @@ const graphSchema = buildCalculatorGraphSchema({
           if (!foundResult) {
             var genericOutputs = document.querySelectorAll('output, [aria-live="polite"]');
             for (var k = 0; k < genericOutputs.length; k++) {
-              var out = genericOutputs[k];
-              if (out && out.offsetParent !== null && out.textContent.trim().length > 0) {
+              var out = genericOutputs[k] as HTMLElement;
+              if (out && out.offsetParent !== null && (out.textContent || '').trim().length > 0) {
                 trackAnalytics('calculation_success');
                 return;
               }
@@ -663,11 +663,13 @@ const graphSchema = buildCalculatorGraphSchema({
         }
 
         // Listen for Calculate button clicks & action bar buttons across all forms and widgets
-        document.addEventListener('click', function(e) {
-          var btn = e.target.closest('button, input[type="submit"], input[type="button"], a');
+        document.addEventListener('click', function(e: MouseEvent) {
+          var target = e.target as Element | null;
+          if (!target || typeof target.closest !== 'function') return;
+          var btn = target.closest('button, input[type="submit"], input[type="button"], a') as HTMLElement | HTMLInputElement | null;
           if (!btn) return;
 
-          var text = (btn.textContent || btn.value || '').toLowerCase();
+          var text = (btn.textContent || ('value' in btn ? (btn as HTMLInputElement).value : '') || '').toLowerCase();
           var id = (btn.id || '').toLowerCase();
           var cls = (btn.className || '').toString().toLowerCase();
 
@@ -699,11 +701,12 @@ const graphSchema = buildCalculatorGraphSchema({
             return;
           }
 
+          var btnType = btn.getAttribute('type') || ('type' in btn ? (btn as any).type : '');
           var isCalcTrigger = text.includes('calculate') ||
                               text.includes('convert') ||
                               text.includes('generate') ||
                               id.includes('calc') ||
-                              btn.type === 'submit' ||
+                              btnType === 'submit' ||
                               cls.includes('btn-calculate');
 
           if (isCalcTrigger) {
