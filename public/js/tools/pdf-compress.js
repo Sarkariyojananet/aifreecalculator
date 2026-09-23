@@ -532,21 +532,27 @@
         compressedSize = result.byteLength;
 
         // Check if a pure vector stream copy is smaller (only for Low preset on vector-only PDFs)
-        if (level === 'low' && pdfLibDoc) {
-          try {
-            var vectorDoc = await window.PDFLib.PDFDocument.create();
-            var vPages = await vectorDoc.copyPages(
-              pdfLibDoc,
-              Array.from({ length: totalPages }, function (_, i) { return i; })
-            );
-            vPages.forEach(function (p) { vectorDoc.addPage(p); });
-            var vectorBytes = await vectorDoc.save({ useObjectStreams: true, addDefaultPage: false });
-            if (vectorBytes.byteLength < finalBlob.size && vectorBytes.byteLength < uploadedFile.size) {
-              finalBlob = new Blob([vectorBytes], { type: 'application/pdf' });
-              compressedSize = vectorBytes.byteLength;
+        if (level === 'low') {
+          if (pdfLibDoc) {
+            try {
+              var vectorDoc = await window.PDFLib.PDFDocument.create();
+              var vPages = await vectorDoc.copyPages(
+                pdfLibDoc,
+                Array.from({ length: totalPages }, function (_, i) { return i; })
+              );
+              vPages.forEach(function (p) { vectorDoc.addPage(p); });
+              var vectorBytes = await vectorDoc.save({ useObjectStreams: true, addDefaultPage: false });
+              if (vectorBytes.byteLength < finalBlob.size) {
+                finalBlob = new Blob([vectorBytes], { type: 'application/pdf' });
+                compressedSize = vectorBytes.byteLength;
+              }
+            } catch (vErr) {
+              // Keep rasterized version
             }
-          } catch (vErr) {
-            // Keep rasterized version
+          }
+          if (uploadedFile.size < compressedSize) {
+            finalBlob = new Blob([await readFileAsArrayBuffer(uploadedFile)], { type: 'application/pdf' });
+            compressedSize = uploadedFile.size;
           }
         }
 
