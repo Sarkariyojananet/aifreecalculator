@@ -379,8 +379,12 @@ const graphSchema = buildCalculatorGraphSchema({
       var eventQueue: Record<string, number> = Object.create(null);
       var queuedTotal = 0;
       var flushTimer: ReturnType<typeof setTimeout> | null = null;
-      var FLUSH_AFTER_EVENTS = 12;
-      var FLUSH_AFTER_MS = 15000;
+      var lastFlushAt = 0;
+      var MIN_FLUSH_INTERVAL_MS = 60000; // Throttle multiple recalculation flushes to at most 1 per 60s
+      var isBot = false;
+      try {
+        if (navigator.webdriver) isBot = true;
+      } catch (e) {}
 
       var deviceType = 'desktop';
       try {
@@ -389,12 +393,21 @@ const graphSchema = buildCalculatorGraphSchema({
         else if (vw < 1024) deviceType = 'tablet';
       } catch (e) {}
 
-      function flushAnalytics() {
+      function flushAnalytics(force?: boolean) {
         if (flushTimer) {
           clearTimeout(flushTimer);
           flushTimer = null;
         }
-        if (queuedTotal === 0) return;
+        if (queuedTotal === 0 || isBot) return;
+
+        var now = Date.now();
+        // If not force (e.g. not page exit) and recently flushed, debounce until interval settles
+        if (!force && lastFlushAt > 0 && (now - lastFlushAt < MIN_FLUSH_INTERVAL_MS)) {
+          if (!flushTimer) {
+            flushTimer = setTimeout(function() { flushAnalytics(); }, MIN_FLUSH_INTERVAL_MS - (now - lastFlushAt));
+          }
+          return;
+        }
 
         var events: Array<{ slug: string; event: string; device: string; count: number }> = [];
         for (var name in eventQueue) {
@@ -408,9 +421,10 @@ const graphSchema = buildCalculatorGraphSchema({
           }
         }
 
-        // Reset the queue BEFORE sending so a beacon retry can never double-count
+        // Reset the queue BEFORE sending so retries never double-count
         eventQueue = Object.create(null);
         queuedTotal = 0;
+        lastFlushAt = Date.now();
         if (events.length === 0) return;
 
         try {
@@ -434,29 +448,49 @@ const graphSchema = buildCalculatorGraphSchema({
 
       function trackAnalytics(eventName: string) {
         try {
+          // 1. Send directly to GA4 (offloaded completely from Cloudflare Worker)
+          if (typeof (window as any).gtag === 'function') {
+            (window as any).gtag('event', eventName, {
+              calculator_slug: slug,
+              event_category: 'calculator_funnel',
+              event_label: slug
+            });
+          }
+
+          if (isBot) return;
+
           eventQueue[eventName] = (eventQueue[eventName] || 0) + 1;
           queuedTotal++;
 
-          // Flush promptly once a page has generated enough activity
-          if (queuedTotal >= FLUSH_AFTER_EVENTS) {
-            flushAnalytics();
+          // 2. Meaningful milestone: calculation outcome reached (success or error)
+          // Debounce 2 seconds so calculations settle, then flush all funnel events in ONE request!
+          if (eventName === 'calculation_success' || eventName === 'calculation_error') {
+            if (flushTimer) clearTimeout(flushTimer);
+            flushTimer = setTimeout(function() {
+              flushAnalytics();
+            }, 2000);
             return;
           }
 
-          // Otherwise coalesce for a while, so bursts collapse into one request
-          if (!flushTimer) {
-            flushTimer = setTimeout(flushAnalytics, FLUSH_AFTER_MS);
+          // Auxiliary user actions: copy, share, reset
+          if (eventName === 'result_copy' || eventName === 'result_share' || eventName === 'calculator_reset') {
+            if (!flushTimer) {
+              flushTimer = setTimeout(function() {
+                flushAnalytics();
+              }, 4000);
+            }
+            return;
           }
+
+          // Note: page_view and calculator_start are NOT flushed eagerly.
+          // They are batched together with the first calculation, or sent via sendBeacon on pagehide!
         } catch (e) {}
       }
 
-      // Never lose queued events when the page is being backgrounded or unloaded
+      // Flush on page exit via non-blocking sendBeacon (never loses data, zero tab-switch noise)
       try {
-        document.addEventListener('visibilitychange', function() {
-          if (document.visibilityState === 'hidden') flushAnalytics();
-        });
-        window.addEventListener('pagehide', flushAnalytics);
-        window.addEventListener('beforeunload', flushAnalytics);
+        window.addEventListener('pagehide', function() { flushAnalytics(true); });
+        window.addEventListener('beforeunload', function() { flushAnalytics(true); });
       } catch (e) {}
 
       (window as any).__trackCalculatorEvent = trackAnalytics;

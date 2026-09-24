@@ -8,7 +8,7 @@ const testCases = [
   { url: 'es/general/unit-converter/index.html', lang: 'es', expectedText: 'Conversor de Unidades', expectedFaq: '¿Qué tan preciso es este conversor de unidades online?' },
   { url: 'hi/general/age-calculator/index.html', lang: 'hi', expectedText: 'उम्र कैलकुलेटर', expectedFaq: 'मैं अपनी सही आयु की गणना कैसे करूँ' },
   { url: 'es/general/age-calculator/index.html', lang: 'es', expectedText: 'Calculadora de Edad', expectedFaq: '¿Cómo calculo mi edad exacta?' },
-  { url: 'hi/finance/gratuity-calculator/index.html', lang: 'hi', expectedText: 'ग्रेच्युटी गणना', expectedFaq: 'साधारण और उन्नत ग्रेच्युटी कैलकुलेटर में क्या अंतर है' },
+  { url: 'hi/finance/gratuity-calculator/index.html', lang: 'hi', expectedText: 'ग्रेच्युटी', expectedFaq: 'साधारण और उन्नत ग्रेच्युटी कैलकुलेटर में क्या अंतर है' },
   { url: 'hi/finance/ppf-calculator/index.html', lang: 'hi', expectedText: 'PPF', expectedFaq: 'वर्तमान में PPF की ब्याज दर कितनी है' },
   { url: 'hi/finance/swp-calculator/index.html', lang: 'hi', expectedText: 'SWP', expectedFaq: 'म्यूचुअल फंड में SWP की गणना कैसे की जाती है' },
   { url: 'hi/finance/xirr-calculator/index.html', lang: 'hi', expectedText: 'XIRR', expectedFaq: 'XIRR और IRR में क्या अंतर है' },

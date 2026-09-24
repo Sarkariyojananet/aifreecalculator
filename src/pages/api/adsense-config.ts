@@ -142,8 +142,9 @@ export async function readSettings(locals: App.Locals): Promise<AdsConfig> {
 
 const ADSENSE_CONFIG_HEADERS = {
   'Content-Type': 'application/json; charset=utf-8',
-  'Cache-Control': 'public, max-age=300, s-maxage=3600, stale-while-revalidate=86400',
-  'Cloudflare-CDN-Cache-Control': 'max-age=3600, stale-while-revalidate=86400',
+  'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
+  'Cloudflare-CDN-Cache-Control': 'max-age=86400, stale-while-revalidate=604800',
+  'CDN-Cache-Control': 'max-age=86400, stale-while-revalidate=604800',
 } as const;
 
 export const GET: APIRoute = async ({ request, locals }) => {
