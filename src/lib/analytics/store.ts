@@ -322,8 +322,11 @@ export async function recordCalculatorAnalyticsBatch(
         return;
       } catch {}
     }
-    // Fall back to sequential writes so no event is silently dropped
-    for (const statement of statements) {
+    // Bounded fallback: Never execute an unbounded chain of dozens of sequential D1 queries.
+    // Cap sequential fallback to at most MAX_FALLBACK_STATEMENTS (3) to prevent worker execution timeouts.
+    const MAX_FALLBACK_STATEMENTS = 3;
+    const fallbackSubset = statements.slice(0, MAX_FALLBACK_STATEMENTS);
+    for (const statement of fallbackSubset) {
       try {
         await statement.run();
       } catch {}

@@ -55,53 +55,78 @@ function parseDevice(userAgent: string | null, clientHint?: string): DeviceCateg
   return 'desktop';
 }
 
+const ORGANIC_DOMAINS = [
+  'google.',
+  'bing.',
+  'duckduckgo.',
+  'yahoo.',
+  'ecosia.',
+  'baidu.',
+  'yandex.',
+];
+
+const SOCIAL_DOMAINS = [
+  'facebook.',
+  'instagram.',
+  'twitter.',
+  't.co',
+  'x.com',
+  'linkedin.',
+  'reddit.',
+  'pinterest.',
+  'youtube.',
+  'tiktok.',
+  'whatsapp.',
+];
+
 function parseTrafficSource(referer: string | null, origin: string | null): TrafficSourceCategory {
   if (!referer) return 'direct';
+
+  // Fast path: if referer matches origin (internal navigation), attribution is direct
+  if (origin && referer.startsWith(origin)) {
+    return 'direct';
+  }
+
+  // Fast host extraction without allocating heavy URL parser objects
+  let refHost = '';
   try {
-    const refUrl = new URL(referer);
-    const refHost = refUrl.hostname.toLowerCase();
-
-    if (origin) {
-      try {
-        const origUrl = new URL(origin);
-        if (refHost === origUrl.hostname.toLowerCase()) return 'direct';
-      } catch {
-        // Continue
-      }
+    const schemeIdx = referer.indexOf('://');
+    if (schemeIdx !== -1) {
+      const start = schemeIdx + 3;
+      const end = referer.indexOf('/', start);
+      const hostPort = end === -1 ? referer.slice(start) : referer.slice(start, end);
+      const colonIdx = hostPort.indexOf(':');
+      refHost = (colonIdx === -1 ? hostPort : hostPort.slice(0, colonIdx)).toLowerCase();
+    } else {
+      refHost = new URL(referer).hostname.toLowerCase();
     }
-
-    if (
-      refHost.includes('google.') ||
-      refHost.includes('bing.') ||
-      refHost.includes('duckduckgo.') ||
-      refHost.includes('yahoo.') ||
-      refHost.includes('ecosia.') ||
-      refHost.includes('baidu.') ||
-      refHost.includes('yandex.')
-    ) {
-      return 'organic';
-    }
-
-    if (
-      refHost.includes('facebook.') ||
-      refHost.includes('instagram.') ||
-      refHost.includes('twitter.') ||
-      refHost.includes('t.co') ||
-      refHost.includes('x.com') ||
-      refHost.includes('linkedin.') ||
-      refHost.includes('reddit.') ||
-      refHost.includes('pinterest.') ||
-      refHost.includes('youtube.') ||
-      refHost.includes('tiktok.') ||
-      refHost.includes('whatsapp.')
-    ) {
-      return 'social';
-    }
-
-    return 'referral';
   } catch {
     return 'direct';
   }
+
+  if (!refHost) return 'direct';
+
+  // Check if referer host matches origin host
+  if (origin) {
+    try {
+      const origSchemeIdx = origin.indexOf('://');
+      const origStart = origSchemeIdx === -1 ? 0 : origSchemeIdx + 3;
+      const origEnd = origin.indexOf('/', origStart);
+      const origHostPort = origEnd === -1 ? origin.slice(origStart) : origin.slice(origStart, origEnd);
+      const origHost = origHostPort.split(':')[0].toLowerCase();
+      if (refHost === origHost) return 'direct';
+    } catch {}
+  }
+
+  for (let i = 0; i < ORGANIC_DOMAINS.length; i++) {
+    if (refHost.includes(ORGANIC_DOMAINS[i])) return 'organic';
+  }
+
+  for (let i = 0; i < SOCIAL_DOMAINS.length; i++) {
+    if (refHost.includes(SOCIAL_DOMAINS[i])) return 'social';
+  }
+
+  return 'referral';
 }
 
 function createOptionsResponse(): Response {
@@ -154,6 +179,8 @@ export const POST: APIRoute = async ({ request, locals }) => {
       : request.headers.get('referer');
     const origin = request.headers.get('origin');
     const source = parseTrafficSource(referer, origin);
+
+    // Compute request-level device classification ONCE
     const fallbackDevice = parseDevice(userAgent, typeof body.device === 'string' ? body.device : undefined);
 
     // Filter out bots from polluting real conversion analytics
@@ -179,10 +206,17 @@ export const POST: APIRoute = async ({ request, locals }) => {
         if (!event || !VALID_EVENTS.has(event)) continue;
         if (!slug || !KNOWN_SLUGS.has(slug)) continue;
 
+        // Re-use request-level device classification or valid client hint without re-parsing User-Agent
+        const rawDev = typeof raw.device === 'string' ? raw.device : undefined;
+        const eventDevice: DeviceCategory =
+          rawDev === 'mobile' || rawDev === 'tablet' || rawDev === 'desktop'
+            ? rawDev
+            : fallbackDevice;
+
         valid.push({
           slug,
           eventType: event,
-          device: parseDevice(userAgent, typeof raw.device === 'string' ? raw.device : undefined),
+          device: eventDevice,
           source,
           count: Number.isFinite(raw.count) && raw.count > 0 ? Math.min(1000, Math.floor(raw.count)) : 1,
         });
