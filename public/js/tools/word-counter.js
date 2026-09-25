@@ -6,7 +6,7 @@
 (function () {
   'use strict';
 
-  // Common stop words across writing to filter out of the frequency table
+  // Common stop words filtered from the top words frequency table
   const stopWords = new Set([
     'the', 'a', 'an', 'is', 'of', 'and', 'to', 'in', 'that', 'it', 'for', 'on', 'with', 'as',
     'this', 'was', 'at', 'by', 'be', 'from', 'or', 'are', 'your', 'you', 'i', 'we', 'they',
@@ -17,14 +17,91 @@
   ]);
 
   const SAMPLE_TEXT =
-    "The quick brown fox jumps over the lazy dog. Writing clearly and effectively requires attention to word choice, sentence structure, and document length. This free online word counter helps writers, students, researchers, and editors track words, characters, sentences, paragraphs, and estimated reading time with complete privacy.";
+    "The quick brown fox jumps over the lazy dog. Writing clearly requires state-of-the-art attention to word choice. It's John's 3.14 calculation! This free online word counter helps writers, students, researchers, and editors track words, characters, sentences, paragraphs, and estimated reading time with complete privacy. नमस्ते दुनिया।";
+
+  // Explicit, deterministic tokenization policy:
+  // 1. Numbers with decimal fractions: \p{N}+(?:\.\p{N}+)+ (e.g. 3.14)
+  // 2. Words with internal hyphens or apostrophes: [\p{L}\p{N}\p{M}]+(?:[-'’][\p{L}\p{N}\p{M}]+)* (e.g. state-of-the-art, It's, John's)
+  const WORD_TOKEN_REGEX = /\p{N}+(?:\.\p{N}+)+|[\p{L}\p{N}\p{M}]+(?:[-'’][\p{L}\p{N}\p{M}]+)*/gu;
+
+  // Unicode-aware grapheme counting (user-perceived characters)
+  function countGraphemes(text) {
+    if (!text) return 0;
+    if (typeof Intl !== 'undefined' && Intl.Segmenter) {
+      try {
+        const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
+        let count = 0;
+        for (const _ of segmenter.segment(text)) {
+          count++;
+        }
+        return count;
+      } catch (e) {
+        // Fallback to surrogate-aware array length
+      }
+    }
+    return Array.from(text).length;
+  }
+
+  // Deterministic sentence-counting algorithm:
+  // - Supports terminators: . ! ? । ॥
+  // - Prevents decimal points in numbers (e.g. 3.14) from triggering sentence ends
+  // - Groups consecutive terminators (e.g. ... or ?!) into a single sentence boundary
+  // - Requires preceding word content before counting a sentence
+  // - Unpunctuated text (e.g. "Hello world") returns 0 sentences
+  function countSentences(text) {
+    if (!text || !text.trim()) return 0;
+    let count = 0;
+    let hasSentenceContent = false;
+    const len = text.length;
+
+    for (let i = 0; i < len; i++) {
+      const ch = text[i];
+      let isTerminator = false;
+
+      if (ch === '!' || ch === '?' || ch === '\u0964' || ch === '\u0965') {
+        isTerminator = true;
+      } else if (ch === '.') {
+        // Decimal check: preceded by digit AND followed by digit is a decimal point, NOT a terminator
+        const isPrevDigit = i > 0 && /\d/.test(text[i - 1]);
+        const isNextDigit = i + 1 < len && /\d/.test(text[i + 1]);
+        if (!(isPrevDigit && isNextDigit)) {
+          isTerminator = true;
+        }
+      }
+
+      if (isTerminator) {
+        if (hasSentenceContent) {
+          count++;
+          hasSentenceContent = false;
+        }
+        // Advance past consecutive terminators (e.g. "...", "?!", "!!")
+        while (i + 1 < len) {
+          const next = text[i + 1];
+          if (next === '.' || next === '!' || next === '?' || next === '\u0964' || next === '\u0965') {
+            if (next === '.') {
+              const prevD = /\d/.test(text[i]);
+              const nextD = i + 2 < len && /\d/.test(text[i + 2]);
+              if (prevD && nextD) break;
+            }
+            i++;
+          } else {
+            break;
+          }
+        }
+      } else if (/[\p{L}\p{N}\p{M}]/u.test(ch)) {
+        hasSentenceContent = true;
+      }
+    }
+
+    return count;
+  }
 
   // Core Analysis Engine
   function analyze(text) {
     if (!text || text.trim().length === 0) {
       return {
         words: 0,
-        characters: text ? text.length : 0,
+        characters: text ? countGraphemes(text) : 0,
         charactersNoSpaces: 0,
         sentences: 0,
         paragraphs: 0,
@@ -34,9 +111,9 @@
       };
     }
 
-    // Characters
-    const characters = text.length;
-    const charactersNoSpaces = text.replace(/\s/g, '').length;
+    // User-perceived characters (Graphemes)
+    const characters = countGraphemes(text);
+    const charactersNoSpaces = countGraphemes(text.replace(/\s/gu, ''));
 
     // Paragraphs: non-empty chunks separated by newlines
     const paragraphs = text
@@ -44,100 +121,74 @@
       .map((p) => p.trim())
       .filter((p) => p.length > 0).length;
 
-    // Unicode-aware word extraction
-    let wordsCount = 0;
-    let wordTokens = [];
+    // Words & Tokens using single defined tokenizer policy
+    const wordTokens = text.match(WORD_TOKEN_REGEX) || [];
+    const words = wordTokens.length;
 
-    // Method 1: Intl.Segmenter (Standard modern Unicode word segmentation)
-    if (typeof Intl !== 'undefined' && Intl.Segmenter) {
-      try {
-        const segmenter = new Intl.Segmenter(undefined, { granularity: 'word' });
-        const segments = segmenter.segment(text);
-        for (const s of segments) {
-          if (s.isWordLike) {
-            wordsCount++;
-            wordTokens.push(s.segment.toLowerCase());
-          }
-        }
-      } catch (e) {
-        wordsCount = 0;
-        wordTokens = [];
-      }
-    }
-
-    // Method 2: Robust Unicode Regex fallback
-    if (wordsCount === 0 && text.trim().length > 0) {
-      const matches = text.match(/[\p{L}\p{N}\p{M}]+(?:[-'’][\p{L}\p{N}\p{M}]+)*/gu);
-      if (matches && matches.length > 0) {
-        wordsCount = matches.length;
-        wordTokens = matches.map((w) => w.toLowerCase());
-      }
-    }
-
-    // Method 3: Whitespace split fallback (guarantees non-zero for any text)
-    if (wordsCount === 0 && text.trim().length > 0) {
-      const tokens = text.trim().split(/\s+/).filter(Boolean);
-      wordsCount = tokens.length;
-      wordTokens = tokens.map((t) => t.toLowerCase());
-    }
-
-    // Sentences: match ending punctuation (. ! ? ।) followed by space or line end
-    let sentences = 0;
-    if (wordsCount > 0) {
-      const sentenceMatches = text.match(/[^.!?।\s][^.!?।]*(?:[.!?।]+(?:\s+|$)|$)/g);
-      sentences = sentenceMatches ? sentenceMatches.filter((s) => s.trim().length > 0).length : 1;
-    }
+    // Sentences using deterministic scanner
+    const sentences = countSentences(text);
 
     // Reading time: Average adult silent reading ~225 WPM
     let readingTime = '0 min';
-    if (wordsCount > 0) {
-      const rMinutes = wordsCount / 225;
-      if (rMinutes < 0.5) {
-        readingTime = '< 1 min';
-      } else {
-        readingTime = Math.round(rMinutes) + ' min';
-      }
+    if (words > 0) {
+      const rMinutes = words / 225;
+      readingTime = rMinutes < 0.5 ? '< 1 min' : Math.round(rMinutes) + ' min';
     }
 
     // Speaking time: Average presentation speaking ~130 WPM
     let speakingTime = '0 min';
-    if (wordsCount > 0) {
-      const sMinutes = wordsCount / 130;
-      if (sMinutes < 0.5) {
-        speakingTime = '< 1 min';
-      } else {
-        speakingTime = Math.round(sMinutes) + ' min';
-      }
+    if (words > 0) {
+      const sMinutes = words / 130;
+      speakingTime = sMinutes < 0.5 ? '< 1 min' : Math.round(sMinutes) + ' min';
     }
 
-    // Keyword / Top Words Frequency
+    // Keyword / Top Words Frequency: Uses the exact same tokenizer
     const freq = {};
-    for (let i = 0; i < wordTokens.length; i++) {
-      const w = wordTokens[i];
-      if (w.length > 1 && !stopWords.has(w) && !/^\d+$/.test(w)) {
+    for (let i = 0; i < words; i++) {
+      const w = wordTokens[i].toLowerCase();
+      if (w.length > 1 && !stopWords.has(w) && !/^\d+(?:\.\d+)?$/.test(w)) {
         freq[w] = (freq[w] || 0) + 1;
       }
     }
 
-    const sortedWords = Object.entries(freq)
+    const topWords = Object.entries(freq)
       .sort((a, b) => b[1] - a[1])
       .slice(0, 6)
       .map(([word, count]) => ({
         word,
         count,
-        pct: Math.round((count / (wordsCount || 1)) * 100)
+        pct: Math.round((count / (words || 1)) * 100)
       }));
 
     return {
-      words: wordsCount,
+      words,
       characters,
       charactersNoSpaces,
       sentences,
       paragraphs,
       readingTime,
       speakingTime,
-      topWords: sortedWords
+      topWords
     };
+  }
+
+  // Unicode-safe Title Case conversion
+  function toTitleCase(text) {
+    if (!text) return '';
+    return text.toLowerCase().replace(/(^|[^\p{L}\p{N}\p{M}'’])(\p{L})/gu, (m, prefix, char) => {
+      return prefix + char.toUpperCase();
+    });
+  }
+
+  // Unicode-safe Sentence Case conversion
+  function toSentenceCase(text) {
+    if (!text) return '';
+    const lower = text.toLowerCase();
+    return lower
+      .replace(/(^|\s*[\.!\?।॥]["'’\)]*\s+)\s*(\p{L})/gu, (m, prefix, char) => {
+        return prefix + char.toUpperCase();
+      })
+      .replace(/^\s*\p{L}/u, (m) => m.toUpperCase());
   }
 
   function escapeHtml(str) {
@@ -186,10 +237,10 @@
     const titleCaseBtn = document.getElementById('wcTitleCaseBtn');
     const sentenceCaseBtn = document.getElementById('wcSentenceCaseBtn');
 
-    function updateUI(explicitCount) {
-      const text = textInput ? textInput.value : '';
-      const stats = analyze(text);
+    let debounceTimer = null;
+    let lastAnalyzedText = null;
 
+    function renderUI(stats, explicitCount) {
       if (wordsDisplay) wordsDisplay.textContent = stats.words.toLocaleString();
       if (charsDisplay) charsDisplay.textContent = stats.characters.toLocaleString();
       if (charsNoSpacesDisplay) charsNoSpacesDisplay.textContent = stats.charactersNoSpaces.toLocaleString();
@@ -232,7 +283,7 @@
       if (explicitCount && stats.words > 0) {
         showToast(`Counted ${stats.words.toLocaleString()} words!`);
 
-        // Highlight animation on the words display card
+        // Visual feedback highlight on the words display card
         const wordsCard = wordsDisplay ? wordsDisplay.closest('div.p-4, div.rounded-2xl') : null;
         if (wordsCard) {
           wordsCard.classList.add('ring-4', 'ring-blue-500/40');
@@ -249,16 +300,37 @@
       }
     }
 
-    // Input events for real-time live counting
-    if (textInput) {
-      textInput.addEventListener('input', () => updateUI(false));
-      textInput.addEventListener('keyup', () => updateUI(false));
-      textInput.addEventListener('change', () => updateUI(false));
-      textInput.addEventListener('paste', () => setTimeout(() => updateUI(false), 20));
+    function updateUI(explicitCount) {
+      const text = textInput ? textInput.value : '';
+
+      // Skip duplicate full-text calculations if text has not changed
+      if (!explicitCount && text === lastAnalyzedText) {
+        return;
+      }
+
+      lastAnalyzedText = text;
+      const stats = analyze(text);
+      renderUI(stats, explicitCount);
     }
 
-    // Explicit "Count Words" button
+    // Debounced update for input typing to prevent duplicate full-text recalculation
+    function scheduleUpdate() {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
+      }
+      debounceTimer = setTimeout(() => {
+        updateUI(false);
+      }, 50);
+    }
+
+    // Requirement 4: Single input listener for typing, pasting, cutting, deleting
+    if (textInput) {
+      textInput.addEventListener('input', scheduleUpdate);
+    }
+
+    // Explicit "Count Words" button (immediate, no debounce)
     countBtn?.addEventListener('click', () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       if (!textInput || textInput.value.trim().length === 0) {
         if (textInput) {
           textInput.focus();
@@ -273,6 +345,7 @@
 
     // Load Sample Text button
     sampleBtn?.addEventListener('click', () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       if (textInput) {
         textInput.value = SAMPLE_TEXT;
         textInput.focus();
@@ -299,6 +372,7 @@
 
     // Clear Text
     clearBtn?.addEventListener('click', () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
       if (textInput) {
         textInput.value = '';
         textInput.focus();
@@ -307,7 +381,7 @@
       showToast('Cleared!');
     });
 
-    // Case conversions
+    // Case conversions: Unicode-safe
     upperCaseBtn?.addEventListener('click', () => {
       if (!textInput || !textInput.value) return;
       textInput.value = textInput.value.toUpperCase();
@@ -322,17 +396,13 @@
 
     titleCaseBtn?.addEventListener('click', () => {
       if (!textInput || !textInput.value) return;
-      textInput.value = textInput.value
-        .toLowerCase()
-        .replace(/(^|\s|\b)\p{L}/gu, (c) => c.toUpperCase());
+      textInput.value = toTitleCase(textInput.value);
       updateUI(false);
     });
 
     sentenceCaseBtn?.addEventListener('click', () => {
       if (!textInput || !textInput.value) return;
-      textInput.value = textInput.value
-        .toLowerCase()
-        .replace(/(^\s*|[.!?।]\s*)\p{L}/gu, (c) => c.toUpperCase());
+      textInput.value = toSentenceCase(textInput.value);
       updateUI(false);
     });
 
