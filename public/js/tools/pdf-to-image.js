@@ -205,7 +205,7 @@
       html += '<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">';
       images.forEach(function (img) {
         html += '<div class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-3 space-y-2">';
-        html += '<div class="aspect-[4/3] rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800">';
+        html += '<div class="aspect-4/3 rounded-lg overflow-hidden bg-slate-100 dark:bg-slate-800">';
         html += '<img src="' + img.url + '" alt="Page ' + img.page + '" class="w-full h-full object-contain" />';
         html += '</div>';
         html += '<div class="flex items-center justify-between gap-2">';

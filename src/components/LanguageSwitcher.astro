@@ -17,7 +17,8 @@ const originalPath = (Astro.locals as any)?.originalPath;
 const effectivePath = originalPath || currentPath;
 const urlQueryLang = Astro.url.searchParams.get('lang');
 const { lang: pathLang, cleanPath } = extractLocaleFromPath(effectivePath);
-const candidateLang = propLang || (localsLang && isValidLocale(localsLang) ? localsLang : null) || (urlQueryLang && isValidLocale(urlQueryLang) ? (urlQueryLang as Locale) : null) || pathLang;
+const astroLocale = Astro.currentLocale as Locale | undefined;
+const candidateLang = (astroLocale && isValidLocale(astroLocale) ? astroLocale : null) || propLang || pathLang || (localsLang && isValidLocale(localsLang) ? localsLang : null) || (urlQueryLang && isValidLocale(urlQueryLang) ? (urlQueryLang as Locale) : null);
 const currentLang: Locale = isValidLocale(candidateLang) ? candidateLang : DEFAULT_LOCALE;
 const currentLocaleInfo = LOCALES_MAP[currentLang];
 
@@ -44,6 +45,7 @@ const languageOptions = LOCALES.map((locale) => {
       aria-expanded="false"
       aria-haspopup="true"
       aria-label="Select Language"
+      data-current-lang={currentLang}
       class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition-all duration-200 hover:bg-linear-to-br hover:from-slate-50 hover:to-slate-100 hover:text-blue-600 hover:border-slate-300 hover:shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800 dark:hover:border-slate-700 cursor-pointer shadow-2xs language-badge"
     >
       <span class="text-sm leading-none language-btn-flag flag-hover" aria-hidden="true">{currentLocaleInfo.flag}</span>
@@ -85,7 +87,7 @@ const languageOptions = LOCALES.map((locale) => {
               </div>
             </div>
             {opt.isActive && (
-              <svg class="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <svg class="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0 lang-check-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
               </svg>
             )}
@@ -119,7 +121,7 @@ const languageOptions = LOCALES.map((locale) => {
             <div class="truncate text-[10px] text-slate-400 dark:text-slate-400 leading-tight">{opt.name}</div>
           </div>
           {opt.isActive && (
-            <svg class="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 ml-auto shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <svg class="h-3.5 w-3.5 text-blue-600 dark:text-blue-400 ml-auto shrink-0 lang-check-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           )}
@@ -186,6 +188,7 @@ const languageOptions = LOCALES.map((locale) => {
         const code = link.getAttribute('data-locale-code');
         if (code) {
           try {
+            sessionStorage.setItem('lang_just_switched', 'true');
             localStorage.setItem('preferred_locale', code);
             document.cookie = `preferred_locale=${code}; path=/; max-age=31536000; SameSite=Lax`;
           } catch (e) {}
@@ -193,31 +196,165 @@ const languageOptions = LOCALES.map((locale) => {
       });
     });
 
-    // Sync button visual if user preferred a specific language
-    try {
-      const urlParams = new URLSearchParams(window.location.search);
-      const qLang = urlParams.get('lang');
-      const pref = qLang || localStorage.getItem('preferred_locale');
-      if (pref && pref !== 'en') {
-        const option = document.querySelector(`[data-locale-code="${pref}"]`);
-        if (option) {
-          const flagSpan = option.querySelector('span');
-          const nameDiv = option.querySelector('.font-medium');
-          if (flagSpan && nameDiv) {
-            const btnFlag = document.querySelector('.language-btn-flag');
-            const btnName = document.querySelector('.language-btn-name');
-            const btnCode = document.querySelector('.language-btn-code');
-            if (btnFlag) btnFlag.textContent = flagSpan.textContent;
-            if (btnName) btnName.textContent = nameDiv.textContent;
-            if (btnCode) btnCode.textContent = pref.toUpperCase();
-          }
+    // Client-side locale sync: dynamically bind to current URL / active route to prevent SSR edge cache mismatch
+    const LOCALES_METADATA: Record<string, { flag: string; nativeName: string; code: string }> = {
+      en: { flag: '🇺🇸', nativeName: 'English', code: 'EN' },
+      hi: { flag: '🇮🇳', nativeName: 'हिन्दी', code: 'HI' },
+      es: { flag: '🇪🇸', nativeName: 'Español', code: 'ES' },
+      ja: { flag: '🇯🇵', nativeName: '日本語', code: 'JA' },
+      fr: { flag: '🇫🇷', nativeName: 'Français', code: 'FR' },
+      de: { flag: '🇩🇪', nativeName: 'Deutsch', code: 'DE' },
+      pt: { flag: '🇧🇷', nativeName: 'Português', code: 'PT' },
+      ko: { flag: '🇰🇷', nativeName: '한국어', code: 'KO' },
+      it: { flag: '🇮🇹', nativeName: 'Italiano', code: 'IT' },
+    };
+
+    function resolveCurrentPageLocale(): string {
+      // 1. Current URL pathname is the primary source of truth (e.g. /es/..., /hi/...)
+      const path = (window.location.pathname || '/').toLowerCase();
+      const segments = path.split('/').filter(Boolean);
+      if (segments.length > 0) {
+        const firstSegment = segments[0];
+        if (firstSegment in LOCALES_METADATA && firstSegment !== 'en') {
+          return firstSegment;
         }
       }
-    } catch (e) {}
+
+      // 2. Query param ?lang= if present and valid
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const qLang = (urlParams.get('lang') || '').toLowerCase();
+        if (qLang in LOCALES_METADATA) {
+          return qLang;
+        }
+      } catch (e) {}
+
+      // 3. Document language attribute (set by server during SSR)
+      const htmlLang = (document.documentElement.lang || '').slice(0, 2).toLowerCase();
+      if (htmlLang in LOCALES_METADATA && htmlLang !== 'en') {
+        return htmlLang;
+      }
+
+      // 4. Default is strictly 'en' for root and un-prefixed routes
+      return 'en';
+    }
+
+    function syncLanguageState() {
+      const activeLocale = resolveCurrentPageLocale();
+      const meta = LOCALES_METADATA[activeLocale] || LOCALES_METADATA.en;
+
+      // Update button flag, name, code, and data attribute
+      const btnFlag = document.querySelector('.language-btn-flag');
+      const btnName = document.querySelector('.language-btn-name');
+      const btnCode = document.querySelector('.language-btn-code');
+      const switchBtn = document.getElementById('language-switcher-btn');
+
+      if (btnFlag && btnFlag.textContent !== meta.flag) btnFlag.textContent = meta.flag;
+      if (btnName && btnName.textContent !== meta.nativeName) btnName.textContent = meta.nativeName;
+      if (btnCode && btnCode.textContent !== meta.code) btnCode.textContent = meta.code;
+      if (switchBtn) switchBtn.setAttribute('data-current-lang', activeLocale);
+
+      // Update active checkmarks in desktop dropdown menu
+      document.querySelectorAll('.language-switcher-dropdown .lang-choice-item').forEach((item) => {
+        const itemCode = item.getAttribute('data-locale-code');
+        const isActive = itemCode === activeLocale;
+        if (isActive) {
+          item.classList.add(
+            'bg-linear-to-r',
+            'from-blue-50',
+            'to-blue-100/80',
+            'font-bold',
+            'text-blue-700',
+            'shadow-sm',
+            'dark:from-blue-950/60',
+            'dark:to-blue-900/40',
+            'dark:text-blue-300'
+          );
+          item.classList.remove('text-slate-700', 'dark:text-slate-300');
+          if (!item.querySelector('.lang-check-svg')) {
+            const checkSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            checkSvg.setAttribute('class', 'h-3.5 w-3.5 text-blue-600 dark:text-blue-400 shrink-0 lang-check-svg');
+            checkSvg.setAttribute('fill', 'none');
+            checkSvg.setAttribute('viewBox', '0 0 24 24');
+            checkSvg.setAttribute('stroke', 'currentColor');
+            checkSvg.setAttribute('stroke-width', '2.5');
+            checkSvg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />';
+            item.appendChild(checkSvg);
+          }
+        } else {
+          item.classList.remove(
+            'bg-linear-to-r',
+            'from-blue-50',
+            'to-blue-100/80',
+            'font-bold',
+            'text-blue-700',
+            'shadow-sm',
+            'dark:from-blue-950/60',
+            'dark:to-blue-900/40',
+            'dark:text-blue-300'
+          );
+          item.classList.add('text-slate-700', 'dark:text-slate-300');
+          const existingCheck = item.querySelector('.lang-check-svg');
+          if (existingCheck) existingCheck.remove();
+        }
+      });
+
+      // Update active checkmarks in mobile language list
+      document.querySelectorAll('.language-badge.lang-choice-item').forEach((item) => {
+        const itemCode = item.getAttribute('data-locale-code');
+        const isActive = itemCode === activeLocale;
+        if (isActive) {
+          item.classList.add(
+            'border-blue-500',
+            'bg-linear-to-br',
+            'from-blue-50',
+            'to-blue-100/80',
+            'font-bold',
+            'text-blue-700',
+            'shadow-sm',
+            'dark:border-blue-500/50',
+            'dark:from-blue-950/60',
+            'dark:to-blue-900/40',
+            'dark:text-blue-300'
+          );
+          item.classList.remove('border-slate-200', 'bg-white', 'text-slate-700', 'dark:border-slate-800', 'dark:bg-slate-900', 'dark:text-slate-300');
+          if (!item.querySelector('.lang-check-svg')) {
+            const checkSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            checkSvg.setAttribute('class', 'h-3.5 w-3.5 text-blue-600 dark:text-blue-400 ml-auto shrink-0 lang-check-svg');
+            checkSvg.setAttribute('fill', 'none');
+            checkSvg.setAttribute('viewBox', '0 0 24 24');
+            checkSvg.setAttribute('stroke', 'currentColor');
+            checkSvg.setAttribute('stroke-width', '2.5');
+            checkSvg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />';
+            item.appendChild(checkSvg);
+          }
+        } else {
+          item.classList.remove(
+            'border-blue-500',
+            'bg-linear-to-br',
+            'from-blue-50',
+            'to-blue-100/80',
+            'font-bold',
+            'text-blue-700',
+            'shadow-sm',
+            'dark:border-blue-500/50',
+            'dark:from-blue-950/60',
+            'dark:to-blue-900/40',
+            'dark:text-blue-300'
+          );
+          item.classList.add('border-slate-200', 'bg-white', 'text-slate-700', 'dark:border-slate-800', 'dark:bg-slate-900', 'dark:text-slate-300');
+          const existingCheck = item.querySelector('.lang-check-svg');
+          if (existingCheck) existingCheck.remove();
+        }
+      });
+    }
+
+    syncLanguageState();
   }
 
   // Run on first load and after Astro View Transitions
   initLanguageSwitcher();
   document.addEventListener('astro:page-load', initLanguageSwitcher);
 </script>
+
 )}

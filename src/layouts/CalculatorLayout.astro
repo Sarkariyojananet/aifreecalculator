@@ -371,84 +371,12 @@ const graphSchema = buildCalculatorGraphSchema({
       })();
 
       // =========================================================
-      // BATCHED TELEMETRY DISPATCHER
-      // Events are accumulated client-side and flushed as ONE request instead of
-      // one Worker invocation + D1 write per event. Counters stay numerically
-      // identical because each event carries an explicit repeat count.
+      // CLIENT-SIDE GA4 TELEMETRY DISPATCHER
+      // Events are dispatched directly to Google Analytics 4 (gtag),
+      // completely offloaded from Cloudflare Worker and D1 database.
       // =========================================================
-      var eventQueue: Record<string, number> = Object.create(null);
-      var queuedTotal = 0;
-      var flushTimer: ReturnType<typeof setTimeout> | null = null;
-      var lastFlushAt = 0;
-      var MIN_FLUSH_INTERVAL_MS = 60000; // Throttle multiple recalculation flushes to at most 1 per 60s
-      var isBot = false;
-      try {
-        if (navigator.webdriver) isBot = true;
-      } catch (e) {}
-
-      var deviceType = 'desktop';
-      try {
-        var vw = window.innerWidth || document.documentElement.clientWidth || 1024;
-        if (vw < 768) deviceType = 'mobile';
-        else if (vw < 1024) deviceType = 'tablet';
-      } catch (e) {}
-
-      function flushAnalytics(force?: boolean) {
-        if (flushTimer) {
-          clearTimeout(flushTimer);
-          flushTimer = null;
-        }
-        if (queuedTotal === 0 || isBot) return;
-
-        var now = Date.now();
-        // If not force (e.g. not page exit) and recently flushed, debounce until interval settles
-        if (!force && lastFlushAt > 0 && (now - lastFlushAt < MIN_FLUSH_INTERVAL_MS)) {
-          if (!flushTimer) {
-            flushTimer = setTimeout(function() { flushAnalytics(); }, MIN_FLUSH_INTERVAL_MS - (now - lastFlushAt));
-          }
-          return;
-        }
-
-        var events: Array<{ slug: string; event: string; device: string; count: number }> = [];
-        for (var name in eventQueue) {
-          if (eventQueue[name] > 0) {
-            events.push({
-              slug: slug || '',
-              event: name,
-              device: deviceType,
-              count: eventQueue[name]
-            });
-          }
-        }
-
-        // Reset the queue BEFORE sending so retries never double-count
-        eventQueue = Object.create(null);
-        queuedTotal = 0;
-        lastFlushAt = Date.now();
-        if (events.length === 0) return;
-
-        try {
-          var payload = JSON.stringify({
-            events: events,
-            referrer: document.referrer || ''
-          });
-
-          if (navigator.sendBeacon) {
-            navigator.sendBeacon('/api/analytics/event', payload);
-          } else {
-            fetch('/api/analytics/event', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: payload,
-              keepalive: true
-            }).catch(function() {});
-          }
-        } catch (e) {}
-      }
-
       function trackAnalytics(eventName: string) {
         try {
-          // 1. Send directly to GA4 (offloaded completely from Cloudflare Worker)
           if (typeof (window as any).gtag === 'function') {
             (window as any).gtag('event', eventName, {
               calculator_slug: slug,
@@ -456,42 +384,8 @@ const graphSchema = buildCalculatorGraphSchema({
               event_label: slug
             });
           }
-
-          if (isBot) return;
-
-          eventQueue[eventName] = (eventQueue[eventName] || 0) + 1;
-          queuedTotal++;
-
-          // 2. Meaningful milestone: calculation outcome reached (success or error)
-          // Debounce 2 seconds so calculations settle, then flush all funnel events in ONE request!
-          if (eventName === 'calculation_success' || eventName === 'calculation_error') {
-            if (flushTimer) clearTimeout(flushTimer);
-            flushTimer = setTimeout(function() {
-              flushAnalytics();
-            }, 2000);
-            return;
-          }
-
-          // Auxiliary user actions: copy, share, reset
-          if (eventName === 'result_copy' || eventName === 'result_share' || eventName === 'calculator_reset') {
-            if (!flushTimer) {
-              flushTimer = setTimeout(function() {
-                flushAnalytics();
-              }, 4000);
-            }
-            return;
-          }
-
-          // Note: page_view and calculator_start are NOT flushed eagerly.
-          // They are batched together with the first calculation, or sent via sendBeacon on pagehide!
         } catch (e) {}
       }
-
-      // Flush on page exit via non-blocking sendBeacon (never loses data, zero tab-switch noise)
-      try {
-        window.addEventListener('pagehide', function() { flushAnalytics(true); });
-        window.addEventListener('beforeunload', function() { flushAnalytics(true); });
-      } catch (e) {}
 
       (window as any).__trackCalculatorEvent = trackAnalytics;
 

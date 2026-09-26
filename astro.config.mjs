@@ -127,11 +127,31 @@ export default defineConfig({
       exclude: [
         '@astrojs/cloudflare',
         '@astrojs/cloudflare/cache',
+        '@astrojs/cloudflare/cache/provider',
         '@astrojs/cloudflare/entrypoints/server',
+        'constants',
+        'node:constants',
       ],
     },
     ssr: {
-      external: ['@astrojs/cloudflare'],
+      external: [
+        '@astrojs/cloudflare',
+        '@astrojs/cloudflare/cache',
+        '@astrojs/cloudflare/cache/provider',
+        '@astrojs/cloudflare/entrypoints/server',
+        'constants',
+        'node:constants',
+      ],
+      optimizeDeps: {
+        exclude: [
+          '@astrojs/cloudflare',
+          '@astrojs/cloudflare/cache',
+          '@astrojs/cloudflare/cache/provider',
+          '@astrojs/cloudflare/entrypoints/server',
+          'constants',
+          'node:constants',
+        ],
+      },
     },
   },
 

@@ -555,6 +555,7 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
 <!-- CLIENT-SIDE LOGIC                                                 -->
 <!-- ================================================================= -->
 <script>
+  // @ts-nocheck
   (function () {
     if (typeof window === 'undefined') return;
 
@@ -836,11 +837,25 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
             var parentLbl = inp.closest('label');
             if (parentLbl) label = parentLbl.textContent.trim();
           }
+          if (!label && inp.parentElement) {
+            var siblingLbl = inp.parentElement.querySelector('label');
+            if (siblingLbl) label = siblingLbl.textContent.trim();
+          }
+          if (!label) {
+            var prevEl = inp.previousElementSibling;
+            if (prevEl && (prevEl.tagName === 'LABEL' || prevEl.classList.contains('font-bold') || prevEl.classList.contains('text-xs'))) {
+              label = prevEl.textContent.trim();
+            }
+          }
           if (!label && inp.placeholder) {
             label = inp.placeholder;
           }
           if (!label && inp.name) {
             label = inp.name;
+          }
+          if (!label && inp.id) {
+            label = inp.id.replace(/^(inp-|nps-|pen-|tax-|sel-)/, '').replace(/-/g, ' ');
+            label = label.charAt(0).toUpperCase() + label.slice(1);
           }
           if (!label) return;
 
@@ -867,7 +882,7 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
         var resContainer = getActiveResultContainer();
         if (resContainer) {
           // A. Hero / Main highlighted metrics
-          var heroElements = resContainer.querySelectorAll('[id*="hero"], [id*="main"], [id*="primary"], [id*="future-val"], [id*="monthly-emi"], [id*="bmi"], [id*="total-steel"], [id*="concrete"], [id*="res-total"], [id*="res-excavation"], [id*="res-steel"], [id*="res-shuttering"]');
+          var heroElements = resContainer.querySelectorAll('[id*="hero"], [id*="main"], [id*="primary"], [id*="future-val"], [id*="monthly-emi"], [id*="bmi"], [id*="total-steel"], [id*="concrete"], [id*="corpus"], [id*="pension"], [id*="res-total"], [id*="res-excavation"], [id*="res-steel"], [id*="res-shuttering"], [id*="tax-saved"], [id*="maturity-amount"]');
           heroElements.forEach(function (h) {
             var text = (h.textContent || '').trim().replace(/\s+/g, ' ');
             if (text && text !== '--' && text !== '-- m³' && text !== '-- kg' && text.length < 60 && !h.closest('button')) {
@@ -875,11 +890,11 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
               var labelText = prevLbl ? prevLbl.textContent.trim() : '';
               if (!labelText) {
                 var pCard = h.closest('div');
-                var headerEl = pCard ? pCard.querySelector('[class*="uppercase"], [class*="text-slate-500"], [class*="text-slate-400"]') : null;
+                var headerEl = pCard ? pCard.querySelector('[class*="uppercase"], [class*="text-slate-500"], [class*="text-slate-400"], [class*="text-blue-700"], [class*="text-blue-300"], [id*="badge"]') : null;
                 if (headerEl && headerEl !== h) labelText = headerEl.textContent.trim();
               }
               if (!labelText) {
-                labelText = h.id.replace(/^res-/, '').replace(/-/g, ' ').toUpperCase();
+                labelText = h.id.replace(/^(res-|nps-res-)/, '').replace(/-/g, ' ').toUpperCase();
               }
               labelText = labelText.replace(/\s+/g, ' ').trim();
               if (labelText && !results.some(function (r) { return r.label === labelText; })) {
@@ -889,12 +904,12 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
           });
 
           // B. Result Cards (handles multi-line, structured divs & sub-metrics)
-          var cardItems = resContainer.querySelectorAll('.unit-result-card, [class*="rounded-xl"], [class*="rounded-2xl"]');
+          var cardItems = resContainer.querySelectorAll('.unit-result-card, [class*="rounded-xl"], [class*="rounded-2xl"], [class*="rounded-3xl"]');
           cardItems.forEach(function (card) {
             if (card.querySelector('table') || card.closest('table') || card === barContainer || barContainer.contains(card)) return;
 
-            var lblEl = card.querySelector('[class*="uppercase"], label, .text-xs, .text-\\[11px\\], .text-\\[10px\\], span:first-child');
-            var valEl = card.querySelector('[class*="font-black"], [class*="font-bold"], .text-lg, .text-xl, .text-2xl, .text-3xl, [id^="res-"], [id^="mat-"]');
+            var lblEl = card.querySelector('[class*="uppercase"], label, .text-xs, .text-\\[11px\\], .text-\\[10px\\], .text-slate-500, span:first-child');
+            var valEl = card.querySelector('[class*="font-black"], [class*="font-bold"], .text-lg, .text-xl, .text-2xl, .text-3xl, [id^="res-"], [id^="nps-res-"], [id^="mat-"]');
             var subValEl = card.querySelector('[class*="text-slate-400"], [class*="text-slate-500"], .text-\\[11px\\], .text-\\[10px\\]');
 
             if (lblEl && valEl && lblEl !== valEl) {
@@ -910,7 +925,7 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
                 results.push({
                   label: lText,
                   value: vText,
-                  isHero: valEl.classList.contains('text-xl') || valEl.classList.contains('text-2xl') || valEl.classList.contains('text-3xl')
+                  isHero: valEl.classList.contains('text-xl') || valEl.classList.contains('text-2xl') || valEl.classList.contains('text-3xl') || valEl.classList.contains('text-4xl') || valEl.classList.contains('text-5xl')
                 });
                 return;
               }
@@ -930,8 +945,8 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
             }
           });
 
-          // C. Explicit fallback for all named result elements [id^="res-"], [id^="mat-"], [id^="k-res-"], [id^="k-summary-"]
-          var explicitValElements = resContainer.querySelectorAll('[id^="res-"], [id^="mat-"], [id^="k-res-"], [id^="k-summary-"]');
+          // C. Explicit fallback for all named result elements
+          var explicitValElements = resContainer.querySelectorAll('[id^="res-"], [id*="-res-"], [id^="nps-res-"], [id^="mat-"], [id^="k-res-"], [id^="k-summary-"], [id*="-amount"], [id*="-pension"]');
           explicitValElements.forEach(function (el) {
             var vText = (el.textContent || '').trim().replace(/\s+/g, ' ');
             if (!vText || vText === '--' || vText === '-- m³' || vText === '-- kg' || vText.startsWith('--')) return;
@@ -940,13 +955,13 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
             var p = el.parentElement;
             var lText = '';
             if (p) {
-              var lCandidate = p.querySelector('[class*="uppercase"], label, .text-xs, .text-\\[11px\\], .text-\\[10px\\], div:first-child');
+              var lCandidate = p.querySelector('[class*="uppercase"], label, .text-xs, .text-\\[11px\\], .text-\\[10px\\], .text-slate-500, div:first-child');
               if (lCandidate && lCandidate !== el) {
                 lText = lCandidate.textContent.trim().replace(/\s+/g, ' ');
               }
             }
             if (!lText) {
-              lText = el.id.replace(/^(res-|mat-|k-res-|k-summary-)/, '').replace(/-/g, ' ');
+              lText = el.id.replace(/^(res-|nps-res-|mat-|k-res-|k-summary-)/, '').replace(/-/g, ' ');
               lText = lText.charAt(0).toUpperCase() + lText.slice(1);
             }
 
@@ -1036,7 +1051,7 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
 
         // E. Visual Detailing Diagrams (SVG & Canvas elements)
         var diagrams = [];
-        var svgNodes = container.querySelectorAll('svg#svg-cross-section, svg#svg-elevation, svg#bmi-gauge-svg, svg[id*="diagram"], svg[class*="donut"], svg.visual-diagram');
+        var svgNodes = container.querySelectorAll('svg#svg-cross-section, svg#svg-elevation, svg#bmi-gauge-svg, svg#svg-nps-donut, svg[id*="diagram"], svg[id*="donut"], svg[class*="donut"], svg.visual-diagram');
         var seenSvgs = {};
         svgNodes.forEach(function (svg) {
           if (!svg.offsetParent && svg.offsetWidth === 0 && svg.offsetHeight === 0) return;
@@ -1056,7 +1071,7 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
             if (sid === 'svg-cross-section') title = 'Cross-Section Detailing Diagram';
             else if (sid === 'svg-elevation') title = 'Longitudinal Elevation Diagram';
             else if (sid.includes('bmi')) title = 'Body Mass Index Radial Gauge';
-            else if (sid.includes('donut')) title = 'Visual Investment Breakdown';
+            else if (sid.includes('donut') || sid.includes('nps')) title = 'Visual Investment & Corpus Breakdown';
             else title = sid.replace(/^svg-/, '').replace(/-/g, ' ').toUpperCase() + ' Diagram';
           }
 
@@ -1675,6 +1690,20 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
                 'Where: P = Monthly Investment, i = Monthly Rate of Return (Annual / 12 / 100), n = Total Months',
                 'Total Investment = P × n',
                 'Estimated Wealth Gain = Future Value - Total Investment'
+              ]
+            });
+          } else if (s.includes('nps')) {
+            formulas.push({
+              heading: 'National Pension System (NPS) Retirement Formulas',
+              items: [
+                'NPS Total Corpus (A) = P × [((1 + r)^n - 1) / r] × (1 + r)',
+                'Where: P = Monthly Contribution, r = Monthly Rate (Annual Return / 12 / 100), n = Months to Retirement (Retirement Age - Current Age) × 12',
+                'Total Invested Amount = P × n',
+                'Total Wealth Gain / Returns = Total Corpus (A) - Total Invested Amount',
+                'Tax-Free Lump Sum (60%) = Total Corpus × (1 - Annuity %)',
+                'Mandatory Annuity Corpus (40%) = Total Corpus × Annuity % (Min 40%)',
+                'Estimated Monthly Pension = (Annuity Corpus × Annuity Rate %) / 12 / 100',
+                'Tax Deductions: Up to ₹1.5L under 80CCD(1) + ₹50,000 under 80CCD(1B) + Employer Contribution under 80CCD(2)'
               ]
             });
           } else if (s.includes('bmi')) {

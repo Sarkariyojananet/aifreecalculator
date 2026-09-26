@@ -213,25 +213,42 @@ const effectiveRobots = override.robots;
   <!-- Client-side Smart Search & Recent History Engine -->
   <script>
     (function initHomeSearch() {
-      const searchInput = document.getElementById('home-main-search');
+      const searchInput = document.getElementById('home-main-search') as HTMLInputElement | null;
       const searchClear = document.getElementById('home-search-clear');
       const searchDropdown = document.getElementById('home-search-dropdown');
       const dropdownItems = document.getElementById('home-dropdown-items');
       const matchCountLabel = document.getElementById('home-match-count');
-      const quickTags = document.querySelectorAll('.home-quick-tag');
+      const quickTags = document.querySelectorAll<HTMLButtonElement>('.home-quick-tag');
 
-      let searchDataPromise = null;
-      let data = window.__CALCULATORS_SEARCH_DATA__ || window.__CALCULATORS_DATA__ || [];
+      interface SearchItem {
+        name: string;
+        category: string;
+        desc: string;
+        icon: string;
+        path: string;
+        keywords?: string[];
+        aliases?: string[];
+        slug?: string;
+      }
 
-      function getSearchData() {
+      type WindowWithSearch = Window & typeof globalThis & {
+        __CALCULATORS_SEARCH_DATA__?: SearchItem[];
+        __CALCULATORS_DATA__?: SearchItem[];
+      };
+      const win = window as unknown as WindowWithSearch;
+
+      let searchDataPromise: Promise<SearchItem[]> | null = null;
+      let data: SearchItem[] = win.__CALCULATORS_SEARCH_DATA__ || win.__CALCULATORS_DATA__ || [];
+
+      function getSearchData(): Promise<SearchItem[]> {
         if (data && data.length > 0) return Promise.resolve(data);
-        if (window.__CALCULATORS_SEARCH_DATA__ && window.__CALCULATORS_SEARCH_DATA__.length > 0) {
-          data = window.__CALCULATORS_SEARCH_DATA__;
+        if (win.__CALCULATORS_SEARCH_DATA__ && win.__CALCULATORS_SEARCH_DATA__.length > 0) {
+          data = win.__CALCULATORS_SEARCH_DATA__;
           return Promise.resolve(data);
         }
-        if (window.__CALCULATORS_DATA__ && window.__CALCULATORS_DATA__.length > 0) {
-          data = window.__CALCULATORS_DATA__;
-          window.__CALCULATORS_SEARCH_DATA__ = data;
+        if (win.__CALCULATORS_DATA__ && win.__CALCULATORS_DATA__.length > 0) {
+          data = win.__CALCULATORS_DATA__;
+          win.__CALCULATORS_SEARCH_DATA__ = data;
           return Promise.resolve(data);
         }
         if (searchDataPromise) return searchDataPromise;
@@ -242,9 +259,9 @@ const effectiveRobots = override.robots;
             return res.json();
           })
           .then((items) => {
-            data = Array.isArray(items) ? items : [];
-            window.__CALCULATORS_SEARCH_DATA__ = data;
-            window.__CALCULATORS_DATA__ = data;
+            data = Array.isArray(items) ? (items as SearchItem[]) : [];
+            win.__CALCULATORS_SEARCH_DATA__ = data;
+            win.__CALCULATORS_DATA__ = data;
             loadRecentlyUsed();
             return data;
           })
@@ -259,10 +276,10 @@ const effectiveRobots = override.robots;
         setTimeout(getSearchData, 2000);
       }
 
-      let searchLogTimer = null;
-      function logSearch(query, hasResults) {
+      let searchLogTimer: ReturnType<typeof setTimeout> | null = null;
+      function logSearch(query: string, hasResults: boolean) {
         if (!query || query.length < 2) return;
-        clearTimeout(searchLogTimer);
+        if (searchLogTimer) clearTimeout(searchLogTimer);
         searchLogTimer = setTimeout(() => {
           try {
             fetch('/api/search-log', {
@@ -274,7 +291,7 @@ const effectiveRobots = override.robots;
         }, 700);
       }
 
-      function filterSearch(query) {
+      function filterSearch(query: string) {
         const q = (query || '').toLowerCase().trim();
         if (!q) {
           if (searchDropdown) searchDropdown.classList.add('hidden');
@@ -304,12 +321,12 @@ const effectiveRobots = override.robots;
           return;
         }
 
-        const matches = data.filter((item) => {
+        const matches = data.filter((item: SearchItem) => {
           const nameMatch = item.name.toLowerCase().includes(q);
           const catMatch = item.category.toLowerCase().includes(q);
           const descMatch = (item.desc || '').toLowerCase().includes(q);
-          const kwMatch = (item.keywords || []).some((k) => k.toLowerCase().includes(q));
-          const aliasMatch = (item.aliases || []).some((a) => a.toLowerCase().includes(q));
+          const kwMatch = (item.keywords || []).some((k: string) => k.toLowerCase().includes(q));
+          const aliasMatch = (item.aliases || []).some((a: string) => a.toLowerCase().includes(q));
           return nameMatch || catMatch || descMatch || kwMatch || aliasMatch;
         });
 
@@ -330,7 +347,7 @@ const effectiveRobots = override.robots;
               </div>
             `;
           } else {
-            dropdownItems.innerHTML = matches.slice(0, 7).map((item) => `
+            dropdownItems.innerHTML = matches.slice(0, 7).map((item: SearchItem) => `
               <a
                 href="${item.path}"
                 class="flex items-center justify-between p-2.5 rounded-lg transition hover:bg-slate-50 dark:hover:bg-slate-800/80 group"
@@ -362,7 +379,10 @@ const effectiveRobots = override.robots;
           getSearchData();
           if (searchInput.value.trim()) filterSearch(searchInput.value);
         });
-        searchInput.addEventListener('input', (e) => filterSearch(e.target.value));
+        searchInput.addEventListener('input', (e) => {
+          const target = e.target as HTMLInputElement | null;
+          filterSearch(target?.value || '');
+        });
       }
 
       if (searchClear) {
@@ -387,7 +407,7 @@ const effectiveRobots = override.robots;
       });
 
       document.addEventListener('click', (e) => {
-        if (!searchInput?.contains(e.target) && !searchDropdown?.contains(e.target)) {
+        if (!searchInput?.contains(e.target as Node | null) && !searchDropdown?.contains(e.target as Node | null)) {
           if (searchDropdown) searchDropdown.classList.add('hidden');
         }
       });
@@ -411,12 +431,12 @@ const effectiveRobots = override.robots;
             const recentSlugs = JSON.parse(rawHistory);
             if (Array.isArray(recentSlugs) && recentSlugs.length > 0) {
               const matchedTools = recentSlugs
-                .map((slug) => data.find((d) => d.slug === slug || d.slug === `${slug}-calculator`))
+                .map((slug: string) => data.find((d: SearchItem) => d.slug === slug || d.slug === `${slug}-calculator`))
                 .filter(Boolean)
                 .slice(0, 5);
 
               if (matchedTools.length > 0) {
-                recentsGrid.innerHTML = matchedTools.map((t) => `
+                recentsGrid.innerHTML = (matchedTools as SearchItem[]).map((t) => `
                   <a
                     href="${t.path}"
                     class="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-2.5 shadow-2xs hover:border-blue-400 dark:border-slate-800 dark:bg-slate-900 transition group"
