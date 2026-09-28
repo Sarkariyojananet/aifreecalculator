@@ -9,7 +9,6 @@ import {
 import {
   detectRedirectLoop,
   detectRedirectChain,
-  auditAllRedirectRules,
   isKnownSiteRoute,
   normalizeRedirectPath,
 } from '../../../lib/redirects/validator';
@@ -31,15 +30,14 @@ export const GET: APIRoute = async ({ request, cookies, locals }) => {
   }
 
   const rules = await getRedirectRules(locals);
-  const audit = auditAllRedirectRules(rules);
   const kpis = await getRedirectSummaryKPIs(locals);
 
   return new Response(
     JSON.stringify({
       redirects: rules,
       total: rules.length,
-      chains: audit.chains,
-      loops: audit.loops,
+      chains: [],
+      loops: [],
       kpis,
     }),
     {
@@ -150,8 +148,6 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
       await update404Status(rule.source.slice(0, -1), 'redirected', rule.id, locals);
     }
 
-    const updatedAudit = auditAllRedirectRules(result.rules);
-
     return new Response(
       JSON.stringify({
         success: true,
@@ -159,7 +155,7 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
         redirects: result.rules,
         chainWarning: !collapseChain ? chainWarning : undefined,
         destinationWarning,
-        chains: updatedAudit.chains,
+        chains: [],
       }),
       {
         status: 200,

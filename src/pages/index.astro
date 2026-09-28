@@ -253,12 +253,13 @@ const effectiveRobots = override.robots;
         }
         if (searchDataPromise) return searchDataPromise;
 
-        searchDataPromise = fetch('/search-data/en.json')
+        searchDataPromise = fetch('/search-index.json')
           .then((res) => {
             if (!res.ok) throw new Error('Failed to load search data');
             return res.json();
           })
-          .then((items) => {
+          .then((raw: any) => {
+            const items = Array.isArray(raw) ? raw : (raw['en'] || []);
             data = Array.isArray(items) ? (items as SearchItem[]) : [];
             win.__CALCULATORS_SEARCH_DATA__ = data;
             win.__CALCULATORS_DATA__ = data;

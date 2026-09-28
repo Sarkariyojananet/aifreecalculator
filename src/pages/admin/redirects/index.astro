@@ -7,11 +7,11 @@ import {
   get404Logs,
   getRedirectHistory,
 } from '../../../lib/redirects/store';
-import { auditAllRedirectRules } from '../../../lib/redirects/validator';
+// Client-side validation used instead of auditAllRedirectRules
 
 // 1. Fetch live metrics and data from D1
 const redirects = await getRedirectRules(Astro.locals);
-const chainReport = auditAllRedirectRules(redirects);
+// chainReport computed client-side when needed
 const kpis = await getRedirectSummaryKPIs(Astro.locals);
 const active404Data = await get404Logs({ status: 'active', limit: 100 }, Astro.locals);
 const ignored404Data = await get404Logs({ status: 'ignored', limit: 50 }, Astro.locals);
@@ -145,41 +145,23 @@ if (!user) {
       </div>
     </div>
 
-    <!-- Chains Alert Banner (if chains detected) -->
-    {chainReport.chains.length > 0 && (
-      <div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/60 dark:bg-amber-950/30">
-        <div class="flex items-start justify-between gap-3">
-          <div class="flex items-start gap-2.5">
-            <span class="text-base shrink-0">⚠️</span>
-            <div>
-              <h4 class="text-xs font-bold text-amber-900 dark:text-amber-200">
-                {chainReport.chains.length} Redirect Chain(s) Detected
-              </h4>
-              <p class="text-[11px] text-amber-700 dark:text-amber-300 mt-0.5">
-                Redirect chains (A → B → C) slow down page loads and dilute SEO authority. Collapsing them directly to final destinations is recommended.
-              </p>
-              <div class="mt-2 space-y-1.5">
-                {chainReport.chains.slice(0, 3).map((ch) => (
-                  <div class="text-[11px] font-mono text-slate-800 dark:text-slate-200 bg-white/70 dark:bg-slate-900/70 rounded-lg px-2.5 py-1 flex items-center justify-between gap-2">
-                    <span class="truncate">
-                      <strong>{ch.source}</strong> → {ch.currentDestination} → <strong class="text-emerald-600 dark:text-emerald-400">{ch.finalDestination}</strong> ({ch.hopCount} hops)
-                    </span>
-                    <button
-                      type="button"
-                      class="btn-collapse-chain shrink-0 rounded-md bg-amber-600 px-2 py-0.5 text-[10px] font-bold text-white hover:bg-amber-700 cursor-pointer"
-                      data-source={ch.source}
-                      data-final={ch.finalDestination}
-                    >
-                      Collapse to Final
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
+    <!-- Chains Alert Banner (Hydrated client-side for zero SSR CPU) -->
+    <div id="chains-alert-banner" class="hidden rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-900/60 dark:bg-amber-950/30">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-start gap-2.5">
+          <span class="text-base shrink-0">⚠️</span>
+          <div>
+            <h4 id="chains-alert-title" class="text-xs font-bold text-amber-900 dark:text-amber-200">
+              Redirect Chain(s) Detected
+            </h4>
+            <p class="text-[11px] text-amber-700 dark:text-amber-300 mt-0.5">
+              Redirect chains (A → B → C) slow down page loads and dilute SEO authority. Collapsing them directly to final destinations is recommended.
+            </p>
+            <div id="chains-list-container" class="mt-2 space-y-1.5"></div>
           </div>
         </div>
       </div>
-    )}
+    </div>
 
     <!-- Add / Edit Manual Redirect Card (Collapsible) -->
     <div id="redirect-form-card" class="hidden rounded-3xl border border-blue-200 bg-blue-50/50 p-6 dark:border-blue-900/60 dark:bg-blue-950/30 space-y-4">
@@ -1029,9 +1011,134 @@ if (!user) {
     </div>
   </div>
 
+  <script id="redirect-rules-data" type="application/json" set:html={JSON.stringify(redirects.map((r) => ({ id: r.id, source: r.source, destination: r.destination })))}></script>
 </AdminLayout>
 
 <script is:inline>
+  const clientRedirectRules = JSON.parse(document.getElementById('redirect-rules-data')?.textContent || '[]');
+
+  function clientDetectLoop(source, dest, existingRules, currentId) {
+    if (!source || !dest) return null;
+    if (source === dest) return [source, dest];
+    const map = new Map();
+    for (const r of existingRules) {
+      if (r.id !== currentId && r.source && r.destination) {
+        map.set(r.source, r.destination);
+      }
+    }
+    map.set(source, dest);
+
+    const visited = new Set();
+    let curr = source;
+    const path = [curr];
+
+    while (curr && map.has(curr)) {
+      const next = map.get(curr);
+      if (visited.has(next)) {
+        path.push(next);
+        return path;
+      }
+      visited.add(next);
+      path.push(next);
+      curr = next;
+    }
+    return null;
+  }
+
+  function clientDetectChains(rules) {
+    if (!Array.isArray(rules) || rules.length === 0) return [];
+    const map = new Map();
+    for (const r of rules) {
+      if (r.source && r.destination) {
+        map.set(r.source, r.destination);
+      }
+    }
+
+    const chains = [];
+    for (const r of rules) {
+      let curr = r.destination;
+      let hops = 1;
+      const visited = new Set([r.source]);
+
+      while (curr && map.has(curr) && !visited.has(curr) && hops < 10) {
+        visited.add(curr);
+        curr = map.get(curr);
+        hops++;
+      }
+
+      if (hops > 1 && curr && curr !== r.destination) {
+        chains.push({
+          source: r.source,
+          currentDestination: r.destination,
+          finalDestination: curr,
+          hopCount: hops,
+        });
+      }
+    }
+    return chains;
+  }
+
+  function renderClientChains() {
+    const detectedChains = clientDetectChains(clientRedirectRules);
+    const banner = document.getElementById('chains-alert-banner');
+    const title = document.getElementById('chains-alert-title');
+    const list = document.getElementById('chains-list-container');
+
+    if (detectedChains.length > 0 && banner && title && list) {
+      title.textContent = `${detectedChains.length} Redirect Chain(s) Detected`;
+      list.innerHTML = detectedChains.slice(0, 3).map((ch) => `
+        <div class="text-[11px] font-mono text-slate-800 dark:text-slate-200 bg-white/70 dark:bg-slate-900/70 rounded-lg px-2.5 py-1 flex items-center justify-between gap-2">
+          <span class="truncate">
+            <strong>${ch.source}</strong> → ${ch.currentDestination} → <strong class="text-emerald-600 dark:text-emerald-400">${ch.finalDestination}</strong> (${ch.hopCount} hops)
+          </span>
+          <button
+            type="button"
+            class="btn-collapse-chain shrink-0 rounded-md bg-amber-600 px-2 py-0.5 text-[10px] font-bold text-white hover:bg-amber-700 cursor-pointer"
+            data-source="${ch.source}"
+            data-final="${ch.finalDestination}"
+          >
+            Collapse to Final
+          </button>
+        </div>
+      `).join('');
+      banner.classList.remove('hidden');
+
+      // Bind click handlers for dynamic collapse buttons
+      list.querySelectorAll('.btn-collapse-chain').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const source = btn.getAttribute('data-source');
+          const finalDest = btn.getAttribute('data-final');
+          if (!source || !finalDest) return;
+
+          if (!confirm(`Update "${source}" directly to final destination "${finalDest}"?`)) return;
+
+          try {
+            const res = await fetch('/api/admin/redirects', {
+              method: 'POST',
+              headers: getAuthHeaders(),
+              body: JSON.stringify({
+                source,
+                destination: finalDest,
+                statusCode: 301,
+                collapseChain: true,
+              }),
+            });
+            if (res.ok) {
+              alert('✓ Chain collapsed directly to final destination!');
+              window.location.reload();
+            }
+          } catch {
+            alert('Network error');
+          }
+        });
+      });
+    }
+  }
+
+  // Run chain check after load
+  renderClientChains();
+
+
   // 1. Tab Navigation
   const tabBtns = document.querySelectorAll('.tab-nav-btn');
   const tabPanels = document.querySelectorAll('.tab-panel');
@@ -1426,6 +1533,17 @@ if (!user) {
     const source = srcInput?.value.trim() || '';
     const destination = destInput?.value.trim() || '';
     const statusCode = parseInt(statusSelect?.value || '301', 10);
+
+    // Client-side loop detection before calling the server
+    const clientLoop = clientDetectLoop(source, destination, clientRedirectRules, id);
+    if (clientLoop) {
+      if (statusMsg) {
+        statusMsg.className = 'rounded-xl p-3 text-xs font-semibold bg-red-50 text-red-700 dark:bg-red-950 dark:text-red-300';
+        statusMsg.textContent = 'Redirect loop detected: ' + clientLoop.join(' ➔ ') + '. This rule cannot be saved.';
+        statusMsg.classList.remove('hidden');
+      }
+      return;
+    }
 
     if (statusMsg) {
       statusMsg.className = 'rounded-xl p-3 text-xs font-semibold bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300';

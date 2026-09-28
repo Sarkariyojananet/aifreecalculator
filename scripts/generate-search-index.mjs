@@ -8,7 +8,7 @@ const rootDir = path.resolve(__dirname, '..');
 
 const calcsPath = path.join(rootDir, 'src', 'data', 'calculators.json');
 const dataDir = path.join(rootDir, 'src', 'i18n', 'translations', 'calculators', 'data');
-const outputPath = path.join(rootDir, 'src', 'data', 'search-index.json');
+const outputPath = path.join(rootDir, 'public', 'search-index.json');
 
 const locales = ['en', 'hi', 'es', 'ja', 'fr', 'de', 'pt', 'ko', 'it'];
 const calcs = JSON.parse(fs.readFileSync(calcsPath, 'utf8'));

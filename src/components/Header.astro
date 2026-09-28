@@ -528,13 +528,14 @@ const categoryLinks = [
       return searchDataLoading;
     }
     const curLang = window.__ACTIVE_HEADER_LANG__ || 'en';
-    searchDataLoading = fetch(`/search-data/${encodeURIComponent(curLang)}.json`)
+    searchDataLoading = fetch('/search-index.json')
       .then((res) => {
         if (!res.ok) throw new Error('Search data fetch failed');
-        return res.json() as Promise<CalculatorItem[]>;
+        return res.json();
       })
-      .then((data) => {
-        window.__CALCULATORS_DATA__ = Array.isArray(data) ? data : [];
+      .then((raw: any) => {
+        const data = Array.isArray(raw) ? raw : (raw[curLang] || raw['en'] || []);
+        window.__CALCULATORS_DATA__ = Array.isArray(data) ? (data as CalculatorItem[]) : [];
         searchDataLoaded = true;
         searchDataLoading = null;
         renderResults();
