@@ -22,18 +22,22 @@ function escapeHtml(text: string): string {
 // RFC 5322 compliant email validator
 const EMAIL_REGEX = /^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/;
 
-// Reusable HTTP response headers & static responses
+// Reusable HTTP response headers
 const JSON_HEADERS = { 'Content-Type': 'application/json' } as const;
 
-const METHOD_NOT_ALLOWED_RESPONSE = new Response(
-  JSON.stringify({ error: 'Method Not Allowed. This endpoint accepts POST requests only.' }),
-  { status: 405, headers: { 'Content-Type': 'application/json', 'Allow': 'POST' } }
-);
+function createMethodNotAllowedResponse(): Response {
+  return new Response(
+    JSON.stringify({ error: 'Method Not Allowed. This endpoint accepts POST requests only.' }),
+    { status: 405, headers: { 'Content-Type': 'application/json', 'Allow': 'POST' } }
+  );
+}
 
-const HONEYPOT_SUCCESS_RESPONSE = new Response(
-  JSON.stringify({ success: true, message: 'Your message was sent successfully.' }),
-  { status: 200, headers: JSON_HEADERS }
-);
+function createHoneypotSuccessResponse(): Response {
+  return new Response(
+    JSON.stringify({ success: true, message: 'Your message was sent successfully.' }),
+    { status: 200, headers: JSON_HEADERS }
+  );
+}
 
 function buildEmailText(
   name: string,
@@ -72,7 +76,7 @@ function buildEmailHtml(
 }
 
 export const GET: APIRoute = async () => {
-  return METHOD_NOT_ALLOWED_RESPONSE;
+  return createMethodNotAllowedResponse();
 };
 
 export const POST: APIRoute = async ({ request, locals }) => {
@@ -98,7 +102,7 @@ export const POST: APIRoute = async ({ request, locals }) => {
 
     // 1. Anti-spam honeypot detection: silently drop bot submissions
     if (honeypot) {
-      return HONEYPOT_SUCCESS_RESPONSE;
+      return createHoneypotSuccessResponse();
     }
 
     // 2. Strict Input & Length Validation

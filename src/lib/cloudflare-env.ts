@@ -1,30 +1,12 @@
 /**
  * Safe Cloudflare Workers Runtime Environment Resolver
  *
- * In Astro v5/v6 with @astrojs/cloudflare, `Astro.locals.runtime.env` was removed
- * in favor of `import { env } from 'cloudflare:workers'`.
+ * Provides safe asynchronous and synchronous access to Cloudflare Workers
+ * environment variables and bindings across Cloudflare Workers and Node.js environments.
  *
- * This utility provides safe asynchronous and synchronous access to Cloudflare Workers
- * environment variables and bindings without triggering deprecated throwing getters on `locals.runtime`.
+ * Guaranteed to NEVER execute I/O or evaluate AsyncLocalStorage-backed `env`
+ * in the module-level global scope.
  */
-
-let cachedCfEnv: any = null;
-let cachedRuntimeProxy: Record<string, any> | null = null;
-
-// Dynamic import of cloudflare:workers to prevent build-time failures in Node.js
-if (typeof globalThis !== 'undefined') {
-  try {
-    // @ts-ignore
-    import('cloudflare:workers')
-      .then((cf) => {
-        if (cf?.env) {
-          cachedCfEnv = cf.env;
-          cachedRuntimeProxy = null; // Re-invalidate cached proxy
-        }
-      })
-      .catch(() => {});
-  } catch {}
-}
 
 /**
  * Safely schedules an asynchronous task on Cloudflare ExecutionContext across
@@ -72,82 +54,128 @@ export function safeWaitUntil(target: any, promise: Promise<unknown>): void {
 
 /**
  * Resolves Cloudflare Workers runtime environment and bindings asynchronously.
+ * Strictly called within an active request context.
  */
 export async function getRuntimeEnv(locals?: any): Promise<Record<string, any>> {
-  if (!cachedCfEnv) {
-    try {
-      // @ts-ignore
-      const cf = await import('cloudflare:workers');
-      if (cf?.env) {
-        cachedCfEnv = cf.env;
-        cachedRuntimeProxy = null;
-      }
-    } catch {
-      // Graceful fallback for non-workerd runtimes
+  let cfEnv: any = null;
+  try {
+    // @ts-ignore
+    const cf = await import('cloudflare:workers');
+    if (cf?.env) {
+      cfEnv = cf.env;
     }
+  } catch {
+    // Graceful fallback for non-workerd runtimes (Node.js / dev server / test runners)
   }
 
-  return getRuntimeEnvSync(locals);
+  return getRuntimeEnvSync(locals, cfEnv);
 }
 
 /**
  * Synchronous resolver for contexts where an async function cannot be awaited.
- * Uses a stable module-level cache when locals has no custom overrides,
- * eliminating repeated Proxy and object allocations on every call.
+ * Extracts environment from request locals, runtime context, or Node process without
+ * caching mutable request-scoped proxies in global isolate scope.
  */
-export function getRuntimeEnvSync(locals?: any): Record<string, any> {
-  const hasLocalsOverride = Boolean(
-    locals && typeof locals === 'object' && !Array.isArray(locals) && (locals.env || locals.DB)
-  );
+export function getRuntimeEnvSync(locals?: any, explicitCfEnv?: any): Record<string, any> {
+  const sources: Record<string, any>[] = [];
 
-  if (!hasLocalsOverride && cachedRuntimeProxy) {
-    return cachedRuntimeProxy;
-  }
-
-  const fallbackEnv: Record<string, any> = {};
-
+  // 1. Process environment (Node.js / build time)
   if (typeof process !== 'undefined' && process?.env) {
-    Object.assign(fallbackEnv, process.env);
+    sources.push(process.env);
   }
 
-  if (hasLocalsOverride) {
-    try {
-      if (locals.env && typeof locals.env === 'object') {
-        Object.assign(fallbackEnv, locals.env);
-      }
-    } catch {}
-    if (locals.DB && !fallbackEnv.DB) {
-      fallbackEnv.DB = locals.DB;
+  // 2. Global environment fallbacks
+  if (typeof globalThis !== 'undefined') {
+    const g = globalThis as any;
+    if (g?.__env && typeof g.__env === 'object') {
+      sources.push(g.__env);
+    }
+    if (g?.env && typeof g.env === 'object') {
+      sources.push(g.env);
     }
   }
 
-  if (typeof globalThis !== 'undefined') {
-    const g = globalThis as any;
-    if (g?.__env) Object.assign(fallbackEnv, g.__env);
+  // 3. Locals environment bindings (Astro Cloudflare adapter locals)
+  if (locals && typeof locals === 'object' && !Array.isArray(locals)) {
+    try {
+      if (locals.env && typeof locals.env === 'object') {
+        sources.push(locals.env);
+      }
+    } catch {}
+    try {
+      if (locals.runtime?.env && typeof locals.runtime.env === 'object') {
+        sources.push(locals.runtime.env);
+      }
+    } catch {}
+    // Direct binding fallbacks attached to locals
+    const directBindings: Record<string, any> = {};
+    if (locals.DB) directBindings.DB = locals.DB;
+    if (locals.SESSION) directBindings.SESSION = locals.SESSION;
+    if (locals.CONTACT_EMAIL) directBindings.CONTACT_EMAIL = locals.CONTACT_EMAIL;
+    if (Object.keys(directBindings).length > 0) {
+      sources.push(directBindings);
+    }
   }
 
-  const target = cachedCfEnv || {};
+  // 4. Explicit Cloudflare workers env object passed into resolver
+  if (explicitCfEnv && typeof explicitCfEnv === 'object') {
+    sources.push(explicitCfEnv);
+  }
 
-  const proxy = new Proxy(target, {
-    get(t, prop, receiver) {
+  // Return a safe composite Proxy that checks sources in priority order (latest source has precedence)
+  return new Proxy({} as Record<string, any>, {
+    get(_t, prop, receiver) {
+      if (typeof prop !== 'string') {
+        return Reflect.get(_t, prop, receiver);
+      }
+      for (let i = sources.length - 1; i >= 0; i--) {
+        const source = sources[i];
+        try {
+          if (source && prop in source && source[prop] !== undefined) {
+            return source[prop];
+          }
+        } catch {}
+      }
+      return undefined;
+    },
+    has(_t, prop) {
+      if (typeof prop !== 'string') return false;
+      for (let i = sources.length - 1; i >= 0; i--) {
+        const source = sources[i];
+        try {
+          if (source && prop in source) return true;
+        } catch {}
+      }
+      return false;
+    },
+    ownKeys() {
+      const keys = new Set<string>();
+      for (let i = sources.length - 1; i >= 0; i--) {
+        const source = sources[i];
+        try {
+          if (source && typeof source === 'object') {
+            Object.keys(source).forEach((k) => keys.add(k));
+          }
+        } catch {}
+      }
+      return Array.from(keys);
+    },
+    getOwnPropertyDescriptor(_t, prop) {
       if (typeof prop === 'string') {
-        if (prop in t && t[prop] !== undefined) {
-          return Reflect.get(t, prop, receiver);
-        }
-        if (prop in fallbackEnv) {
-          return fallbackEnv[prop];
+        for (let i = sources.length - 1; i >= 0; i--) {
+          const source = sources[i];
+          try {
+            if (source && prop in source) {
+              return {
+                enumerable: true,
+                configurable: true,
+                value: source[prop],
+              };
+            }
+          } catch {}
         }
       }
-      return Reflect.get(t, prop, receiver);
-    },
-    has(t, prop) {
-      return Reflect.has(t, prop) || (typeof prop === 'string' && prop in fallbackEnv);
+      return undefined;
     },
   });
-
-  if (!hasLocalsOverride) {
-    cachedRuntimeProxy = proxy;
-  }
-
-  return proxy;
 }

@@ -13,11 +13,16 @@ import {
 (function initAdSenseEngine() {
   if (typeof window === 'undefined') return;
 
-  async function fetchAdConfig(): Promise<AdsConfig | null> {
-    try {
-      const CACHE_KEY = 'adsense_cfg';
-      const CACHE_TTL = 86_400_000; // 24 hours client cache
+  const CACHE_KEY = 'adsense_cfg';
+  const CACHE_TTL = 86_400_000; // 24 hours client cache
+  let inFlightConfigPromise: Promise<AdsConfig | null> | null = null;
 
+  async function getAdsConfig(forceRefresh = false): Promise<AdsConfig | null> {
+    if (inFlightConfigPromise && !forceRefresh) {
+      return inFlightConfigPromise;
+    }
+
+    inFlightConfigPromise = (async () => {
       // Allow URL override for instant testing/previewing: ?preview_ads=1, ?test_ads=1, ?preview=ads
       const urlParams = new URLSearchParams(window.location.search);
       const forcePreview =
@@ -26,53 +31,70 @@ import {
         urlParams.get('preview') === 'ads' ||
         urlParams.get('ad_mode') === 'test';
 
-      // 1. If NOT in forced preview mode: use static/build-time configuration directly
-      if (!forcePreview) {
-        if ((window as any).__AFC_ADS_CONFIG__) {
-          return (window as any).__AFC_ADS_CONFIG__ as AdsConfig;
-        }
-
-        let cached: string | null = null;
+      // 1. Check client-side storage first (localStorage / sessionStorage) unless preview mode or forceRefresh
+      if (!forcePreview && !forceRefresh) {
         try {
-          cached = localStorage.getItem(CACHE_KEY) || sessionStorage.getItem(CACHE_KEY);
-        } catch {}
-
-        if (cached) {
-          try {
+          const cached = localStorage.getItem(CACHE_KEY) || sessionStorage.getItem(CACHE_KEY);
+          if (cached) {
             const parsed = JSON.parse(cached);
-            if (parsed && parsed.expiry > Date.now() && parsed.data) {
+            if (
+              parsed &&
+              typeof parsed.expiry === 'number' &&
+              parsed.expiry > Date.now() &&
+              parsed.data &&
+              typeof parsed.data === 'object'
+            ) {
               return parsed.data as AdsConfig;
             }
-          } catch {}
+          }
+        } catch {
+          // localStorage disabled or sandbox restricted
         }
-
-        // Return default build-time config without making any network request!
-        return DEFAULT_ADS_CONFIG;
       }
 
-      // 2. Only if forcePreview is explicitly active (admin testing), fetch live from API
-      const fetchUrl = '/api/adsense-config?t=' + Date.now();
-      const res = await fetch(fetchUrl);
-      if (!res.ok) return DEFAULT_ADS_CONFIG;
-      const data = (await res.json()) as AdsConfig;
-
-      if (data) {
-        data.testMode = true;
-      }
-
+      // 2. Fetch live configuration from edge-cached /api/adsense-config
       try {
-        const payload = JSON.stringify({ data, expiry: Date.now() + CACHE_TTL });
-        localStorage.setItem(CACHE_KEY, payload);
-      } catch {
-        try {
-          sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data, expiry: Date.now() + CACHE_TTL }));
-        } catch {}
+        const fetchUrl = forcePreview
+          ? `/api/adsense-config?preview_ads=1&t=${Date.now()}`
+          : '/api/adsense-config';
+
+        const res = await fetch(fetchUrl);
+        if (res.ok) {
+          const data = (await res.json()) as AdsConfig;
+          if (data && typeof data === 'object') {
+            if (forcePreview) {
+              data.testMode = true;
+            }
+
+            // Save fresh configuration to client-side storage with 24h TTL
+            try {
+              const payload = JSON.stringify({ data, expiry: Date.now() + CACHE_TTL });
+              localStorage.setItem(CACHE_KEY, payload);
+            } catch {
+              try {
+                sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data, expiry: Date.now() + CACHE_TTL }));
+              } catch {}
+            }
+
+            return data;
+          }
+        }
+      } catch (err) {
+        console.warn('[Ads Engine] Failed to fetch live ads config:', err);
       }
-      return data;
-    } catch {
-      return (window as any).__AFC_ADS_CONFIG__ || DEFAULT_ADS_CONFIG;
-    }
+
+      // 3. Graceful fallback if network request fails or API is unavailable
+      return ((window as any).__AFC_ADS_CONFIG__ as AdsConfig) || DEFAULT_ADS_CONFIG;
+    })().catch((err) => {
+      console.warn('[Ads Engine] Unexpected error resolving ads config:', err);
+      return ((window as any).__AFC_ADS_CONFIG__ as AdsConfig) || DEFAULT_ADS_CONFIG;
+    });
+
+    return inFlightConfigPromise;
   }
+
+  // Alias for backward compatibility within engine
+  const fetchAdConfig = getAdsConfig;
 
   function loadGoogleScript(clientId: string) {
     if (!clientId || !clientId.startsWith('ca-pub-')) return;
@@ -111,6 +133,20 @@ import {
         const tag = el.tagName.toUpperCase();
 
         if (tag === 'SCRIPT') {
+          const srcAttr = el.getAttribute('src');
+          if (srcAttr) {
+            // Deduplicate: Don't inject if exact src or matching AdSense/Ahrefs script already exists
+            if (
+              document.querySelector(`script[src="${srcAttr}"]`) ||
+              (srcAttr.includes('pagead2.googlesyndication.com') &&
+                document.querySelector('script[src*="pagead2.googlesyndication.com"]')) ||
+              (srcAttr.includes('analytics.ahrefs.com') &&
+                document.querySelector('script[src*="analytics.ahrefs.com"]'))
+            ) {
+              return;
+            }
+          }
+
           const script = document.createElement('script');
           Array.from(el.attributes).forEach((attr) => {
             script.setAttribute(attr.name, attr.value);
@@ -465,6 +501,7 @@ import {
       localStorage.removeItem('adsense_cfg');
       sessionStorage.removeItem('adsense_cfg');
     } catch {}
+    inFlightConfigPromise = null;
     renderAdSlots();
   };
 
@@ -473,13 +510,16 @@ import {
       localStorage.removeItem('adsense_cfg');
       sessionStorage.removeItem('adsense_cfg');
     } catch {}
-    fetchAdConfig().then((cfg) => {
+    inFlightConfigPromise = null;
+    getAdsConfig(true).then((cfg) => {
       if (cfg) {
         cfg.testMode = enable !== false;
         renderAdSlots();
       }
     });
   };
+
+  (window as any).__afcGetAdsConfig = getAdsConfig;
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', renderAdSlots);
