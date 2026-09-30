@@ -30,7 +30,7 @@ export const GET: APIRoute = async ({ request, cookies, locals }) => {
         calculators: summaries,
         stats: { healthy, needsReview, critical, unknown, total: summaries.length },
       }),
-      { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } }
+      { status: 200, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'private, no-cache, no-store' } }
     );
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Failed to load health data';

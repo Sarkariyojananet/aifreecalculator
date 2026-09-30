@@ -27,11 +27,21 @@ const HEALTH_SCORES_KEY = 'cms_calc_health_scores';
 
 // ─── Ensure Tables Exist ──────────────────────────────────────────────────────
 
+let tablesInitialized = false;
+
+/**
+ * Invalidate the in-memory health summary cache.
+ */
+export function invalidateHealthCache(): void {
+  inMemoryHealthSummaries = null;
+}
+
 /**
  * Create required tables if they don't exist.
  * Called before any read/write operations.
  */
 async function ensureTables(locals?: unknown): Promise<void> {
+  if (tablesInitialized) return;
   const db = getDb(locals);
   try {
     await db
@@ -82,6 +92,8 @@ async function ensureTables(locals?: unknown): Promise<void> {
         `CREATE TABLE IF NOT EXISTS site_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)`
       )
       .run();
+
+    tablesInitialized = true;
   } catch {
     // Tables may not be creatable in local fallback DB — silently continue
   }
@@ -172,6 +184,8 @@ export async function saveTestRun(
       .prepare(`INSERT OR REPLACE INTO site_settings (key, value) VALUES (?, ?)`)
       .bind(TEST_RESULTS_KEY, JSON.stringify(compactResults))
       .run();
+
+    invalidateHealthCache();
   } catch {
     // Storage failure must not bubble up to break test run response
   }
@@ -289,6 +303,7 @@ export async function recordRuntimeError(
         .bind(id, slug, errorType, errorMessage, now, now)
         .run();
     }
+    invalidateHealthCache();
   } catch {
     // Logging failure must never surface to users
   }
@@ -331,6 +346,32 @@ export async function getErrorLog(
 }
 
 /**
+ * Get all unreviewed error counts aggregated by calculator_slug in ONE query.
+ */
+export async function getAllUnreviewedErrorCounts(
+  locals?: unknown
+): Promise<Record<string, number>> {
+  await ensureTables(locals);
+  const db = getDb(locals);
+  try {
+    const { results } = await db
+      .prepare(
+        `SELECT calculator_slug, COUNT(*) as cnt FROM calc_error_log
+           WHERE reviewed = 0
+           GROUP BY calculator_slug`
+      )
+      .all<{ calculator_slug: string; cnt: number }>();
+    const map: Record<string, number> = {};
+    for (const r of results ?? []) {
+      map[r.calculator_slug] = r.cnt;
+    }
+    return map;
+  } catch {
+    return {};
+  }
+}
+
+/**
  * Get unreviewed error count for a specific calculator.
  */
 export async function getUnreviewedErrorCount(
@@ -364,10 +405,14 @@ export async function markErrorReviewed(id: string, locals?: unknown): Promise<v
       .prepare(`UPDATE calc_error_log SET reviewed = 1 WHERE id = ?`)
       .bind(id)
       .run();
+    invalidateHealthCache();
   } catch {}
 }
 
 // ─── Health Summary Builder ──────────────────────────────────────────────────
+
+let inMemoryHealthSummaries: { data: CalculatorHealthSummary[]; expiry: number } | null = null;
+const HEALTH_CACHE_TTL = 60_000; // 60 seconds in-memory cache
 
 /**
  * Determine overall health status based on test state and error count.
@@ -412,11 +457,21 @@ function computeHealthStatus(
 /**
  * Build a health summary for all registered calculators.
  * Combines test results, error counts, and computes health status.
+ * Optimized: Executes only 2 single D1 queries (batch results + batch errors)
+ * instead of 500+ serial roundtrips, and caches results in memory for 60s.
  */
 export async function getCalculatorHealthSummaries(
   locals?: unknown
 ): Promise<CalculatorHealthSummary[]> {
-  const testResults = await getLatestTestResults(locals);
+  const now = Date.now();
+  if (inMemoryHealthSummaries && inMemoryHealthSummaries.expiry > now) {
+    return inMemoryHealthSummaries.data;
+  }
+
+  const [testResults, errorCounts] = await Promise.all([
+    getLatestTestResults(locals),
+    getAllUnreviewedErrorCounts(locals),
+  ]);
   const testedSlugs = getTestedSlugs();
 
   const summaries: CalculatorHealthSummary[] = [];
@@ -424,7 +479,7 @@ export async function getCalculatorHealthSummaries(
   for (const calc of calculators) {
     const slug = calc.slug;
     const testData = testResults?.[slug] ?? null;
-    const unreviewedErrors = await getUnreviewedErrorCount(slug, locals);
+    const unreviewedErrors = errorCounts[slug] ?? 0;
 
     const testState = testData?.state;
     const { status, reason } = computeHealthStatus(testState, unreviewedErrors);
@@ -474,6 +529,7 @@ export async function getCalculatorHealthSummaries(
     }
   }
 
+  inMemoryHealthSummaries = { data: summaries, expiry: now + HEALTH_CACHE_TTL };
   return summaries;
 }
 

@@ -484,19 +484,13 @@ export async function getGlobalAnalyticsKPIs(
 }
 
 /**
- * Builds complete funnel metrics and conversion scoring for a specific calculator.
+ * Builds calculator detail funnel metrics in-memory from a pre-fetched aggregated row.
  */
-export async function getCalculatorDetailFunnel(
-  slug: string,
-  range: AnalyticsDateRange = '28d',
-  locals?: any
-): Promise<CalculatorFunnelMetrics | null> {
-  const calc = calculators.find((c) => c.slug === slug || c.slug === `${slug}-calculator`);
-  if (!calc) return null;
-
-  const { currentStart, currentEnd } = resolveDateIntervals(range);
-  const curMap = await getAggregatedCalculatorMetrics(currentStart, currentEnd, locals);
-  const row = curMap[calc.slug] || {
+export function buildCalculatorDetailFromRow(
+  calc: (typeof calculators)[0],
+  rawRow?: AggregatedRow
+): CalculatorFunnelMetrics {
+  const row = rawRow || {
     calculator_slug: calc.slug,
     page_views: 0,
     calculator_starts: 0,
@@ -613,20 +607,45 @@ export async function getCalculatorDetailFunnel(
 }
 
 /**
+ * Builds complete funnel metrics and conversion scoring for a specific calculator.
+ */
+export async function getCalculatorDetailFunnel(
+  slug: string,
+  range: AnalyticsDateRange = '28d',
+  locals?: any,
+  preloadedMap?: Record<string, AggregatedRow>
+): Promise<CalculatorFunnelMetrics | null> {
+  const calc = calculators.find((c) => c.slug === slug || c.slug === `${slug}-calculator`);
+  if (!calc) return null;
+
+  let row: AggregatedRow | undefined;
+  if (preloadedMap) {
+    row = preloadedMap[calc.slug];
+  } else {
+    const { currentStart, currentEnd } = resolveDateIntervals(range);
+    const curMap = await getAggregatedCalculatorMetrics(currentStart, currentEnd, locals);
+    row = curMap[calc.slug];
+  }
+
+  return buildCalculatorDetailFromRow(calc, row);
+}
+
+/**
  * Retrieves all calculators funnel metrics, computed rates, and conversion scores.
+ * Optimized: Executes only ONE single aggregation query across all 84 calculators
+ * instead of 84 duplicate roundtrips.
  */
 export async function getCalculatorsFunnelMetrics(
   range: AnalyticsDateRange = '28d',
   sort: 'conversionScore' | 'pageViews' | 'calculations' | 'startRate' | 'successRate' = 'conversionScore',
   locals?: any
 ): Promise<CalculatorFunnelMetrics[]> {
-  const list: CalculatorFunnelMetrics[] = [];
+  const { currentStart, currentEnd } = resolveDateIntervals(range);
+  const curMap = await getAggregatedCalculatorMetrics(currentStart, currentEnd, locals);
 
+  const list: CalculatorFunnelMetrics[] = [];
   for (const calc of calculators) {
-    const detail = await getCalculatorDetailFunnel(calc.slug, range, locals);
-    if (detail) {
-      list.push(detail);
-    }
+    list.push(buildCalculatorDetailFromRow(calc, curMap[calc.slug]));
   }
 
   // Sort list by requested metric

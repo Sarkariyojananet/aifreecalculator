@@ -15,44 +15,56 @@ import {
 
   const CACHE_KEY = 'adsense_cfg';
   const CACHE_TTL = 86_400_000; // 24 hours client cache
+  let inMemoryConfig: AdsConfig | null = null;
   let inFlightConfigPromise: Promise<AdsConfig | null> | null = null;
 
-  async function getAdsConfig(forceRefresh = false): Promise<AdsConfig | null> {
+  function readFromStorage(): AdsConfig | null {
+    if (inMemoryConfig) return inMemoryConfig;
+    try {
+      const cached = localStorage.getItem(CACHE_KEY) || sessionStorage.getItem(CACHE_KEY);
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        if (
+          parsed &&
+          typeof parsed.expiry === 'number' &&
+          parsed.expiry > Date.now() &&
+          parsed.data &&
+          typeof parsed.data === 'object'
+        ) {
+          inMemoryConfig = parsed.data as AdsConfig;
+          return inMemoryConfig;
+        }
+      }
+    } catch {
+      // localStorage disabled or sandbox restricted
+    }
+    return null;
+  }
+
+  function getAdsConfig(forceRefresh = false): Promise<AdsConfig | null> {
+    // Allow URL override for instant testing/previewing: ?preview_ads=1, ?test_ads=1, ?preview=ads
+    const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
+    const forcePreview =
+      urlParams.has('preview_ads') ||
+      urlParams.has('test_ads') ||
+      urlParams.get('preview') === 'ads' ||
+      urlParams.get('ad_mode') === 'test';
+
+    // 1. Immediately return valid cached configuration if available (Zero Network Request)
+    if (!forcePreview && !forceRefresh) {
+      const stored = readFromStorage();
+      if (stored) {
+        return Promise.resolve(stored);
+      }
+    }
+
+    // 2. If a fetch is already in flight, share the single in-flight Promise among all simultaneous callers
     if (inFlightConfigPromise && !forceRefresh) {
       return inFlightConfigPromise;
     }
 
+    // 3. Initiate single API request for missing/expired/forced cache
     inFlightConfigPromise = (async () => {
-      // Allow URL override for instant testing/previewing: ?preview_ads=1, ?test_ads=1, ?preview=ads
-      const urlParams = new URLSearchParams(window.location.search);
-      const forcePreview =
-        urlParams.has('preview_ads') ||
-        urlParams.has('test_ads') ||
-        urlParams.get('preview') === 'ads' ||
-        urlParams.get('ad_mode') === 'test';
-
-      // 1. Check client-side storage first (localStorage / sessionStorage) unless preview mode or forceRefresh
-      if (!forcePreview && !forceRefresh) {
-        try {
-          const cached = localStorage.getItem(CACHE_KEY) || sessionStorage.getItem(CACHE_KEY);
-          if (cached) {
-            const parsed = JSON.parse(cached);
-            if (
-              parsed &&
-              typeof parsed.expiry === 'number' &&
-              parsed.expiry > Date.now() &&
-              parsed.data &&
-              typeof parsed.data === 'object'
-            ) {
-              return parsed.data as AdsConfig;
-            }
-          }
-        } catch {
-          // localStorage disabled or sandbox restricted
-        }
-      }
-
-      // 2. Fetch live configuration from edge-cached /api/adsense-config
       try {
         const fetchUrl = forcePreview
           ? `/api/adsense-config?preview_ads=1&t=${Date.now()}`
@@ -65,6 +77,8 @@ import {
             if (forcePreview) {
               data.testMode = true;
             }
+
+            inMemoryConfig = data;
 
             // Save fresh configuration to client-side storage with 24h TTL
             try {
@@ -83,11 +97,17 @@ import {
         console.warn('[Ads Engine] Failed to fetch live ads config:', err);
       }
 
-      // 3. Graceful fallback if network request fails or API is unavailable
-      return ((window as any).__AFC_ADS_CONFIG__ as AdsConfig) || DEFAULT_ADS_CONFIG;
+      // 4. Graceful fallback if network request fails or API is unavailable
+      const fallback = ((window as any).__AFC_ADS_CONFIG__ as AdsConfig) || DEFAULT_ADS_CONFIG;
+      inMemoryConfig = fallback;
+      return fallback;
     })().catch((err) => {
       console.warn('[Ads Engine] Unexpected error resolving ads config:', err);
-      return ((window as any).__AFC_ADS_CONFIG__ as AdsConfig) || DEFAULT_ADS_CONFIG;
+      const fallback = ((window as any).__AFC_ADS_CONFIG__ as AdsConfig) || DEFAULT_ADS_CONFIG;
+      inMemoryConfig = fallback;
+      return fallback;
+    }).finally(() => {
+      inFlightConfigPromise = null;
     });
 
     return inFlightConfigPromise;
@@ -502,6 +522,7 @@ import {
       sessionStorage.removeItem('adsense_cfg');
     } catch {}
     inFlightConfigPromise = null;
+    inMemoryConfig = null;
     renderAdSlots();
   };
 
@@ -511,6 +532,7 @@ import {
       sessionStorage.removeItem('adsense_cfg');
     } catch {}
     inFlightConfigPromise = null;
+    inMemoryConfig = null;
     getAdsConfig(true).then((cfg) => {
       if (cfg) {
         cfg.testMode = enable !== false;

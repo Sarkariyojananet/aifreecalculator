@@ -105,14 +105,30 @@ function normalizeSettings(stored: any): AdsConfig {
   };
 }
 
-let inMemoryAdsConfig: { data: AdsConfig; json: string; expiry: number } | null = null;
+export function extractPublicAdsConfig(config: AdsConfig) {
+  return {
+    enabled: config.enabled,
+    clientId: config.clientId,
+    testMode: config.testMode,
+    autoAds: config.autoAds,
+    approvalMode: config.approvalMode,
+    isConfigured: config.isConfigured,
+    gaMeasurementId: config.gaMeasurementId,
+    headerScript: config.headerScript,
+    customMetaTags: config.customMetaTags,
+    smartThrottling: config.smartThrottling,
+    slots: config.slots,
+  };
+}
+
+let inMemoryAdsConfig: { data: AdsConfig; fullJson: string; publicJson: string; expiry: number } | null = null;
 const ADS_CONFIG_TTL = 600_000; // 10 minutes in-memory edge isolate cache
 
 export function invalidateAdsConfigCache(): void {
   inMemoryAdsConfig = null;
 }
 
-export async function readSettingsWithJson(locals: App.Locals): Promise<{ data: AdsConfig; json: string }> {
+export async function readSettingsWithJson(locals: App.Locals): Promise<{ data: AdsConfig; fullJson: string; publicJson: string }> {
   const now = Date.now();
   if (inMemoryAdsConfig && inMemoryAdsConfig.expiry > now) {
     return inMemoryAdsConfig;
@@ -123,15 +139,17 @@ export async function readSettingsWithJson(locals: App.Locals): Promise<{ data: 
     if (row?.value) {
       const parsed = JSON.parse(row.value);
       const normalized = normalizeSettings(parsed);
-      const jsonStr = JSON.stringify(normalized);
-      inMemoryAdsConfig = { data: normalized, json: jsonStr, expiry: now + ADS_CONFIG_TTL };
+      const fullJson = JSON.stringify(normalized);
+      const publicJson = JSON.stringify(extractPublicAdsConfig(normalized));
+      inMemoryAdsConfig = { data: normalized, fullJson, publicJson, expiry: now + ADS_CONFIG_TTL };
       return inMemoryAdsConfig;
     }
   } catch {
     // Database fallback
   }
-  const defaultJson = JSON.stringify(DEFAULT_ADS_CONFIG);
-  inMemoryAdsConfig = { data: DEFAULT_ADS_CONFIG, json: defaultJson, expiry: now + ADS_CONFIG_TTL };
+  const defaultFullJson = JSON.stringify(DEFAULT_ADS_CONFIG);
+  const defaultPublicJson = JSON.stringify(extractPublicAdsConfig(DEFAULT_ADS_CONFIG));
+  inMemoryAdsConfig = { data: DEFAULT_ADS_CONFIG, fullJson: defaultFullJson, publicJson: defaultPublicJson, expiry: now + ADS_CONFIG_TTL };
   return inMemoryAdsConfig;
 }
 
@@ -140,14 +158,14 @@ export async function readSettings(locals: App.Locals): Promise<AdsConfig> {
   return result.data;
 }
 
-const ADSENSE_CONFIG_HEADERS = {
+const PUBLIC_ADSENSE_CONFIG_HEADERS = {
   'Content-Type': 'application/json; charset=utf-8',
-  'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=604800',
-  'Cloudflare-CDN-Cache-Control': 'max-age=86400, stale-while-revalidate=604800',
-  'CDN-Cache-Control': 'max-age=86400, stale-while-revalidate=604800',
+  'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400',
+  'Cloudflare-CDN-Cache-Control': 'max-age=3600, stale-while-revalidate=86400',
+  'CDN-Cache-Control': 'max-age=3600, stale-while-revalidate=86400',
 } as const;
 
-export const GET: APIRoute = async ({ request, locals }) => {
+export const GET: APIRoute = async ({ request, cookies, locals }) => {
   try {
     const url = new URL(request.url);
     const isPreview =
@@ -156,6 +174,33 @@ export const GET: APIRoute = async ({ request, locals }) => {
       url.searchParams.get('preview') === 'ads' ||
       url.searchParams.get('ad_mode') === 'test';
 
+    // Check if requester has admin credentials (e.g. from /admin/settings)
+    let token = cookies.get('admin_session')?.value;
+    if (!token) {
+      const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
+      if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
+        token = authHeader.substring(7).trim();
+      }
+    }
+    if (!token) {
+      const cookieHeader = request.headers.get('cookie') || request.headers.get('Cookie');
+      token = cookieHeader?.match(/admin_session=([^;]+)/)?.[1]?.trim();
+    }
+    const isAdmin = token ? await verifyAdminToken(token) : null;
+
+    // Admin callers get complete settings (including ads.txt draft configs)
+    if (isAdmin) {
+      const { fullJson } = await readSettingsWithJson(locals);
+      return new Response(fullJson, {
+        status: 200,
+        headers: {
+          'Content-Type': 'application/json; charset=utf-8',
+          'Cache-Control': 'private, no-cache, no-store, must-revalidate',
+        },
+      });
+    }
+
+    // Public callers: check edge cache first (when not in preview mode)
     const cache = typeof caches !== 'undefined' && (caches as any).default ? ((caches as any).default as Cache) : null;
     const canonicalKey = url.origin + '/api/adsense-config';
 
@@ -166,15 +211,15 @@ export const GET: APIRoute = async ({ request, locals }) => {
       } catch { }
     }
 
-    const { json } = await readSettingsWithJson(locals);
+    const { publicJson } = await readSettingsWithJson(locals);
     const headers = isPreview
       ? {
         'Content-Type': 'application/json; charset=utf-8',
         'Cache-Control': 'no-store, no-cache, must-revalidate',
       }
-      : ADSENSE_CONFIG_HEADERS;
+      : PUBLIC_ADSENSE_CONFIG_HEADERS;
 
-    const response = new Response(json, {
+    const response = new Response(publicJson, {
       status: 200,
       headers,
     });
@@ -187,9 +232,9 @@ export const GET: APIRoute = async ({ request, locals }) => {
 
     return response;
   } catch {
-    return new Response(JSON.stringify(DEFAULT_ADS_CONFIG), {
+    return new Response(JSON.stringify(extractPublicAdsConfig(DEFAULT_ADS_CONFIG)), {
       status: 200,
-      headers: ADSENSE_CONFIG_HEADERS,
+      headers: PUBLIC_ADSENSE_CONFIG_HEADERS,
     });
   }
 };

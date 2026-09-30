@@ -32,8 +32,8 @@ const TRACKING_QUERY_PARAMS = new Set([
   'source',
 ]);
 
-// Pre-compiled regex for static asset identification (CSS, JS, fonts, images, media, maps)
-const STATIC_ASSET_REGEX = /\.(?:css|js|mjs|woff2?|ttf|eot|otf|svg|png|jpe?g|gif|webp|avif|ico|map|webmanifest)$/i;
+// Pre-compiled regex for static asset identification (CSS, JS, fonts, images, media, maps, txt)
+const STATIC_ASSET_REGEX = /\.(?:css|js|mjs|woff2?|ttf|eot|otf|svg|png|jpe?g|gif|webp|avif|ico|map|webmanifest|txt)$/i;
 
 function isStaticAsset(pathname: string): boolean {
   return (
