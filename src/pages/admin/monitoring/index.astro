@@ -706,9 +706,34 @@ if (hasRouteDown || realOpenCriticalIncidents.length > 0) {
         if (res.ok && data.success) {
           if (banner) {
             banner.className = 'rounded-2xl p-4 text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 block';
-            banner.innerHTML = '<span>✅ Authentic edge health checks recorded successfully. Refreshing live view...</span>';
+            banner.innerHTML = '<span>✅ Authentic edge health checks recorded successfully. Results updated in table below.</span>';
           }
-          setTimeout(() => window.location.reload(), 800);
+          // Update table rows in-place without page reload
+          const rows = document.querySelectorAll('tbody tr');
+          clientProbes.forEach((probe, idx) => {
+            const tr = rows[idx];
+            if (tr) {
+              const cells = tr.querySelectorAll('td');
+              // HTTP Code
+              if (cells[3]) cells[3].textContent = String(probe.statusCode || '--');
+              // Latency
+              if (cells[4]) {
+                const color = probe.responseTimeMs < 500 ? 'text-emerald-600 dark:text-emerald-400' : probe.responseTimeMs < 1500 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400';
+                cells[4].innerHTML = `<span class="font-mono font-bold ${color}">${probe.responseTimeMs} ms</span>`;
+              }
+              // Status Pill
+              if (cells[2]) {
+                const statusHtml = probe.status === 'healthy'
+                  ? '<span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">🟢 Online</span>'
+                  : probe.status === 'degraded'
+                  ? '<span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">🟡 Slow</span>'
+                  : '<span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300">🔴 Offline</span>';
+                cells[2].innerHTML = statusHtml;
+              }
+              // Last Checked Time
+              if (cells[6]) cells[6].textContent = new Date().toLocaleTimeString();
+            }
+          });
         } else {
           throw new Error(data.error || 'Server rejected probe payload');
         }
@@ -717,6 +742,7 @@ if (hasRouteDown || realOpenCriticalIncidents.length > 0) {
           banner.className = 'rounded-2xl p-4 text-xs font-semibold bg-red-50 text-red-700 border border-red-200 block';
           banner.innerHTML = `<span>❌ Error recording health check: ${err.message || 'Unknown error'}</span>`;
         }
+      } finally {
         if (btnUptime) btnUptime.disabled = false;
         if (btnUptimeText) btnUptimeText.textContent = 'Run Health Check Now';
       }
@@ -737,6 +763,8 @@ if (hasRouteDown || realOpenCriticalIncidents.length > 0) {
         if (action === 'ignore') status = 'ignored';
         if (action === 'investigate') status = 'investigating';
 
+        const parentCard = btn.closest('.rounded-2xl');
+
         try {
           btn.disabled = true;
           if (action === 'delete') {
@@ -746,7 +774,8 @@ if (hasRouteDown || realOpenCriticalIncidents.length > 0) {
               headers: getAuthHeaders(),
             });
             if (res.ok) {
-              window.location.reload();
+              const row = btn.closest('.rounded-xl');
+              if (row) row.remove();
             } else {
               alert('Failed to delete incident.');
               btn.disabled = false;
@@ -762,7 +791,16 @@ if (hasRouteDown || realOpenCriticalIncidents.length > 0) {
           });
 
           if (res.ok) {
-            window.location.reload();
+            if (action === 'resolve' || action === 'ignore') {
+              if (parentCard) {
+                parentCard.style.opacity = '0.5';
+                parentCard.style.transition = 'opacity 0.3s ease';
+                setTimeout(() => parentCard.remove(), 300);
+              }
+            } else if (action === 'investigate') {
+              btn.textContent = 'Investigating...';
+              btn.classList.add('bg-blue-50', 'text-blue-700');
+            }
           } else {
             const errData = await res.json().catch(() => ({}));
             alert('Failed to update incident: ' + (errData.error || res.status));
@@ -779,7 +817,6 @@ if (hasRouteDown || realOpenCriticalIncidents.length > 0) {
     document.getElementById('btn-resolve-all-incidents')?.addEventListener('click', async () => {
       if (!confirm('Mark ALL active incidents as resolved?')) return;
       try {
-        // Resolve each open incident one by one
         const incidentBtns = document.querySelectorAll('[data-incident-action="resolve"]');
         const ids = Array.from(incidentBtns).map(b => b.getAttribute('data-incident-id')).filter(Boolean);
         const results = await Promise.all(ids.map(id =>
@@ -792,15 +829,15 @@ if (hasRouteDown || realOpenCriticalIncidents.length > 0) {
         ));
         const allOk = results.every(r => r.ok);
         if (allOk || results.length === 0) {
-          window.location.reload();
+          const cards = document.querySelectorAll('[data-incident-action="resolve"]');
+          cards.forEach(c => c.closest('.rounded-2xl')?.remove());
         } else {
-          alert('Some incidents could not be resolved. Try logging in again.');
+          alert('Some incidents could not be resolved.');
         }
       } catch {
         alert('Network error resolving incidents.');
       }
     });
-
 
     // Clear All Resolved Incidents
     document.getElementById('btn-clear-resolved-incidents')?.addEventListener('click', async (e) => {
@@ -812,7 +849,8 @@ if (hasRouteDown || realOpenCriticalIncidents.length > 0) {
           headers: getAuthHeaders(),
         });
         if (res.ok) {
-          window.location.reload();
+          const details = document.querySelector('details');
+          if (details) details.remove();
         } else {
           alert('Failed to clear resolved incidents.');
         }
@@ -829,6 +867,7 @@ if (hasRouteDown || realOpenCriticalIncidents.length > 0) {
         if (!id || !action) return;
 
         const status = action === 'resolve' ? 'resolved' : 'open';
+        const tr = btn.closest('tr');
 
         try {
           btn.disabled = true;
@@ -839,13 +878,22 @@ if (hasRouteDown || realOpenCriticalIncidents.length > 0) {
           });
 
           if (res.ok) {
-            window.location.reload();
+            if (tr) {
+              const statusCell = tr.querySelectorAll('td')[5];
+              if (statusCell) {
+                statusCell.innerHTML = status === 'resolved'
+                  ? '<span class="capitalize text-[11px] font-bold text-emerald-600 dark:text-emerald-400">resolved</span>'
+                  : '<span class="capitalize text-[11px] font-bold text-red-600 dark:text-red-400">open</span>';
+              }
+              btn.textContent = status === 'resolved' ? 'Re-open' : 'Resolve';
+              btn.setAttribute('data-error-action', status === 'resolved' ? 'reopen' : 'resolve');
+            }
           } else {
             alert('Failed to update error status.');
-            btn.disabled = false;
           }
         } catch {
           alert('Network error updating error status.');
+        } finally {
           btn.disabled = false;
         }
       });
@@ -861,7 +909,17 @@ if (hasRouteDown || realOpenCriticalIncidents.length > 0) {
           body: JSON.stringify({ id: 'all', status: 'resolved' }),
         });
         if (res.ok) {
-          window.location.reload();
+          document.querySelectorAll('[data-error-action]').forEach(btn => {
+            const tr = btn.closest('tr');
+            if (tr) {
+              const statusCell = tr.querySelectorAll('td')[5];
+              if (statusCell) {
+                statusCell.innerHTML = '<span class="capitalize text-[11px] font-bold text-emerald-600 dark:text-emerald-400">resolved</span>';
+              }
+              btn.textContent = 'Re-open';
+              btn.setAttribute('data-error-action', 'reopen');
+            }
+          });
         } else {
           alert('Failed to resolve all error groups.');
         }
@@ -879,7 +937,8 @@ if (hasRouteDown || realOpenCriticalIncidents.length > 0) {
           headers: getAuthHeaders(),
         });
         if (res.ok) {
-          window.location.reload();
+          const tbody = document.querySelector('tbody');
+          if (tbody) tbody.innerHTML = '';
         } else {
           alert('Failed to clear error groups.');
         }
@@ -888,12 +947,5 @@ if (hasRouteDown || realOpenCriticalIncidents.length > 0) {
       }
     });
 
-    // Auto-heal: If routes currently display 522 (the old bug history) or have not been checked,
-    // automatically run a fresh browser edge probe once to sync authentic health metrics.
-    const tableRows = Array.from(document.querySelectorAll('tbody tr'));
-    const needsProbe = tableRows.length > 0 && tableRows.every((tr) => tr.innerText.includes('522') || tr.innerText.includes('Pending'));
-    if (needsProbe) {
-      setTimeout(executeBrowserUptimeProbes, 400);
-    }
   })();
 </script>
