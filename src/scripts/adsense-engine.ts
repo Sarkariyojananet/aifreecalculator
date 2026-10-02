@@ -18,6 +18,41 @@ import {
   let inMemoryConfig: AdsConfig | null = null;
   let inFlightConfigPromise: Promise<AdsConfig | null> | null = null;
 
+  function extractPublicAdsConfig(config: Partial<AdsConfig>): AdsConfig {
+    return {
+      enabled: typeof config.enabled === 'boolean' ? config.enabled : DEFAULT_ADS_CONFIG.enabled,
+      clientId: typeof config.clientId === 'string' ? config.clientId : DEFAULT_ADS_CONFIG.clientId,
+      testMode: config.testMode === true,
+      autoAds: config.autoAds === true,
+      approvalMode: config.approvalMode !== undefined ? Boolean(config.approvalMode) : (DEFAULT_ADS_CONFIG.approvalMode ?? true),
+      isConfigured: Boolean(config.isConfigured),
+      gaMeasurementId: typeof config.gaMeasurementId === 'string' ? config.gaMeasurementId : (DEFAULT_ADS_CONFIG.gaMeasurementId || ''),
+      headerScript: typeof config.headerScript === 'string' ? config.headerScript : '',
+      customMetaTags: typeof config.customMetaTags === 'string' ? config.customMetaTags : '',
+      smartThrottling: config.smartThrottling || DEFAULT_SMART_THROTTLING,
+      slots: config.slots || DEFAULT_ADS_CONFIG.slots,
+    };
+  }
+
+  function isValidPublicConfig(cfg: unknown): cfg is AdsConfig {
+    return Boolean(
+      cfg &&
+      typeof cfg === 'object' &&
+      typeof (cfg as any).slots === 'object'
+    );
+  }
+
+  function persistToStorage(data: AdsConfig): void {
+    try {
+      const payload = JSON.stringify({ data, expiry: Date.now() + CACHE_TTL });
+      localStorage.setItem(CACHE_KEY, payload);
+    } catch {
+      try {
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data, expiry: Date.now() + CACHE_TTL }));
+      } catch {}
+    }
+  }
+
   function readFromStorage(): AdsConfig | null {
     if (inMemoryConfig) return inMemoryConfig;
     try {
@@ -28,10 +63,9 @@ import {
           parsed &&
           typeof parsed.expiry === 'number' &&
           parsed.expiry > Date.now() &&
-          parsed.data &&
-          typeof parsed.data === 'object'
+          isValidPublicConfig(parsed.data)
         ) {
-          inMemoryConfig = parsed.data as AdsConfig;
+          inMemoryConfig = extractPublicAdsConfig(parsed.data);
           return inMemoryConfig;
         }
       }
@@ -56,6 +90,15 @@ import {
       if (stored) {
         return Promise.resolve(stored);
       }
+
+      // Use build-time public config before API fetch to avoid a Worker invocation on first visit.
+      const initialConfig = (window as any).__AFC_ADS_CONFIG__;
+      if (isValidPublicConfig(initialConfig)) {
+        const publicConfig = extractPublicAdsConfig(initialConfig);
+        inMemoryConfig = publicConfig;
+        persistToStorage(publicConfig);
+        return Promise.resolve(publicConfig);
+      }
     }
 
     // 2. If a fetch is already in flight, share the single in-flight Promise among all simultaneous callers
@@ -73,24 +116,15 @@ import {
         const res = await fetch(fetchUrl);
         if (res.ok) {
           const data = (await res.json()) as AdsConfig;
-          if (data && typeof data === 'object') {
+          if (isValidPublicConfig(data)) {
             if (forcePreview) {
               data.testMode = true;
             }
 
-            inMemoryConfig = data;
-
-            // Save fresh configuration to client-side storage with 24h TTL
-            try {
-              const payload = JSON.stringify({ data, expiry: Date.now() + CACHE_TTL });
-              localStorage.setItem(CACHE_KEY, payload);
-            } catch {
-              try {
-                sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data, expiry: Date.now() + CACHE_TTL }));
-              } catch {}
-            }
-
-            return data;
+            const publicConfig = extractPublicAdsConfig(data);
+            inMemoryConfig = publicConfig;
+            persistToStorage(publicConfig);
+            return publicConfig;
           }
         }
       } catch (err) {
@@ -98,12 +132,14 @@ import {
       }
 
       // 4. Graceful fallback if network request fails or API is unavailable
-      const fallback = ((window as any).__AFC_ADS_CONFIG__ as AdsConfig) || DEFAULT_ADS_CONFIG;
+      const fallbackRaw = ((window as any).__AFC_ADS_CONFIG__ as AdsConfig) || DEFAULT_ADS_CONFIG;
+      const fallback = extractPublicAdsConfig(fallbackRaw);
       inMemoryConfig = fallback;
       return fallback;
     })().catch((err) => {
       console.warn('[Ads Engine] Unexpected error resolving ads config:', err);
-      const fallback = ((window as any).__AFC_ADS_CONFIG__ as AdsConfig) || DEFAULT_ADS_CONFIG;
+      const fallbackRaw = ((window as any).__AFC_ADS_CONFIG__ as AdsConfig) || DEFAULT_ADS_CONFIG;
+      const fallback = extractPublicAdsConfig(fallbackRaw);
       inMemoryConfig = fallback;
       return fallback;
     }).finally(() => {
@@ -255,8 +291,8 @@ import {
       .replace(/'/g, '&#039;');
   }
 
-  async function renderAdSlots() {
-    const config = await fetchAdConfig();
+  async function renderAdSlots(forceRefresh = false) {
+    const config = await fetchAdConfig(forceRefresh === true);
     if (!config) return;
 
     // 1. ALWAYS load Global Header Script / Tags (AdX, Prebid, Ezoic, GTM) immediately in <head>
@@ -523,7 +559,7 @@ import {
     } catch {}
     inFlightConfigPromise = null;
     inMemoryConfig = null;
-    renderAdSlots();
+    renderAdSlots(true);
   };
 
   (window as any).__showAdPreview = function (enable: boolean) {
@@ -544,7 +580,7 @@ import {
   (window as any).__afcGetAdsConfig = getAdsConfig;
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', renderAdSlots);
+    document.addEventListener('DOMContentLoaded', () => renderAdSlots());
   } else {
     renderAdSlots();
   }
