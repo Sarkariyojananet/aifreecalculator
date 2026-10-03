@@ -6,17 +6,16 @@ import {
   type AdSlotKey,
   type AdNetworkType,
   type SmartThrottlingConfig,
-} from '../../lib/ads-config';
-import { getDb } from '../../lib/db';
-import { verifyAdminToken } from '../../lib/auth';
-import { logAuditEvent, saveSettingsSnapshot } from '../../lib/admin/audit-store';
-import { safeWaitUntil } from '../../lib/cloudflare-env';
+} from '../../../lib/ads-config';
+import { getDb } from '../../../lib/db';
+import { verifyAdminToken } from '../../../lib/auth';
+import { logAuditEvent, saveSettingsSnapshot } from '../../../lib/admin/audit-store';
 
 export const prerender = false;
 
 const SETTINGS_KEY = 'adsense_config';
 
-function normalizeSettings(stored: any): AdsConfig {
+export function normalizeSettings(stored: any): AdsConfig {
   const defaults = DEFAULT_ADS_CONFIG;
   if (!stored || typeof stored !== 'object') {
     return defaults;
@@ -57,7 +56,6 @@ function normalizeSettings(stored: any): AdsConfig {
   for (const key of slotKeys) {
     const rawSlot = stored.slots?.[key];
     if (typeof rawSlot === 'string') {
-      // Legacy format where slots was Record<string, string>
       slots[key] = {
         ...defaults.slots[key],
         slotId: rawSlot.trim(),
@@ -105,30 +103,14 @@ function normalizeSettings(stored: any): AdsConfig {
   };
 }
 
-export function extractPublicAdsConfig(config: AdsConfig) {
-  return {
-    enabled: config.enabled,
-    clientId: config.clientId,
-    testMode: config.testMode,
-    autoAds: config.autoAds,
-    approvalMode: config.approvalMode,
-    isConfigured: config.isConfigured,
-    gaMeasurementId: config.gaMeasurementId,
-    headerScript: config.headerScript,
-    customMetaTags: config.customMetaTags,
-    smartThrottling: config.smartThrottling,
-    slots: config.slots,
-  };
-}
-
-let inMemoryAdsConfig: { data: AdsConfig; fullJson: string; publicJson: string; expiry: number } | null = null;
-const ADS_CONFIG_TTL = 600_000; // 10 minutes in-memory edge isolate cache
+let inMemoryAdsConfig: { data: AdsConfig; fullJson: string; expiry: number } | null = null;
+const ADS_CONFIG_TTL = 600_000; // 10 minutes
 
 export function invalidateAdsConfigCache(): void {
   inMemoryAdsConfig = null;
 }
 
-export async function readSettingsWithJson(locals: App.Locals): Promise<{ data: AdsConfig; fullJson: string; publicJson: string }> {
+export async function readSettingsWithJson(locals: App.Locals): Promise<{ data: AdsConfig; fullJson: string }> {
   const now = Date.now();
   if (inMemoryAdsConfig && inMemoryAdsConfig.expiry > now) {
     return inMemoryAdsConfig;
@@ -140,16 +122,14 @@ export async function readSettingsWithJson(locals: App.Locals): Promise<{ data: 
       const parsed = JSON.parse(row.value);
       const normalized = normalizeSettings(parsed);
       const fullJson = JSON.stringify(normalized);
-      const publicJson = JSON.stringify(extractPublicAdsConfig(normalized));
-      inMemoryAdsConfig = { data: normalized, fullJson, publicJson, expiry: now + ADS_CONFIG_TTL };
+      inMemoryAdsConfig = { data: normalized, fullJson, expiry: now + ADS_CONFIG_TTL };
       return inMemoryAdsConfig;
     }
   } catch {
     // Database fallback
   }
   const defaultFullJson = JSON.stringify(DEFAULT_ADS_CONFIG);
-  const defaultPublicJson = JSON.stringify(extractPublicAdsConfig(DEFAULT_ADS_CONFIG));
-  inMemoryAdsConfig = { data: DEFAULT_ADS_CONFIG, fullJson: defaultFullJson, publicJson: defaultPublicJson, expiry: now + ADS_CONFIG_TTL };
+  inMemoryAdsConfig = { data: DEFAULT_ADS_CONFIG, fullJson: defaultFullJson, expiry: now + ADS_CONFIG_TTL };
   return inMemoryAdsConfig;
 }
 
@@ -158,104 +138,49 @@ export async function readSettings(locals: App.Locals): Promise<AdsConfig> {
   return result.data;
 }
 
-const PUBLIC_ADSENSE_CONFIG_HEADERS = {
-  'Content-Type': 'application/json; charset=utf-8',
-  'Cache-Control': 'public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400',
-  'Cloudflare-CDN-Cache-Control': 'max-age=3600, stale-while-revalidate=86400',
-  'CDN-Cache-Control': 'max-age=3600, stale-while-revalidate=86400',
-} as const;
-
-export const GET: APIRoute = async ({ request, cookies, locals }) => {
-  try {
-    const url = new URL(request.url);
-    const isPreview =
-      url.searchParams.has('preview_ads') ||
-      url.searchParams.has('test_ads') ||
-      url.searchParams.get('preview') === 'ads' ||
-      url.searchParams.get('ad_mode') === 'test';
-
-    // Check if requester has admin credentials (e.g. from /admin/settings)
-    let token = cookies.get('admin_session')?.value;
-    if (!token) {
-      const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
-      if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
-        token = authHeader.substring(7).trim();
-      }
-    }
-    if (!token) {
-      const cookieHeader = request.headers.get('cookie') || request.headers.get('Cookie');
-      token = cookieHeader?.match(/admin_session=([^;]+)/)?.[1]?.trim();
-    }
-    const isAdmin = token ? await verifyAdminToken(token) : null;
-
-    // Admin callers get complete settings (including ads.txt draft configs)
-    if (isAdmin) {
-      const { fullJson } = await readSettingsWithJson(locals);
-      return new Response(fullJson, {
-        status: 200,
-        headers: {
-          'Content-Type': 'application/json; charset=utf-8',
-          'Cache-Control': 'private, no-cache, no-store, must-revalidate',
-        },
-      });
-    }
-
-    // Public callers: check edge cache first (when not in preview mode)
-    const cache = typeof caches !== 'undefined' && (caches as any).default ? ((caches as any).default as Cache) : null;
-    const canonicalKey = url.origin + '/api/adsense-config';
-
-    if (cache && !isPreview) {
-      try {
-        const cached = await cache.match(canonicalKey);
-        if (cached) return new Response(cached.body, cached);
-      } catch { }
-    }
-
-    const { publicJson } = await readSettingsWithJson(locals);
-    const headers = isPreview
-      ? {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Cache-Control': 'no-store, no-cache, must-revalidate',
-      }
-      : PUBLIC_ADSENSE_CONFIG_HEADERS;
-
-    const response = new Response(publicJson, {
-      status: 200,
-      headers,
-    });
-
-    if (cache && !isPreview) {
-      try {
-        safeWaitUntil(locals, cache.put(canonicalKey, response.clone()).catch(() => { }));
-      } catch { }
-    }
-
-    return response;
-  } catch {
-    return new Response(JSON.stringify(extractPublicAdsConfig(DEFAULT_ADS_CONFIG)), {
-      status: 200,
-      headers: PUBLIC_ADSENSE_CONFIG_HEADERS,
-    });
-  }
-};
-
-
-export const POST: APIRoute = async ({ request, cookies, locals }) => {
+function extractToken(request: Request, cookies: any): string | undefined {
   let token = cookies.get('admin_session')?.value;
-
   if (!token) {
     const authHeader = request.headers.get('authorization') || request.headers.get('Authorization');
     if (authHeader && authHeader.toLowerCase().startsWith('bearer ')) {
       token = authHeader.substring(7).trim();
     }
   }
-
   if (!token) {
     const cookieHeader = request.headers.get('cookie') || request.headers.get('Cookie');
     token = cookieHeader?.match(/admin_session=([^;]+)/)?.[1]?.trim();
   }
+  return token;
+}
 
-  const admin = await verifyAdminToken(token);
+export const GET: APIRoute = async ({ request, cookies, locals }) => {
+  const token = extractToken(request, cookies);
+  const isAdmin = token ? await verifyAdminToken(token) : null;
+
+  if (!isAdmin) {
+    return new Response(JSON.stringify({ error: 'Unauthorized. Admin credentials required.' }), {
+      status: 401,
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'no-store, no-cache, must-revalidate',
+      },
+    });
+  }
+
+  const { fullJson } = await readSettingsWithJson(locals);
+  return new Response(fullJson, {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Cache-Control': 'private, no-cache, no-store, must-revalidate',
+    },
+  });
+};
+
+export const POST: APIRoute = async ({ request, cookies, locals }) => {
+  const token = extractToken(request, cookies);
+  const admin = token ? await verifyAdminToken(token) : null;
+
   if (!admin) {
     return Response.json({
       error: 'Unauthorized. Please login again at /admin/barwalaoffice/',
@@ -267,7 +192,6 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
     const body = await request.json();
     const normalized = normalizeSettings(body);
 
-    // Validate client ID if enabled and adsense is used
     if (normalized.enabled && normalized.clientId) {
       if (!/^ca-pub-\d{10,}$/.test(normalized.clientId)) {
         return Response.json({
@@ -276,7 +200,6 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
       }
     }
 
-    // Save previous snapshot before writing changes
     const previousConfig = await readSettings(locals);
     await saveSettingsSnapshot(locals, previousConfig);
 
@@ -287,19 +210,8 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
       .bind(SETTINGS_KEY, JSON.stringify(normalized))
       .run();
 
-    // Invalidate in-memory cache and Cloudflare edge cache
     invalidateAdsConfigCache();
-    const edgeCache = typeof caches !== 'undefined' && (caches as any).default ? ((caches as any).default as Cache) : null;
-    if (edgeCache) {
-      try {
-        const url = new URL(request.url);
-        await edgeCache.delete(url.origin + '/api/adsense-config');
-        await edgeCache.delete(url.origin + '/api/adsense-config/');
-        await edgeCache.delete(request.url);
-      } catch { }
-    }
 
-    // Log audit event
     const activeNetworks = Object.entries(normalized.slots).map(([slot, cfg]) => `${slot}:${cfg.adNetwork}`);
     await logAuditEvent(locals, {
       action: 'SETTINGS_UPDATE',
@@ -316,11 +228,10 @@ export const POST: APIRoute = async ({ request, cookies, locals }) => {
 
     return Response.json({
       success: true,
-      message: 'Monetization & ad settings saved and published successfully.',
+      message: 'Monetization & ad settings saved to D1 successfully. Note: Static public config (/adsense-config.json) requires a new build/deployment to update.',
       settings: normalized,
     });
   } catch (err: any) {
     return Response.json({ error: err.message || 'Failed to save AdSense settings.' }, { status: 500 });
   }
 };
-

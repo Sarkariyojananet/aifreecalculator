@@ -1,6 +1,6 @@
 /**
  * Client-Side Google AdSense Slot Hydration Engine
- * Bundled and cached asset. Eliminates runtime Worker requests to /api/adsense-config on normal pages.
+ * Bundled and cached asset. Serves static /adsense-config.json without invoking Cloudflare Worker or D1.
  */
 
 import {
@@ -109,9 +109,9 @@ import {
     // 3. Initiate single API request for missing/expired/forced cache
     inFlightConfigPromise = (async () => {
       try {
-        const fetchUrl = forcePreview
-          ? `/api/adsense-config?preview_ads=1&t=${Date.now()}`
-          : '/api/adsense-config';
+        const fetchUrl = forcePreview || forceRefresh
+          ? `/adsense-config.json?t=${Date.now()}`
+          : '/adsense-config.json';
 
         const res = await fetch(fetchUrl);
         if (res.ok) {
@@ -128,18 +128,24 @@ import {
           }
         }
       } catch (err) {
-        console.warn('[Ads Engine] Failed to fetch live ads config:', err);
+        console.warn('[Ads Engine] Failed to fetch static ads config:', err);
       }
 
-      // 4. Graceful fallback if network request fails or API is unavailable
+      // 4. Graceful fallback if network request fails or static JSON is unavailable
       const fallbackRaw = ((window as any).__AFC_ADS_CONFIG__ as AdsConfig) || DEFAULT_ADS_CONFIG;
       const fallback = extractPublicAdsConfig(fallbackRaw);
+      if (forcePreview) {
+        fallback.testMode = true;
+      }
       inMemoryConfig = fallback;
       return fallback;
     })().catch((err) => {
       console.warn('[Ads Engine] Unexpected error resolving ads config:', err);
       const fallbackRaw = ((window as any).__AFC_ADS_CONFIG__ as AdsConfig) || DEFAULT_ADS_CONFIG;
       const fallback = extractPublicAdsConfig(fallbackRaw);
+      if (forcePreview) {
+        fallback.testMode = true;
+      }
       inMemoryConfig = fallback;
       return fallback;
     }).finally(() => {
