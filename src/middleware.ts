@@ -240,6 +240,30 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
+  // 2b. Redirect legacy PDF tools paths across ALL languages to /pdf-tools/...
+  if (isHtmlPagePath && pathname.includes('free-online-tools/')) {
+    const pdfSlugs = ['pdf-merge', 'pdf-split', 'pdf-compress', 'pdf-to-image', 'image-to-pdf'];
+    for (const slug of pdfSlugs) {
+      if (pathname.includes(`/free-online-tools/${slug}`)) {
+        const targetPath = pathname.replace(`/free-online-tools/${slug}`, `/pdf-tools/${slug}`);
+        const normalizedTarget = targetPath.endsWith('/') ? targetPath : `${targetPath}/`;
+        const redirectResponse = context.redirect(normalizedTarget, 301);
+        redirectResponse.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+        redirectResponse.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=604800');
+        return redirectResponse;
+      }
+    }
+
+    if (pathname.includes('/free-online-tools/monthly-time-table-maker')) {
+      const targetPath = pathname.replace('/free-online-tools/monthly-time-table-maker', '/time-table-tools/monthly-time-table-maker');
+      const normalizedTarget = targetPath.endsWith('/') ? targetPath : `${targetPath}/`;
+      const redirectResponse = context.redirect(normalizedTarget, 301);
+      redirectResponse.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+      redirectResponse.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=604800');
+      return redirectResponse;
+    }
+  }
+
   // 2c. Canonicalize legacy query parameter `?lang=xx` to clean path `/{lang}/...`
   // Fast path: Only parse if query string actually contains 'lang='
   if (isHtmlPagePath && context.url.search?.includes('lang=')) {

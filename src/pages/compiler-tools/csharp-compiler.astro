@@ -1,0 +1,183 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+
+const faqs = [
+  {
+    question: "What is an online C# compiler?",
+    answer: "An online C# compiler is an in-browser development environment that allows developers to write, test, and run C# (.NET) code without downloading Visual Studio or configuring .NET SDKs."
+  },
+  {
+    question: "Which .NET features are supported?",
+    answer: "It supports modern C# syntax including LINQ expressions, generic collections, lambda functions, string interpolation, and object-oriented class hierarchies."
+  },
+  {
+    question: "How do I print output to the console in C#?",
+    answer: "Use standard Console.WriteLine(...) or Console.Write(...) methods. All printed lines are rendered in the execution terminal below the editor."
+  },
+  {
+    question: "Can I download my C# code as a file?",
+    answer: "Yes, clicking 'Download .cs' instantly saves your code locally as Program.cs."
+  },
+  {
+    question: "Is this C# compiler free to use?",
+    answer: "Yes, our online C# compiler is 100% free with unlimited runs, zero watermarks, and no sign-up or registration required."
+  },
+  {
+    question: "What keyboard shortcut triggers compilation?",
+    answer: "Press Ctrl + Enter (or Cmd + Enter on macOS) while inside the code editor to compile and execute immediately."
+  },
+  {
+    question: "Can I test LINQ queries and collections?",
+    answer: "Yes, System.Linq and generic collections like List<T> and Dictionary<TKey, TValue> are fully supported."
+  },
+  {
+    question: "Is my code secure?",
+    answer: "Yes. All code runs locally in your browser session with zero server uploads, protecting your code privacy."
+  }
+];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqs.map((faq) => ({
+    "@type": "Question",
+    "name": faq.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": faq.answer
+    }
+  }))
+};
+
+const defaultCode = `using System;
+
+public class Program
+{
+    public static void Main()
+    {
+        Console.WriteLine("Hello, World from Online C# Compiler!");
+
+        string language = "C# .NET";
+        int releaseYear = 2002;
+
+        Console.WriteLine($"Language: {language}, Introduced: {releaseYear}");
+    }
+}
+`;
+
+const templatesJson = JSON.stringify({
+  hello: `using System;\n\npublic class Program {\n    public static void Main() {\n        Console.WriteLine("Hello, World!");\n    }\n}`,
+  linq: `using System;\nusing System.Collections.Generic;\nusing System.Linq;\n\npublic class Program {\n    public static void Main() {\n        var scores = new List<int> { 85, 92, 78, 96, 88, 64 };\n        var highScores = scores.Where(s => s >= 85).OrderByDescending(s => s);\n        Console.WriteLine("Scores above 85:");\n        foreach(var s in highScores) Console.WriteLine(s);\n    }\n}`,
+  classes: `using System;\n\npublic class User {\n    public string Username { get; set; }\n    public string Role { get; set; }\n    public void Greet() => Console.WriteLine($"User: {Username} ({Role})");\n}\n\npublic class Program {\n    public static void Main() {\n        var user = new User { Username = "alex99", Role = "Admin" };\n        user.Greet();\n    }\n}`
+});
+---
+
+<CalculatorLayout
+  title="Online C# Compiler - Run C# .NET Code Online Free"
+  description="Write and execute C# .NET programs online. Test algorithms, LINQ queries, and object-oriented code with instant terminal output."
+  category="Compiler Tools"
+  calculatorName="Online C# Compiler"
+  slug="csharp-compiler"
+  keywords={[
+    'online c# compiler',
+    'online csharp compiler',
+    'c# compiler online',
+    'run c# online',
+    'dotnet online compiler',
+    'c# code runner'
+  ]}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <div class="space-y-6">
+    <!-- Header Hero Intro -->
+    <div class="text-center max-w-3xl mx-auto space-y-3">
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800/80 text-indigo-700 dark:text-indigo-300 text-xs font-semibold tracking-wide">
+        <span>🔷</span>
+        <span>C# .NET • LINQ & Collections • Real-Time Terminal Output</span>
+      </div>
+
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+        Online C# Compiler
+      </h1>
+
+      <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
+        Write, compile, and run <strong>C# .NET programs online</strong> in your browser. Test algorithms, LINQ queries, and object-oriented data models with real-time terminal feedback and zero configuration.
+      </p>
+    </div>
+
+    <!-- Interactive Code Editor Widget -->
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
+      <!-- Editor Action Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
+        <div class="flex items-center gap-2">
+          <span class="flex h-3 w-3 rounded-full bg-indigo-500"></span>
+          <span class="font-mono text-xs font-bold text-slate-700 dark:text-slate-200">Program.cs</span>
+          <span class="text-xs text-slate-400">|</span>
+          <label class="text-xs text-slate-500 dark:text-slate-400">Template:</label>
+          <select id="code-runner-templates" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+            <option value="hello">Hello World</option>
+            <option value="linq">LINQ Query Filtering</option>
+            <option value="classes">OOP Classes & Properties</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button id="code-runner-copy" type="button" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+            📋 Copy
+          </button>
+          <button id="code-runner-download" type="button" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+            💾 Download .cs
+          </button>
+          <button id="code-runner-clear" type="button" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:border-slate-700 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-slate-700">
+            🗑️ Clear
+          </button>
+          <button id="code-runner-btn" type="button" class="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-4 py-1.5 text-xs font-bold text-white shadow-md hover:bg-indigo-700 active:scale-95 transition">
+            ▶ Run Code <span class="hidden sm:inline text-[10px] opacity-80">(Ctrl+Enter)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Code Textarea Editor -->
+      <div class="relative bg-[#1e1e2e]">
+        <textarea
+          id="code-runner-input"
+          class="w-full h-80 sm:h-96 p-4 font-mono text-sm leading-relaxed text-[#cdd6f4] bg-transparent resize-y focus:outline-none border-0"
+          spellcheck="false"
+          set:text={defaultCode}
+        />
+      </div>
+
+      <!-- Standard Input (STDIN) -->
+      <div class="border-t border-slate-800 bg-[#181825] px-4 py-2">
+        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+          <span class="font-mono">Standard Input (STDIN):</span>
+        </div>
+        <input
+          id="code-runner-stdin"
+          type="text"
+          placeholder="Enter input values for Console.ReadLine() here..."
+          class="w-full bg-[#11111b] border border-slate-700 rounded px-3 py-1.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500"
+        />
+      </div>
+
+      <!-- Output Terminal Console -->
+      <div class="border-t border-slate-800 bg-[#11111b] p-4">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-800/80 mb-3 text-xs">
+          <div class="flex items-center gap-2">
+            <span class="font-mono text-slate-400 uppercase tracking-wider font-bold">Terminal Output</span>
+            <span id="code-runner-status" class="text-xs px-2.5 py-0.5 rounded-full font-medium bg-slate-800 text-slate-300">Ready</span>
+          </div>
+          <div class="flex items-center gap-3 text-slate-400 font-mono text-xs">
+            <span>Execution Time: <strong id="code-runner-time" class="text-slate-200">0ms</strong></span>
+          </div>
+        </div>
+
+        <pre id="code-runner-output" class="font-mono text-xs sm:text-sm text-[#a6e3a1] min-h-30 max-h-72 overflow-y-auto whitespace-pre-wrap select-text leading-relaxed">Click "Run Code" or press Ctrl+Enter to compile and run your C# program.</pre>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline set:html={`document.body.setAttribute('data-tool-lang', 'csharp'); window.__COMPILER_TEMPLATES = ${templatesJson};`} />
+  <script is:inline src="/js/tools/compiler-runner.js"></script>
+</CalculatorLayout>

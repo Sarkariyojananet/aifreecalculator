@@ -6,7 +6,11 @@ export type CalculatorCategory =
   | 'Finance'
   | 'Health'
   | 'Math'
-  | 'Free Online Tools';
+  | 'Free Online Tools'
+  | 'Image Tools'
+  | 'PDF Tools'
+  | 'Compiler Tools'
+  | 'Time Table Tools';
 
 export interface Calculator {
   slug: string;
@@ -258,6 +262,196 @@ const CALCULATOR_ALIASES: Record<string, string[]> = {
     'png to pdf',
     'photo to pdf',
     'photo se pdf banana'
+  ],
+  'compress-image': [
+    'compress image',
+    'compress image online',
+    'image compressor online',
+    'reduce image size',
+    'compress photo',
+    'photo size reducer',
+    'compress image to 50kb',
+    'compress image to 100kb',
+    'compress image to 20kb'
+  ],
+  'crop-image': [
+    'crop image',
+    'crop image online',
+    'image cropper',
+    'photo crop online',
+    'photo cropper',
+    'cut image',
+    'crop picture'
+  ],
+  'resize-image': [
+    'resize image',
+    'resize image online',
+    'image resizer online',
+    'change image dimensions',
+    'scale photo',
+    'resize photo in kb',
+    'photo pixel resizer'
+  ],
+  'webp-to-png': [
+    'webp to png',
+    'convert webp to png',
+    'webp to png converter',
+    'webp to png online',
+    'webp convert to png'
+  ],
+  'webp-to-jpg': [
+    'webp to jpg',
+    'convert webp to jpg',
+    'webp to jpg converter',
+    'webp to jpeg',
+    'webp to jpg online'
+  ],
+  'png-to-jpg-converter': [
+    'png to jpg',
+    'png to jpg converter',
+    'convert png to jpg',
+    'png to jpeg',
+    'png to jpg online'
+  ],
+  'jpg-to-png-converter': [
+    'jpg to png',
+    'jpg to png converter',
+    'convert jpg to png',
+    'jpeg to png',
+    'jpg to png online'
+  ],
+  'svg-to-png': [
+    'svg to png',
+    'convert svg to png',
+    'svg to png converter',
+    'vector to png',
+    'svg to png online high resolution'
+  ],
+  'black-and-white-image': [
+    'black and white image',
+    'black and white image converter',
+    'grayscale image online',
+    'convert photo to black and white',
+    'bw photo maker',
+    'monochrome converter'
+  ],
+  'invert-image-colors': [
+    'invert image colors',
+    'invert image',
+    'photo negative converter',
+    'negative image online',
+    'invert colors photo'
+  ],
+  'flip-rotate-image': [
+    'flip and rotate image',
+    'rotate image',
+    'flip image online',
+    'rotate photo 90 degrees',
+    'mirror image online'
+  ],
+  'qr-code-generator-tool': [
+    'qr code generator',
+    'create qr code',
+    'free qr code generator',
+    'custom qr code online',
+    'qr code maker'
+  ],
+  'blur-image': [
+    'blur image',
+    'blur image online',
+    'blur photo online',
+    'gaussian blur image',
+    'blur picture tool'
+  ],
+  'image-color-palette': [
+    'image color palette',
+    'image color palette generator',
+    'extract colors from image',
+    'photo color picker palette',
+    'image color extractor'
+  ],
+  'protect-pdf': [
+    'protect pdf',
+    'password protect pdf',
+    'encrypt pdf',
+    'lock pdf',
+    'pdf password',
+    'secure pdf',
+    'pdf me password lagaye'
+  ],
+  'unlock-pdf': [
+    'unlock pdf',
+    'remove password from pdf',
+    'decrypt pdf',
+    'pdf password remover',
+    'unlock secured pdf',
+    'pdf ka password hataye'
+  ],
+  'rotate-pdf': [
+    'rotate pdf',
+    'rotate pdf pages',
+    'turn pdf pages',
+    'pdf rotation',
+    'flip pdf',
+    'pdf ghumaye'
+  ],
+  'add-page-numbers-to-pdf': [
+    'add page numbers to pdf',
+    'number pdf pages',
+    'pdf page numbering',
+    'insert page numbers pdf',
+    'paginate pdf',
+    'pdf me page number dale'
+  ],
+  'pdf-to-word': [
+    'pdf to word',
+    'convert pdf to word',
+    'pdf to docx',
+    'pdf to doc',
+    'pdf se word banaye',
+    'pdf word converter'
+  ],
+  'word-to-pdf': [
+    'word to pdf',
+    'convert word to pdf',
+    'docx to pdf',
+    'doc to pdf',
+    'word se pdf banaye',
+    'word pdf converter'
+  ],
+  'delete-pages-from-pdf': [
+    'delete pages from pdf',
+    'remove pages from pdf',
+    'delete pdf pages',
+    'remove pdf page',
+    'cut pages from pdf',
+    'pdf se page hataye'
+  ],
+  'reorder-pdf-pages': [
+    'reorder pdf pages',
+    'rearrange pdf pages',
+    'organize pdf pages',
+    'change pdf page order',
+    'sort pdf pages',
+    'pdf page aage piche kare'
+  ],
+  'pdf-to-grayscale': [
+    'pdf to grayscale',
+    'convert pdf to black and white',
+    'black and white pdf',
+    'monochrome pdf',
+    'pdf to bw',
+    'pdf black and white kare'
+  ],
+  'monthly-time-table-maker': [
+    'monthly time table maker',
+    'monthly timetable maker',
+    'monthly schedule generator',
+    'calendar timetable maker',
+    'monthly planner online',
+    'year calendar timetable',
+    'monthly timetable printable',
+    'month wise schedule maker'
   ]
 };
 
@@ -308,6 +502,30 @@ export const categories: { name: CalculatorCategory; icon: string; description: 
     icon: '🛠️',
     description: 'Free online browser-based utility tools for image compression, file conversion, text analysis, and developer utilities.',
     path: '/free-online-tools/',
+  },
+  {
+    name: 'Image Tools',
+    icon: '🖼️',
+    description: 'Free online image tools for compressing, resizing, cropping, converting, editing, and generating images.',
+    path: '/image-tools/',
+  },
+  {
+    name: 'PDF Tools',
+    icon: '📄',
+    description: 'Free online browser-based PDF utilities for merging, splitting, compressing, and converting PDF documents.',
+    path: '/pdf-tools/',
+  },
+  {
+    name: 'Compiler Tools',
+    icon: '💻',
+    description: 'Free online compilers, code editors, and interactive runners for Python, JavaScript, HTML, C++, Java, C#, PHP, and SQL.',
+    path: '/compiler-tools/',
+  },
+  {
+    name: 'Time Table Tools',
+    icon: '📅',
+    description: 'Free online timetable makers, schedule generators, and routine planners for students, schools, workouts, and daily life.',
+    path: '/time-table-tools/',
   },
 ];
 
@@ -422,7 +640,7 @@ export function searchCalculators(query: string): Calculator[] {
 }
 
 // Precomputed Homepage Category Pills with Live Counts (Zero per-request overhead)
-const preferredCategoryOrder = ['Finance', 'Construction', 'Health', 'Math', 'General', 'Free Online Tools'];
+const preferredCategoryOrder = ['Finance', 'Construction', 'Health', 'Math', 'General', 'Free Online Tools', 'Image Tools', 'PDF Tools', 'Compiler Tools', 'Time Table Tools'];
 export const PRECOMPUTED_CATEGORY_PILLS = [...categories]
   .sort((a, b) => {
     const idxA = preferredCategoryOrder.indexOf(a.name);

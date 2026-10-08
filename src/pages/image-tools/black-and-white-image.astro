@@ -1,0 +1,431 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+
+const faqs = [
+  {
+    question: "How do I turn a color photo into black and white?",
+    answer: "Upload your photo, select a black-and-white preset (such as Classic Grayscale, High Contrast, Silver Noir, or Sepia), fine-tune brightness and contrast if needed, and click Download B&W Image."
+  },
+  {
+    question: "What is the difference between Grayscale and High-Contrast Black & White?",
+    answer: "Grayscale preserves subtle gradient transitions across 256 shades of gray. High-contrast black and white intensifies deep blacks and bright whites for a dramatic, vintage fine-art aesthetic."
+  },
+  {
+    question: "Are my photos uploaded to any remote server?",
+    answer: "No. All color matrix filtering and pixel transformations execute directly on your computer or phone using HTML5 Canvas ImageData APIs."
+  },
+  {
+    question: "Can I download the converted image in PNG or JPG format?",
+    answer: "Yes, you can toggle your preferred output format between lossless PNG and compressed JPG."
+  }
+];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqs.map(faq => ({
+    "@type": "Question",
+    "name": faq.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": faq.answer
+    }
+  }))
+};
+---
+
+<CalculatorLayout
+  title="Black and White Image Converter - Free Online Grayscale Tool"
+  description="Convert color photos to stunning black & white, grayscale, film noir, or vintage sepia online. Multiple artistic presets with 100% private in-browser conversion."
+  category="Image Tools"
+  calculatorName="Black and White Image Converter"
+  slug="black-and-white-image"
+  keywords={[
+    'black and white image',
+    'convert image to black and white',
+    'photo to grayscale online',
+    'monochrome image converter',
+    'black and white photo filter',
+    'sepia photo filter',
+    'online image desaturate'
+  ]}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <div class="space-y-6">
+    <!-- Privacy Banner -->
+    <div class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5 text-xs text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300">
+      <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold">
+        🛡️
+      </div>
+      <div>
+        <span class="font-bold">100% Client-Side Privacy:</span>
+        Your images are transformed locally in your browser. No files are uploaded to any server.
+      </div>
+    </div>
+
+    <!-- Upload Section -->
+    <section id="upload-zone" class="transition-all">
+      <div
+        id="drop-zone"
+        tabindex="0"
+        role="button"
+        aria-label="Upload image to convert to black and white"
+        class="group relative flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-8 text-center transition-all duration-200 hover:border-blue-500 hover:bg-blue-50/40 focus:border-blue-500 focus:outline-hidden focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-blue-500 dark:hover:bg-blue-950/20 sm:p-12 cursor-pointer"
+      >
+        <input
+          type="file"
+          id="file-input"
+          accept="image/*"
+          class="sr-only"
+        />
+        <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 text-3xl text-blue-600 transition group-hover:scale-105 group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-950 dark:text-blue-400">
+          🎞️
+        </div>
+        <h2 class="mt-4 text-lg font-bold text-slate-900 dark:text-white sm:text-xl">
+          Choose a photo or drag & drop here
+        </h2>
+        <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400 sm:text-sm max-w-md">
+          Converts color images into classic grayscale, dramatic high-contrast noir, silver print, or sepia.
+        </p>
+        <div class="mt-5 flex flex-wrap items-center justify-center gap-3">
+          <button
+            type="button"
+            id="btn-select"
+            class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-blue-700 cursor-pointer sm:text-sm"
+          >
+            📁 Select Image File
+          </button>
+          <span class="text-xs text-slate-400">or paste from clipboard (Ctrl+V)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Workspace Zone -->
+    <section id="workspace-zone" class="hidden space-y-6">
+
+      <!-- Preset and Adjustment Toolbar -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 sm:p-5 space-y-4">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2">Monochrome Style Presets</span>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" data-preset="classic" class="preset-btn active rounded-xl border border-blue-600 bg-blue-50 px-3.5 py-1.5 text-xs font-bold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 cursor-pointer">
+              Classic Grayscale
+            </button>
+            <button type="button" data-preset="high-contrast" class="preset-btn rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">
+              High Contrast Noir
+            </button>
+            <button type="button" data-preset="silver" class="preset-btn rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">
+              Silver Gelatin
+            </button>
+            <button type="button" data-preset="sepia" class="preset-btn rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">
+              Vintage Sepia
+            </button>
+            <button type="button" data-preset="threshold" class="preset-btn rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">
+              1-Bit Silhouette
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <div>
+            <div class="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <span>Contrast:</span>
+              <span id="contrast-val">0%</span>
+            </div>
+            <input type="range" id="contrast-slider" min="-50" max="100" value="0" class="w-full accent-blue-600 cursor-pointer" />
+          </div>
+
+          <div>
+            <div class="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <span>Brightness:</span>
+              <span id="brightness-val">0%</span>
+            </div>
+            <input type="range" id="brightness-slider" min="-50" max="50" value="0" class="w-full accent-blue-600 cursor-pointer" />
+          </div>
+
+          <div>
+            <label for="format-choice" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Export Format</label>
+            <select id="format-choice" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+              <option value="png">PNG (Lossless)</option>
+              <option value="jpg">JPG (Standard Web)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview Section -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-3 dark:border-slate-800">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Original Color</span>
+              <span id="src-size" class="text-xs font-bold text-slate-700 dark:text-slate-300">0 KB</span>
+            </div>
+            <div class="flex items-center justify-center rounded-xl bg-slate-100 p-2 dark:bg-slate-950 min-h-[220px] max-h-[300px] overflow-hidden">
+              <img id="src-preview" src="" alt="Original Image" class="max-h-[260px] w-auto max-w-full rounded object-contain" />
+            </div>
+          </div>
+          <div class="mt-3 text-[11px] text-slate-500">
+            Dimensions: <strong id="src-dims" class="text-slate-700 dark:text-slate-300">-- × -- px</strong>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-slate-300 bg-white p-4 shadow-2xs dark:border-slate-700 dark:bg-slate-900 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-3 dark:border-slate-800">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-900 dark:text-white">Black & White Output</span>
+              <span id="target-size" class="text-xs font-bold text-slate-900 dark:text-white">0 KB</span>
+            </div>
+            <div class="flex items-center justify-center rounded-xl bg-slate-100 p-2 dark:bg-slate-950 min-h-[220px] max-h-[300px] overflow-hidden">
+              <img id="target-preview" src="" alt="Black and White Converted" class="max-h-[260px] w-auto max-w-full rounded object-contain" />
+            </div>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-[11px] text-slate-500">
+            <span>Dimensions: <strong id="target-dims" class="text-slate-900 dark:text-white">-- × -- px</strong></span>
+            <span class="text-slate-700 dark:text-slate-300 font-semibold">✓ Fine Art Monochromatic</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <button
+          type="button"
+          id="btn-reset"
+          class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+        >
+          🔄 Choose Another Photo
+        </button>
+
+        <a
+          id="btn-download"
+          href="#"
+          download="black-and-white.png"
+          class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-md hover:bg-blue-700 cursor-pointer transition"
+        >
+          ⬇️ Download B&W Image
+        </a>
+      </div>
+    </section>
+  </div>
+
+  <!-- Educational Guide -->
+  <div class="mt-12 space-y-8 text-slate-700 dark:text-slate-300 text-sm leading-relaxed border-t border-slate-200 pt-8 dark:border-slate-800">
+    <section class="space-y-3">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        The Art of Black and White Photography
+      </h2>
+      <p>
+        Stripping away color forces viewers to focus on texture, geometry, lighting, emotional expression, and shadow contrast. Standard conversion calculates human eye luminous sensitivity (approx. 29.9% Red, 58.7% Green, and 11.4% Blue) to yield natural, balanced monochromatic tones.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function initBlackAndWhite() {
+      let currentImage: HTMLImageElement | null = null;
+      let currentFile: File | null = null;
+      let activePreset = 'classic';
+
+      const uploadZone = document.getElementById('upload-zone');
+      const dropZone = document.getElementById('drop-zone');
+      const fileInput = document.getElementById('file-input') as HTMLInputElement | null;
+      const btnSelect = document.getElementById('btn-select');
+      const workspaceZone = document.getElementById('workspace-zone');
+      const btnReset = document.getElementById('btn-reset');
+      const btnDownload = document.getElementById('btn-download') as HTMLAnchorElement | null;
+
+      const srcPreview = document.getElementById('src-preview') as HTMLImageElement | null;
+      const targetPreview = document.getElementById('target-preview') as HTMLImageElement | null;
+      const srcSize = document.getElementById('src-size');
+      const targetSize = document.getElementById('target-size');
+      const srcDims = document.getElementById('src-dims');
+      const targetDims = document.getElementById('target-dims');
+
+      const contrastSlider = document.getElementById('contrast-slider') as HTMLInputElement | null;
+      const contrastVal = document.getElementById('contrast-val');
+      const brightnessSlider = document.getElementById('brightness-slider') as HTMLInputElement | null;
+      const brightnessVal = document.getElementById('brightness-val');
+      const formatChoice = document.getElementById('format-choice') as HTMLSelectElement | null;
+      const presetBtns = document.querySelectorAll('.preset-btn');
+
+      function formatBytes(bytes: number): string {
+        if (bytes <= 0) return '0 B';
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+      }
+
+      function processImage() {
+        if (!currentImage || !currentFile) return;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = currentImage.naturalWidth;
+        canvas.height = currentImage.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        ctx.drawImage(currentImage, 0, 0);
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imgData.data;
+
+        const userContrast = Number(contrastSlider?.value || 0);
+        const userBrightness = Number(brightnessSlider?.value || 0);
+        const contrastFactor = (259 * (userContrast + 255)) / (255 * (259 - userContrast));
+
+        for (let i = 0; i < data.length; i += 4) {
+          const r = data[i];
+          const g = data[i + 1];
+          const b = data[i + 2];
+          const a = data[i + 3];
+
+          if (a === 0) continue;
+
+          let gray = 0.299 * r + 0.587 * g + 0.114 * b;
+
+          if (activePreset === 'high-contrast') {
+            const highC = (259 * (50 + 255)) / (255 * (259 - 50));
+            gray = highC * (gray - 128) + 128;
+          } else if (activePreset === 'silver') {
+            // Slight cool tint with enhanced midtones
+            gray = Math.min(255, Math.max(0, gray * 1.05 + 5));
+          } else if (activePreset === 'threshold') {
+            gray = gray >= 128 ? 255 : 0;
+          }
+
+          // Apply user brightness & contrast
+          let finalVal = contrastFactor * (gray - 128) + 128 + userBrightness;
+          finalVal = Math.min(255, Math.max(0, finalVal));
+
+          if (activePreset === 'sepia') {
+            data[i] = Math.min(255, finalVal * 1.08 + 20); // Reddish
+            data[i + 1] = Math.min(255, finalVal * 0.95 + 10); // Warm green
+            data[i + 2] = Math.min(255, finalVal * 0.75); // Low blue
+          } else if (activePreset === 'silver') {
+            data[i] = finalVal;
+            data[i + 1] = finalVal;
+            data[i + 2] = Math.min(255, finalVal * 1.04 + 4); // Subtle cool silver
+          } else {
+            data[i] = finalVal;
+            data[i + 1] = finalVal;
+            data[i + 2] = finalVal;
+          }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+
+        const mimeType = formatChoice?.value === 'jpg' ? 'image/jpeg' : 'image/png';
+        const ext = formatChoice?.value === 'jpg' ? 'jpg' : 'png';
+
+        canvas.toBlob((blob) => {
+          if (!blob) return;
+          const url = URL.createObjectURL(blob);
+          if (targetPreview) targetPreview.src = url;
+          if (targetSize) targetSize.textContent = formatBytes(blob.size);
+          if (targetDims) targetDims.textContent = `${canvas.width} × ${canvas.height} px`;
+
+          if (btnDownload) {
+            btnDownload.href = url;
+            const baseName = currentFile?.name.replace(/\.[^/.]+$/, '') || 'photo';
+            btnDownload.download = `${baseName}-bw.${ext}`;
+          }
+        }, mimeType, 0.92);
+      }
+
+      function handleFile(file: File) {
+        if (!file) return;
+        currentFile = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            currentImage = img;
+            if (srcPreview) srcPreview.src = img.src;
+            if (srcSize) srcSize.textContent = formatBytes(file.size);
+            if (srcDims) srcDims.textContent = `${img.naturalWidth} × ${img.naturalHeight} px`;
+
+            if (uploadZone) uploadZone.classList.add('hidden');
+            if (workspaceZone) workspaceZone.classList.remove('hidden');
+
+            processImage();
+          };
+          img.src = e.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      presetBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          presetBtns.forEach((b) => {
+            b.classList.remove('border-blue-600', 'bg-blue-50', 'text-blue-700', 'dark:bg-blue-950/60', 'dark:text-blue-300', 'active');
+            b.classList.add('border-slate-200', 'bg-white', 'text-slate-700', 'dark:border-slate-700', 'dark:bg-slate-800', 'dark:text-slate-300');
+          });
+          btn.classList.add('border-blue-600', 'bg-blue-50', 'text-blue-700', 'dark:bg-blue-950/60', 'dark:text-blue-300', 'active');
+          btn.classList.remove('border-slate-200', 'bg-white', 'text-slate-700', 'dark:border-slate-700', 'dark:bg-slate-800', 'dark:text-slate-300');
+
+          activePreset = btn.getAttribute('data-preset') || 'classic';
+          processImage();
+        });
+      });
+
+      contrastSlider?.addEventListener('input', (e) => {
+        const val = (e.target as HTMLInputElement).value;
+        if (contrastVal) contrastVal.textContent = `${val > '0' ? '+' : ''}${val}%`;
+        processImage();
+      });
+
+      brightnessSlider?.addEventListener('input', (e) => {
+        const val = (e.target as HTMLInputElement).value;
+        if (brightnessVal) brightnessVal.textContent = `${val > '0' ? '+' : ''}${val}%`;
+        processImage();
+      });
+
+      formatChoice?.addEventListener('change', processImage);
+
+      btnSelect?.addEventListener('click', () => fileInput?.click());
+      dropZone?.addEventListener('click', (e) => {
+        if (e.target !== btnSelect) fileInput?.click();
+      });
+
+      fileInput?.addEventListener('change', (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) handleFile(file);
+      });
+
+      dropZone?.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-blue-500', 'bg-blue-50/50');
+      });
+
+      dropZone?.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-blue-500', 'bg-blue-50/50');
+      });
+
+      dropZone?.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-blue-500', 'bg-blue-50/50');
+        const file = e.dataTransfer?.files?.[0];
+        if (file) handleFile(file);
+      });
+
+      document.addEventListener('paste', (e) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.indexOf('image') !== -1) {
+            const file = items[i].getAsFile();
+            if (file) handleFile(file);
+            break;
+          }
+        }
+      });
+
+      btnReset?.addEventListener('click', () => {
+        if (fileInput) fileInput.value = '';
+        if (uploadZone) uploadZone.classList.remove('hidden');
+        if (workspaceZone) workspaceZone.classList.add('hidden');
+      });
+    })();
+  </script>
+</CalculatorLayout>

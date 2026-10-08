@@ -1,0 +1,381 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+
+const faqs = [
+  {
+    question: "How do I invert the colors of an image online?",
+    answer: "Upload your image to the tool, select an inversion mode (Full RGB Inversion or individual color channels), and immediately download your inverted negative photo."
+  },
+  {
+    question: "What is color inversion?",
+    answer: "Color inversion replaces every pixel color with its exact chromatic opposite (for example, black becomes white, blue becomes orange, and red becomes cyan) by subtracting each RGB value from 255."
+  },
+  {
+    question: "Does inverting colors affect transparent backgrounds?",
+    answer: "No. Our tool preserves the alpha transparency channel so cutouts, PNG logos, and transparent stickers retain their clear backgrounds without turning black or white."
+  },
+  {
+    question: "Is this tool secure for private or sensitive documents?",
+    answer: "Yes, 100%. The pixel color inversion executes locally in your browser memory via HTML5 Canvas. No image data is ever transmitted to a server."
+  }
+];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqs.map(faq => ({
+    "@type": "Question",
+    "name": faq.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": faq.answer
+    }
+  }))
+};
+---
+
+<CalculatorLayout
+  title="Invert Image Colors Online - Negative Photo Generator Free"
+  description="Invert image colors to create photo negatives and color opposites online for free. Full RGB & individual channel inversion, 100% private in-browser tool."
+  category="Image Tools"
+  calculatorName="Invert Image Colors"
+  slug="invert-image-colors"
+  keywords={[
+    'invert image colors',
+    'negative image generator',
+    'photo negative converter',
+    'invert colors online',
+    'reverse image colors',
+    'invert rgb channels',
+    'client side image inverter'
+  ]}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <div class="space-y-6">
+    <!-- Privacy Banner -->
+    <div class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5 text-xs text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300">
+      <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold">
+        🛡️
+      </div>
+      <div>
+        <span class="font-bold">100% Client-Side Privacy:</span>
+        Color inversion runs completely inside your browser. No files are uploaded to any server.
+      </div>
+    </div>
+
+    <!-- Upload Section -->
+    <section id="upload-zone" class="transition-all">
+      <div
+        id="drop-zone"
+        tabindex="0"
+        role="button"
+        aria-label="Upload image to invert colors"
+        class="group relative flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-8 text-center transition-all duration-200 hover:border-blue-500 hover:bg-blue-50/40 focus:border-blue-500 focus:outline-hidden focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-blue-500 dark:hover:bg-blue-950/20 sm:p-12 cursor-pointer"
+      >
+        <input
+          type="file"
+          id="file-input"
+          accept="image/*"
+          class="sr-only"
+        />
+        <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 text-3xl text-blue-600 transition group-hover:scale-105 group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-950 dark:text-blue-400">
+          🔄
+        </div>
+        <h2 class="mt-4 text-lg font-bold text-slate-900 dark:text-white sm:text-xl">
+          Choose an image or drag & drop here
+        </h2>
+        <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400 sm:text-sm max-w-md">
+          Inverts pixel colors into photo negatives, x-ray effects, or creative color opposites.
+        </p>
+        <div class="mt-5 flex flex-wrap items-center justify-center gap-3">
+          <button
+            type="button"
+            id="btn-select"
+            class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-blue-700 cursor-pointer sm:text-sm"
+          >
+            📁 Select Image File
+          </button>
+          <span class="text-xs text-slate-400">or paste from clipboard (Ctrl+V)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Workspace Zone -->
+    <section id="workspace-zone" class="hidden space-y-6">
+
+      <!-- Settings Toolbar -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 sm:p-5 space-y-4">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2">Inversion Channels</span>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" data-mode="all" class="mode-btn active rounded-xl border border-blue-600 bg-blue-50 px-3.5 py-1.5 text-xs font-bold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 cursor-pointer">
+              Full Inversion (All RGB)
+            </button>
+            <button type="button" data-mode="red" class="mode-btn rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">
+              Invert Red Only (Cyan Shift)
+            </button>
+            <button type="button" data-mode="green" class="mode-btn rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">
+              Invert Green Only (Magenta Shift)
+            </button>
+            <button type="button" data-mode="blue" class="mode-btn rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">
+              Invert Blue Only (Yellow Shift)
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-xs">
+          <div class="flex items-center gap-2">
+            <input type="checkbox" id="keep-alpha" checked class="h-4 w-4 rounded accent-blue-600 cursor-pointer" />
+            <label for="keep-alpha" class="font-bold text-slate-700 dark:text-slate-300 cursor-pointer">Preserve Alpha Transparency</label>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <label for="format-choice" class="font-bold text-slate-700 dark:text-slate-300">Format:</label>
+            <select id="format-choice" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 font-medium text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+              <option value="png">PNG (Lossless)</option>
+              <option value="jpg">JPG (Compressed)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview Section -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-3 dark:border-slate-800">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Original Colors</span>
+              <span id="src-size" class="text-xs font-bold text-slate-700 dark:text-slate-300">0 KB</span>
+            </div>
+            <div class="flex items-center justify-center rounded-xl bg-slate-100 p-2 dark:bg-slate-950 min-h-[220px] max-h-[300px] overflow-hidden">
+              <img id="src-preview" src="" alt="Original Photo" class="max-h-[260px] w-auto max-w-full rounded object-contain" />
+            </div>
+          </div>
+          <div class="mt-3 text-[11px] text-slate-500">
+            Dimensions: <strong id="src-dims" class="text-slate-700 dark:text-slate-300">-- × -- px</strong>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-purple-200 bg-white p-4 shadow-2xs dark:border-purple-900/40 dark:bg-slate-900 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-3 dark:border-slate-800">
+              <span class="text-xs font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400">Inverted Negative Result</span>
+              <span id="target-size" class="text-xs font-bold text-slate-900 dark:text-white">0 KB</span>
+            </div>
+            <div class="flex items-center justify-center rounded-xl bg-slate-100 p-2 dark:bg-slate-950 min-h-[220px] max-h-[300px] overflow-hidden">
+              <img id="target-preview" src="" alt="Inverted Negative" class="max-h-[260px] w-auto max-w-full rounded object-contain" />
+            </div>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-[11px] text-slate-500">
+            <span>Dimensions: <strong id="target-dims" class="text-purple-600 dark:text-purple-400">-- × -- px</strong></span>
+            <span class="text-purple-600 font-semibold">✓ Inverted Matrix</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <button
+          type="button"
+          id="btn-reset"
+          class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+        >
+          🔄 Choose Another Image
+        </button>
+
+        <a
+          id="btn-download"
+          href="#"
+          download="inverted-negative.png"
+          class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-md hover:bg-blue-700 cursor-pointer transition"
+        >
+          ⬇️ Download Inverted Image
+        </a>
+      </div>
+    </section>
+  </div>
+
+  <!-- Educational Guide -->
+  <div class="mt-12 space-y-8 text-slate-700 dark:text-slate-300 text-sm leading-relaxed border-t border-slate-200 pt-8 dark:border-slate-800">
+    <section class="space-y-3">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        How Color Inversion Works
+      </h2>
+      <p>
+        In digital 24-bit RGB imaging, colors are defined by red, green, and blue values ranging between 0 and 255. Inverting an image subtracts each channel from 255 (i.e. New Red = 255 - Old Red). This simulates traditional photographic film negatives, converts white documents into high-contrast dark modes, and creates striking artistic graphics.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function initInvertColors() {
+      let currentImage: HTMLImageElement | null = null;
+      let currentFile: File | null = null;
+      let activeMode = 'all';
+
+      const uploadZone = document.getElementById('upload-zone');
+      const dropZone = document.getElementById('drop-zone');
+      const fileInput = document.getElementById('file-input') as HTMLInputElement | null;
+      const btnSelect = document.getElementById('btn-select');
+      const workspaceZone = document.getElementById('workspace-zone');
+      const btnReset = document.getElementById('btn-reset');
+      const btnDownload = document.getElementById('btn-download') as HTMLAnchorElement | null;
+
+      const srcPreview = document.getElementById('src-preview') as HTMLImageElement | null;
+      const targetPreview = document.getElementById('target-preview') as HTMLImageElement | null;
+      const srcSize = document.getElementById('src-size');
+      const targetSize = document.getElementById('target-size');
+      const srcDims = document.getElementById('src-dims');
+      const targetDims = document.getElementById('target-dims');
+
+      const keepAlpha = document.getElementById('keep-alpha') as HTMLInputElement | null;
+      const formatChoice = document.getElementById('format-choice') as HTMLSelectElement | null;
+      const modeBtns = document.querySelectorAll('.mode-btn');
+
+      function formatBytes(bytes: number): string {
+        if (bytes <= 0) return '0 B';
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+      }
+
+      function invertColors() {
+        if (!currentImage || !currentFile) return;
+
+        const canvas = document.createElement('canvas');
+        canvas.width = currentImage.naturalWidth;
+        canvas.height = currentImage.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        ctx.drawImage(currentImage, 0, 0);
+        const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imgData.data;
+
+        for (let i = 0; i < data.length; i += 4) {
+          const a = data[i + 3];
+          if (a === 0 && keepAlpha?.checked) continue;
+
+          if (activeMode === 'all') {
+            data[i] = 255 - data[i];
+            data[i + 1] = 255 - data[i + 1];
+            data[i + 2] = 255 - data[i + 2];
+          } else if (activeMode === 'red') {
+            data[i] = 255 - data[i];
+          } else if (activeMode === 'green') {
+            data[i + 1] = 255 - data[i + 1];
+          } else if (activeMode === 'blue') {
+            data[i + 2] = 255 - data[i + 2];
+          }
+
+          if (!keepAlpha?.checked) {
+            data[i + 3] = 255 - a;
+          }
+        }
+
+        ctx.putImageData(imgData, 0, 0);
+
+        const mimeType = formatChoice?.value === 'jpg' ? 'image/jpeg' : 'image/png';
+        const ext = formatChoice?.value === 'jpg' ? 'jpg' : 'png';
+
+        canvas.toBlob((blob) => {
+          if (!blob) return;
+          const url = URL.createObjectURL(blob);
+          if (targetPreview) targetPreview.src = url;
+          if (targetSize) targetSize.textContent = formatBytes(blob.size);
+          if (targetDims) targetDims.textContent = `${canvas.width} × ${canvas.height} px`;
+
+          if (btnDownload) {
+            btnDownload.href = url;
+            const baseName = currentFile?.name.replace(/\.[^/.]+$/, '') || 'image';
+            btnDownload.download = `${baseName}-inverted.${ext}`;
+          }
+        }, mimeType, 0.92);
+      }
+
+      function handleFile(file: File) {
+        if (!file) return;
+        currentFile = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            currentImage = img;
+            if (srcPreview) srcPreview.src = img.src;
+            if (srcSize) srcSize.textContent = formatBytes(file.size);
+            if (srcDims) srcDims.textContent = `${img.naturalWidth} × ${img.naturalHeight} px`;
+
+            if (uploadZone) uploadZone.classList.add('hidden');
+            if (workspaceZone) workspaceZone.classList.remove('hidden');
+
+            invertColors();
+          };
+          img.src = e.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      modeBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          modeBtns.forEach((b) => {
+            b.classList.remove('border-blue-600', 'bg-blue-50', 'text-blue-700', 'dark:bg-blue-950/60', 'dark:text-blue-300', 'active');
+            b.classList.add('border-slate-200', 'bg-white', 'text-slate-700', 'dark:border-slate-700', 'dark:bg-slate-800', 'dark:text-slate-300');
+          });
+          btn.classList.add('border-blue-600', 'bg-blue-50', 'text-blue-700', 'dark:bg-blue-950/60', 'dark:text-blue-300', 'active');
+          btn.classList.remove('border-slate-200', 'bg-white', 'text-slate-700', 'dark:border-slate-700', 'dark:bg-slate-800', 'dark:text-slate-300');
+
+          activeMode = btn.getAttribute('data-mode') || 'all';
+          invertColors();
+        });
+      });
+
+      keepAlpha?.addEventListener('change', invertColors);
+      formatChoice?.addEventListener('change', invertColors);
+
+      btnSelect?.addEventListener('click', () => fileInput?.click());
+      dropZone?.addEventListener('click', (e) => {
+        if (e.target !== btnSelect) fileInput?.click();
+      });
+
+      fileInput?.addEventListener('change', (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) handleFile(file);
+      });
+
+      dropZone?.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-blue-500', 'bg-blue-50/50');
+      });
+
+      dropZone?.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-blue-500', 'bg-blue-50/50');
+      });
+
+      dropZone?.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-blue-500', 'bg-blue-50/50');
+        const file = e.dataTransfer?.files?.[0];
+        if (file) handleFile(file);
+      });
+
+      document.addEventListener('paste', (e) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.indexOf('image') !== -1) {
+            const file = items[i].getAsFile();
+            if (file) handleFile(file);
+            break;
+          }
+        }
+      });
+
+      btnReset?.addEventListener('click', () => {
+        if (fileInput) fileInput.value = '';
+        if (uploadZone) uploadZone.classList.remove('hidden');
+        if (workspaceZone) workspaceZone.classList.add('hidden');
+      });
+    })();
+  </script>
+</CalculatorLayout>

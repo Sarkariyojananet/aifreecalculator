@@ -1,0 +1,770 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+import { buildYear, EN_LOCALE } from '../../utils/monthlyTimetable';
+
+const defaultYear = 2026;
+const initialYearData = buildYear(defaultYear, 'sunday', 'DD-MM-YYYY', 'all', false);
+
+// FAQ Schema for Search Engines
+const faqs = [
+  {
+    question: "How do I add date-wise notes to my timetable?",
+    answer: "You can add notes in two ways: 1) Use the dedicated 'Add Date-Wise Note' panel to select any date and type your schedule or reminder, or 2) Click directly on any date box in Calendar View or type into the Notes column in Table View. All notes are saved automatically in your browser."
+  },
+  {
+    question: "How are Excel and CSV files structured?",
+    answer: "Both Excel (.xlsx) and CSV exports are formatted with a calendar grid structure featuring 7-column day layouts for each month along with dedicated note rows for each scheduled date."
+  },
+  {
+    question: "How does the combined Print / PDF button work?",
+    answer: "Clicking 'Print / PDF' opens the high-resolution browser print and PDF preview dialog. You can print directly to any physical printer or select 'Save as PDF' to export a vector PDF that strictly matches your selected Calendar, Table, or Full Year layout."
+  },
+  {
+    question: "Are my schedule notes stored permanently?",
+    answer: "Yes, all notes are stored in your local browser storage (localStorage) so they remain intact across page reloads and future visits without needing a login or account."
+  },
+  {
+    question: "Can I filter only weekdays or weekends?",
+    answer: "Yes. Choose 'Weekdays Only' to isolate Monday through Friday for work and academic planning, or 'Weekends Only' to focus on Saturday and Sunday events and rest schedules."
+  },
+  {
+    question: "Is my timetable data private and secure?",
+    answer: "Yes. All timetable calculations, note storage, and PDF/Excel generation happen 100% in your browser. No schedule data is ever sent to our servers."
+  }
+];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqs.map((faq) => ({
+    "@type": "Question",
+    "name": faq.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": faq.answer
+    }
+  }))
+};
+---
+
+<CalculatorLayout
+  title="Monthly Time Table Maker - Printable Calendar Generator with Date Notes"
+  description="Generate, customize, print, and export monthly and yearly calendar timetables with date-wise notes. Export to Calendar-formatted Excel, CSV, and Print/PDF in active layout."
+  category="Time Table Tools"
+  calculatorName="Monthly Time Table Maker"
+  slug="monthly-time-table-maker"
+  keywords={[
+    'monthly time table maker',
+    'monthly timetable maker',
+    'monthly schedule generator',
+    'calendar timetable maker',
+    'printable monthly timetable',
+    'yearly timetable maker',
+    'timetable with date notes',
+    'calendar excel exporter',
+    'calendar csv maker'
+  ]}
+>
+  <!-- Injected FAQPage Schema for Search Engines -->
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <!-- Print Stylesheet -->
+  <style is:inline>
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      header, footer, nav, aside, .no-print, #ttControlsCard, #ttStatsGrid, #ttExportBar, #ttDedicatedNotesSection, [data-ad-slot], .breadcrumb, #ttNoteModal {
+        display: none !important;
+      }
+      #ttPrintTitle {
+        display: block !important;
+        text-align: center;
+        margin-bottom: 20px;
+        font-size: 20pt;
+        font-weight: bold;
+      }
+      .month-card {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        border: 1px solid #cbd5e1 !important;
+        margin-bottom: 24px !important;
+        box-shadow: none !important;
+      }
+      table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+      }
+      th, td {
+        border: 1px solid #cbd5e1 !important;
+        padding: 6px 8px !important;
+        color: #000000 !important;
+      }
+    }
+  </style>
+
+  <!-- MAIN INTERACTIVE TOOL WIDGET -->
+  <div class="space-y-6">
+
+    <!-- Header & Intro Badge -->
+    <div class="text-center max-w-3xl mx-auto space-y-3">
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 dark:bg-blue-950/60 border border-blue-200 dark:border-blue-800/80 text-blue-700 dark:text-blue-300 text-xs font-semibold tracking-wide">
+        <svg class="w-4 h-4 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <span>Calendar Grid Excel & CSV • Date-Wise Notes • Unified Print / PDF</span>
+      </div>
+
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+        Monthly Time Table Maker
+      </h1>
+
+      <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
+        Create, organize, and export customizable <strong>monthly and yearly timetables</strong> with custom date-wise notes. Download calendar-structured <strong>Excel & CSV</strong> files, and print or export to <strong>PDF</strong> in your active layout.
+      </p>
+    </div>
+
+    <!-- PRINT ONLY TITLE -->
+    <div id="ttPrintTitle" class="hidden text-center text-2xl font-bold text-slate-900 pb-2 mb-4 border-b border-slate-300">
+      Monthly Timetable — 2026
+    </div>
+
+    <!-- STATS OVERVIEW CARDS -->
+    <div id="ttStatsGrid" class="grid grid-cols-2 sm:grid-cols-6 gap-2.5 sm:gap-3">
+      <div class="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+        <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Active Year</span>
+        <div id="ttStatYear" class="text-xl font-bold text-blue-600 dark:text-blue-400 font-mono mt-0.5">{defaultYear}</div>
+      </div>
+      <div class="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+        <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Total Days</span>
+        <div id="ttStatTotalDays" class="text-xl font-bold text-slate-900 dark:text-white font-mono mt-0.5">{initialYearData.totalDays}</div>
+      </div>
+      <div class="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+        <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Weekdays</span>
+        <div id="ttStatWeekdays" class="text-xl font-bold text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">{initialYearData.totalWeekdays}</div>
+      </div>
+      <div class="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+        <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Weekends</span>
+        <div id="ttStatWeekends" class="text-xl font-bold text-rose-600 dark:text-rose-400 font-mono mt-0.5">{initialYearData.totalWeekends}</div>
+      </div>
+      <div class="p-3.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xs">
+        <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Leap Year?</span>
+        <div id="ttStatLeap" class="text-sm font-bold text-slate-800 dark:text-slate-200 mt-1">{initialYearData.isLeapYear ? 'Yes (366d)' : 'No (365d)'}</div>
+      </div>
+      <div class="col-span-2 sm:col-span-1 p-3.5 rounded-2xl border border-amber-200/80 dark:border-amber-900/60 bg-amber-50/50 dark:bg-amber-950/30 shadow-2xs">
+        <span class="text-[11px] font-semibold text-amber-700 dark:text-amber-400 uppercase tracking-wider">Notes Saved</span>
+        <div id="ttStatNotesCount" class="text-sm font-bold text-amber-900 dark:text-amber-200 mt-1">0 Saved</div>
+      </div>
+    </div>
+
+    <!-- CONTROLS & FILTERS PANEL -->
+    <div id="ttControlsCard" class="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-sm space-y-5">
+
+      <!-- Top Row: Year Picker + View Switcher -->
+      <div class="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
+
+        <!-- Year Control -->
+        <div class="md:col-span-6 space-y-1.5">
+          <label for="ttYearInput" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            Target Year (1900 - 2100)
+          </label>
+          <div class="flex items-center gap-2">
+            <button
+              type="button"
+              id="ttYearPrevBtn"
+              class="px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold transition cursor-pointer shadow-2xs"
+              title="Previous Year"
+              aria-label="Previous Year"
+            >
+              ◀
+            </button>
+            <input
+              type="number"
+              id="ttYearInput"
+              min="1900"
+              max="2100"
+              value={defaultYear}
+              class="w-full text-center px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white font-mono font-bold text-lg focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+            />
+            <button
+              type="button"
+              id="ttYearNextBtn"
+              class="px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold transition cursor-pointer shadow-2xs"
+              title="Next Year"
+              aria-label="Next Year"
+            >
+              ▶
+            </button>
+          </div>
+          <p id="ttYearError" class="hidden text-xs font-medium text-rose-600 dark:text-rose-400"></p>
+        </div>
+
+        <!-- View Segmented Switcher -->
+        <div class="md:col-span-6 space-y-1.5">
+          <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            Layout View (Print & PDF Will Match This Layout)
+          </label>
+          <div class="grid grid-cols-3 gap-1.5 p-1 rounded-2xl bg-slate-100 dark:bg-slate-950 border border-slate-200/80 dark:border-slate-800">
+            <button
+              type="button"
+              id="ttViewCalendarBtn"
+              class="px-3 py-2 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 text-white shadow-sm transition flex items-center justify-center gap-1.5 cursor-pointer"
+              aria-pressed="true"
+            >
+              <span>📅</span> <span>Calendar</span>
+            </button>
+            <button
+              type="button"
+              id="ttViewTableBtn"
+              class="px-3 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition flex items-center justify-center gap-1.5 cursor-pointer"
+              aria-pressed="false"
+            >
+              <span>📋</span> <span>Table</span>
+            </button>
+            <button
+              type="button"
+              id="ttViewFullYearBtn"
+              class="px-3 py-2 rounded-xl text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200/60 dark:hover:bg-slate-800 transition flex items-center justify-center gap-1.5 cursor-pointer"
+              aria-pressed="false"
+            >
+              <span>🗂️</span> <span>Full Year</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Secondary Filters Row -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+
+        <!-- Month & Quarter Selector -->
+        <div class="space-y-1">
+          <label for="ttMonthSelect" class="block text-xs font-semibold text-slate-600 dark:text-slate-400">
+            Calendar Month / Quarter
+          </label>
+          <select
+            id="ttMonthSelect"
+            class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="all">All 12 Months (Jan - Dec)</option>
+            <optgroup label="Quarters & Semesters">
+              <option value="q1">Q1 (January - March)</option>
+              <option value="q2">Q2 (April - June)</option>
+              <option value="q3">Q3 (July - September)</option>
+              <option value="q4">Q4 (October - December)</option>
+              <option value="h1">H1 (Jan - Jun / 1st Half)</option>
+              <option value="h2">H2 (Jul - Dec / 2nd Half)</option>
+            </optgroup>
+            <optgroup label="Single Month">
+              {EN_LOCALE.monthNames.map((name, idx) => (
+                <option value={idx}>{name}</option>
+              ))}
+            </optgroup>
+            <option value="custom" disabled>Custom Selection (Use Chips Below)</option>
+          </select>
+        </div>
+
+        <!-- Weekday & Weekend Toggles -->
+        <div class="space-y-1">
+          <span class="block text-xs font-semibold text-slate-600 dark:text-slate-400">
+            Show / Hide Days
+          </span>
+          <div class="flex items-center gap-2 pt-1">
+            <label class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                id="ttToggleWeekdays"
+                checked
+                class="rounded text-blue-600 focus:ring-blue-500 w-3.5 h-3.5 cursor-pointer"
+              />
+              <span>Weekdays (Mon-Fri)</span>
+            </label>
+            <label class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                id="ttToggleWeekends"
+                checked
+                class="rounded text-rose-600 focus:ring-rose-500 w-3.5 h-3.5 cursor-pointer"
+              />
+              <span>Weekends (Sat-Sun)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Week Starts On -->
+        <div class="space-y-1">
+          <label for="ttWeekStartSelect" class="block text-xs font-semibold text-slate-600 dark:text-slate-400">
+            Week Starts On
+          </label>
+          <select
+            id="ttWeekStartSelect"
+            class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="sunday" selected>Sunday (Default)</option>
+            <option value="monday">Monday</option>
+          </select>
+        </div>
+
+        <!-- Date Format -->
+        <div class="space-y-1">
+          <label for="ttDateFormatSelect" class="block text-xs font-semibold text-slate-600 dark:text-slate-400">
+            Date Format
+          </label>
+          <select
+            id="ttDateFormatSelect"
+            class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-xs sm:text-sm focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="DD-MM-YYYY">DD-MM-YYYY (01-01-2026)</option>
+            <option value="MM-DD-YYYY">MM-DD-YYYY (01-01-2026)</option>
+            <option value="YYYY-MM-DD">YYYY-MM-DD (2026-01-01)</option>
+            <option value="D MMMM YYYY">D MMMM YYYY (1 January 2026)</option>
+            <option value="DD MMMM YYYY">DD MMMM YYYY (01 January 2026)</option>
+          </select>
+        </div>
+
+      </div>
+
+      <!-- Quick Multi-Month Selection Chips -->
+      <div class="space-y-1.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-400">
+          Select Multiple Months to View & Print Together:
+        </label>
+        <div id="ttMonthChipsContainer" class="min-h-9.5 flex items-center">
+          <!-- Dynamically populated chips -->
+        </div>
+      </div>
+
+      <!-- Action Buttons Row (Combined Print/PDF, Calendar Excel, Calendar CSV) -->
+      <div id="ttExportBar" class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100 dark:border-slate-800">
+
+        <div class="flex flex-wrap items-center gap-2.5">
+          <!-- COMBINED PRINT / PDF BUTTON -->
+          <button
+            type="button"
+            id="ttPrintPdfBtn"
+            class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition cursor-pointer"
+            title="Print or Save as PDF Calendar"
+          >
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            <span>🖨️ Print / PDF</span>
+          </button>
+
+          <!-- Export Excel (Calendar-Structured) -->
+          <button
+            type="button"
+            id="ttExportExcelBtn"
+            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 dark:hover:bg-emerald-900/50 transition cursor-pointer shadow-2xs"
+            title="Download Calendar-formatted Excel with notes"
+          >
+            <span>📊</span> <span>Calendar Excel (.xlsx)</span>
+          </button>
+
+          <!-- Export CSV (Calendar-Structured) -->
+          <button
+            type="button"
+            id="ttExportCsvBtn"
+            class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition cursor-pointer shadow-2xs"
+            title="Download Calendar-formatted CSV with notes"
+          >
+            <span>📑</span> <span>Calendar CSV</span>
+          </button>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <!-- Clear Notes Button -->
+          <button
+            type="button"
+            id="ttClearNotesBtn"
+            class="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition cursor-pointer"
+            title="Delete all custom schedule notes"
+          >
+            <span>🗑️ Clear Notes</span>
+          </button>
+
+          <!-- Reset Button -->
+          <button
+            type="button"
+            id="ttResetBtn"
+            class="inline-flex items-center gap-1 px-3 py-2 rounded-xl text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+          >
+            <span>↺ Reset</span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- DEDICATED DATE-WISE NOTE ADDITION SECTION -->
+    <div id="ttDedicatedNotesSection" class="rounded-3xl border border-amber-200/80 dark:border-amber-900/60 bg-amber-50/40 dark:bg-amber-950/20 p-5 sm:p-6 space-y-4">
+      <div class="flex items-center justify-between border-b border-amber-200/60 dark:border-amber-900/40 pb-3">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">📝</span>
+          <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+            Add Date-Wise Note / Event / Reminder
+          </h3>
+        </div>
+        <span class="text-xs text-amber-800 dark:text-amber-300 font-medium">Auto-saves to browser</span>
+      </div>
+
+      <!-- Quick Note Creator Form -->
+      <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+        <!-- Select Date -->
+        <div class="sm:col-span-4 space-y-1">
+          <label for="ttDedicatedDateInput" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+            Select Date
+          </label>
+          <input
+            type="date"
+            id="ttDedicatedDateInput"
+            class="w-full px-3 py-2.5 rounded-xl border border-amber-200 dark:border-amber-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-xs sm:text-sm font-semibold focus:outline-hidden focus:ring-2 focus:ring-amber-500"
+          />
+        </div>
+
+        <!-- Note Text Input -->
+        <div class="sm:col-span-6 space-y-1">
+          <div class="flex items-center justify-between">
+            <label for="ttDedicatedNoteInput" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Schedule Note / Event Details
+            </label>
+            <div class="flex items-center gap-1.5">
+              <button
+                type="button"
+                id="ttDedicatedBoldBtn"
+                class="px-2 py-0.5 rounded text-[11px] font-black bg-white dark:bg-slate-850 border border-amber-300 dark:border-amber-800 text-slate-800 dark:text-white cursor-pointer shadow-2xs hover:bg-amber-100 dark:hover:bg-amber-950 transition"
+                title="Bold"
+              >
+                B
+              </button>
+              <select
+                id="ttDedicatedSizeSelect"
+                class="px-1.5 py-0.5 rounded text-[11px] font-semibold bg-white dark:bg-slate-850 border border-amber-300 dark:border-amber-800 text-slate-800 dark:text-white cursor-pointer"
+              >
+                <option value="normal">Normal</option>
+                <option value="sm">Small</option>
+                <option value="lg">Large</option>
+              </select>
+            </div>
+          </div>
+          <input
+            type="text"
+            id="ttDedicatedNoteInput"
+            placeholder="e.g. **Physics Exam** 10 AM, Project Deadline, Meeting..."
+            class="w-full px-3.5 py-2.5 rounded-xl border border-amber-200 dark:border-amber-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white text-xs sm:text-sm focus:outline-hidden focus:ring-2 focus:ring-amber-500"
+          />
+        </div>
+
+        <!-- Add Button -->
+        <div class="sm:col-span-2">
+          <button
+            type="button"
+            id="ttDedicatedAddNoteBtn"
+            class="w-full py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold bg-amber-600 hover:bg-amber-700 text-white shadow-sm transition cursor-pointer flex items-center justify-center gap-1.5"
+          >
+            <span>+ Save Note</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Active Notes List Box -->
+      <div class="pt-2 space-y-2">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+          Saved Schedule Notes for Active Year:
+        </h4>
+        <div id="ttDedicatedNotesList" class="space-y-2">
+          <!-- Dynamically filled by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN TIMETABLE CONTAINER (Prerendered default static HTML) -->
+    <div id="ttTimetableContainer" class="space-y-8">
+      {initialYearData.months.map((m) => (
+        <div class="month-card rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-xs">
+          <div class="px-4 py-3 bg-linear-to-r from-slate-50 to-blue-50/50 dark:from-slate-950 dark:to-blue-950/20 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <span class="w-2.5 h-2.5 rounded-full bg-blue-600 dark:bg-blue-400"></span>
+              <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+                {m.monthName} {m.year}
+              </h3>
+            </div>
+            <div class="text-xs font-semibold text-slate-500 dark:text-slate-400">
+              {m.days.length} Days
+            </div>
+          </div>
+
+          <div class="p-3 sm:p-5">
+            <div class="grid grid-cols-7 gap-1 sm:gap-2 mb-2">
+              {EN_LOCALE.shortDayNamesSundayStart.map((day, idx) => (
+                <div class={`py-1.5 text-center text-[11px] sm:text-xs font-bold uppercase tracking-wider ${
+                  (idx === 0 || idx === 6)
+                    ? 'text-rose-600 dark:text-rose-400 bg-rose-50/60 dark:bg-rose-950/30 rounded-lg'
+                    : 'text-slate-600 dark:text-slate-400 bg-slate-100/70 dark:bg-slate-800/70 rounded-lg'
+                }`}>
+                  {day}
+                </div>
+              ))}
+            </div>
+
+            <div class="grid grid-cols-7 gap-1 sm:gap-2">
+              {m.calendarWeeks.flat().map((cell) => {
+                if (!cell) {
+                  return <div class="min-h-17.5 sm:min-h-21.25 rounded-xl border border-transparent bg-slate-50/30 dark:bg-slate-900/30 opacity-25"></div>;
+                }
+
+                let cellClasses = 'border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/80 text-slate-800 dark:text-slate-200';
+                if (cell.isWeekend) {
+                  cellClasses = 'border-rose-200/80 dark:border-rose-900/40 bg-rose-50/40 dark:bg-rose-950/20 text-rose-900 dark:text-rose-200';
+                }
+
+                return (
+                  <div class={`min-h-17.5 sm:min-h-21.25 p-1.5 sm:p-2 rounded-xl border ${cellClasses} transition hover:shadow-xs flex flex-col justify-between`}>
+                    <div class="flex items-center justify-between">
+                      <span class="text-xs sm:text-sm font-bold">{cell.dayOfMonth}</span>
+                      {cell.isWeekend && <span class="inline-block text-[9px] font-bold text-rose-600 dark:text-rose-400">W/E</span>}
+                    </div>
+                    <div class="text-[10px] text-slate-400 dark:text-slate-500 truncate print:hidden">
+                      {cell.shortDayName}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+
+    <!-- QUICK DATE NOTE MODAL DIALOG (Supports Multiple Notes) -->
+    <div id="ttNoteModal" class="hidden fixed inset-0 z-50 items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+      <div class="w-full max-w-lg rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+        <div class="flex items-start justify-between">
+          <div>
+            <h3 id="ttNoteModalTitle" class="text-base sm:text-lg font-bold text-slate-900 dark:text-white">
+              Schedule Notes
+            </h3>
+            <p id="ttNoteModalDateStr" class="text-xs text-blue-600 dark:text-blue-400 font-semibold mt-0.5">
+              —
+            </p>
+          </div>
+          <button
+            type="button"
+            id="ttNoteModalCloseBtn"
+            class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-lg font-bold p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+
+        <!-- Existing Notes for this date -->
+        <div id="ttNoteModalExistingSection" class="space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
+              Saved Notes for this Day (<span id="ttNoteModalCount">0</span>):
+            </span>
+          </div>
+          <div id="ttNoteModalExistingList" class="space-y-2 max-h-48 overflow-y-auto pr-1">
+            <!-- Dynamically injected list of note cards with edit & delete buttons -->
+          </div>
+        </div>
+
+        <!-- Add / Edit Note Input Section -->
+        <div class="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <label for="ttNoteModalInput" id="ttNoteModalInputLabel" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+              ➕ Add New Note:
+            </label>
+            <span class="text-[11px] text-slate-400">Bold (B), Italic (I), Size & Colors</span>
+          </div>
+
+          <!-- Formatting Toolbar: Bold, Italic, Font Size, Color Tag -->
+          <div class="flex flex-wrap items-center justify-between gap-1.5 p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
+            <div class="flex items-center gap-1.5">
+              <button
+                type="button"
+                id="ttNoteModalBoldBtn"
+                class="px-2.5 py-1 rounded-lg text-xs font-black bg-white dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-600 cursor-pointer shadow-2xs transition"
+                title="Bold (Wraps text with **)"
+              >
+                B
+              </button>
+              <button
+                type="button"
+                id="ttNoteModalItalicBtn"
+                class="px-2.5 py-1 rounded-lg text-xs italic font-bold bg-white dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-600 cursor-pointer shadow-2xs transition"
+                title="Italic (Wraps text with *)"
+              >
+                I
+              </button>
+              <select
+                id="ttNoteModalSizeSelect"
+                class="px-2 py-1 rounded-lg text-xs font-semibold bg-white dark:bg-slate-700 text-slate-800 dark:text-white border border-slate-200 dark:border-slate-600 cursor-pointer"
+                title="Text Size"
+              >
+                <option value="normal">Normal Size</option>
+                <option value="sm">Small Size</option>
+                <option value="lg">Large Size</option>
+              </select>
+            </div>
+
+            <!-- Color Palette Radios -->
+            <div class="flex items-center gap-1.5" id="ttNoteModalColors">
+              <button type="button" class="tt-modal-color-chip w-5 h-5 rounded-full bg-amber-400 ring-2 ring-amber-600 cursor-pointer" data-color="amber" title="Yellow / Standard"></button>
+              <button type="button" class="tt-modal-color-chip w-5 h-5 rounded-full bg-rose-500 hover:ring-2 hover:ring-rose-400 cursor-pointer" data-color="rose" title="Red / Urgent"></button>
+              <button type="button" class="tt-modal-color-chip w-5 h-5 rounded-full bg-blue-500 hover:ring-2 hover:ring-blue-400 cursor-pointer" data-color="blue" title="Blue / Study"></button>
+              <button type="button" class="tt-modal-color-chip w-5 h-5 rounded-full bg-emerald-500 hover:ring-2 hover:ring-emerald-400 cursor-pointer" data-color="emerald" title="Green / Done"></button>
+              <button type="button" class="tt-modal-color-chip w-5 h-5 rounded-full bg-purple-500 hover:ring-2 hover:ring-purple-400 cursor-pointer" data-color="purple" title="Purple / Priority"></button>
+            </div>
+          </div>
+
+          <textarea
+            id="ttNoteModalInput"
+            rows="3"
+            placeholder="Type note e.g. **Physics Exam** 10 AM, Submit Assignment..."
+            class="w-full p-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-950 text-slate-900 dark:text-white text-sm focus:outline-hidden focus:ring-2 focus:ring-blue-500 resize-none font-sans"
+          ></textarea>
+        </div>
+
+        <div class="flex items-center justify-between gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+          <button
+            type="button"
+            id="ttNoteModalDeleteBtn"
+            class="hidden px-3 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition cursor-pointer"
+          >
+            Clear All Notes
+          </button>
+          <div class="flex items-center gap-2 ml-auto">
+            <button
+              type="button"
+              id="ttNoteModalCancelEditBtn"
+              class="hidden px-3 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition cursor-pointer"
+            >
+              Cancel Edit
+            </button>
+            <button
+              type="button"
+              id="ttNoteModalSaveBtn"
+              class="px-5 py-2 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition cursor-pointer"
+            >
+              + Add Note
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXPORT FEEDBACK TOAST -->
+    <div id="ttExportToast" class="fixed bottom-6 right-6 z-50 px-4 py-2.5 rounded-xl text-sm font-semibold shadow-lg transition-all duration-300 transform opacity-0 translate-y-4 pointer-events-none flex items-center gap-2 bg-emerald-600 text-white">
+      <span id="ttExportToastMsg">Success</span>
+    </div>
+
+    <!-- CLIENT SCRIPT LOADER -->
+    <script is:inline src="/js/tools/monthly-time-table-maker.js"></script>
+  </div>
+
+  <!-- ================= RICH TAILWIND SEO CONTENT SLOT ================= -->
+  <Fragment slot="content">
+    <div class="space-y-12 text-slate-700 dark:text-slate-300 not-prose">
+
+      <!-- SECTION 1: OVERVIEW -->
+      <section class="space-y-4">
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-white">
+          Calendar Grid Timetable Maker with Date-Wise Notes & Unified Print / PDF
+        </h2>
+        <p class="leading-relaxed">
+          The <strong>Monthly Time Table Maker</strong> provides students, professionals, and project planners with a powerful, astronomical-grade calendar and scheduling generator. Generate beautiful, structured monthly and annual schedules for any year from <strong>1900 to 2100</strong> with seamless <strong>date-wise note tracking</strong> and versatile export options.
+        </p>
+        <p class="leading-relaxed">
+          Unlike ordinary table generators, our tool supports <strong>Calendar-structured Excel (.xlsx) and CSV exports</strong> where dates and notes are organized in 7-column monthly calendar grids. With our unified <strong>Print / PDF</strong> feature, you can instantly print or save your active <strong>Calendar, Table, or Full Year</strong> view to high-resolution vector PDF.
+        </p>
+      </section>
+
+      <!-- SECTION 2: HOW TO ADD DATE-WISE NOTES -->
+      <section class="space-y-4">
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-white">
+          How to Add Date-Wise Notes & Export in Calendar Structure
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
+            <div class="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300 font-bold flex items-center justify-center">1</div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Add Date-Wise Notes</h3>
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+              Use the dedicated "Add Date-Wise Note" box to select any date and save reminders, exams, shifts, or tasks with instant browser persistence.
+            </p>
+          </div>
+          <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
+            <div class="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300 font-bold flex items-center justify-center">2</div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Calendar Excel & CSV</h3>
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+              Download Excel workbooks and CSV files formatted in 7-column calendar grids with all notes neatly arranged beneath each date.
+            </p>
+          </div>
+          <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2">
+            <div class="w-8 h-8 rounded-xl bg-blue-100 dark:bg-blue-900/60 text-blue-600 dark:text-blue-300 font-bold flex items-center justify-center">3</div>
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Unified Print / PDF</h3>
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+              Click the single "Print / PDF" button to print directly or save as vector PDF matching your active Calendar, Table, or Full Year layout.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 3: USE CASES -->
+      <section class="space-y-4">
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-white">
+          Popular Use Cases
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+            <h3 class="font-bold text-slate-900 dark:text-white mb-1">🎓 Exam Schedules & Academic Planning</h3>
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+              Add dates for midterms, finals, coursework deadlines, and holidays across all 12 months for seamless revision planning.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+            <h3 class="font-bold text-slate-900 dark:text-white mb-1">🏢 Work Shift & Roster Management</h3>
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+              Filter weekdays for team project milestones or mark weekend rotational on-call shifts and employee vacation dates.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+            <h3 class="font-bold text-slate-900 dark:text-white mb-1">🏃 Daily Workout & Habit Tracking</h3>
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+              Print clean monthly calendar grids to mark workout completion, fitness streaks, meditation routines, and hydration goals.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50">
+            <h3 class="font-bold text-slate-900 dark:text-white mb-1">📊 Budget Cycles & Bill Payment Reminders</h3>
+            <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+              Export to calendar-structured Excel sheets to manage recurring monthly subscriptions, invoice deadlines, and payroll schedules.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- SECTION 4: FAQS -->
+      <section class="space-y-4">
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-white">
+          Frequently Asked Questions
+        </h2>
+        <div class="space-y-3">
+          {faqs.map((faq) => (
+            <details class="group rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 transition-all duration-200 open:shadow-xs">
+              <summary class="flex cursor-pointer items-center justify-between text-sm font-bold text-slate-900 dark:text-white list-none">
+                <span>{faq.question}</span>
+                <span class="ml-2 text-slate-400 transition-transform duration-200 group-open:rotate-180">▼</span>
+              </summary>
+              <div class="mt-3 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800">
+                {faq.answer}
+              </div>
+            </details>
+          ))}
+        </div>
+      </section>
+
+    </div>
+  </Fragment>
+</CalculatorLayout>

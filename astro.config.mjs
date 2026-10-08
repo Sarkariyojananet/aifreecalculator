@@ -28,6 +28,19 @@ export default defineConfig({
     '/tools': '/free-online-tools/',
     '/weight-calculator': '/general/weight-calculator/',
     '/age-calculator': '/general/age-calculator/',
+    '/image-tools/compress-image': '/free-online-tools/image-compressor/',
+    '/image-tools/image-compressor': '/free-online-tools/image-compressor/',
+    '/image-tools/resize-image': '/free-online-tools/image-resizer/',
+    '/image-tools/image-resizer': '/free-online-tools/image-resizer/',
+    '/image-tools/jpg-to-png': '/free-online-tools/jpg-to-png/',
+    '/image-tools/png-to-jpg': '/free-online-tools/png-to-jpg/',
+    '/image-tools/qr-code-generator': '/free-online-tools/qr-code-generator/',
+    '/free-online-tools/pdf-merge': '/pdf-tools/pdf-merge/',
+    '/free-online-tools/pdf-split': '/pdf-tools/pdf-split/',
+    '/free-online-tools/pdf-compress': '/pdf-tools/pdf-compress/',
+    '/free-online-tools/pdf-to-image': '/pdf-tools/pdf-to-image/',
+    '/free-online-tools/image-to-pdf': '/pdf-tools/image-to-pdf/',
+    '/free-online-tools/monthly-time-table-maker': '/time-table-tools/monthly-time-table-maker/',
   },
 
   cache: {
@@ -125,6 +138,7 @@ export default defineConfig({
     optimizeDeps: {
       include: ['astro/assets/services/noop', 'astro/app/manifest'],
       exclude: [
+        'astro:middleware',
         '@astrojs/cloudflare',
         '@astrojs/cloudflare/cache',
         '@astrojs/cloudflare/cache/provider',
@@ -144,6 +158,7 @@ export default defineConfig({
       ],
       optimizeDeps: {
         exclude: [
+          'astro:middleware',
           '@astrojs/cloudflare',
           '@astrojs/cloudflare/cache',
           '@astrojs/cloudflare/cache/provider',

@@ -1,0 +1,565 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+
+const faqs = [
+  {
+    question: "How do I crop an image online for free?",
+    answer: "Upload your image, choose an aspect ratio preset (such as 1:1 Square, 16:9 Widescreen, or Freeform), adjust the crop boundary box by dragging its handles, and click 'Crop & Download'. The entire process runs 100% locally in your browser."
+  },
+  {
+    question: "Which aspect ratios are available?",
+    answer: "We support Freeform (custom dimensions), 1:1 (Instagram square & profile pictures), 16:9 (YouTube thumbnails & banners), 4:3 (standard presentation), 9:16 (Instagram Reels & TikTok stories), and 3:2 (standard DSLR photography)."
+  },
+  {
+    question: "Are my photos uploaded to a remote server?",
+    answer: "No. Your images are never uploaded to our servers. The cropping is computed directly on your device using HTML5 Canvas rendering."
+  },
+  {
+    question: "Can I save the cropped image with a transparent background?",
+    answer: "Yes. If your original image is a PNG with transparency or you select PNG output format, transparency is fully preserved in the cropped output."
+  }
+];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqs.map(faq => ({
+    "@type": "Question",
+    "name": faq.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": faq.answer
+    }
+  }))
+};
+---
+
+<CalculatorLayout
+  title="Crop Image Online - Free In-Browser Image Cropper"
+  description="Crop JPG, PNG, and WebP images online for free. Interactive crop box, aspect ratio presets (1:1, 16:9, 4:3, 9:16), and instant client-side download."
+  category="Image Tools"
+  calculatorName="Crop Image Online"
+  slug="crop-image"
+  keywords={[
+    'crop image online',
+    'image cropper',
+    'photo cropper',
+    'crop picture online',
+    'cut image',
+    'square crop 1:1',
+    '16:9 image crop',
+    'free online image cropper'
+  ]}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <div class="space-y-6">
+    <!-- Privacy Guarantee Banner -->
+    <div class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5 text-xs text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300">
+      <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold">
+        🛡️
+      </div>
+      <div>
+        <span class="font-bold">100% Client-Side Privacy:</span>
+        Your photos are cropped directly on your device. Zero images are transmitted over the network.
+      </div>
+    </div>
+
+    <!-- Upload Section -->
+    <section id="upload-zone" class="transition-all">
+      <div
+        id="drop-zone"
+        tabindex="0"
+        role="button"
+        aria-label="Upload image area: Click or drag and drop an image to crop"
+        class="group relative flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-8 text-center transition-all duration-200 hover:border-blue-500 hover:bg-blue-50/40 focus:border-blue-500 focus:outline-hidden focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-blue-500 dark:hover:bg-blue-950/20 sm:p-12 cursor-pointer"
+      >
+        <input
+          type="file"
+          id="file-input"
+          accept="image/jpeg,image/png,image/webp"
+          class="sr-only"
+        />
+        <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 text-3xl text-blue-600 transition group-hover:scale-105 group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-950 dark:text-blue-400">
+          ✂️
+        </div>
+        <h2 class="mt-4 text-lg font-bold text-slate-900 dark:text-white sm:text-xl">
+          Choose an image or drag & drop here
+        </h2>
+        <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400 sm:text-sm max-w-md">
+          Supports <strong>JPG, JPEG, PNG, and WebP</strong>. Crop freely or choose standard social media aspect ratios.
+        </p>
+        <div class="mt-5 flex flex-wrap items-center justify-center gap-3">
+          <button
+            type="button"
+            id="btn-select"
+            class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-blue-700 cursor-pointer sm:text-sm"
+          >
+            📁 Select Image
+          </button>
+          <span class="text-xs text-slate-400">or paste from clipboard (Ctrl+V)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Cropping Workspace (Hidden until image selected) -->
+    <section id="workspace-zone" class="hidden space-y-6">
+
+      <!-- Aspect Ratio & Format Controls -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 sm:p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 dark:border-slate-800">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Aspect Ratio Preset</span>
+            <div class="mt-2 flex flex-wrap gap-2">
+              <button type="button" data-ratio="free" class="ratio-btn active rounded-lg border-2 border-blue-600 bg-blue-50 px-3 py-1.5 text-xs font-bold text-blue-600 dark:border-blue-500 dark:bg-blue-950/60 dark:text-blue-300 cursor-pointer">
+                Freeform
+              </button>
+              <button type="button" data-ratio="1:1" class="ratio-btn rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 hover:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer">
+                1:1 Square
+              </button>
+              <button type="button" data-ratio="16:9" class="ratio-btn rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 hover:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer">
+                16:9 Banner
+              </button>
+              <button type="button" data-ratio="4:3" class="ratio-btn rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 hover:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer">
+                4:3 Standard
+              </button>
+              <button type="button" data-ratio="9:16" class="ratio-btn rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 hover:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer">
+                9:16 Story
+              </button>
+              <button type="button" data-ratio="3:2" class="ratio-btn rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-bold text-slate-700 hover:border-blue-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer">
+                3:2 Photo
+              </button>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2 text-xs">
+            <label for="format-select" class="font-bold text-slate-600 dark:text-slate-300">Format:</label>
+            <select
+              id="format-select"
+              class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 font-semibold text-slate-800 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200"
+            >
+              <option value="image/png" selected>PNG (Lossless)</option>
+              <option value="image/jpeg">JPG / JPEG</option>
+              <option value="image/webp">WebP</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between text-xs text-slate-500">
+          <span>Crop Dimensions: <strong id="crop-stats" class="text-slate-900 dark:text-white">-- × -- px</strong></span>
+          <span>Original: <strong id="orig-dims" class="text-slate-700 dark:text-slate-300">-- × -- px</strong></span>
+        </div>
+      </div>
+
+      <!-- Interactive Canvas Cropping Stage -->
+      <div class="relative flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-slate-950 p-4 shadow-inner min-h-[380px] overflow-hidden select-none">
+        <canvas id="crop-canvas" class="max-w-full max-h-[500px] object-contain cursor-crosshair"></canvas>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <button
+          type="button"
+          id="btn-reset"
+          class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+        >
+          🔄 Choose Another Image
+        </button>
+
+        <div class="flex items-center gap-2">
+          <button
+            type="button"
+            id="btn-perform-crop"
+            class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-md hover:bg-blue-700 cursor-pointer transition"
+          >
+            ✂️ Crop & Download Image
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Educational Guide -->
+  <div class="mt-12 space-y-8 text-slate-700 dark:text-slate-300 text-sm leading-relaxed border-t border-slate-200 pt-8 dark:border-slate-800">
+    <section class="space-y-3">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        Why Crop Images with Exact Aspect Ratios?
+      </h2>
+      <p>
+        Cropping is essential for focusing on the primary subject of a photograph, removing unwanted background distractions, and fitting images perfectly into specific container dimensions for digital platforms.
+      </p>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+        <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="font-bold text-slate-900 dark:text-white">1:1 Square Ratio</h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            Instagram feed posts, LinkedIn profile avatars, Discord icons, and e-commerce product listings.
+          </p>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="font-bold text-slate-900 dark:text-white">16:9 Widescreen</h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            YouTube video thumbnails, PowerPoint presentations, Twitter/X banner headers, and web hero graphics.
+          </p>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+          <h3 class="font-bold text-slate-900 dark:text-white">9:16 Vertical Story</h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            Instagram Stories, Reels, TikTok videos, YouTube Shorts, and full-screen mobile smartphone wallpapers.
+          </p>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    (function initImageCropper() {
+      let originalImage: HTMLImageElement | null = null;
+      let originalFile: File | null = null;
+      let selectedRatio: string = 'free'; // 'free', '1:1', '16:9', '4:3', '9:16', '3:2'
+
+      const uploadZone = document.getElementById('upload-zone');
+      const dropZone = document.getElementById('drop-zone');
+      const fileInput = document.getElementById('file-input') as HTMLInputElement | null;
+      const btnSelect = document.getElementById('btn-select');
+      const workspaceZone = document.getElementById('workspace-zone');
+      const btnReset = document.getElementById('btn-reset');
+      const btnPerformCrop = document.getElementById('btn-perform-crop');
+      const formatSelect = document.getElementById('format-select') as HTMLSelectElement | null;
+      const canvas = document.getElementById('crop-canvas') as HTMLCanvasElement | null;
+      const cropStats = document.getElementById('crop-stats');
+      const origDims = document.getElementById('orig-dims');
+      const ratioBtns = document.querySelectorAll<HTMLButtonElement>('.ratio-btn');
+
+      // Crop box state in image coordinate system
+      let cropX = 0;
+      let cropY = 0;
+      let cropW = 0;
+      let cropH = 0;
+
+      // Dragging state
+      let isDragging = false;
+      let dragHandle: string | null = null; // 'center', 'tl', 'tr', 'bl', 'br'
+      let startMouseX = 0;
+      let startMouseY = 0;
+      let startCropX = 0;
+      let startCropY = 0;
+      let startCropW = 0;
+      let startCropH = 0;
+
+      function handleFile(file: File) {
+        if (!file || !file.type.startsWith('image/')) return;
+        originalFile = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            originalImage = img;
+            if (origDims) origDims.textContent = `${img.naturalWidth} × ${img.naturalHeight} px`;
+
+            // Initialize default crop to center 80%
+            cropW = Math.round(img.naturalWidth * 0.8);
+            cropH = Math.round(img.naturalHeight * 0.8);
+            cropX = Math.round((img.naturalWidth - cropW) / 2);
+            cropY = Math.round((img.naturalHeight - cropH) / 2);
+
+            applyAspectConstraint();
+
+            if (uploadZone) uploadZone.classList.add('hidden');
+            if (workspaceZone) workspaceZone.classList.remove('hidden');
+
+            renderCanvas();
+          };
+          img.src = e.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function applyAspectConstraint() {
+        if (!originalImage || selectedRatio === 'free') return;
+        const [rW, rH] = selectedRatio.split(':').map(Number);
+        const targetAspect = rW / rH;
+
+        let newW = cropW;
+        let newH = Math.round(newW / targetAspect);
+
+        if (newH > originalImage.naturalHeight) {
+          newH = originalImage.naturalHeight;
+          newW = Math.round(newH * targetAspect);
+        }
+        if (newW > originalImage.naturalWidth) {
+          newW = originalImage.naturalWidth;
+          newH = Math.round(newW / targetAspect);
+        }
+
+        cropW = Math.max(20, newW);
+        cropH = Math.max(20, newH);
+
+        // Keep within bounds
+        if (cropX + cropW > originalImage.naturalWidth) {
+          cropX = Math.max(0, originalImage.naturalWidth - cropW);
+        }
+        if (cropY + cropH > originalImage.naturalHeight) {
+          cropY = Math.max(0, originalImage.naturalHeight - cropH);
+        }
+      }
+
+      function renderCanvas() {
+        if (!canvas || !originalImage) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        canvas.width = originalImage.naturalWidth;
+        canvas.height = originalImage.naturalHeight;
+
+        // Draw main image
+        ctx.drawImage(originalImage, 0, 0);
+
+        // Draw dark overlay outside crop region
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+        ctx.fillRect(0, 0, canvas.width, cropY); // top
+        ctx.fillRect(0, cropY + cropH, canvas.width, canvas.height - (cropY + cropH)); // bottom
+        ctx.fillRect(0, cropY, cropX, cropH); // left
+        ctx.fillRect(cropX + cropW, cropY, canvas.width - (cropX + cropW), cropH); // right
+
+        // Draw crop border
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = Math.max(2, Math.round(canvas.width / 400));
+        ctx.strokeRect(cropX, cropY, cropW, cropH);
+
+        // Draw rule of thirds grid
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        // vertical thirds
+        ctx.moveTo(cropX + cropW / 3, cropY);
+        ctx.lineTo(cropX + cropW / 3, cropY + cropH);
+        ctx.moveTo(cropX + (2 * cropW) / 3, cropY);
+        ctx.lineTo(cropX + (2 * cropW) / 3, cropY + cropH);
+        // horizontal thirds
+        ctx.moveTo(cropX, cropY + cropH / 3);
+        ctx.lineTo(cropX + cropW, cropY + cropH / 3);
+        ctx.moveTo(cropX, cropY + (2 * cropH) / 3);
+        ctx.lineTo(cropX + cropW, cropY + (2 * cropH) / 3);
+        ctx.stroke();
+
+        // Draw corner handles
+        const handleSize = Math.max(12, Math.round(canvas.width / 80));
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#2563eb';
+        ctx.lineWidth = 2;
+
+        const handles = [
+          [cropX, cropY], // TL
+          [cropX + cropW, cropY], // TR
+          [cropX, cropY + cropH], // BL
+          [cropX + cropW, cropY + cropH], // BR
+        ];
+
+        handles.forEach(([hx, hy]) => {
+          ctx.fillRect(hx - handleSize / 2, hy - handleSize / 2, handleSize, handleSize);
+          ctx.strokeRect(hx - handleSize / 2, hy - handleSize / 2, handleSize, handleSize);
+        });
+
+        if (cropStats) {
+          cropStats.textContent = `${Math.round(cropW)} × ${Math.round(cropH)} px`;
+        }
+      }
+
+      function getCanvasCoords(e: MouseEvent): { x: number; y: number } {
+        if (!canvas) return { x: 0, y: 0 };
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        return {
+          x: (e.clientX - rect.left) * scaleX,
+          y: (e.clientY - rect.top) * scaleY,
+        };
+      }
+
+      function getHandleAt(x: number, y: number): string | null {
+        if (!canvas) return null;
+        const handleSize = Math.max(18, Math.round(canvas.width / 60));
+        const dist = (x1: number, y1: number, x2: number, y2: number) => Math.hypot(x1 - x2, y1 - y2);
+
+        if (dist(x, y, cropX, cropY) < handleSize) return 'tl';
+        if (dist(x, y, cropX + cropW, cropY) < handleSize) return 'tr';
+        if (dist(x, y, cropX, cropY + cropH) < handleSize) return 'bl';
+        if (dist(x, y, cropX + cropW, cropY + cropH) < handleSize) return 'br';
+
+        if (x >= cropX && x <= cropX + cropW && y >= cropY && y <= cropY + cropH) {
+          return 'center';
+        }
+        return null;
+      }
+
+      canvas?.addEventListener('mousedown', (e) => {
+        const { x, y } = getCanvasCoords(e);
+        const handle = getHandleAt(x, y);
+        if (handle) {
+          isDragging = true;
+          dragHandle = handle;
+          startMouseX = x;
+          startMouseY = y;
+          startCropX = cropX;
+          startCropY = cropY;
+          startCropW = cropW;
+          startCropH = cropH;
+        }
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging || !originalImage || !dragHandle) return;
+        const { x, y } = getCanvasCoords(e);
+        const dx = x - startMouseX;
+        const dy = y - startMouseY;
+
+        if (dragHandle === 'center') {
+          cropX = Math.max(0, Math.min(originalImage.naturalWidth - cropW, startCropX + dx));
+          cropY = Math.max(0, Math.min(originalImage.naturalHeight - cropH, startCropY + dy));
+        } else {
+          let newW = startCropW;
+          let newH = startCropH;
+          let newX = startCropX;
+          let newY = startCropY;
+
+          if (dragHandle === 'br') {
+            newW = Math.max(30, startCropW + dx);
+            newH = Math.max(30, startCropH + dy);
+          } else if (dragHandle === 'tr') {
+            newW = Math.max(30, startCropW + dx);
+            newH = Math.max(30, startCropH - dy);
+            newY = startCropY + (startCropH - newH);
+          } else if (dragHandle === 'bl') {
+            newW = Math.max(30, startCropW - dx);
+            newH = Math.max(30, startCropH + dy);
+            newX = startCropX + (startCropW - newW);
+          } else if (dragHandle === 'tl') {
+            newW = Math.max(30, startCropW - dx);
+            newH = Math.max(30, startCropH - dy);
+            newX = startCropX + (startCropW - newW);
+            newY = startCropY + (startCropH - newH);
+          }
+
+          if (selectedRatio !== 'free') {
+            const [rW, rH] = selectedRatio.split(':').map(Number);
+            newH = Math.round(newW / (rW / rH));
+          }
+
+          // Boundary checks
+          if (newX >= 0 && newX + newW <= originalImage.naturalWidth) {
+            cropX = newX;
+            cropW = newW;
+          }
+          if (newY >= 0 && newY + newH <= originalImage.naturalHeight) {
+            cropY = newY;
+            cropH = newH;
+          }
+        }
+        renderCanvas();
+      });
+
+      window.addEventListener('mouseup', () => {
+        isDragging = false;
+        dragHandle = null;
+      });
+
+      // Ratio Button Switching
+      ratioBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          ratioBtns.forEach((b) => {
+            b.classList.remove('active', 'border-2', 'border-blue-600', 'bg-blue-50', 'text-blue-600', 'dark:border-blue-500', 'dark:bg-blue-950/60', 'dark:text-blue-300');
+            b.classList.add('border-slate-200', 'bg-slate-50', 'text-slate-700', 'dark:border-slate-700', 'dark:bg-slate-800', 'dark:text-slate-200');
+          });
+          btn.classList.add('active', 'border-2', 'border-blue-600', 'bg-blue-50', 'text-blue-600', 'dark:border-blue-500', 'dark:bg-blue-950/60', 'dark:text-blue-300');
+          btn.classList.remove('border-slate-200', 'bg-slate-50', 'text-slate-700', 'dark:border-slate-700', 'dark:bg-slate-800', 'dark:text-slate-200');
+
+          selectedRatio = btn.getAttribute('data-ratio') || 'free';
+          applyAspectConstraint();
+          renderCanvas();
+        });
+      });
+
+      // Export Cropped Result
+      btnPerformCrop?.addEventListener('click', () => {
+        if (!originalImage) return;
+        const outCanvas = document.createElement('canvas');
+        outCanvas.width = Math.round(cropW);
+        outCanvas.height = Math.round(cropH);
+        const outCtx = outCanvas.getContext('2d');
+        if (!outCtx) return;
+
+        outCtx.drawImage(
+          originalImage,
+          Math.round(cropX),
+          Math.round(cropY),
+          Math.round(cropW),
+          Math.round(cropH),
+          0,
+          0,
+          outCanvas.width,
+          outCanvas.height
+        );
+
+        const mime = formatSelect?.value || 'image/png';
+        const ext = mime === 'image/png' ? 'png' : mime === 'image/webp' ? 'webp' : 'jpg';
+        const baseName = originalFile?.name.replace(/\.[^/.]+$/, '') || 'cropped-image';
+
+        outCanvas.toBlob((blob) => {
+          if (!blob) return;
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${baseName}-cropped.${ext}`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(() => URL.revokeObjectURL(url), 2000);
+        }, mime, 0.95);
+      });
+
+      btnSelect?.addEventListener('click', () => fileInput?.click());
+      dropZone?.addEventListener('click', (e) => {
+        if (e.target !== btnSelect) fileInput?.click();
+      });
+
+      fileInput?.addEventListener('change', (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) handleFile(file);
+      });
+
+      dropZone?.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-blue-500', 'bg-blue-50/50');
+      });
+
+      dropZone?.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-blue-500', 'bg-blue-50/50');
+      });
+
+      dropZone?.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-blue-500', 'bg-blue-50/50');
+        const file = e.dataTransfer?.files?.[0];
+        if (file) handleFile(file);
+      });
+
+      document.addEventListener('paste', (e) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.indexOf('image') !== -1) {
+            const file = items[i].getAsFile();
+            if (file) handleFile(file);
+            break;
+          }
+        }
+      });
+
+      btnReset?.addEventListener('click', () => {
+        if (fileInput) fileInput.value = '';
+        if (uploadZone) uploadZone.classList.remove('hidden');
+        if (workspaceZone) workspaceZone.classList.add('hidden');
+      });
+    })();
+  </script>
+</CalculatorLayout>

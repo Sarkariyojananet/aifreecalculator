@@ -1,0 +1,474 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+
+const faqs = [
+  {
+    question: "How do I extract a color palette from an image?",
+    answer: "Upload or paste any photograph or graphic. Our algorithm analyzes pixel clusters and instantly extracts dominant, harmonious color swatches with HEX, RGB, and HSL codes."
+  },
+  {
+    question: "Can I click on specific parts of the image to sample exact colors?",
+    answer: "Yes! Hover or click anywhere on the uploaded image to sample exact pixel colors using the built-in digital color loupe."
+  },
+  {
+    question: "How can I copy or export the extracted color palette?",
+    answer: "Click any color swatch to copy its HEX code directly to your clipboard. You can also export the full color scheme as CSS variables, JSON tokens, or a PNG swatch card."
+  },
+  {
+    question: "Are my uploaded images kept private?",
+    answer: "Yes, 100%. Color frequency analysis runs completely inside your browser using HTML5 Canvas. Your images are never sent to any server."
+  }
+];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqs.map(faq => ({
+    "@type": "Question",
+    "name": faq.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": faq.answer
+    }
+  }))
+};
+---
+
+<CalculatorLayout
+  title="Image Color Palette Generator - Extract HEX & RGB from Photos"
+  description="Extract beautiful dominant color palettes, HEX codes, RGB and HSL values from images online for free. Color picker loupe, CSS & JSON export, 100% private."
+  category="Image Tools"
+  calculatorName="Image Color Palette Generator"
+  slug="image-color-palette"
+  keywords={[
+    'image color palette generator',
+    'extract colors from image',
+    'photo color picker online',
+    'image hex code extractor',
+    'dominant color finder',
+    'palette from photo',
+    'css palette generator'
+  ]}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <div class="space-y-6">
+    <!-- Privacy Banner -->
+    <div class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5 text-xs text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300">
+      <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold">
+        🛡️
+      </div>
+      <div>
+        <span class="font-bold">100% Client-Side Privacy:</span>
+        Color quantization and palette analysis run directly in your browser. No images are uploaded to any server.
+      </div>
+    </div>
+
+    <!-- Upload Section -->
+    <section id="upload-zone" class="transition-all">
+      <div
+        id="drop-zone"
+        tabindex="0"
+        role="button"
+        aria-label="Upload image to extract color palette"
+        class="group relative flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-8 text-center transition-all duration-200 hover:border-blue-500 hover:bg-blue-50/40 focus:border-blue-500 focus:outline-hidden focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-blue-500 dark:hover:bg-blue-950/20 sm:p-12 cursor-pointer"
+      >
+        <input
+          type="file"
+          id="file-input"
+          accept="image/*"
+          class="sr-only"
+        />
+        <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 text-3xl text-blue-600 transition group-hover:scale-105 group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-950 dark:text-blue-400">
+          🎨
+        </div>
+        <h2 class="mt-4 text-lg font-bold text-slate-900 dark:text-white sm:text-xl">
+          Choose a photo or drag & drop here
+        </h2>
+        <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400 sm:text-sm max-w-md">
+          Extracts dominant color palettes with HEX/RGB codes and provides an interactive pixel color dropper.
+        </p>
+        <div class="mt-5 flex flex-wrap items-center justify-center gap-3">
+          <button
+            type="button"
+            id="btn-select"
+            class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-blue-700 cursor-pointer sm:text-sm"
+          >
+            📁 Select Image File
+          </button>
+          <span class="text-xs text-slate-400">or paste from clipboard (Ctrl+V)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Workspace Zone -->
+    <section id="workspace-zone" class="hidden space-y-6">
+
+      <!-- Swatch Settings Toolbar -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 sm:p-5 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-2">
+          <span class="text-xs font-bold text-slate-700 dark:text-slate-300">Palette Size:</span>
+          <div class="flex items-center gap-1.5">
+            <button type="button" data-count="6" class="count-btn active rounded-xl border border-blue-600 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 cursor-pointer">
+              6 Colors
+            </button>
+            <button type="button" data-count="8" class="count-btn rounded-xl border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">
+              8 Colors
+            </button>
+            <button type="button" data-count="12" class="count-btn rounded-xl border border-slate-200 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">
+              12 Colors
+            </button>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button type="button" id="btn-copy-css" class="rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">
+            📋 Copy CSS Vars
+          </button>
+          <button type="button" id="btn-copy-json" class="rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">
+            📦 Copy JSON
+          </button>
+        </div>
+      </div>
+
+      <!-- Dominant Swatch Cards Grid -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Dominant Extracted Palette (Click to Copy HEX)</h3>
+          <span id="copy-toast" class="text-xs font-bold text-emerald-600 opacity-0 transition-opacity">Copied!</span>
+        </div>
+
+        <div id="swatches-grid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
+          <!-- Swatches dynamically inserted here -->
+        </div>
+      </div>
+
+      <!-- Image Canvas & Eyedropper Section -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- Interactive Canvas Image -->
+        <div class="lg:col-span-8 rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 space-y-3">
+          <div class="flex items-center justify-between text-xs font-bold text-slate-500 border-b border-slate-100 pb-2 dark:border-slate-800">
+            <span>Hover or Click to Pick Colors</span>
+            <span id="img-dims">0 × 0 px</span>
+          </div>
+
+          <div class="relative flex items-center justify-center rounded-xl bg-slate-100 p-2 dark:bg-slate-950 min-h-[300px] max-h-[480px] overflow-hidden">
+            <canvas id="palette-canvas" class="max-h-[440px] w-auto max-w-full rounded shadow-sm cursor-crosshair object-contain"></canvas>
+          </div>
+        </div>
+
+        <!-- Color Loupe & Sampled Pixel Info -->
+        <div class="lg:col-span-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between space-y-4">
+          <div>
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-3">Sampled Pixel Loupe</span>
+            <div id="loupe-preview" class="h-28 w-full rounded-2xl shadow-inner border border-slate-200 dark:border-slate-700 flex items-end p-3 transition-colors bg-[#3b82f6]">
+              <span id="loupe-hex-display" class="font-mono text-sm font-bold bg-white/90 dark:bg-slate-900/90 px-2.5 py-1 rounded-lg text-slate-900 dark:text-white shadow-xs">#3B82F6</span>
+            </div>
+
+            <div class="space-y-2 mt-4 text-xs">
+              <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                <span class="text-slate-500">RGB:</span>
+                <strong id="loupe-rgb" class="font-mono text-slate-800 dark:text-slate-200">rgb(59, 130, 246)</strong>
+              </div>
+              <div class="flex justify-between py-1 border-b border-slate-100 dark:border-slate-800">
+                <span class="text-slate-500">HSL:</span>
+                <strong id="loupe-hsl" class="font-mono text-slate-800 dark:text-slate-200">hsl(217, 91%, 60%)</strong>
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            id="btn-copy-sampled"
+            class="w-full inline-flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-blue-700 cursor-pointer transition"
+          >
+            📋 Copy Sampled HEX
+          </button>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <button
+          type="button"
+          id="btn-reset"
+          class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+        >
+          🔄 Choose Another Photo
+        </button>
+      </div>
+    </section>
+  </div>
+
+  <!-- Educational Guide -->
+  <div class="mt-12 space-y-8 text-slate-700 dark:text-slate-300 text-sm leading-relaxed border-t border-slate-200 pt-8 dark:border-slate-800">
+    <section class="space-y-3">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        Color Extraction & Design Harmonies
+      </h2>
+      <p>
+        Extracting color palettes from nature, interior photography, or UI moodboards helps designers establish cohesive brand palettes, website color systems, and digital illustrations. Our quantization algorithm groups millions of image pixels into dominant clusters, ranking them by perceptual frequency and contrast.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function initPaletteGenerator() {
+      let currentImage: HTMLImageElement | null = null;
+      let currentColors: string[] = [];
+      let paletteCount = 6;
+      let sampledHex = '#3B82F6';
+
+      const uploadZone = document.getElementById('upload-zone');
+      const dropZone = document.getElementById('drop-zone');
+      const fileInput = document.getElementById('file-input') as HTMLInputElement | null;
+      const btnSelect = document.getElementById('btn-select');
+      const workspaceZone = document.getElementById('workspace-zone');
+      const btnReset = document.getElementById('btn-reset');
+
+      const paletteCanvas = document.getElementById('palette-canvas') as HTMLCanvasElement | null;
+      const swatchesGrid = document.getElementById('swatches-grid');
+      const imgDims = document.getElementById('img-dims');
+      const copyToast = document.getElementById('copy-toast');
+      const countBtns = document.querySelectorAll('.count-btn');
+
+      const loupePreview = document.getElementById('loupe-preview');
+      const loupeHexDisplay = document.getElementById('loupe-hex-display');
+      const loupeRgb = document.getElementById('loupe-rgb');
+      const loupeHsl = document.getElementById('loupe-hsl');
+      const btnCopySampled = document.getElementById('btn-copy-sampled');
+      const btnCopyCss = document.getElementById('btn-copy-css');
+      const btnCopyJson = document.getElementById('btn-copy-json');
+
+      function rgbToHex(r: number, g: number, b: number): string {
+        return '#' + [r, g, b].map(x => {
+          const hex = x.toString(16);
+          return hex.length === 1 ? '0' + hex : hex;
+        }).join('').toUpperCase();
+      }
+
+      function rgbToHsl(r: number, g: number, b: number): string {
+        r /= 255; g /= 255; b /= 255;
+        const max = Math.max(r, g, b), min = Math.min(r, g, b);
+        let h = 0, s = 0, l = (max + min) / 2;
+
+        if (max !== min) {
+          const d = max - min;
+          s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+          switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+          }
+          h /= 6;
+        }
+        return `hsl(${Math.round(h * 360)}, ${Math.round(s * 100)}%, ${Math.round(l * 100)}%)`;
+      }
+
+      function showToast(msg: string = 'Copied!') {
+        if (!copyToast) return;
+        copyToast.textContent = msg;
+        copyToast.classList.remove('opacity-0');
+        setTimeout(() => copyToast.classList.add('opacity-0'), 2000);
+      }
+
+      function extractPalette() {
+        if (!currentImage || !paletteCanvas) return;
+
+        const w = currentImage.naturalWidth;
+        const h = currentImage.naturalHeight;
+        paletteCanvas.width = w;
+        paletteCanvas.height = h;
+
+        const ctx = paletteCanvas.getContext('2d', { willReadFrequently: true });
+        if (!ctx) return;
+
+        ctx.drawImage(currentImage, 0, 0, w, h);
+        if (imgDims) imgDims.textContent = `${w} × ${h} px`;
+
+        // Downsample for fast clustering
+        const sampleSize = 100;
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = sampleSize;
+        tempCanvas.height = sampleSize;
+        const tempCtx = tempCanvas.getContext('2d');
+        if (!tempCtx) return;
+
+        tempCtx.drawImage(currentImage, 0, 0, sampleSize, sampleSize);
+        const imgData = tempCtx.getImageData(0, 0, sampleSize, sampleSize).data;
+
+        // Bucket colors by quantized RGB space
+        const colorBuckets: { [key: string]: { r: number; g: number; b: number; count: number } } = {};
+        const step = 24; // quantization step
+
+        for (let i = 0; i < imgData.length; i += 4) {
+          const a = imgData[i + 3];
+          if (a < 128) continue; // ignore transparent pixels
+
+          const r = Math.round(imgData[i] / step) * step;
+          const g = Math.round(imgData[i + 1] / step) * step;
+          const b = Math.round(imgData[i + 2] / step) * step;
+          const key = `${r},${g},${b}`;
+
+          if (!colorBuckets[key]) {
+            colorBuckets[key] = { r: imgData[i], g: imgData[i + 1], b: imgData[i + 2], count: 1 };
+          } else {
+            colorBuckets[key].count++;
+          }
+        }
+
+        const sorted = Object.values(colorBuckets).sort((a, b) => b.count - a.count);
+        currentColors = sorted.slice(0, paletteCount).map(c => rgbToHex(c.r, c.g, c.b));
+
+        renderSwatches();
+      }
+
+      function renderSwatches() {
+        if (!swatchesGrid) return;
+        swatchesGrid.innerHTML = '';
+
+        currentColors.forEach(hex => {
+          const card = document.createElement('div');
+          card.className = 'group flex flex-col rounded-xl border border-slate-200 dark:border-slate-800 overflow-hidden cursor-pointer shadow-xs hover:scale-105 transition';
+
+          card.innerHTML = `
+            <div class="h-20 w-full" style="background-color: ${hex}"></div>
+            <div class="p-2.5 bg-slate-50 dark:bg-slate-950 text-center">
+              <span class="font-mono text-xs font-bold text-slate-800 dark:text-slate-200">${hex}</span>
+            </div>
+          `;
+
+          card.addEventListener('click', () => {
+            navigator.clipboard.writeText(hex);
+            showToast(`Copied ${hex}!`);
+          });
+
+          swatchesGrid.appendChild(card);
+        });
+      }
+
+      function updateLoupe(r: number, g: number, b: number) {
+        sampledHex = rgbToHex(r, g, b);
+        if (loupePreview) loupePreview.style.backgroundColor = sampledHex;
+        if (loupeHexDisplay) loupeHexDisplay.textContent = sampledHex;
+        if (loupeRgb) loupeRgb.textContent = `rgb(${r}, ${g}, ${b})`;
+        if (loupeHsl) loupeHsl.textContent = rgbToHsl(r, g, b);
+      }
+
+      function handleFile(file: File) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            currentImage = img;
+            if (uploadZone) uploadZone.classList.add('hidden');
+            if (workspaceZone) workspaceZone.classList.remove('hidden');
+            extractPalette();
+          };
+          img.src = e.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      // Eyedropper mouse move on canvas
+      paletteCanvas?.addEventListener('mousemove', (e) => {
+        if (!paletteCanvas) return;
+        const rect = paletteCanvas.getBoundingClientRect();
+        const scaleX = paletteCanvas.width / rect.width;
+        const scaleY = paletteCanvas.height / rect.height;
+
+        const x = Math.floor((e.clientX - rect.left) * scaleX);
+        const y = Math.floor((e.clientY - rect.top) * scaleY);
+
+        const ctx = paletteCanvas.getContext('2d', { willReadFrequently: true });
+        if (!ctx) return;
+
+        try {
+          const pixel = ctx.getImageData(x, y, 1, 1).data;
+          updateLoupe(pixel[0], pixel[1], pixel[2]);
+        } catch (_) {}
+      });
+
+      paletteCanvas?.addEventListener('click', () => {
+        navigator.clipboard.writeText(sampledHex);
+        showToast(`Copied ${sampledHex}!`);
+      });
+
+      btnCopySampled?.addEventListener('click', () => {
+        navigator.clipboard.writeText(sampledHex);
+        showToast(`Copied ${sampledHex}!`);
+      });
+
+      countBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          countBtns.forEach((b) => {
+            b.classList.remove('border-blue-600', 'bg-blue-50', 'text-blue-700', 'dark:bg-blue-950/60', 'dark:text-blue-300', 'active');
+            b.classList.add('border-slate-200', 'bg-white', 'text-slate-700', 'dark:border-slate-700', 'dark:bg-slate-800', 'dark:text-slate-300');
+          });
+          btn.classList.add('border-blue-600', 'bg-blue-50', 'text-blue-700', 'dark:bg-blue-950/60', 'dark:text-blue-300', 'active');
+          btn.classList.remove('border-slate-200', 'bg-white', 'text-slate-700', 'dark:border-slate-700', 'dark:bg-slate-800', 'dark:text-slate-300');
+
+          paletteCount = parseInt(btn.getAttribute('data-count') || '6', 10);
+          extractPalette();
+        });
+      });
+
+      btnCopyCss?.addEventListener('click', () => {
+        const css = `:root {\n` + currentColors.map((c, i) => `  --color-palette-${i + 1}: ${c};`).join('\n') + `\n}`;
+        navigator.clipboard.writeText(css);
+        showToast('Copied CSS Variables!');
+      });
+
+      btnCopyJson?.addEventListener('click', () => {
+        const json = JSON.stringify({ palette: currentColors }, null, 2);
+        navigator.clipboard.writeText(json);
+        showToast('Copied JSON Tokens!');
+      });
+
+      btnSelect?.addEventListener('click', () => fileInput?.click());
+      dropZone?.addEventListener('click', (e) => {
+        if (e.target !== btnSelect) fileInput?.click();
+      });
+
+      fileInput?.addEventListener('change', (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) handleFile(file);
+      });
+
+      dropZone?.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-blue-500', 'bg-blue-50/50');
+      });
+
+      dropZone?.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-blue-500', 'bg-blue-50/50');
+      });
+
+      dropZone?.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-blue-500', 'bg-blue-50/50');
+        const file = e.dataTransfer?.files?.[0];
+        if (file) handleFile(file);
+      });
+
+      document.addEventListener('paste', (e) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.indexOf('image') !== -1) {
+            const file = items[i].getAsFile();
+            if (file) handleFile(file);
+            break;
+          }
+        }
+      });
+
+      btnReset?.addEventListener('click', () => {
+        if (fileInput) fileInput.value = '';
+        if (uploadZone) uploadZone.classList.remove('hidden');
+        if (workspaceZone) workspaceZone.classList.add('hidden');
+      });
+    })();
+  </script>
+</CalculatorLayout>

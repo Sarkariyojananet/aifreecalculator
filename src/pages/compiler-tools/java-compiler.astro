@@ -1,0 +1,181 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+
+const faqs = [
+  {
+    question: "What is an online Java compiler?",
+    answer: "An online Java compiler is a web-based coding environment that enables developers and students to write, compile, and execute Java programs without installing JDK or configuring PATH variables."
+  },
+  {
+    question: "What class name should I use?",
+    answer: "By default, your primary code should be placed in `public class Main` with the standard `public static void main(String[] args)` entry method."
+  },
+  {
+    question: "Can I use Scanner for user input?",
+    answer: "Yes, you can enter your input values in the custom STDIN box before executing, and java.util.Scanner will process them properly."
+  },
+  {
+    question: "Can I download my Java source code?",
+    answer: "Yes, clicking the 'Download .java' button saves a clean Main.java file directly to your system."
+  },
+  {
+    question: "Is this Java compiler free?",
+    answer: "Yes, it is 100% free with unlimited runs, zero subscriptions, and no registration required."
+  },
+  {
+    question: "What keyboard shortcut compiles Java code?",
+    answer: "Press Ctrl + Enter (Cmd + Enter on macOS) while inside the code editor to compile and run your code immediately."
+  },
+  {
+    question: "Can I practice data structures and algorithms in Java?",
+    answer: "Yes. You can implement ArrayLists, HashMaps, linked lists, sorting algorithms, recursion, and object-oriented inheritance."
+  },
+  {
+    question: "Does it work on mobile phones and tablets?",
+    answer: "Yes, the editor is responsive and touch-friendly, allowing you to code and run Java on Android, iPhone, iPad, and laptops."
+  }
+];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqs.map((faq) => ({
+    "@type": "Question",
+    "name": faq.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": faq.answer
+    }
+  }))
+};
+const defaultCode = `public class Main {
+    public static void main(String[] args) {
+        System.out.println("Hello, World from Online Java Compiler!");
+
+        int a = 15;
+        int b = 30;
+        int sum = a + b;
+
+        System.out.println("Calculation Result: " + sum);
+    }
+}
+`;
+
+const templatesJson = JSON.stringify({
+  hello: `public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, World!");\n    }\n}`,
+  arraylist: `import java.util.ArrayList;\n\npublic class Main {\n    public static void main(String[] args) {\n        ArrayList<String> fruits = new ArrayList<>();\n        fruits.add("Apple");\n        fruits.add("Banana");\n        fruits.add("Orange");\n        System.out.println("Fruits list: " + fruits);\n    }\n}`,
+  fibonacci: `public class Main {\n    public static int fib(int n) {\n        if (n <= 1) return n;\n        return fib(n - 1) + fib(n - 2);\n    }\n    public static void main(String[] args) {\n        int n = 8;\n        System.out.println("Fibonacci term " + n + ": " + fib(n));\n    }\n}`,
+  oop: `class Car {\n    String model;\n    int year;\n    Car(String m, int y) { model = m; year = y; }\n    void info() { System.out.println("Car: " + model + " (" + year + ")"); }\n}\n\npublic class Main {\n    public static void main(String[] args) {\n        Car myCar = new Car("Tesla Model 3", 2024);\n        myCar.info();\n    }\n}`
+});
+---
+
+<CalculatorLayout
+  title="Online Java Compiler - Write & Run Java Code Online"
+  description="Write, debug, and run standard Java programs online. Fast cloud execution, custom console input, and instant error stack trace inspection."
+  category="Compiler Tools"
+  calculatorName="Online Java Compiler"
+  slug="java-compiler"
+  keywords={[
+    'online java compiler',
+    'java compiler',
+    'run java online',
+    'java compiler online',
+    'online java ide',
+    'java code runner'
+  ]}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <div class="space-y-6">
+    <!-- Header Hero Intro -->
+    <div class="text-center max-w-3xl mx-auto space-y-3">
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-orange-50 dark:bg-orange-950/60 border border-orange-200 dark:border-orange-800/80 text-orange-700 dark:text-orange-300 text-xs font-semibold tracking-wide">
+        <span>☕</span>
+        <span>OpenJDK • Interactive Terminal & STDIN • Zero Installation</span>
+      </div>
+
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+        Online Java Compiler
+      </h1>
+
+      <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
+        Write, compile, and execute <strong>standard Java code online</strong>. Test algorithms, practice object-oriented programming, pass custom console inputs, and debug exceptions in real time.
+      </p>
+    </div>
+
+    <!-- Interactive Code Editor Widget -->
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
+      <!-- Editor Action Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
+        <div class="flex items-center gap-2">
+          <span class="flex h-3 w-3 rounded-full bg-orange-500"></span>
+          <span class="font-mono text-xs font-bold text-slate-700 dark:text-slate-200">Main.java</span>
+          <span class="text-xs text-slate-400">|</span>
+          <label class="text-xs text-slate-500 dark:text-slate-400">Template:</label>
+          <select id="code-runner-templates" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+            <option value="hello">Hello World</option>
+            <option value="arraylist">ArrayList & Collections</option>
+            <option value="fibonacci">Fibonacci Recursion</option>
+            <option value="oop">OOP Class & Methods</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button id="code-runner-copy" type="button" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+            📋 Copy
+          </button>
+          <button id="code-runner-download" type="button" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+            💾 Download .java
+          </button>
+          <button id="code-runner-clear" type="button" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:border-slate-700 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-slate-700">
+            🗑️ Clear
+          </button>
+          <button id="code-runner-btn" type="button" class="inline-flex items-center gap-1.5 rounded-lg bg-orange-600 px-4 py-1.5 text-xs font-bold text-white shadow-md hover:bg-orange-700 active:scale-95 transition">
+            ▶ Run Code <span class="hidden sm:inline text-[10px] opacity-80">(Ctrl+Enter)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Code Textarea Editor -->
+      <div class="relative bg-[#1e1e2e]">
+        <textarea
+          id="code-runner-input"
+          class="w-full h-80 sm:h-96 p-4 font-mono text-sm leading-relaxed text-[#cdd6f4] bg-transparent resize-y focus:outline-none border-0"
+          spellcheck="false"
+          set:text={defaultCode}
+        />
+      </div>
+
+      <!-- Standard Input (STDIN) -->
+      <div class="border-t border-slate-800 bg-[#181825] px-4 py-2">
+        <div class="flex items-center justify-between text-xs text-slate-400 mb-1">
+          <span class="font-mono">Standard Input (STDIN):</span>
+        </div>
+        <input
+          id="code-runner-stdin"
+          type="text"
+          placeholder="Enter input values for Scanner here..."
+          class="w-full bg-[#11111b] border border-slate-700 rounded px-3 py-1.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-orange-500"
+        />
+      </div>
+
+      <!-- Output Terminal Console -->
+      <div class="border-t border-slate-800 bg-[#11111b] p-4">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-800/80 mb-3 text-xs">
+          <div class="flex items-center gap-2">
+            <span class="font-mono text-slate-400 uppercase tracking-wider font-bold">Terminal Output</span>
+            <span id="code-runner-status" class="text-xs px-2.5 py-0.5 rounded-full font-medium bg-slate-800 text-slate-300">Ready</span>
+          </div>
+          <div class="flex items-center gap-3 text-slate-400 font-mono text-xs">
+            <span>Execution Time: <strong id="code-runner-time" class="text-slate-200">0ms</strong></span>
+          </div>
+        </div>
+
+        <pre id="code-runner-output" class="font-mono text-xs sm:text-sm text-[#a6e3a1] min-h-30 max-h-72 overflow-y-auto whitespace-pre-wrap select-text leading-relaxed">Click "Run Code" or press Ctrl+Enter to compile and run your Java program.</pre>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline set:html={`document.body.setAttribute('data-tool-lang', 'java'); window.__COMPILER_TEMPLATES = ${templatesJson};`} />
+  <script is:inline src="/js/tools/compiler-runner.js"></script>
+</CalculatorLayout>

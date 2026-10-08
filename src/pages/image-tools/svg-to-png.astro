@@ -1,0 +1,434 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+
+const faqs = [
+  {
+    question: "How do I convert an SVG file to PNG format?",
+    answer: "Upload your SVG graphic or paste SVG code into our tool. Select your target scale (e.g. 1x, 2x for Retina, 4x for Ultra-HD) or custom pixel dimensions, and click Download PNG Image."
+  },
+  {
+    question: "Why convert vector SVG to raster PNG?",
+    answer: "SVG files are vector XML documents that may not render correctly in standard image viewers, social media platforms, or certain office apps. Converting to high-resolution PNG renders vectors into universally viewable raster images."
+  },
+  {
+    question: "Can I upscale SVG to very high resolutions without blurriness?",
+    answer: "Yes! Because SVG is vector-based, our converter rasterizes vectors at your chosen multiplier (such as 2x, 4x, or 8x) with crystal-clear edges and zero pixelation."
+  },
+  {
+    question: "Are my SVG graphics kept private?",
+    answer: "Yes. The conversion occurs entirely within your browser's local sandbox using the DOMParser, Blob URLs, and HTML5 Canvas APIs. No data is sent over the internet."
+  }
+];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqs.map(faq => ({
+    "@type": "Question",
+    "name": faq.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": faq.answer
+    }
+  }))
+};
+---
+
+<CalculatorLayout
+  title="SVG to PNG Converter - High Resolution Vector Rasterizer"
+  description="Convert SVG vector files to high-resolution PNG format online for free. Scale up to 8x (Retina & 4K), retain transparency, 100% private in-browser rasterizer."
+  category="Image Tools"
+  calculatorName="SVG to PNG Converter"
+  slug="svg-to-png"
+  keywords={[
+    'svg to png',
+    'convert svg to png',
+    'svg rasterizer',
+    'svg to png high resolution',
+    'svg to png 4k',
+    'convert svg transparent png',
+    'online vector to png'
+  ]}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <div class="space-y-6">
+    <!-- Privacy Banner -->
+    <div class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5 text-xs text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300">
+      <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold">
+        🛡️
+      </div>
+      <div>
+        <span class="font-bold">100% Client-Side Privacy:</span>
+        Your SVG files are processed directly in your web browser. Nothing is uploaded to any server.
+      </div>
+    </div>
+
+    <!-- Upload Section -->
+    <section id="upload-zone" class="transition-all">
+      <div
+        id="drop-zone"
+        tabindex="0"
+        role="button"
+        aria-label="Upload SVG image: Click or drag and drop to convert to PNG"
+        class="group relative flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-8 text-center transition-all duration-200 hover:border-blue-500 hover:bg-blue-50/40 focus:border-blue-500 focus:outline-hidden focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-blue-500 dark:hover:bg-blue-950/20 sm:p-12 cursor-pointer"
+      >
+        <input
+          type="file"
+          id="file-input"
+          accept=".svg,image/svg+xml"
+          class="sr-only"
+        />
+        <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 text-3xl text-blue-600 transition group-hover:scale-105 group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-950 dark:text-blue-400">
+          📐
+        </div>
+        <h2 class="mt-4 text-lg font-bold text-slate-900 dark:text-white sm:text-xl">
+          Choose an SVG vector file or drag & drop here
+        </h2>
+        <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400 sm:text-sm max-w-md">
+          Rasterizes vector SVG files into crisp, transparent PNG graphics at 1x, 2x, 4x, or custom resolution.
+        </p>
+        <div class="mt-5 flex flex-wrap items-center justify-center gap-3">
+          <button
+            type="button"
+            id="btn-select"
+            class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-blue-700 cursor-pointer sm:text-sm"
+          >
+            📁 Select SVG File
+          </button>
+          <span class="text-xs text-slate-400">or paste SVG / XML markup</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Workspace Zone -->
+    <section id="workspace-zone" class="hidden space-y-6">
+
+      <!-- Resolution & Scaling Toolbar -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 sm:p-5 space-y-4">
+        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Output Settings & Scale Multipliers</h3>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button type="button" data-scale="1" class="scale-btn active rounded-xl border border-blue-600 bg-blue-50 px-3.5 py-1.5 text-xs font-bold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 cursor-pointer">
+            1x (Standard)
+          </button>
+          <button type="button" data-scale="2" class="scale-btn rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">
+            2x (Retina HD)
+          </button>
+          <button type="button" data-scale="3" class="scale-btn rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">
+            3x (Super HD)
+          </button>
+          <button type="button" data-scale="4" class="scale-btn rounded-xl border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-slate-700 hover:border-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer">
+            4x (Ultra HD 4K)
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+          <div>
+            <label for="custom-width" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Target Width (px)</label>
+            <input type="number" id="custom-width" min="16" max="10000" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+          </div>
+          <div>
+            <label for="custom-height" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Target Height (px)</label>
+            <input type="number" id="custom-height" min="16" max="10000" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+          </div>
+          <div>
+            <label for="bg-choice" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Background Layer</label>
+            <select id="bg-choice" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-medium text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+              <option value="transparent">Transparent (Alpha)</option>
+              <option value="#ffffff">Solid White (#FFFFFF)</option>
+              <option value="#000000">Solid Black (#000000)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview Section -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-3 dark:border-slate-800">
+              <span class="text-xs font-bold uppercase tracking-wider text-slate-500">Source: SVG Vector</span>
+              <span id="src-size" class="text-xs font-bold text-slate-700 dark:text-slate-300">0 KB</span>
+            </div>
+            <div id="svg-container" class="flex items-center justify-center rounded-xl bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:12px_12px] bg-slate-50 p-4 dark:bg-slate-950 dark:[radial-gradient(#334155_1px,transparent_1px)] min-h-[220px] max-h-[320px] overflow-hidden">
+              <!-- SVG preview rendered here -->
+            </div>
+          </div>
+          <div class="mt-3 text-[11px] text-slate-500">
+            Vector ViewBox: <strong id="src-dims" class="text-slate-700 dark:text-slate-300">-- × --</strong>
+          </div>
+        </div>
+
+        <div class="rounded-2xl border border-emerald-200 bg-white p-4 shadow-2xs dark:border-emerald-900/40 dark:bg-slate-900 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between border-b border-slate-100 pb-2 mb-3 dark:border-slate-800">
+              <span class="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Target: PNG Raster</span>
+              <span id="target-size" class="text-xs font-bold text-slate-900 dark:text-white">0 KB</span>
+            </div>
+            <div class="flex items-center justify-center rounded-xl bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:12px_12px] bg-slate-50 p-4 dark:bg-slate-950 dark:[radial-gradient(#334155_1px,transparent_1px)] min-h-[220px] max-h-[320px] overflow-hidden">
+              <img id="target-preview" src="" alt="PNG Rasterized" class="max-h-[280px] w-auto max-w-full rounded object-contain" />
+            </div>
+          </div>
+          <div class="mt-3 flex items-center justify-between text-[11px] text-slate-500">
+            <span>Dimensions: <strong id="target-dims" class="text-emerald-600 dark:text-emerald-400">-- × -- px</strong></span>
+            <span class="text-emerald-600 font-semibold">✓ Crisp High-DPI Rendering</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <button
+          type="button"
+          id="btn-reset"
+          class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+        >
+          🔄 Convert Another SVG
+        </button>
+
+        <a
+          id="btn-download"
+          href="#"
+          download="rasterized-vector.png"
+          class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-md hover:bg-blue-700 cursor-pointer transition"
+        >
+          ⬇️ Download PNG Image
+        </a>
+      </div>
+    </section>
+  </div>
+
+  <!-- Educational Guide -->
+  <div class="mt-12 space-y-8 text-slate-700 dark:text-slate-300 text-sm leading-relaxed border-t border-slate-200 pt-8 dark:border-slate-800">
+    <section class="space-y-3">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        Vector SVG vs Raster PNG
+      </h2>
+      <p>
+        SVG (Scalable Vector Graphics) is an XML-based graphic format consisting of mathematical curves, lines, and polygons. While SVGs scale infinitely without losing quality, many legacy systems, email programs, CMS platforms, and video editing suites do not support vector formats. Converting your SVG to high-resolution PNG ensures full compatibility across all software.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function initSvgToPng() {
+      let currentSvgText: string = '';
+      let baseWidth: number = 300;
+      let baseHeight: number = 300;
+      let currentScale: number = 1;
+      let currentFile: File | null = null;
+
+      const uploadZone = document.getElementById('upload-zone');
+      const dropZone = document.getElementById('drop-zone');
+      const fileInput = document.getElementById('file-input') as HTMLInputElement | null;
+      const btnSelect = document.getElementById('btn-select');
+      const workspaceZone = document.getElementById('workspace-zone');
+      const btnReset = document.getElementById('btn-reset');
+      const btnDownload = document.getElementById('btn-download') as HTMLAnchorElement | null;
+
+      const svgContainer = document.getElementById('svg-container');
+      const targetPreview = document.getElementById('target-preview') as HTMLImageElement | null;
+      const srcSize = document.getElementById('src-size');
+      const targetSize = document.getElementById('target-size');
+      const srcDims = document.getElementById('src-dims');
+      const targetDims = document.getElementById('target-dims');
+
+      const customWidth = document.getElementById('custom-width') as HTMLInputElement | null;
+      const customHeight = document.getElementById('custom-height') as HTMLInputElement | null;
+      const bgChoice = document.getElementById('bg-choice') as HTMLSelectElement | null;
+      const scaleBtns = document.querySelectorAll('.scale-btn');
+
+      function formatBytes(bytes: number): string {
+        if (bytes <= 0) return '0 B';
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+        return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+      }
+
+      function handleSvgString(svgText: string, fileName: string, fileSize: number) {
+        currentSvgText = svgText;
+
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(svgText, 'image/svg+xml');
+        const svgEl = doc.querySelector('svg');
+
+        if (!svgEl) {
+          alert('Could not parse valid SVG XML from this file.');
+          return;
+        }
+
+        // Determine base dimensions
+        let w = parseFloat(svgEl.getAttribute('width') || '');
+        let h = parseFloat(svgEl.getAttribute('height') || '');
+
+        if (isNaN(w) || isNaN(h)) {
+          const viewBox = svgEl.getAttribute('viewBox');
+          if (viewBox) {
+            const parts = viewBox.split(/[\s,]+/).map(Number);
+            if (parts.length === 4) {
+              w = parts[2];
+              h = parts[3];
+            }
+          }
+        }
+
+        baseWidth = Math.round(w) || 400;
+        baseHeight = Math.round(h) || 400;
+
+        if (srcSize) srcSize.textContent = formatBytes(fileSize);
+        if (srcDims) srcDims.textContent = `${baseWidth} × ${baseHeight}`;
+
+        if (customWidth) customWidth.value = String(baseWidth);
+        if (customHeight) customHeight.value = String(baseHeight);
+
+        if (svgContainer) {
+          svgContainer.innerHTML = '';
+          const cloned = svgEl.cloneNode(true) as SVGElement;
+          cloned.setAttribute('style', 'max-height: 260px; max-width: 100%; height: auto;');
+          svgContainer.appendChild(cloned);
+        }
+
+        if (uploadZone) uploadZone.classList.add('hidden');
+        if (workspaceZone) workspaceZone.classList.remove('hidden');
+
+        rasterize();
+      }
+
+      function rasterize() {
+        if (!currentSvgText) return;
+
+        let targetW = parseInt(customWidth?.value || '0', 10);
+        let targetH = parseInt(customHeight?.value || '0', 10);
+
+        if (!targetW || targetW <= 0) targetW = baseWidth * currentScale;
+        if (!targetH || targetH <= 0) targetH = baseHeight * currentScale;
+
+        const svgBlob = new Blob([currentSvgText], { type: 'image/svg+xml;charset=utf-8' });
+        const URLObj = window.URL || window.webkitURL || window;
+        const blobURL = URLObj.createObjectURL(svgBlob);
+
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = targetW;
+          canvas.height = targetH;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) return;
+
+          const bg = bgChoice?.value || 'transparent';
+          if (bg !== 'transparent') {
+            ctx.fillStyle = bg;
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+          } else {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+          }
+
+          ctx.drawImage(img, 0, 0, targetW, targetH);
+          URLObj.revokeObjectURL(blobURL);
+
+          canvas.toBlob((blob) => {
+            if (!blob) return;
+            const pngUrl = URLObj.createObjectURL(blob);
+            if (targetPreview) targetPreview.src = pngUrl;
+            if (targetSize) targetSize.textContent = formatBytes(blob.size);
+            if (targetDims) targetDims.textContent = `${targetW} × ${targetH} px`;
+
+            if (btnDownload) {
+              btnDownload.href = pngUrl;
+              const baseName = currentFile?.name.replace(/\.[^/.]+$/, '') || 'vector-export';
+              btnDownload.download = `${baseName}-${targetW}x${targetH}.png`;
+            }
+          }, 'image/png');
+        };
+        img.src = blobURL;
+      }
+
+      function handleFile(file: File) {
+        if (!file) return;
+        currentFile = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const text = e.target?.result as string;
+          handleSvgString(text, file.name, file.size);
+        };
+        reader.readAsText(file);
+      }
+
+      scaleBtns.forEach((btn) => {
+        btn.addEventListener('click', () => {
+          scaleBtns.forEach((b) => {
+            b.classList.remove('border-blue-600', 'bg-blue-50', 'text-blue-700', 'dark:bg-blue-950/60', 'dark:text-blue-300', 'active');
+            b.classList.add('border-slate-200', 'bg-white', 'text-slate-700', 'dark:border-slate-700', 'dark:bg-slate-800', 'dark:text-slate-300');
+          });
+          btn.classList.add('border-blue-600', 'bg-blue-50', 'text-blue-700', 'dark:bg-blue-950/60', 'dark:text-blue-300', 'active');
+          btn.classList.remove('border-slate-200', 'bg-white', 'text-slate-700', 'dark:border-slate-700', 'dark:bg-slate-800', 'dark:text-slate-300');
+
+          currentScale = parseFloat(btn.getAttribute('data-scale') || '1');
+          if (customWidth) customWidth.value = String(Math.round(baseWidth * currentScale));
+          if (customHeight) customHeight.value = String(Math.round(baseHeight * currentScale));
+          rasterize();
+        });
+      });
+
+      customWidth?.addEventListener('input', () => {
+        const val = parseInt(customWidth.value, 10);
+        if (val && baseWidth > 0 && customHeight) {
+          const ratio = baseHeight / baseWidth;
+          customHeight.value = String(Math.round(val * ratio));
+        }
+        rasterize();
+      });
+
+      customHeight?.addEventListener('input', () => {
+        const val = parseInt(customHeight.value, 10);
+        if (val && baseHeight > 0 && customWidth) {
+          const ratio = baseWidth / baseHeight;
+          customWidth.value = String(Math.round(val * ratio));
+        }
+        rasterize();
+      });
+
+      bgChoice?.addEventListener('change', rasterize);
+
+      btnSelect?.addEventListener('click', () => fileInput?.click());
+      dropZone?.addEventListener('click', (e) => {
+        if (e.target !== btnSelect) fileInput?.click();
+      });
+
+      fileInput?.addEventListener('change', (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) handleFile(file);
+      });
+
+      dropZone?.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-blue-500', 'bg-blue-50/50');
+      });
+
+      dropZone?.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-blue-500', 'bg-blue-50/50');
+      });
+
+      dropZone?.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-blue-500', 'bg-blue-50/50');
+        const file = e.dataTransfer?.files?.[0];
+        if (file) handleFile(file);
+      });
+
+      document.addEventListener('paste', (e) => {
+        const text = e.clipboardData?.getData('text');
+        if (text && (text.includes('<svg') || text.includes('xmlns="http://www.w3.org/2000/svg"'))) {
+          handleSvgString(text, 'pasted-vector.svg', text.length);
+        }
+      });
+
+      btnReset?.addEventListener('click', () => {
+        if (fileInput) fileInput.value = '';
+        if (uploadZone) uploadZone.classList.remove('hidden');
+        if (workspaceZone) workspaceZone.classList.add('hidden');
+      });
+    })();
+  </script>
+</CalculatorLayout>

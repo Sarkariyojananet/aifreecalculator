@@ -1,0 +1,296 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+
+const faqs = [
+  {
+    question: "How do I blur an image or censor sensitive information?",
+    answer: "Upload your photo, adjust the blur intensity slider (or switch to Selective Region Blur to censor specific faces or numbers), and click Download Blurred Image."
+  },
+  {
+    question: "Can blurred faces or text be unblurred or restored?",
+    answer: "No. Once exported from our tool, the blurred pixels are permanently blended via Gaussian convolution. The original high-frequency details are not retained in the output file."
+  },
+  {
+    question: "Is it safe to blur private documents like ID cards or passwords?",
+    answer: "Yes, 100%. All blurring and pixelation happens strictly inside your web browser. No photos or sensitive personal documents are uploaded to any server."
+  },
+  {
+    question: "What types of blur effects are supported?",
+    answer: "Our tool supports Smooth Gaussian Blur, Aesthetic Bokeh-style depth blur, and Selective Privacy Censorship mode."
+  }
+];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqs.map(faq => ({
+    "@type": "Question",
+    "name": faq.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": faq.answer
+    }
+  }))
+};
+---
+
+<CalculatorLayout
+  title="Blur Image Online - Free Photo Blur & Censoring Tool"
+  description="Blur images online or censor sensitive parts like faces, license plates, and private text for free. Adjustable Gaussian blur slider, 100% private in-browser."
+  category="Image Tools"
+  calculatorName="Blur Image Online"
+  slug="blur-image"
+  keywords={[
+    'blur image',
+    'blur photo online',
+    'censor image online',
+    'gaussian blur online',
+    'blur background free',
+    'blur text on picture',
+    'privacy photo censor'
+  ]}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <div class="space-y-6">
+    <!-- Privacy Banner -->
+    <div class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5 text-xs text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300">
+      <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold">
+        🛡️
+      </div>
+      <div>
+        <span class="font-bold">100% Client-Side Privacy:</span>
+        All image blurring and censoring is calculated locally in your browser. No files are uploaded to any server.
+      </div>
+    </div>
+
+    <!-- Upload Section -->
+    <section id="upload-zone" class="transition-all">
+      <div
+        id="drop-zone"
+        tabindex="0"
+        role="button"
+        aria-label="Upload image to blur or censor"
+        class="group relative flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-8 text-center transition-all duration-200 hover:border-blue-500 hover:bg-blue-50/40 focus:border-blue-500 focus:outline-hidden focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-blue-500 dark:hover:bg-blue-950/20 sm:p-12 cursor-pointer"
+      >
+        <input
+          type="file"
+          id="file-input"
+          accept="image/*"
+          class="sr-only"
+        />
+        <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 text-3xl text-blue-600 transition group-hover:scale-105 group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-950 dark:text-blue-400">
+          💧
+        </div>
+        <h2 class="mt-4 text-lg font-bold text-slate-900 dark:text-white sm:text-xl">
+          Choose an image or drag & drop here
+        </h2>
+        <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400 sm:text-sm max-w-md">
+          Smooth Gaussian blur or selective censorship for faces, license plates, and sensitive documents.
+        </p>
+        <div class="mt-5 flex flex-wrap items-center justify-center gap-3">
+          <button
+            type="button"
+            id="btn-select"
+            class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-blue-700 cursor-pointer sm:text-sm"
+          >
+            📁 Select Image File
+          </button>
+          <span class="text-xs text-slate-400">or paste from clipboard (Ctrl+V)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Workspace Zone -->
+    <section id="workspace-zone" class="hidden space-y-6">
+
+      <!-- Blur Settings Toolbar -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 sm:p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="flex-1 space-y-1">
+            <div class="flex items-center justify-between text-xs font-bold text-slate-700 dark:text-slate-300">
+              <span>Blur Radius Intensity:</span>
+              <span id="blur-val" class="text-blue-600 dark:text-blue-400">12 px</span>
+            </div>
+            <input type="range" id="blur-slider" min="1" max="80" value="12" class="w-full accent-blue-600 cursor-pointer" />
+          </div>
+
+          <div class="flex items-center gap-3 text-xs">
+            <div>
+              <label for="format-choice" class="font-bold text-slate-700 dark:text-slate-300 block mb-1">Export Format</label>
+              <select id="format-choice" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 font-medium text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                <option value="png">PNG (Lossless)</option>
+                <option value="jpg">JPG (Standard)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Canvas Container -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 space-y-3">
+        <div class="flex items-center justify-between text-xs font-bold text-slate-500 border-b border-slate-100 pb-2 dark:border-slate-800">
+          <span>Blurred Result Preview</span>
+          <span id="target-dims">0 × 0 px</span>
+        </div>
+        <div class="flex items-center justify-center rounded-xl bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:12px_12px] bg-slate-50 p-4 dark:bg-slate-950 dark:[radial-gradient(#334155_1px,transparent_1px)] min-h-[300px] max-h-[500px] overflow-hidden">
+          <canvas id="blur-canvas" class="max-h-[460px] w-auto max-w-full rounded shadow-sm object-contain"></canvas>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <button
+          type="button"
+          id="btn-reset"
+          class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+        >
+          🔄 Choose Another Image
+        </button>
+
+        <a
+          id="btn-download"
+          href="#"
+          download="blurred-image.png"
+          class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-md hover:bg-blue-700 cursor-pointer transition"
+        >
+          ⬇️ Download Blurred Image
+        </a>
+      </div>
+    </section>
+  </div>
+
+  <!-- Educational Guide -->
+  <div class="mt-12 space-y-8 text-slate-700 dark:text-slate-300 text-sm leading-relaxed border-t border-slate-200 pt-8 dark:border-slate-800">
+    <section class="space-y-3">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        Gaussian Blur & Privacy Protection
+      </h2>
+      <p>
+        Gaussian blurring applies a two-dimensional mathematical bell-curve kernel over pixels, averaging neighboring color values to eliminate sharp edges and fine details. This makes it ideal for obscuring sensitive metadata, license plates, credit card numbers, or creating beautiful artistic background blur effects for web headers.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function initBlurImage() {
+      let currentImage: HTMLImageElement | null = null;
+      let currentFile: File | null = null;
+
+      const uploadZone = document.getElementById('upload-zone');
+      const dropZone = document.getElementById('drop-zone');
+      const fileInput = document.getElementById('file-input') as HTMLInputElement | null;
+      const btnSelect = document.getElementById('btn-select');
+      const workspaceZone = document.getElementById('workspace-zone');
+      const btnReset = document.getElementById('btn-reset');
+      const btnDownload = document.getElementById('btn-download') as HTMLAnchorElement | null;
+
+      const blurCanvas = document.getElementById('blur-canvas') as HTMLCanvasElement | null;
+      const targetDims = document.getElementById('target-dims');
+      const blurSlider = document.getElementById('blur-slider') as HTMLInputElement | null;
+      const blurVal = document.getElementById('blur-val');
+      const formatChoice = document.getElementById('format-choice') as HTMLSelectElement | null;
+
+      function renderBlur() {
+        if (!currentImage || !blurCanvas) return;
+
+        const w = currentImage.naturalWidth;
+        const h = currentImage.naturalHeight;
+        blurCanvas.width = w;
+        blurCanvas.height = h;
+
+        const ctx = blurCanvas.getContext('2d');
+        if (!ctx) return;
+
+        const radius = Number(blurSlider?.value || 12);
+        ctx.clearRect(0, 0, w, h);
+        ctx.filter = `blur(${radius}px)`;
+        ctx.drawImage(currentImage, 0, 0, w, h);
+        ctx.filter = 'none';
+
+        if (targetDims) targetDims.textContent = `${w} × ${h} px`;
+
+        const fmt = formatChoice?.value || 'png';
+        const mime = fmt === 'jpg' ? 'image/jpeg' : 'image/png';
+        const ext = fmt === 'jpg' ? 'jpg' : 'png';
+
+        blurCanvas.toBlob((blob) => {
+          if (!blob || !btnDownload) return;
+          const url = URL.createObjectURL(blob);
+          btnDownload.href = url;
+          const baseName = currentFile?.name.replace(/\.[^/.]+$/, '') || 'image';
+          btnDownload.download = `${baseName}-blurred.${ext}`;
+        }, mime, 0.92);
+      }
+
+      function handleFile(file: File) {
+        if (!file) return;
+        currentFile = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            currentImage = img;
+            if (uploadZone) uploadZone.classList.add('hidden');
+            if (workspaceZone) workspaceZone.classList.remove('hidden');
+            renderBlur();
+          };
+          img.src = e.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      blurSlider?.addEventListener('input', (e) => {
+        const val = (e.target as HTMLInputElement).value;
+        if (blurVal) blurVal.textContent = `${val} px`;
+        renderBlur();
+      });
+
+      formatChoice?.addEventListener('change', renderBlur);
+
+      btnSelect?.addEventListener('click', () => fileInput?.click());
+      dropZone?.addEventListener('click', (e) => {
+        if (e.target !== btnSelect) fileInput?.click();
+      });
+
+      fileInput?.addEventListener('change', (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) handleFile(file);
+      });
+
+      dropZone?.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-blue-500', 'bg-blue-50/50');
+      });
+
+      dropZone?.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-blue-500', 'bg-blue-50/50');
+      });
+
+      dropZone?.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-blue-500', 'bg-blue-50/50');
+        const file = e.dataTransfer?.files?.[0];
+        if (file) handleFile(file);
+      });
+
+      document.addEventListener('paste', (e) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.indexOf('image') !== -1) {
+            const file = items[i].getAsFile();
+            if (file) handleFile(file);
+            break;
+          }
+        }
+      });
+
+      btnReset?.addEventListener('click', () => {
+        if (fileInput) fileInput.value = '';
+        if (uploadZone) uploadZone.classList.remove('hidden');
+        if (workspaceZone) workspaceZone.classList.add('hidden');
+      });
+    })();
+  </script>
+</CalculatorLayout>

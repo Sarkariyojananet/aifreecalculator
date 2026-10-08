@@ -270,6 +270,58 @@ export const LIVE_PAGE_METADATA: Record<string, PageMetaItem> = {
     "title": "Image to PDF - Convert JPG/PNG to PDF Online Free",
     "description": "Convert JPG, PNG, GIF, and WebP images into a combined PDF document in your browser."
   },
+  "compress-image": {
+    "title": "Compress Image Online - Reduce Image Size Free",
+    "description": "Compress JPG, PNG, and WebP images online for free. Reduce file size without losing visible quality with 100% private in-browser compression."
+  },
+  "crop-image": {
+    "title": "Crop Image Online - Free In-Browser Image Cropper",
+    "description": "Crop images online with custom aspect ratios, freeform cropping, and instant preview. Fast, free, and 100% private in your browser."
+  },
+  "resize-image": {
+    "title": "Resize Image Online - Change Dimensions & Resolution",
+    "description": "Resize images by exact pixels or percentage while maintaining aspect ratio. Free in-browser image resizer for JPG, PNG, and WebP."
+  },
+  "webp-to-png": {
+    "title": "WebP to PNG Converter - Convert WebP to PNG Free",
+    "description": "Convert WebP images to high quality transparent PNG online for free. Fast, private, browser-based conversion with no file uploads."
+  },
+  "webp-to-jpg": {
+    "title": "WebP to JPG Converter - Convert WebP to JPG Online",
+    "description": "Convert WebP images to standard JPG/JPEG format online. Fast, high-quality, and 100% private in-browser image conversion."
+  },
+  "svg-to-png": {
+    "title": "SVG to PNG Converter - Render Vector SVG to Raster PNG",
+    "description": "Convert vector SVG graphics to high-resolution raster PNG images with custom dimensions and transparent background support."
+  },
+  "black-and-white-image": {
+    "title": "Black and White Image Converter - Grayscale Photo Tool",
+    "description": "Convert color photos into clean black and white or grayscale images with adjustable contrast and brightness directly in your browser."
+  },
+  "invert-image-colors": {
+    "title": "Invert Image Colors - Photo Color Negative Inverter",
+    "description": "Invert image colors online to create negative photographic effects. Fast, free, and processed 100% in your browser."
+  },
+  "flip-rotate-image": {
+    "title": "Flip and Rotate Image Online - Mirror & Rotate Photos",
+    "description": "Rotate images 90, 180, or 270 degrees, and flip horizontally or vertically. Free online image orientation tool."
+  },
+  "blur-image": {
+    "title": "Blur Image Online - Blur Photos & Faces in Browser",
+    "description": "Apply adjustable Gaussian blur to images online. Smooth backgrounds, obscure sensitive details, and download high-resolution results."
+  },
+  "image-color-palette": {
+    "title": "Image Color Palette Generator - Extract HEX & RGB Colors",
+    "description": "Extract dominant color palettes and HEX/RGB codes from any image automatically. Free client-side color palette generator."
+  },
+  "category:image-tools": {
+    "title": "Free Online Image Tools - Compress, Resize, Crop & Convert Images",
+    "description": "Free online image tools for compressing, resizing, cropping, converting, editing, and generating images directly in your browser with 100% privacy."
+  },
+  "core:image-tools": {
+    "title": "Free Online Image Tools - Compress, Resize, Crop & Convert Images",
+    "description": "Free online image tools for compressing, resizing, cropping, converting, editing, and generating images directly in your browser with 100% privacy."
+  },
   "right-triangle-area-calculator": {
     "title": "Right Triangle Area Calculator – Calculate Area of Right Triangle",
     "description": "Calculate the area of a right triangle from two legs, leg and hypotenuse, or side and acute angle with step-by-step mathematical formulas and conversions."
@@ -301,6 +353,50 @@ export const LIVE_PAGE_METADATA: Record<string, PageMetaItem> = {
   "core:all-calculators": {
     "title": "All Calculators Directory (42+ Free Tools) - AI Free Calculator",
     "description": "Browse the complete directory of free online calculators for loan EMI, SIP returns, construction BOQ, steel rebar, BMI, calories, math, and everyday tasks."
+  },
+  "category:pdf-tools": {
+    "title": "Free Online PDF Tools - Merge, Split, Compress & Convert PDF",
+    "description": "Free online PDF tools to merge, split, compress, and convert PDF documents directly in your browser with 100% privacy and zero uploads."
+  },
+  "category:time-table-tools": {
+    "title": "Free Timetable Makers & Schedule Generators | Weekly & Daily Planners",
+    "description": "Free online timetable makers and schedule generators. Create, customize, and print school, college, study, workout, work, and daily routine schedules."
+  },
+  "category:compiler-tools": {
+    "title": "Online Compilers & Code Editors - Python, JS, C++, Java",
+    "description": "Free online compilers and code editors. Write, compile, and run Python, JavaScript, HTML, C++, Java, C#, PHP, and SQL code directly in your browser."
+  },
+  "python-compiler": {
+    "title": "Online Python Compiler - Run Python 3 in Browser Free",
+    "description": "Run Python 3 scripts online directly in your browser with instant WebAssembly execution, standard libraries, and interactive console output."
+  },
+  "javascript-compiler": {
+    "title": "Online JavaScript Compiler - Run JS Code in Browser",
+    "description": "Execute modern ES6+ JavaScript code in a secure browser sandbox with live console output, error logging, and performance benchmarks."
+  },
+  "html-editor": {
+    "title": "Online HTML Editor - Live HTML, CSS & JS Code Playground",
+    "description": "Live interactive HTML, CSS, and JavaScript editor with real-time browser preview, responsive device toggle, and clean code exporting."
+  },
+  "cpp-compiler": {
+    "title": "Online C++ Compiler - Compile & Run C++ Programs Online",
+    "description": "Write, compile, and execute C++ programs online with standard template libraries, custom input stdin, and real-time terminal output."
+  },
+  "java-compiler": {
+    "title": "Online Java Compiler - Write & Run Java Code Online",
+    "description": "Write, debug, and run standard Java programs online. Fast cloud execution, custom console input, and instant error stack trace inspection."
+  },
+  "csharp-compiler": {
+    "title": "Online C# Compiler - Run C# .NET Code Online Free",
+    "description": "Write and execute C# .NET programs online. Test algorithms, LINQ queries, and object-oriented code with instant terminal output."
+  },
+  "php-compiler": {
+    "title": "Online PHP Compiler - Run & Test PHP Scripts Online",
+    "description": "Execute PHP scripts online directly in your browser. Test syntax, algorithms, string operations, and arrays with instant output rendering."
+  },
+  "sql-editor": {
+    "title": "Online SQL Editor - Run SQL Queries on SQLite Online",
+    "description": "Execute SQL queries, test database schemas, and practice joins and aggregations online with an in-browser SQLite database and tables."
   }
 };
 

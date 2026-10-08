@@ -1,0 +1,163 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+
+const faqs = [
+  {
+    question: "What is an online SQL editor?",
+    answer: "An online SQL editor is a web-based database management playground that allows you to write, test, and execute SQL queries directly against an in-browser relational database without configuring MySQL, PostgreSQL, or Oracle."
+  },
+  {
+    question: "Which database engine powers this editor?",
+    answer: "This editor is powered by SQLite WebAssembly (sql.js). It runs 100% locally in your browser memory with zero network delay, providing instant query results."
+  },
+  {
+    question: "Are preloaded sample tables available to practice with?",
+    answer: "Yes, standard relational tables (employees, departments, orders) with realistic mock data are preloaded so you can practice SELECT, WHERE, GROUP BY, and JOIN queries immediately."
+  },
+  {
+    question: "Can I create custom tables and insert rows?",
+    answer: "Yes. You can execute standard DDL and DML commands like CREATE TABLE, INSERT INTO, UPDATE, and DELETE to design custom database schemas."
+  },
+  {
+    question: "Can I export query results to CSV?",
+    answer: "Yes, clicking the 'Export CSV' button downloads the result dataset formatted into clean comma-separated values ready for Microsoft Excel or Google Sheets."
+  },
+  {
+    question: "Is this SQL editor completely free?",
+    answer: "Yes, it is 100% free with unlimited query executions, zero paywalls, and no login required."
+  },
+  {
+    question: "What keyboard shortcut executes queries?",
+    answer: "Press Ctrl + Enter (or Cmd + Enter on macOS) while inside the SQL query editor to run your queries instantly."
+  },
+  {
+    question: "Is my query data private?",
+    answer: "Yes. Since SQLite runs entirely in your local browser WebAssembly memory, your queries and datasets are never transmitted to any external server."
+  }
+];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqs.map((faq) => ({
+    "@type": "Question",
+    "name": faq.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": faq.answer
+    }
+  }))
+};
+---
+
+<CalculatorLayout
+  title="Online SQL Editor - Run SQL Queries on SQLite Online"
+  description="Execute SQL queries, test database schemas, and practice joins and aggregations online with an in-browser SQLite database and tables."
+  category="Compiler Tools"
+  calculatorName="Online SQL Editor"
+  slug="sql-editor"
+  keywords={[
+    'online sql editor',
+    'sql editor',
+    'run sql online',
+    'sqlite online editor',
+    'sql query runner',
+    'test sql online',
+    'sql playground'
+  ]}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <div class="space-y-6">
+    <!-- Header Hero Intro -->
+    <div class="text-center max-w-3xl mx-auto space-y-3">
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-cyan-50 dark:bg-cyan-950/60 border border-cyan-200 dark:border-cyan-800/80 text-cyan-700 dark:text-cyan-300 text-xs font-semibold tracking-wide">
+        <span>🗄️</span>
+        <span>SQLite WASM • Preloaded Relational Schema • CSV Export</span>
+      </div>
+
+      <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+        Online SQL Editor
+      </h1>
+
+      <p class="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed">
+        Write, run, and practice <strong>SQL queries online</strong> with an interactive in-browser SQLite database. Test JOINs, aggregations, window functions, and export query results to CSV with zero server latency.
+      </p>
+    </div>
+
+    <!-- Interactive SQL Editor Widget -->
+    <div class="rounded-2xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
+      <!-- Editor Action Bar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-950">
+        <div class="flex items-center gap-2">
+          <span class="flex h-3 w-3 rounded-full bg-cyan-500"></span>
+          <span class="font-mono text-xs font-bold text-slate-700 dark:text-slate-200">query.sql</span>
+          <span class="text-xs text-slate-400">|</span>
+          <label class="text-xs text-slate-500 dark:text-slate-400">Sample Query:</label>
+          <select id="sql-template-select" class="rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+            <option value="select_all">SELECT JOIN (Employees & Depts)</option>
+            <option value="aggregates">GROUP BY & Aggregations</option>
+            <option value="orders">Filter Orders (WHERE)</option>
+            <option value="create_table">CREATE TABLE & INSERT</option>
+          </select>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button id="sql-copy-btn" type="button" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+            📋 Copy SQL
+          </button>
+          <button id="sql-export-csv-btn" type="button" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">
+            📊 Export CSV
+          </button>
+          <button id="sql-clear-btn" type="button" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 dark:border-slate-700 dark:bg-slate-800 dark:text-rose-400 dark:hover:bg-slate-700">
+            🗑️ Clear
+          </button>
+          <button id="sql-run-btn" type="button" class="inline-flex items-center gap-1.5 rounded-lg bg-cyan-600 px-4 py-1.5 text-xs font-bold text-white shadow-md hover:bg-cyan-700 active:scale-95 transition">
+            ▶ Run Query <span class="hidden sm:inline text-[10px] opacity-80">(Ctrl+Enter)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- SQL Query Textarea Editor -->
+      <div class="relative bg-[#1e1e2e]">
+        <textarea
+          id="sql-query-input"
+          class="w-full h-64 sm:h-72 p-4 font-mono text-sm leading-relaxed text-[#cdd6f4] bg-transparent resize-y focus:outline-none border-0"
+          spellcheck="false"
+        >-- Select all employees with their department name
+SELECT 
+    e.id AS emp_id, 
+    e.name, 
+    e.role, 
+    d.department_name, 
+    e.salary 
+FROM employees e
+JOIN departments d ON e.department_id = d.id
+ORDER BY e.salary DESC;
+</textarea>
+      </div>
+
+      <!-- Result Table Section -->
+      <div class="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-4 py-2.5 text-xs">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-slate-700 dark:text-slate-200">Query Results:</span>
+            <span id="sql-status-badge" class="px-2 py-0.5 rounded-full font-medium bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300">Ready</span>
+            <span id="sql-row-count" class="text-slate-500 font-mono text-[11px]">0 rows</span>
+          </div>
+          <div class="flex items-center gap-2 text-slate-400 font-mono text-xs">
+            <span>Query Time: <strong id="sql-exec-time" class="text-slate-700 dark:text-slate-200">0ms</strong></span>
+          </div>
+        </div>
+
+        <div id="sql-table-result" class="min-h-40 max-h-96 overflow-y-auto">
+          <div class="p-8 text-center text-sm text-slate-500 dark:text-slate-400">
+            Click <strong>"Run Query"</strong> or press <kbd class="px-1.5 py-0.5 rounded bg-slate-200 dark:bg-slate-800 font-mono text-xs">Ctrl + Enter</kbd> to execute your SQL statement.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline src="/js/tools/sql-editor.js"></script>
+</CalculatorLayout>

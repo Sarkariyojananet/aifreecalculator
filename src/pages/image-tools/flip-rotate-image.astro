@@ -1,0 +1,386 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+
+const faqs = [
+  {
+    question: "How do I rotate or flip an image online?",
+    answer: "Upload your image, click the 90° Rotate, Flip Horizontal, or Flip Vertical buttons (or use the free angle rotation slider), and click Download Image."
+  },
+  {
+    question: "Does rotating or flipping reduce photo quality?",
+    answer: "No. When exported as PNG or high-quality JPG, pixel clarity and aspect ratios are strictly preserved without generation loss."
+  },
+  {
+    question: "What is the difference between flipping and rotating?",
+    answer: "Rotating turns an image around its center point by an angular degree (e.g. 90° or 180°). Flipping creates a mirror reflection across the vertical or horizontal axis."
+  },
+  {
+    question: "Is it safe to upload personal pictures?",
+    answer: "Yes. All transformations take place 100% on your device using client-side JavaScript and HTML5 Canvas. Your files are never uploaded to any cloud server."
+  }
+];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqs.map(faq => ({
+    "@type": "Question",
+    "name": faq.question,
+    "acceptedAnswer": {
+      "@type": "Answer",
+      "text": faq.answer
+    }
+  }))
+};
+---
+
+<CalculatorLayout
+  title="Flip and Rotate Image Online - Free Image Orientation Tool"
+  description="Rotate photos 90, 180, 270 degrees, mirror flip horizontally and vertically online for free. 100% private in-browser tool with instant high-quality download."
+  category="Image Tools"
+  calculatorName="Flip and Rotate Image"
+  slug="flip-rotate-image"
+  keywords={[
+    'flip image',
+    'rotate image online',
+    'rotate photo 90 degrees',
+    'flip image horizontally',
+    'mirror image online',
+    'flip photo vertically',
+    'image orientation tool'
+  ]}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <div class="space-y-6">
+    <!-- Privacy Banner -->
+    <div class="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/70 p-3.5 text-xs text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-300">
+      <div class="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-emerald-600 text-white font-bold">
+        🛡️
+      </div>
+      <div>
+        <span class="font-bold">100% Client-Side Privacy:</span>
+        Image transformations run directly in your browser. No files are uploaded to any server.
+      </div>
+    </div>
+
+    <!-- Upload Section -->
+    <section id="upload-zone" class="transition-all">
+      <div
+        id="drop-zone"
+        tabindex="0"
+        role="button"
+        aria-label="Upload image to rotate and flip"
+        class="group relative flex flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50/50 p-8 text-center transition-all duration-200 hover:border-blue-500 hover:bg-blue-50/40 focus:border-blue-500 focus:outline-hidden focus:ring-4 focus:ring-blue-500/10 dark:border-slate-700 dark:bg-slate-900/40 dark:hover:border-blue-500 dark:hover:bg-blue-950/20 sm:p-12 cursor-pointer"
+      >
+        <input
+          type="file"
+          id="file-input"
+          accept="image/*"
+          class="sr-only"
+        />
+        <div class="flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-100 text-3xl text-blue-600 transition group-hover:scale-105 group-hover:bg-blue-600 group-hover:text-white dark:bg-blue-950 dark:text-blue-400">
+          🔄
+        </div>
+        <h2 class="mt-4 text-lg font-bold text-slate-900 dark:text-white sm:text-xl">
+          Choose an image or drag & drop here
+        </h2>
+        <p class="mt-1.5 text-xs text-slate-500 dark:text-slate-400 sm:text-sm max-w-md">
+          Rotate 90°, 180°, 270°, mirror flip horizontally, or flip vertically with instant preview.
+        </p>
+        <div class="mt-5 flex flex-wrap items-center justify-center gap-3">
+          <button
+            type="button"
+            id="btn-select"
+            class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-bold text-white shadow-xs transition hover:bg-blue-700 cursor-pointer sm:text-sm"
+          >
+            📁 Select Image File
+          </button>
+          <span class="text-xs text-slate-400">or paste from clipboard (Ctrl+V)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Workspace Zone -->
+    <section id="workspace-zone" class="hidden space-y-6">
+
+      <!-- Action & Rotation Toolbar -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 sm:p-5 space-y-4">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-slate-500 block mb-2">Transform Controls</span>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" id="btn-rot-left" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-blue-500 cursor-pointer">
+              ↺ Rotate 90° Left
+            </button>
+            <button type="button" id="btn-rot-right" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-blue-500 cursor-pointer">
+              ↻ Rotate 90° Right
+            </button>
+            <button type="button" id="btn-flip-h" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-blue-500 cursor-pointer">
+              ⇄ Flip Horizontal
+            </button>
+            <button type="button" id="btn-flip-v" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-bold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:border-blue-500 cursor-pointer">
+              ⇅ Flip Vertical
+            </button>
+            <button type="button" id="btn-reset-transforms" class="inline-flex items-center gap-1 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 hover:bg-rose-100 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300 cursor-pointer">
+              ✖ Reset All
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+          <div>
+            <div class="flex justify-between text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+              <span>Fine Angle Rotation:</span>
+              <span id="angle-display" class="text-blue-600 dark:text-blue-400">0°</span>
+            </div>
+            <input type="range" id="angle-slider" min="-180" max="180" value="0" class="w-full accent-blue-600 cursor-pointer" />
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="flex-1">
+              <label for="export-format" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Format</label>
+              <select id="export-format" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-1.5 text-xs font-medium text-slate-900 focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                <option value="png">PNG (Preserve Transparency)</option>
+                <option value="jpg">JPG (High Quality)</option>
+                <option value="webp">WebP (Modern Compact)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Transform Canvas Container -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-2xs dark:border-slate-800 dark:bg-slate-900 space-y-3">
+        <div class="flex items-center justify-between text-xs font-bold text-slate-500 border-b border-slate-100 pb-2 dark:border-slate-800">
+          <span>Current Transformed Preview</span>
+          <span id="output-dims">0 × 0 px</span>
+        </div>
+        <div class="flex items-center justify-center rounded-xl bg-[radial-gradient(#cbd5e1_1px,transparent_1px)] [background-size:12px_12px] bg-slate-50 p-4 dark:bg-slate-950 dark:[radial-gradient(#334155_1px,transparent_1px)] min-h-[300px] max-h-[500px] overflow-hidden">
+          <canvas id="main-canvas" class="max-h-[460px] w-auto max-w-full rounded shadow-sm object-contain"></canvas>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <button
+          type="button"
+          id="btn-reset"
+          class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-xs font-semibold text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+        >
+          🔄 Choose Another Image
+        </button>
+
+        <a
+          id="btn-download"
+          href="#"
+          download="transformed-image.png"
+          class="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-6 py-2.5 text-sm font-bold text-white shadow-md hover:bg-blue-700 cursor-pointer transition"
+        >
+          ⬇️ Download Transformed Image
+        </a>
+      </div>
+    </section>
+  </div>
+
+  <!-- Educational Guide -->
+  <div class="mt-12 space-y-8 text-slate-700 dark:text-slate-300 text-sm leading-relaxed border-t border-slate-200 pt-8 dark:border-slate-800">
+    <section class="space-y-3">
+      <h2 class="text-xl font-bold text-slate-900 dark:text-white">
+        Correcting Image Orientation
+      </h2>
+      <p>
+        Digital cameras and smartphones frequently record orientation metadata in EXIF tags that can display sideways or upside down when uploaded to websites or printed. Using our in-browser orientation tool rewrites the image matrix directly, permanently fixing rotation and horizontal mirror orientation across all devices.
+      </p>
+    </section>
+  </div>
+
+  <script>
+    (function initFlipRotate() {
+      let currentImage: HTMLImageElement | null = null;
+      let currentFile: File | null = null;
+      let rotationAngle = 0;
+      let flipH = false;
+      let flipV = false;
+
+      const uploadZone = document.getElementById('upload-zone');
+      const dropZone = document.getElementById('drop-zone');
+      const fileInput = document.getElementById('file-input') as HTMLInputElement | null;
+      const btnSelect = document.getElementById('btn-select');
+      const workspaceZone = document.getElementById('workspace-zone');
+      const btnReset = document.getElementById('btn-reset');
+      const btnDownload = document.getElementById('btn-download') as HTMLAnchorElement | null;
+
+      const mainCanvas = document.getElementById('main-canvas') as HTMLCanvasElement | null;
+      const outputDims = document.getElementById('output-dims');
+      const angleSlider = document.getElementById('angle-slider') as HTMLInputElement | null;
+      const angleDisplay = document.getElementById('angle-display');
+      const exportFormat = document.getElementById('export-format') as HTMLSelectElement | null;
+
+      const btnRotLeft = document.getElementById('btn-rot-left');
+      const btnRotRight = document.getElementById('btn-rot-right');
+      const btnFlipH = document.getElementById('btn-flip-h');
+      const btnFlipV = document.getElementById('btn-flip-v');
+      const btnResetTransforms = document.getElementById('btn-reset-transforms');
+
+      function renderTransform() {
+        if (!currentImage || !mainCanvas) return;
+
+        const rad = (rotationAngle * Math.PI) / 180;
+        const sin = Math.abs(Math.sin(rad));
+        const cos = Math.abs(Math.cos(rad));
+
+        const originalW = currentImage.naturalWidth;
+        const originalH = currentImage.naturalHeight;
+
+        const newW = Math.round(originalW * cos + originalH * sin);
+        const newH = Math.round(originalW * sin + originalH * cos);
+
+        mainCanvas.width = newW;
+        mainCanvas.height = newH;
+
+        const ctx = mainCanvas.getContext('2d');
+        if (!ctx) return;
+
+        ctx.clearRect(0, 0, newW, newH);
+        ctx.save();
+
+        ctx.translate(newW / 2, newH / 2);
+        ctx.rotate(rad);
+        ctx.scale(flipH ? -1 : 1, flipV ? -1 : 1);
+
+        ctx.drawImage(currentImage, -originalW / 2, -originalH / 2);
+        ctx.restore();
+
+        if (outputDims) outputDims.textContent = `${newW} × ${newH} px`;
+
+        const fmt = exportFormat?.value || 'png';
+        let mime = 'image/png';
+        let ext = 'png';
+        if (fmt === 'jpg') {
+          mime = 'image/jpeg';
+          ext = 'jpg';
+        } else if (fmt === 'webp') {
+          mime = 'image/webp';
+          ext = 'webp';
+        }
+
+        mainCanvas.toBlob((blob) => {
+          if (!blob || !btnDownload) return;
+          const url = URL.createObjectURL(blob);
+          btnDownload.href = url;
+          const baseName = currentFile?.name.replace(/\.[^/.]+$/, '') || 'image';
+          btnDownload.download = `${baseName}-transformed.${ext}`;
+        }, mime, 0.95);
+      }
+
+      function handleFile(file: File) {
+        if (!file) return;
+        currentFile = file;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            currentImage = img;
+            rotationAngle = 0;
+            flipH = false;
+            flipV = false;
+            if (angleSlider) angleSlider.value = '0';
+            if (angleDisplay) angleDisplay.textContent = '0°';
+
+            if (uploadZone) uploadZone.classList.add('hidden');
+            if (workspaceZone) workspaceZone.classList.remove('hidden');
+
+            renderTransform();
+          };
+          img.src = e.target?.result as string;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      btnRotLeft?.addEventListener('click', () => {
+        rotationAngle = (rotationAngle - 90) % 360;
+        if (angleSlider) angleSlider.value = String(rotationAngle);
+        if (angleDisplay) angleDisplay.textContent = `${rotationAngle}°`;
+        renderTransform();
+      });
+
+      btnRotRight?.addEventListener('click', () => {
+        rotationAngle = (rotationAngle + 90) % 360;
+        if (angleSlider) angleSlider.value = String(rotationAngle);
+        if (angleDisplay) angleDisplay.textContent = `${rotationAngle}°`;
+        renderTransform();
+      });
+
+      btnFlipH?.addEventListener('click', () => {
+        flipH = !flipH;
+        renderTransform();
+      });
+
+      btnFlipV?.addEventListener('click', () => {
+        flipV = !flipV;
+        renderTransform();
+      });
+
+      btnResetTransforms?.addEventListener('click', () => {
+        rotationAngle = 0;
+        flipH = false;
+        flipV = false;
+        if (angleSlider) angleSlider.value = '0';
+        if (angleDisplay) angleDisplay.textContent = '0°';
+        renderTransform();
+      });
+
+      angleSlider?.addEventListener('input', (e) => {
+        rotationAngle = Number((e.target as HTMLInputElement).value);
+        if (angleDisplay) angleDisplay.textContent = `${rotationAngle}°`;
+        renderTransform();
+      });
+
+      exportFormat?.addEventListener('change', renderTransform);
+
+      btnSelect?.addEventListener('click', () => fileInput?.click());
+      dropZone?.addEventListener('click', (e) => {
+        if (e.target !== btnSelect) fileInput?.click();
+      });
+
+      fileInput?.addEventListener('change', (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) handleFile(file);
+      });
+
+      dropZone?.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('border-blue-500', 'bg-blue-50/50');
+      });
+
+      dropZone?.addEventListener('dragleave', () => {
+        dropZone.classList.remove('border-blue-500', 'bg-blue-50/50');
+      });
+
+      dropZone?.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-blue-500', 'bg-blue-50/50');
+        const file = e.dataTransfer?.files?.[0];
+        if (file) handleFile(file);
+      });
+
+      document.addEventListener('paste', (e) => {
+        const items = e.clipboardData?.items;
+        if (!items) return;
+        for (let i = 0; i < items.length; i++) {
+          if (items[i].type.indexOf('image') !== -1) {
+            const file = items[i].getAsFile();
+            if (file) handleFile(file);
+            break;
+          }
+        }
+      });
+
+      btnReset?.addEventListener('click', () => {
+        if (fileInput) fileInput.value = '';
+        if (uploadZone) uploadZone.classList.remove('hidden');
+        if (workspaceZone) workspaceZone.classList.add('hidden');
+      });
+    })();
+  </script>
+</CalculatorLayout>

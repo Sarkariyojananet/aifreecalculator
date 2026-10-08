@@ -38,6 +38,10 @@ const CATEGORY_SLUGS = [
   'math',
   'general',
   'free-online-tools',
+  'image-tools',
+  'pdf-tools',
+  'compiler-tools',
+  'time-table-tools',
 ] as const;
 
 const STATIC_SLUG_PATHS = new Set(STATIC_SLUGS.map((s) => `/${s}/`));

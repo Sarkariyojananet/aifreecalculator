@@ -426,7 +426,48 @@ const graphSchema = buildCalculatorGraphSchema({
       document.addEventListener('input', onFirstInteraction, true);
       document.addEventListener('focusin', onFirstInteraction, true);
 
-      // 3. Listen for uncaught calculation errors on the calculator page
+      // 3. Telemetry guards to prevent network flooding and duplicate error logging
+      var reportedErrorSignatures = new Set();
+      var totalErrorsReported = 0;
+      var MAX_ERRORS_PER_PAGE = 3;
+      var lastErrorLogTime = 0;
+      var ERROR_LOG_THROTTLE_MS = 10000; // Minimum 10 seconds between error reports
+
+      function sendErrorTelemetry(errorType: string, msg: string) {
+        if (totalErrorsReported >= MAX_ERRORS_PER_PAGE) return;
+
+        var normalizedMsg = String(msg || '').trim().toLowerCase().slice(0, 200);
+        var signature = slug + ':' + errorType + ':' + normalizedMsg;
+        if (reportedErrorSignatures.has(signature)) return;
+
+        var now = Date.now();
+        if (now - lastErrorLogTime < ERROR_LOG_THROTTLE_MS) return;
+
+        reportedErrorSignatures.add(signature);
+        totalErrorsReported++;
+        lastErrorLogTime = now;
+
+        try {
+          var payload = JSON.stringify({
+            calculatorSlug: slug,
+            errorType: errorType,
+            errorMessage: String(msg || '').slice(0, 300),
+            url: window.location.pathname
+          });
+          if (navigator.sendBeacon) {
+            navigator.sendBeacon('/api/calculator-error-log', payload);
+          } else {
+            fetch('/api/calculator-error-log', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: payload,
+              keepalive: true
+            }).catch(function() {});
+          }
+        } catch (e) {}
+      }
+
+      // Listen for uncaught calculation errors on the calculator page
       window.addEventListener('error', function(event) {
         if (!event || !event.message) return;
         var msg = String(event.message || '');
@@ -442,40 +483,15 @@ const graphSchema = buildCalculatorGraphSchema({
 
         trackAnalytics('calculation_error');
 
-        try {
-          var payload = JSON.stringify({
-            calculatorSlug: slug,
-            errorType: event.error && event.error.name ? event.error.name : 'UncaughtException',
-            errorMessage: msg.slice(0, 300),
-            url: window.location.pathname
-          });
-          if (navigator.sendBeacon) {
-            navigator.sendBeacon('/api/calculator-error-log', payload);
-          } else {
-            fetch('/api/calculator-error-log', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: payload,
-              keepalive: true
-            }).catch(function() {});
-          }
-        } catch (e) {}
+        var errType = event.error && event.error.name ? event.error.name : 'UncaughtException';
+        sendErrorTelemetry(errType, msg);
       });
 
       // Global hook for calculator script handlers to report NaN / Infinite results
       (window as any).__reportCalculatorAnomaly = function(type: string, details?: unknown) {
         trackAnalytics('calculation_error');
-        try {
-          var payload = JSON.stringify({
-            calculatorSlug: slug,
-            errorType: type || 'CalculationAnomaly',
-            errorMessage: typeof details === 'string' ? details.slice(0, 300) : JSON.stringify(details).slice(0, 300),
-            url: window.location.pathname
-          });
-          if (navigator.sendBeacon) {
-            navigator.sendBeacon('/api/calculator-error-log', payload);
-          }
-        } catch (e) {}
+        var anomalyMsg = typeof details === 'string' ? details : JSON.stringify(details || '');
+        sendErrorTelemetry(type || 'CalculationAnomaly', anomalyMsg);
       };
 
       // =========================================================

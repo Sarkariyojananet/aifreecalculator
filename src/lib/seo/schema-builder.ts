@@ -44,7 +44,7 @@ export function buildCalculatorGraphSchema(params: CalculatorSchemaParams): Reco
   } = params;
 
   const cleanCategory = (category || 'General').trim();
-  const categorySlug = cleanCategory.toLowerCase();
+  const categorySlug = cleanCategory.toLowerCase().replace(/\s+/g, '-');
   const categoryUrl = `${siteUrl}/${categorySlug}/`;
 
   // 1. WebApplication Schema
