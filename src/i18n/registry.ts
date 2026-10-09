@@ -80,7 +80,8 @@ export function getAvailableLocalesForPath(pathname: string): Locale[] {
     if (slash2 !== -1 && slash2 === cleanPath.length - 1) {
       const cat = cleanPath.slice(1, slash1);
       if (CATEGORY_SLUGS_SET.has(cat)) {
-        return ALL_LOCALES_ARRAY;
+        const slug = cleanPath.slice(slash1 + 1, slash2);
+        return getCalculatorAvailableLocales(slug);
       }
     }
   }

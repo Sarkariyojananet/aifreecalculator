@@ -123,6 +123,12 @@ export function isCalculatorTranslated(slug: string, locale: Locale): boolean {
 export function getCalculatorAvailableLocales(slug: string): Locale[] {
   const translations = ALL_CALCULATOR_TRANSLATIONS[slug];
   if (!translations) return ['en'];
-  return Object.keys(translations) as Locale[];
+  const translatedLocales = Object.entries(translations)
+    .filter(([_, trans]) => trans && trans.status === 'translated')
+    .map(([loc]) => loc as Locale);
+  if (!translatedLocales.includes('en')) {
+    translatedLocales.unshift('en');
+  }
+  return translatedLocales;
 }
 
