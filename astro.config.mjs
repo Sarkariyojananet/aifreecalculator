@@ -41,6 +41,24 @@ export default defineConfig({
     '/free-online-tools/pdf-to-image': '/pdf-tools/pdf-to-image/',
     '/free-online-tools/image-to-pdf': '/pdf-tools/image-to-pdf/',
     '/free-online-tools/monthly-time-table-maker': '/time-table-tools/monthly-time-table-maker/',
+    // Phase 2A/2B: Consolidate Timetable Doorway Pages to Authoritative Canonical Tools
+    '/time-table-tools/exam-timetable-maker': '/time-table-tools/study-timetable-maker/',
+    '/time-table-tools/student-timetable-maker': '/time-table-tools/study-timetable-maker/',
+    '/time-table-tools/school-timetable-maker': '/time-table-tools/study-timetable-maker/',
+    '/time-table-tools/college-timetable-maker': '/time-table-tools/study-timetable-maker/',
+    '/time-table-tools/university-timetable-maker': '/time-table-tools/study-timetable-maker/',
+    '/time-table-tools/class-timetable-generator': '/time-table-tools/study-timetable-maker/',
+    '/time-table-tools/class-schedule-maker': '/time-table-tools/study-timetable-maker/',
+    '/time-table-tools/teacher-timetable-maker': '/time-table-tools/study-timetable-maker/',
+    '/time-table-tools/kids-timetable-maker': '/time-table-tools/daily-timetable-maker/',
+    '/time-table-tools/kids-daily-routine-planner': '/time-table-tools/daily-timetable-maker/',
+    '/time-table-tools/boys-daily-routine-planner': '/time-table-tools/daily-timetable-maker/',
+    '/time-table-tools/girls-daily-routine-planner': '/time-table-tools/daily-timetable-maker/',
+    '/time-table-tools/personal-timetable-maker': '/time-table-tools/daily-timetable-maker/',
+    '/time-table-tools/home-routine-planner': '/time-table-tools/weekly-timetable-maker/',
+    '/time-table-tools/employee-work-timetable': '/time-table-tools/work-shift-schedule-maker/',
+    '/time-table-tools/printable-timetable-maker': '/time-table-tools/timetable-maker/',
+    '/time-table-tools/smart-timetable-generator': '/time-table-tools/timetable-maker/',
   },
 
   cache: {
@@ -181,7 +199,26 @@ export default defineConfig({
         !page.includes('/sitemap') &&
         !page.includes('/404') &&
         !page.includes('/500') &&
-        !page.includes('/brickwork-calculator'),
+        !page.includes('/brickwork-calculator') &&
+        ![
+          'exam-timetable-maker',
+          'student-timetable-maker',
+          'school-timetable-maker',
+          'college-timetable-maker',
+          'university-timetable-maker',
+          'class-timetable-generator',
+          'class-schedule-maker',
+          'teacher-timetable-maker',
+          'kids-timetable-maker',
+          'kids-daily-routine-planner',
+          'boys-daily-routine-planner',
+          'girls-daily-routine-planner',
+          'personal-timetable-maker',
+          'home-routine-planner',
+          'employee-work-timetable',
+          'printable-timetable-maker',
+          'smart-timetable-generator',
+        ].some((slug) => page.includes(`/time-table-tools/${slug}`)),
       changefreq: 'weekly',
       priority: 0.8,
       lastmod: new Date(),

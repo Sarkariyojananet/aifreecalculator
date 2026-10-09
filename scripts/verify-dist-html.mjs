@@ -18,7 +18,7 @@ const testCases = [
   { url: 'de/free-online-tools/word-counter/index.html', lang: 'de', expectedText: 'Wortzähler', expectedFaq: 'Was ist ein Wortzähler' },
   { url: 'ja/free-online-tools/qr-code-generator/index.html', lang: 'ja', expectedText: 'QRコード', expectedFaq: 'QRコードジェネレーターとは何ですか？' },
   { url: 'pt/free-online-tools/password-generator/index.html', lang: 'pt', expectedText: 'Gerador de Senhas', expectedFaq: 'O que é um gerador de senhas seguras?' },
-  { url: 'ko/free-online-tools/pdf-merge/index.html', lang: 'ko', expectedText: 'PDF 병합', expectedFaq: 'PDF 병합(PDF Merge) 도구는 어떻게 작동하나요?' },
+  { url: 'ko/pdf-tools/pdf-merge/index.html', lang: 'ko', expectedText: 'PDF 병합', expectedFaq: 'PDF 병합(PDF Merge) 도구는 어떻게 작동하나요?' },
   { url: 'it/free-online-tools/json-formatter/index.html', lang: 'it', expectedText: 'Formattatore JSON', expectedFaq: 'Che cos\'è un formattatore JSON?' }
 ];
 
