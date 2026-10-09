@@ -614,9 +614,22 @@ import {
 
   (window as any).__afcGetAdsConfig = getAdsConfig;
 
+  function startEngine() {
+    if ((window as any).__afcEngineStarted) return;
+    (window as any).__afcEngineStarted = true;
+
+    if (typeof (window as any).__afcDefer === 'function') {
+      (window as any).__afcDefer(() => {
+        renderAdSlots();
+      });
+    } else {
+      renderAdSlots();
+    }
+  }
+
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => renderAdSlots());
+    document.addEventListener('DOMContentLoaded', startEngine);
   } else {
-    renderAdSlots();
+    startEngine();
   }
 })();
