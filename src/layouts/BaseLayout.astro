@@ -116,12 +116,18 @@ const resolvedOgImage = ogImage.startsWith('http')
       window.__afcDefer = function (fn) {
         var done = false;
 
+        function onVisibilityChange() {
+          if (document.visibilityState === 'hidden') run();
+        }
+
         function cleanup() {
           try {
             window.removeEventListener('scroll', run);
             window.removeEventListener('pointerdown', run);
             window.removeEventListener('keydown', run);
             window.removeEventListener('touchstart', run);
+            window.removeEventListener('pagehide', run);
+            document.removeEventListener('visibilitychange', onVisibilityChange);
           } catch (e) {}
         }
 
@@ -136,20 +142,22 @@ const resolvedOgImage = ogImage.startsWith('http')
           }
         }
 
-        // 1. First genuine user interaction wins (covers real visitors instantly)
+        // 1. First genuine user interaction or navigation event wins
         try {
           window.addEventListener('scroll', run, { passive: true });
           window.addEventListener('pointerdown', run, { passive: true });
           window.addEventListener('keydown', run, { passive: true });
           window.addEventListener('touchstart', run, { passive: true });
+          window.addEventListener('pagehide', run, { once: true });
+          document.addEventListener('visibilitychange', onVisibilityChange, { once: true });
         } catch (e) {}
 
         // 2. Otherwise wait for a quiet moment after the page has fully loaded
         function scheduleIdle() {
           if ('requestIdleCallback' in window) {
-            window.requestIdleCallback(run, { timeout: 2500 });
+            window.requestIdleCallback(run, { timeout: 3500 });
           } else {
-            setTimeout(run, 1500);
+            setTimeout(run, 2500);
           }
         }
 
@@ -167,7 +175,11 @@ const resolvedOgImage = ogImage.startsWith('http')
         (function () {
           function loadAdSense() {
             try {
-              if (document.querySelector('script[src*="pagead2.googlesyndication.com"]')) return;
+              if (
+                window.__afcAdSenseLoaded ||
+                document.querySelector('script[src*="pagead2.googlesyndication.com"]')
+              ) return;
+              window.__afcAdSenseLoaded = true;
               var s = document.createElement('script');
               s.async = true;
               s.crossOrigin = 'anonymous';

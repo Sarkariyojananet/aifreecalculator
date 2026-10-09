@@ -40,15 +40,20 @@ const gtagSrc = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponen
             window.dataLayer.push(arguments);
           };
 
-        window.gtag('js', new Date());
-        window.gtag('config', gaId);
+        if (!window.__afcGAConfigured) {
+          window.__afcGAConfigured = true;
+          window.__afcCurrentGAId = gaId;
+          window.gtag('js', new Date());
+          window.gtag('config', gaId);
+        }
 
         var loaded = false;
 
         function loadGA() {
           try {
-            if (loaded) return;
+            if (loaded || window.__afcGALoaded) return;
             loaded = true;
+            window.__afcGALoaded = true;
             // Guard against a second copy being injected by the runtime
             // AdSense/monetization config loader.
             if (document.querySelector('script[src*="googletagmanager.com/gtag/js"]')) return;

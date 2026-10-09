@@ -161,6 +161,13 @@ import {
   function loadGoogleScript(clientId: string) {
     if (!clientId || !clientId.startsWith('ca-pub-')) return;
 
+    if (
+      (window as any).__afcAdSenseLoaded ||
+      document.querySelector('script[src*="pagead2.googlesyndication.com"]')
+    ) {
+      return;
+    }
+
     // The head loader defers adsbygoogle.js off the critical path.
     // When an ad unit is actually about to render, force it in now.
     if (typeof (window as any).__afcLoadAdSense === 'function') {
@@ -168,11 +175,11 @@ import {
       return;
     }
 
-    if (document.querySelector(`script[src*="pagead2.googlesyndication.com"]`)) return;
     const script = document.createElement('script');
     script.async = true;
     script.crossOrigin = 'anonymous';
     script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${clientId}`;
+    (window as any).__afcAdSenseLoaded = true;
     document.head.appendChild(script);
   }
 
@@ -272,19 +279,41 @@ import {
 
   function loadGoogleAnalytics(gaId: string) {
     if (!gaId || !gaId.startsWith('G-')) return;
-    if (document.querySelector(`script[src*="googletagmanager.com/gtag/js?id=${gaId}"]`)) return;
+
+    // Install or preserve standard gtag queue
+    (window as any).dataLayer = (window as any).dataLayer || [];
+    if (!(window as any).gtag) {
+      (window as any).gtag = function (...args: any[]) {
+        (window as any).dataLayer.push(args);
+      };
+      (window as any).gtag('js', new Date());
+    }
+
+    // Configure only if not already configured with this ID
+    if ((window as any).__afcCurrentGAId !== gaId) {
+      (window as any).__afcCurrentGAId = gaId;
+      (window as any).gtag('config', gaId);
+    }
+
+    // If script is already loaded or being fetched, prevent duplicate
+    if (
+      (window as any).__afcGALoaded ||
+      document.querySelector('script[src*="googletagmanager.com/gtag/js"]')
+    ) {
+      return;
+    }
+
+    // Delegate to deferred loader from GoogleAnalytics.astro if available
+    if (typeof (window as any).__afcLoadGA === 'function') {
+      (window as any).__afcLoadGA();
+      return;
+    }
+
     const script = document.createElement('script');
     script.async = true;
     script.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
+    (window as any).__afcGALoaded = true;
     document.head.appendChild(script);
-
-    (window as any).dataLayer = (window as any).dataLayer || [];
-    function gtag(...args: any[]) {
-      (window as any).dataLayer.push(args);
-    }
-    (window as any).gtag = gtag;
-    gtag('js', new Date());
-    gtag('config', gaId);
   }
 
   function escapeText(str: unknown): string {

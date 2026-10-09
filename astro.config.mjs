@@ -48,6 +48,9 @@ export default defineConfig({
   },
 
   vite: {
+    build: {
+      target: 'es2022',
+    },
     plugins: [
       tailwindcss(),
       // Build-time git-info plugin: injects PUBLIC_GIT_* env vars

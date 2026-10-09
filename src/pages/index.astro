@@ -82,13 +82,13 @@ const effectiveRobots = override.robots;
   <section id="recently-used-section" class="hidden border-b border-slate-200 bg-slate-50/60 px-4 py-6 dark:border-slate-800 dark:bg-slate-900/40">
     <div class="mx-auto max-w-7xl space-y-3">
       <div class="flex items-center justify-between">
-        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-300">
           Recently Used Calculators
         </h3>
         <button
           type="button"
           id="btn-clear-recents"
-          class="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition cursor-pointer"
+          class="text-xs text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-200 transition cursor-pointer"
         >
           Clear History ✕
         </button>
@@ -229,10 +229,10 @@ const effectiveRobots = override.robots;
       type WindowWithSearch = Window & typeof globalThis & {
         __CALCULATORS_SEARCH_DATA__?: SearchItem[];
         __CALCULATORS_DATA__?: SearchItem[];
+        __CALCULATORS_DATA_PROMISE__?: Promise<SearchItem[]>;
       };
       const win = window as unknown as WindowWithSearch;
 
-      let searchDataPromise: Promise<SearchItem[]> | null = null;
       let data: SearchItem[] = win.__CALCULATORS_SEARCH_DATA__ || win.__CALCULATORS_DATA__ || [];
 
       function getSearchData(): Promise<SearchItem[]> {
@@ -246,32 +246,47 @@ const effectiveRobots = override.robots;
           win.__CALCULATORS_SEARCH_DATA__ = data;
           return Promise.resolve(data);
         }
-        if (searchDataPromise) return searchDataPromise;
+        if (win.__CALCULATORS_DATA_PROMISE__) return win.__CALCULATORS_DATA_PROMISE__;
 
-        searchDataPromise = fetch('/search-index.json')
+        // Fetch optimized per-language JSON (~55KB vs 534KB) on-demand
+        searchDataFailed = false;
+        win.__CALCULATORS_DATA_PROMISE__ = fetch('/search-data/en.json')
           .then((res) => {
-            if (!res.ok) throw new Error('Failed to load search data');
+            if (!res.ok) throw new Error('Localized search index failed');
             return res.json();
           })
-          .then((raw: any) => {
-            const items = Array.isArray(raw) ? raw : (raw['en'] || []);
-            data = Array.isArray(items) ? (items as SearchItem[]) : [];
+          .then((items: any) => {
+            const list = Array.isArray(items) ? items : (items['en'] || []);
+            data = Array.isArray(list) ? (list as SearchItem[]) : [];
             win.__CALCULATORS_SEARCH_DATA__ = data;
             win.__CALCULATORS_DATA__ = data;
-            loadRecentlyUsed();
             return data;
           })
-          .catch(() => []);
-        return searchDataPromise;
+          .catch(() => {
+            // Graceful fallback to legacy monolithic index
+            return fetch('/search-index.json')
+              .then((res) => {
+                if (!res.ok) throw new Error('Fallback search index failed');
+                return res.json();
+              })
+              .then((raw: any) => {
+                const items = Array.isArray(raw) ? raw : (raw['en'] || []);
+                data = Array.isArray(items) ? (items as SearchItem[]) : [];
+                win.__CALCULATORS_SEARCH_DATA__ = data;
+                win.__CALCULATORS_DATA__ = data;
+                return data;
+              })
+              .catch(() => {
+                searchDataFailed = true;
+                win.__CALCULATORS_DATA_PROMISE__ = null;
+                return [];
+              });
+          });
+
+        return win.__CALCULATORS_DATA_PROMISE__;
       }
 
-      // Prefetch search data during idle frame to ensure instant response on typing
-      if ('requestIdleCallback' in window) {
-        window.requestIdleCallback(getSearchData, { timeout: 3000 });
-      } else {
-        setTimeout(getSearchData, 2000);
-      }
-
+      let searchDataFailed = false;
       let searchLogTimer: ReturnType<typeof setTimeout> | null = null;
       function logSearch(query: string, hasResults: boolean) {
         if (!query || query.length < 2) return;
@@ -304,11 +319,32 @@ const effectiveRobots = override.robots;
         }
 
         if (!data || data.length === 0) {
+          if (searchDataFailed) {
+            if (dropdownItems) {
+              dropdownItems.innerHTML = `
+                <div class="py-6 text-center text-xs text-slate-500 dark:text-slate-400">
+                  <p class="text-xl mb-1">⚠️</p>
+                  <p class="font-medium text-slate-700 dark:text-slate-200">Search temporarily unavailable</p>
+                  <button id="hero-search-retry-btn" type="button" class="mt-2 text-xs font-bold text-blue-600 dark:text-blue-400 underline cursor-pointer">Retry</button>
+                </div>
+              `;
+              const retryBtn = document.getElementById('hero-search-retry-btn');
+              if (retryBtn) {
+                retryBtn.addEventListener('click', () => {
+                  searchDataFailed = false;
+                  getSearchData().then(() => filterSearch(query));
+                });
+              }
+            }
+            if (searchDropdown) searchDropdown.classList.remove('hidden');
+            return;
+          }
+
           if (dropdownItems) {
             dropdownItems.innerHTML = `
-              <div class="py-6 text-center text-xs text-slate-400">
+              <div class="py-6 text-center text-xs text-slate-500 dark:text-slate-400">
                 <div class="inline-block h-5 w-5 animate-spin rounded-full border-2 border-blue-500 border-t-transparent mb-2"></div>
-                <p class="font-medium text-slate-600 dark:text-slate-300">Searching calculators...</p>
+                <p class="font-medium text-slate-700 dark:text-slate-200">Searching calculators...</p>
               </div>
             `;
           }
@@ -337,8 +373,8 @@ const effectiveRobots = override.robots;
         if (dropdownItems) {
           if (matches.length === 0) {
             dropdownItems.innerHTML = `
-              <div class="py-6 text-center text-xs text-slate-500 dark:text-slate-400">
-                <p class="font-bold text-slate-700 dark:text-slate-200 text-sm">No calculators matching "${q}"</p>
+              <div class="py-6 text-center text-xs text-slate-600 dark:text-slate-300">
+                <p class="font-bold text-slate-800 dark:text-slate-100 text-sm">No calculators matching "${q}"</p>
                 <p class="mt-1">Try keywords like 'EMI', 'Slab', 'Sariya', 'Tax', 'BMI', or 'Percentage'</p>
               </div>
             `;
@@ -352,7 +388,7 @@ const effectiveRobots = override.robots;
                   <div class="font-bold text-xs sm:text-sm text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">
                     ${item.name}
                   </div>
-                  <div class="text-[11px] text-slate-500 dark:text-slate-400 line-clamp-1 mt-0.5">
+                  <div class="text-[11px] text-slate-600 dark:text-slate-300 line-clamp-1 mt-0.5">
                     ${item.desc}
                   </div>
                 </div>
@@ -360,7 +396,7 @@ const effectiveRobots = override.robots;
                   <span class="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                     ${item.category}
                   </span>
-                  <span class="text-slate-400 text-xs group-hover:translate-x-0.5 transition-transform">→</span>
+                  <span class="text-slate-500 dark:text-slate-400 text-xs group-hover:translate-x-0.5 transition-transform">→</span>
                 </div>
               </a>
             `).join('');
@@ -371,9 +407,12 @@ const effectiveRobots = override.robots;
       }
 
       if (searchInput) {
+        searchInput.addEventListener('mouseenter', () => getSearchData(), { once: true });
+        searchInput.addEventListener('touchstart', () => getSearchData(), { once: true });
         searchInput.addEventListener('focus', () => {
-          getSearchData();
-          if (searchInput.value.trim()) filterSearch(searchInput.value);
+          getSearchData().then(() => {
+            if (searchInput.value.trim()) filterSearch(searchInput.value);
+          });
         });
         searchInput.addEventListener('input', (e) => {
           const target = e.target as HTMLInputElement | null;
@@ -392,12 +431,13 @@ const effectiveRobots = override.robots;
       }
 
       quickTags.forEach((btn) => {
+        btn.addEventListener('mouseenter', () => getSearchData(), { once: true });
         btn.addEventListener('click', () => {
           const q = btn.getAttribute('data-query') || '';
           if (searchInput) {
             searchInput.value = q;
             searchInput.focus();
-            filterSearch(q);
+            getSearchData().then(() => filterSearch(q));
           }
         });
       });
@@ -419,36 +459,39 @@ const effectiveRobots = override.robots;
       function loadRecentlyUsed() {
         const recentsSection = document.getElementById('recently-used-section');
         const recentsGrid = document.getElementById('recently-used-grid');
-        if (!recentsSection || !recentsGrid || !data || data.length === 0) return;
+        if (!recentsSection || !recentsGrid) return;
 
         try {
           const rawHistory = localStorage.getItem('recent_calculators');
-          if (rawHistory) {
-            const recentSlugs = JSON.parse(rawHistory);
-            if (Array.isArray(recentSlugs) && recentSlugs.length > 0) {
-              const matchedTools = recentSlugs
-                .map((slug: string) => data.find((d: SearchItem) => d.slug === slug || d.slug === `${slug}-calculator`))
-                .filter(Boolean)
-                .slice(0, 5);
+          if (!rawHistory) return;
+          const recentSlugs = JSON.parse(rawHistory);
+          if (!Array.isArray(recentSlugs) || recentSlugs.length === 0) return;
 
-              if (matchedTools.length > 0) {
-                recentsGrid.innerHTML = (matchedTools as SearchItem[]).map((t) => `
-                  <a
-                    href="${t.path}"
-                    class="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-2.5 shadow-2xs hover:border-blue-400 dark:border-slate-800 dark:bg-slate-900 transition group"
-                  >
-                    <div class="min-w-0 pr-2">
-                      <div class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">${t.name}</div>
-                      <div class="text-[10px] text-slate-400">${t.category}</div>
-                    </div>
-                    <span class="text-slate-400 text-xs shrink-0 group-hover:translate-x-0.5 transition-transform">→</span>
-                  </a>
-                `).join('');
+          // Only request search data if local history actually exists
+          getSearchData().then((items) => {
+            if (!items || items.length === 0) return;
+            const matchedTools = recentSlugs
+              .map((slug: string) => items.find((d: SearchItem) => d.slug === slug || d.slug === `${slug}-calculator`))
+              .filter(Boolean)
+              .slice(0, 5);
 
-                recentsSection.classList.remove('hidden');
-              }
+            if (matchedTools.length > 0) {
+              recentsGrid.innerHTML = (matchedTools as SearchItem[]).map((t) => `
+                <a
+                  href="${t.path}"
+                  class="flex items-center justify-between rounded-lg border border-slate-200 bg-white p-2.5 shadow-2xs hover:border-blue-400 dark:border-slate-800 dark:bg-slate-900 transition group"
+                >
+                  <div class="min-w-0 pr-2">
+                    <div class="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 truncate">${t.name}</div>
+                    <div class="text-[10px] text-slate-600 dark:text-slate-400">${t.category}</div>
+                  </div>
+                  <span class="text-slate-500 dark:text-slate-400 text-xs shrink-0 group-hover:translate-x-0.5 transition-transform">→</span>
+                </a>
+              `).join('');
+
+              recentsSection.classList.remove('hidden');
             }
-          }
+          });
         } catch {}
       }
 
