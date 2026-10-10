@@ -295,7 +295,52 @@ The output card is the visual payoff of the calculator:
 
 ---
 
-## 6. Calculator Page Architecture & Responsive Rules
+## 6. Workspace & File Tools Specification
+
+This specification extends the existing Calculator Pro design system for file-based utilities (PDF tools, image tools, and compilers). It must reuse the existing Tailwind CSS v4 tokens, slate/blue color palette, typography, radii, shadows, dark-mode treatment, and native control preference. It does not replace or alter the calculator design system.
+
+### 6.1 Full-Width Workspace Shell
+* **Scope:** PDF tools, image tools, and compilers use a dedicated workspace within the existing page shell; standard calculators retain the two-column calculator layout defined below.
+* **Width & Padding:** Use the established `max-w-7xl` content boundary and responsive `px-4 sm:px-6 lg:px-8` padding. The workspace surface may span the full available content width; do not constrain it to the standard 1200px calculator form/result split.
+* **Structure:** Place the tool heading and concise helper text above the workspace, followed by the primary work area, persistent or contextual actions, and a results/summary area. Keep secondary explanatory and SEO content below the workspace.
+* **Responsive behavior:** On desktop, use multi-column workspace panels only when controls remain readable; on tablet and mobile, stack panels in task order and preserve the active action without horizontal page scrolling. Large previews, tables, and file metadata may use contained `overflow-x-auto` regions.
+
+### 6.2 Upload Zones & File Queue
+* **Shared upload zone:** Provide a consistent drag-and-drop target for every file tool using `rounded-2xl`, a dashed `border-slate-200 dark:border-slate-700`, and `bg-slate-50/70 dark:bg-slate-900/40`. Include a clear primary button, supported file types, and size/count limits.
+* **Interaction states:** Default, drag-over, disabled, and validation-error states must be visibly distinct. Drag-over uses the established blue accent (for example `border-blue-600 bg-blue-50/70 dark:bg-blue-950/40`); errors use the existing red palette. Do not rely on color alone—include text and an icon or status indicator.
+* **Queue rows:** Each accepted file displays its name, type, source size, and current status in a compact bordered row. Include an accessible remove control and, where ordering affects output, move-up/move-down controls in addition to pointer drag reordering.
+* **Queue feedback:** Empty, single-file, multi-file, reorder, removing, and validation-error states must be explicit. Reordering announces the new position; removal returns focus to a predictable neighboring control or the upload button.
+
+### 6.3 Validation, Processing & Outcome States
+* **Validation:** Show file-level errors beside the affected queue row and a concise summary near the action control. Cover unsupported type, excessive size, duplicate file, file-count limit, unreadable/corrupt file, and tool-specific incompatibilities.
+* **Processing:** Disable conflicting controls while processing, retain queue and configuration context, and show a determinate progress bar whenever measurable. Expose programmatic progress (`<progress>` or equivalent ARIA attributes) plus a translated status such as “Compressing 2 of 5 files”.
+* **Success:** Show a clear success status, output filename/type, and primary next action (download, save, or continue). Keep retry/reconfigure actions available without forcing re-upload.
+* **Failure:** Preserve input queue and settings, state what failed in plain language, and provide an actionable retry path. Do not present a failed operation as complete.
+
+### 6.4 File Metrics & Results
+* **Before/after comparison:** For transforms that change file size, present source size, output size, absolute difference, and percentage change together in a compact metric group. Use `font-mono` for values and clearly identify whether the change is a reduction or increase.
+* **Compression emphasis:** Compression tools surface the saved amount and percentage as the primary result, with before/after values immediately visible. Avoid visual claims of improvement when output is larger.
+* **Multiple files:** Provide per-file outcomes and, when appropriate, aggregate totals. Failed or skipped items remain clearly separated from successfully processed items.
+
+### 6.5 Image Canvas & Editing Controls
+* **Canvas panel:** Image tools provide a clearly bounded preview/canvas surface with a neutral checkerboard or slate background where transparency matters. Maintain source aspect ratio and contain oversized images without page-level overflow.
+* **Crop interaction:** The crop region must have a high-contrast boundary, visible handles, keyboard-operable adjustments, and a translated text alternative describing its position and dimensions. Preserve an explicit reset crop action.
+* **Rotate and transform controls:** Provide labelled rotate-left, rotate-right, flip, zoom, reset, and apply controls as applicable. Icon-only controls require accessible names and visible focus states; grouped controls use the established utility-button styling.
+* **Preview behavior:** Changes remain pending until applied or exported, unless the tool clearly labels autosave/instant preview behavior. Respect `prefers-reduced-motion` for canvas transitions.
+
+### 6.6 Accessibility, Focus & Localized Status
+* **Keyboard operation:** Upload, queue management, reorder, configuration, canvas controls, processing actions, and download/retry actions must be keyboard usable. Do not make drag-and-drop the only way to add or reorder files.
+* **Focus treatment:** Reuse `focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900`. Focus order follows the visible task sequence and is restored predictably after removal, processing completion, or an error.
+* **Status announcements:** Use appropriate polite/assertive live regions for queue updates, validation errors, progress, success, and failures. Status strings, button labels, file-type hints, and metric labels must be sourced from the existing translation system; this specification does not add or alter translations in this phase.
+* **Contrast and motion:** Meet the accessibility standards in Section 8, including non-color state cues, minimum touch targets, and reduced-motion support.
+
+### 6.7 Deferred Implementation Checks
+* **Duplicate H1 report:** The reported duplicate H1 headings require a separate implementation/audit batch. This phase only records the concern; it does not change page markup or heading structure.
+* **Workspace layout constraints:** Validate full-width workspace behavior against existing page shells, ad placements, mobile overflow protections, and below-the-fold content in that separate batch. This phase does not modify components, routes, SEO metadata, ads, or translations.
+
+---
+
+## 7. Calculator Page Architecture & Responsive Rules
 
 ### Desktop Layout (≥ 1024px)
 * **Two-Column Master Grid (`grid grid-cols-1 lg:grid-cols-12 gap-8 items-start`):**
@@ -315,7 +360,7 @@ The output card is the visual payoff of the calculator:
 
 ---
 
-## 7. Accessibility (a11y) Standards
+## 8. Accessibility (a11y) Standards
 
 * **Color Contrast:** All text must strictly comply with WCAG 2.1 AA contrast ratios (minimum 4.5:1 for standard body text, 3:1 for large display headings).
 * **Focus Indicators:** Interactive elements must display a high-contrast focus ring (`focus-visible:ring-2 focus-visible:ring-blue-600 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 outline-none`).
@@ -326,7 +371,7 @@ The output card is the visual payoff of the calculator:
 
 ---
 
-## 8. Dark Mode Specification
+## 9. Dark Mode Specification
 
 * **Mechanism:** Class-based `dark` variant (`@custom-variant dark (&:where(.dark, .dark *));`) with anti-flicker client storage synchronization.
 * **Background Inversion:** Deep dark slate canvas (`#090d16`), elevated slate surface cards (`#0f172a`), hairline slate borders (`#334155`).
@@ -335,7 +380,7 @@ The output card is the visual payoff of the calculator:
 
 ---
 
-## 9. Performance & Technical Constraints
+## 10. Performance & Technical Constraints
 
 * **Engine:** Built exclusively for Astro and Tailwind CSS.
 * **Zero Bloat:** Do not introduce UI component kits (Radix, HeadlessUI, MUI), animation runtimes (Framer Motion, GSAP), or heavy icon packs.

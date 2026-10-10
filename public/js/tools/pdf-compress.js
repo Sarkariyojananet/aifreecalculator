@@ -163,12 +163,12 @@
       if (msg.toLowerCase().includes('password') || msg.toLowerCase().includes('encrypt')) {
         msg = 'This PDF is password-protected. Please remove password protection before compressing.';
       }
+      resetTool(true);
       showError(msg);
-      resetTool();
     }
   }
 
-  function resetTool() {
+  function resetTool(preserveError) {
     uploadedFile = null;
     pdfjsDoc = null;
     pdfLibDoc = null;
@@ -178,7 +178,9 @@
     if (optionsSection) optionsSection.classList.add('hidden');
     hideStatus();
     hideDownload();
-    clearError();
+    if (preserveError !== true) {
+      clearError();
+    }
   }
 
   // Handle Level & Custom Size Radio Toggles
