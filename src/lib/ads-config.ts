@@ -94,7 +94,7 @@ export const DEFAULT_ADS_CONFIG: AdsConfig = {
       responsive: true,
       minHeight: '90px',
       label: 'Top Banner Ad',
-      description: 'Appears directly below header on Homepage, Category pages & all 42+ Calculator tools.',
+      description: 'Appears directly below header on Homepage, Category pages & all 119+ Calculator tools.',
       adNetwork: 'adsense',
       customCode: '',
       sponsorBannerUrl: '',

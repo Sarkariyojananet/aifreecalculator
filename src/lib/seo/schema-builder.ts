@@ -102,37 +102,54 @@ export function buildCalculatorGraphSchema(params: CalculatorSchemaParams): Reco
   const graph: any[] = [webAppSchema, breadcrumbSchema];
 
   // 3. HowTo Schema (How to use this calculator)
-  const defaultSteps: SchemaStep[] = steps.length > 0 ? steps : [
-    {
-      name: 'Enter Parameters',
-      text: `Enter the required inputs and select your preferred units in the ${name}.`,
-    },
-    {
-      name: 'Calculate & Review Formula',
-      text: 'View the instant accurate calculation breakdown, formulas, and visual summary.',
-    },
-    {
-      name: 'Export or Copy Results',
-      text: 'Download results as PDF, copy the calculation details, or share the result.',
-    },
-  ];
+  // The generic fallback steps describe a numeric-calculator workflow
+  // ("enter parameters -> calculate -> download PDF"). That workflow does not
+  // apply to interactive tool categories - timetable, image, PDF, compiler,
+  // and browser utilities - so HowTo is emitted only when real steps are
+  // supplied, or when the category is an actual calculator category.
+  const HOWTO_EXCLUDED_CATEGORIES = new Set([
+    'time-table-tools',
+    'image-tools',
+    'pdf-tools',
+    'compiler-tools',
+    'free-online-tools',
+  ]);
+  const shouldEmitHowTo =
+    steps.length > 0 || !HOWTO_EXCLUDED_CATEGORIES.has(categorySlug);
 
-  graph.push({
-    '@type': 'HowTo',
-    '@id': `${url}#howto`,
-    name: `How to use the ${name}`,
-    description: `Step-by-step instructions on calculating ${name} values online.`,
-    totalTime: 'PT1M',
-    step: defaultSteps.map((s, idx) => ({
-      '@type': 'HowToStep',
-      position: idx + 1,
-      name: s.name,
-      itemListElement: {
-        '@type': 'HowToDirection',
-        text: s.text,
+  if (shouldEmitHowTo) {
+    const defaultSteps: SchemaStep[] = steps.length > 0 ? steps : [
+      {
+        name: 'Enter Parameters',
+        text: `Enter the required inputs and select your preferred units in the ${name}.`,
       },
-    })),
-  });
+      {
+        name: 'Calculate & Review Formula',
+        text: 'View the instant accurate calculation breakdown, formulas, and visual summary.',
+      },
+      {
+        name: 'Export or Copy Results',
+        text: 'Review the calculated result and copy or export it using the options shown on the page.',
+      },
+    ];
+
+    graph.push({
+      '@type': 'HowTo',
+      '@id': `${url}#howto`,
+      name: `How to use the ${name}`,
+      description: `Step-by-step instructions on calculating ${name} values online.`,
+      totalTime: 'PT1M',
+      step: defaultSteps.map((s, idx) => ({
+        '@type': 'HowToStep',
+        position: idx + 1,
+        name: s.name,
+        itemListElement: {
+          '@type': 'HowToDirection',
+          text: s.text,
+        },
+      })),
+    });
+  }
 
   // 4. FAQPage Schema (if FAQs are available)
   if (faqs.length > 0) {

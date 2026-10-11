@@ -76,7 +76,7 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       contact: 'Contact',
     },
     search: {
-      placeholder: 'Search 60+ calculators...',
+      placeholder: 'Search 119+ tools & calculators...',
       label: 'Search calculators',
       noResults: 'No calculators found matching your search.',
       searching: 'Searching...',
@@ -108,7 +108,7 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       allLabel: 'All',
       noResultsTitle: 'No calculators found',
       noResultsDesc: 'Try a different search term or select "All" categories.',
-      toolsCountBadge: '60+ Free Online Tools',
+      toolsCountBadge: '119+ Free Online Tools',
     },
     footer: {
       quickLinks: 'Quick Links',
@@ -135,7 +135,7 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       contact: 'संपर्क',
     },
     search: {
-      placeholder: '60+ कैलकुलेटर खोजें...',
+      placeholder: '119+ टूल्स और कैलकुलेटर खोजें...',
       label: 'कैलकुलेटर खोजें',
       noResults: 'आपकी खोज से मेल खाता कोई कैलकुलेटर नहीं मिला।',
       searching: 'खोज रहे हैं...',
@@ -167,7 +167,7 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       allLabel: 'सभी',
       noResultsTitle: 'कोई कैलकुलेटर नहीं मिला',
       noResultsDesc: 'कृपया दूसरा कीवर्ड खोजें या "सभी" श्रेणी चुनें।',
-      toolsCountBadge: '60+ मुफ़्त ऑनलाइन टूल्स',
+      toolsCountBadge: '119+ मुफ़्त ऑनलाइन टूल्स',
     },
     footer: {
       quickLinks: 'त्वरित लिंक',
@@ -194,7 +194,7 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       contact: 'Contacto',
     },
     search: {
-      placeholder: 'Buscar más de 60 calculadoras...',
+      placeholder: 'Buscar entre 119+ herramientas...',
       label: 'Buscar calculadoras',
       noResults: 'No se encontraron calculadoras que coincidan con su búsqueda.',
       searching: 'Buscando...',
@@ -226,7 +226,7 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       allLabel: 'Todas',
       noResultsTitle: 'No se encontraron calculadoras',
       noResultsDesc: 'Pruebe con otro término de búsqueda o seleccione la categoría "Todas".',
-      toolsCountBadge: 'Más de 60 herramientas en línea gratuitas',
+      toolsCountBadge: '119+ herramientas en línea gratuitas',
     },
     footer: {
       quickLinks: 'Enlaces rápidos',
@@ -253,7 +253,7 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       contact: 'お問い合わせ',
     },
     search: {
-      placeholder: '60以上の計算機を検索...',
+      placeholder: '119種以上のツールを検索...',
       label: '計算機を検索',
       noResults: '一致する計算機が見つかりませんでした。',
       searching: '検索中...',
@@ -285,7 +285,7 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       allLabel: 'すべて',
       noResultsTitle: '計算機が見つかりません',
       noResultsDesc: '別の検索語を入力するか、「すべて」のカテゴリを選択してください。',
-      toolsCountBadge: '60以上の無料オンライン計算ツール',
+      toolsCountBadge: '119以上の無料オンライン計算ツール',
     },
     footer: {
       quickLinks: 'クイックリンク',
@@ -312,7 +312,7 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       contact: 'Contact',
     },
     search: {
-      placeholder: 'Rechercher parmi 60+ calculateurs...',
+      placeholder: 'Rechercher parmi 119+ outils...',
       label: 'Rechercher un calculateur',
       noResults: 'Aucun calculateur ne correspond à votre recherche.',
       searching: 'Recherche...',
@@ -344,7 +344,7 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       allLabel: 'Toutes',
       noResultsTitle: 'Aucune calculatrice trouvée',
       noResultsDesc: 'Essayez un autre mot-clé ou sélectionnez la catégorie « Toutes ».',
-      toolsCountBadge: '60+ outils en ligne gratuits',
+      toolsCountBadge: '119+ outils en ligne gratuits',
     },
     footer: {
       quickLinks: 'Liens rapides',
@@ -371,7 +371,7 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       contact: 'Kontakt',
     },
     search: {
-      placeholder: 'Über 60 Rechner durchsuchen...',
+      placeholder: '119+ Tools & Rechner durchsuchen...',
       label: 'Rechner suchen',
       noResults: 'Keine Rechner passend zu Ihrer Suche gefunden.',
       searching: 'Suche läuft...',
@@ -403,7 +403,7 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       allLabel: 'Alle',
       noResultsTitle: 'Keine Rechner gefunden',
       noResultsDesc: 'Versuchen Sie einen anderen Suchbegriff oder wählen Sie "Alle" Kategorien.',
-      toolsCountBadge: '60+ kostenlose Online-Tools',
+      toolsCountBadge: '119+ kostenlose Online-Tools',
     },
     footer: {
       quickLinks: 'Schnellzugriff',
@@ -430,7 +430,7 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       contact: 'Contato',
     },
     search: {
-      placeholder: 'Pesquisar em mais de 60 calculadoras...',
+      placeholder: 'Pesquisar em 119+ ferramentas...',
       label: 'Buscar calculadoras',
       noResults: 'Nenhuma calculadora encontrada correspondente à sua busca.',
       searching: 'Pesquisando...',
@@ -462,7 +462,7 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       allLabel: 'Todas',
       noResultsTitle: 'Nenhuma calculadora encontrada',
       noResultsDesc: 'Tente outro termo de pesquisa ou selecione a categoria "Todas".',
-      toolsCountBadge: 'Mais de 60 ferramentas online gratuitas',
+      toolsCountBadge: '119+ ferramentas online gratuitas',
     },
     footer: {
       quickLinks: 'Links rápidos',
@@ -489,7 +489,7 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       contact: '문의하기',
     },
     search: {
-      placeholder: '60개 이상의 계산기 검색...',
+      placeholder: '119개 이상의 도구 및 계산기 검색...',
       label: '계산기 검색',
       noResults: '일치하는 계산기를 찾을 수 없습니다.',
       searching: '검색 중...',
@@ -521,7 +521,7 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       allLabel: '전체',
       noResultsTitle: '계산기를 찾을 수 없습니다',
       noResultsDesc: '다른 검색어를 입력하시거나 "전체" 카테고리를 선택해 주세요.',
-      toolsCountBadge: '60개 이상의 무료 온라인 계산 도구',
+      toolsCountBadge: '119개 이상의 무료 온라인 계산 도구',
     },
     footer: {
       quickLinks: '빠른 링크',
@@ -548,7 +548,7 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       contact: 'Contatti',
     },
     search: {
-      placeholder: 'Cerca tra oltre 60 calcolatori...',
+      placeholder: 'Cerca tra 119+ strumenti online...',
       label: 'Cerca calcolatori',
       noResults: 'Nessun calcolatore trovato per la ricerca effettuata.',
       searching: 'Ricerca in corso...',
@@ -580,7 +580,7 @@ export const COMMON_TRANSLATIONS: Record<Locale, CommonTranslations> = {
       allLabel: 'Tutti',
       noResultsTitle: 'Nessun calcolatore trovato',
       noResultsDesc: 'Prova con un altro termine di ricerca o seleziona la categoria "Tutti".',
-      toolsCountBadge: '60+ strumenti online gratuiti',
+      toolsCountBadge: '119+ strumenti online gratuiti',
     },
     footer: {
       quickLinks: 'Collegamenti rapidi',

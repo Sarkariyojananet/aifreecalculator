@@ -6,6 +6,33 @@ import { cacheCloudflare } from '@astrojs/cloudflare/cache';
 
 import sitemap from '@astrojs/sitemap';
 
+// Redirect stubs are emitted as noindex meta-refresh pages, but @astrojs/sitemap
+// still lists them. Every entry below is a verified redirect SOURCE, matched by
+// its trailing `category/slug` pair so that all locale variants are covered with
+// a single rule. The canonical DESTINATION of each redirect has a different
+// category/slug pair (e.g. /math/percentage-calculator/ vs /general/percentage-
+// calculator/), so it is never matched here and stays in the sitemap.
+//
+//   /general/percentage-calculator/       -> /math/percentage-calculator/
+//   /general/date-difference-calculator/  -> /general/time-calculator/
+//   /math/standard-deviation-calculator/  -> /math/scientific-calculator/
+//   /free-online-tools/pdf-*|image-to-pdf -> /pdf-tools/...
+//   /image-tools/image-*|jpg-*|png-*      -> /free-online-tools/...
+const REDIRECT_SOURCE_KEYS = new Set([
+  'general/percentage-calculator',
+  'general/date-difference-calculator',
+  'math/standard-deviation-calculator',
+  'free-online-tools/pdf-merge',
+  'free-online-tools/pdf-split',
+  'free-online-tools/pdf-compress',
+  'free-online-tools/pdf-to-image',
+  'free-online-tools/image-to-pdf',
+  'image-tools/image-compressor',
+  'image-tools/image-resizer',
+  'image-tools/jpg-to-png',
+  'image-tools/png-to-jpg',
+]);
+
 export default defineConfig({
   site: 'https://aifreecalculator.com',
 
@@ -199,7 +226,16 @@ export default defineConfig({
         !page.includes('/sitemap') &&
         !page.includes('/404') &&
         !page.includes('/500') &&
-        !page.includes('/brickwork-calculator') &&
+        // Exclude only the top-level redirect source '/brickwork-calculator'
+        // (a redirect stub), NOT its canonical destination
+        // '/construction/brickwork-calculator/'.
+        new URL(page).pathname.replace(/\/$/, '') !== '/brickwork-calculator' &&
+        // Exclude every verified redirect-source path (and its locale variants)
+        // by matching the trailing category/slug pair. Canonical destinations
+        // are not in this set, so they remain in the sitemap.
+        !REDIRECT_SOURCE_KEYS.has(
+          new URL(page).pathname.replace(/\/$/, '').split('/').slice(-2).join('/')
+        ) &&
         ![
           'exam-timetable-maker',
           'student-timetable-maker',

@@ -1,9 +1,12 @@
 ---
 /**
- * SEO-Friendly Content Section for Calculator Pages
- * Adds valuable, natural content to help with AdSense approval
- * Provides helpful information without keyword stuffing
+ * SEO-Friendly & Educational Content Section for Calculator & Tool Pages
+ * Provides authentic, tool-specific mathematical formulas, variables breakdown,
+ * step-by-step procedures, worked practical examples, and accurate domain disclaimers.
  */
+
+import { getCalculatorTranslation } from '../i18n/translations/calculators';
+import { isValidLocale, type Locale } from '../i18n/config';
 
 interface Props {
   calculatorName: string;
@@ -13,100 +16,213 @@ interface Props {
 }
 
 const { calculatorName, category, slug, lang = 'en' } = Astro.props;
-
-// Content templates by category with natural, helpful text
-const contentTemplates = {
-  finance: {
-    intro: "Understanding your finances is crucial for making informed decisions. This calculator helps you compute accurate figures quickly and easily, giving you clear insights into your financial planning.",
-    howItWorks: "The calculator uses standard financial formulas to provide precise calculations. Simply enter your values, and the tool instantly processes the data to give you comprehensive results.",
-    whyUse: "Using an online calculator saves time and reduces the risk of manual calculation errors. It's free, accessible anytime, and requires no installation or signup.",
-    tips: "For best results, ensure you enter accurate values. Double-check your inputs, especially interest rates and time periods. You can save your calculations for future reference."
-  },
-  construction: {
-    intro: "Construction planning requires accurate material estimates and structural calculations. This tool helps contractors, engineers, and homeowners make precise calculations for their building projects.",
-    howItWorks: "Our calculator follows industry-standard engineering codes and formulas. Enter your project dimensions and specifications to get instant material estimates and structural requirements.",
-    whyUse: "Accurate calculations prevent material wastage and ensure structural safety. Use this tool to get professional-grade estimates without complex manual calculations.",
-    tips: "Always verify calculated values with on-site conditions. Consider adding 5-10% extra for material wastage. Consult a structural engineer for final approval on critical structures."
-  },
-  health: {
-    intro: "Health tracking and fitness planning are easier with accurate calculations. This tool helps you understand your health metrics and set realistic wellness goals.",
-    howItWorks: "The calculator uses medically recognized formulas and standards. Enter your measurements to receive instant health metrics and personalized recommendations.",
-    whyUse: "Regular health monitoring helps you track progress and make informed lifestyle choices. This free tool provides quick assessments without needing medical equipment.",
-    tips: "Use these calculations as general guidelines. For medical advice and personalized health plans, always consult qualified healthcare professionals."
-  },
-  math: {
-    intro: "Mathematical calculations are essential for students, professionals, and everyday tasks. This calculator simplifies complex computations and provides step-by-step solutions.",
-    howItWorks: "Enter your numbers or expressions, and the calculator applies proven mathematical principles to deliver accurate results instantly.",
-    whyUse: "Whether you're studying, working, or solving daily problems, this tool makes math accessible and error-free. No installation needed—just open and calculate.",
-    tips: "Understand the formulas behind the calculations to improve your math skills. Use the results to verify your manual work and build confidence in problem-solving."
-  },
-  general: {
-    intro: "Daily calculations made simple. This versatile tool helps with common tasks like conversions, comparisons, and quick computations you need throughout the day.",
-    howItWorks: "Select your input values and get instant results. The calculator handles the math so you can focus on using the information.",
-    whyUse: "Save time on routine calculations. No need to search for formulas or use multiple tools—everything you need is here in one place.",
-    tips: "Bookmark this page for quick access whenever you need it. All calculations run in your browser, keeping your data private and secure."
-  },
-  'free-online-tools': {
-    intro: "Our free online tools make digital tasks easier. No downloads, no signups—just open your browser and start using powerful utilities instantly.",
-    howItWorks: "Upload or enter your data, choose your options, and the tool processes everything locally in your browser. Your files never leave your device.",
-    whyUse: "These tools are completely free and respect your privacy. Process files, generate content, and complete tasks without installing software or creating accounts.",
-    tips: "All processing happens in your browser for maximum privacy. For best performance, use modern browsers like Chrome, Firefox, or Edge."
-  },
-  'image-tools': {
-    intro: "Our image editing and processing tools run directly inside your web browser. Edit, convert, compress, and enhance your photos instantly without installing heavy software.",
-    howItWorks: "Upload your image to apply real-time filters, transformations, conversions, or compressions. The image is rendered and processed client-side with HTML5 Canvas and Web APIs.",
-    whyUse: "100% private and secure. Your photos and graphic assets are never transmitted or saved on external servers.",
-    tips: "For optimal results, make sure your browser is updated. You can preview changes before downloading your high-resolution output."
-  }
-};
+const validLang: Locale = isValidLocale(lang) ? (lang as Locale) : 'en';
+const translation = getCalculatorTranslation(slug, validLang);
 
 const categoryKey = category.toLowerCase().replace(/\s+/g, '-');
-const content = contentTemplates[categoryKey as keyof typeof contentTemplates] || contentTemplates.general;
 
-// Additional features section
+const isCompiler = categoryKey === 'compiler-tools';
+const isImageTool = categoryKey === 'image-tools';
+const isPdfTool = categoryKey === 'pdf-tools';
+const isTimetable = categoryKey === 'time-table-tools';
+const isHealth = categoryKey === 'health';
+const isFinance = categoryKey === 'finance';
+const isConstruction = categoryKey === 'construction';
+
+const toolKind = isCompiler ? 'Tool' : isImageTool ? 'Tool' : isPdfTool ? 'Tool' : isTimetable ? 'Planner' : 'Calculator';
+
+// Domain-specific intro fallback if translation has no custom intro
+const categoryIntros: Record<string, string> = {
+  finance: `Financial decisions require transparent, verified arithmetic. This ${calculatorName} applies standard financial formulas to evaluate your figures accurately, providing clear quantitative visibility for budgeting and planning.`,
+  construction: `Civil and construction estimates demand reliable material and structural computations. This ${calculatorName} follows industry-standard engineering ratios to calculate quantities, dimensions, and project benchmarks.`,
+  health: `Health tracking is most effective when grounded in validated biometric standards. This ${calculatorName} utilizes published physiological formulas to evaluate personal metrics and provide clear wellness benchmarks.`,
+  math: `Mathematical calculations require precision and step-by-step transparency. This ${calculatorName} computes solutions instantly with verified algebraic principles.`,
+  general: `This ${calculatorName} simplifies everyday numeric workflows, conversions, and quantitative tasks with instant, verified client-side computation.`,
+  'free-online-tools': `Our browser-based ${calculatorName} processes your tasks locally with zero file uploads, providing fast, private, and accessible utility on any device.`,
+  'image-tools': `This ${calculatorName} executes graphic processing directly within your web browser using HTML5 Canvas APIs, ensuring private, high-fidelity image output with zero server uploads.`,
+  'pdf-tools': `This ${calculatorName} processes document tasks entirely on your local device. Enjoy private, reliable PDF manipulation without third-party cloud uploads.`,
+  'time-table-tools': `Structuring daily and weekly commitments improves focus and consistency. This ${calculatorName} lets you create, customize, and print schedules directly in your web browser.`,
+  'compiler-tools': `This ${calculatorName} provides an in-browser code editor and execution sandbox, allowing you to test syntax, practice algorithms, and inspect output instantly without local toolchain installation.`
+};
+
+const introText = translation?.intro || translation?.shortDescription || translation?.description || categoryIntros[categoryKey] || categoryIntros.general;
+const formulaDesc = translation?.formulaDescription && translation.formulaDescription !== translation.description ? translation.formulaDescription : null;
+
+// Dynamic use cases tailored to the specific tool
+function getUseCases(cat: string, name: string): string[] {
+  if (cat === 'compiler-tools') {
+    return [
+      'Practising programming syntax and basic algorithms without installing a local compiler or heavy IDE',
+      'Verifying short code snippets, testing edge cases, and inspecting real-time terminal output',
+      'Studying programming patterns and starter templates for academic coursework or technical interviews'
+    ];
+  }
+  if (cat === 'image-tools') {
+    return [
+      'Optimizing and transforming graphic assets directly in your web browser with zero quality degradation',
+      'Preparing image files for web publishing, presentations, or legacy system compatibility',
+      'Guaranteeing photo privacy with 100% in-browser Canvas processing and zero file transmissions'
+    ];
+  }
+  if (cat === 'pdf-tools') {
+    return [
+      'Managing, organizing, and converting document pages without paid desktop software suites',
+      'Preparing clean, compliant PDF documents for official submissions, academic papers, and printing',
+      'Maintaining document confidentiality with client-side zero-upload file manipulation'
+    ];
+  }
+  if (cat === 'time-table-tools') {
+    return [
+      'Organizing classes, study sessions, fitness routines, and shift duties into an intuitive visual grid',
+      'Balancing productive work blocks with personal rest, hobbies, and family time',
+      'Exporting clean, high-resolution printable schedule sheets for binders, desks, or noticeboards'
+    ];
+  }
+  if (cat === 'construction') {
+    return [
+      'Estimating structural material quantities for slabs, beams, columns, footing, and masonry',
+      'Planning project procurement budgets and preventing expensive site material wastage',
+      'Cross-referencing estimates against standard CPWD and IS 456 civil engineering benchmarks'
+    ];
+  }
+  if (cat === 'health') {
+    return [
+      'Tracking personal biometric health and fitness indicators as part of a structured wellness regimen',
+      'Estimating metabolic energy requirements (BMR/TDEE) and balancing caloric and macronutrient intakes',
+      'Monitoring progress trends alongside balanced lifestyle habits and professional medical guidance'
+    ];
+  }
+  if (cat === 'finance') {
+    return [
+      `Computing exact financial amounts and payment schedules for ${name} forecasting`,
+      'Evaluating interest rate variations, tenure durations, and compound growth over time',
+      'Budgeting personal and business finances with transparent, verified mathematical formulas'
+    ];
+  }
+  return [
+    `Performing quick, error-free computations with the ${name}`,
+    'Verifying manual calculations with step-by-step mathematical logic',
+    'Solving everyday conversion, percentage, and quantitative estimation tasks'
+  ];
+}
+
+const useCases = getUseCases(categoryKey, calculatorName);
+
+// Standard features
 const features = [
-  { icon: '⚡', title: 'Instant Results', desc: 'Get calculations in milliseconds with real-time updates as you type' },
-  { icon: '🔒', title: 'Privacy First', desc: 'All calculations run in your browser—your data never leaves your device' },
-  { icon: '📱', title: 'Works Anywhere', desc: 'Use on any device—desktop, tablet, or mobile—with a modern web browser' },
-  { icon: '💯', title: 'Always Free', desc: 'No hidden costs, no subscriptions, no ads blocking functionality' },
-  { icon: '🎯', title: 'Accurate Formulas', desc: 'Based on industry standards and verified mathematical principles' },
-  { icon: '💾', title: 'Save & Share', desc: 'Download results as PDF or share calculations with colleagues' }
+  { icon: '⚡', title: 'Instant Execution', desc: 'Evaluates results in milliseconds as you input values, without page reloads' },
+  { icon: '🔒', title: 'Client-Side Privacy', desc: 'All processing operates locally in your browser—inputs and files are never stored' },
+  { icon: '📱', title: 'Universal Compatibility', desc: 'Optimized for high-resolution desktops, laptops, tablets, and smartphones' },
+  { icon: '💯', title: '100% Free Access', desc: 'Unlimited calculations and tool usage without accounts, sign-ups, or subscriptions' },
+  { icon: '🧩', title: 'Transparent Formulas', desc: 'Clear variable definitions and verified formulas ensure trustworthy results' },
+  { icon: '♻️', title: 'Flexible & Reusable', desc: 'Adjust parameters and re-calculate alternative scenarios as often as needed' }
 ];
 ---
 
 <div class="space-y-8">
 
-  <!-- How to Use Section -->
-  <div class="space-y-4">
+  <!-- Overview Section -->
+  <div class="space-y-3">
     <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-      <span>📖</span> How to Use This {calculatorName}
-    </h2>
-
-    <div class="space-y-3 text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-      <p>{content.intro}</p>
-      <p>{content.howItWorks}</p>
-    </div>
-
-    <div class="rounded-xl border border-blue-100 bg-blue-50/50 p-4 dark:border-blue-900/30 dark:bg-blue-950/20">
-      <div class="flex items-start gap-3">
-        <span class="text-2xl shrink-0">💡</span>
-        <div class="space-y-1">
-          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Pro Tips</h3>
-          <p class="text-xs text-slate-600 dark:text-slate-300">{content.tips}</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Why Use This Calculator -->
-  <div class="space-y-4">
-    <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-      <span>✨</span> Why Use This Calculator?
+      <span>📖</span> About the {calculatorName}
     </h2>
 
     <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300">
-      {content.whyUse}
+      {introText}
     </p>
+  </div>
+
+  <!-- Mathematical Formula (When Available) -->
+  {translation?.formulaEquation && (
+    <div class="space-y-3 rounded-2xl border border-blue-200/80 bg-linear-to-br from-blue-50/50 to-indigo-50/30 p-5 dark:border-blue-900/40 dark:from-slate-900 dark:to-blue-950/20">
+      <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">
+        <span>📐</span> {translation.formulaTitle || 'Mathematical Formula'}
+      </div>
+      <div class="rounded-xl border border-blue-200 bg-white p-3.5 font-mono text-xs sm:text-sm font-bold text-blue-950 dark:border-blue-900/60 dark:bg-slate-950 dark:text-blue-200 overflow-x-auto shadow-2xs">
+        <code>{translation.formulaEquation}</code>
+      </div>
+      {formulaDesc && (
+        <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+          {formulaDesc}
+        </p>
+      )}
+    </div>
+  )}
+
+  <!-- Variables Breakdown Table (When Available) -->
+  {translation?.variables && translation.variables.length > 0 && (
+    <div class="space-y-3">
+      <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <span>📋</span> Variable Definitions
+      </h3>
+      <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/70">
+        <table class="w-full text-left text-xs">
+          <thead class="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 font-bold">
+            <tr>
+              <th class="p-2.5">Symbol</th>
+              <th class="p-2.5">Variable Name</th>
+              <th class="p-2.5">Description</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 text-slate-600 dark:text-slate-300">
+            {translation.variables.map((v) => (
+              <tr>
+                <td class="p-2.5 font-mono font-bold text-blue-600 dark:text-blue-400">{v.symbol}</td>
+                <td class="p-2.5 font-semibold text-slate-900 dark:text-white">{v.name}</td>
+                <td class="p-2.5 leading-relaxed">{v.description}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )}
+
+  <!-- Step-by-Step Procedure (When Available) -->
+  {translation?.stepByStep && translation.stepByStep.length > 0 && (
+    <div class="space-y-3">
+      <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <span>🔢</span> Step-by-Step Calculation Guide
+      </h3>
+      <ol class="space-y-2 list-decimal list-inside text-xs leading-relaxed text-slate-700 dark:text-slate-300">
+        {translation.stepByStep.map((s) => (
+          <li class="pl-1">
+            <strong class="text-slate-900 dark:text-white">{s.title}:</strong> {s.description || s.instruction}
+          </li>
+        ))}
+      </ol>
+    </div>
+  )}
+
+  <!-- Worked Example (When Available) -->
+  {translation?.workedExample && (translation.workedExample.scenario || translation.workedExample.calculation) && (
+    <div class="space-y-3 rounded-2xl border border-emerald-200/80 bg-emerald-50/40 p-5 dark:border-emerald-900/40 dark:bg-emerald-950/20">
+      <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+        <span>💡</span> {translation.workedExample.title || 'Worked Practical Example'}
+      </div>
+      {translation.workedExample.scenario && (
+        <p class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+          <strong>Scenario:</strong> {translation.workedExample.scenario}
+        </p>
+      )}
+      {translation.workedExample.calculation && (
+        <div class="rounded-lg bg-white p-3 font-mono text-xs text-slate-800 dark:bg-slate-900 dark:text-slate-200 border border-emerald-200/60 dark:border-emerald-900/40">
+          <code>{translation.workedExample.calculation}</code>
+        </div>
+      )}
+      {translation.workedExample.result && (
+        <p class="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+          <strong>Result:</strong> {translation.workedExample.result}
+        </p>
+      )}
+    </div>
+  )}
+
+  <!-- Why Use This Tool/Calculator -->
+  <div class="space-y-4">
+    <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+      <span>✨</span> Why Use This {toolKind}?
+    </h2>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {features.map((feature) => (
@@ -123,116 +239,45 @@ const features = [
     </div>
   </div>
 
-  <!-- Common Use Cases -->
-  <div class="space-y-4">
+  <!-- Common Practical Use Cases -->
+  <div class="space-y-3">
     <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
       <span>🎯</span> Common Use Cases
     </h2>
 
-    <div class="space-y-2">
-      {categoryKey === 'finance' && (
-        <>
-          <div class="flex items-start gap-2 text-sm">
-            <span class="text-blue-600 dark:text-blue-400 shrink-0">•</span>
-            <p class="text-slate-700 dark:text-slate-300">Planning loan repayments and understanding interest costs over time</p>
-          </div>
-          <div class="flex items-start gap-2 text-sm">
-            <span class="text-blue-600 dark:text-blue-400 shrink-0">•</span>
-            <p class="text-slate-700 dark:text-slate-300">Comparing different loan offers to find the best deal for your needs</p>
-          </div>
-          <div class="flex items-start gap-2 text-sm">
-            <span class="text-blue-600 dark:text-blue-400 shrink-0">•</span>
-            <p class="text-slate-700 dark:text-slate-300">Budgeting monthly expenses and setting realistic financial goals</p>
-          </div>
-        </>
-      )}
-
-      {categoryKey === 'construction' && (
-        <>
-          <div class="flex items-start gap-2 text-sm">
-            <span class="text-blue-600 dark:text-blue-400 shrink-0">•</span>
-            <p class="text-slate-700 dark:text-slate-300">Estimating material quantities for construction and renovation projects</p>
-          </div>
-          <div class="flex items-start gap-2 text-sm">
-            <span class="text-blue-600 dark:text-blue-400 shrink-0">•</span>
-            <p class="text-slate-700 dark:text-slate-300">Calculating structural requirements for safe and compliant building design</p>
-          </div>
-          <div class="flex items-start gap-2 text-sm">
-            <span class="text-blue-600 dark:text-blue-400 shrink-0">•</span>
-            <p class="text-slate-700 dark:text-slate-300">Planning project budgets and preventing material wastage during construction</p>
-          </div>
-        </>
-      )}
-
-      {categoryKey === 'health' && (
-        <>
-          <div class="flex items-start gap-2 text-sm">
-            <span class="text-blue-600 dark:text-blue-400 shrink-0">•</span>
-            <p class="text-slate-700 dark:text-slate-300">Tracking fitness progress and setting achievable health goals</p>
-          </div>
-          <div class="flex items-start gap-2 text-sm">
-            <span class="text-blue-600 dark:text-blue-400 shrink-0">•</span>
-            <p class="text-slate-700 dark:text-slate-300">Understanding nutritional needs and planning balanced meal plans</p>
-          </div>
-          <div class="flex items-start gap-2 text-sm">
-            <span class="text-blue-600 dark:text-blue-400 shrink-0">•</span>
-            <p class="text-slate-700 dark:text-slate-300">Monitoring health metrics as part of a wellness routine or medical advice</p>
-          </div>
-        </>
-      )}
-
-      {(categoryKey === 'math' || categoryKey === 'general') && (
-        <>
-          <div class="flex items-start gap-2 text-sm">
-            <span class="text-blue-600 dark:text-blue-400 shrink-0">•</span>
-            <p class="text-slate-700 dark:text-slate-300">Solving homework problems and verifying manual calculations quickly</p>
-          </div>
-          <div class="flex items-start gap-2 text-sm">
-            <span class="text-blue-600 dark:text-blue-400 shrink-0">•</span>
-            <p class="text-slate-700 dark:text-slate-300">Handling everyday tasks like conversions, comparisons, and measurements</p>
-          </div>
-          <div class="flex items-start gap-2 text-sm">
-            <span class="text-blue-600 dark:text-blue-400 shrink-0">•</span>
-            <p class="text-slate-700 dark:text-slate-300">Completing work projects that require quick and accurate computations</p>
-          </div>
-        </>
-      )}
-    </div>
+    <ul class="space-y-2 text-xs text-slate-700 dark:text-slate-300">
+      {useCases.map((uc) => (
+        <li class="flex items-start gap-2">
+          <span class="text-blue-600 dark:text-blue-400 shrink-0 font-bold">•</span>
+          <span>{uc}</span>
+        </li>
+      ))}
+    </ul>
   </div>
 
-  <!-- Important Notes -->
-  <div class="rounded-xl border border-amber-200 bg-amber-50/50 p-4 dark:border-amber-900/30 dark:bg-amber-950/20">
-    <div class="flex items-start gap-3">
-      <span class="text-2xl shrink-0">⚠️</span>
-      <div class="space-y-2">
-        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Important Notes</h3>
-        <div class="space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
-          <p>• Results are based on standard formulas and should be used as estimates</p>
-          {categoryKey === 'finance' && (
-            <p>• For legal financial advice or large investments, consult a certified financial advisor</p>
-          )}
-          {categoryKey === 'construction' && (
-            <p>• Always verify calculations with a licensed structural engineer before construction</p>
-          )}
-          {categoryKey === 'health' && (
-            <p>• These calculations are for informational purposes—consult healthcare professionals for medical advice</p>
-          )}
-          <p>• Double-check all input values to ensure accurate results</p>
-          <p>• Save or download your calculations for future reference and record-keeping</p>
-        </div>
-      </div>
+  <!-- Official Domain Disclaimers & Limitations -->
+  <div class="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-900/40 dark:bg-amber-950/20 space-y-2">
+    <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+      <span>⚠️</span> Important Guidance &amp; Disclaimers
+    </div>
+    <div class="space-y-1.5 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+      {isHealth && (
+        <p>• <strong>Medical Notice:</strong> Calculations are provided for educational and wellness awareness based on published clinical formulas (such as WHO, CDC, and Mifflin-St Jeor). They do not replace professional medical diagnosis, laboratory testing, or physician consultation.</p>
+      )}
+      {isFinance && (
+        <p>• <strong>Financial Notice:</strong> Results are estimates intended for personal planning and budgeting. Actual loan terms, tax obligations, and market yields depend on lender conditions and tax authorities. Consult a certified financial planner or tax advisor for binding decisions.</p>
+      )}
+      {isConstruction && (
+        <p>• <strong>Engineering Notice:</strong> Quantities follow standard civil engineering ratios (IS 456 / CPWD thumb rules). Always account for 5–10% on-site wastage and obtain formal structural approval from a licensed engineer before procurement.</p>
+      )}
+      {isCompiler && (
+        <p>• <strong>Execution Notice:</strong> Code executes inside a sandboxed browser environment for instant learning and testing. It does not replace a native compiler toolchain for raw I/O or full system libraries.</p>
+      )}
+      {(isImageTool || isPdfTool) && (
+        <p>• <strong>Privacy Guarantee:</strong> All document and image operations process locally on your device via HTML5 APIs. No files are uploaded to our servers.</p>
+      )}
+      <p>• Always double-check input parameters to ensure mathematical accuracy.</p>
     </div>
   </div>
 
 </div>
-
-<style>
-  /* Ensure proper text styling */
-  p {
-    line-height: 1.6;
-  }
-
-  h2, h3 {
-    line-height: 1.3;
-  }
-</style>

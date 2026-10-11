@@ -328,7 +328,7 @@ export const LIVE_PAGE_METADATA: Record<string, PageMetaItem> = {
   },
   "core:home": {
     "title": "Free Online Calculators - Finance, Health, Construction & Math",
-    "description": "Use 42+ free online calculators for loan EMI, SIP returns, Indian income tax, RCC construction steel, BMI, calorie TDEE, percentages, and scientific math."
+    "description": "Use 119+ free online tools and calculators for loan EMI, SIP returns, Indian income tax, RCC construction steel, BMI, timetables, and productivity."
   },
   "core:about": {
     "title": "About Us - AI Free Calculator Mission & Methodology",
@@ -351,8 +351,8 @@ export const LIVE_PAGE_METADATA: Record<string, PageMetaItem> = {
     "description": "Review estimation disclaimers for civil construction BOQs, financial projections, income tax computations, and health biometric indicators."
   },
   "core:all-calculators": {
-    "title": "All Calculators Directory (42+ Free Tools) - AI Free Calculator",
-    "description": "Browse the complete directory of free online calculators for loan EMI, SIP returns, construction BOQ, steel rebar, BMI, calories, math, and everyday tasks."
+    "title": "All Tools Directory (119+ Free Online Tools) - AI Free Calculator",
+    "description": "Browse the complete directory of 119+ free online tools and calculators for finance, construction, health, timetables, PDF, code, and daily tasks."
   },
   "category:pdf-tools": {
     "title": "Free Online PDF Tools - Merge, Split, Compress & Convert PDF",
