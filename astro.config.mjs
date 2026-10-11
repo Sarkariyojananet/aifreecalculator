@@ -40,6 +40,12 @@ export default defineConfig({
     imageService: 'passthrough',
   }),
 
+  vite: {
+    optimizeDeps: {
+      exclude: ['astro:middleware'],
+    },
+  },
+
   i18n: {
     defaultLocale: 'en',
     locales: ['en', 'hi', 'es', 'ja', 'fr', 'de', 'pt', 'ko', 'it'],
