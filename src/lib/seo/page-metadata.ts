@@ -207,8 +207,8 @@ export const LIVE_PAGE_METADATA: Record<string, PageMetaItem> = {
     "description": "Scientifically verified health and fitness tools: Daily calorie TDEE, BMR metabolic rate, Body Fat percentage, and BMI healthy weight range."
   },
   "category:math": {
-    "title": "Math Calculators - GPA, Fractions, Scientific & Statistics",
-    "description": "Academic and scientific math tools: GPA calculator, Scientific Calculator, Fraction math, Standard Deviation variance, and Random Numbers."
+    "title": "Online Math Calculators – Academic, Scientific & Statistics Tools",
+    "description": "Accurate online math calculators for academic and scientific calculations: GPA, fractions, percentages, standard deviation, and advanced mathematics."
   },
   "category:free-online-tools": {
     "title": "Free Online Tools - Image, PDF, Text & Developer Utilities",
