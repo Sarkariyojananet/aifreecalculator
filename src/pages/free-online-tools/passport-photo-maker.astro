@@ -1,0 +1,1196 @@
+---
+import CalculatorLayout from "../../layouts/CalculatorLayout.astro";
+
+// FAQ Schema data for search engines
+const faqs = [
+  {
+    question: "What is the official passport photo size for India?",
+    answer:
+      "The official Indian passport photo size is 3.5 cm × 4.5 cm (35 mm × 45 mm / 413 × 531 pixels at 300 DPI) with 70% to 80% face coverage. For Indian PAN cards, the standard size is 2.5 cm × 3.5 cm (25 mm × 35 mm / 295 × 413 pixels), and for OCI (Overseas Citizen of India) cards, it is 5.1 cm × 5.1 cm (2 × 2 inches / 600 × 600 pixels).",
+  },
+  {
+    question: "What is the official size for a US Visa or US Passport photo?",
+    answer:
+      "The official US Visa and US Passport photo size is 2 × 2 inches (51 × 51 mm / 600 × 600 pixels at 300 DPI). The head height from the bottom of the chin to the top of the hair must measure between 1 inch and 1 3/8 inches (25 mm to 35 mm).",
+  },
+  {
+    question: "How many passport photos fit on an A4 sheet or 4×6 photo paper?",
+    answer:
+      "On a full A4 sheet (210 × 297 mm), you can fit up to 30 standard 35×45 mm photos (or up to 49 smaller PAN card photos), or 10 photos on a handy 1/3 A4 strip. On standard 4×6 inch photo paper, you can comfortably print 6 standard passport photos with clean cutting guide borders.",
+  },
+  {
+    question: "How do I print passport photos at home with high quality?",
+    answer:
+      "Select your passport size and choose 'A4 Sheet' or '4×6 Photo Paper'. Click 'Download PDF', open your printer dialog, ensure 'Scale' is set to 100% (Actual Size - do not select 'Fit to Page'), and use glossy 180-240 GSM photo inkjet paper.",
+  },
+  {
+    question: "Are my uploaded photos sent to any server or cloud database?",
+    answer:
+      "No. All photo cropping, face alignment, grid calculations, and PDF generation take place 100% locally in your web browser using HTML5 Canvas. Your photos are never uploaded or stored remotely.",
+  },
+];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: faqs.map((faq) => ({
+    "@type": "Question",
+    name: faq.question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: faq.answer,
+    },
+  })),
+};
+---
+
+<CalculatorLayout
+  layoutVariant="workspace"
+  title="Passport Photo Maker - Online & Free | 3.5x4.5cm & US Visa 2x2"
+  description="Make passport size images in seconds: 3.5×4.5 cm Indian passport, 2×2 inch US visa, face alignment guides, and printable A4/4x6 sheets at 300 DPI for free."
+  category="Free Online Tools"
+  calculatorName="Passport Photo Maker"
+  slug="passport-photo-maker"
+  keywords={[
+    "passport photo maker",
+    "aifreecalculator passport photo maker",
+    "online passport photo maker",
+    "passport size photo maker",
+    "3.5 x 4.5 cm photo",
+    "passport photo a4 sheet",
+    "us visa photo maker 2x2",
+    "printable passport photo sheet",
+    "passport photo generator free",
+    "indian passport photo size",
+    "schengen visa photo online",
+  ]}
+>
+  <!-- Injected FAQ Structured Data Schema (WebApplication schema is provided by CalculatorLayout) -->
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <div class="space-y-6">
+    <!-- Privacy & 300 DPI Security Banner -->
+    <div
+      class="flex items-center justify-between rounded-2xl border border-blue-200 bg-blue-50/70 p-3.5 text-xs text-blue-900 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-300"
+    >
+      <div class="flex items-center gap-3">
+        <div
+          class="flex h-7 w-7 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white font-bold"
+        >
+          🔒
+        </div>
+        <div>
+          <span class="font-bold">100% Client-Side Private:</span>
+          Your photos are processed in your browser. Zero cloud uploads, zero watermarks.
+        </div>
+      </div>
+      <div
+        class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 text-[11px] font-semibold"
+      >
+        <span>🖨️ True 300 DPI Print Calibrated</span>
+      </div>
+    </div>
+
+    <!-- ================= 1. HERO DROP ZONE (INITIAL STATE - SCREENSHOT 1) ================= -->
+    <div
+      id="passport-hero-upload"
+      class="rounded-3xl border-2 border-dashed border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 p-8 sm:p-14 text-center shadow-xs transition hover:border-blue-500"
+    >
+      <div class="mx-auto max-w-xl space-y-5">
+        <div>
+          <h2
+            class="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white"
+          >
+            Make Passport Size Photo
+          </h2>
+          <p class="mt-1.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+            Welcome to Passport Photo Maker - Your Reliable Solution for Passport Size Images!
+          </p>
+        </div>
+
+        <div
+          id="passport-drop-zone"
+          class="cursor-pointer rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-8 transition hover:bg-blue-50/30 dark:hover:bg-slate-800/70 space-y-4"
+        >
+          <p class="text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-300">
+            Select Or Drag & Drop Image Here
+          </p>
+          <input
+            type="file"
+            id="passport-file-input"
+            accept="image/jpeg,image/png,image/webp"
+            class="hidden"
+          />
+          <button
+            type="button"
+            id="passport-browse-btn"
+            class="inline-flex items-center gap-2 rounded-xl bg-blue-700 hover:bg-blue-800 active:scale-95 px-7 py-3 text-sm font-bold text-white shadow-md shadow-blue-700/20 transition cursor-pointer"
+          >
+            Select Image
+          </button>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-center gap-3 text-xs text-slate-500 pt-2">
+          <span class="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+            <span>🇮🇳</span> India (3.5×4.5cm)
+          </span>
+          <span>•</span>
+          <span class="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+            <span>🇺🇸</span> USA Visa (2×2in)
+          </span>
+          <span>•</span>
+          <span class="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+            <span>🇨🇦</span> Canada (50×70mm)
+          </span>
+          <span>•</span>
+          <span class="flex items-center gap-1 font-semibold text-slate-700 dark:text-slate-300">
+            <span>📄</span> A4 & 4×6 Sheets
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= 2. FIVE-STEP WIZARD STUDIO CONTAINER (POST UPLOAD) ================= -->
+    <div
+      id="passport-studio-container"
+      class="hidden w-full max-w-4xl mx-auto space-y-3 sm:space-y-4"
+    >
+      <!-- STEP NAVIGATION TABS -->
+      <div class="flex items-center justify-center">
+        <div
+          role="tablist"
+          aria-label="Passport Photo Steps"
+          class="inline-flex items-center p-1 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs overflow-x-auto max-w-full gap-1"
+        >
+          <button
+            type="button"
+            id="tab-step-size"
+            role="tab"
+            aria-selected="true"
+            aria-controls="panel-step-size"
+            data-step="size"
+            class="wizard-step-tab active flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold transition-all text-white bg-blue-700 shadow-xs"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"/>
+            </svg>
+            Size
+          </button>
+          <button
+            type="button"
+            id="tab-step-crop"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-step-crop"
+            data-step="crop"
+            class="wizard-step-tab flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+            Crop
+          </button>
+          <button
+            type="button"
+            id="tab-step-bg"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-step-bg"
+            data-step="bg"
+            class="wizard-step-tab flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4 4.5 4.5 0 01.5-2L6 8l3 3-2.5 2.5a2.5 2.5 0 000 3.5L7 21zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.5"/>
+            </svg>
+            Background
+          </button>
+          <button
+            type="button"
+            id="tab-step-download"
+            role="tab"
+            aria-selected="false"
+            aria-controls="panel-step-download"
+            data-step="download"
+            class="wizard-step-tab flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
+            Download
+          </button>
+        </div>
+      </div>
+
+      <!-- MAIN CONTAINER CARD -->
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 sm:p-5 shadow-xs">
+        
+        <!-- ================= STEP 1: SIZE SELECTION ================= -->
+        <div id="panel-step-size" role="tabpanel" aria-labelledby="tab-step-size" class="wizard-panel space-y-3 sm:space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800 pb-2">
+            <div>
+              <h3 class="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100">
+                1. Select Passport Size Preset
+              </h3>
+              <p class="text-[11px] text-slate-500">Choose official standard dimension or enter custom</p>
+            </div>
+            <div class="inline-flex items-center gap-1.5 text-xs text-slate-600 dark:text-slate-400">
+              <label for="passport-dpi-input" class="font-semibold">Print DPI:</label>
+              <div class="flex items-center border border-slate-300 dark:border-slate-700 rounded-md overflow-hidden">
+                <input
+                  type="number"
+                  id="passport-dpi-input"
+                  aria-label="Default DPI"
+                  value="300"
+                  min="72"
+                  max="600"
+                  class="w-14 px-1.5 py-0.5 text-center font-bold text-xs text-slate-800 dark:text-white bg-slate-50 dark:bg-slate-800 focus:outline-none"
+                />
+                <span class="bg-slate-700 text-white font-bold text-[10px] px-1.5 py-1">
+                  DPI
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preset Size Cards (4 Options) -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <!-- Preset 1: India / UK / Europe / Australia / Philippines -->
+            <div
+              data-preset="india_35x45"
+              role="button"
+              tabindex="0"
+              aria-pressed="true"
+              class="passport-size-card relative cursor-pointer rounded-xl border-2 border-blue-600 bg-blue-50/40 dark:bg-blue-950/20 p-3 text-center transition-all hover:shadow-xs flex flex-col justify-between min-h-26.25 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+            >
+              <div class="selected-badge absolute -top-2.5 left-2.5 bg-blue-700 text-white text-[10px] font-black px-2 py-0.2 rounded-full shadow-xs">
+                ✓ Selected
+              </div>
+              <div class="space-y-0.5 mt-1">
+                <div class="font-black text-slate-800 dark:text-white text-sm sm:text-base">
+                  3.5 × 4.5 CM
+                </div>
+                <div class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                  35 MM × 45 MM
+                </div>
+              </div>
+              <div class="border-t border-slate-200 dark:border-slate-800 pt-1.5 text-[11px] text-slate-500 font-medium">
+                India, Philippines, UK, Europe
+              </div>
+            </div>
+
+            <!-- Preset 2: USA / OCI -->
+            <div
+              data-preset="usa_2x2"
+              role="button"
+              tabindex="0"
+              aria-pressed="false"
+              class="passport-size-card relative cursor-pointer rounded-xl border-2 border-slate-200 dark:border-slate-800 hover:border-blue-400 bg-white dark:bg-slate-900 p-3 text-center transition-all hover:shadow-xs flex flex-col justify-between min-h-26.25 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+            >
+              <div class="selected-badge hidden absolute -top-2.5 left-2.5 bg-blue-700 text-white text-[10px] font-black px-2 py-0.2 rounded-full shadow-xs">
+                ✓ Selected
+              </div>
+              <div class="space-y-0.5 mt-1">
+                <div class="font-black text-slate-800 dark:text-white text-sm sm:text-base">
+                  2 × 2 Inch
+                </div>
+                <div class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                  51 MM × 51 MM
+                </div>
+              </div>
+              <div class="border-t border-slate-200 dark:border-slate-800 pt-1.5 text-[11px] text-slate-500 font-medium">
+                USA, OCI Card
+              </div>
+            </div>
+
+            <!-- Preset 3: Canada -->
+            <div
+              data-preset="canada_50x70"
+              role="button"
+              tabindex="0"
+              aria-pressed="false"
+              class="passport-size-card relative cursor-pointer rounded-xl border-2 border-slate-200 dark:border-slate-800 hover:border-blue-400 bg-white dark:bg-slate-900 p-3 text-center transition-all hover:shadow-xs flex flex-col justify-between min-h-26.25 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+            >
+              <div class="selected-badge hidden absolute -top-2.5 left-2.5 bg-blue-700 text-white text-[10px] font-black px-2 py-0.2 rounded-full shadow-xs">
+                ✓ Selected
+              </div>
+              <div class="space-y-0.5 mt-1">
+                <div class="font-black text-slate-800 dark:text-white text-sm sm:text-base">
+                  50 × 70 MM
+                </div>
+                <div class="text-[11px] font-semibold text-slate-600 dark:text-slate-400">
+                  5 CM × 7 CM
+                </div>
+              </div>
+              <div class="border-t border-slate-200 dark:border-slate-800 pt-1.5 text-[11px] text-slate-500 font-medium">
+                Canada
+              </div>
+            </div>
+
+            <!-- Preset 4: Custom -->
+            <div
+              data-preset="custom"
+              role="button"
+              tabindex="0"
+              aria-pressed="false"
+              class="passport-size-card relative cursor-pointer rounded-xl border-2 border-slate-200 dark:border-slate-800 hover:border-blue-400 bg-white dark:bg-slate-900 p-2.5 text-center transition-all hover:shadow-xs flex flex-col justify-between min-h-26.25 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+            >
+              <div class="selected-badge hidden absolute -top-2.5 left-2.5 bg-blue-700 text-white text-[10px] font-black px-2 py-0.2 rounded-full shadow-xs">
+                ✓ Selected
+              </div>
+              <!-- Unit Selector Radios -->
+              <div class="flex items-center justify-center gap-1 text-[10px] font-bold text-slate-700 dark:text-slate-300">
+                <label class="flex items-center gap-0.5 cursor-pointer">
+                  <input type="radio" name="custom-unit" value="cm" checked class="text-blue-600" /> CM
+                </label>
+                <label class="flex items-center gap-0.5 cursor-pointer">
+                  <input type="radio" name="custom-unit" value="mm" class="text-blue-600" /> MM
+                </label>
+                <label class="flex items-center gap-0.5 cursor-pointer">
+                  <input type="radio" name="custom-unit" value="inch" class="text-blue-600" /> In
+                </label>
+                <label class="flex items-center gap-0.5 cursor-pointer">
+                  <input type="radio" name="custom-unit" value="px" class="text-blue-600" /> PX
+                </label>
+              </div>
+
+              <!-- Input Dimensions -->
+              <div class="flex items-center justify-center gap-1.5 my-1">
+                <label for="custom-size-w" class="sr-only">Width</label>
+                <input
+                  type="number"
+                  id="custom-size-w"
+                  aria-label="Custom Width"
+                  value="3.5"
+                  step="0.1"
+                  min="0.1"
+                  class="w-13 px-1 py-0.5 text-center font-bold text-xs border border-slate-300 dark:border-slate-700 rounded bg-slate-50 dark:bg-slate-800"
+                />
+                <span class="font-bold text-slate-400 text-xs">×</span>
+                <label for="custom-size-h" class="sr-only">Height</label>
+                <input
+                  type="number"
+                  id="custom-size-h"
+                  aria-label="Custom Height"
+                  value="4.5"
+                  step="0.1"
+                  min="0.1"
+                  class="w-13 px-1 py-0.5 text-center font-bold text-xs border border-slate-300 dark:border-slate-700 rounded bg-slate-50 dark:bg-slate-800"
+                />
+              </div>
+
+              <div class="border-t border-slate-200 dark:border-slate-800 pt-1 text-[11px] font-black text-slate-600 dark:text-slate-300">
+                Custom Size
+              </div>
+            </div>
+          </div>
+
+          <!-- Next Button -->
+          <div class="flex justify-center pt-2">
+            <button
+              type="button"
+              id="btn-size-next"
+              class="inline-flex items-center gap-1.5 px-6 py-2 rounded-xl font-bold text-xs sm:text-sm text-blue-700 bg-white border-2 border-blue-600 hover:bg-blue-50 transition shadow-xs cursor-pointer"
+            >
+              <span>Next (Crop Face)</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- ================= STEP 2: CROP FACE (LIVE PHOTO CROP BOX) ================= -->
+        <div id="panel-step-crop" role="tabpanel" aria-labelledby="tab-step-crop" class="wizard-panel hidden space-y-2">
+          <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-1.5">
+            <div>
+              <h3 class="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100">
+                2. Crop Face
+              </h3>
+              <p class="text-[11px] text-slate-500">
+                Click & drag on image to create a new crop or drag the 8 blue handles.
+              </p>
+            </div>
+
+            <!-- Quick Photo Adjustment Toolbar & Controls -->
+            <div class="flex items-center gap-1 bg-slate-50 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+              <button
+                type="button"
+                id="btn-crop-zoom-in"
+                title="Zoom In"
+                aria-label="Zoom in"
+                class="p-1 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"/>
+                </svg>
+              </button>
+              <button
+                type="button"
+                id="btn-crop-zoom-out"
+                title="Zoom Out"
+                aria-label="Zoom out"
+                class="p-1 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"/>
+                </svg>
+              </button>
+              <div class="h-4 w-px bg-slate-300 dark:bg-slate-700 mx-0.5"></div>
+              <button
+                type="button"
+                id="btn-crop-brightness"
+                title="Brightness"
+                aria-label="Adjust brightness"
+                class="p-1 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
+              </button>
+              <button
+                type="button"
+                id="btn-crop-contrast"
+                title="Contrast"
+                aria-label="Adjust contrast"
+                class="p-1 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <circle cx="12" cy="12" r="9" stroke-width="2"/>
+                  <path stroke-width="2" d="M12 3v18A9 9 0 0012 3z"/>
+                </svg>
+              </button>
+              <button
+                type="button"
+                id="btn-crop-saturation"
+                title="Saturation"
+                aria-label="Adjust saturation"
+                class="p-1 rounded-lg text-slate-700 dark:text-slate-200 hover:bg-white dark:hover:bg-slate-700 transition cursor-pointer"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"/>
+                </svg>
+              </button>
+              <button
+                type="button"
+                id="btn-crop-lock-ratio"
+                class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[11px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800 hover:bg-amber-100 cursor-pointer"
+              >
+                <span id="crop-ratio-icon">🔓</span>
+                <span id="crop-ratio-text">Freeform Crop</span>
+              </button>
+              <button
+                type="button"
+                id="btn-crop-reset"
+                class="p-1 text-[11px] font-semibold text-slate-600 dark:text-slate-300 hover:text-slate-900 cursor-pointer"
+                title="Reset Crop Box"
+              >
+                ↺ Reset
+              </button>
+            </div>
+          </div>
+
+          <!-- Active Adjustment Slider Bar (collapsible) -->
+          <div id="crop-slider-bar" class="hidden [&:not(.hidden)]:flex w-full max-w-sm mx-auto p-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 items-center gap-2">
+            <span id="crop-slider-label" class="text-xs font-bold text-slate-700 dark:text-slate-300 w-20">
+              ☀️ Brightness
+            </span>
+            <input
+              type="range"
+              id="crop-adjustment-slider"
+              aria-label="Adjustment value slider"
+              min="0"
+              max="200"
+              value="100"
+              class="flex-1 accent-blue-600 cursor-pointer h-1.5"
+            />
+            <button
+              type="button"
+              id="btn-reset-crop-adjust"
+              title="Reset adjustment"
+              aria-label="Reset slider adjustment"
+              class="text-xs text-rose-500 hover:text-rose-700 font-bold p-0.5 cursor-pointer"
+            >
+              ⊘
+            </button>
+          </div>
+
+          <!-- Interactive Live Canvas Wrapper (compact height on PC) -->
+          <div class="flex flex-col items-center justify-center">
+            <div
+              id="crop-canvas-wrapper"
+              class="relative bg-slate-900 rounded-xl shadow-xs border border-slate-300 dark:border-slate-700 overflow-hidden flex items-center justify-center max-w-full max-h-75 sm:max-h-85"
+            >
+              <canvas
+                id="crop-canvas"
+                class="w-auto h-auto max-w-full max-h-75 sm:max-h-85 cursor-crosshair block select-none"
+              ></canvas>
+            </div>
+          </div>
+
+          <!-- Bottom Action Buttons -->
+          <div class="flex items-center justify-center gap-3 pt-2">
+            <button
+              type="button"
+              id="btn-crop-back"
+              class="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
+            >
+              <span>↩ Back</span>
+            </button>
+            <button
+              type="button"
+              id="btn-crop-next"
+              class="inline-flex items-center gap-1.5 px-6 py-2 rounded-xl font-bold text-xs sm:text-sm text-blue-700 bg-white border-2 border-blue-600 hover:bg-blue-50 transition shadow-xs cursor-pointer"
+            >
+              <span>Save & Next</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- ================= STEP 3: BACKGROUND STYLE & NAME/DATE ================= -->
+        <div id="panel-step-bg" role="tabpanel" aria-labelledby="tab-step-bg" class="wizard-panel hidden space-y-2">
+          <div class="text-center">
+            <h3 class="text-base sm:text-lg font-bold text-slate-800 dark:text-slate-100">
+              3. Background Color & Customization
+            </h3>
+          </div>
+
+          <!-- 2 Compact Comparison Cards: Original vs Background Color -->
+          <div class="grid grid-cols-2 gap-3 max-w-sm sm:max-w-md mx-auto">
+            <!-- Original Card -->
+            <div
+              id="card-bg-original"
+              role="button"
+              tabindex="0"
+              aria-label="Keep Original Background"
+              class="cursor-pointer rounded-xl border-2 border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-xs transition hover:shadow-sm flex flex-col focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+            >
+              <div class="relative w-full aspect-35/45 max-h-42.5 sm:max-h-47.5 bg-slate-100 dark:bg-slate-800 flex items-center justify-center overflow-hidden">
+                <canvas id="canvas-preview-original" class="max-w-full max-h-full object-contain"></canvas>
+              </div>
+              <div class="bg-slate-100 dark:bg-slate-800 py-1 text-center font-bold text-xs text-slate-700 dark:text-slate-300">
+                Original
+              </div>
+            </div>
+
+            <!-- Background Card -->
+            <div
+              id="card-bg-color"
+              role="button"
+              tabindex="0"
+              aria-label="Select Custom Background Color"
+              class="relative cursor-pointer rounded-xl border-2 border-blue-600 bg-white dark:bg-slate-900 overflow-hidden shadow-xs transition hover:shadow-sm flex flex-col ring-2 ring-blue-600 focus:outline-hidden focus:ring-2 focus:ring-blue-500"
+            >
+              <div class="selected-badge absolute top-2 left-2 bg-blue-700 text-white text-[10px] font-black px-2 py-0.2 rounded-full shadow-xs z-10">
+                ✓ Selected
+              </div>
+              <div class="relative w-full aspect-35/45 max-h-42.5 sm:max-h-47.5 bg-white flex items-center justify-center overflow-hidden">
+                <canvas id="canvas-preview-color" class="max-w-full max-h-full object-contain"></canvas>
+              </div>
+              <div class="bg-blue-50 dark:bg-blue-950/40 py-1 px-3 flex items-center justify-between font-bold text-xs text-blue-900 dark:text-blue-200">
+                <label for="bg-color-picker" class="font-bold cursor-pointer text-xs">Color</label>
+                <input
+                  type="color"
+                  id="bg-color-picker"
+                  aria-label="Background Color Picker"
+                  value="#ffffff"
+                  class="w-6 h-6 rounded border border-slate-300 cursor-pointer"
+                />
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Color Swatches Bar -->
+          <div class="flex items-center justify-center gap-2 pt-0.5">
+            <button type="button" data-color="#ffffff" aria-label="White background" class="bg-swatch-btn w-6 h-6 rounded-full border-2 border-blue-600 bg-white shadow-2xs cursor-pointer" title="White"></button>
+            <button type="button" data-color="#e2e8f0" aria-label="Light Gray background" class="bg-swatch-btn w-6 h-6 rounded-full border border-slate-300 bg-slate-200 shadow-2xs cursor-pointer" title="Light Gray"></button>
+            <button type="button" data-color="#bae6fd" aria-label="Sky Blue background" class="bg-swatch-btn w-6 h-6 rounded-full border border-slate-300 bg-sky-200 shadow-2xs cursor-pointer" title="Sky Blue"></button>
+            <button type="button" data-color="#3b82f6" aria-label="Blue background" class="bg-swatch-btn w-6 h-6 rounded-full border border-slate-300 bg-blue-500 shadow-2xs cursor-pointer" title="Blue"></button>
+            <button type="button" data-color="#1e3a8a" aria-label="Navy Blue background" class="bg-swatch-btn w-6 h-6 rounded-full border border-slate-300 bg-blue-900 shadow-2xs cursor-pointer" title="Navy Blue"></button>
+            <button type="button" data-color="#ef4444" aria-label="Red background" class="bg-swatch-btn w-6 h-6 rounded-full border border-slate-300 bg-red-500 shadow-2xs cursor-pointer" title="Red"></button>
+          </div>
+
+          <!-- Background Removal Sensitivity & Eyedropper Bar -->
+          <div class="max-w-sm sm:max-w-md mx-auto space-y-1 pt-1">
+            <div class="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-1">
+              <div class="flex items-center justify-between text-xs">
+                <label for="bg-tolerance-slider" class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1 cursor-pointer">
+                  <span>Sensitivity (Tolerance):</span>
+                </label>
+                <span id="bg-tolerance-val" class="font-black text-blue-600 dark:text-blue-400">25%</span>
+              </div>
+              <input
+                type="range"
+                id="bg-tolerance-slider"
+                aria-label="Background Sensitivity Slider"
+                min="5"
+                max="60"
+                value="25"
+                class="w-full accent-blue-600 cursor-pointer h-1.5"
+              />
+              <div class="flex items-center justify-between text-[11px] text-slate-400">
+                <button
+                  type="button"
+                  id="btn-pick-bg-color"
+                  class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-bold bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 text-slate-700 dark:text-slate-200 hover:bg-slate-100 transition cursor-pointer"
+                >
+                  <span>🎯</span>
+                  <span id="pick-bg-btn-text">Pick Color from Photo</span>
+                </button>
+                <span>Click preview photo to sample color</span>
+              </div>
+            </div>
+
+            <!-- Background Replacement Status Notice -->
+            <div
+              id="bg-cutout-notice"
+              class="hidden text-[11px] text-amber-800 dark:text-amber-200 bg-amber-50 dark:bg-amber-950/40 p-2 rounded-xl border border-amber-200 dark:border-amber-800 text-center font-medium"
+            ></div>
+          </div>
+
+          <!-- Write Name & Date On Image Option (Compact) -->
+          <div class="max-w-sm sm:max-w-md mx-auto space-y-1.5 pt-1">
+            <label class="flex items-center justify-center gap-1.5 cursor-pointer font-bold text-xs text-slate-800 dark:text-slate-200">
+              <input
+                type="checkbox"
+                id="check-name-date"
+                class="w-3.5 h-3.5 rounded text-blue-600 focus:ring-blue-500 cursor-pointer"
+              />
+              <span>Write Name & Date on Photo</span>
+            </label>
+
+            <div id="name-date-inputs" class="hidden">
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label for="input-person-name" class="block text-[10px] font-semibold text-slate-700 dark:text-slate-300 mb-0.5">Full Name</label>
+                  <input
+                    type="text"
+                    id="input-person-name"
+                    aria-label="Full Name"
+                    placeholder="e.g. JOHN DOE"
+                    class="w-full px-2.5 py-1 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white"
+                  />
+                </div>
+                <div>
+                  <label for="input-person-date" class="block text-[10px] font-semibold text-slate-700 dark:text-slate-300 mb-0.5">Date (DOB / DOP)</label>
+                  <input
+                    type="date"
+                    id="input-person-date"
+                    aria-label="Date"
+                    class="w-full px-2.5 py-1 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 text-slate-800 dark:text-white"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex items-center justify-center gap-3 pt-2">
+            <button
+              type="button"
+              id="btn-bg-back"
+              class="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
+            >
+              <span>↩ Back</span>
+            </button>
+            <button
+              type="button"
+              id="btn-bg-to-download"
+              class="inline-flex items-center gap-1.5 px-6 py-2 rounded-xl font-bold text-xs sm:text-sm text-white bg-blue-700 hover:bg-blue-800 transition shadow-xs cursor-pointer"
+            >
+              <span>Next (Download)</span>
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- ================= STEP 4: DOWNLOAD PASSPORT SIZE IMAGE ================= -->
+        <div id="panel-step-download" role="tabpanel" aria-labelledby="tab-step-download" class="wizard-panel hidden space-y-3">
+          <div class="text-center">
+            <h3 class="text-base sm:text-lg font-black text-slate-800 dark:text-slate-100">
+              4. Download Passport Size Image
+            </h3>
+          </div>
+
+          <!-- 2 Cards Layout: Single Online Photo vs Printable Sheet -->
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 items-stretch">
+            
+            <!-- Left Card: Online Submission Single Photo -->
+            <div class="rounded-2xl border-2 border-slate-200 dark:border-slate-800 p-3 sm:p-4 flex flex-col justify-between space-y-2 bg-white dark:bg-slate-900 shadow-2xs">
+              <div class="text-center space-y-0.5">
+                <div class="font-black text-xs sm:text-sm text-slate-800 dark:text-white">
+                  Online Submission
+                </div>
+                <div id="download-single-dimensions" class="text-[11px] text-slate-500 font-semibold">
+                  3.5 x 4.5 CM (300 DPI)
+                </div>
+              </div>
+
+              <!-- Single Photo Canvas Preview -->
+              <div class="flex-1 flex items-center justify-center p-1 min-h-36">
+                <canvas
+                  id="download-single-canvas"
+                  class="max-w-36 max-h-44 rounded-lg shadow-xs border border-slate-200 dark:border-slate-700 object-contain bg-white"
+                ></canvas>
+              </div>
+
+              <!-- Target File Size / KB limit (e.g. Under 50KB for Govt forms) -->
+              <div class="space-y-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
+                <div class="flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400">
+                  <label for="target-kb-select" class="cursor-pointer">Target File Size:</label>
+                  <select
+                    id="target-kb-select"
+                    aria-label="Target File Size"
+                    class="px-2 py-0.5 rounded-lg border border-slate-300 dark:border-slate-700 text-xs font-bold bg-slate-50 dark:bg-slate-800"
+                  >
+                    <option value="max" selected>Original Quality (Max)</option>
+                    <option value="100">Under 100 KB</option>
+                    <option value="50">Under 50 KB (Govt Portals)</option>
+                    <option value="20">Under 20 KB (Visa / SSC)</option>
+                  </select>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    id="btn-download-single-jpg"
+                    class="w-full py-1.5 px-3 rounded-xl font-bold text-xs text-blue-700 bg-white border-2 border-blue-600 hover:bg-blue-50 transition shadow-2xs flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    Download JPG
+                  </button>
+                  <button
+                    type="button"
+                    id="btn-download-single-png"
+                    class="w-full py-1.5 px-3 rounded-xl font-bold text-xs text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition shadow-2xs flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    Download PNG
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Card: Printable Sheet Grid -->
+            <div class="rounded-2xl border-2 border-slate-200 dark:border-slate-800 p-3 sm:p-4 flex flex-col justify-between space-y-2 bg-white dark:bg-slate-900 shadow-2xs">
+              <!-- Sheet format options: A4, 1/3 A4, 4x6 -->
+              <div class="flex items-center justify-center gap-3 text-xs font-bold text-slate-700 dark:text-slate-300">
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input type="radio" name="sheet-format" id="sheet-fmt-a4" value="a4" class="text-blue-600" />
+                  <span>A4</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input type="radio" name="sheet-format" id="sheet-fmt-3a4" value="3a4" checked class="text-blue-600" />
+                  <span>1/3 A4 Strip (210×99 mm)</span>
+                </label>
+                <label class="flex items-center gap-1.5 cursor-pointer">
+                  <input type="radio" name="sheet-format" id="sheet-fmt-4x6" value="4x6" class="text-blue-600" />
+                  <span>4×6 Photo</span>
+                </label>
+              </div>
+
+              <!-- Sheet Canvas Preview -->
+              <div class="flex-1 flex items-center justify-center p-1 min-h-36">
+                <canvas
+                  id="download-sheet-canvas"
+                  class="max-w-44 max-h-44 rounded-lg shadow-xs border border-slate-300 dark:border-slate-700 object-contain bg-white"
+                ></canvas>
+              </div>
+
+              <!-- Download Sheet Action Buttons -->
+              <div class="space-y-1.5 pt-1 border-t border-slate-100 dark:border-slate-800">
+                <div class="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    id="btn-download-sheet-pdf"
+                    class="w-full py-1.5 px-3 rounded-xl font-bold text-xs text-white bg-blue-700 hover:bg-blue-800 transition shadow-2xs flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                    </svg>
+                    Download PDF
+                  </button>
+                  <button
+                    type="button"
+                    id="btn-download-sheet-jpg"
+                    class="w-full py-1.5 px-3 rounded-xl font-bold text-xs text-blue-700 bg-white border-2 border-blue-600 hover:bg-blue-50 transition shadow-2xs flex items-center justify-center gap-1 cursor-pointer"
+                  >
+                    Download Sheet JPG
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Bottom Global Actions (Make New Image, Back) -->
+          <div class="flex items-center justify-center gap-4 pt-6 border-t border-slate-200 dark:border-slate-800">
+            <button
+              type="button"
+              id="btn-make-new-image"
+              class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-blue-700 bg-white border-2 border-blue-600 hover:bg-blue-50 transition shadow-xs cursor-pointer"
+            >
+              <span>➕ Make New Image</span>
+            </button>
+            <button
+              type="button"
+              id="btn-download-back"
+              class="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 transition cursor-pointer"
+            >
+              <span>↩ Back</span>
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Modular Client-Side Passport Photo Scripts (Inside default slot) -->
+    <script is:inline id="jspdf-cdn" data-src="/js/vendor/jspdf.umd.min.js"></script>
+    <script is:inline src="/js/tools/passport-photo-maker.js"></script>
+  </div>
+
+  <!-- EDUCATIONAL CONTENT SLOT -->
+  <Fragment slot="content">
+    <div class="space-y-12 not-prose text-slate-700 dark:text-slate-300">
+      <!-- Section 1: Intro -->
+      <section class="space-y-4">
+        <div
+          class="rounded-3xl border border-blue-100 bg-linear-to-br from-blue-50/80 via-white to-slate-50 p-6 shadow-xs dark:border-blue-950/60 dark:from-slate-900 dark:via-slate-900/80 dark:to-blue-950/20 sm:p-8"
+        >
+          <div
+            class="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-100/60 px-3 py-1 text-xs font-bold text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/70 dark:text-blue-300"
+          >
+            <span class="h-2 w-2 rounded-full bg-blue-600 animate-pulse"></span>
+            Official Sizing Guidelines Compliant
+          </div>
+
+          <h2
+            class="mt-4 text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white"
+          >
+            Online Passport Size Photo Maker & Printable Sheet Generator
+          </h2>
+
+          <p
+            class="mt-3 text-sm sm:text-base text-slate-600 dark:text-slate-300 leading-relaxed max-w-4xl"
+          >
+            Getting passport photos from a physical studio or pharmacy photo kiosk can cost anywhere from $15 to $25 for just two pictures. With our <strong>Passport Photo Maker</strong> by aifreecalculator.com, you can format, crop, align, and print compliant passport and visa photos from your phone or desktop in seconds. All processing is 100% client-side with zero cloud uploads.
+          </p>
+        </div>
+      </section>
+
+      <!-- Section 2: How-To-Use 3-Step Guide -->
+      <section class="space-y-6">
+        <div>
+          <span
+            class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400"
+            >Step-by-Step Guide</span
+          >
+          <h2
+            class="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl"
+          >
+            How to Create and Print Passport Photos Online
+          </h2>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 max-w-3xl">
+            Follow this simple three-step workflow to prepare official passport photos for printing:
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div
+            class="p-5 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-2"
+          >
+            <div class="flex items-center gap-2">
+              <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white font-bold text-xs">1</span>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">Upload Your Photo</h3>
+            </div>
+            <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Drag and drop any clear portrait photo taken against a plain light wall in good lighting. Ensure you are looking directly into the camera.
+            </p>
+          </div>
+
+          <div
+            class="p-5 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-2"
+          >
+            <div class="flex items-center gap-2">
+              <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white font-bold text-xs">2</span>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">Crop to 3.5×4.5cm or 2×2in</h3>
+            </div>
+            <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Select your country size preset. Use the biometric oval guide to ensure the top of your hair and the bottom of your chin fit between official guide markers.
+            </p>
+          </div>
+
+          <div
+            class="p-5 rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-2"
+          >
+            <div class="flex items-center gap-2">
+              <span class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-blue-600 text-white font-bold text-xs">3</span>
+              <h3 class="text-sm font-bold text-slate-900 dark:text-white">Download A4 / 4×6 Sheet</h3>
+            </div>
+            <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Choose your printable sheet format (A4, 3/A4 strip, or 4×6 photo paper) and download the 300 DPI high-resolution PDF or JPG complete with cutting guide borders.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 3: Official Country Photo Size Table -->
+      <section class="space-y-6">
+        <div>
+          <span
+            class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400"
+            >Global Standards Chart</span
+          >
+          <h2
+            class="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl"
+          >
+            Official Country Passport & Visa Photo Sizes
+          </h2>
+          <p class="mt-2 text-sm text-slate-600 dark:text-slate-400 max-w-3xl">
+            Each government immigration agency specifies strict physical millimeter requirements. Our tool pre-configures exact dimensions at 300 DPI:
+          </p>
+        </div>
+
+        <div
+          class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-xs dark:border-slate-800 dark:bg-slate-900"
+        >
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs sm:text-sm">
+              <thead
+                class="border-b border-slate-200 bg-slate-50/70 text-slate-700 dark:border-slate-800 dark:bg-slate-800/40 dark:text-slate-300"
+              >
+                <tr>
+                  <th class="p-4 font-bold">Country / Document</th>
+                  <th class="p-4 font-bold">Physical Size (mm)</th>
+                  <th class="p-4 font-bold">Imperial (in)</th>
+                  <th class="p-4 font-bold text-blue-600 dark:text-blue-400">Exact 300 DPI (px)</th>
+                  <th class="p-4 font-bold">Head Height Ratio</th>
+                </tr>
+              </thead>
+              <tbody
+                class="divide-y divide-slate-100 text-slate-600 dark:divide-slate-800 dark:text-slate-300"
+              >
+                <tr>
+                  <td class="p-4 font-semibold text-slate-900 dark:text-white">India Passport</td>
+                  <td class="p-4 font-mono">35 × 45 mm</td>
+                  <td class="p-4 font-mono">1.38 × 1.77 in</td>
+                  <td class="p-4 font-mono font-bold text-blue-600 dark:text-blue-400">413 × 531 px</td>
+                  <td class="p-4">70% to 80% (31–36 mm)</td>
+                </tr>
+                <tr>
+                  <td class="p-4 font-semibold text-slate-900 dark:text-white">India PAN Card</td>
+                  <td class="p-4 font-mono">25 × 35 mm</td>
+                  <td class="p-4 font-mono">0.98 × 1.38 in</td>
+                  <td class="p-4 font-mono font-bold text-blue-600 dark:text-blue-400">295 × 413 px</td>
+                  <td class="p-4">Head centered, 70% to 80%</td>
+                </tr>
+                <tr>
+                  <td class="p-4 font-semibold text-slate-900 dark:text-white">India OCI Card</td>
+                  <td class="p-4 font-mono">51 × 51 mm</td>
+                  <td class="p-4 font-mono">2.0 × 2.0 in</td>
+                  <td class="p-4 font-mono font-bold text-blue-600 dark:text-blue-400">600 × 600 px</td>
+                  <td class="p-4">50% to 69% (25–35 mm)</td>
+                </tr>
+                <tr>
+                  <td class="p-4 font-semibold text-slate-900 dark:text-white">United States (Passport & Visa)</td>
+                  <td class="p-4 font-mono">51 × 51 mm</td>
+                  <td class="p-4 font-mono">2.0 × 2.0 in</td>
+                  <td class="p-4 font-mono font-bold text-blue-600 dark:text-blue-400">600 × 600 px</td>
+                  <td class="p-4">50% to 69% (25–35 mm)</td>
+                </tr>
+                <tr>
+                  <td class="p-4 font-semibold text-slate-900 dark:text-white">Philippines Passport</td>
+                  <td class="p-4 font-mono">35 × 45 mm</td>
+                  <td class="p-4 font-mono">1.38 × 1.77 in</td>
+                  <td class="p-4 font-mono font-bold text-blue-600 dark:text-blue-400">413 × 531 px</td>
+                  <td class="p-4">70% to 80% (32–36 mm)</td>
+                </tr>
+                <tr>
+                  <td class="p-4 font-semibold text-slate-900 dark:text-white">UK & Schengen Area (Europe)</td>
+                  <td class="p-4 font-mono">35 × 45 mm</td>
+                  <td class="p-4 font-mono">1.38 × 1.77 in</td>
+                  <td class="p-4 font-mono font-bold text-blue-600 dark:text-blue-400">413 × 531 px</td>
+                  <td class="p-4">70% to 80% (29–34 mm)</td>
+                </tr>
+                <tr>
+                  <td class="p-4 font-semibold text-slate-900 dark:text-white">Canada Passport</td>
+                  <td class="p-4 font-mono">50 × 70 mm</td>
+                  <td class="p-4 font-mono">1.97 × 2.76 in</td>
+                  <td class="p-4 font-mono font-bold text-blue-600 dark:text-blue-400">591 × 827 px</td>
+                  <td class="p-4">31 mm to 36 mm</td>
+                </tr>
+                <tr>
+                  <td class="p-4 font-semibold text-slate-900 dark:text-white">Australia Passport</td>
+                  <td class="p-4 font-mono">35 × 45 mm</td>
+                  <td class="p-4 font-mono">1.38 × 1.77 in</td>
+                  <td class="p-4 font-mono font-bold text-blue-600 dark:text-blue-400">413 × 531 px</td>
+                  <td class="p-4">32 mm to 36 mm</td>
+                </tr>
+                <tr>
+                  <td class="p-4 font-semibold text-slate-900 dark:text-white">Stamp Size Document Photo</td>
+                  <td class="p-4 font-mono">25 × 30 mm</td>
+                  <td class="p-4 font-mono">0.98 × 1.18 in</td>
+                  <td class="p-4 font-mono font-bold text-blue-600 dark:text-blue-400">295 × 354 px</td>
+                  <td class="p-4">Compact ID cards</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 4: Key Features -->
+      <section class="space-y-6">
+        <div>
+          <span
+            class="text-xs font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400"
+            >Engineered for Speed & Quality</span
+          >
+          <h2
+            class="mt-1 text-2xl font-black tracking-tight text-slate-900 dark:text-white sm:text-3xl"
+          >
+            Key Features of Passport Photo Maker
+          </h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2 shadow-xs">
+            <div class="text-2xl">🎯</div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Face Alignment Guides</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Interactive oval guidelines display eye-level and chin-level markers to help accurately position your head and face.
+            </p>
+          </div>
+
+          <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2 shadow-xs">
+            <div class="text-2xl">🖨️</div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Multi-Grid Sheet Options</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Choose between A4 Full Sheet, 1/3 A4 Strip (8 photos), or standard 4×6 inch photo paper to print multiple copies effortlessly.
+            </p>
+          </div>
+
+          <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2 shadow-xs">
+            <div class="text-2xl">✂️</div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">Cutting Guide Borders</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Each photo on the sheet is framed with a thin cutting guide border, making it easy to cut clean, straight edges using scissors or a paper trimmer.
+            </p>
+          </div>
+
+          <div class="p-5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-2 shadow-xs">
+            <div class="text-2xl">🔒</div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white">100% Client-Side Privacy</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              Your photos never touch any cloud server. Everything processes in your browser canvas.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 5: Related Tools -->
+      <section
+        class="space-y-4 border-t border-slate-200 pt-8 dark:border-slate-800"
+      >
+        <div class="flex items-center justify-between">
+          <h2
+            class="text-xl font-bold tracking-tight text-slate-900 dark:text-white"
+          >
+            Explore Related Free Online Tools
+          </h2>
+          <a
+            href="/free-online-tools/"
+            class="text-xs font-bold text-blue-600 hover:underline dark:text-blue-400"
+          >
+            View All Tools →
+          </a>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+          <a
+            href="/free-online-tools/photo-collage-maker/"
+            class="group flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-2xs transition hover:border-blue-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500"
+          >
+            <span class="text-2xl transition group-hover:scale-110">🖼️</span>
+            <span
+              class="mt-2 font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400"
+              >Photo Collage Maker</span
+            >
+            <span class="mt-0.5 text-[10px] text-slate-400"
+              >A4 300 DPI Print Layouts</span
+            >
+          </a>
+
+          <a
+            href="/free-online-tools/image-resizer/"
+            class="group flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-2xs transition hover:border-blue-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500"
+          >
+            <span class="text-2xl transition group-hover:scale-110">📐</span>
+            <span
+              class="mt-2 font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400"
+              >Image Resizer</span
+            >
+            <span class="mt-0.5 text-[10px] text-slate-400"
+              >Scale px, cm & KB</span
+            >
+          </a>
+
+          <a
+            href="/free-online-tools/image-compressor/"
+            class="group flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-2xs transition hover:border-blue-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500"
+          >
+            <span class="text-2xl transition group-hover:scale-110">🗜️</span>
+            <span
+              class="mt-2 font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400"
+              >Image Compressor</span
+            >
+            <span class="mt-0.5 text-[10px] text-slate-400"
+              >Target KB reduction</span
+            >
+          </a>
+
+          <a
+            href="/free-online-tools/jpg-to-png/"
+            class="group flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-4 text-center shadow-2xs transition hover:border-blue-500 hover:shadow-xs dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500"
+          >
+            <span class="text-2xl transition group-hover:scale-110">🖼️</span>
+            <span
+              class="mt-2 font-bold text-slate-800 dark:text-slate-200 group-hover:text-blue-600 dark:group-hover:text-blue-400"
+              >JPG to PNG</span
+            >
+            <span class="mt-0.5 text-[10px] text-slate-400"
+              >Lossless conversion</span
+            >
+          </a>
+        </div>
+      </section>
+    </div>
+  </Fragment>
+
+  <!-- FAQ ACCORDION SLOT -->
+  <Fragment slot="faq">
+    <div class="space-y-3 text-sm not-prose">
+      {
+        faqs.map((faq) => (
+          <details class="group rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-800/30 transition">
+            <summary class="font-bold text-slate-900 dark:text-white cursor-pointer list-none flex items-center justify-between">
+              <span>{faq.question}</span>
+              <span class="text-blue-600 font-bold transition group-open:rotate-180">
+                ▼
+              </span>
+            </summary>
+            <p class="mt-2 text-slate-600 dark:text-slate-300 text-xs sm:text-sm leading-relaxed">
+              {faq.answer}
+            </p>
+          </details>
+        ))
+      }
+    </div>
+  </Fragment>
+</CalculatorLayout>

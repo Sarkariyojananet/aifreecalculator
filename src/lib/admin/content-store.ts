@@ -54,12 +54,6 @@ export interface FeatureFlags {
   enableSearchAnalytics: boolean;
 }
 
-export interface SearchQueryLog {
-  query: string;
-  count: number;
-  hasResults: boolean;
-  lastSearched: string;
-}
 
 const DEFAULT_FEATURE_FLAGS: FeatureFlags = {
   enablePdfDownload: true,
@@ -134,7 +128,6 @@ const DEFAULT_FAQS: FAQItem[] = [
   },
 ];
 
-const DEFAULT_NO_RESULT_SEARCHES: SearchQueryLog[] = [];
 
 // In-memory cache for D1 site_settings (1 hour TTL) to eliminate repetitive DB queries
 const inMemorySettingsCache = new Map<string, { value: any; expiry: number }>();
@@ -397,41 +390,6 @@ export async function deleteRedirectRule(id: string, locals?: any): Promise<Redi
   return filtered;
 }
 
-export async function getSearchAnalytics(locals?: any): Promise<SearchQueryLog[]> {
-  return await readSetting<SearchQueryLog[]>('cms_search_analytics', DEFAULT_NO_RESULT_SEARCHES, locals);
-}
-
-export async function recordSearchQuery(query: string, hasResults: boolean, locals?: any): Promise<void> {
-  const normalized = query.trim().toLowerCase().slice(0, 80);
-  if (!normalized || normalized.length < 2) return;
-  const current = await getSearchAnalytics(locals);
-  const existing = current.find((s) => s.query.toLowerCase() === normalized);
-  if (existing) {
-    existing.count++;
-    existing.lastSearched = new Date().toISOString();
-    existing.hasResults = hasResults;
-  } else {
-    current.unshift({
-      query: normalized,
-      count: 1,
-      hasResults,
-      lastSearched: new Date().toISOString(),
-    });
-  }
-  await writeSetting('cms_search_analytics', current.slice(0, 150), locals);
-}
-
-export async function deleteSearchQuery(query: string, locals?: any): Promise<SearchQueryLog[]> {
-  const current = await getSearchAnalytics(locals);
-  const normalized = query.trim().toLowerCase();
-  const filtered = current.filter((s) => s.query.toLowerCase() !== normalized);
-  await writeSetting('cms_search_analytics', filtered, locals);
-  return filtered;
-}
-
-export async function clearAllSearchQueries(locals?: any): Promise<void> {
-  await writeSetting('cms_search_analytics', [], locals);
-}
 
 export async function getCalculatorOverrides(locals?: any): Promise<Record<string, any>> {
   return await readSetting<Record<string, any>>('cms_calculator_overrides', {}, locals);

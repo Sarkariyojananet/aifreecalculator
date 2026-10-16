@@ -173,7 +173,6 @@ export function getRoutePerformanceCatalog(statsMap?: Record<string, number>): R
   const apiEndpoints = [
     { path: '/api/analytics/event', name: 'Funnel Analytics Ingestion' },
     { path: '/api/calculator-error-log', name: 'Calculator Error Telemetry' },
-    { path: '/api/search-log', name: 'Search Query Capture' },
     { path: '/api/contact', name: 'Contact Form Dispatch' },
   ];
 
