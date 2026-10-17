@@ -1,0 +1,1904 @@
+---
+import CalculatorLayout from "../../layouts/CalculatorLayout.astro";
+
+const faqs = [
+  {
+    q: "How do I calculate how much concrete I need?",
+    a: "To calculate concrete volume, multiply Length × Width × Thickness (in feet) to find cubic feet, then divide by 27 to convert to cubic yards. For cylindrical footings, use π × radius² × depth. For stairs and curbs, break the structure into geometric components. Always add 5% to 10% extra for wastage, subgrade unevenness, and formwork deflection."
+  },
+  {
+    q: "How many 80-lb bags of concrete make a cubic yard?",
+    a: "It takes exactly 45 bags of 80-lb pre-mixed concrete to make one cubic yard (27 cubic feet) of mixed concrete. Each 80-lb bag yields approximately 0.60 cubic feet."
+  },
+  {
+    q: "How many 60-lb bags of concrete make a cubic yard?",
+    a: "It takes 60 bags of 60-lb pre-mixed concrete to make one cubic yard (27 cubic feet). Each 60-lb bag yields approximately 0.45 cubic feet of solid concrete."
+  },
+  {
+    q: "How many bags of concrete do I need for a 10x10 slab that is 4 inches thick?",
+    a: "A 10 ft × 10 ft slab at 4 inches (0.333 ft) thick has a volume of 33.33 cubic feet (1.23 cubic yards). You will need approximately 56 bags of 80-lb concrete or 74 bags of 60-lb concrete (including a 10% safety margin)."
+  },
+  {
+    q: "What is the standard density of concrete?",
+    a: "Standard bagged pre-mixed dry concrete has an in-place density of approximately 133 lbs/ft³ (2,130 kg/m³). Structural normal-weight ready-mix concrete with coarse stone aggregate typically weighs 145 to 150 lbs/ft³ (2,320 to 2,400 kg/m³)."
+  },
+  {
+    q: "How do you calculate concrete for stairs?",
+    a: "Concrete stairs volume equals the cumulative volume of each step wedge plus the top platform/landing. For N risers, the steps cross-sectional area is Run × Rise × [N × (N - 1) / 2], plus Platform Depth × (N × Rise) for the landing, multiplied by the staircase width."
+  },
+  {
+    q: "How do you calculate concrete for a curb and gutter barrier?",
+    a: "Calculate the two cross-sectional areas: (1) Curb section above the gutter = Curb Depth × Curb Height; (2) Base flag slab = (Curb Depth + Gutter Width) × Flag Thickness. Add the areas together and multiply by the total curb length."
+  },
+  {
+    q: "Can I download or print a bill of quantities (BOQ) PDF report?",
+    a: "Yes. Click 'Print / Save Report' or 'Download PDF' to generate an itemized, client-ready summary complete with geometric dimensions, volumes in cubic yards/meters, required pre-mixed bags, density assumptions, and estimated costs."
+  }
+];
+---
+
+<CalculatorLayout
+  title="Concrete Calculator – Slabs, Footings, Columns, Tubes, Curbs & Stairs | AI Free Calculator"
+  description="Free online concrete calculator to estimate concrete volume in cubic yards, cubic feet, and cubic meters, plus weight and 60-lb / 80-lb bag counts for slabs, walls, footings, round columns, tubes, curb & gutter, and stairs."
+  category="Construction"
+  calculatorName="Concrete Calculator"
+  slug="concrete-calculator"
+  keywords={[
+    "concrete calculator",
+    "concrete volume calculator",
+    "concrete bags calculator",
+    "concrete slab calculator",
+    "concrete footing calculator",
+    "concrete column calculator",
+    "concrete tube calculator",
+    "curb and gutter concrete calculator",
+    "concrete stairs calculator",
+    "how many bags of concrete",
+    "cubic yards of concrete",
+    "concrete weight calculator",
+    "concrete mix ratio",
+    "ready mix concrete calculator"
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- HERO HEADER & DESCRIPTION -->
+    <div class="rounded-3xl border border-slate-200/90 bg-linear-to-r from-blue-50/60 via-indigo-50/40 to-white p-5 dark:border-slate-800 dark:from-slate-900 dark:via-blue-950/20 dark:to-slate-900 sm:p-6 shadow-xs">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center gap-2 rounded-full bg-blue-100/80 px-3 py-1 text-xs font-bold text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 mb-2">
+            <span>🏗️</span> All-in-One Civil & DIY Concrete Estimator
+          </div>
+          <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            Concrete Calculator
+          </h1>
+          <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl">
+            Estimates the volume, weight, and pre-mixed bag quantities (60-lb &amp; 80-lb) of concrete necessary to cover any given area or structure.
+            Purchasing slightly more concrete (5%–10% wastage) than the estimated result ensures you won't fall short during a pour.
+          </p>
+        </div>
+
+        <!-- GLOBAL DENSITY & WASTAGE SETTINGS -->
+        <div class="shrink-0 flex flex-wrap sm:flex-col gap-2 rounded-2xl border border-slate-200/80 bg-white/90 p-3 shadow-2xs dark:border-slate-800 dark:bg-slate-950/80 text-xs">
+          <div class="flex items-center justify-between gap-3">
+            <span class="font-bold text-slate-700 dark:text-slate-300">Concrete Density:</span>
+            <select id="cfg-density" class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 cursor-pointer">
+              <option value="2130" selected>Pre-mixed (2,130 kg/m³ / 133 lbs/ft³)</option>
+              <option value="2400">Normal Structural (2,400 kg/m³ / 150 lbs/ft³)</option>
+              <option value="1760">Lightweight (1,760 kg/m³ / 110 lbs/ft³)</option>
+              <option value="custom">Custom Density...</option>
+            </select>
+          </div>
+          <div id="cfg-custom-density-wrap" class="flex items-center justify-between gap-2 mt-1" style="display: none;">
+            <span class="text-[11px] text-slate-500">kg/m³:</span>
+            <input type="number" id="cfg-custom-density" value="2130" min="500" max="4000" class="w-24 rounded border border-slate-300 px-1.5 py-0.5 text-xs text-right font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+          </div>
+          <div class="flex items-center justify-between gap-3">
+            <span class="font-bold text-slate-700 dark:text-slate-300">Safety Wastage:</span>
+            <select id="cfg-wastage" class="rounded-lg border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 cursor-pointer">
+              <option value="0">0% (Exact Net Volume)</option>
+              <option value="5">5% (Light Margin)</option>
+              <option value="10" selected>10% (Recommended Standard)</option>
+              <option value="15">15% (Rough/Uneven Subgrade)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- QUICK PRESETS -->
+      <div class="mt-4 pt-3 border-t border-slate-200/80 dark:border-slate-800 flex flex-wrap items-center gap-1.5 text-xs">
+        <span class="font-bold text-slate-600 dark:text-slate-400 mr-1 flex items-center gap-1">
+          <span>⚡</span> Quick Presets:
+        </span>
+        <button type="button" class="btn-quick-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-target="slab" data-l="10" data-lu="feet" data-w="10" data-wu="feet" data-h="4" data-hu="inches" data-q="1">10' × 10' × 4" Patio Slab</button>
+        <button type="button" class="btn-quick-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-target="slab" data-l="5" data-lu="meters" data-w="2.5" data-wu="meters" data-h="5" data-hu="centimeters" data-q="1">5m × 2.5m × 5cm Slab</button>
+        <button type="button" class="btn-quick-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-target="cylinder" data-d="2.5" data-du="meters" data-h="6" data-hu="meters" data-q="1">2.5m Dia × 6m Cylinder Column</button>
+        <button type="button" class="btn-quick-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-target="tube" data-d1="5" data-d1u="meters" data-d2="4" data-d2u="meters" data-h="6" data-hu="centimeters" data-q="1">5m OD × 4m ID Circular Tube</button>
+        <button type="button" class="btn-quick-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-target="curb" data-cd="4" data-cdu="centimeters" data-gw="10" data-gwu="centimeters" data-ch="4" data-chu="centimeters" data-ft="5" data-ftu="centimeters" data-l="10" data-lu="meters" data-q="1">10m Curb &amp; Gutter Barrier</button>
+        <button type="button" class="btn-quick-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-target="stairs" data-run="12" data-runu="centimeters" data-rise="6" data-riseu="centimeters" data-w="50" data-wu="centimeters" data-p="5" data-pu="centimeters" data-risers="5" data-q="1">5-Step Concrete Staircase</button>
+      </div>
+    </div>
+
+    <!-- VIEW & SHAPE NAVIGATION SELECTOR TABS -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-2 shadow-xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-100 pb-2 dark:border-slate-800/80 mb-2">
+        <span class="text-xs font-extrabold uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+          <span>📐</span> Choose Concrete Shape / Mode:
+        </span>
+        <div class="flex items-center gap-2">
+          <label class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-700 dark:text-slate-300 cursor-pointer">
+            <input type="checkbox" id="chk-view-all" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+            <span>Show All 5 Shapes on Single Page</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-1.5 sm:grid-cols-3 lg:grid-cols-5" id="shape-tab-buttons">
+        <button
+          type="button"
+          data-tab="slab"
+          class="shape-tab-btn active flex items-center justify-center gap-1.5 rounded-xl border border-blue-600 bg-blue-50 px-3 py-2.5 text-xs font-bold text-blue-700 shadow-xs transition dark:border-blue-500 dark:bg-blue-950/60 dark:text-blue-300 cursor-pointer"
+        >
+          <span>📦</span> Slabs, Footings &amp; Walls
+        </button>
+        <button
+          type="button"
+          data-tab="cylinder"
+          class="shape-tab-btn flex items-center justify-center gap-1.5 rounded-xl border border-transparent bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700/60 transition cursor-pointer"
+        >
+          <span>🏛️</span> Cylinder &amp; Columns
+        </button>
+        <button
+          type="button"
+          data-tab="tube"
+          class="shape-tab-btn flex items-center justify-center gap-1.5 rounded-xl border border-transparent bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700/60 transition cursor-pointer"
+        >
+          <span>⭕</span> Circular Slab or Tube
+        </button>
+        <button
+          type="button"
+          data-tab="curb"
+          class="shape-tab-btn flex items-center justify-center gap-1.5 rounded-xl border border-transparent bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700/60 transition cursor-pointer"
+        >
+          <span>🛣️</span> Curb &amp; Gutter Barrier
+        </button>
+        <button
+          type="button"
+          data-tab="stairs"
+          class="shape-tab-btn flex items-center justify-center gap-1.5 rounded-xl border border-transparent bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700/60 transition cursor-pointer"
+        >
+          <span>🪜</span> Stairs &amp; Steps
+        </button>
+      </div>
+    </div>
+
+    <!-- CALCULATOR FORMS CONTAINER -->
+    <div id="shapes-container" class="space-y-8">
+
+      <!-- ========================================================================= -->
+      <!-- SHAPE 1: SLABS, SQUARE FOOTINGS, OR WALLS -->
+      <!-- ========================================================================= -->
+      <section id="section-slab" class="shape-section rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-5">
+        <div class="border-b border-slate-100 pb-3 dark:border-slate-800 flex items-center justify-between">
+          <h2 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span class="text-blue-600 dark:text-blue-400">1.</span> Slabs, Square Footings, or Walls
+          </h2>
+          <span class="text-xs font-semibold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
+            Rectangular Prism
+          </span>
+        </div>
+
+        <!-- RESULT BOX (EXACT DESIGN AS SCREENSHOT) -->
+        <div class="rounded-2xl border border-emerald-300 bg-emerald-50/70 dark:border-emerald-800/60 dark:bg-emerald-950/30 overflow-hidden shadow-xs">
+          <div class="bg-emerald-700 text-white px-4 py-2 flex items-center justify-between text-sm font-bold tracking-wide">
+            <span class="flex items-center gap-1.5">
+              <span>📊</span> Result
+            </span>
+            <button type="button" class="btn-save-result opacity-90 hover:opacity-100 transition cursor-pointer text-xs flex items-center gap-1 bg-emerald-800/80 px-2 py-0.5 rounded" title="Save this calculation">
+              <span>💾</span> save
+            </button>
+          </div>
+          <div class="p-4 sm:p-5 space-y-3">
+            <div class="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 leading-relaxed">
+              Volume: <strong class="text-emerald-700 dark:text-emerald-400 text-base sm:text-lg font-black" id="res-slab-cuft">22.07</strong> cubic feet<br />
+              <span class="pl-4">or <strong class="text-emerald-700 dark:text-emerald-400 font-bold" id="res-slab-cuyd">0.82</strong> cubic yards</span><br />
+              <span class="pl-4">or <strong class="text-emerald-700 dark:text-emerald-400 font-bold" id="res-slab-cum">0.63</strong> cubic meters</span>
+            </div>
+
+            <div class="pt-2 border-t border-emerald-200/60 dark:border-emerald-800/40">
+              <p class="text-xs text-slate-600 dark:text-slate-400">
+                If using pre-mixed concrete with density of <span class="font-bold text-slate-800 dark:text-slate-200" id="lbl-slab-density">2,130 kg/m³ or 133 lbs/ft³</span>*:
+              </p>
+              <div class="mt-2 overflow-x-auto">
+                <table class="w-full text-left text-xs border border-emerald-200 dark:border-emerald-900 bg-white/80 dark:bg-slate-900/80 rounded-lg">
+                  <tbody class="divide-y divide-emerald-100 dark:divide-emerald-900/60">
+                    <tr>
+                      <td class="p-2 font-semibold text-slate-700 dark:text-slate-300 w-1/3">Weight needed</td>
+                      <td class="p-2 font-black text-emerald-700 dark:text-emerald-400">
+                        <span id="res-slab-weight-lb">2,935.53</span> lbs or <span id="res-slab-weight-kg">1,331.25</span> kg
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="p-2 font-semibold text-slate-700 dark:text-slate-300">Using 60-lb bags</td>
+                      <td class="p-2 font-black text-emerald-700 dark:text-emerald-400">
+                        <span id="res-slab-bags-60">48.93</span> bags
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="p-2 font-semibold text-slate-700 dark:text-slate-300">Using 80-lb bags</td>
+                      <td class="p-2 font-black text-emerald-700 dark:text-emerald-400">
+                        <span id="res-slab-bags-80">36.69</span> bags
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="mt-1.5 text-[11px] text-slate-500 italic">
+                * Different types of concrete can have very different densities. Includes <span id="lbl-slab-wastage">10%</span> wastage margin.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- FORM & DIAGRAM GRID -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
+          <!-- Inputs Column -->
+          <div class="md:col-span-7 space-y-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/50">
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <label for="inp-slab-l" class="col-span-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+                Length (l)
+              </label>
+              <div class="col-span-4">
+                <input type="number" id="inp-slab-l" value="5" min="0.001" step="any" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </div>
+              <div class="col-span-4">
+                <select id="unit-slab-l" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                  <option value="meters" selected>meters</option>
+                  <option value="feet">feet</option>
+                  <option value="inches">inches</option>
+                  <option value="centimeters">centimeters</option>
+                  <option value="yards">yards</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <label for="inp-slab-w" class="col-span-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+                Width (w)
+              </label>
+              <div class="col-span-4">
+                <input type="number" id="inp-slab-w" value="2.5" min="0.001" step="any" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </div>
+              <div class="col-span-4">
+                <select id="unit-slab-w" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                  <option value="meters" selected>meters</option>
+                  <option value="feet">feet</option>
+                  <option value="inches">inches</option>
+                  <option value="centimeters">centimeters</option>
+                  <option value="yards">yards</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <label for="inp-slab-h" class="col-span-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+                Thickness or Height (h)
+              </label>
+              <div class="col-span-4">
+                <input type="number" id="inp-slab-h" value="5" min="0.001" step="any" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </div>
+              <div class="col-span-4">
+                <select id="unit-slab-h" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                  <option value="centimeters" selected>centimeters</option>
+                  <option value="meters">meters</option>
+                  <option value="feet">feet</option>
+                  <option value="inches">inches</option>
+                  <option value="yards">yards</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <label for="inp-slab-q" class="col-span-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+                Quantity
+              </label>
+              <div class="col-span-4">
+                <input type="number" id="inp-slab-q" value="1" min="1" step="1" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-2 pt-2">
+              <button type="button" id="btn-calc-slab" class="flex items-center gap-1.5 rounded-lg bg-emerald-700 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-800 transition cursor-pointer">
+                <span>Calculate</span> <span class="text-[10px]">▶</span>
+              </button>
+              <button type="button" id="btn-clear-slab" class="rounded-lg bg-slate-400 px-4 py-2 text-xs font-bold text-white hover:bg-slate-500 transition cursor-pointer">
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <!-- SVG Diagram Column -->
+          <div class="md:col-span-5 flex flex-col items-center justify-center p-3">
+            <svg viewBox="0 0 240 160" class="w-full max-w-56 h-auto drop-shadow-xs">
+              <!-- Isometric Box -->
+              <polygon points="40,90 140,90 140,130 40,130" fill="#f8fafc" stroke="#1e293b" stroke-width="2" stroke-dasharray="none" />
+              <polygon points="140,90 190,50 190,90 140,130" fill="#e2e8f0" stroke="#1e293b" stroke-width="2" />
+              <polygon points="40,90 90,50 190,50 140,90" fill="#cbd5e1" stroke="#1e293b" stroke-width="2" />
+              <!-- Hidden dashed edges -->
+              <line x1="40" y1="90" x2="90" y2="50" stroke="#94a3b8" stroke-dasharray="3,3" />
+              <line x1="90" y1="50" x2="90" y2="90" stroke="#94a3b8" stroke-dasharray="3,3" />
+              <line x1="90" y1="90" x2="190" y2="90" stroke="#94a3b8" stroke-dasharray="3,3" />
+              <line x1="40" y1="130" x2="90" y2="90" stroke="#94a3b8" stroke-dasharray="3,3" />
+              <!-- Dimension markers -->
+              <text x="85" y="146" fill="#1d4ed8" font-size="14" font-weight="bold" font-family="monospace">l</text>
+              <text x="175" y="120" fill="#1d4ed8" font-size="14" font-weight="bold" font-family="monospace">w</text>
+              <text x="198" y="73" fill="#1d4ed8" font-size="14" font-weight="bold" font-family="monospace">h</text>
+            </svg>
+            <span class="text-[11px] text-slate-500 font-medium mt-1">Slab / Footing / Wall Box</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- SHAPE 2: CYLINDER, ROUND FOOTINGS, OR ROUND COLUMNS -->
+      <!-- ========================================================================= -->
+      <section id="section-cylinder" class="shape-section rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-5">
+        <div class="border-b border-slate-100 pb-3 dark:border-slate-800 flex items-center justify-between">
+          <h2 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span class="text-blue-600 dark:text-blue-400">2.</span> Cylinder, Round Footings, or Round Columns
+          </h2>
+          <span class="text-xs font-semibold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
+            Solid Cylinder
+          </span>
+        </div>
+
+        <!-- RESULT BOX -->
+        <div class="rounded-2xl border border-emerald-300 bg-emerald-50/70 dark:border-emerald-800/60 dark:bg-emerald-950/30 overflow-hidden shadow-xs">
+          <div class="bg-emerald-700 text-white px-4 py-2 flex items-center justify-between text-sm font-bold tracking-wide">
+            <span class="flex items-center gap-1.5">
+              <span>📊</span> Result
+            </span>
+            <button type="button" class="btn-save-result opacity-90 hover:opacity-100 transition cursor-pointer text-xs flex items-center gap-1 bg-emerald-800/80 px-2 py-0.5 rounded" title="Save this calculation">
+              <span>💾</span> save
+            </button>
+          </div>
+          <div class="p-4 sm:p-5 space-y-3">
+            <div class="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 leading-relaxed">
+              Volume: <strong class="text-emerald-700 dark:text-emerald-400 text-base sm:text-lg font-black" id="res-cyl-cuft">1,040.10</strong> cubic feet<br />
+              <span class="pl-4">or <strong class="text-emerald-700 dark:text-emerald-400 font-bold" id="res-cyl-cuyd">38.52</strong> cubic yards</span><br />
+              <span class="pl-4">or <strong class="text-emerald-700 dark:text-emerald-400 font-bold" id="res-cyl-cum">29.45</strong> cubic meters</span>
+            </div>
+
+            <div class="pt-2 border-t border-emerald-200/60 dark:border-emerald-800/40">
+              <p class="text-xs text-slate-600 dark:text-slate-400">
+                If using pre-mixed concrete with density of <span class="font-bold text-slate-800 dark:text-slate-200" id="lbl-cyl-density">2,130 kg/m³ or 133 lbs/ft³</span>*:
+              </p>
+              <div class="mt-2 overflow-x-auto">
+                <table class="w-full text-left text-xs border border-emerald-200 dark:border-emerald-900 bg-white/80 dark:bg-slate-900/80 rounded-lg">
+                  <tbody class="divide-y divide-emerald-100 dark:divide-emerald-900/60">
+                    <tr>
+                      <td class="p-2 font-semibold text-slate-700 dark:text-slate-300 w-1/3">Weight needed</td>
+                      <td class="p-2 font-black text-emerald-700 dark:text-emerald-400">
+                        <span id="res-cyl-weight-lb">138,333.55</span> lbs or <span id="res-cyl-weight-kg">62,733.63</span> kg
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="p-2 font-semibold text-slate-700 dark:text-slate-300">Using 60-lb bags</td>
+                      <td class="p-2 font-black text-emerald-700 dark:text-emerald-400">
+                        <span id="res-cyl-bags-60">2,305.56</span> bags
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="p-2 font-semibold text-slate-700 dark:text-slate-300">Using 80-lb bags</td>
+                      <td class="p-2 font-black text-emerald-700 dark:text-emerald-400">
+                        <span id="res-cyl-bags-80">1,729.17</span> bags
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="mt-1.5 text-[11px] text-slate-500 italic">
+                * Different types of concrete can have very different densities.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- FORM & DIAGRAM GRID -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
+          <!-- Inputs Column -->
+          <div class="md:col-span-7 space-y-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/50">
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <label for="inp-cyl-d" class="col-span-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+                Diameter (d)
+              </label>
+              <div class="col-span-4">
+                <input type="number" id="inp-cyl-d" value="2.5" min="0.001" step="any" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </div>
+              <div class="col-span-4">
+                <select id="unit-cyl-d" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                  <option value="meters" selected>meters</option>
+                  <option value="feet">feet</option>
+                  <option value="inches">inches</option>
+                  <option value="centimeters">centimeters</option>
+                  <option value="yards">yards</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <label for="inp-cyl-h" class="col-span-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+                Depth or Height (h)
+              </label>
+              <div class="col-span-4">
+                <input type="number" id="inp-cyl-h" value="6" min="0.001" step="any" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </div>
+              <div class="col-span-4">
+                <select id="unit-cyl-h" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                  <option value="meters" selected>meters</option>
+                  <option value="feet">feet</option>
+                  <option value="inches">inches</option>
+                  <option value="centimeters">centimeters</option>
+                  <option value="yards">yards</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <label for="inp-cyl-q" class="col-span-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+                Quantity
+              </label>
+              <div class="col-span-4">
+                <input type="number" id="inp-cyl-q" value="1" min="1" step="1" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-2 pt-2">
+              <button type="button" id="btn-calc-cyl" class="flex items-center gap-1.5 rounded-lg bg-emerald-700 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-800 transition cursor-pointer">
+                <span>Calculate</span> <span class="text-[10px]">▶</span>
+              </button>
+              <button type="button" id="btn-clear-cyl" class="rounded-lg bg-slate-400 px-4 py-2 text-xs font-bold text-white hover:bg-slate-500 transition cursor-pointer">
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <!-- SVG Diagram Column -->
+          <div class="md:col-span-5 flex flex-col items-center justify-center p-3">
+            <svg viewBox="0 0 240 160" class="w-full max-w-56 h-auto drop-shadow-xs">
+              <!-- Top Ellipse -->
+              <ellipse cx="120" cy="50" rx="60" ry="18" fill="#e2e8f0" stroke="#1e293b" stroke-width="2" />
+              <!-- Body -->
+              <path d="M 60,50 L 60,110 A 60,18 0 0,0 180,110 L 180,50" fill="#cbd5e1" stroke="#1e293b" stroke-width="2" />
+              <!-- Hidden bottom rear ellipse -->
+              <path d="M 60,110 A 60,18 0 0,1 180,110" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3,3" />
+              <!-- Top Dimension arrow & label -->
+              <line x1="60" y1="50" x2="180" y2="50" stroke="#1d4ed8" stroke-width="1.5" marker-start="url(#arr-b)" marker-end="url(#arr-b)" />
+              <text x="116" y="44" fill="#1d4ed8" font-size="14" font-weight="bold" font-family="monospace">d</text>
+              <!-- Height marker -->
+              <text x="186" y="85" fill="#1d4ed8" font-size="14" font-weight="bold" font-family="monospace">h</text>
+            </svg>
+            <span class="text-[11px] text-slate-500 font-medium mt-1">Round Column / Pier Footing</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- SHAPE 3: CIRCULAR SLAB OR TUBE -->
+      <!-- ========================================================================= -->
+      <section id="section-tube" class="shape-section rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-5">
+        <div class="border-b border-slate-100 pb-3 dark:border-slate-800 flex items-center justify-between">
+          <h2 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span class="text-blue-600 dark:text-blue-400">3.</span> Circular Slab or Tube
+          </h2>
+          <span class="text-xs font-semibold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
+            Hollow Cylinder / Ring
+          </span>
+        </div>
+
+        <!-- RESULT BOX -->
+        <div class="rounded-2xl border border-emerald-300 bg-emerald-50/70 dark:border-emerald-800/60 dark:bg-emerald-950/30 overflow-hidden shadow-xs">
+          <div class="bg-emerald-700 text-white px-4 py-2 flex items-center justify-between text-sm font-bold tracking-wide">
+            <span class="flex items-center gap-1.5">
+              <span>📊</span> Result
+            </span>
+            <button type="button" class="btn-save-result opacity-90 hover:opacity-100 transition cursor-pointer text-xs flex items-center gap-1 bg-emerald-800/80 px-2 py-0.5 rounded" title="Save this calculation">
+              <span>💾</span> save
+            </button>
+          </div>
+          <div class="p-4 sm:p-5 space-y-3">
+            <div class="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 leading-relaxed">
+              Volume: <strong class="text-emerald-700 dark:text-emerald-400 text-base sm:text-lg font-black" id="res-tube-cuft">14.98</strong> cubic feet<br />
+              <span class="pl-4">or <strong class="text-emerald-700 dark:text-emerald-400 font-bold" id="res-tube-cuyd">0.55</strong> cubic yards</span><br />
+              <span class="pl-4">or <strong class="text-emerald-700 dark:text-emerald-400 font-bold" id="res-tube-cum">0.42</strong> cubic meters</span>
+            </div>
+
+            <div class="pt-2 border-t border-emerald-200/60 dark:border-emerald-800/40">
+              <p class="text-xs text-slate-600 dark:text-slate-400">
+                If using pre-mixed concrete with density of <span class="font-bold text-slate-800 dark:text-slate-200" id="lbl-tube-density">2,130 kg/m³ or 133 lbs/ft³</span>*:
+              </p>
+              <div class="mt-2 overflow-x-auto">
+                <table class="w-full text-left text-xs border border-emerald-200 dark:border-emerald-900 bg-white/80 dark:bg-slate-900/80 rounded-lg">
+                  <tbody class="divide-y divide-emerald-100 dark:divide-emerald-900/60">
+                    <tr>
+                      <td class="p-2 font-semibold text-slate-700 dark:text-slate-300 w-1/3">Weight needed</td>
+                      <td class="p-2 font-black text-emerald-700 dark:text-emerald-400">
+                        <span id="res-tube-weight-lb">1,992.00</span> lbs or <span id="res-tube-weight-kg">903.36</span> kg
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="p-2 font-semibold text-slate-700 dark:text-slate-300">Using 60-lb bags</td>
+                      <td class="p-2 font-black text-emerald-700 dark:text-emerald-400">
+                        <span id="res-tube-bags-60">33.20</span> bags
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="p-2 font-semibold text-slate-700 dark:text-slate-300">Using 80-lb bags</td>
+                      <td class="p-2 font-black text-emerald-700 dark:text-emerald-400">
+                        <span id="res-tube-bags-80">24.90</span> bags
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="mt-1.5 text-[11px] text-slate-500 italic">
+                * Different types of concrete can have very different densities.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- FORM & DIAGRAM GRID -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
+          <!-- Inputs Column -->
+          <div class="md:col-span-7 space-y-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/50">
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <label for="inp-tube-d1" class="col-span-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+                Outer Diameter (d₁)
+              </label>
+              <div class="col-span-4">
+                <input type="number" id="inp-tube-d1" value="5" min="0.001" step="any" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </div>
+              <div class="col-span-4">
+                <select id="unit-tube-d1" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                  <option value="meters" selected>meters</option>
+                  <option value="feet">feet</option>
+                  <option value="inches">inches</option>
+                  <option value="centimeters">centimeters</option>
+                  <option value="yards">yards</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <label for="inp-tube-d2" class="col-span-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+                Inner Diameter (d₂)
+              </label>
+              <div class="col-span-4">
+                <input type="number" id="inp-tube-d2" value="4" min="0.001" step="any" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </div>
+              <div class="col-span-4">
+                <select id="unit-tube-d2" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                  <option value="meters" selected>meters</option>
+                  <option value="feet">feet</option>
+                  <option value="inches">inches</option>
+                  <option value="centimeters">centimeters</option>
+                  <option value="yards">yards</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <label for="inp-tube-h" class="col-span-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+                Length or Height (h)
+              </label>
+              <div class="col-span-4">
+                <input type="number" id="inp-tube-h" value="6" min="0.001" step="any" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </div>
+              <div class="col-span-4">
+                <select id="unit-tube-h" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                  <option value="centimeters" selected>centimeters</option>
+                  <option value="meters">meters</option>
+                  <option value="feet">feet</option>
+                  <option value="inches">inches</option>
+                  <option value="yards">yards</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <label for="inp-tube-q" class="col-span-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+                Quantity
+              </label>
+              <div class="col-span-4">
+                <input type="number" id="inp-tube-q" value="1" min="1" step="1" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-2 pt-2">
+              <button type="button" id="btn-calc-tube" class="flex items-center gap-1.5 rounded-lg bg-emerald-700 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-800 transition cursor-pointer">
+                <span>Calculate</span> <span class="text-[10px]">▶</span>
+              </button>
+              <button type="button" id="btn-clear-tube" class="rounded-lg bg-slate-400 px-4 py-2 text-xs font-bold text-white hover:bg-slate-500 transition cursor-pointer">
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <!-- SVG Diagram Column -->
+          <div class="md:col-span-5 flex flex-col items-center justify-center p-3">
+            <svg viewBox="0 0 240 180" class="w-full max-w-56 h-auto drop-shadow-xs">
+              <!-- Outer top ellipse -->
+              <ellipse cx="120" cy="55" rx="65" ry="22" fill="#e2e8f0" stroke="#1e293b" stroke-width="2" />
+              <!-- Inner top hole -->
+              <ellipse cx="120" cy="55" rx="42" ry="14" fill="#f8fafc" stroke="#1e293b" stroke-width="1.8" />
+              <!-- Outer body -->
+              <path d="M 55,55 L 55,115 A 65,22 0 0,0 185,115 L 185,55" fill="#cbd5e1" stroke="#1e293b" stroke-width="2" />
+              <!-- Inner body dashed -->
+              <path d="M 78,55 L 78,115 A 42,14 0 0,0 162,115 L 162,55" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3,3" />
+              <path d="M 55,115 A 65,22 0 0,1 185,115" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3,3" />
+              <!-- Outer Dia dimension -->
+              <line x1="55" y1="135" x2="185" y2="135" stroke="#1d4ed8" stroke-width="1.5" />
+              <text x="114" y="152" fill="#1d4ed8" font-size="13" font-weight="bold" font-family="monospace">d1</text>
+              <!-- Inner Dia dimension -->
+              <line x1="78" y1="28" x2="162" y2="28" stroke="#1d4ed8" stroke-width="1.5" />
+              <text x="114" y="24" fill="#1d4ed8" font-size="13" font-weight="bold" font-family="monospace">d2</text>
+              <!-- Height marker -->
+              <text x="190" y="85" fill="#1d4ed8" font-size="14" font-weight="bold" font-family="monospace">h</text>
+            </svg>
+            <span class="text-[11px] text-slate-500 font-medium mt-1">Circular Slab / Hollow Tube</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- SHAPE 4: CURB AND GUTTER BARRIER -->
+      <!-- ========================================================================= -->
+      <section id="section-curb" class="shape-section rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-5">
+        <div class="border-b border-slate-100 pb-3 dark:border-slate-800 flex items-center justify-between">
+          <h2 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span class="text-blue-600 dark:text-blue-400">4.</span> Curb and Gutter Barrier
+          </h2>
+          <span class="text-xs font-semibold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
+            L-Shaped Barrier Profile
+          </span>
+        </div>
+
+        <!-- RESULT BOX -->
+        <div class="rounded-2xl border border-emerald-300 bg-emerald-50/70 dark:border-emerald-800/60 dark:bg-emerald-950/30 overflow-hidden shadow-xs">
+          <div class="bg-emerald-700 text-white px-4 py-2 flex items-center justify-between text-sm font-bold tracking-wide">
+            <span class="flex items-center gap-1.5">
+              <span>📊</span> Result
+            </span>
+            <button type="button" class="btn-save-result opacity-90 hover:opacity-100 transition cursor-pointer text-xs flex items-center gap-1 bg-emerald-800/80 px-2 py-0.5 rounded" title="Save this calculation">
+              <span>💾</span> save
+            </button>
+          </div>
+          <div class="p-4 sm:p-5 space-y-3">
+            <div class="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 leading-relaxed">
+              Volume: <strong class="text-emerald-700 dark:text-emerald-400 text-base sm:text-lg font-black" id="res-curb-cuft">3.04</strong> cubic feet<br />
+              <span class="pl-4">or <strong class="text-emerald-700 dark:text-emerald-400 font-bold" id="res-curb-cuyd">0.11</strong> cubic yards</span><br />
+              <span class="pl-4">or <strong class="text-emerald-700 dark:text-emerald-400 font-bold" id="res-curb-cum">0.086</strong> cubic meters</span>
+            </div>
+
+            <div class="pt-2 border-t border-emerald-200/60 dark:border-emerald-800/40">
+              <p class="text-xs text-slate-600 dark:text-slate-400">
+                If using pre-mixed concrete with density of <span class="font-bold text-slate-800 dark:text-slate-200" id="lbl-curb-density">2,130 kg/m³ or 133 lbs/ft³</span>*:
+              </p>
+              <div class="mt-2 overflow-x-auto">
+                <table class="w-full text-left text-xs border border-emerald-200 dark:border-emerald-900 bg-white/80 dark:bg-slate-900/80 rounded-lg">
+                  <tbody class="divide-y divide-emerald-100 dark:divide-emerald-900/60">
+                    <tr>
+                      <td class="p-2 font-semibold text-slate-700 dark:text-slate-300 w-1/3">Weight needed</td>
+                      <td class="p-2 font-black text-emerald-700 dark:text-emerald-400">
+                        <span id="res-curb-weight-lb">403.93</span> lbs or <span id="res-curb-weight-kg">183.18</span> kg
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="p-2 font-semibold text-slate-700 dark:text-slate-300">Using 60-lb bags</td>
+                      <td class="p-2 font-black text-emerald-700 dark:text-emerald-400">
+                        <span id="res-curb-bags-60">6.73</span> bags
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="p-2 font-semibold text-slate-700 dark:text-slate-300">Using 80-lb bags</td>
+                      <td class="p-2 font-black text-emerald-700 dark:text-emerald-400">
+                        <span id="res-curb-bags-80">5.05</span> bags
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="mt-1.5 text-[11px] text-slate-500 italic">
+                * Different types of concrete can have very different densities.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- FORM & DIAGRAM GRID -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
+          <!-- Inputs Column -->
+          <div class="md:col-span-7 space-y-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/50">
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <label for="inp-curb-cd" class="col-span-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+                Curb Depth
+              </label>
+              <div class="col-span-4">
+                <input type="number" id="inp-curb-cd" value="4" min="0.001" step="any" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </div>
+              <div class="col-span-4">
+                <select id="unit-curb-cd" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                  <option value="centimeters" selected>centimeters</option>
+                  <option value="meters">meters</option>
+                  <option value="feet">feet</option>
+                  <option value="inches">inches</option>
+                  <option value="yards">yards</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <label for="inp-curb-gw" class="col-span-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+                Gutter Width
+              </label>
+              <div class="col-span-4">
+                <input type="number" id="inp-curb-gw" value="10" min="0.001" step="any" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </div>
+              <div class="col-span-4">
+                <select id="unit-curb-gw" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                  <option value="centimeters" selected>centimeters</option>
+                  <option value="meters">meters</option>
+                  <option value="feet">feet</option>
+                  <option value="inches">inches</option>
+                  <option value="yards">yards</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <label for="inp-curb-ch" class="col-span-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+                Curb Height
+              </label>
+              <div class="col-span-4">
+                <input type="number" id="inp-curb-ch" value="4" min="0.001" step="any" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </div>
+              <div class="col-span-4">
+                <select id="unit-curb-ch" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                  <option value="centimeters" selected>centimeters</option>
+                  <option value="meters">meters</option>
+                  <option value="feet">feet</option>
+                  <option value="inches">inches</option>
+                  <option value="yards">yards</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <label for="inp-curb-ft" class="col-span-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+                Flag Thickness
+              </label>
+              <div class="col-span-4">
+                <input type="number" id="inp-curb-ft" value="5" min="0.001" step="any" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </div>
+              <div class="col-span-4">
+                <select id="unit-curb-ft" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                  <option value="centimeters" selected>centimeters</option>
+                  <option value="meters">meters</option>
+                  <option value="feet">feet</option>
+                  <option value="inches">inches</option>
+                  <option value="yards">yards</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <label for="inp-curb-l" class="col-span-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+                Length
+              </label>
+              <div class="col-span-4">
+                <input type="number" id="inp-curb-l" value="10" min="0.001" step="any" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </div>
+              <div class="col-span-4">
+                <select id="unit-curb-l" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                  <option value="meters" selected>meters</option>
+                  <option value="feet">feet</option>
+                  <option value="inches">inches</option>
+                  <option value="centimeters">centimeters</option>
+                  <option value="yards">yards</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <label for="inp-curb-q" class="col-span-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+                Quantity
+              </label>
+              <div class="col-span-4">
+                <input type="number" id="inp-curb-q" value="1" min="1" step="1" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-2 pt-2">
+              <button type="button" id="btn-calc-curb" class="flex items-center gap-1.5 rounded-lg bg-emerald-700 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-800 transition cursor-pointer">
+                <span>Calculate</span> <span class="text-[10px]">▶</span>
+              </button>
+              <button type="button" id="btn-clear-curb" class="rounded-lg bg-slate-400 px-4 py-2 text-xs font-bold text-white hover:bg-slate-500 transition cursor-pointer">
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <!-- SVG Diagram Column -->
+          <div class="md:col-span-5 flex flex-col items-center justify-center p-3">
+            <svg viewBox="0 0 240 180" class="w-full max-w-56 h-auto drop-shadow-xs">
+              <!-- L-shape cross section extruded -->
+              <!-- Front L face -->
+              <polygon points="50,60 85,60 85,95 155,95 155,130 50,130" fill="#cbd5e1" stroke="#1e293b" stroke-width="2" />
+              <!-- Top curb face -->
+              <polygon points="50,60 90,25 125,25 85,60" fill="#f8fafc" stroke="#1e293b" stroke-width="2" />
+              <!-- Gutter top face -->
+              <polygon points="85,95 125,60 195,60 155,95" fill="#f1f5f9" stroke="#1e293b" stroke-width="2" />
+              <!-- Back curb vertical face -->
+              <polygon points="125,25 125,60 85,95 85,60" fill="#94a3b8" stroke="#1e293b" stroke-width="1.5" />
+              <!-- Right side face -->
+              <polygon points="155,95 195,60 195,95 155,130" fill="#94a3b8" stroke="#1e293b" stroke-width="2" />
+
+              <!-- Dimension Annotations -->
+              <!-- Curb Depth -->
+              <line x1="50" y1="52" x2="85" y2="52" stroke="#1d4ed8" stroke-width="1.2" />
+              <text x="52" y="47" fill="#1d4ed8" font-size="10" font-weight="bold">Curb Depth</text>
+
+              <!-- Gutter Width -->
+              <line x1="85" y1="52" x2="155" y2="52" stroke="#1d4ed8" stroke-width="1.2" />
+              <text x="96" y="47" fill="#1d4ed8" font-size="10" font-weight="bold">Gutter Width</text>
+
+              <!-- Curb Height -->
+              <line x1="80" y1="62" x2="80" y2="93" stroke="#1d4ed8" stroke-width="1.2" />
+              <text x="88" y="78" fill="#1d4ed8" font-size="10" font-weight="bold">Curb Height</text>
+
+              <!-- Flag Thickness -->
+              <line x1="160" y1="95" x2="160" y2="130" stroke="#1d4ed8" stroke-width="1.2" />
+              <text x="164" y="115" fill="#1d4ed8" font-size="10" font-weight="bold">Flag Thickness</text>
+
+              <!-- Length -->
+              <line x1="156" y1="135" x2="196" y2="100" stroke="#1d4ed8" stroke-width="1.5" />
+              <text x="176" y="128" fill="#1d4ed8" font-size="11" font-weight="bold">Length</text>
+            </svg>
+            <span class="text-[11px] text-slate-500 font-medium mt-1">L-Shaped Curb &amp; Gutter</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================================================= -->
+      <!-- SHAPE 5: STAIRS -->
+      <!-- ========================================================================= -->
+      <section id="section-stairs" class="shape-section rounded-3xl border border-slate-200/90 bg-white p-5 sm:p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-5">
+        <div class="border-b border-slate-100 pb-3 dark:border-slate-800 flex items-center justify-between">
+          <h2 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span class="text-blue-600 dark:text-blue-400">5.</span> Stairs
+          </h2>
+          <span class="text-xs font-semibold text-slate-500 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg">
+            Steps &amp; Landing Platform
+          </span>
+        </div>
+
+        <!-- RESULT BOX -->
+        <div class="rounded-2xl border border-emerald-300 bg-emerald-50/70 dark:border-emerald-800/60 dark:bg-emerald-950/30 overflow-hidden shadow-xs">
+          <div class="bg-emerald-700 text-white px-4 py-2 flex items-center justify-between text-sm font-bold tracking-wide">
+            <span class="flex items-center gap-1.5">
+              <span>📊</span> Result
+            </span>
+            <button type="button" class="btn-save-result opacity-90 hover:opacity-100 transition cursor-pointer text-xs flex items-center gap-1 bg-emerald-800/80 px-2 py-0.5 rounded" title="Save this calculation">
+              <span>💾</span> save
+            </button>
+          </div>
+          <div class="p-4 sm:p-5 space-y-3">
+            <div class="text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300 leading-relaxed">
+              Volume: <strong class="text-emerald-700 dark:text-emerald-400 text-base sm:text-lg font-black" id="res-stair-cuft">1.54</strong> cubic feet<br />
+              <span class="pl-4">or <strong class="text-emerald-700 dark:text-emerald-400 font-bold" id="res-stair-cuyd">0.057</strong> cubic yards</span><br />
+              <span class="pl-4">or <strong class="text-emerald-700 dark:text-emerald-400 font-bold" id="res-stair-cum">0.044</strong> cubic meters</span>
+            </div>
+
+            <div class="pt-2 border-t border-emerald-200/60 dark:border-emerald-800/40">
+              <p class="text-xs text-slate-600 dark:text-slate-400">
+                If using pre-mixed concrete with density of <span class="font-bold text-slate-800 dark:text-slate-200" id="lbl-stair-density">2,130 kg/m³ or 133 lbs/ft³</span>*:
+              </p>
+              <div class="mt-2 overflow-x-auto">
+                <table class="w-full text-left text-xs border border-emerald-200 dark:border-emerald-900 bg-white/80 dark:bg-slate-900/80 rounded-lg">
+                  <tbody class="divide-y divide-emerald-100 dark:divide-emerald-900/60">
+                    <tr>
+                      <td class="p-2 font-semibold text-slate-700 dark:text-slate-300 w-1/3">Weight needed</td>
+                      <td class="p-2 font-black text-emerald-700 dark:text-emerald-400">
+                        <span id="res-stair-weight-lb">204.31</span> lbs or <span id="res-stair-weight-kg">92.66</span> kg
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="p-2 font-semibold text-slate-700 dark:text-slate-300">Using 60-lb bags</td>
+                      <td class="p-2 font-black text-emerald-700 dark:text-emerald-400">
+                        <span id="res-stair-bags-60">3.41</span> bags
+                      </td>
+                    </tr>
+                    <tr>
+                      <td class="p-2 font-semibold text-slate-700 dark:text-slate-300">Using 80-lb bags</td>
+                      <td class="p-2 font-black text-emerald-700 dark:text-emerald-400">
+                        <span id="res-stair-bags-80">2.55</span> bags
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <p class="mt-1.5 text-[11px] text-slate-500 italic">
+                * Different types of concrete can have very different densities.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- FORM & DIAGRAM GRID -->
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-5 items-center">
+          <!-- Inputs Column -->
+          <div class="md:col-span-7 space-y-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-950/50">
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <label for="inp-stair-run" class="col-span-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+                Run
+              </label>
+              <div class="col-span-4">
+                <input type="number" id="inp-stair-run" value="12" min="0.001" step="any" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </div>
+              <div class="col-span-4">
+                <select id="unit-stair-run" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                  <option value="centimeters" selected>centimeters</option>
+                  <option value="meters">meters</option>
+                  <option value="inches">inches</option>
+                  <option value="feet">feet</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <label for="inp-stair-rise" class="col-span-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+                Rise
+              </label>
+              <div class="col-span-4">
+                <input type="number" id="inp-stair-rise" value="6" min="0.001" step="any" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </div>
+              <div class="col-span-4">
+                <select id="unit-stair-rise" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                  <option value="centimeters" selected>centimeters</option>
+                  <option value="meters">meters</option>
+                  <option value="inches">inches</option>
+                  <option value="feet">feet</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <label for="inp-stair-w" class="col-span-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+                Width
+              </label>
+              <div class="col-span-4">
+                <input type="number" id="inp-stair-w" value="50" min="0.001" step="any" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </div>
+              <div class="col-span-4">
+                <select id="unit-stair-w" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                  <option value="centimeters" selected>centimeters</option>
+                  <option value="meters">meters</option>
+                  <option value="inches">inches</option>
+                  <option value="feet">feet</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <label for="inp-stair-p" class="col-span-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+                Platform Depth
+              </label>
+              <div class="col-span-4">
+                <input type="number" id="inp-stair-p" value="5" min="0" step="any" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </div>
+              <div class="col-span-4">
+                <select id="unit-stair-p" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200">
+                  <option value="centimeters" selected>centimeters</option>
+                  <option value="meters">meters</option>
+                  <option value="inches">inches</option>
+                  <option value="feet">feet</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <label for="inp-stair-n" class="col-span-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+                Number of Risers
+              </label>
+              <div class="col-span-4">
+                <input type="number" id="inp-stair-n" value="5" min="1" max="100" step="1" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-12 gap-2 items-center">
+              <label for="inp-stair-q" class="col-span-4 text-xs font-bold text-slate-700 dark:text-slate-300">
+                Quantity
+              </label>
+              <div class="col-span-4">
+                <input type="number" id="inp-stair-q" value="1" min="1" step="1" class="w-full rounded-lg border border-slate-300 bg-white p-2 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-900 dark:text-white" />
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex items-center gap-2 pt-2">
+              <button type="button" id="btn-calc-stair" class="flex items-center gap-1.5 rounded-lg bg-emerald-700 px-4 py-2 text-xs font-bold text-white shadow-xs hover:bg-emerald-800 transition cursor-pointer">
+                <span>Calculate</span> <span class="text-[10px]">▶</span>
+              </button>
+              <button type="button" id="btn-clear-stair" class="rounded-lg bg-slate-400 px-4 py-2 text-xs font-bold text-white hover:bg-slate-500 transition cursor-pointer">
+                Clear
+              </button>
+            </div>
+          </div>
+
+          <!-- SVG Diagram Column -->
+          <div class="md:col-span-5 flex flex-col items-center justify-center p-3">
+            <svg viewBox="0 0 260 180" class="w-full max-w-64 h-auto drop-shadow-xs">
+              <!-- Stairs Isometric projection -->
+              <!-- Solid foundation/back block -->
+              <polygon points="30,110 60,110 60,35 30,35" fill="#94a3b8" stroke="#1e293b" stroke-width="1.8" />
+              <!-- Stepped front profile -->
+              <!-- Step 1 to 5 risers -->
+              <path d="M 30,35 L 65,35 L 65,50 L 95,50 L 95,65 L 125,65 L 125,80 L 155,80 L 155,95 L 185,95 L 185,110 L 30,110 Z" fill="#cbd5e1" stroke="#1e293b" stroke-width="1.8" />
+              <!-- Tread tops and sides -->
+              <polygon points="65,35 85,15 120,15 95,35" fill="#f8fafc" stroke="#1e293b" stroke-width="1.5" />
+              <polygon points="95,50 115,30 145,30 125,50" fill="#f1f5f9" stroke="#1e293b" stroke-width="1.5" />
+              <polygon points="125,65 145,45 175,45 155,65" fill="#f8fafc" stroke="#1e293b" stroke-width="1.5" />
+              <polygon points="155,80 175,60 205,60 185,80" fill="#f1f5f9" stroke="#1e293b" stroke-width="1.5" />
+              <polygon points="185,95 205,75 235,75 215,95" fill="#f8fafc" stroke="#1e293b" stroke-width="1.5" />
+              <!-- Right side steps -->
+              <polygon points="215,95 235,75 235,90 215,110" fill="#94a3b8" stroke="#1e293b" stroke-width="1.5" />
+
+              <!-- Numbers on risers -->
+              <text x="50" y="44" fill="#1d4ed8" font-size="11" font-weight="bold">5</text>
+              <text x="78" y="59" fill="#1d4ed8" font-size="11" font-weight="bold">4</text>
+              <text x="108" y="74" fill="#1d4ed8" font-size="11" font-weight="bold">3</text>
+              <text x="138" y="89" fill="#1d4ed8" font-size="11" font-weight="bold">2</text>
+              <text x="168" y="104" fill="#1d4ed8" font-size="11" font-weight="bold">1</text>
+
+              <!-- Annotations -->
+              <!-- Platform Depth -->
+              <line x1="30" y1="28" x2="65" y2="28" stroke="#1d4ed8" stroke-width="1.2" />
+              <text x="32" y="24" fill="#1d4ed8" font-size="10" font-weight="bold">Platform Depth</text>
+
+              <!-- Run -->
+              <line x1="65" y1="45" x2="95" y2="45" stroke="#1d4ed8" stroke-width="1.2" />
+              <text x="73" y="42" fill="#1d4ed8" font-size="10" font-weight="bold">Run</text>
+
+              <!-- Rise -->
+              <line x1="98" y1="50" x2="98" y2="65" stroke="#1d4ed8" stroke-width="1.2" />
+              <text x="102" y="60" fill="#1d4ed8" font-size="10" font-weight="bold">Rise</text>
+
+              <!-- Width -->
+              <text x="188" y="118" fill="#1d4ed8" font-size="11" font-weight="bold" transform="rotate(-30 188 118)">Width</text>
+            </svg>
+            <span class="text-[11px] text-slate-500 font-medium mt-1">Staircase with Platform</span>
+          </div>
+        </div>
+      </section>
+
+    </div><!-- End Shapes Container -->
+
+    <!-- ========================================================================= -->
+    <!-- MASTER PROJECT SUMMARY & BOQ ESTIMATOR (ALL SHAPES COMBINED) -->
+    <!-- ========================================================================= -->
+    <div class="rounded-3xl border border-blue-200/90 bg-linear-to-br from-blue-50/40 via-white to-indigo-50/30 p-5 sm:p-7 shadow-md dark:border-blue-900/40 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/20 space-y-5">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-blue-100 pb-4 dark:border-blue-900/60">
+        <div>
+          <h2 class="text-base sm:text-lg font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📋</span> Project Total Concrete BOQ &amp; Cost Summary
+          </h2>
+          <p class="text-xs text-slate-600 dark:text-slate-400">
+            Real-time aggregate total of all active concrete shapes calculated above.
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" id="btn-print-summary" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer">
+            <span>🖨️</span> Print / Save PDF
+          </button>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
+          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Volume (CYD)</span>
+          <div class="mt-1 text-xl sm:text-2xl font-black text-blue-600 dark:text-blue-400" id="res-tot-cyd">
+            0.82 yd³
+          </div>
+          <span class="text-[11px] text-slate-500" id="res-tot-cft">22.07 ft³</span>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
+          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Volume (CUM)</span>
+          <div class="mt-1 text-xl sm:text-2xl font-black text-emerald-600 dark:text-emerald-400" id="res-tot-cum">
+            0.63 m³
+          </div>
+          <span class="text-[11px] text-slate-500" id="res-tot-liters">625 Liters</span>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
+          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">60-lb Bags</span>
+          <div class="mt-1 text-xl sm:text-2xl font-black text-slate-900 dark:text-white" id="res-tot-bags60">
+            49 Bags
+          </div>
+          <span class="text-[11px] text-slate-500">~0.45 ft³ yield/bag</span>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
+          <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">80-lb Bags</span>
+          <div class="mt-1 text-xl sm:text-2xl font-black text-slate-900 dark:text-white" id="res-tot-bags80">
+            37 Bags
+          </div>
+          <span class="text-[11px] text-slate-500">~0.60 ft³ yield/bag</span>
+        </div>
+      </div>
+
+      <!-- ON-SITE RAW MATERIAL BREAKUP (OPTIONAL TOGGLE) -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-3">
+        <div class="flex items-center justify-between">
+          <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+            <span>🧪</span> Mixing on site from scratch? (Raw Cement, Sand &amp; Aggregate Breakup)
+          </span>
+          <select id="sel-mix-ratio" class="rounded-lg border border-slate-300 bg-white px-2.5 py-1 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200">
+            <option value="1:2:4" selected>M15 / 1:2:4 (Driveways, Paths)</option>
+            <option value="1:1.5:3">M20 / 1:1.5:3 (Slabs, Beams, Foundations)</option>
+            <option value="1:1:2">M25 / 1:1:2 (Heavy Duty, Columns)</option>
+            <option value="1:3:6">M10 / 1:3:6 (Plain Footings, Mass Concrete)</option>
+          </select>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+          <div class="rounded-xl bg-slate-50 p-2.5 dark:bg-slate-800">
+            <span class="text-slate-500 block text-[11px]">Cement Bags (50kg)</span>
+            <strong class="text-slate-900 dark:text-white text-sm" id="res-raw-cement">~5.2 Bags</strong>
+          </div>
+          <div class="rounded-xl bg-slate-50 p-2.5 dark:bg-slate-800">
+            <span class="text-slate-500 block text-[11px]">Sand / Fine Aggregate</span>
+            <strong class="text-slate-900 dark:text-white text-sm" id="res-raw-sand">~15.4 cft (0.68 t)</strong>
+          </div>
+          <div class="rounded-xl bg-slate-50 p-2.5 dark:bg-slate-800">
+            <span class="text-slate-500 block text-[11px]">Coarse Gravel / Aggregate</span>
+            <strong class="text-slate-900 dark:text-white text-sm" id="res-raw-agg">~30.8 cft (1.35 t)</strong>
+          </div>
+          <div class="rounded-xl bg-slate-50 p-2.5 dark:bg-slate-800">
+            <span class="text-slate-500 block text-[11px]">Mixing Water</span>
+            <strong class="text-slate-900 dark:text-white text-sm" id="res-raw-water">~145 Liters (38 gal)</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- DETAILED SEO & EDUCATIONAL SECTION -->
+    <!-- ========================================================================= -->
+    <div class="rounded-3xl border border-slate-200/90 bg-white p-6 sm:p-8 dark:border-slate-800 dark:bg-slate-900 space-y-8">
+      
+      <div>
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+          How to Calculate Concrete: Formulas, Bag Yields &amp; Estimation Guide
+        </h2>
+        <p class="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          Concrete is one of the most widely used structural building materials in the world, composed of Portland cement, fine aggregate (sand), coarse aggregate (gravel or crushed stone), and clean water.
+          Whether you are pouring a backyard patio slab, casting isolated deck footings, pouring round sonotube piers, building roadside curbs, or framing entrance stairs, calculating the exact volume of concrete is essential to budget properly and avoid cold joints caused by running out of material midway through a pour.
+        </p>
+      </div>
+
+      <!-- FORMULAS BREAKDOWN -->
+      <div class="space-y-4">
+        <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>📐</span> Concrete Calculation Formulas by Shape
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Slab Formula -->
+          <div class="rounded-2xl border border-slate-200 p-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 space-y-2">
+            <h4 class="text-xs font-bold text-blue-700 dark:text-blue-300 uppercase">1. Slabs, Walls &amp; Square Footings</h4>
+            <div class="font-mono text-xs font-bold bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
+              Volume = Length × Width × Thickness × Quantity
+            </div>
+            <p class="text-[11px] text-slate-600 dark:text-slate-400">
+              In Imperial units: (Length in ft × Width in ft × Thickness in inches / 12) ÷ 27 = <strong>Cubic Yards</strong>.
+            </p>
+          </div>
+
+          <!-- Cylinder Formula -->
+          <div class="rounded-2xl border border-slate-200 p-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 space-y-2">
+            <h4 class="text-xs font-bold text-blue-700 dark:text-blue-300 uppercase">2. Cylinders, Round Footings &amp; Sonotubes</h4>
+            <div class="font-mono text-xs font-bold bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
+              Volume = π × (Diameter / 2)² × Height × Quantity
+            </div>
+            <p class="text-[11px] text-slate-600 dark:text-slate-400">
+              In Imperial units: π × (Radius in ft)² × Height in ft ÷ 27 = <strong>Cubic Yards</strong>.
+            </p>
+          </div>
+
+          <!-- Circular Tube Formula -->
+          <div class="rounded-2xl border border-slate-200 p-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 space-y-2">
+            <h4 class="text-xs font-bold text-blue-700 dark:text-blue-300 uppercase">3. Circular Slab or Tube (Hollow Ring)</h4>
+            <div class="font-mono text-xs font-bold bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
+              Volume = [π/4 × (d₁² - d₂²)] × Height × Quantity
+            </div>
+            <p class="text-[11px] text-slate-600 dark:text-slate-400">
+              Subtract the inner core volume from the outer cylinder volume to determine concrete required for pipe walls or well rings.
+            </p>
+          </div>
+
+          <!-- Curb and Gutter Formula -->
+          <div class="rounded-2xl border border-slate-200 p-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 space-y-2">
+            <h4 class="text-xs font-bold text-blue-700 dark:text-blue-300 uppercase">4. Curb &amp; Gutter Barrier</h4>
+            <div class="font-mono text-xs font-bold bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
+              Area = (Curb Depth × Curb Height) + [(Curb Depth + Gutter Width) × Flag Thickness]
+            </div>
+            <p class="text-[11px] text-slate-600 dark:text-slate-400">
+              Volume = Area × Total Length × Quantity.
+            </p>
+          </div>
+
+          <!-- Stairs Formula -->
+          <div class="rounded-2xl border border-slate-200 p-4 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 space-y-2 md:col-span-2">
+            <h4 class="text-xs font-bold text-blue-700 dark:text-blue-300 uppercase">5. Concrete Stairs &amp; Steps</h4>
+            <div class="font-mono text-xs font-bold bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200">
+              Total Area = [Run × Rise × N × (N - 1) ÷ 2] + [Platform Depth × N × Rise]
+            </div>
+            <p class="text-[11px] text-slate-600 dark:text-slate-400">
+              Volume = Total Area × Staircase Width × Quantity. This accounts for all step risers plus the horizontal top landing platform.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONCRETE BAG YIELD COMPARISON TABLE -->
+      <div class="space-y-3">
+        <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>📦</span> Concrete Bag Yield Reference Chart
+        </h3>
+        <p class="text-xs text-slate-600 dark:text-slate-400">
+          Commercial pre-mixed concrete bags (such as Quikrete or Sakrete) are commonly sold in 40-lb, 50-lb, 60-lb, and 80-lb sizes in North America, and 25-kg / 40-kg / 50-kg bags internationally.
+        </p>
+
+        <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950/60">
+          <table class="w-full text-left text-xs">
+            <thead class="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60 text-slate-800 dark:text-slate-200 font-bold">
+              <tr>
+                <th class="p-3">Bag Size</th>
+                <th class="p-3">Yield (Cubic Feet)</th>
+                <th class="p-3">Bags per 1 Cubic Yard (27 ft³)</th>
+                <th class="p-3">Bags per 1 Cubic Meter (35.31 ft³)</th>
+                <th class="p-3">Typical Application</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 text-slate-600 dark:text-slate-300">
+              <tr>
+                <td class="p-3 font-bold text-blue-600 dark:text-blue-400">40 lb (18.1 kg)</td>
+                <td class="p-3 font-mono">0.30 ft³ (0.0085 m³)</td>
+                <td class="p-3 font-bold">90 Bags</td>
+                <td class="p-3 font-bold">118 Bags</td>
+                <td class="p-3">Small fence post repairs, patch jobs</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold text-blue-600 dark:text-blue-400">50 lb (22.7 kg)</td>
+                <td class="p-3 font-mono">0.375 ft³ (0.0106 m³)</td>
+                <td class="p-3 font-bold">72 Bags</td>
+                <td class="p-3 font-bold">94 Bags</td>
+                <td class="p-3">Fast-setting post mix, mailbox anchors</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold text-blue-600 dark:text-blue-400">60 lb (27.2 kg)</td>
+                <td class="p-3 font-mono">0.45 ft³ (0.0127 m³)</td>
+                <td class="p-3 font-bold">60 Bags</td>
+                <td class="p-3 font-bold">78.5 Bags</td>
+                <td class="p-3">Sidewalks, small slabs, walkways</td>
+              </tr>
+              <tr class="bg-blue-50/40 dark:bg-blue-950/20">
+                <td class="p-3 font-bold text-blue-700 dark:text-blue-300">80 lb (36.3 kg) ★ Most Economical</td>
+                <td class="p-3 font-mono font-bold text-slate-900 dark:text-white">0.60 ft³ (0.0170 m³)</td>
+                <td class="p-3 font-black text-emerald-600 dark:text-emerald-400">45 Bags</td>
+                <td class="p-3 font-black text-emerald-600 dark:text-emerald-400">58.9 Bags</td>
+                <td class="p-3">Patios, driveways, footings, steps</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold text-blue-600 dark:text-blue-400">25 kg (55.1 lb)</td>
+                <td class="p-3 font-mono">0.41 ft³ (0.0117 m³)</td>
+                <td class="p-3 font-bold">66 Bags</td>
+                <td class="p-3 font-bold">85.5 Bags</td>
+                <td class="p-3">Standard UK/EU pre-mix bag</td>
+              </tr>
+              <tr>
+                <td class="p-3 font-bold text-blue-600 dark:text-blue-400">50 kg (110.2 lb) Pure Cement</td>
+                <td class="p-3 font-mono">1.25 ft³ (0.0354 m³)</td>
+                <td class="p-3 font-bold">~6 to 8 Bags (depends on mix)</td>
+                <td class="p-3 font-bold">~7 to 10 Bags</td>
+                <td class="p-3">Site mixing with separate sand &amp; stone</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- WHEN TO ORDER READY-MIX VS BAGS -->
+      <div class="rounded-2xl border border-amber-200 bg-amber-50/50 p-4 sm:p-5 dark:border-amber-900/40 dark:bg-amber-950/20 space-y-2">
+        <h4 class="text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
+          <span>💡</span> Pro Tip: Ready-Mix Truck vs. Bagged Pre-Mix
+        </h4>
+        <p class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+          If your project requires more than <strong>1.5 to 2.0 cubic yards</strong> (approx. 65 to 90 bags of 80-lb concrete), ordering ready-mix delivered by a concrete truck is usually faster, cheaper, and yields higher structural consistency. Mixing dozens of heavy bags by hand or small mixer can take hours, leading to premature drying or cold joints.
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- CLIENT-SIDE CALCULATION ENGINE & INTERACTIVE SCRIPT -->
+  <script>
+    // Conversion factors to meters
+    const TO_METERS: Record<string, number> = {
+      meters: 1.0,
+      feet: 0.3048,
+      inches: 0.0254,
+      centimeters: 0.01,
+      yards: 0.9144
+    };
+
+    const CFT_PER_CUM = 35.3146667;
+    const CYD_PER_CUM = 1.30795062;
+
+    function getVal(id: string): number {
+      const el = document.getElementById(id) as HTMLInputElement | null;
+      return el ? parseFloat(el.value) || 0 : 0;
+    }
+
+    function getUnit(id: string): string {
+      const el = document.getElementById(id) as HTMLSelectElement | null;
+      return el ? el.value : 'meters';
+    }
+
+    function toM(val: number, unit: string): number {
+      return val * (TO_METERS[unit] || 1.0);
+    }
+
+    function getDensityKgM3(): number {
+      const sel = document.getElementById('cfg-density') as HTMLSelectElement | null;
+      if (!sel) return 2130;
+      if (sel.value === 'custom') {
+        const inp = document.getElementById('cfg-custom-density') as HTMLInputElement | null;
+        return inp ? parseFloat(inp.value) || 2130 : 2130;
+      }
+      return parseFloat(sel.value) || 2130;
+    }
+
+    function getWastageMult(): number {
+      const sel = document.getElementById('cfg-wastage') as HTMLSelectElement | null;
+      const pct = sel ? parseFloat(sel.value) || 0 : 10;
+      return 1 + (pct / 100);
+    }
+
+    // Active Results Store
+    const resultsStore = {
+      slab: { cum: 0.625, cuft: 22.07, cuyd: 0.82, weightKg: 1331.25, weightLb: 2935.53, bags60: 48.93, bags80: 36.69 },
+      cylinder: { cum: 0, cuft: 0, cuyd: 0, weightKg: 0, weightLb: 0, bags60: 0, bags80: 0 },
+      tube: { cum: 0, cuft: 0, cuyd: 0, weightKg: 0, weightLb: 0, bags60: 0, bags80: 0 },
+      curb: { cum: 0, cuft: 0, cuyd: 0, weightKg: 0, weightLb: 0, bags60: 0, bags80: 0 },
+      stairs: { cum: 0, cuft: 0, cuyd: 0, weightKg: 0, weightLb: 0, bags60: 0, bags80: 0 },
+    };
+
+    let activeTab = 'slab';
+
+    // 1. Calculate Slab
+    function calcSlab() {
+      const l = toM(getVal('inp-slab-l'), getUnit('unit-slab-l'));
+      const w = toM(getVal('inp-slab-w'), getUnit('unit-slab-w'));
+      const h = toM(getVal('inp-slab-h'), getUnit('unit-slab-h'));
+      const q = Math.max(1, getVal('inp-slab-q'));
+      const density = getDensityKgM3();
+      const wastage = getWastageMult();
+
+      const netCum = l * w * h * q;
+      const totalCum = netCum * wastage;
+      const totalCuft = totalCum * CFT_PER_CUM;
+      const totalCuyd = totalCuft / 27;
+
+      const weightKg = totalCum * density;
+      const weightLb = totalCuft * (density * 0.06242796);
+      const bags60 = weightLb / 60;
+      const bags80 = weightLb / 80;
+
+      resultsStore.slab = { cum: totalCum, cuft: totalCuft, cuyd: totalCuyd, weightKg, weightLb, bags60, bags80 };
+
+      const elCuft = document.getElementById('res-slab-cuft');
+      const elCuyd = document.getElementById('res-slab-cuyd');
+      const elCum = document.getElementById('res-slab-cum');
+      const elWlb = document.getElementById('res-slab-weight-lb');
+      const elWkg = document.getElementById('res-slab-weight-kg');
+      const elB60 = document.getElementById('res-slab-bags-60');
+      const elB80 = document.getElementById('res-slab-bags-80');
+
+      if (elCuft) elCuft.textContent = totalCuft.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elCuyd) elCuyd.textContent = totalCuyd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elCum) elCum.textContent = totalCum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elWlb) elWlb.textContent = weightLb.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elWkg) elWkg.textContent = weightKg.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elB60) elB60.textContent = bags60.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elB80) elB80.textContent = bags80.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      updateMasterSummary();
+    }
+
+    // 2. Calculate Cylinder
+    function calcCylinder() {
+      const d = toM(getVal('inp-cyl-d'), getUnit('unit-cyl-d'));
+      const h = toM(getVal('inp-cyl-h'), getUnit('unit-cyl-h'));
+      const q = Math.max(1, getVal('inp-cyl-q'));
+      const density = getDensityKgM3();
+      const wastage = getWastageMult();
+
+      const r = d / 2;
+      const netCum = Math.PI * r * r * h * q;
+      const totalCum = netCum * wastage;
+      const totalCuft = totalCum * CFT_PER_CUM;
+      const totalCuyd = totalCuft / 27;
+
+      const weightKg = totalCum * density;
+      const weightLb = totalCuft * (density * 0.06242796);
+      const bags60 = weightLb / 60;
+      const bags80 = weightLb / 80;
+
+      resultsStore.cylinder = { cum: totalCum, cuft: totalCuft, cuyd: totalCuyd, weightKg, weightLb, bags60, bags80 };
+
+      const elCuft = document.getElementById('res-cyl-cuft');
+      const elCuyd = document.getElementById('res-cyl-cuyd');
+      const elCum = document.getElementById('res-cyl-cum');
+      const elWlb = document.getElementById('res-cyl-weight-lb');
+      const elWkg = document.getElementById('res-cyl-weight-kg');
+      const elB60 = document.getElementById('res-cyl-bags-60');
+      const elB80 = document.getElementById('res-cyl-bags-80');
+
+      if (elCuft) elCuft.textContent = totalCuft.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elCuyd) elCuyd.textContent = totalCuyd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elCum) elCum.textContent = totalCum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elWlb) elWlb.textContent = weightLb.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elWkg) elWkg.textContent = weightKg.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elB60) elB60.textContent = bags60.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elB80) elB80.textContent = bags80.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      updateMasterSummary();
+    }
+
+    // 3. Calculate Tube
+    function calcTube() {
+      const d1 = toM(getVal('inp-tube-d1'), getUnit('unit-tube-d1'));
+      const d2 = toM(getVal('inp-tube-d2'), getUnit('unit-tube-d2'));
+      const h = toM(getVal('inp-tube-h'), getUnit('unit-tube-h'));
+      const q = Math.max(1, getVal('inp-tube-q'));
+      const density = getDensityKgM3();
+      const wastage = getWastageMult();
+
+      const r1 = d1 / 2;
+      const r2 = Math.min(r1, d2 / 2);
+      const area = Math.PI * (r1 * r1 - r2 * r2);
+      const netCum = area * h * q;
+      const totalCum = netCum * wastage;
+      const totalCuft = totalCum * CFT_PER_CUM;
+      const totalCuyd = totalCuft / 27;
+
+      const weightKg = totalCum * density;
+      const weightLb = totalCuft * (density * 0.06242796);
+      const bags60 = weightLb / 60;
+      const bags80 = weightLb / 80;
+
+      resultsStore.tube = { cum: totalCum, cuft: totalCuft, cuyd: totalCuyd, weightKg, weightLb, bags60, bags80 };
+
+      const elCuft = document.getElementById('res-tube-cuft');
+      const elCuyd = document.getElementById('res-tube-cuyd');
+      const elCum = document.getElementById('res-tube-cum');
+      const elWlb = document.getElementById('res-tube-weight-lb');
+      const elWkg = document.getElementById('res-tube-weight-kg');
+      const elB60 = document.getElementById('res-tube-bags-60');
+      const elB80 = document.getElementById('res-tube-bags-80');
+
+      if (elCuft) elCuft.textContent = totalCuft.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elCuyd) elCuyd.textContent = totalCuyd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elCum) elCum.textContent = totalCum.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elWlb) elWlb.textContent = weightLb.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elWkg) elWkg.textContent = weightKg.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elB60) elB60.textContent = bags60.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elB80) elB80.textContent = bags80.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      updateMasterSummary();
+    }
+
+    // 4. Calculate Curb
+    function calcCurb() {
+      const cd = toM(getVal('inp-curb-cd'), getUnit('unit-curb-cd'));
+      const gw = toM(getVal('inp-curb-gw'), getUnit('unit-curb-gw'));
+      const ch = toM(getVal('inp-curb-ch'), getUnit('unit-curb-ch'));
+      const ft = toM(getVal('inp-curb-ft'), getUnit('unit-curb-ft'));
+      const l = toM(getVal('inp-curb-l'), getUnit('unit-curb-l'));
+      const q = Math.max(1, getVal('inp-curb-q'));
+      const density = getDensityKgM3();
+      const wastage = getWastageMult();
+
+      const area = (cd * ch) + ((cd + gw) * ft);
+      const netCum = area * l * q;
+      const totalCum = netCum * wastage;
+      const totalCuft = totalCum * CFT_PER_CUM;
+      const totalCuyd = totalCuft / 27;
+
+      const weightKg = totalCum * density;
+      const weightLb = totalCuft * (density * 0.06242796);
+      const bags60 = weightLb / 60;
+      const bags80 = weightLb / 80;
+
+      resultsStore.curb = { cum: totalCum, cuft: totalCuft, cuyd: totalCuyd, weightKg, weightLb, bags60, bags80 };
+
+      const elCuft = document.getElementById('res-curb-cuft');
+      const elCuyd = document.getElementById('res-curb-cuyd');
+      const elCum = document.getElementById('res-curb-cum');
+      const elWlb = document.getElementById('res-curb-weight-lb');
+      const elWkg = document.getElementById('res-curb-weight-kg');
+      const elB60 = document.getElementById('res-curb-bags-60');
+      const elB80 = document.getElementById('res-curb-bags-80');
+
+      if (elCuft) elCuft.textContent = totalCuft.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elCuyd) elCuyd.textContent = totalCuyd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elCum) elCum.textContent = totalCum.toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+      if (elWlb) elWlb.textContent = weightLb.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elWkg) elWkg.textContent = weightKg.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elB60) elB60.textContent = bags60.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elB80) elB80.textContent = bags80.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      updateMasterSummary();
+    }
+
+    // 5. Calculate Stairs
+    function calcStairs() {
+      const run = toM(getVal('inp-stair-run'), getUnit('unit-stair-run'));
+      const rise = toM(getVal('inp-stair-rise'), getUnit('unit-stair-rise'));
+      const w = toM(getVal('inp-stair-w'), getUnit('unit-stair-w'));
+      const p = toM(getVal('inp-stair-p'), getUnit('unit-stair-p'));
+      const n = Math.max(1, getVal('inp-stair-n'));
+      const q = Math.max(1, getVal('inp-stair-q'));
+      const density = getDensityKgM3();
+      const wastage = getWastageMult();
+
+      const stepArea = run * rise * ((n * (n - 1)) / 2);
+      const platArea = p * (n * rise);
+      const totalArea = stepArea + platArea;
+      const netCum = totalArea * w * q;
+      const totalCum = netCum * wastage;
+      const totalCuft = totalCum * CFT_PER_CUM;
+      const totalCuyd = totalCuft / 27;
+
+      const weightKg = totalCum * density;
+      const weightLb = totalCuft * (density * 0.06242796);
+      const bags60 = weightLb / 60;
+      const bags80 = weightLb / 80;
+
+      resultsStore.stairs = { cum: totalCum, cuft: totalCuft, cuyd: totalCuyd, weightKg, weightLb, bags60, bags80 };
+
+      const elCuft = document.getElementById('res-stair-cuft');
+      const elCuyd = document.getElementById('res-stair-cuyd');
+      const elCum = document.getElementById('res-stair-cum');
+      const elWlb = document.getElementById('res-stair-weight-lb');
+      const elWkg = document.getElementById('res-stair-weight-kg');
+      const elB60 = document.getElementById('res-stair-bags-60');
+      const elB80 = document.getElementById('res-stair-bags-80');
+
+      if (elCuft) elCuft.textContent = totalCuft.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elCuyd) elCuyd.textContent = totalCuyd.toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+      if (elCum) elCum.textContent = totalCum.toLocaleString('en-US', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+      if (elWlb) elWlb.textContent = weightLb.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elWkg) elWkg.textContent = weightKg.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elB60) elB60.textContent = bags60.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elB80) elB80.textContent = bags80.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      updateMasterSummary();
+    }
+
+    // Update Project Master BOQ
+    function updateMasterSummary() {
+      const chkViewAll = document.getElementById('chk-view-all') as HTMLInputElement | null;
+      const isAll = chkViewAll ? chkViewAll.checked : false;
+
+      let totCum = 0;
+      let totCuft = 0;
+      let totCuyd = 0;
+      let totBags60 = 0;
+      let totBags80 = 0;
+
+      if (isAll) {
+        for (const key of Object.keys(resultsStore) as (keyof typeof resultsStore)[]) {
+          totCum += resultsStore[key].cum;
+          totCuft += resultsStore[key].cuft;
+          totCuyd += resultsStore[key].cuyd;
+          totBags60 += resultsStore[key].bags60;
+          totBags80 += resultsStore[key].bags80;
+        }
+      } else {
+        const curr = resultsStore[activeTab as keyof typeof resultsStore] || resultsStore.slab;
+        totCum = curr.cum;
+        totCuft = curr.cuft;
+        totCuyd = curr.cuyd;
+        totBags60 = curr.bags60;
+        totBags80 = curr.bags80;
+      }
+
+      const elTotCyd = document.getElementById('res-tot-cyd');
+      const elTotCft = document.getElementById('res-tot-cft');
+      const elTotCum = document.getElementById('res-tot-cum');
+      const elTotLit = document.getElementById('res-tot-liters');
+      const elTotB60 = document.getElementById('res-tot-bags60');
+      const elTotB80 = document.getElementById('res-tot-bags80');
+
+      if (elTotCyd) elTotCyd.textContent = `${totCuyd.toFixed(2)} yd³`;
+      if (elTotCft) elTotCft.textContent = `${totCuft.toFixed(2)} ft³`;
+      if (elTotCum) elTotCum.textContent = `${totCum.toFixed(2)} m³`;
+      if (elTotLit) elTotLit.textContent = `${Math.round(totCum * 1000)} Liters`;
+      if (elTotB60) elTotB60.textContent = `${Math.ceil(totBags60)} Bags`;
+      if (elTotB80) elTotB80.textContent = `${Math.ceil(totBags80)} Bags`;
+
+      // Update Raw Material Mix Breakup (dry volume factor 1.54)
+      const selMix = document.getElementById('sel-mix-ratio') as HTMLSelectElement | null;
+      const mixKey = selMix ? selMix.value : '1:2:4';
+      let cPart = 1, sPart = 2, aPart = 4;
+      if (mixKey === '1:1.5:3') { cPart = 1; sPart = 1.5; aPart = 3; }
+      else if (mixKey === '1:1:2') { cPart = 1; sPart = 1; aPart = 2; }
+      else if (mixKey === '1:3:6') { cPart = 1; sPart = 3; aPart = 6; }
+
+      const sumParts = cPart + sPart + aPart;
+      const dryVol = totCum * 1.54;
+      const cementVolM3 = (dryVol * cPart) / sumParts;
+      const cementBags50kg = (cementVolM3 * 1440) / 50;
+      const sandCft = ((dryVol * sPart) / sumParts) * CFT_PER_CUM;
+      const sandTons = (sandCft * 45) / 1000;
+      const aggCft = ((dryVol * aPart) / sumParts) * CFT_PER_CUM;
+      const aggTons = (aggCft * 48) / 1000;
+      const waterLiters = cementBags50kg * 28;
+      const waterGal = waterLiters * 0.264172;
+
+      const elRawC = document.getElementById('res-raw-cement');
+      const elRawS = document.getElementById('res-raw-sand');
+      const elRawA = document.getElementById('res-raw-agg');
+      const elRawW = document.getElementById('res-raw-water');
+
+      if (elRawC) elRawC.textContent = `~${cementBags50kg.toFixed(1)} Bags (50kg)`;
+      if (elRawS) elRawS.textContent = `~${sandCft.toFixed(1)} cft (${sandTons.toFixed(2)} t)`;
+      if (elRawA) elRawA.textContent = `~${aggCft.toFixed(1)} cft (${aggTons.toFixed(2)} t)`;
+      if (elRawW) elRawW.textContent = `~${Math.round(waterLiters)} L (${Math.round(waterGal)} gal)`;
+    }
+
+    // Switch Shape Tab
+    function setShapeTab(tabId: string) {
+      activeTab = tabId;
+      const chkViewAll = document.getElementById('chk-view-all') as HTMLInputElement | null;
+      const isAll = chkViewAll ? chkViewAll.checked : false;
+
+      const btns = document.querySelectorAll('.shape-tab-btn');
+      btns.forEach((btn) => {
+        const b = btn as HTMLButtonElement;
+        if (b.dataset.tab === tabId) {
+          b.className = 'shape-tab-btn active flex items-center justify-center gap-1.5 rounded-xl border border-blue-600 bg-blue-50 px-3 py-2.5 text-xs font-bold text-blue-700 shadow-xs transition dark:border-blue-500 dark:bg-blue-950/60 dark:text-blue-300 cursor-pointer';
+        } else {
+          b.className = 'shape-tab-btn flex items-center justify-center gap-1.5 rounded-xl border border-transparent bg-slate-50 px-3 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700/60 transition cursor-pointer';
+        }
+      });
+
+      const sections = document.querySelectorAll('.shape-section');
+      sections.forEach((sec) => {
+        const s = sec as HTMLElement;
+        if (isAll) {
+          s.classList.remove('hidden');
+        } else {
+          if (s.id === `section-${tabId}`) {
+            s.classList.remove('hidden');
+          } else {
+            s.classList.add('hidden');
+          }
+        }
+      });
+
+      updateMasterSummary();
+    }
+
+    // Attach Event Listeners on DOM Ready
+    function init() {
+      // Calculate buttons
+      document.getElementById('btn-calc-slab')?.addEventListener('click', calcSlab);
+      document.getElementById('btn-calc-cyl')?.addEventListener('click', calcCylinder);
+      document.getElementById('btn-calc-tube')?.addEventListener('click', calcTube);
+      document.getElementById('btn-calc-curb')?.addEventListener('click', calcCurb);
+      document.getElementById('btn-calc-stair')?.addEventListener('click', calcStairs);
+
+      // Real-time recalculation on any input changes
+      const allInputs = document.querySelectorAll('#shapes-container input, #shapes-container select, #cfg-density, #cfg-wastage, #cfg-custom-density, #sel-mix-ratio');
+      allInputs.forEach((inp) => {
+        inp.addEventListener('input', () => {
+          calcSlab();
+          calcCylinder();
+          calcTube();
+          calcCurb();
+          calcStairs();
+        });
+        inp.addEventListener('change', () => {
+          calcSlab();
+          calcCylinder();
+          calcTube();
+          calcCurb();
+          calcStairs();
+        });
+      });
+
+      // Clear buttons
+      document.getElementById('btn-clear-slab')?.addEventListener('click', () => {
+        const elL = document.getElementById('inp-slab-l') as HTMLInputElement | null;
+        const elW = document.getElementById('inp-slab-w') as HTMLInputElement | null;
+        const elH = document.getElementById('inp-slab-h') as HTMLInputElement | null;
+        if (elL) elL.value = '0';
+        if (elW) elW.value = '0';
+        if (elH) elH.value = '0';
+        calcSlab();
+      });
+
+      document.getElementById('btn-clear-cyl')?.addEventListener('click', () => {
+        const elD = document.getElementById('inp-cyl-d') as HTMLInputElement | null;
+        const elH = document.getElementById('inp-cyl-h') as HTMLInputElement | null;
+        if (elD) elD.value = '0';
+        if (elH) elH.value = '0';
+        calcCylinder();
+      });
+
+      document.getElementById('btn-clear-tube')?.addEventListener('click', () => {
+        const elD1 = document.getElementById('inp-tube-d1') as HTMLInputElement | null;
+        const elD2 = document.getElementById('inp-tube-d2') as HTMLInputElement | null;
+        const elH = document.getElementById('inp-tube-h') as HTMLInputElement | null;
+        if (elD1) elD1.value = '0';
+        if (elD2) elD2.value = '0';
+        if (elH) elH.value = '0';
+        calcTube();
+      });
+
+      document.getElementById('btn-clear-curb')?.addEventListener('click', () => {
+        const elCd = document.getElementById('inp-curb-cd') as HTMLInputElement | null;
+        const elGw = document.getElementById('inp-curb-gw') as HTMLInputElement | null;
+        const elCh = document.getElementById('inp-curb-ch') as HTMLInputElement | null;
+        const elFt = document.getElementById('inp-curb-ft') as HTMLInputElement | null;
+        const elL = document.getElementById('inp-curb-l') as HTMLInputElement | null;
+        if (elCd) elCd.value = '0';
+        if (elGw) elGw.value = '0';
+        if (elCh) elCh.value = '0';
+        if (elFt) elFt.value = '0';
+        if (elL) elL.value = '0';
+        calcCurb();
+      });
+
+      document.getElementById('btn-clear-stair')?.addEventListener('click', () => {
+        const elRun = document.getElementById('inp-stair-run') as HTMLInputElement | null;
+        const elRise = document.getElementById('inp-stair-rise') as HTMLInputElement | null;
+        const elW = document.getElementById('inp-stair-w') as HTMLInputElement | null;
+        const elP = document.getElementById('inp-stair-p') as HTMLInputElement | null;
+        if (elRun) elRun.value = '0';
+        if (elRise) elRise.value = '0';
+        if (elW) elW.value = '0';
+        if (elP) elP.value = '0';
+        calcStairs();
+      });
+
+      // Quick Preset buttons
+      const presetBtns = document.querySelectorAll('.btn-quick-preset');
+      presetBtns.forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          const b = e.currentTarget as HTMLButtonElement;
+          const target = b.dataset.target || 'slab';
+          setShapeTab(target);
+
+          if (target === 'slab') {
+            (document.getElementById('inp-slab-l') as HTMLInputElement).value = b.dataset.l || '5';
+            (document.getElementById('unit-slab-l') as HTMLSelectElement).value = b.dataset.lu || 'meters';
+            (document.getElementById('inp-slab-w') as HTMLInputElement).value = b.dataset.w || '2.5';
+            (document.getElementById('unit-slab-w') as HTMLSelectElement).value = b.dataset.wu || 'meters';
+            (document.getElementById('inp-slab-h') as HTMLInputElement).value = b.dataset.h || '5';
+            (document.getElementById('unit-slab-h') as HTMLSelectElement).value = b.dataset.hu || 'centimeters';
+            (document.getElementById('inp-slab-q') as HTMLInputElement).value = b.dataset.q || '1';
+            calcSlab();
+          } else if (target === 'cylinder') {
+            (document.getElementById('inp-cyl-d') as HTMLInputElement).value = b.dataset.d || '2.5';
+            (document.getElementById('unit-cyl-d') as HTMLSelectElement).value = b.dataset.du || 'meters';
+            (document.getElementById('inp-cyl-h') as HTMLInputElement).value = b.dataset.h || '6';
+            (document.getElementById('unit-cyl-h') as HTMLSelectElement).value = b.dataset.hu || 'meters';
+            (document.getElementById('inp-cyl-q') as HTMLInputElement).value = b.dataset.q || '1';
+            calcCylinder();
+          } else if (target === 'tube') {
+            (document.getElementById('inp-tube-d1') as HTMLInputElement).value = b.dataset.d1 || '5';
+            (document.getElementById('unit-tube-d1') as HTMLSelectElement).value = b.dataset.d1u || 'meters';
+            (document.getElementById('inp-tube-d2') as HTMLInputElement).value = b.dataset.d2 || '4';
+            (document.getElementById('unit-tube-d2') as HTMLSelectElement).value = b.dataset.d2u || 'meters';
+            (document.getElementById('inp-tube-h') as HTMLInputElement).value = b.dataset.h || '6';
+            (document.getElementById('unit-tube-h') as HTMLSelectElement).value = b.dataset.hu || 'centimeters';
+            (document.getElementById('inp-tube-q') as HTMLInputElement).value = b.dataset.q || '1';
+            calcTube();
+          } else if (target === 'curb') {
+            (document.getElementById('inp-curb-cd') as HTMLInputElement).value = b.dataset.cd || '4';
+            (document.getElementById('unit-curb-cd') as HTMLSelectElement).value = b.dataset.cdu || 'centimeters';
+            (document.getElementById('inp-curb-gw') as HTMLInputElement).value = b.dataset.gw || '10';
+            (document.getElementById('unit-curb-gw') as HTMLSelectElement).value = b.dataset.gwu || 'centimeters';
+            (document.getElementById('inp-curb-ch') as HTMLInputElement).value = b.dataset.ch || '4';
+            (document.getElementById('unit-curb-ch') as HTMLSelectElement).value = b.dataset.chu || 'centimeters';
+            (document.getElementById('inp-curb-ft') as HTMLInputElement).value = b.dataset.ft || '5';
+            (document.getElementById('unit-curb-ft') as HTMLSelectElement).value = b.dataset.ftu || 'centimeters';
+            (document.getElementById('inp-curb-l') as HTMLInputElement).value = b.dataset.l || '10';
+            (document.getElementById('unit-curb-l') as HTMLSelectElement).value = b.dataset.lu || 'meters';
+            (document.getElementById('inp-curb-q') as HTMLInputElement).value = b.dataset.q || '1';
+            calcCurb();
+          } else if (target === 'stairs') {
+            (document.getElementById('inp-stair-run') as HTMLInputElement).value = b.dataset.run || '12';
+            (document.getElementById('unit-stair-run') as HTMLSelectElement).value = b.dataset.runu || 'centimeters';
+            (document.getElementById('inp-stair-rise') as HTMLInputElement).value = b.dataset.rise || '6';
+            (document.getElementById('unit-stair-rise') as HTMLSelectElement).value = b.dataset.riseu || 'centimeters';
+            (document.getElementById('inp-stair-w') as HTMLInputElement).value = b.dataset.w || '50';
+            (document.getElementById('unit-stair-w') as HTMLSelectElement).value = b.dataset.wu || 'centimeters';
+            (document.getElementById('inp-stair-p') as HTMLInputElement).value = b.dataset.p || '5';
+            (document.getElementById('unit-stair-p') as HTMLSelectElement).value = b.dataset.pu || 'centimeters';
+            (document.getElementById('inp-stair-n') as HTMLInputElement).value = b.dataset.risers || '5';
+            (document.getElementById('inp-stair-q') as HTMLInputElement).value = b.dataset.q || '1';
+            calcStairs();
+          }
+        });
+      });
+
+      // Density selector
+      document.getElementById('cfg-density')?.addEventListener('change', (e) => {
+        const val = (e.target as HTMLSelectElement).value;
+        const wrap = document.getElementById('cfg-custom-density-wrap');
+        if (wrap) {
+          wrap.style.display = val === 'custom' ? 'flex' : 'none';
+        }
+        calcSlab();
+        calcCylinder();
+        calcTube();
+        calcCurb();
+        calcStairs();
+      });
+
+      // Shape tab buttons
+      const tabBtns = document.querySelectorAll('.shape-tab-btn');
+      tabBtns.forEach((btn) => {
+        btn.addEventListener('click', (e) => {
+          const tab = (e.currentTarget as HTMLButtonElement).dataset.tab || 'slab';
+          setShapeTab(tab);
+        });
+      });
+
+      // Show All checkbox
+      document.getElementById('chk-view-all')?.addEventListener('change', () => {
+        setShapeTab(activeTab);
+      });
+
+      // Print Summary Button
+      document.getElementById('btn-print-summary')?.addEventListener('click', () => {
+        window.print();
+      });
+
+      // Initial Calculations
+      calcSlab();
+      calcCylinder();
+      calcTube();
+      calcCurb();
+      calcStairs();
+      setShapeTab('slab');
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</CalculatorLayout>
