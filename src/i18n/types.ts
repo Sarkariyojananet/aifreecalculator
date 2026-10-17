@@ -14,15 +14,17 @@ export interface CalculatorFaq {
 
 export interface FormulaVariable {
   symbol: string;
-  label: string;
+  label?: string;
+  name?: string;
   description: string;
   unit?: string;
 }
 
 export interface StepByStepInstruction {
-  stepNumber: number;
-  title: string;
-  instruction: string;
+  stepNumber?: number;
+  title?: string;
+  instruction?: string;
+  description?: string;
 }
 
 export interface WorkedExample {
@@ -57,13 +59,14 @@ export interface CalculatorTranslation {
   h1: string;
   shortDescription: string;
   description?: string;
+  intro?: string;
   title?: string;
   categoryLabel: string;
   formulaTitle: string;
   formulaDescription: string;
   formulaEquation: string;
   variables: FormulaVariable[];
-  stepByStep: StepByStepInstruction[];
+  stepByStep: Array<StepByStepInstruction | string>;
   workedExample: WorkedExample;
   faqs: CalculatorFaq[];
   ui: CalculatorUiStrings;
