@@ -283,6 +283,33 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
+  // 2d. Canonicalize legacy query parameter ?calc=... on /contact/ and /{lang}/contact/ to hash fragment #calc=...
+  if (
+    isHtmlPagePath &&
+    (pathname === '/contact' || pathname === '/contact/' || pathname.endsWith('/contact') || pathname.endsWith('/contact/')) &&
+    context.url.search?.includes('calc=')
+  ) {
+    const cleanPath = pathname.endsWith('/') ? pathname : `${pathname}/`;
+    const searchString = context.url.search.slice(1);
+    const targetUrl = `${cleanPath}#${searchString}`;
+    const redirectResponse = context.redirect(targetUrl, 301);
+    redirectResponse.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+    redirectResponse.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=604800');
+    return redirectResponse;
+  }
+
+  // 2e. Canonicalize legacy search action queries /?q={search_term_string} to clean home /
+  if (
+    isHtmlPagePath &&
+    (pathname === '/' || pathname === '') &&
+    (context.url.search?.includes('search_term_string') || context.url.search?.includes('%7Bsearch_term_string%7D') || context.url.search?.includes('q='))
+  ) {
+    const redirectResponse = context.redirect('/', 301);
+    redirectResponse.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+    redirectResponse.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=604800');
+    return redirectResponse;
+  }
+
   let response: Response;
   try {
     response = await next();
