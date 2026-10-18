@@ -3,6 +3,7 @@
  * SEO-Friendly & Educational Content Section for Calculator & Tool Pages
  * Provides authentic, tool-specific mathematical formulas, variables breakdown,
  * step-by-step procedures, worked practical examples, and accurate domain disclaimers.
+ * Fully localized across all 9 supported languages.
  */
 
 import { getCalculatorTranslation } from '../i18n/translations/calculators';
@@ -29,7 +30,21 @@ const isHealth = categoryKey === 'health';
 const isFinance = categoryKey === 'finance';
 const isConstruction = categoryKey === 'construction';
 
-const toolKind = isCompiler ? 'Tool' : isImageTool ? 'Tool' : isPdfTool ? 'Tool' : isTimetable ? 'Planner' : 'Calculator';
+// Localized tool kinds
+const toolKindMap: Record<Locale, { Calculator: string; Tool: string; Planner: string }> = {
+  en: { Calculator: 'Calculator', Tool: 'Tool', Planner: 'Planner' },
+  hi: { Calculator: 'कैलकुलेटर', Tool: 'टूल', Planner: 'प्लानर' },
+  es: { Calculator: 'Calculadora', Tool: 'Herramienta', Planner: 'Planificador' },
+  fr: { Calculator: 'Calculatrice', Tool: 'Outil', Planner: 'Planificateur' },
+  de: { Calculator: 'Rechner', Tool: 'Tool', Planner: 'Planer' },
+  it: { Calculator: 'Calcolatore', Tool: 'Strumento', Planner: 'Pianificatore' },
+  pt: { Calculator: 'Calculadora', Tool: 'Ferramenta', Planner: 'Planejador' },
+  ja: { Calculator: '計算ツール', Tool: 'ツール', Planner: 'プランナー' },
+  ko: { Calculator: '계산기', Tool: '도구', Planner: '플래너' },
+};
+
+const rawKind = isCompiler ? 'Tool' : isImageTool ? 'Tool' : isPdfTool ? 'Tool' : isTimetable ? 'Planner' : 'Calculator';
+const toolKind = (toolKindMap[validLang] || toolKindMap.en)[rawKind];
 
 // Domain-specific intro fallback if translation has no custom intro
 const categoryIntros: Record<string, string> = {
@@ -48,8 +63,338 @@ const categoryIntros: Record<string, string> = {
 const introText = translation?.intro || translation?.shortDescription || translation?.description || categoryIntros[categoryKey] || categoryIntros.general;
 const formulaDesc = translation?.formulaDescription && translation.formulaDescription !== translation.description ? translation.formulaDescription : null;
 
-// Dynamic use cases tailored to the specific tool
-function getUseCases(cat: string, name: string): string[] {
+// Localized UI dictionary
+const uiLabels: Record<Locale, {
+  about: (name: string) => string;
+  formula: string;
+  variables: string;
+  symbol: string;
+  variableName: string;
+  description: string;
+  stepByStep: string;
+  workedExample: string;
+  scenario: string;
+  result: string;
+  whyUse: (kind: string) => string;
+  commonUseCases: string;
+  disclaimers: string;
+  disclaimerVerify: string;
+  medicalNotice: string;
+  financialNotice: string;
+  engineeringNotice: string;
+  executionNotice: string;
+  privacyGuarantee: string;
+}> = {
+  en: {
+    about: (name) => `About the ${name}`,
+    formula: 'Mathematical Formula',
+    variables: 'Variable Definitions',
+    symbol: 'Symbol',
+    variableName: 'Variable Name',
+    description: 'Description',
+    stepByStep: 'Step-by-Step Calculation Guide',
+    workedExample: 'Worked Practical Example',
+    scenario: 'Scenario:',
+    result: 'Result:',
+    whyUse: (kind) => `Why Use This ${kind}?`,
+    commonUseCases: 'Common Use Cases',
+    disclaimers: 'Important Guidance & Disclaimers',
+    disclaimerVerify: 'Always double-check input parameters to ensure mathematical accuracy.',
+    medicalNotice: 'Medical Notice: Calculations are provided for educational and wellness awareness based on published clinical formulas (such as WHO, CDC, and Mifflin-St Jeor). They do not replace professional medical diagnosis, laboratory testing, or physician consultation.',
+    financialNotice: 'Financial Notice: Results are estimates intended for personal planning and budgeting. Actual loan terms, tax obligations, and market yields depend on lender conditions and tax authorities. Consult a certified financial planner or tax advisor for binding decisions.',
+    engineeringNotice: 'Engineering Notice: Quantities follow standard civil engineering ratios (IS 456 / CPWD thumb rules). Always account for 5–10% on-site wastage and obtain formal structural approval from a licensed engineer before procurement.',
+    executionNotice: 'Execution Notice: Code executes inside a sandboxed browser environment for instant learning and testing. It does not replace a native compiler toolchain for raw I/O or full system libraries.',
+    privacyGuarantee: 'Privacy Guarantee: All document and image operations process locally on your device via HTML5 APIs. No files are uploaded to our servers.',
+  },
+  hi: {
+    about: (name) => `${name} के बारे में`,
+    formula: 'गणितीय सूत्र और विधि',
+    variables: 'चर एवं संकेत परिभाषाएँ',
+    symbol: 'प्रतीक',
+    variableName: 'चर का नाम',
+    description: 'विवरण',
+    stepByStep: 'चरण-दर-चरण गणना मार्गदर्शिका',
+    workedExample: 'हल किया गया व्यावहारिक उदाहरण',
+    scenario: 'परिदृश्य:',
+    result: 'परिणाम:',
+    whyUse: (kind) => `यह ${kind} क्यों चुनें?`,
+    commonUseCases: 'सामान्य उपयोग परिदृश्य',
+    disclaimers: 'महत्वपूर्ण दिशानिर्देश और अस्वीकरण',
+    disclaimerVerify: 'सटीक गणना के लिए हमेशा दर्ज किए गए इनपुट मानों की दोबारा जांच करें।',
+    medicalNotice: 'चिकित्सा सूचना: ये गणनाएं प्रकाशित वैज्ञानिक मानकों पर आधारित हैं और केवल जागरूकता के लिए हैं। ये किसी डॉक्टर या चिकित्सकीय परामर्श का विकल्प नहीं हैं।',
+    financialNotice: 'वित्तीय सूचना: गणना के परिणाम व्यक्तिगत बजट व अनुमान के लिए हैं। वास्तविक ब्याज दरें और कर नियम संबंधित संस्थाओं की शर्तों पर निर्भर करते हैं।',
+    engineeringNotice: 'इंजीनियरिंग सूचना: सामग्री की मात्रा मानक निर्माण अनुपातों पर आधारित है। खरीद से पहले 5–10% साइट वेस्टेज अवश्य जोड़ें।',
+    executionNotice: 'निष्पादन सूचना: कोड ब्राउज़र सैंडबॉक्स में सुरक्षित रूप से चलता है। यह सीखने और परीक्षण के लिए उपयुक्त है।',
+    privacyGuarantee: 'गोपनीयता गारंटी: सभी दस्तावेज़ और चित्र आपके डिवाइस पर स्थानीय रूप से प्रोसेस होते हैं। सर्वर पर कोई डेटा अपलोड नहीं होता।',
+  },
+  es: {
+    about: (name) => `Acerca de ${name}`,
+    formula: 'Fórmula Matemática',
+    variables: 'Definición de Variables',
+    symbol: 'Símbolo',
+    variableName: 'Nombre de Variable',
+    description: 'Descripción',
+    stepByStep: 'Guía de Cálculo Paso a Paso',
+    workedExample: 'Ejemplo Práctico Resuelto',
+    scenario: 'Escenario:',
+    result: 'Resultado:',
+    whyUse: (kind) => `¿Por qué usar esta ${kind}?`,
+    commonUseCases: 'Casos de Uso Comunes',
+    disclaimers: 'Orientación Importante y Descargos de Responsabilidad',
+    disclaimerVerify: 'Verifique siempre los parámetros ingresados para garantizar la precisión del cálculo.',
+    medicalNotice: 'Aviso Médico: Los cálculos son solo para fines educativos y no reemplazan el diagnóstico ni la consulta de un profesional de la salud.',
+    financialNotice: 'Aviso Financiero: Los resultados son estimaciones para planificación personal. Consulte con un asesor financiero para decisiones vinculantes.',
+    engineeringNotice: 'Aviso de Ingeniería: Las cantidades siguen ratios de ingeniería estándar. Considere un margen de desperdicio de 5-10%.',
+    executionNotice: 'Aviso de Ejecución: El código se ejecuta en un entorno aislado del navegador para pruebas y aprendizaje rápido.',
+    privacyGuarantee: 'Garantía de Privacidad: Todas las operaciones se procesan localmente en su dispositivo. No se sube ningún archivo al servidor.',
+  },
+  fr: {
+    about: (name) => `À propos de : ${name}`,
+    formula: 'Formule Mathématique',
+    variables: 'Définition des Variables',
+    symbol: 'Symbole',
+    variableName: 'Nom de la Variable',
+    description: 'Description',
+    stepByStep: 'Guide de Calcul Étape par Étape',
+    workedExample: 'Exemple Pratique Résolu',
+    scenario: 'Scénario :',
+    result: 'Résultat :',
+    whyUse: (kind) => `Pourquoi utiliser cet outil (${kind}) ?`,
+    commonUseCases: "Cas d'Utilisation Fréquents",
+    disclaimers: 'Directives Importantes et Avertissements',
+    disclaimerVerify: 'Vérifiez toujours vos paramètres saisis afin de garantir une parfaite exactitude mathématique.',
+    medicalNotice: 'Avis Médical : Ces calculs sont fournis à titre informatif et ne sauraient remplacer un avis médical professionnel.',
+    financialNotice: 'Avis Financier : Ces résultats sont des estimations pour votre budget personnel. Consultez un conseiller financier agréé.',
+    engineeringNotice: 'Avis Technique : Les calculs suivent les normes du bâtiment standard. Prévoyez une marge de perte de 5 à 10 %.',
+    executionNotice: "Avis d'Exécution : Le code s'exécute localement dans le bac à sable de votre navigateur.",
+    privacyGuarantee: 'Garantie de Confidentialité : Tous les fichiers sont traités localement sur votre appareil sans téléversement sur serveur.',
+  },
+  de: {
+    about: (name) => `Über ${name}`,
+    formula: 'Mathematische Formel',
+    variables: 'Variablendefinitionen',
+    symbol: 'Symbol',
+    variableName: 'Variablenname',
+    description: 'Beschreibung',
+    stepByStep: 'Schritt-für-Schritt-Anleitung',
+    workedExample: 'Praktisches Rechenbeispiel',
+    scenario: 'Szenario:',
+    result: 'Ergebnis:',
+    whyUse: (kind) => `Warum dieses ${kind} nutzen?`,
+    commonUseCases: 'Typische Anwendungsbereiche',
+    disclaimers: 'Wichtige Hinweise & Haftungsausschluss',
+    disclaimerVerify: 'Überprüfen Sie stets Ihre Eingabewerte auf mathematische Richtigkeit.',
+    medicalNotice: 'Medizinischer Hinweis: Diese Berechnungen dienen nur Informationszwecken und ersetzen keine ärztliche Beratung.',
+    financialNotice: 'Finanzieller Hinweis: Ergebnisse sind Schätzungen zur persönlichen Planung. Wenden Sie sich bei verbindlichen Fragen an einen Berater.',
+    engineeringNotice: 'Ingenieurhinweis: Materialmengen basieren auf gängigen Bau-Faustregeln. Berücksichtigen Sie 5–10 % Verschnitt.',
+    executionNotice: 'Ausführungshinweis: Code wird direkt im Browser-Sandbox-Modus zu Testzwecken ausgeführt.',
+    privacyGuarantee: 'Datenschutzgarantie: Alle Dateien werden lokal in Ihrem Browser verarbeitet und niemals auf externe Server geladen.',
+  },
+  it: {
+    about: (name) => `Informazioni su ${name}`,
+    formula: 'Formula Matematica',
+    variables: 'Definizione delle Variabili',
+    symbol: 'Simbolo',
+    variableName: 'Nome Variabile',
+    description: 'Descrizione',
+    stepByStep: 'Guida al Calcolo Passo dopo Passo',
+    workedExample: 'Esempio Pratico Svolto',
+    scenario: 'Scenario:',
+    result: 'Risultato:',
+    whyUse: (kind) => `Perché usare questo strumento (${kind})?`,
+    commonUseCases: "Casi d'Uso Più Comuni",
+    disclaimers: 'Linee Guida Importanti e Disclaimer',
+    disclaimerVerify: 'Verifica sempre i parametri inseriti per garantire la massima accuratezza dei calcoli.',
+    medicalNotice: 'Avviso Medico: I calcoli sono puramente indicativi ed educativi e non sostituiscono un consulto medico specialistico.',
+    financialNotice: 'Avviso Finanziario: I risultati sono stime di pianificazione personale. Consulta un professionista finanziario qualificato.',
+    engineeringNotice: 'Avviso Ingegneristico: I quantitativi seguono indici costruttivi standard. Considera sempre un 5-10% di scarto di cantiere.',
+    executionNotice: 'Avviso di Esecuzione: Il codice viene eseguito nella sandbox del browser per verifiche immediate.',
+    privacyGuarantee: 'Garanzia di Privacy: Tutte le operazioni avvengono in locale sul tuo browser senza caricamento sui nostri server.',
+  },
+  pt: {
+    about: (name) => `Sobre o ${name}`,
+    formula: 'Fórmula Matemática',
+    variables: 'Definições de Variáveis',
+    symbol: 'Símbolo',
+    variableName: 'Nome da Variável',
+    description: 'Descrição',
+    stepByStep: 'Guia de Cálculo Passo a Passo',
+    workedExample: 'Exemplo Prático Resolvido',
+    scenario: 'Cenário:',
+    result: 'Resultado:',
+    whyUse: (kind) => `Por que usar esta ${kind}?`,
+    commonUseCases: 'Casos de Uso Comuns',
+    disclaimers: 'Orientações Importantes e Isenção de Responsabilidade',
+    disclaimerVerify: 'Sempre confira os valores inseridos para assegurar a exatidão matemática do resultado.',
+    medicalNotice: 'Aviso Médico: Cálculos fornecidos apenas para fins educativos. Não substituem aconselhamento médico profissional.',
+    financialNotice: 'Aviso Financeiro: Estimativas para planejamento orçamentário pessoal. Consulte um especialista para decisões formais.',
+    engineeringNotice: 'Aviso de Engenharia: Estimativas calculadas por parâmetros padrão da construção civil. Considere 5–10% de perda.',
+    executionNotice: 'Aviso de Execução: O código roda de forma isolada no navegador para testes e estudos imediatos.',
+    privacyGuarantee: 'Garantia de Privacidade: O processamento ocorre 100% no seu dispositivo, sem envio de arquivos para servidores.',
+  },
+  ja: {
+    about: (name) => `${name} について`,
+    formula: '計算式と計算方法',
+    variables: '変数の定義',
+    symbol: '記号',
+    variableName: '変数名',
+    description: '説明',
+    stepByStep: 'ステップバイステップ計算手順',
+    workedExample: '実際の計算例',
+    scenario: '設定:',
+    result: '結果:',
+    whyUse: (kind) => `この${kind}が選ばれる理由`,
+    commonUseCases: '主な利用シーン',
+    disclaimers: '重要なお知らせおよび免責事項',
+    disclaimerVerify: '数値の正確性を確保するため、入力したパラメータを必ず再確認してください。',
+    medicalNotice: '医療に関するご注意: 本計算は健康管理の参考情報であり、医師の診断や専門的な医学的アドバイスに代わるものではありません。',
+    financialNotice: '財務に関するご注意: 計算結果は目安です。実際の金利や税額は金融機関等の規程に従います。専門家にご相談ください。',
+    engineeringNotice: '土木・建築に関するご注意: 標準的な工学係数に基づく試算です。実際の現場では5〜10%の余裕率を見込んでください。',
+    executionNotice: '実行環境について: コードはブラウザ内の安全なサンドボックスで即座に実行されます。',
+    privacyGuarantee: 'プライバシー保証: 全ての処理はお手元のブラウザ内で完結し、サーバーへデータが送信されることはありません。',
+  },
+  ko: {
+    about: (name) => `${name} 안내`,
+    formula: '수학 공식 및 계산법',
+    variables: '변수 정의',
+    symbol: '기호',
+    variableName: '변수 이름',
+    description: '설명',
+    stepByStep: '단계별 계산 가이드',
+    workedExample: '실전 계산 예제',
+    scenario: '상황:',
+    result: '결과:',
+    whyUse: (kind) => `이 ${kind}을(를) 사용해야 하는 이유`,
+    commonUseCases: '주요 활용 사례',
+    disclaimers: '중요 안내 및 면책 조항',
+    disclaimerVerify: '정확한 계산을 위해 입력한 매개변수를 다시 한번 확인해 주세요.',
+    medicalNotice: '의학적 주의사항: 본 계산 결과는 참고용이며 의사의 전문적인 진단이나 상담을 대신할 수 없습니다.',
+    financialNotice: '재무 관련 주의사항: 결과는 개인 계획을 위한 추정치입니다. 구속력 있는 결정은 금융 전문가와 상의하세요.',
+    engineeringNotice: '엔지니어링 주의사항: 표준 건축 지침에 따른 수치입니다. 자재 손실률 5~10%를 반드시 고려하세요.',
+    executionNotice: '실행 안내: 브라우저 내부 샌드박스에서 즉각 실행되며 안전한 테스트 환경을 제공합니다.',
+    privacyGuarantee: '개인정보 보호 보장: 모든 처리는 사용자의 브라우저 내에서 직접 수행되며 서버로 전송되지 않습니다.',
+  },
+};
+
+const labels = uiLabels[validLang] || uiLabels.en;
+
+// Localized dynamic use cases tailored to the specific tool
+function getUseCases(cat: string, name: string, locale: Locale): string[] {
+  if (locale === 'hi') {
+    if (cat === 'compiler-tools') {
+      return [
+        'स्थानीय कंपाइलर या भारी आईडीई स्थापित किए बिना कोडिंग सिंटैक्स और एल्गोरिदम का अभ्यास करना',
+        'छोटे कोड स्निपेट का परीक्षण, एज केस की जांच और रीयल-टाइम आउटपुट का निरीक्षण करना',
+        'अकादमिक अध्ययन या तकनीकी इंटरव्यू की तैयारी के लिए प्रोग्रामिंग पैटर्न समझना'
+      ];
+    }
+    if (cat === 'image-tools') {
+      return [
+        'गुणवत्ता में गिरावट के बिना सीधे ब्राउज़र में छवियों को अनुकूलित और रूपांतरित करना',
+        'वेब प्रकाशन, प्रस्तुति या विरासत सिस्टम के लिए चित्र तैयार करना',
+        'बिना सर्वर अपलोड के 100% स्थानीय कैनवास प्रोसेसिंग द्वारा पूर्ण फोटो गोपनीयता बनाए रखना'
+      ];
+    }
+    if (cat === 'pdf-tools') {
+      return [
+        'सशुल्क सॉफ्टवेयर के बिना पीडीएफ पृष्ठों को व्यवस्थित, संयोजित और रूपांतरित करना',
+        'आधिकारिक प्रस्तुतियों और प्रिंटिंग के लिए स्वच्छ पीडीएफ तैयार करना',
+        'बिना क्लाउड अपलोड के स्थानीय डिवाइस पर दस्तावेज़ गोपनीयता सुनिश्चित करना'
+      ];
+    }
+    if (cat === 'time-table-tools') {
+      return [
+        'कक्षाओं, अध्ययन सत्रों, फिटनेस और कार्य शिफ्ट को दृश्य समय सारिणी में व्यवस्थित करना',
+        'उत्पादक कार्य घंटों और व्यक्तिगत विश्राम व पारिवारिक समय में संतुलन बनाना',
+        'प्रिंट करने योग्य उच्च-रिज़ॉल्यूशन टाइमटेबल शीट तैयार करना'
+      ];
+    }
+    if (cat === 'construction') {
+      return [
+        'स्लैब, बीम, कॉलम, फुटिंग और चिनाई के लिए निर्माण सामग्री की सही मात्रा का आकलन',
+        'परियोजना बजट बनाना और साइट पर सामग्री की बर्बादी को रोकना',
+        'मानक सीपीडब्ल्यूडी और आईएस 456 सिविल इंजीनियरिंग मानकों के अनुसार क्रॉस-सत्यापन'
+      ];
+    }
+    if (cat === 'health') {
+      return [
+        'व्यक्तिगत स्वास्थ्य दिनचर्या के हिस्से के रूप में बायोमेट्रिक संकेतकों को ट्रैक करना',
+        'मेटाबोलिक ऊर्जा आवश्यकताओं (बीएमआर/टीडीईई) का सटीक आकलन करना',
+        'संतुलित जीवनशैली की आदतों के साथ प्रगति की निगरानी करना'
+      ];
+    }
+    if (cat === 'finance') {
+      return [
+        `${name} के साथ सटीक वित्तीय राशियों और भुगतान अनुसूचियों का पूर्वानुमान लगाना`,
+        'ब्याज दरों में उतार-चढ़ाव, अवधि और चक्रवृद्धि वृद्धि का मूल्यांकन करना',
+        'पारदर्शी गणितीय सूत्रों के साथ व्यक्तिगत और व्यावसायिक वित्त का बजट बनाना'
+      ];
+    }
+    return [
+      `${name} द्वारा त्वरित और त्रुटिहीन गणना निष्पादित करना`,
+      'चरण-दर-चरण गणितीय तर्क से हस्तलिखित गणनाओं का सत्यापन करना',
+      'दैनिक रूपांतरण और संख्यात्मक अनुमान कार्यों को सरलता से हल करना'
+    ];
+  }
+
+  if (locale === 'es') {
+    if (cat === 'compiler-tools') {
+      return [
+        'Practicar sintaxis y algoritmos sin instalar compiladores locales ni entornos pesados',
+        'Verificar fragmentos de código breves y comprobar resultados de terminal en tiempo real',
+        'Estudiar patrones de programación para cursos académicos o entrevistas técnicas'
+      ];
+    }
+    if (cat === 'image-tools') {
+      return [
+        'Optimizar y transformar imágenes en el navegador sin pérdida de resolución ni calidad',
+        'Preparar archivos gráficos para sitios web, presentaciones y compatibilidad de formatos',
+        'Garantizar privacidad absoluta con procesamiento local Canvas sin subir archivos'
+      ];
+    }
+    if (cat === 'pdf-tools') {
+      return [
+        'Organizar, dividir y convertir páginas de documentos PDF sin software de pago',
+        'Crear documentos PDF limpios para presentaciones oficiales, trámites y archivo',
+        'Mantener la confidencialidad total procesando los archivos en su propio dispositivo'
+      ];
+    }
+    if (cat === 'time-table-tools') {
+      return [
+        'Organizar clases, horarios de estudio y turnos en una cuadrícula visual intuitiva',
+        'Equilibrar bloques de trabajo productivo con tiempo personal y descanso',
+        'Exportar horarios imprimibles de alta resolución para tableros y carpetas'
+      ];
+    }
+    if (cat === 'construction') {
+      return [
+        'Calcular cantidades de materiales para losas, vigas, columnas y albañilería',
+        'Planificar presupuestos de compras y evitar desperdicio de material en obra',
+        'Verificar cálculos frente a estándares habituales de construcción civil'
+      ];
+    }
+    if (cat === 'health') {
+      return [
+        'Monitorear indicadores de bienestar y salud personal en su rutina habitual',
+        'Estimar requerimientos metabólicos de energía (TMB/TDEE) y macronutrientes',
+        'Seguir la evolución física junto con hábitos saludables y supervisión médica'
+      ];
+    }
+    if (cat === 'finance') {
+      return [
+        `Calcular cantidades exactas y tablas de pagos para previsiones con ${name}`,
+        'Evaluar variaciones de tipos de interés, plazos y crecimiento compuesto en el tiempo',
+        'Presupuestar finanzas personales y profesionales con fórmulas matemáticas claras'
+      ];
+    }
+    return [
+      `Realizar cálculos rápidos y exactos utilizando ${name}`,
+      'Verificar cálculos manuales con el procedimiento matemático paso a paso',
+      'Resolver tareas cotidianas de conversión, porcentajes y estimaciones numéricas'
+    ];
+  }
+
+  // Fallback English
   if (cat === 'compiler-tools') {
     return [
       'Practising programming syntax and basic algorithms without installing a local compiler or heavy IDE',
@@ -106,17 +451,85 @@ function getUseCases(cat: string, name: string): string[] {
   ];
 }
 
-const useCases = getUseCases(categoryKey, calculatorName);
+const useCases = getUseCases(categoryKey, calculatorName, validLang);
 
-// Standard features
-const features = [
-  { icon: '⚡', title: 'Instant Execution', desc: 'Evaluates results in milliseconds as you input values, without page reloads' },
-  { icon: '🔒', title: 'Client-Side Privacy', desc: 'All processing operates locally in your browser—inputs and files are never stored' },
-  { icon: '📱', title: 'Universal Compatibility', desc: 'Optimized for high-resolution desktops, laptops, tablets, and smartphones' },
-  { icon: '💯', title: '100% Free Access', desc: 'Unlimited calculations and tool usage without accounts, sign-ups, or subscriptions' },
-  { icon: '🧩', title: 'Transparent Formulas', desc: 'Clear variable definitions and verified formulas ensure trustworthy results' },
-  { icon: '♻️', title: 'Flexible & Reusable', desc: 'Adjust parameters and re-calculate alternative scenarios as often as needed' }
-];
+// Localized standard features
+const featureTemplates: Record<Locale, Array<{ icon: string; title: string; desc: string }>> = {
+  en: [
+    { icon: '⚡', title: 'Instant Execution', desc: 'Evaluates results in milliseconds as you input values, without page reloads' },
+    { icon: '🔒', title: 'Client-Side Privacy', desc: 'All processing operates locally in your browser—inputs and files are never stored' },
+    { icon: '📱', title: 'Universal Compatibility', desc: 'Optimized for high-resolution desktops, laptops, tablets, and smartphones' },
+    { icon: '💯', title: '100% Free Access', desc: 'Unlimited calculations and tool usage without accounts, sign-ups, or subscriptions' },
+    { icon: '🧩', title: 'Transparent Formulas', desc: 'Clear variable definitions and verified formulas ensure trustworthy results' },
+    { icon: '♻️', title: 'Flexible & Reusable', desc: 'Adjust parameters and re-calculate alternative scenarios as often as needed' }
+  ],
+  hi: [
+    { icon: '⚡', title: 'त्वरित परिणाम', desc: 'पेज रीलोड किए बिना मान दर्ज करते ही मिलीसेकंड में सटीक परिणाम प्राप्त करें' },
+    { icon: '🔒', title: 'पूर्ण गोपनीयता', desc: 'सभी गणनाएं सीधे आपके ब्राउज़र में होती हैं—डेटा कभी भी सर्वर पर नहीं भेजा जाता' },
+    { icon: '📱', title: 'सभी डिवाइस पर अनुकूल', desc: 'मोबाइल, टैबलेट, लैपटॉप और कंप्यूटर की स्क्रीन पर सुचारू रूप से कार्य करता है' },
+    { icon: '💯', title: '100% निःशुल्क', desc: 'बिना किसी लॉगिन या शुल्क के असीमित बार सभी टूल्स का उपयोग करें' },
+    { icon: '🧩', title: 'पारदर्शी गणितीय विधि', desc: 'स्पष्ट सूत्र और चरण-दर-चरण गणना से विश्वसनीय और सटीक परिणाम सुनिश्चित' },
+    { icon: '♻️', title: 'पुन: प्रयोज्य', desc: 'जब चाहें संख्याएं बदलकर नए परिदृश्यों का तुरंत विश्लेषण करें' }
+  ],
+  es: [
+    { icon: '⚡', title: 'Ejecución Instantánea', desc: 'Calcula resultados en milisegundos a medida que ingresas datos, sin recargas' },
+    { icon: '🔒', title: 'Privacidad del Navegador', desc: 'El procesamiento ocurre 100% en tu dispositivo, sin almacenar entradas en servidores' },
+    { icon: '📱', title: 'Compatibilidad Universal', desc: 'Optimizado para teléfonos inteligentes, tabletas, portátiles y ordenadores' },
+    { icon: '💯', title: '100% Gratuito', desc: 'Uso ilimitado de herramientas y cálculos sin registro ni suscripciones' },
+    { icon: '🧩', title: 'Fórmulas Transparentes', desc: 'Fórmulas verificadas y definiciones claras de variables para resultados fiables' },
+    { icon: '♻️', title: 'Flexible y Reutilizable', desc: 'Ajusta parámetros y evalúa escenarios alternativos tantas veces como necesites' }
+  ],
+  fr: [
+    { icon: '⚡', title: 'Exécution Instantanée', desc: 'Calcul immédiat en millisecondes sans rechargement de page' },
+    { icon: '🔒', title: 'Confidentialité Totale', desc: 'Traitement 100% local dans votre navigateur sans téléversement sur serveur' },
+    { icon: '📱', title: 'Compatibilité Universelle', desc: 'Optimisé pour ordinateurs, tablettes et smartphones' },
+    { icon: '💯', title: '100% Gratuit', desc: 'Accès illimité sans compte, sans inscription ni abonnement' },
+    { icon: '🧩', title: 'Formules Vérifiées', desc: 'Définitions claires des variables et méthodes mathématiques transparentes' },
+    { icon: '♻️', title: 'Flexible et Réutilisable', desc: 'Modifiez les valeurs et recalculez de nouveaux scénarios à volonté' }
+  ],
+  de: [
+    { icon: '⚡', title: 'Sofortige Berechnung', desc: 'Ergebnisse in Millisekunden während der Eingabe, ohne Seitenneuladen' },
+    { icon: '🔒', title: 'Lokaler Datenschutz', desc: 'Berechnung direkt im Browser – Eingaben werden niemals auf Servern gespeichert' },
+    { icon: '📱', title: 'Universelle Kompatibilität', desc: 'Optimal angepasst für Desktop-PCs, Laptops, Tablets und Smartphones' },
+    { icon: '💯', title: '100% Kostenfrei', desc: 'Unbegrenzte Nutzung aller Werkzeuge ohne Registrierung oder Kosten' },
+    { icon: '🧩', title: 'Transparente Formeln', desc: 'Geprüfte Rechenwege und klare Variablen für verlässliche Ergebnisse' },
+    { icon: '♻️', title: 'Flexibel & Wiederverwendbar', desc: 'Werte beliebig anpassen und verschiedene Szenarien durchrechnen' }
+  ],
+  it: [
+    { icon: '⚡', title: 'Calcolo Istantaneo', desc: 'Fornisce risultati in millisecondi in tempo reale senza ricaricare la pagina' },
+    { icon: '🔒', title: 'Privacy Garantita', desc: 'Tutto il calcolo avviene nel tuo browser senza invio di dati a server esterni' },
+    { icon: '📱', title: 'Compatibilità Totale', desc: 'Funziona perfettamente su smartphone, tablet, laptop e computer desktop' },
+    { icon: '💯', title: '100% Gratuito', desc: 'Accesso illimitato a tutti i calcoli senza registrazione né costi' },
+    { icon: '🧩', title: 'Formule Verificate', desc: 'Spiegazioni matematiche chiare e variabili definite con rigore' },
+    { icon: '♻️', title: 'Flessibile e Modificabile', desc: 'Cambia i parametri e ricalcola nuove simulazioni in qualsiasi momento' }
+  ],
+  pt: [
+    { icon: '⚡', title: 'Execução Instantânea', desc: 'Calcula resultados em milissegundos conforme você digita, sem recarregar a página' },
+    { icon: '🔒', title: 'Privacidade Total', desc: 'Processamento local no seu navegador: nenhum dado é gravado em servidores' },
+    { icon: '📱', title: 'Compatibilidade Universal', desc: 'Otimizado para celulares, tablets, notebooks e computadores de mesa' },
+    { icon: '💯', title: '100% Gratuito', desc: 'Acesso livre e irrestrito sem cadastro, contas ou assinaturas' },
+    { icon: '🧩', title: 'Fórmulas Transparentes', desc: 'Equações verificadas e variáveis explícitas para garantir confiabilidade' },
+    { icon: '♻️', title: 'Flexível e Reutilizável', desc: 'Altere parâmetros e recalcule hipóteses quantas vezes quiser' }
+  ],
+  ja: [
+    { icon: '⚡', title: '瞬時の計算実行', desc: '数値を入力するとページを再読み込みすることなくミリ秒単位で結果を計算' },
+    { icon: '🔒', title: '確かなプライバシー', desc: '全処理がお使いのブラウザ内で完結し、外部サーバーに入力データが保存されません' },
+    { icon: '📱', title: 'マルチデバイス最適化', desc: 'スマートフォン、タブレット、ノートPC、大画面デスクトップで快適に動作' },
+    { icon: '💯', title: '完全無料・登録不要', desc: 'ログインや会員登録なしで、すべての計算機能を無制限に利用可能' },
+    { icon: '🧩', title: '透明な計算ロジック', desc: '明確な数式と定義された変数により、常に信頼できる試算結果を提供' },
+    { icon: '♻️', title: '何度でも自由に変更', desc: '条件や数値を自在に変更して、複数のシミュレーションを即座に比較' }
+  ],
+  ko: [
+    { icon: '⚡', title: '즉각적인 연산 처리', desc: '값을 입력하는 즉시 페이지 새로고침 없이 수 밀리초 만에 결과를 산출합니다' },
+    { icon: '🔒', title: '완벽한 기기 내 보안', desc: '모든 연산이 브라우저 로컬에서 수행되며 서버로 데이터가 전송되지 않습니다' },
+    { icon: '📱', title: '모든 기기 완벽 호환', desc: '스마트폰, 태블릿, 노트북, 데스크톱 화면에 맞춰 최적화된 반응형 인터페이스' },
+    { icon: '💯', title: '100% 완전 무료 이용', desc: '회원가입, 로그인, 유료 결제 없이 무제한으로 모든 도구를 자유롭게 활용' },
+    { icon: '🧩', title: '투명하고 검증된 공식', desc: '명확한 변수 정의와 검증된 수학 공식을 통해 높은 신뢰도의 결과 제공' },
+    { icon: '♻️', title: '자유로운 반복 계산', desc: '언제든 입력값을 변경하여 다양한 조건의 계산을 실시간으로 다시 확인' }
+  ]
+};
+
+const features = featureTemplates[validLang] || featureTemplates.en;
 ---
 
 <div class="space-y-8">
@@ -124,7 +537,7 @@ const features = [
   <!-- Overview Section -->
   <div class="space-y-3">
     <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-      <span>📖</span> About the {calculatorName}
+      <span>📖</span> {labels.about(calculatorName)}
     </h2>
 
     <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300">
@@ -136,7 +549,7 @@ const features = [
   {translation?.formulaEquation && (
     <div class="space-y-3 rounded-2xl border border-blue-200/80 bg-linear-to-br from-blue-50/50 to-indigo-50/30 p-5 dark:border-blue-900/40 dark:from-slate-900 dark:to-blue-950/20">
       <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">
-        <span>📐</span> {translation.formulaTitle || 'Mathematical Formula'}
+        <span>📐</span> {translation.formulaTitle || labels.formula}
       </div>
       <div class="rounded-xl border border-blue-200 bg-white p-3.5 font-mono text-xs sm:text-sm font-bold text-blue-950 dark:border-blue-900/60 dark:bg-slate-950 dark:text-blue-200 overflow-x-auto shadow-2xs">
         <code>{translation.formulaEquation}</code>
@@ -153,15 +566,15 @@ const features = [
   {translation?.variables && translation.variables.length > 0 && (
     <div class="space-y-3">
       <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-        <span>📋</span> Variable Definitions
+        <span>📋</span> {labels.variables}
       </h3>
       <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900/70">
         <table class="w-full text-left text-xs">
           <thead class="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 font-bold">
             <tr>
-              <th class="p-2.5">Symbol</th>
-              <th class="p-2.5">Variable Name</th>
-              <th class="p-2.5">Description</th>
+              <th class="p-2.5">{labels.symbol}</th>
+              <th class="p-2.5">{labels.variableName}</th>
+              <th class="p-2.5">{labels.description}</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 text-slate-600 dark:text-slate-300">
@@ -182,7 +595,7 @@ const features = [
   {translation?.stepByStep && translation.stepByStep.length > 0 && (
     <div class="space-y-3">
       <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-        <span>🔢</span> Step-by-Step Calculation Guide
+        <span>🔢</span> {labels.stepByStep}
       </h3>
       <ol class="space-y-2 list-decimal list-inside text-xs leading-relaxed text-slate-700 dark:text-slate-300">
         {translation.stepByStep.map((s) => (
@@ -205,11 +618,11 @@ const features = [
   {translation?.workedExample && (translation.workedExample.scenario || translation.workedExample.calculation) && (
     <div class="space-y-3 rounded-2xl border border-emerald-200/80 bg-emerald-50/40 p-5 dark:border-emerald-900/40 dark:bg-emerald-950/20">
       <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
-        <span>💡</span> {translation.workedExample.title || 'Worked Practical Example'}
+        <span>💡</span> {translation.workedExample.title || labels.workedExample}
       </div>
       {translation.workedExample.scenario && (
         <p class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
-          <strong>Scenario:</strong> {translation.workedExample.scenario}
+          <strong>{labels.scenario}</strong> {translation.workedExample.scenario}
         </p>
       )}
       {translation.workedExample.calculation && (
@@ -219,7 +632,7 @@ const features = [
       )}
       {translation.workedExample.result && (
         <p class="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
-          <strong>Result:</strong> {translation.workedExample.result}
+          <strong>{labels.result}</strong> {translation.workedExample.result}
         </p>
       )}
     </div>
@@ -228,7 +641,7 @@ const features = [
   <!-- Why Use This Tool/Calculator -->
   <div class="space-y-4">
     <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-      <span>✨</span> Why Use This {toolKind}?
+      <span>✨</span> {labels.whyUse(toolKind)}
     </h2>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -249,7 +662,7 @@ const features = [
   <!-- Common Practical Use Cases -->
   <div class="space-y-3">
     <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-      <span>🎯</span> Common Use Cases
+      <span>🎯</span> {labels.commonUseCases}
     </h2>
 
     <ul class="space-y-2 text-xs text-slate-700 dark:text-slate-300">
@@ -265,25 +678,25 @@ const features = [
   <!-- Official Domain Disclaimers & Limitations -->
   <div class="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-900/40 dark:bg-amber-950/20 space-y-2">
     <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
-      <span>⚠️</span> Important Guidance &amp; Disclaimers
+      <span>⚠️</span> {labels.disclaimers}
     </div>
     <div class="space-y-1.5 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
       {isHealth && (
-        <p>• <strong>Medical Notice:</strong> Calculations are provided for educational and wellness awareness based on published clinical formulas (such as WHO, CDC, and Mifflin-St Jeor). They do not replace professional medical diagnosis, laboratory testing, or physician consultation.</p>
+        <p>• {labels.medicalNotice}</p>
       )}
       {isFinance && (
-        <p>• <strong>Financial Notice:</strong> Results are estimates intended for personal planning and budgeting. Actual loan terms, tax obligations, and market yields depend on lender conditions and tax authorities. Consult a certified financial planner or tax advisor for binding decisions.</p>
+        <p>• {labels.financialNotice}</p>
       )}
       {isConstruction && (
-        <p>• <strong>Engineering Notice:</strong> Quantities follow standard civil engineering ratios (IS 456 / CPWD thumb rules). Always account for 5–10% on-site wastage and obtain formal structural approval from a licensed engineer before procurement.</p>
+        <p>• {labels.engineeringNotice}</p>
       )}
       {isCompiler && (
-        <p>• <strong>Execution Notice:</strong> Code executes inside a sandboxed browser environment for instant learning and testing. It does not replace a native compiler toolchain for raw I/O or full system libraries.</p>
+        <p>• {labels.executionNotice}</p>
       )}
       {(isImageTool || isPdfTool) && (
-        <p>• <strong>Privacy Guarantee:</strong> All document and image operations process locally on your device via HTML5 APIs. No files are uploaded to our servers.</p>
+        <p>• {labels.privacyGuarantee}</p>
       )}
-      <p>• Always double-check input parameters to ensure mathematical accuracy.</p>
+      <p>• {labels.disclaimerVerify}</p>
     </div>
   </div>
 

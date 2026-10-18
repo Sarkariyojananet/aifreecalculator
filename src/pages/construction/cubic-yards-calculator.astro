@@ -1,0 +1,1518 @@
+---
+import CalculatorLayout from "../../layouts/CalculatorLayout.astro";
+import CalculatorActionBar from "../../components/CalculatorActionBar.astro";
+import { extractLocaleFromPath, getLocalizedPath } from "../../i18n/utils";
+import { isValidLocale, type Locale } from "../../i18n/config";
+import { getCalculatorTranslation } from "../../i18n/translations/calculators";
+import uiDict from "../../data/cubic-yards-ui.json";
+
+const localsLang = (Astro.locals as any)?.locale;
+const originalPath = (Astro.locals as any)?.originalPath;
+const urlQueryLang = Astro.url.searchParams.get("lang");
+const detectedLang = extractLocaleFromPath(
+  originalPath || Astro.url.pathname,
+).lang;
+const candidateLang =
+  (localsLang && isValidLocale(localsLang) ? (localsLang as Locale) : null) ||
+  (urlQueryLang && isValidLocale(urlQueryLang) ? (urlQueryLang as Locale) : null) ||
+  detectedLang;
+const lang: Locale = isValidLocale(candidateLang) ? candidateLang : "en";
+
+const t = getCalculatorTranslation("cubic-yards-calculator", lang);
+const curT = (uiDict as any)[lang] || (uiDict as any).en;
+
+const homeHref = getLocalizedPath("/", lang);
+const concreteCalcHref = getLocalizedPath("/construction/concrete-calculator/", lang);
+const sqFtCalcHref = getLocalizedPath("/construction/square-footage-calculator/", lang);
+const contactHref = `${getLocalizedPath("/contact/", lang)}#calc=cubic-yards-calculator&name=${encodeURIComponent(t.name)}&type=bug`;
+---
+
+<CalculatorLayout
+  title={t.metaTitle}
+  description={t.metaDescription}
+  category="Construction"
+  calculatorName={t.name}
+  slug="cubic-yards-calculator"
+  hideActionBar={true}
+  hideFeedback={true}
+  keywords={[
+    "cubic yards calculator",
+    "calculate cubic yards",
+    "cubic yards to cubic feet",
+    "cubic feet to cubic yards",
+    "square feet to cubic yards with depth",
+    "cubic yard calculator for concrete",
+    "cubic yard calculator for mulch",
+    "gravel volume calculator",
+    "soil volume calculator",
+    "cubic yards of material",
+    "cubic yard coverage",
+    "bags per cubic yard"
+  ]}
+>
+  <div class="space-y-8">
+
+    <!-- HERO HEADER & INTRO -->
+    <div class="rounded-3xl border border-slate-200/90 bg-linear-to-r from-amber-50/70 via-orange-50/40 to-white p-5 dark:border-slate-800 dark:from-slate-900 dark:via-amber-950/20 dark:to-slate-900 sm:p-6 shadow-xs">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center gap-2 rounded-full bg-amber-100/90 px-3 py-1 text-xs font-bold text-amber-900 dark:bg-amber-900/60 dark:text-amber-200 mb-2">
+            <span>📦</span> {curT.heroTag}
+          </div>
+          <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            {t.h1}
+          </h1>
+          <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl">
+            {t.shortDescription}
+          </p>
+        </div>
+
+        <div class="shrink-0 flex items-center gap-2.5 rounded-2xl border border-slate-200/80 bg-white/95 p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-950/80 text-xs">
+          <span class="text-2xl">📐</span>
+          <div>
+            <div class="font-bold text-slate-800 dark:text-slate-200">{curT.badgeShapes}</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">{curT.badgeSupport}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INSTRUCTION NOTICE BAR -->
+      <div class="mt-4 flex items-center justify-center gap-2 rounded-xl bg-amber-800 px-4 py-2.5 text-xs font-bold text-white shadow-xs dark:bg-amber-900">
+        <span class="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 text-xs">▼</span>
+        <span>{curT.instructionBar}</span>
+      </div>
+    </div>
+
+    <!-- MAIN CALCULATOR WORKSPACE -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- LEFT COLUMN: INPUT CARD (Matching Reference Image) (7 Cols) -->
+      <div class="lg:col-span-7 space-y-6">
+
+        <div class="rounded-2xl border border-slate-300/80 bg-[#f4f4f4] dark:bg-slate-900 dark:border-slate-800 shadow-sm overflow-hidden">
+          
+          <!-- Terracotta / Brown Card Top Header (Matching Reference Image) -->
+          <div class="bg-[#A3523B] dark:bg-[#8C432F] px-4 py-2.5 text-center text-white font-bold text-sm tracking-wide shadow-xs">
+            {curT.calcCardHeader}
+          </div>
+
+          <div class="p-5 sm:p-6 space-y-5">
+            
+            <!-- Shape Dropdown Selector -->
+            <div>
+              <label for="sel-shape" class="block text-center text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200 mb-2">
+                {curT.selectShapePrompt}
+              </label>
+              <select 
+                id="sel-shape" 
+                class="w-full sm:w-72 mx-auto block rounded-lg border border-slate-400 bg-white px-3 py-2 text-xs sm:text-sm font-bold text-slate-800 shadow-2xs focus:border-amber-600 focus:ring-2 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+              >
+                <option value="rectangle" selected>{curT.shapeNames.rectangle}</option>
+                <option value="square">{curT.shapeNames.square}</option>
+                <option value="rectangle-border">{curT.shapeNames["rectangle-border"]}</option>
+                <option value="circle">{curT.shapeNames.circle}</option>
+                <option value="circle-border">{curT.shapeNames["circle-border"]}</option>
+                <option value="annulus">{curT.shapeNames.annulus}</option>
+                <option value="triangle-base">{curT.shapeNames["triangle-base"]}</option>
+                <option value="triangle-sides">{curT.shapeNames["triangle-sides"]}</option>
+                <option value="trapezoid">{curT.shapeNames.trapezoid}</option>
+                <option value="direct-area">{curT.shapeNames["direct-area"]}</option>
+              </select>
+            </div>
+
+            <!-- DYNAMIC INPUT FIELDS CONTAINER -->
+            <div id="dynamic-shape-inputs" class="space-y-3 pt-2">
+              <div class="flex items-center justify-end gap-2 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+                <label for="inp-depth" class="shrink-0">{curT.labels.depth}</label>
+                <input type="number" id="inp-depth" value="4" min="0" step="any" placeholder="4" class="w-24 sm:w-28 rounded-md border border-slate-400 bg-white px-2.5 py-1.5 text-center font-bold text-slate-900 shadow-2xs focus:border-amber-600 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                <select id="inp-depth-unit" class="w-16 shrink-0 rounded-md border border-slate-400 bg-white px-1.5 py-1.5 text-xs font-bold text-slate-800 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                  <option value="in" selected>in</option>
+                  <option value="ft">ft</option>
+                  <option value="yd">yd</option>
+                  <option value="cm">cm</option>
+                  <option value="m">m</option>
+                </select>
+              </div>
+              <div class="flex items-center justify-end gap-2 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+                <label for="inp-length" class="shrink-0">{curT.labels.length}</label>
+                <input type="number" id="inp-length" value="12" min="0" step="any" placeholder="12" class="w-24 sm:w-28 rounded-md border border-slate-400 bg-white px-2.5 py-1.5 text-center font-bold text-slate-900 shadow-2xs focus:border-amber-600 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                <select id="inp-length-unit" class="w-16 shrink-0 rounded-md border border-slate-400 bg-white px-1.5 py-1.5 text-xs font-bold text-slate-800 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                  <option value="in">in</option>
+                  <option value="ft" selected>ft</option>
+                  <option value="yd">yd</option>
+                  <option value="cm">cm</option>
+                  <option value="m">m</option>
+                </select>
+              </div>
+              <div class="flex items-center justify-end gap-2 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+                <label for="inp-width" class="shrink-0">{curT.labels.width}</label>
+                <input type="number" id="inp-width" value="10" min="0" step="any" placeholder="10" class="w-24 sm:w-28 rounded-md border border-slate-400 bg-white px-2.5 py-1.5 text-center font-bold text-slate-900 shadow-2xs focus:border-amber-600 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                <select id="inp-width-unit" class="w-16 shrink-0 rounded-md border border-slate-400 bg-white px-1.5 py-1.5 text-xs font-bold text-slate-800 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer">
+                  <option value="in">in</option>
+                  <option value="ft" selected>ft</option>
+                  <option value="yd">yd</option>
+                  <option value="cm">cm</option>
+                  <option value="m">m</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- QUANTITY MULTIPLIER -->
+            <div class="flex items-center justify-end gap-2 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
+              <label for="inp-quantity" class="shrink-0">{curT.labels.quantity}</label>
+              <input 
+                type="number" 
+                id="inp-quantity" 
+                value="1" 
+                min="1" 
+                max="1000" 
+                step="1"
+                class="w-24 sm:w-28 rounded-md border border-slate-400 bg-white px-2.5 py-1.5 text-center font-bold text-slate-900 shadow-2xs focus:border-amber-600 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              />
+              <span class="w-16 shrink-0"></span>
+            </div>
+
+            <!-- WASTE FACTOR SELECTOR (Optional) -->
+            <div class="rounded-xl border border-slate-300/80 bg-white/80 p-3.5 dark:border-slate-800 dark:bg-slate-800/60 text-xs sm:text-sm">
+              <div class="flex items-center justify-between mb-1.5">
+                <label for="sel-waste" class="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                  <span>📐</span> {curT.labels.waste}
+                </label>
+                <span class="text-[11px] text-slate-500 dark:text-slate-400">Optional</span>
+              </div>
+              <select 
+                id="sel-waste" 
+                class="w-full rounded-md border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-800 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+              >
+                <option value="0" selected>{curT.wasteOptions.w0}</option>
+                <option value="5">{curT.wasteOptions.w5}</option>
+                <option value="10">{curT.wasteOptions.w10}</option>
+                <option value="15">{curT.wasteOptions.w15}</option>
+                <option value="20">{curT.wasteOptions.w20}</option>
+                <option value="custom">{curT.wasteOptions.custom}</option>
+              </select>
+              <div id="custom-waste-wrap" class="mt-2 hidden">
+                <div class="flex items-center gap-2">
+                  <input 
+                    type="number" 
+                    id="inp-custom-waste" 
+                    value="10" 
+                    min="0" 
+                    max="100" 
+                    step="any"
+                    class="w-24 rounded-md border border-slate-300 px-2.5 py-1 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" 
+                  />
+                  <span class="text-xs text-slate-600 dark:text-slate-400">% extra volume</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- OPTIONAL COST CALCULATION (Matching Reference Image) -->
+            <fieldset class="rounded-xl border border-slate-300/90 bg-white/80 p-3.5 dark:border-slate-700 dark:bg-slate-800/50">
+              <legend class="px-2 text-xs italic font-medium text-slate-600 dark:text-slate-300">
+                {curT.labels.costTitle}
+              </legend>
+
+              <div class="mt-1 flex flex-wrap items-center justify-center gap-2 text-xs sm:text-sm">
+                
+                <!-- Currency Selector -->
+                <select 
+                  id="sel-currency" 
+                  class="rounded-md border border-slate-300 bg-white px-2 py-1.5 font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+                >
+                  <option value="$" selected>$</option>
+                  <option value="€">€</option>
+                  <option value="£">£</option>
+                  <option value="₹">₹</option>
+                  <option value="¥">¥</option>
+                  <option value="₩">₩</option>
+                </select>
+
+                <!-- Price Input Box -->
+                <div class="flex flex-col items-center">
+                  <span class="text-[11px] italic text-slate-500 mb-0.5">price</span>
+                  <input 
+                    type="number" 
+                    id="inp-price" 
+                    placeholder="0" 
+                    min="0" 
+                    step="any" 
+                    class="w-24 sm:w-28 rounded-md border border-slate-400 bg-white px-2.5 py-1 text-center font-bold text-slate-900 shadow-2xs focus:border-amber-600 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  />
+                </div>
+
+                <!-- Price Unit Dropdown -->
+                <div class="flex flex-col items-start">
+                  <span class="text-[11px] italic text-slate-500 mb-0.5">per cubic / bag</span>
+                  <select 
+                    id="sel-price-unit" 
+                    class="rounded-md border border-slate-400 bg-white px-2.5 py-1 font-semibold text-slate-800 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer"
+                  >
+                    <option value="yd3" selected>{curT.priceUnits.cuYd}</option>
+                    <option value="ft3">{curT.priceUnits.cuFt}</option>
+                    <option value="m3">{curT.priceUnits.cuM}</option>
+                    <option value="bag20">{curT.priceUnits.bag20}</option>
+                    <option value="bag15">{curT.priceUnits.bag15}</option>
+                    <option value="bag05">{curT.priceUnits.bag05}</option>
+                  </select>
+                </div>
+
+              </div>
+            </fieldset>
+
+            <!-- ACTION BUTTONS -->
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+              <button 
+                type="button" 
+                id="btn-calculate" 
+                class="flex-1 min-w-40 rounded-xl bg-amber-700 hover:bg-amber-800 px-5 py-2.5 text-xs sm:text-sm font-bold text-white shadow-sm transition active:scale-[0.98] text-center"
+              >
+                {curT.buttons.calculate}
+              </button>
+              <button 
+                type="button" 
+                id="btn-reset" 
+                class="rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
+              >
+                {curT.buttons.reset}
+              </button>
+            </div>
+
+            <!-- Friendly localized error banner -->
+            <div id="calc-error-banner" class="hidden rounded-xl border border-red-200 bg-red-50 p-3 text-xs font-semibold text-red-800 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300">
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: SHAPE DIAGRAM & RESULTS (5 Cols) -->
+      <div class="lg:col-span-5 space-y-6">
+
+        <!-- LIVE SHAPE DIAGRAM CARD -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 shadow-xs flex flex-col items-center">
+          <div class="w-full flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800 mb-3 text-xs font-bold text-slate-600 dark:text-slate-300">
+            <span>📐 Selected Shape Geometry</span>
+            <span id="diagram-shape-badge" class="font-mono text-amber-700 dark:text-amber-400">Rectangle</span>
+          </div>
+          <div id="shape-diagram-container" class="w-full h-48 sm:h-52 flex items-center justify-center p-2">
+            <svg viewBox="0 0 240 160" class="w-full h-full max-h-48" xmlns="http://www.w3.org/2000/svg">
+              <polygon points="40,95 70,55 200,55 170,95" fill="#BFDBFE" stroke="#2563EB" stroke-width="1.5" />
+              <polygon points="170,95 200,55 200,85 170,125" fill="#93C5FD" stroke="#2563EB" stroke-width="1.5" />
+              <rect x="40" y="95" width="130" height="30" fill="#3B82F6" stroke="#1D4ED8" stroke-width="2" />
+              <line x1="40" y1="135" x2="170" y2="135" stroke="#334155" stroke-width="1.5" />
+              <text x="105" y="148" text-anchor="middle" font-size="10" font-weight="bold" fill="#334155">Length</text>
+              <line x1="180" y1="95" x2="210" y2="55" stroke="#334155" stroke-width="1.5" />
+              <text x="205" y="75" text-anchor="start" font-size="10" font-weight="bold" fill="#334155">Width</text>
+              <line x1="25" y1="95" x2="25" y2="125" stroke="#D97706" stroke-width="1.5" />
+              <text x="18" y="113" text-anchor="end" font-size="10" font-weight="bold" fill="#D97706">Depth</text>
+            </svg>
+          </div>
+          <div id="diagram-caption" class="mt-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+            Geometric Dimension Guide
+          </div>
+        </div>
+
+        <!-- RESULTS DISPLAY CARD -->
+        <div id="results-section" data-calculator-results class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
+            <h2 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+              <span>📊</span> {curT.results.summaryTitle}
+            </h2>
+            <div class="flex items-center gap-1.5">
+              <button 
+                type="button" 
+                id="btn-copy-result" 
+                class="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 transition"
+              >
+                {curT.buttons.copy}
+              </button>
+              <button 
+                type="button" 
+                id="btn-print-report" 
+                class="rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 transition"
+              >
+                🖨️
+              </button>
+            </div>
+          </div>
+
+          <!-- PRIMARY RESULT: CUBIC YARDS -->
+          <div class="rounded-xl border border-amber-300 bg-linear-to-br from-amber-500/10 via-orange-500/5 to-white p-4 dark:border-amber-800/60 dark:from-amber-950/40 dark:to-slate-900 text-center">
+            <div class="text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-300">
+              {curT.results.primaryLabel}
+            </div>
+            <div class="mt-1 font-mono text-3xl sm:text-4xl font-black text-amber-700 dark:text-amber-400" id="res-cubic-yards">
+              1.48 yd³
+            </div>
+            <div class="mt-1 text-xs text-slate-500 dark:text-slate-400" id="res-cubic-yards-sub">
+              Net Volume: 1.4815 yd³
+            </div>
+          </div>
+
+          <!-- SECONDARY VOLUMES: CU FT & CU METERS & AREA -->
+          <div class="grid grid-cols-2 gap-2.5 text-xs">
+            <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-800/50">
+              <div class="font-bold text-slate-500 dark:text-slate-400">{curT.results.cuFtLabel}</div>
+              <div class="mt-1 font-mono text-base font-bold text-slate-900 dark:text-white" id="res-cubic-feet">
+                40.00 ft³
+              </div>
+            </div>
+            <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-800/50">
+              <div class="font-bold text-slate-500 dark:text-slate-400">{curT.results.cuMLabel}</div>
+              <div class="mt-1 font-mono text-base font-bold text-slate-900 dark:text-white" id="res-cubic-meters">
+                1.13 m³
+              </div>
+            </div>
+            <div class="col-span-2 rounded-xl border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-800 dark:bg-slate-800/50 flex items-center justify-between">
+              <div>
+                <div class="font-bold text-slate-500 dark:text-slate-400">{curT.results.areaLabel}</div>
+                <div class="mt-0.5 font-mono text-xs font-bold text-slate-800 dark:text-slate-200" id="res-area">
+                  120.00 sq ft (11.15 m²)
+                </div>
+              </div>
+              <div id="res-depth-pill" class="rounded-lg bg-amber-100 px-2.5 py-1 text-[11px] font-bold text-amber-900 dark:bg-amber-900/60 dark:text-amber-200">
+                Depth: 4 in (0.33 ft)
+              </div>
+            </div>
+          </div>
+
+          <!-- WITH WASTE ALLOWANCE -->
+          <div id="waste-result-card" class="hidden rounded-xl border border-orange-200 bg-orange-50/60 p-3 dark:border-orange-900/40 dark:bg-orange-950/30 text-xs">
+            <div class="font-bold text-orange-900 dark:text-orange-200 flex items-center justify-between">
+              <span>📦 {curT.results.withWasteLabel}:</span>
+              <span id="res-waste-pct" class="font-mono text-xs">10% Waste</span>
+            </div>
+            <div class="mt-1.5 flex items-baseline justify-between font-mono">
+              <span class="text-base font-black text-orange-700 dark:text-orange-300" id="res-gross-yards">1.63 yd³</span>
+              <span class="text-xs font-semibold text-slate-600 dark:text-slate-300" id="res-gross-feet">(44.00 ft³)</span>
+            </div>
+          </div>
+
+          <!-- MATERIAL COST & BAG ESTIMATE -->
+          <div id="cost-result-card" class="hidden rounded-xl border border-emerald-200 bg-emerald-50/70 p-3.5 dark:border-emerald-900/40 dark:bg-emerald-950/30 text-xs space-y-1.5">
+            <div class="font-bold text-emerald-900 dark:text-emerald-200 flex items-center justify-between">
+              <span>💰 {curT.results.costLabel}:</span>
+              <span class="font-mono text-lg font-black text-emerald-700 dark:text-emerald-400" id="res-total-cost">$0.00</span>
+            </div>
+            <div class="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-300 pt-1 border-t border-emerald-200/60 dark:border-emerald-900/30">
+              <span>{curT.results.bagsLabel} (2.0 cu ft):</span>
+              <span class="font-bold font-mono text-slate-800 dark:text-slate-200" id="res-bag-count">20 bags</span>
+            </div>
+          </div>
+
+          <!-- STEP-BY-STEP BREAKDOWN -->
+          <details class="group rounded-xl border border-slate-200 bg-slate-50/60 p-3 dark:border-slate-800 dark:bg-slate-900/40 text-xs">
+            <summary class="cursor-pointer font-bold text-slate-800 dark:text-slate-200 flex items-center justify-between">
+              <span>🧮 {curT.results.breakdownTitle}</span>
+              <span class="text-slate-400 group-open:rotate-180 transition-transform">▼</span>
+            </summary>
+            <div class="mt-2.5 pt-2 border-t border-slate-200 dark:border-slate-800 space-y-2 font-mono text-[11px] text-slate-700 dark:text-slate-300" id="res-step-breakdown">
+            </div>
+          </details>
+
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- SAVE, SHARE & SUPPORT CARD (Below the entire calculator tool, full width) -->
+    <CalculatorActionBar
+      calculatorName={t.name}
+      slug="cubic-yards-calculator"
+      category="Construction"
+      lang={lang}
+      contactHref={contactHref}
+      noTopBorder={true}
+    />
+
+  </div>
+
+  <!-- EDUCATIONAL GUIDES, TABLES & VISUAL COMPARISONS -->
+  <Fragment slot="content">
+    <div class="space-y-8">
+
+
+
+    <!-- EDUCATIONAL SECTION 2: HOW TO CALCULATE CUBIC YARDS + WORKED EXAMPLE -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-6">
+      <div>
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+          {curT.sections.howToTitle}
+        </h2>
+        <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+          Follow these sequential mathematical steps to calculate cubic yardage accurately for any construction or landscaping surface:
+        </p>
+      </div>
+
+      <ol class="list-decimal list-inside space-y-2.5 text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        {curT.sections.howToSteps.map((step: string) => (
+          <li><span>{step}</span></li>
+        ))}
+      </ol>
+
+      <!-- Worked Practical Example Card -->
+      <div class="rounded-2xl border border-amber-200/90 bg-linear-to-r from-amber-50/70 via-orange-50/40 to-white p-5 dark:border-amber-900/40 dark:from-slate-900 dark:to-slate-900 space-y-2">
+        <div class="font-bold text-amber-900 dark:text-amber-200 text-sm flex items-center gap-2">
+          <span>📐</span> {curT.sections.exampleTitle}
+        </div>
+        <p class="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+          {curT.sections.exampleText}
+        </p>
+      </div>
+    </div>
+
+    <!-- EDUCATIONAL SECTION 3: CONVERTING CUBIC FEET TO CUBIC YARDS & SHORTCUT FORMULA -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-4">
+      <h2 class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+        <span>🔄</span> {curT.sections.convertingTitle}
+      </h2>
+      <p class="text-xs sm:text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+        {curT.sections.convertingText1}
+      </p>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 font-mono text-xs">
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-950 text-center">
+          <div class="text-slate-500 text-[11px] font-sans">Basic Imperial Volume Conversion</div>
+          <div class="text-sm font-bold text-blue-600 dark:text-blue-400 mt-1">Cubic Yards = Cubic Feet ÷ 27</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">Example: 54 ft³ ÷ 27 = 2 yd³</div>
+        </div>
+        <div class="rounded-xl border border-slate-200 bg-slate-50 p-3.5 dark:border-slate-800 dark:bg-slate-950 text-center">
+          <div class="text-slate-500 text-[11px] font-sans">Direct Square Footage with Depth Shortcut</div>
+          <div class="text-sm font-bold text-blue-600 dark:text-blue-400 mt-1">yd³ = (Square Feet × Depth in Inches) ÷ 324</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">Example: (120 sq ft × 4 in) ÷ 324 ≈ 1.48 yd³</div>
+        </div>
+      </div>
+
+      <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+        {curT.sections.convertingText2}
+      </p>
+    </div>
+
+    <!-- EDUCATIONAL SECTION 4: REFERENCE TABLES -->
+    <div class="space-y-6">
+
+      <!-- Table 1: Coverage per Cubic Yard by Depth -->
+      <div class="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-4">
+        <div>
+          <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📊</span> {curT.sections.coverageTableTitle}
+          </h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-300">
+            Formula: <code>Coverage (ft²) = 324 ÷ Depth (inches)</code>. Theoretical uniform layer estimates:
+          </p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60 text-slate-700 dark:text-slate-200 font-bold">
+                <th class="p-3">{curT.sections.coverageDepthTh}</th>
+                <th class="p-3 text-right">{curT.sections.coverageAreaTh}</th>
+                <th class="p-3 text-right hidden sm:table-cell">Metric Area (m²)</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-300">
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">1 inch (2.54 cm)</td>
+                <td class="p-3 text-right font-mono font-bold text-blue-600 dark:text-blue-400">324 ft²</td>
+                <td class="p-3 text-right font-mono hidden sm:table-cell">30.10 m²</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">2 inches (5.08 cm)</td>
+                <td class="p-3 text-right font-mono font-bold text-blue-600 dark:text-blue-400">162 ft²</td>
+                <td class="p-3 text-right font-mono hidden sm:table-cell">15.05 m²</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">3 inches (7.62 cm)</td>
+                <td class="p-3 text-right font-mono font-bold text-blue-600 dark:text-blue-400">108 ft²</td>
+                <td class="p-3 text-right font-mono hidden sm:table-cell">10.03 m²</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">4 inches (10.16 cm)</td>
+                <td class="p-3 text-right font-mono font-bold text-blue-600 dark:text-blue-400">81 ft²</td>
+                <td class="p-3 text-right font-mono hidden sm:table-cell">7.53 m²</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">6 inches (15.24 cm)</td>
+                <td class="p-3 text-right font-mono font-bold text-blue-600 dark:text-blue-400">54 ft²</td>
+                <td class="p-3 text-right font-mono hidden sm:table-cell">5.02 m²</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">12 inches (30.48 cm / 1 foot)</td>
+                <td class="p-3 text-right font-mono font-bold text-blue-600 dark:text-blue-400">27 ft²</td>
+                <td class="p-3 text-right font-mono hidden sm:table-cell">2.51 m²</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Table 2: Square Feet to Cubic Yards by Depth -->
+      <div class="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-4">
+        <div>
+          <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📐</span> {curT.sections.sqftTableTitle}
+          </h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-300">
+            Formula: <code>yd³ = Area (ft²) × Depth (in) ÷ 324</code>:
+          </p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60 text-slate-700 dark:text-slate-200 font-bold">
+                <th class="p-3">Surface Area (ft²)</th>
+                <th class="p-3 text-right">2 Inches Depth</th>
+                <th class="p-3 text-right">3 Inches Depth</th>
+                <th class="p-3 text-right">4 Inches Depth</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-300">
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">100 ft²</td>
+                <td class="p-3 text-right font-mono">0.62 yd³</td>
+                <td class="p-3 text-right font-mono">0.93 yd³</td>
+                <td class="p-3 text-right font-mono font-bold text-amber-700 dark:text-amber-400">1.23 yd³</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">200 ft²</td>
+                <td class="p-3 text-right font-mono">1.23 yd³</td>
+                <td class="p-3 text-right font-mono">1.85 yd³</td>
+                <td class="p-3 text-right font-mono font-bold text-amber-700 dark:text-amber-400">2.47 yd³</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">300 ft²</td>
+                <td class="p-3 text-right font-mono">1.85 yd³</td>
+                <td class="p-3 text-right font-mono">2.78 yd³</td>
+                <td class="p-3 text-right font-mono font-bold text-amber-700 dark:text-amber-400">3.70 yd³</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">500 ft²</td>
+                <td class="p-3 text-right font-mono">3.09 yd³</td>
+                <td class="p-3 text-right font-mono">4.63 yd³</td>
+                <td class="p-3 text-right font-mono font-bold text-amber-700 dark:text-amber-400">6.17 yd³</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">1,000 ft²</td>
+                <td class="p-3 text-right font-mono">6.17 yd³</td>
+                <td class="p-3 text-right font-mono">9.26 yd³</td>
+                <td class="p-3 text-right font-mono font-bold text-amber-700 dark:text-amber-400">12.35 yd³</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Table 3: Bags per Cubic Yard -->
+      <div class="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-4">
+        <div>
+          <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🛍️</span> {curT.sections.bagsTableTitle}
+          </h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-300">
+            Formula: <code>Bags Required = 27 ÷ Bag Size in ft³</code>. Round up to whole bags for real orders:
+          </p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60 text-slate-700 dark:text-slate-200 font-bold">
+                <th class="p-3">{curT.sections.bagsSizeTh}</th>
+                <th class="p-3 text-right">{curT.sections.bagsCountTh}</th>
+                <th class="p-3 text-slate-500 hidden sm:table-cell">Common Commercial Bagged Material</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-300">
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">0.5 cu ft</td>
+                <td class="p-3 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">54 bags</td>
+                <td class="p-3 text-slate-500 hidden sm:table-cell">Decorative pea gravel, marble chips, dry sand</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">0.75 cu ft</td>
+                <td class="p-3 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">36 bags</td>
+                <td class="p-3 text-slate-500 hidden sm:table-cell">Specialty potting soil, enriched compost</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">1.0 cu ft</td>
+                <td class="p-3 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">27 bags</td>
+                <td class="p-3 text-slate-500 hidden sm:table-cell">Standard garden soil, topsoil, manure blend</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">1.5 cu ft</td>
+                <td class="p-3 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">18 bags</td>
+                <td class="p-3 text-slate-500 hidden sm:table-cell">Commercial soil blends, medium mulch bags</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">2.0 cu ft</td>
+                <td class="p-3 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">13.5 bags (order 14)</td>
+                <td class="p-3 text-slate-500 hidden sm:table-cell">Most common home center wood mulch bags</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">3.0 cu ft</td>
+                <td class="p-3 text-right font-mono font-bold text-emerald-600 dark:text-emerald-400">9 bags</td>
+                <td class="p-3 text-slate-500 hidden sm:table-cell">Large shredded hardwood mulch, compressed peat moss</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Table 4: Recommended Depths by Project Type -->
+      <div class="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-4">
+        <div>
+          <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🎯</span> {curT.sections.recDepthsTitle}
+          </h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-300">
+            Standard starting guidelines for residential and landscape projects:
+          </p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60 text-slate-700 dark:text-slate-200 font-bold">
+                <th class="p-3">{curT.sections.recDepthsThProject}</th>
+                <th class="p-3">{curT.sections.recDepthsThDepth}</th>
+                <th class="p-3">{curT.sections.recDepthsThNotes}</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-300">
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">Garden mulch beds</td>
+                <td class="p-3 font-mono text-amber-700 dark:text-amber-400">2–3 inches</td>
+                <td class="p-3 text-slate-600 dark:text-slate-300">Keep mulch away from stems and tree bark to prevent rot.</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">Tree rings</td>
+                <td class="p-3 font-mono text-amber-700 dark:text-amber-400">2–3 inches</td>
+                <td class="p-3 text-slate-600 dark:text-slate-300">Leave a 3-inch mulch-free donut around the trunk flare.</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">Mulch garden paths</td>
+                <td class="p-3 font-mono text-amber-700 dark:text-amber-400">3–4 inches</td>
+                <td class="p-3 text-slate-600 dark:text-slate-300">Install durable landscape edging to contain displaced chips.</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">Playground safety mulch</td>
+                <td class="p-3 font-mono text-amber-700 dark:text-amber-400">8–12 inches</td>
+                <td class="p-3 text-slate-600 dark:text-slate-300">Preliminary range only; verify ASTM / local safety standards.</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">Gravel walking paths</td>
+                <td class="p-3 font-mono text-amber-700 dark:text-amber-400">3–4 inches</td>
+                <td class="p-3 text-slate-600 dark:text-slate-300">Lay landscape fabric beneath to suppress weeds and mud.</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">Gravel base beneath pavers</td>
+                <td class="p-3 font-mono text-amber-700 dark:text-amber-400">4–6 inches</td>
+                <td class="p-3 text-slate-600 dark:text-slate-300">Initial estimate; depth depends on vehicle load and subgrade soil.</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">Lawn topdressing</td>
+                <td class="p-3 font-mono text-amber-700 dark:text-amber-400">¼–½ inch</td>
+                <td class="p-3 text-slate-600 dark:text-slate-300">Aerate before applying thin layers to avoid smothering grass.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Table 5: Suggested Waste Allowance -->
+      <div class="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-4">
+        <div>
+          <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📐</span> {curT.sections.wasteTableTitle}
+          </h3>
+          <p class="mt-1 text-xs text-slate-600 dark:text-slate-300">
+            Illustrative allowances for uneven ground, settling, compaction, and spillage:
+          </p>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/60 text-slate-700 dark:text-slate-200 font-bold">
+                <th class="p-3">{curT.sections.wasteThProject}</th>
+                <th class="p-3 text-right">{curT.sections.wasteThAllowance}</th>
+                <th class="p-3">{curT.sections.wasteThReason}</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-medium text-slate-700 dark:text-slate-300">
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">Decorative Mulch</td>
+                <td class="p-3 text-right font-mono font-bold text-amber-700 dark:text-amber-400">5–10%</td>
+                <td class="p-3 text-slate-600 dark:text-slate-300">Irregular curved flowerbed borders and natural wood settling.</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">Gravel Paths &amp; Driveways</td>
+                <td class="p-3 text-right font-mono font-bold text-amber-700 dark:text-amber-400">10–15%</td>
+                <td class="p-3 text-slate-600 dark:text-slate-300">Mechanical roller compaction, tire tracking, and handling losses.</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">Stone Base Beneath Pavers</td>
+                <td class="p-3 text-right font-mono font-bold text-amber-700 dark:text-amber-400">10–15%</td>
+                <td class="p-3 text-slate-600 dark:text-slate-300">Plate tamper compaction and grading subbase variations.</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">Topsoil Grading &amp; Seeding</td>
+                <td class="p-3 text-right font-mono font-bold text-amber-700 dark:text-amber-400">5–10%</td>
+                <td class="p-3 text-slate-600 dark:text-slate-300">Filling low pockets, raking, and subsequent watering settling.</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">Concrete Slabs &amp; Footings</td>
+                <td class="p-3 text-right font-mono font-bold text-amber-700 dark:text-amber-400">~5%</td>
+                <td class="p-3 text-slate-600 dark:text-slate-300">Formwork deflection, subbase undulation, and chute spillage.</td>
+              </tr>
+              <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                <td class="p-3 font-bold">Playground Safety Mulch</td>
+                <td class="p-3 text-right font-mono font-bold text-amber-700 dark:text-amber-400">10–20%</td>
+                <td class="p-3 text-slate-600 dark:text-slate-300">Loose fiber compaction and initial displacement under high traffic.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- EDUCATIONAL SECTION 5: SHAPE FORMULAS WITH COMPACT DIAGRAMS -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-6">
+      <div>
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+          {curT.sections.formulasTitle}
+        </h2>
+        <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+          For every shape, dimensions are converted into consistent feet before multiplying area by depth:
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+        
+        <!-- Rectangle -->
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40 space-y-2">
+          <div class="font-bold text-slate-900 dark:text-white text-sm flex items-center justify-between">
+            <span>1. Rectangle</span>
+            <span class="font-mono text-blue-600 dark:text-blue-400">Area = L × W</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">
+            Volume = Area × Depth. Divided by 27 gives cubic yards.
+          </p>
+        </div>
+
+        <!-- Square -->
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40 space-y-2">
+          <div class="font-bold text-slate-900 dark:text-white text-sm flex items-center justify-between">
+            <span>2. Square</span>
+            <span class="font-mono text-blue-600 dark:text-blue-400">Area = Side²</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">
+            For equal sides. 3 ft × 3 ft × 3 ft = 27 ft³ = 1 yd³.
+          </p>
+        </div>
+
+        <!-- Rectangle Border -->
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40 space-y-2">
+          <div class="font-bold text-slate-900 dark:text-white text-sm flex items-center justify-between">
+            <span>3. Rectangle Border</span>
+            <span class="font-mono text-blue-600 dark:text-blue-400">Outer Area − Inner Area</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">
+            Outer Length = Inner Length + 2 × Border Width; Outer Width = Inner Width + 2 × Border Width.
+          </p>
+        </div>
+
+        <!-- Circle -->
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40 space-y-2">
+          <div class="font-bold text-slate-900 dark:text-white text-sm flex items-center justify-between">
+            <span>4. Circle</span>
+            <span class="font-mono text-blue-600 dark:text-blue-400">Area = π × (Diameter ÷ 2)²</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">
+            Calculated with high precision π. Volume = Area × Depth.
+          </p>
+        </div>
+
+        <!-- Circle Border & Annulus -->
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40 space-y-2">
+          <div class="font-bold text-slate-900 dark:text-white text-sm flex items-center justify-between">
+            <span>5. Annulus / Circle Border</span>
+            <span class="font-mono text-blue-600 dark:text-blue-400">π × (R_outer² − R_inner²)</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">
+            Ring around trees or circular fire pits. Outer diameter must exceed inner diameter.
+          </p>
+        </div>
+
+        <!-- Triangle -->
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40 space-y-2">
+          <div class="font-bold text-slate-900 dark:text-white text-sm flex items-center justify-between">
+            <span>6. Triangle</span>
+            <span class="font-mono text-blue-600 dark:text-blue-400">½ × Base × Height / Heron's</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">
+            Supports both Base-Height and 3-Sides Heron's formula with triangle inequality validation.
+          </p>
+        </div>
+
+        <!-- Trapezoid -->
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40 md:col-span-2 space-y-2">
+          <div class="font-bold text-slate-900 dark:text-white text-sm flex items-center justify-between">
+            <span>7. Trapezoid</span>
+            <span class="font-mono text-blue-600 dark:text-blue-400">Area = ½ × (Parallel a + Parallel b) × Height</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">
+            Ideal for tapered driveways, retaining wall backfill zones, and sloped bank flowerbeds.
+          </p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- EDUCATIONAL SECTION 6: CONSTRUCTION & LANDSCAPING APPLICATIONS & INTERNAL LINKS -->
+    <div class="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900 shadow-xs space-y-5">
+      <div>
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+          {curT.sections.useCasesTitle}
+        </h2>
+        <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+          How professional landscapers and builders apply cubic yard estimations on real jobsites:
+        </p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+          <div class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
+            <span>🍂</span> Mulch for Flowerbeds
+          </div>
+          <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+            Order bulk bark mulch by the cubic yard for extensive perimeter beds. A 3-inch depth provides weed suppression and retains soil moisture.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+          <div class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
+            <span>🌱</span> Soil &amp; Compost for Lawns
+          </div>
+          <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+            Calculate topsoil volume for lawn leveling, garden boxes, and grading slopes away from foundation walls to ensure proper drainage.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+          <div class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-1.5">
+            <span>🪨</span> Gravel &amp; Paver Aggregate
+          </div>
+          <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+            Crushed run gravel and sand beds under patios and driveways require precise volume calculations plus 10–15% compaction allowance.
+          </p>
+        </div>
+      </div>
+
+      <!-- Internal Cross-Links -->
+      <div class="pt-3 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <span class="font-semibold text-slate-700 dark:text-slate-300">
+          {curT.sections.relatedLinksTitle}:
+        </span>
+        <div class="flex flex-wrap items-center gap-2">
+          <a href={concreteCalcHref} class="rounded-xl border border-blue-200 bg-blue-50/80 px-3 py-1.5 font-bold text-blue-700 hover:bg-blue-100 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-300 transition">
+            🏗️ Concrete Calculator →
+          </a>
+          <a href={sqFtCalcHref} class="rounded-xl border border-blue-200 bg-blue-50/80 px-3 py-1.5 font-bold text-blue-700 hover:bg-blue-100 dark:border-blue-900/50 dark:bg-blue-950/40 dark:text-blue-300 transition">
+            📐 Square Footage Calculator →
+          </a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  </Fragment>
+
+  <script is:inline id="cy-calc-script" data-labels={JSON.stringify(curT.labels)} data-shapes={JSON.stringify(curT.shapeNames)} data-errors={JSON.stringify(curT.errors)} data-diagrams={JSON.stringify(curT.diagrams)}>
+    document.addEventListener('DOMContentLoaded', function() {
+      var scriptEl = document.getElementById('cy-calc-script');
+      var UI_LABELS = JSON.parse(scriptEl ? scriptEl.getAttribute('data-labels') || '{}' : '{}');
+      var UI_SHAPES = JSON.parse(scriptEl ? scriptEl.getAttribute('data-shapes') || '{}' : '{}');
+      var UI_ERRORS = JSON.parse(scriptEl ? scriptEl.getAttribute('data-errors') || '{}' : '{}');
+      var UI_DIAG = JSON.parse(scriptEl ? scriptEl.getAttribute('data-diagrams') || '{}' : '{}');
+
+      var LENGTH_TO_FEET = {
+        'in': 1 / 12,
+        'ft': 1,
+        'yd': 3,
+        'cm': 1 / 30.48,
+        'm': 3.280839895013123
+      };
+
+      var AREA_TO_SQFT = {
+        'sqFt': 1,
+        'sqYd': 9,
+        'sqM': 10.763910416709722,
+        'sqIn': 1 / 144
+      };
+
+      var currentShape = 'rectangle';
+
+      var SHAPE_DEFS = {
+        'rectangle': {
+          get name() { return UI_SHAPES['rectangle'] || 'Rectangle'; },
+          fields: [
+            { id: 'inp-depth', get label() { return UI_LABELS.depth || 'Depth ='; }, defaultVal: '4', defaultUnit: 'in', isDepth: true },
+            { id: 'inp-length', get label() { return UI_LABELS.length || 'Length ='; }, defaultVal: '12', defaultUnit: 'ft' },
+            { id: 'inp-width', get label() { return UI_LABELS.width || 'Width ='; }, defaultVal: '10', defaultUnit: 'ft' }
+          ]
+        },
+        'square': {
+          get name() { return UI_SHAPES['square'] || 'Square'; },
+          fields: [
+            { id: 'inp-depth', get label() { return UI_LABELS.depth || 'Depth ='; }, defaultVal: '4', defaultUnit: 'in', isDepth: true },
+            { id: 'inp-side', get label() { return UI_LABELS.side || 'Side Length ='; }, defaultVal: '10', defaultUnit: 'ft' }
+          ]
+        },
+        'rectangle-border': {
+          get name() { return UI_SHAPES['rectangle-border'] || 'Rectangle Border'; },
+          fields: [
+            { id: 'inp-depth', get label() { return UI_LABELS.depth || 'Depth ='; }, defaultVal: '4', defaultUnit: 'in', isDepth: true },
+            { id: 'inp-inner-len', get label() { return UI_LABELS.innerLength || 'Inner Length ='; }, defaultVal: '12', defaultUnit: 'ft' },
+            { id: 'inp-inner-wid', get label() { return UI_LABELS.innerWidth || 'Inner Width ='; }, defaultVal: '10', defaultUnit: 'ft' },
+            { id: 'inp-border-wid', get label() { return UI_LABELS.borderWidth || 'Border Width ='; }, defaultVal: '2', defaultUnit: 'ft' }
+          ]
+        },
+        'circle': {
+          get name() { return UI_SHAPES['circle'] || 'Circle'; },
+          fields: [
+            { id: 'inp-depth', get label() { return UI_LABELS.depth || 'Depth ='; }, defaultVal: '4', defaultUnit: 'in', isDepth: true },
+            { id: 'inp-diameter', get label() { return UI_LABELS.diameter || 'Diameter ='; }, defaultVal: '12', defaultUnit: 'ft' }
+          ]
+        },
+        'circle-border': {
+          get name() { return UI_SHAPES['circle-border'] || 'Circle Border'; },
+          fields: [
+            { id: 'inp-depth', get label() { return UI_LABELS.depth || 'Depth ='; }, defaultVal: '4', defaultUnit: 'in', isDepth: true },
+            { id: 'inp-inner-dia', get label() { return UI_LABELS.innerDiameter || 'Inner Diameter ='; }, defaultVal: '10', defaultUnit: 'ft' },
+            { id: 'inp-border-wid', get label() { return UI_LABELS.borderWidth || 'Border Width ='; }, defaultVal: '2', defaultUnit: 'ft' }
+          ]
+        },
+        'annulus': {
+          get name() { return UI_SHAPES['annulus'] || 'Annulus (Ring)'; },
+          fields: [
+            { id: 'inp-depth', get label() { return UI_LABELS.depth || 'Depth ='; }, defaultVal: '4', defaultUnit: 'in', isDepth: true },
+            { id: 'inp-outer-dia', get label() { return UI_LABELS.outerDiameter || 'Outer Diameter ='; }, defaultVal: '14', defaultUnit: 'ft' },
+            { id: 'inp-inner-dia', get label() { return UI_LABELS.innerDiameter || 'Inner Diameter ='; }, defaultVal: '10', defaultUnit: 'ft' }
+          ]
+        },
+        'triangle-base': {
+          get name() { return UI_SHAPES['triangle-base'] || 'Triangle (Base & Height)'; },
+          fields: [
+            { id: 'inp-depth', get label() { return UI_LABELS.depth || 'Depth ='; }, defaultVal: '4', defaultUnit: 'in', isDepth: true },
+            { id: 'inp-base', get label() { return UI_LABELS.base || 'Base ='; }, defaultVal: '12', defaultUnit: 'ft' },
+            { id: 'inp-height', get label() { return UI_LABELS.height || 'Height ='; }, defaultVal: '10', defaultUnit: 'ft' }
+          ]
+        },
+        'triangle-sides': {
+          get name() { return UI_SHAPES['triangle-sides'] || "Triangle (3 Sides - Heron's)"; },
+          fields: [
+            { id: 'inp-depth', get label() { return UI_LABELS.depth || 'Depth ='; }, defaultVal: '4', defaultUnit: 'in', isDepth: true },
+            { id: 'inp-side-a', get label() { return UI_LABELS.sideA || 'Side a ='; }, defaultVal: '10', defaultUnit: 'ft' },
+            { id: 'inp-side-b', get label() { return UI_LABELS.sideB || 'Side b ='; }, defaultVal: '12', defaultUnit: 'ft' },
+            { id: 'inp-side-c', get label() { return UI_LABELS.sideC || 'Side c ='; }, defaultVal: '14', defaultUnit: 'ft' }
+          ]
+        },
+        'trapezoid': {
+          get name() { return UI_SHAPES['trapezoid'] || 'Trapezoid'; },
+          fields: [
+            { id: 'inp-depth', get label() { return UI_LABELS.depth || 'Depth ='; }, defaultVal: '4', defaultUnit: 'in', isDepth: true },
+            { id: 'inp-side-a', get label() { return UI_LABELS.parallelA || 'Parallel Side a ='; }, defaultVal: '8', defaultUnit: 'ft' },
+            { id: 'inp-side-b', get label() { return UI_LABELS.parallelB || 'Parallel Side b ='; }, defaultVal: '14', defaultUnit: 'ft' },
+            { id: 'inp-height', get label() { return UI_LABELS.height || 'Height ='; }, defaultVal: '10', defaultUnit: 'ft' }
+          ]
+        },
+        'direct-area': {
+          get name() { return UI_SHAPES['direct-area'] || 'Direct Area & Depth'; },
+          fields: [
+            { id: 'inp-depth', get label() { return UI_LABELS.depth || 'Depth ='; }, defaultVal: '4', defaultUnit: 'in', isDepth: true },
+            { id: 'inp-surface-area', get label() { return UI_LABELS.surfaceArea || 'Surface Area ='; }, defaultVal: '120', defaultUnit: 'sqFt', isArea: true }
+          ]
+        }
+      };
+
+      function getShapeSvg(shape) {
+        var dLength = UI_DIAG.length || 'Length';
+        var dWidth = UI_DIAG.width || 'Width';
+        var dDepth = UI_DIAG.depth || 'Depth';
+        var dSide = UI_DIAG.side || 'Side (a)';
+        var dInnerArea = UI_DIAG.innerArea || 'Inner Area';
+        var dInnerLen = UI_DIAG.innerLength || 'Inner Length';
+        var dInnerW = UI_DIAG.innerWidth || 'Inner W';
+        var dBorderW = UI_DIAG.borderWidth || 'Border Width';
+        var dDia = UI_DIAG.diameter || 'Diameter (d)';
+        var dInnerDia = UI_DIAG.innerDiameter || 'Inner Dia.';
+        var dOuterDia = UI_DIAG.outerDiameter || 'Outer Diameter';
+        var dHeight = UI_DIAG.height || 'Height (h)';
+        var dBase = UI_DIAG.base || 'Base (b)';
+        var dSideA = UI_DIAG.sideA || 'Side a';
+        var dSideB = UI_DIAG.sideB || 'Side b';
+        var dSideC = UI_DIAG.sideC || 'Side c';
+        var dParallelA = UI_DIAG.parallelA || 'Parallel a';
+        var dParallelB = UI_DIAG.parallelB || 'Parallel b';
+        var dSurfaceArea = UI_DIAG.surfaceArea || 'Surface Area';
+        var dAnyShape = UI_DIAG.anyShape || '(Any Irregular Shape)';
+
+        switch (shape) {
+          case 'rectangle':
+            return '<svg viewBox="0 0 240 160" class="w-full h-full max-h-48" xmlns="http://www.w3.org/2000/svg"><polygon points="40,95 70,55 200,55 170,95" fill="#BFDBFE" stroke="#2563EB" stroke-width="1.5" /><polygon points="170,95 200,55 200,85 170,125" fill="#93C5FD" stroke="#2563EB" stroke-width="1.5" /><rect x="40" y="95" width="130" height="30" fill="#3B82F6" stroke="#1D4ED8" stroke-width="2" /><line x1="40" y1="135" x2="170" y2="135" stroke="#334155" stroke-width="1.5" /><text x="105" y="148" text-anchor="middle" font-size="10" font-weight="bold" fill="#334155">' + dLength + '</text><line x1="180" y1="95" x2="210" y2="55" stroke="#334155" stroke-width="1.5" /><text x="205" y="75" text-anchor="start" font-size="10" font-weight="bold" fill="#334155">' + dWidth + '</text><line x1="25" y1="95" x2="25" y2="125" stroke="#D97706" stroke-width="1.5" /><text x="18" y="113" text-anchor="end" font-size="10" font-weight="bold" fill="#D97706">' + dDepth + '</text></svg>';
+          case 'square':
+            return '<svg viewBox="0 0 240 160" class="w-full h-full max-h-48" xmlns="http://www.w3.org/2000/svg"><polygon points="50,95 85,55 185,55 150,95" fill="#BFDBFE" stroke="#2563EB" stroke-width="1.5" /><polygon points="150,95 185,55 185,85 150,125" fill="#93C5FD" stroke="#2563EB" stroke-width="1.5" /><rect x="50" y="95" width="100" height="30" fill="#3B82F6" stroke="#1D4ED8" stroke-width="2" /><line x1="50" y1="135" x2="150" y2="135" stroke="#334155" stroke-width="1.5" /><text x="100" y="148" text-anchor="middle" font-size="10" font-weight="bold" fill="#334155">' + dSide + '</text><line x1="160" y1="95" x2="195" y2="55" stroke="#334155" stroke-width="1.5" /><text x="185" y="75" text-anchor="start" font-size="10" font-weight="bold" fill="#334155">' + dSide + '</text><line x1="35" y1="95" x2="35" y2="125" stroke="#D97706" stroke-width="1.5" /><text x="28" y="113" text-anchor="end" font-size="10" font-weight="bold" fill="#D97706">' + dDepth + '</text></svg>';
+          case 'rectangle-border':
+            return '<svg viewBox="0 0 240 160" class="w-full h-full max-h-48" xmlns="http://www.w3.org/2000/svg"><rect x="35" y="25" width="170" height="105" rx="2" fill="#93C5FD" stroke="#1D4ED8" stroke-width="2" /><rect x="65" y="45" width="110" height="65" rx="2" fill="#FFFFFF" stroke="#1E40AF" stroke-dasharray="3,3" stroke-width="1.5" class="dark:fill-slate-900" /><text x="120" y="82" text-anchor="middle" font-size="10" font-weight="bold" fill="#64748B">' + dInnerArea + '</text><line x1="65" y1="35" x2="175" y2="35" stroke="#334155" stroke-width="1.2" /><text x="120" y="32" text-anchor="middle" font-size="9" font-weight="bold" fill="#334155">' + dInnerLen + '</text><line x1="20" y1="45" x2="20" y2="110" stroke="#334155" stroke-width="1.2" /><text x="16" y="80" text-anchor="end" font-size="9" font-weight="bold" fill="#334155">' + dInnerW + '</text><line x1="35" y1="140" x2="65" y2="140" stroke="#D97706" stroke-width="1.5" /><text x="50" y="152" text-anchor="middle" font-size="9" font-weight="bold" fill="#D97706">' + dBorderW + '</text></svg>';
+          case 'circle':
+            return '<svg viewBox="0 0 240 160" class="w-full h-full max-h-48" xmlns="http://www.w3.org/2000/svg"><ellipse cx="120" cy="100" rx="70" ry="25" fill="#2563EB" /><path d="M 50 75 A 70 25 0 0 0 190 75 L 190 100 A 70 25 0 0 1 50 100 Z" fill="#3B82F6" stroke="#1D4ED8" stroke-width="1.5" /><ellipse cx="120" cy="75" rx="70" ry="25" fill="#93C5FD" stroke="#1D4ED8" stroke-width="2" /><line x1="50" y1="75" x2="190" y2="75" stroke="#1E293B" stroke-width="1.5" stroke-dasharray="4,2" /><circle cx="120" cy="75" r="3" fill="#1E293B" /><text x="120" y="68" text-anchor="middle" font-size="10" font-weight="bold" fill="#1E293B">' + dDia + '</text><line x1="200" y1="75" x2="200" y2="100" stroke="#D97706" stroke-width="1.5" /><text x="208" y="90" text-anchor="start" font-size="10" font-weight="bold" fill="#D97706">' + dDepth + '</text></svg>';
+          case 'circle-border':
+          case 'annulus':
+            return '<svg viewBox="0 0 240 160" class="w-full h-full max-h-48" xmlns="http://www.w3.org/2000/svg"><ellipse cx="120" cy="80" rx="80" ry="45" fill="#93C5FD" stroke="#1D4ED8" stroke-width="2" /><ellipse cx="120" cy="80" rx="45" ry="25" fill="#FFFFFF" stroke="#1E40AF" stroke-width="1.5" stroke-dasharray="3,3" class="dark:fill-slate-900" /><line x1="75" y1="80" x2="165" y2="80" stroke="#1E293B" stroke-width="1.2" /><text x="120" y="76" text-anchor="middle" font-size="9" font-weight="bold" fill="#1E293B">' + dInnerDia + '</text><line x1="40" y1="135" x2="200" y2="135" stroke="#334155" stroke-width="1.5" /><text x="120" y="148" text-anchor="middle" font-size="10" font-weight="bold" fill="#334155">' + dOuterDia + '</text><line x1="40" y1="80" x2="75" y2="80" stroke="#D97706" stroke-width="1.5" /><text x="57" y="93" text-anchor="middle" font-size="8" font-weight="bold" fill="#D97706">' + dBorderW + '</text></svg>';
+          case 'triangle-base':
+            return '<svg viewBox="0 0 240 160" class="w-full h-full max-h-48" xmlns="http://www.w3.org/2000/svg"><polygon points="120,30 40,120 200,120" fill="#93C5FD" stroke="#1D4ED8" stroke-width="2" /><line x1="120" y1="30" x2="120" y2="120" stroke="#EF4444" stroke-width="1.5" stroke-dasharray="3,3" /><text x="126" y="80" text-anchor="start" font-size="10" font-weight="bold" fill="#EF4444">' + dHeight + '</text><line x1="40" y1="135" x2="200" y2="135" stroke="#334155" stroke-width="1.5" /><text x="120" y="148" text-anchor="middle" font-size="10" font-weight="bold" fill="#334155">' + dBase + '</text></svg>';
+          case 'triangle-sides':
+            return '<svg viewBox="0 0 240 160" class="w-full h-full max-h-48" xmlns="http://www.w3.org/2000/svg"><polygon points="110,35 40,125 190,115" fill="#93C5FD" stroke="#1D4ED8" stroke-width="2" /><text x="70" y="75" text-anchor="end" font-size="10" font-weight="bold" fill="#1E293B">' + dSideA + '</text><text x="160" y="70" text-anchor="start" font-size="10" font-weight="bold" fill="#1E293B">' + dSideB + '</text><text x="115" y="135" text-anchor="middle" font-size="10" font-weight="bold" fill="#1E293B">' + dSideC + '</text></svg>';
+          case 'trapezoid':
+            return '<svg viewBox="0 0 240 160" class="w-full h-full max-h-48" xmlns="http://www.w3.org/2000/svg"><polygon points="70,40 170,40 210,120 30,120" fill="#93C5FD" stroke="#1D4ED8" stroke-width="2" /><line x1="70" y1="30" x2="170" y2="30" stroke="#334155" stroke-width="1.5" /><text x="120" y="25" text-anchor="middle" font-size="10" font-weight="bold" fill="#334155">' + dParallelA + '</text><line x1="30" y1="135" x2="210" y2="135" stroke="#334155" stroke-width="1.5" /><text x="120" y="148" text-anchor="middle" font-size="10" font-weight="bold" fill="#334155">' + dParallelB + '</text><line x1="70" y1="40" x2="70" y2="120" stroke="#EF4444" stroke-width="1.5" stroke-dasharray="3,3" /><text x="76" y="85" text-anchor="start" font-size="10" font-weight="bold" fill="#EF4444">' + dHeight + '</text></svg>';
+          case 'direct-area':
+          default:
+            return '<svg viewBox="0 0 240 160" class="w-full h-full max-h-48" xmlns="http://www.w3.org/2000/svg"><ellipse cx="120" cy="80" rx="75" ry="40" fill="#93C5FD" stroke="#1D4ED8" stroke-width="2" /><text x="120" y="78" text-anchor="middle" font-size="12" font-weight="black" fill="#1E40AF">' + dSurfaceArea + '</text><text x="120" y="94" text-anchor="middle" font-size="9" font-weight="semibold" fill="#64748B">' + dAnyShape + '</text><line x1="195" y1="80" x2="195" y2="115" stroke="#D97706" stroke-width="2" /><text x="203" y="100" text-anchor="start" font-size="10" font-weight="bold" fill="#D97706">' + dDepth + '</text></svg>';
+        }
+      }
+
+      function renderShapeFields(shape) {
+        var container = document.getElementById('dynamic-shape-inputs');
+        if (!container) return;
+
+        var def = SHAPE_DEFS[shape] || SHAPE_DEFS['rectangle'];
+        container.innerHTML = '';
+
+        def.fields.forEach(function(field) {
+          var row = document.createElement('div');
+          row.className = 'flex items-center justify-end gap-2 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200';
+
+          var label = document.createElement('label');
+          label.setAttribute('for', field.id);
+          label.className = 'shrink-0';
+          label.textContent = field.label;
+
+          var input = document.createElement('input');
+          input.type = 'number';
+          input.id = field.id;
+          input.value = field.defaultVal;
+          input.placeholder = field.isDepth ? '4' : '10';
+          input.min = '0';
+          input.step = 'any';
+          input.className = 'w-24 sm:w-28 rounded-md border border-slate-400 bg-white px-2.5 py-1.5 text-center font-bold text-slate-900 shadow-2xs focus:border-amber-600 focus:ring-1 focus:ring-amber-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white';
+
+          var unitSelect = document.createElement('select');
+          unitSelect.id = field.id + '-unit';
+          unitSelect.className = 'w-16 shrink-0 rounded-md border border-slate-400 bg-white px-1.5 py-1.5 text-xs font-bold text-slate-800 shadow-2xs dark:border-slate-700 dark:bg-slate-800 dark:text-white cursor-pointer';
+
+          if (field.isArea) {
+            unitSelect.innerHTML = '<option value="sqFt" selected>sq ft</option><option value="sqYd">sq yd</option><option value="sqM">sq m</option><option value="sqIn">sq in</option>';
+          } else {
+            unitSelect.innerHTML = '<option value="in"' + (field.defaultUnit === 'in' ? ' selected' : '') + '>in</option><option value="ft"' + (field.defaultUnit === 'ft' ? ' selected' : '') + '>ft</option><option value="yd"' + (field.defaultUnit === 'yd' ? ' selected' : '') + '>yd</option><option value="cm"' + (field.defaultUnit === 'cm' ? ' selected' : '') + '>cm</option><option value="m"' + (field.defaultUnit === 'm' ? ' selected' : '') + '>m</option>';
+          }
+
+          row.appendChild(label);
+          row.appendChild(input);
+          row.appendChild(unitSelect);
+          container.appendChild(row);
+
+          input.addEventListener('input', runCalculation);
+          unitSelect.addEventListener('change', runCalculation);
+        });
+
+        var diagramContainer = document.getElementById('shape-diagram-container');
+        if (diagramContainer) {
+          diagramContainer.innerHTML = getShapeSvg(shape);
+        }
+        var badge = document.getElementById('diagram-shape-badge');
+        if (badge) {
+          badge.textContent = def.name;
+        }
+      }
+
+      function getValInFeet(inputId) {
+        var inp = document.getElementById(inputId);
+        var unitSel = document.getElementById(inputId + '-unit');
+        if (!inp || !unitSel) return 0;
+        var raw = parseFloat(inp.value);
+        if (isNaN(raw) || raw <= 0) return 0;
+        var factor = LENGTH_TO_FEET[unitSel.value] || 1;
+        return raw * factor;
+      }
+
+      function runCalculation() {
+        var errorBanner = document.getElementById('calc-error-banner');
+        if (errorBanner) errorBanner.classList.add('hidden');
+
+        var depthInFeet = getValInFeet('inp-depth');
+        var depthInches = depthInFeet * 12;
+
+        var areaSqFt = 0;
+        var areaFormulaStr = '';
+        var isValid = true;
+        var errorMsg = '';
+
+        switch (currentShape) {
+          case 'rectangle': {
+            var l = getValInFeet('inp-length');
+            var w = getValInFeet('inp-width');
+            if (l <= 0 || w <= 0) isValid = false;
+            areaSqFt = l * w;
+            areaFormulaStr = 'Area = Length (' + l.toFixed(2) + ' ft) × Width (' + w.toFixed(2) + ' ft) = ' + areaSqFt.toFixed(2) + ' ft²';
+            break;
+          }
+          case 'square': {
+            var side = getValInFeet('inp-side');
+            if (side <= 0) isValid = false;
+            areaSqFt = side * side;
+            areaFormulaStr = 'Area = Side (' + side.toFixed(2) + ' ft)² = ' + areaSqFt.toFixed(2) + ' ft²';
+            break;
+          }
+          case 'rectangle-border': {
+            var inL = getValInFeet('inp-inner-len');
+            var inW = getValInFeet('inp-inner-wid');
+            var border = getValInFeet('inp-border-wid');
+            if (inL <= 0 || inW <= 0 || border <= 0) {
+              isValid = false;
+            } else {
+              var outL = inL + 2 * border;
+              var outW = inW + 2 * border;
+              var innerArea = inL * inW;
+              var outerArea = outL * outW;
+              areaSqFt = outerArea - innerArea;
+              areaFormulaStr = 'Outer Area (' + outL.toFixed(2) + ' × ' + outW.toFixed(2) + ' = ' + outerArea.toFixed(2) + ' ft²) − Inner Area (' + innerArea.toFixed(2) + ' ft²) = ' + areaSqFt.toFixed(2) + ' ft²';
+            }
+            break;
+          }
+          case 'circle': {
+            var dia = getValInFeet('inp-diameter');
+            if (dia <= 0) isValid = false;
+            var r = dia / 2;
+            areaSqFt = Math.PI * r * r;
+            areaFormulaStr = 'Area = π × Radius (' + r.toFixed(2) + ' ft)² = ' + areaSqFt.toFixed(2) + ' ft²';
+            break;
+          }
+          case 'circle-border': {
+            var inDia = getValInFeet('inp-inner-dia');
+            var borderCircle = getValInFeet('inp-border-wid');
+            if (inDia <= 0 || borderCircle <= 0) {
+              isValid = false;
+            } else {
+              var outDia = inDia + 2 * borderCircle;
+              var rIn = inDia / 2;
+              var rOut = outDia / 2;
+              areaSqFt = Math.PI * (rOut * rOut - rIn * rIn);
+              areaFormulaStr = 'Area = π × (R_outer ' + rOut.toFixed(2) + '² − R_inner ' + rIn.toFixed(2) + '²) = ' + areaSqFt.toFixed(2) + ' ft²';
+            }
+            break;
+          }
+          case 'annulus': {
+            var outDiaAnn = getValInFeet('inp-outer-dia');
+            var inDiaAnn = getValInFeet('inp-inner-dia');
+            if (outDiaAnn <= 0 || inDiaAnn <= 0) {
+              isValid = false;
+            } else if (inDiaAnn >= outDiaAnn) {
+              isValid = false;
+              errorMsg = UI_ERRORS.innerGreaterOuter || 'Inner diameter must be strictly smaller than outer diameter.';
+            } else {
+              var rInAnn = inDiaAnn / 2;
+              var rOutAnn = outDiaAnn / 2;
+              areaSqFt = Math.PI * (rOutAnn * rOutAnn - rInAnn * rInAnn);
+              areaFormulaStr = 'Area = π × (R_outer ' + rOutAnn.toFixed(2) + '² − R_inner ' + rInAnn.toFixed(2) + '²) = ' + areaSqFt.toFixed(2) + ' ft²';
+            }
+            break;
+          }
+          case 'triangle-base': {
+            var b = getValInFeet('inp-base');
+            var h = getValInFeet('inp-height');
+            if (b <= 0 || h <= 0) isValid = false;
+            areaSqFt = 0.5 * b * h;
+            areaFormulaStr = 'Area = ½ × Base (' + b.toFixed(2) + ' ft) × Height (' + h.toFixed(2) + ' ft) = ' + areaSqFt.toFixed(2) + ' ft²';
+            break;
+          }
+          case 'triangle-sides': {
+            var a = getValInFeet('inp-side-a');
+            var bSide = getValInFeet('inp-side-b');
+            var c = getValInFeet('inp-side-c');
+            if (a <= 0 || bSide <= 0 || c <= 0) {
+              isValid = false;
+            } else if (a + bSide <= c || a + c <= bSide || bSide + c <= a) {
+              isValid = false;
+              errorMsg = UI_ERRORS.triangleInequality || 'Triangle Inequality Violation: The sum of any two sides must be strictly greater than the third side.';
+            } else {
+              var s = (a + bSide + c) / 2;
+              areaSqFt = Math.sqrt(s * (s - a) * (s - bSide) * (s - c));
+              areaFormulaStr = 'Heron\'s Formula: s = ' + s.toFixed(2) + ', Area = √[s(s-a)(s-b)(s-c)] = ' + areaSqFt.toFixed(2) + ' ft²';
+            }
+            break;
+          }
+          case 'trapezoid': {
+            var aTrap = getValInFeet('inp-side-a');
+            var bTrap = getValInFeet('inp-side-b');
+            var hTrap = getValInFeet('inp-height');
+            if (aTrap <= 0 || bTrap <= 0 || hTrap <= 0) isValid = false;
+            areaSqFt = 0.5 * (aTrap + bTrap) * hTrap;
+            areaFormulaStr = 'Area = ½ × (Side a ' + aTrap.toFixed(2) + ' + Side b ' + bTrap.toFixed(2) + ') × Height ' + hTrap.toFixed(2) + ' = ' + areaSqFt.toFixed(2) + ' ft²';
+            break;
+          }
+          case 'direct-area': {
+            var rawArea = parseFloat(document.getElementById('inp-surface-area')?.value || '0');
+            var unit = document.getElementById('inp-surface-area-unit')?.value || 'sqFt';
+            if (isNaN(rawArea) || rawArea <= 0) {
+              isValid = false;
+            } else {
+              var factor = AREA_TO_SQFT[unit] || 1;
+              areaSqFt = rawArea * factor;
+              areaFormulaStr = 'Direct Input: ' + rawArea + ' ' + unit + ' = ' + areaSqFt.toFixed(2) + ' sq ft';
+            }
+            break;
+          }
+        }
+
+        if (depthInFeet <= 0) {
+          isValid = false;
+          if (!errorMsg) errorMsg = UI_ERRORS.depthRequired || 'Depth / thickness must be greater than zero.';
+        }
+
+        if (!isValid && !errorMsg) {
+          errorMsg = UI_ERRORS.invalidPositive || 'Please enter positive dimensions greater than zero.';
+        }
+
+        if (errorMsg && errorBanner) {
+          errorBanner.textContent = errorMsg;
+          errorBanner.classList.remove('hidden');
+        }
+
+        if (!isValid) {
+          return;
+        }
+
+        var qtyInp = document.getElementById('inp-quantity');
+        var quantity = Math.max(1, parseInt(qtyInp?.value || '1', 10));
+
+        var netCuFt = areaSqFt * depthInFeet * quantity;
+        var netCuYds = netCuFt / 27;
+        var netCuM = netCuFt * 0.028316846592;
+        var areaSqM = areaSqFt * 0.09290304;
+
+        var wasteSel = document.getElementById('sel-waste');
+        var wastePct = 0;
+        if (wasteSel?.value === 'custom') {
+          var customInp = document.getElementById('inp-custom-waste');
+          wastePct = Math.max(0, parseFloat(customInp?.value || '0'));
+        } else {
+          wastePct = Math.max(0, parseFloat(wasteSel?.value || '0'));
+        }
+
+        var grossCuFt = netCuFt * (1 + wastePct / 100);
+        var grossCuYds = netCuYds * (1 + wastePct / 100);
+        var grossCuM = netCuM * (1 + wastePct / 100);
+
+        var elResCuYds = document.getElementById('res-cubic-yards');
+        var elResCuYdsSub = document.getElementById('res-cubic-yards-sub');
+        var elResCuFt = document.getElementById('res-cubic-feet');
+        var elResCuM = document.getElementById('res-cubic-meters');
+        var elResArea = document.getElementById('res-area');
+        var elDepthPill = document.getElementById('res-depth-pill');
+
+        if (elResCuYds) elResCuYds.textContent = (wastePct > 0 ? grossCuYds.toFixed(2) : netCuYds.toFixed(2)) + ' yd³';
+        if (elResCuYdsSub) {
+          elResCuYdsSub.textContent = wastePct > 0 
+            ? 'Net: ' + netCuYds.toFixed(4) + ' yd³ | With ' + wastePct + '% Waste: ' + grossCuYds.toFixed(4) + ' yd³'
+            : 'Exact Net Volume: ' + netCuYds.toFixed(4) + ' yd³';
+        }
+        if (elResCuFt) elResCuFt.textContent = netCuFt.toFixed(2) + ' ft³';
+        if (elResCuM) elResCuM.textContent = netCuM.toFixed(2) + ' m³';
+        if (elResArea) elResArea.textContent = areaSqFt.toFixed(2) + ' sq ft (' + areaSqM.toFixed(2) + ' m²)';
+        if (elDepthPill) elDepthPill.textContent = 'Depth: ' + depthInches.toFixed(2) + ' in (' + depthInFeet.toFixed(3) + ' ft)';
+
+        var wasteCard = document.getElementById('waste-result-card');
+        if (wasteCard) {
+          if (wastePct > 0) {
+            wasteCard.classList.remove('hidden');
+            var elWastePct = document.getElementById('res-waste-pct');
+            var elGrossYds = document.getElementById('res-gross-yards');
+            var elGrossFt = document.getElementById('res-gross-feet');
+            if (elWastePct) elWastePct.textContent = wastePct + '% Waste Allowance';
+            if (elGrossYds) elGrossYds.textContent = grossCuYds.toFixed(2) + ' yd³';
+            if (elGrossFt) elGrossFt.textContent = '(' + grossCuFt.toFixed(2) + ' ft³)';
+          } else {
+            wasteCard.classList.add('hidden');
+          }
+        }
+
+        var priceInp = document.getElementById('inp-price');
+        var priceUnitSel = document.getElementById('sel-price-unit');
+        var currencySel = document.getElementById('sel-currency');
+        var costCard = document.getElementById('cost-result-card');
+
+        var rawPrice = parseFloat(priceInp?.value || '0');
+        var priceUnit = priceUnitSel?.value || 'yd3';
+        var currency = currencySel?.value || '$';
+
+        var volumeForOrderCuFt = wastePct > 0 ? grossCuFt : netCuFt;
+        var volumeForOrderCuYd = wastePct > 0 ? grossCuYds : netCuYds;
+        var volumeForOrderCuM = wastePct > 0 ? grossCuM : netCuM;
+
+        var bags20 = Math.ceil(volumeForOrderCuFt / 2.0);
+        var bags15 = Math.ceil(volumeForOrderCuFt / 1.5);
+        var bags05 = Math.ceil(volumeForOrderCuFt / 0.5);
+
+        if (costCard) {
+          if (!isNaN(rawPrice) && rawPrice > 0) {
+            costCard.classList.remove('hidden');
+            var totalCost = 0;
+            if (priceUnit === 'yd3') {
+              totalCost = volumeForOrderCuYd * rawPrice;
+            } else if (priceUnit === 'ft3') {
+              totalCost = volumeForOrderCuFt * rawPrice;
+            } else if (priceUnit === 'm3') {
+              totalCost = volumeForOrderCuM * rawPrice;
+            } else if (priceUnit === 'bag20') {
+              totalCost = bags20 * rawPrice;
+            } else if (priceUnit === 'bag15') {
+              totalCost = bags15 * rawPrice;
+            } else if (priceUnit === 'bag05') {
+              totalCost = bags05 * rawPrice;
+            }
+
+            var elTotalCost = document.getElementById('res-total-cost');
+            var elBagCount = document.getElementById('res-bag-count');
+            if (elTotalCost) elTotalCost.textContent = currency + totalCost.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            if (elBagCount) elBagCount.textContent = bags20 + ' bags (2.0 ft³) | ' + bags15 + ' bags (1.5 ft³)';
+          } else {
+            costCard.classList.add('hidden');
+          }
+        }
+
+        var stepContainer = document.getElementById('res-step-breakdown');
+        if (stepContainer) {
+          stepContainer.innerHTML = 
+            '<div class="space-y-1 text-slate-700 dark:text-slate-300">' +
+              '<div>1. <strong>Surface Area Calculation:</strong></div>' +
+              '<div class="pl-3 text-slate-500">' + areaFormulaStr + '</div>' +
+              '<div class="mt-1">2. <strong>Depth Normalization:</strong></div>' +
+              '<div class="pl-3 text-slate-500">' + depthInches.toFixed(2) + ' inches ÷ 12 = ' + depthInFeet.toFixed(4) + ' ft</div>' +
+              '<div class="mt-1">3. <strong>Cubic Feet Calculation:</strong></div>' +
+              '<div class="pl-3 text-slate-500">Volume = Area (' + areaSqFt.toFixed(2) + ' ft²) × Depth (' + depthInFeet.toFixed(4) + ' ft)' + (quantity > 1 ? ' × ' + quantity + ' qty' : '') + ' = <strong>' + netCuFt.toFixed(2) + ' cu ft</strong></div>' +
+              '<div class="mt-1">4. <strong>Cubic Yards Conversion:</strong></div>' +
+              '<div class="pl-3 text-slate-500">' + netCuFt.toFixed(2) + ' cu ft ÷ 27 = <strong>' + netCuYds.toFixed(4) + ' yd³</strong></div>' +
+              '<div class="mt-1">5. <strong>Metric Conversion:</strong></div>' +
+              '<div class="pl-3 text-slate-500">' + netCuFt.toFixed(2) + ' cu ft × 0.028317 = <strong>' + netCuM.toFixed(4) + ' m³</strong></div>' +
+              (wastePct > 0 ? 
+                '<div class="mt-1 text-orange-600 dark:text-orange-400">6. <strong>Waste Allowance (' + wastePct + '%):</strong></div>' +
+                '<div class="pl-3 text-slate-500">' + netCuYds.toFixed(4) + ' yd³ × (1 + ' + (wastePct / 100) + ') = <strong>' + grossCuYds.toFixed(4) + ' yd³</strong></div>'
+              : '') +
+              (rawPrice > 0 ? 
+                '<div class="mt-1 text-emerald-600 dark:text-emerald-400">7. <strong>Estimated Cost:</strong></div>' +
+                '<div class="pl-3 text-slate-500">Purchasing via ' + priceUnit + ' = <strong>' + (document.getElementById('res-total-cost')?.textContent || '') + '</strong></div>'
+              : '') +
+            '</div>';
+        }
+
+        var bar = document.getElementById('calc-action-bar-container');
+        if (bar) bar.classList.remove('hidden');
+
+        try {
+          document.dispatchEvent(new CustomEvent('calculator:updated'));
+        } catch (e) {}
+      }
+
+      var shapeSel = document.getElementById('sel-shape');
+      if (shapeSel) {
+        shapeSel.addEventListener('change', function(e) {
+          currentShape = e.target.value;
+          renderShapeFields(currentShape);
+          runCalculation();
+        });
+      }
+
+      var qtyInp = document.getElementById('inp-quantity');
+      if (qtyInp) qtyInp.addEventListener('input', runCalculation);
+
+      var wasteSel = document.getElementById('sel-waste');
+      var customWasteWrap = document.getElementById('custom-waste-wrap');
+      if (wasteSel) {
+        wasteSel.addEventListener('change', function(e) {
+          if (e.target.value === 'custom') {
+            customWasteWrap?.classList.remove('hidden');
+          } else {
+            customWasteWrap?.classList.add('hidden');
+          }
+          runCalculation();
+        });
+      }
+
+      var customWasteInp = document.getElementById('inp-custom-waste');
+      if (customWasteInp) customWasteInp.addEventListener('input', runCalculation);
+
+      var priceInp = document.getElementById('inp-price');
+      var priceUnitSel = document.getElementById('sel-price-unit');
+      var currencySel = document.getElementById('sel-currency');
+
+      if (priceInp) priceInp.addEventListener('input', runCalculation);
+      if (priceUnitSel) priceUnitSel.addEventListener('change', runCalculation);
+      if (currencySel) currencySel.addEventListener('change', runCalculation);
+
+      var btnCalc = document.getElementById('btn-calculate');
+      if (btnCalc) btnCalc.addEventListener('click', runCalculation);
+
+      var btnReset = document.getElementById('btn-reset');
+      if (btnReset) {
+        btnReset.addEventListener('click', function() {
+          if (shapeSel) shapeSel.value = 'rectangle';
+          currentShape = 'rectangle';
+          renderShapeFields('rectangle');
+          if (qtyInp) qtyInp.value = '1';
+          if (wasteSel) wasteSel.value = '0';
+          customWasteWrap?.classList.add('hidden');
+          if (priceInp) priceInp.value = '';
+          runCalculation();
+        });
+      }
+
+      var btnCopy = document.getElementById('btn-copy-result');
+      if (btnCopy) {
+        btnCopy.addEventListener('click', function() {
+          var yds = document.getElementById('res-cubic-yards')?.textContent || '';
+          var ft = document.getElementById('res-cubic-feet')?.textContent || '';
+          var m = document.getElementById('res-cubic-meters')?.textContent || '';
+          var area = document.getElementById('res-area')?.textContent || '';
+          var text = 'Cubic Yards Calculation Result:\nTotal Volume: ' + yds + ' (' + ft + ' / ' + m + ')\nSurface Area: ' + area + '\nCalculated with AI Free Calculator: ' + window.location.href;
+          navigator.clipboard.writeText(text).then(function() {
+            var old = btnCopy.textContent;
+            btnCopy.textContent = '✓ Copied!';
+            setTimeout(function() { btnCopy.textContent = old; }, 2000);
+          });
+        });
+      }
+
+      var btnPrint = document.getElementById('btn-print-report');
+      if (btnPrint) {
+        btnPrint.addEventListener('click', function() {
+          var barPrintBtn = document.getElementById('btn-print-calc');
+          if (barPrintBtn) {
+            barPrintBtn.click();
+          } else {
+            window.print();
+          }
+        });
+      }
+
+      renderShapeFields('rectangle');
+      runCalculation();
+    });
+  </script>
+</CalculatorLayout>

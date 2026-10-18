@@ -6,9 +6,18 @@ interface Props {
   slug: string;
   category: string;
   lang?: Locale;
+  contactHref?: string;
+  noTopBorder?: boolean;
 }
 
-const { calculatorName, slug, category, lang = 'en' } = Astro.props;
+const {
+  calculatorName,
+  slug,
+  category,
+  lang = 'en',
+  contactHref,
+  noTopBorder = false,
+} = Astro.props;
 
 const actionBarTranslations: Record<Locale, {
   heading: string;
@@ -117,7 +126,7 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
 
 <div
   id="calc-action-bar-container"
-  class="hidden mt-6 pt-5 border-t border-slate-200/90 dark:border-slate-800 transition-opacity duration-200"
+  class={`hidden ${noTopBorder ? 'mt-0 pt-0 border-t-0' : 'mt-6 pt-5 border-t border-slate-200/90 dark:border-slate-800'} transition-opacity duration-200`}
   data-calculator-name={calculatorName}
   data-slug={slug}
   data-category={category}
@@ -273,6 +282,28 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
       <span id="calc-action-toast-msg">Calculation copied!</span>
       <button type="button" id="btn-close-toast" class="text-emerald-600 hover:text-emerald-800 font-bold ml-2">✕</button>
     </div>
+
+    {contactHref && (
+      <div class="mt-4 pt-3.5 border-t border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div class="flex items-center gap-2.5 text-slate-700 dark:text-slate-300">
+          <span class="text-base shrink-0">💬</span>
+          <span>
+            <strong>Found an issue?</strong> If a calculator is not working as expected or you spot an error, please{" "}
+            <a href={contactHref} rel="nofollow" class="font-bold text-blue-600 underline dark:text-blue-400">
+              contact us
+            </a>{" "}
+            so we can help.
+          </span>
+        </div>
+        <a
+          href={contactHref}
+          rel="nofollow"
+          class="shrink-0 inline-flex items-center justify-center gap-1 rounded-xl bg-blue-600 px-3.5 py-1.5 font-bold text-white shadow-xs hover:bg-blue-700 transition"
+        >
+          Contact Support →
+        </a>
+      </div>
+    )}
   </div>
 </div>
 
@@ -669,14 +700,17 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
 
       // Find if any results container is currently visible
       function getActiveResultContainer() {
-        var container = barContainer.parentElement;
-        if (!container) return null;
+        var root = barContainer.closest('[data-layout-variant], .rounded-3xl, main') || barContainer.parentElement || document.body;
+        if (!root) return null;
 
         var selectors = [
           '#k-results-section',
           '#results-section',
           '#results-card',
           '#results-box',
+          '#results-panel',
+          '#lcm-results-card',
+          '#cubic-yards-results-card',
           '#age-result',
           '#gpa-results-card',
           '#sip-results-section',
@@ -696,13 +730,18 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
           '#pm-results-section',
           '#gold-results-box',
           '#hw-results-box',
-          '[id*="results-"]',
-          '[id*="-results"]',
-          '[id*="-result"]'
+          'div[id*="results-"]',
+          'div[id*="-results"]',
+          'div[id*="-result"]',
+          'section[id*="results-"]',
+          'section[id*="-results"]',
+          'section[id*="-result"]',
+          '.results-panel',
+          '.unit-result-card'
         ];
 
         for (var i = 0; i < selectors.length; i++) {
-          var els = container.querySelectorAll(selectors[i]);
+          var els = root.querySelectorAll(selectors[i]);
           for (var j = 0; j < els.length; j++) {
             var el = els[j];
             if (
@@ -711,12 +750,37 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
               !el.closest('#calc-action-bar-container') &&
               !el.closest('[role="dialog"]') &&
               !el.classList.contains('hidden') &&
+              el.tagName !== 'BUTTON' &&
+              el.tagName !== 'A' &&
+              el.tagName !== 'INPUT' &&
+              el.tagName !== 'SELECT' &&
+              !el.closest('button') &&
               el.offsetHeight > 30
             ) {
               return el;
             }
           }
         }
+
+        var fallbackCandidates = root.querySelectorAll('div[id*="result"], div[class*="result"], section[id*="result"], section[class*="result"]');
+        for (var f = 0; f < fallbackCandidates.length; f++) {
+          var fb = fallbackCandidates[f];
+          if (
+            fb &&
+            fb !== barContainer &&
+            !barContainer.contains(fb) &&
+            !fb.closest('#calc-action-bar-container') &&
+            !fb.closest('[role="dialog"]') &&
+            !fb.classList.contains('hidden') &&
+            fb.tagName !== 'BUTTON' &&
+            fb.tagName !== 'A' &&
+            !fb.closest('button') &&
+            fb.offsetHeight > 30
+          ) {
+            return fb;
+          }
+        }
+
         return null;
       }
 
@@ -822,12 +886,19 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
         var inputs = [];
         var results = [];
         var tables = [];
-        var container = barContainer.parentElement || document.body;
+        var container = barContainer.closest('[data-layout-variant], .rounded-3xl, main') || barContainer.parentElement || document.body;
 
         // 1. Gather all inputs
-        var inputElements = container.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]):not(#inp-project-name):not(#inp-calc-title):not(#inp-calc-notes):not(#inp-share-url), select:not(#inp-project-name), textarea:not(#inp-calc-notes)');
+        var inputElements = container.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]):not(#inp-project-name):not(#inp-calc-title):not(#inp-calc-notes):not(#inp-share-url):not(#inp-custom-waste), select:not(#inp-project-name), textarea:not(#inp-calc-notes)');
         inputElements.forEach(function (inp) {
-          if (!inp.offsetParent) return;
+          if (!inp.offsetParent && inp.offsetWidth === 0 && inp.offsetHeight === 0) return;
+
+          // If this is a unit select companion (e.g. inp-depth-unit), skip standalone entry because it will be paired with the main input
+          if (inp.id && inp.id.endsWith('-unit')) {
+            var mainId = inp.id.replace(/-unit$/, '');
+            if (document.getElementById(mainId)) return;
+          }
+
           var label = '';
           if (inp.id) {
             var lbl = document.querySelector('label[for="' + inp.id + '"]');
@@ -843,7 +914,7 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
           }
           if (!label) {
             var prevEl = inp.previousElementSibling;
-            if (prevEl && (prevEl.tagName === 'LABEL' || prevEl.classList.contains('font-bold') || prevEl.classList.contains('text-xs'))) {
+            if (prevEl && (prevEl.tagName === 'LABEL' || prevEl.classList.contains('font-bold') || prevEl.classList.contains('text-xs') || prevEl.classList.contains('font-semibold'))) {
               label = prevEl.textContent.trim();
             }
           }
@@ -871,6 +942,16 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
             val = inp.value;
           } else {
             val = inp.value;
+            // If paired unit select exists (e.g. inp-depth + inp-depth-unit)
+            if (inp.id) {
+              var unitEl = document.getElementById(inp.id + '-unit');
+              if (unitEl && unitEl.tagName === 'SELECT') {
+                var unitText = unitEl.options[unitEl.selectedIndex] ? unitEl.options[unitEl.selectedIndex].text.trim() : unitEl.value;
+                if (unitText) {
+                  val += ' ' + unitText;
+                }
+              }
+            }
           }
 
           if (val) {
@@ -879,25 +960,33 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
         });
 
         // 2. Gather results
-        var resContainer = getActiveResultContainer();
+        var resContainer = getActiveResultContainer() || container;
         if (resContainer) {
           // A. Hero / Main highlighted metrics
-          var heroElements = resContainer.querySelectorAll('[id*="hero"], [id*="main"], [id*="primary"], [id*="future-val"], [id*="monthly-emi"], [id*="bmi"], [id*="total-steel"], [id*="concrete"], [id*="corpus"], [id*="pension"], [id*="res-total"], [id*="res-excavation"], [id*="res-steel"], [id*="res-shuttering"], [id*="tax-saved"], [id*="maturity-amount"]');
+          var heroElements = resContainer.querySelectorAll('[id*="hero"], [id*="main"], [id*="primary"], [id*="future-val"], [id*="monthly-emi"], [id*="bmi"], [id*="total-steel"], [id*="concrete"], [id*="corpus"], [id*="pension"], [id*="res-total"], [id*="res-excavation"], [id*="res-steel"], [id*="res-shuttering"], [id*="tax-saved"], [id*="maturity-amount"], [id*="res-cubic"], [id*="res-lcm"], [id*="res-sqft"], [id*="res-volume"], [id*="res-area"], [id*="result-value"]');
           heroElements.forEach(function (h) {
+            // Skip subtitle or secondary details from pretending to be hero metrics with fake labels
+            if (h.id && (h.id.includes('-sub') || h.id.endsWith('_sub'))) return;
+
             var text = (h.textContent || '').trim().replace(/\s+/g, ' ');
             if (text && text !== '--' && text !== '-- m³' && text !== '-- kg' && text.length < 60 && !h.closest('button')) {
               var prevLbl = h.previousElementSibling;
               var labelText = prevLbl ? prevLbl.textContent.trim() : '';
               if (!labelText) {
-                var pCard = h.closest('div');
-                var headerEl = pCard ? pCard.querySelector('[class*="uppercase"], [class*="text-slate-500"], [class*="text-slate-400"], [class*="text-blue-700"], [class*="text-blue-300"], [id*="badge"]') : null;
+                var pCard = h.closest('[class*="rounded"], div');
+                var headerEl = pCard ? pCard.querySelector('[class*="uppercase"], [class*="text-slate-500"], [class*="text-slate-400"], [class*="text-blue-700"], [class*="text-blue-300"], [class*="text-amber-900"], [class*="text-amber-300"], [id*="badge"]') : null;
                 if (headerEl && headerEl !== h) labelText = headerEl.textContent.trim();
               }
+              if (!labelText && h.parentElement && h.parentElement.parentElement) {
+                var grandParent = h.parentElement.parentElement;
+                var gpHeader = grandParent.querySelector('[class*="uppercase"], label, .text-xs, .text-\\[11px\\]');
+                if (gpHeader) labelText = gpHeader.textContent.trim();
+              }
               if (!labelText) {
-                labelText = h.id.replace(/^(res-|nps-res-)/, '').replace(/-/g, ' ').toUpperCase();
+                labelText = h.id.replace(/^(res-|nps-res-|metric-)/, '').replace(/-/g, ' ').toUpperCase();
               }
               labelText = labelText.replace(/\s+/g, ' ').trim();
-              if (labelText && !results.some(function (r) { return r.label === labelText; })) {
+              if (labelText && labelText !== text && !results.some(function (r) { return r.label.toLowerCase() === labelText.toLowerCase(); })) {
                 results.push({ label: labelText, value: text, isHero: true });
               }
             }
@@ -946,8 +1035,9 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
           });
 
           // C. Explicit fallback for all named result elements
-          var explicitValElements = resContainer.querySelectorAll('[id^="res-"], [id*="-res-"], [id^="nps-res-"], [id^="mat-"], [id^="k-res-"], [id^="k-summary-"], [id*="-amount"], [id*="-pension"], [id^="fmt-"], [id*="-fmt-"], [id^="break-"], [id*="-break-"]');
+          var explicitValElements = resContainer.querySelectorAll('[id^="res-"], [id*="-res-"], [id^="nps-res-"], [id^="mat-"], [id^="k-res-"], [id^="k-summary-"], [id*="-amount"], [id*="-pension"], [id^="fmt-"], [id*="-fmt-"], [id^="break-"], [id*="-break-"], [id^="metric-"], [id*="-metric-"]');
           explicitValElements.forEach(function (el) {
+            if (el.id && (el.id.includes('-sub') || el.id.endsWith('_sub'))) return;
             var vText = (el.textContent || '').trim().replace(/\s+/g, ' ');
             if (!vText || vText === '--' || vText === '-- m³' || vText === '-- kg' || vText.startsWith('--')) return;
 
@@ -955,13 +1045,29 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
             var p = el.parentElement;
             var lText = '';
             if (p) {
-              var lCandidate = p.querySelector('[class*="uppercase"], label, .text-xs, .text-\\[11px\\], .text-\\[10px\\], .text-slate-500, div:first-child');
+              var lCandidate = p.querySelector('[class*="uppercase"], label, .text-xs, .text-\\[11px\\], .text-\\[10px\\], .text-slate-500, .text-slate-400, div:first-child');
               if (lCandidate && lCandidate !== el) {
                 lText = lCandidate.textContent.trim().replace(/\s+/g, ' ');
               }
+              if (!lText && p.previousElementSibling) {
+                var prevSibling = p.previousElementSibling;
+                var prevCand = prevSibling.querySelector('[class*="uppercase"], label, .text-xs, .text-\\[11px\\], .text-slate-500, .text-slate-400') || prevSibling;
+                if (prevCand && prevCand !== el) {
+                  lText = prevCand.textContent.trim().replace(/\s+/g, ' ');
+                }
+              }
             }
             if (!lText) {
-              lText = el.id.replace(/^(res-|nps-res-|mat-|k-res-|k-summary-|tbl-fmt-|tbl-break-|fmt-|break-)/, '').replace(/-/g, ' ');
+              var cardParent = el.closest('[class*="rounded"], div');
+              if (cardParent) {
+                var cardH = cardParent.querySelector('[class*="uppercase"], label, .text-xs, [class*="font-bold"], .text-slate-400');
+                if (cardH && cardH !== el && !el.contains(cardH)) {
+                  lText = cardH.textContent.trim().replace(/\s+/g, ' ');
+                }
+              }
+            }
+            if (!lText) {
+              lText = el.id.replace(/^(res-|metric-|nps-res-|mat-|k-res-|k-summary-|tbl-fmt-|tbl-break-|fmt-|break-)/, '').replace(/-/g, ' ');
               lText = lText.charAt(0).toUpperCase() + lText.slice(1);
             }
 
@@ -969,6 +1075,109 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
               results.push({ label: lText, value: vText, isHero: false });
             }
           });
+        }
+
+        // C2. Global container scan for any explicit result metrics not yet captured
+        var globalValElements = container.querySelectorAll('[id^="res-"], [id*="-res-"], [id^="nps-res-"], [id^="mat-"], [id^="k-res-"], [id^="k-summary-"], [id*="-amount"], [id*="-pension"], [id^="fmt-"], [id*="-fmt-"], [id^="break-"], [id*="-break-"], [id^="metric-"], [id*="-metric-"]');
+        globalValElements.forEach(function (el) {
+          if (el.id && (el.id.includes('-sub') || el.id.endsWith('_sub'))) return;
+          if (barContainer.contains(el) || el.closest('#calc-action-bar-container') || el.closest('[role="dialog"]') || el.closest('#print-sheet-strict') || el.closest('button')) return;
+          var vText = (el.textContent || '').trim().replace(/\s+/g, ' ');
+          if (!vText || vText === '--' || vText === '-- m³' || vText === '-- kg' || vText.startsWith('--') || vText.length > 100) return;
+
+          var p = el.parentElement;
+          var lText = '';
+          if (p) {
+            var lCandidate = p.querySelector('[class*="uppercase"], label, .text-xs, .text-\\[11px\\], .text-\\[10px\\], .text-slate-500, .text-slate-400, div:first-child');
+            if (lCandidate && lCandidate !== el) {
+              lText = lCandidate.textContent.trim().replace(/\s+/g, ' ');
+            }
+            if (!lText && p.previousElementSibling) {
+              var prevSibling = p.previousElementSibling;
+              var prevCand = prevSibling.querySelector('[class*="uppercase"], label, .text-xs, .text-\\[11px\\], .text-slate-500, .text-slate-400') || prevSibling;
+              if (prevCand && prevCand !== el) {
+                lText = prevCand.textContent.trim().replace(/\s+/g, ' ');
+              }
+            }
+          }
+          if (!lText) {
+            var cardParent = el.closest('[class*="rounded"], div');
+            if (cardParent) {
+              var cardH = cardParent.querySelector('[class*="uppercase"], label, .text-xs, [class*="font-bold"], .text-slate-400');
+              if (cardH && cardH !== el && !el.contains(cardH)) {
+                lText = cardH.textContent.trim().replace(/\s+/g, ' ');
+              }
+            }
+          }
+          if (!lText) {
+            lText = el.id.replace(/^(res-|metric-|nps-res-|mat-|k-res-|k-summary-|tbl-fmt-|tbl-break-|fmt-|break-)/, '').replace(/-/g, ' ');
+            lText = lText.charAt(0).toUpperCase() + lText.slice(1);
+          }
+
+          if (lText && !results.some(function (r) { return r.label.toLowerCase() === lText.toLowerCase(); })) {
+            results.push({ label: lText, value: vText, isHero: el.id.includes('primary') || el.id.includes('total') || el.id.includes('lcm') || el.id.includes('cubic') || el.id.includes('sqft') });
+          }
+        });
+
+        // C3. Specialized capture for Cubic Yards elements if not yet picked
+        var cyYards = container.querySelector('#res-cubic-yards');
+        if (cyYards) {
+          var yText = (cyYards.textContent || '').trim();
+          var subEl = container.querySelector('#res-cubic-yards-sub');
+          var subText = subEl ? (subEl.textContent || '').trim() : '';
+          var fullVal = yText;
+          if (subText && !fullVal.includes(subText)) {
+            fullVal += ' (' + subText + ')';
+          }
+          var existIdx = results.findIndex(function(r) { return r.label.toLowerCase().includes('cubic yard') || r.label.toLowerCase().includes('total volume'); });
+          if (existIdx !== -1) {
+            results[existIdx].value = fullVal;
+            results[existIdx].isHero = true;
+          } else {
+            results.unshift({ label: 'Total Volume (Cubic Yards)', value: fullVal, isHero: true });
+          }
+        }
+
+        var cyFeet = container.querySelector('#res-cubic-feet');
+        if (cyFeet && !results.some(function(r) { return r.label.toLowerCase().includes('cubic feet'); })) {
+          results.push({ label: 'Cubic Feet Volume', value: (cyFeet.textContent || '').trim(), isHero: true });
+        }
+        var cyMeters = container.querySelector('#res-cubic-meters');
+        if (cyMeters && !results.some(function(r) { return r.label.toLowerCase().includes('cubic meter'); })) {
+          results.push({ label: 'Cubic Meters Volume', value: (cyMeters.textContent || '').trim(), isHero: true });
+        }
+        var cyArea = container.querySelector('#res-area');
+        if (cyArea && !results.some(function(r) { return r.label.toLowerCase().includes('surface area'); })) {
+          results.push({ label: 'Surface Area', value: (cyArea.textContent || '').trim(), isHero: true });
+        }
+        var cyDepth = container.querySelector('#res-depth-pill');
+        if (cyDepth && !results.some(function(r) { return r.label.toLowerCase().includes('depth'); })) {
+          results.push({ label: 'Thickness / Depth', value: (cyDepth.textContent || '').replace(/^Depth:\s*/i, '').trim(), isHero: false });
+        }
+        var cyGrossYds = container.querySelector('#res-gross-yards');
+        var cyWasteCard = container.querySelector('#waste-result-card');
+        if (cyGrossYds && cyWasteCard && !cyWasteCard.classList.contains('hidden')) {
+          var grossVal = (cyGrossYds.textContent || '').trim();
+          var grossFt = container.querySelector('#res-gross-feet');
+          if (grossFt) grossVal += ' ' + (grossFt.textContent || '').trim();
+          var wastePct = container.querySelector('#res-waste-pct');
+          var wLabel = wastePct ? (wastePct.textContent || '').trim() : 'With Waste Allowance';
+          if (!results.some(function(r) { return r.label.toLowerCase().includes('waste'); })) {
+            results.push({ label: 'Total Volume with Waste (' + wLabel + ')', value: grossVal, isHero: true });
+          }
+        }
+        var cyCost = container.querySelector('#res-total-cost');
+        var cyCostCard = container.querySelector('#cost-result-card');
+        if (cyCost && cyCostCard && !cyCostCard.classList.contains('hidden')) {
+          if (!results.some(function(r) { return r.label.toLowerCase().includes('cost'); })) {
+            results.push({ label: 'Estimated Material Cost', value: (cyCost.textContent || '').trim(), isHero: true });
+          }
+        }
+        var cyBags = container.querySelector('#res-bag-count');
+        if (cyBags && cyCostCard && !cyCostCard.classList.contains('hidden')) {
+          if (!results.some(function(r) { return r.label.toLowerCase().includes('bag'); })) {
+            results.push({ label: 'Estimated Bags Needed', value: (cyBags.textContent || '').trim(), isHero: false });
+          }
         }
 
         // D. Breakdown Tables (from resContainer or entire calculator container like #schedule-section)
@@ -1051,7 +1260,7 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
 
         // E. Visual Detailing Diagrams (SVG & Canvas elements)
         var diagrams = [];
-        var svgNodes = container.querySelectorAll('svg#svg-cross-section, svg#svg-elevation, svg#bmi-gauge-svg, svg#svg-nps-donut, svg[id*="diagram"], svg[id*="donut"], svg[class*="donut"], svg.visual-diagram');
+        var svgNodes = container.querySelectorAll('svg#svg-cross-section, svg#svg-elevation, svg#bmi-gauge-svg, svg#svg-nps-donut, #shape-diagram-container svg, [id*="shape-diagram"] svg, svg[id*="diagram"], svg[id*="donut"], svg[class*="donut"], svg.visual-diagram');
         var seenSvgs = {};
         svgNodes.forEach(function (svg) {
           if (!svg.offsetParent && svg.offsetWidth === 0 && svg.offsetHeight === 0) return;
@@ -1072,6 +1281,7 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
             else if (sid === 'svg-elevation') title = 'Longitudinal Elevation Diagram';
             else if (sid.includes('bmi')) title = 'Body Mass Index Radial Gauge';
             else if (sid.includes('donut') || sid.includes('nps')) title = 'Visual Investment & Corpus Breakdown';
+            else if (svg.closest('#shape-diagram-container') || svg.closest('[id*="shape-diagram"]')) title = 'Selected Shape Geometry & Dimension Guide';
             else title = sid.replace(/^svg-/, '').replace(/-/g, ' ').toUpperCase() + ' Diagram';
           }
 
@@ -1104,9 +1314,89 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
           } catch {}
         });
 
+        // F. Step-by-Step Calculation Proofs & Working Methods
+        var steps = [];
+        var stepsContainer = container.querySelector('#lcm-steps-container, [id*="steps-container"], [data-steps-container], .calc-steps-section');
+
+        if (stepsContainer && !stepsContainer.classList.contains('hidden') && stepsContainer.offsetHeight > 0) {
+          var stepCards = stepsContainer.querySelectorAll('.calc-step-card, [id^="card-step-"], .step-card');
+          if (stepCards.length > 0) {
+            stepCards.forEach(function (card) {
+              if (card.classList.contains('hidden') || card.offsetHeight === 0) return;
+              
+              var titleEl = card.querySelector('.step-card-title, [class*="font-bold"], h3, h4, span:first-child');
+              var title = titleEl ? titleEl.textContent.trim().replace(/\s+/g, ' ') : 'Step Method';
+              
+              var detailsEl = card.querySelector('.step-card-details, [id*="-details"], [class*="details"], .step-body') || card;
+              var clone = detailsEl.cloneNode(true);
+              var btns = clone.querySelectorAll('button');
+              btns.forEach(function (b) { b.remove(); });
+              
+              var html = clone.innerHTML.trim();
+              var text = (clone.textContent || '').trim().replace(/\s+/g, ' ');
+              if (text.length > 3) {
+                steps.push({ title: title, html: html, text: text });
+              }
+            });
+          } else {
+            var clone = stepsContainer.cloneNode(true);
+            var hEl = clone.querySelector('[class*="font-bold"], h3, h4');
+            var title = hEl ? hEl.textContent.trim().replace(/\s+/g, ' ') : 'Step-by-Step Working & Calculation Proofs';
+            if (hEl) hEl.remove();
+            var btns = clone.querySelectorAll('button');
+            btns.forEach(function (b) { b.remove(); });
+            var html = clone.innerHTML.trim();
+            var text = (clone.textContent || '').trim().replace(/\s+/g, ' ');
+            if (text.length > 3) {
+              steps.push({ title: title, html: html, text: text });
+            }
+          }
+        }
+
+        // Capture #res-step-breakdown or step breakdown list even when inside details accordion
+        if (steps.length === 0) {
+          var stepBreakdown = container.querySelector('#res-step-breakdown, [id*="step-breakdown"]');
+          if (stepBreakdown && stepBreakdown.innerHTML.trim().length > 15) {
+            var clone = stepBreakdown.cloneNode(true);
+            var bBtns = clone.querySelectorAll('button');
+            bBtns.forEach(function(b) { b.remove(); });
+            var html = clone.innerHTML.trim();
+            var text = (clone.textContent || '').trim().replace(/\s+/g, ' ');
+            if (text.length > 5) {
+              steps.push({
+                title: 'Step-by-Step Working & Volume Calculation Proof',
+                html: html,
+                text: text
+              });
+            }
+          }
+        }
+
+        if (steps.length === 0) {
+          var listSteps = container.querySelectorAll('ol#res-steps, ul#res-steps, [id="res-steps-list"], [id="res-steps-content"], [id="calc-steps-list"], #res-calculation-steps');
+          listSteps.forEach(function (stEl) {
+            if (stEl.closest('.hidden')) return;
+            
+            var pCard = stEl.closest('[class*="rounded"], details, div');
+            var titleEl = pCard ? pCard.querySelector('summary, h3, h4, [class*="font-bold"]') : null;
+            var title = titleEl ? titleEl.textContent.replace(/[▼▲►\n]/g, '').trim().replace(/\s+/g, ' ') : 'Step-by-Step Mathematical Derivation';
+            
+            var clone = stEl.cloneNode(true);
+            var html = clone.innerHTML.trim();
+            var text = (clone.textContent || '').trim().replace(/\s+/g, ' ');
+            if (text.length > 3) {
+              steps.push({ title: title, html: html, text: text });
+            }
+          });
+        }
+
         var uniqueResults = [];
         var seen = {};
         results.forEach(function (r) {
+          // Exclude labels that are obviously raw values leaked as labels (e.g. "1.48 yd³" or starting with numbers)
+          if (/^\d+(\.\d+)?\s*(yd|ft|m|cm|in|sq|kg)/i.test(r.label)) return;
+          if (r.label.length < 3 || r.value.length === 0) return;
+
           var key = r.label.toLowerCase() + '::' + r.value.toLowerCase();
           if (!seen[key] && r.label.length < 80 && r.value.length < 120) {
             seen[key] = true;
@@ -1125,7 +1415,8 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
           inputs: inputs,
           results: uniqueResults,
           tables: tables,
-          diagrams: diagrams
+          diagrams: diagrams,
+          steps: steps
         };
       }
 
@@ -1183,6 +1474,18 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
               tbl.rows.forEach(function (row) {
                 lines.push(row.join(' | '));
               });
+              lines.push('');
+            });
+          }
+
+          // 4. Step-by-Step Working Proofs (if any)
+          if (data.steps && data.steps.length > 0) {
+            lines.push('--------------------------------------------------');
+            lines.push('4. STEP-BY-STEP CALCULATION PROOFS');
+            lines.push('--------------------------------------------------');
+            data.steps.forEach(function (st) {
+              lines.push('• ' + st.title);
+              lines.push('  ' + st.text);
               lines.push('');
             });
           }
@@ -1276,6 +1579,15 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
               });
               csvLines.push('');
             });
+          }
+
+          // Section 4: Step-by-Step Proofs
+          if (data.steps && data.steps.length > 0) {
+            csvLines.push([escapeCsv('--- 4. STEP-BY-STEP CALCULATION PROOFS ---'), ''].join(','));
+            data.steps.forEach(function (st) {
+              csvLines.push([escapeCsv(st.title), escapeCsv(st.text)].join(','));
+            });
+            csvLines.push('');
           }
 
           csvLines.push([escapeCsv('---'), ''].join(','));
@@ -1497,7 +1809,29 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
             '</div>';
         }
 
-        // 6. Detailed Breakdown Tables (If Available)
+        // 6. Step-by-Step Calculation Proofs & Working Methods (If Available)
+        var stepsSectionHtml = '';
+        if (data.steps && data.steps.length > 0) {
+          var stepCardsHtml = data.steps.map(function (st) {
+            return '<div style="background:#ffffff;border:1px solid #cbd5e1;border-radius:10px;padding:12px 16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,0.02);">' +
+              '<div style="font-size:12px;font-weight:800;color:#0f172a;margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;gap:6px;">' +
+              escapeHtml(st.title) +
+              '</div>' +
+              '<div style="font-size:11.5px;line-height:1.55;color:#334155;">' +
+              st.html +
+              '</div>' +
+              '</div>';
+          }).join('');
+
+          stepsSectionHtml = '<div style="margin-top:16px;">' +
+            '<div style="font-size:11.5px;font-weight:800;text-transform:uppercase;color:#475569;letter-spacing:0.4px;margin-bottom:6px;display:flex;align-items:center;gap:5px;">' +
+            '<span>📝</span> ' + (data.diagrams && data.diagrams.length > 0 ? (formulaSectionHtml ? '5.' : '4.') : (formulaSectionHtml ? '4.' : '3.')) + ' Step-by-Step Working &amp; Verification Methods' +
+            '</div>' +
+            stepCardsHtml +
+            '</div>';
+        }
+
+        // 7. Detailed Breakdown Tables (If Available)
         var tablesHtml = '';
         if (data.tables && data.tables.length > 0) {
           data.tables.forEach(function (tbl, idx) {
@@ -1516,7 +1850,7 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
             var tblTitle = tbl.title || ('Detailed Schedule & Material Breakdown ' + (data.tables.length > 1 ? ('(' + (idx + 1) + ')') : ''));
             tablesHtml += '<div style="margin-top:16px;">' +
               '<div style="font-size:11.5px;font-weight:800;text-transform:uppercase;color:#475569;margin-bottom:6px;letter-spacing:0.4px;display:flex;align-items:center;gap:5px;">' +
-              '<span>📊</span> ' + (data.diagrams && data.diagrams.length > 0 ? '5.' : '4.') + ' ' + escapeHtml(tblTitle) +
+              '<span>📊</span> ' + (data.diagrams && data.diagrams.length > 0 ? (stepsSectionHtml ? '6.' : '5.') : (stepsSectionHtml ? '5.' : '4.')) + ' ' + escapeHtml(tblTitle) +
               '</div>' +
               '<div style="overflow-x:auto;border:1px solid #e2e8f0;border-radius:10px;box-shadow:0 1px 3px rgba(0,0,0,0.02);">' +
               '<table style="width:100%;border-collapse:collapse;font-size:11.5px;">' +
@@ -1549,6 +1883,14 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
           '.meta-text { font-size: 11px; color: #64748b; margin: 0; }' +
           '.section-title { font-size: 11.5px; font-weight: 800; text-transform: uppercase; color: #475569; letter-spacing: 0.4px; margin: 16px 0 8px 0; display: flex; align-items: center; gap: 5px; }' +
           '.report-footer { margin-top: 22px; padding-top: 10px; border-top: 1px solid #e2e8f0; font-size: 10.5px; color: #94a3b8; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 6px; }' +
+          '.font-mono, [class*="font-mono"] { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important; }' +
+          'table { width: 100%; border-collapse: collapse; margin-top: 4px; margin-bottom: 4px; }' +
+          'th, td { border: 1px solid #cbd5e1; padding: 5px 8px; font-size: 11px; }' +
+          'th { background: #f1f5f9; font-weight: 700; color: #334155; }' +
+          'ul, ol { margin: 4px 0; padding-left: 18px; }' +
+          'li { margin-bottom: 2px; }' +
+          'code { background: #f1f5f9; padding: 2px 5px; border-radius: 4px; font-family: monospace; font-size: 11px; }' +
+          '.text-blue-600, .text-blue-700, [class*="text-blue-"] { color: #1d4ed8; font-weight: 700; }' +
           '@media print {' +
           '  .top-nav { display: none !important; }' +
           '  body { background: white !important; font-size: 10.5pt; }' +
@@ -1587,6 +1929,7 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
           resultsSectionHtml +
           diagramsSectionHtml +
           formulaSectionHtml +
+          stepsSectionHtml +
           tablesHtml +
           '  <div class="report-footer">' +
           '    <span>AI Free Calculator • 100% Client-Side Private Computation</span>' +
@@ -1726,6 +2069,29 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
                 'ISO 8601 Date Pattern: [Roman Year] · [Roman Month] · [Roman Day]'
               ]
             });
+          } else if (s.includes('lcm') || s.includes('least-common-multiple')) {
+            formulas.push({
+              heading: 'Least Common Multiple (LCM) Mathematical Rules',
+              items: [
+                'LCM Definition: Smallest positive integer divisible by all numbers in the set: LCM(a, b, c...)',
+                'GCF Relationship: LCM(a, b) = (|a × b|) / GCF(a, b)',
+                'Iterative LCM Formula: LCM(a, b, c) = LCM(LCM(a, b), c)',
+                'Prime Factorization: Product of highest powers of all unique prime factors across all numbers'
+              ]
+            });
+          } else if (s.includes('cubic-yard') || s.includes('cubic-yards') || s.includes('volume')) {
+            formulas.push({
+              heading: 'Cubic Yards & Volume Calculation Formulas',
+              items: [
+                'Cubic Yards (yd³) = Cubic Feet (ft³) ÷ 27',
+                'Cubic Feet (ft³) = Surface Area (sq ft) × Depth (ft) × Quantity',
+                'Depth Normalization: Depth (ft) = Depth (inches) ÷ 12',
+                'Metric Volume: Cubic Meters (m³) = Cubic Feet (ft³) × 0.0283168',
+                'Surface Area: Derived from 2D shape geometry (Length × Width, π × r², etc.)',
+                'Waste Allowance: Total Volume = Net Volume × (1 + Waste % ÷ 100)',
+                'Bag Estimator: 2.0 cu ft Bags = ceil(Total ft³ ÷ 2.0)'
+              ]
+            });
           } else {
             formulas.push({
               heading: 'Mathematical Calculation Model',
@@ -1776,6 +2142,36 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
             '</ul></div>';
         });
 
+        // Build Primary Hero Output Banner
+        var primaryHero = data.results.find(function(r) { return r.isHero; }) || (data.results.length > 0 ? data.results[0] : null);
+        var heroBannerHtml = '';
+        if (primaryHero) {
+          heroBannerHtml = '<div style="background:#f0fdf4; border:1.5px solid #22c55e; border-radius:8px; padding:10px 14px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">' +
+            '<div>' +
+            '<div style="font-size:10px; font-weight:800; text-transform:uppercase; color:#166534; letter-spacing:0.5px;">' + escapeHtml(primaryHero.label) + '</div>' +
+            '<div style="font-size:22px; font-weight:900; color:#15803d; font-family:monospace; margin-top:2px;">' + escapeHtml(primaryHero.value) + '</div>' +
+            '</div>' +
+            '<div style="background:#dcfce7; color:#166534; font-size:10.5px; font-weight:800; padding:4px 8px; border-radius:6px; border:1px solid #bbf7d0;">Verified Calculation</div>' +
+            '</div>';
+        }
+
+        // Build Visual Diagrams (if any)
+        var diagramsHtml = '';
+        if (data.diagrams && data.diagrams.length > 0) {
+          var dCards = data.diagrams.map(function(d) {
+            return '<div style="margin-bottom:10px; text-align:center; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:10px; page-break-inside:avoid; break-inside:avoid;">' +
+              '<div style="font-size:10.5px; font-weight:800; text-transform:uppercase; color:#334155; margin-bottom:6px;">' + escapeHtml(d.title) + '</div>' +
+              '<div style="max-height:160px; overflow:hidden; display:flex; justify-content:center; align-items:center;">' + d.html + '</div>' +
+              '</div>';
+          }).join('');
+          diagramsHtml = '<div style="margin-bottom: 18px; page-break-inside:avoid; break-inside:avoid;">' +
+            '<div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#0f172a; margin-bottom:6px; border-left:3px solid #007b8f; padding-left:8px;">' +
+            'Geometric Detailing Diagram' +
+            '</div>' +
+            dCards +
+            '</div>';
+        }
+
         // Build Outputs Table
         var outputsHtml = '';
         if (data.results.length === 0) {
@@ -1818,6 +2214,30 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
               (tbl.rows.length > maxPrintRows ? '<div style="font-size:9px;color:#64748b;margin-top:4px;font-style:italic;">Showing first ' + maxPrintRows + ' rows of ' + tbl.rows.length + ' total rows.</div>' : '') +
               '</div>';
           });
+        }
+
+        // Build Step-by-Step Proofs HTML (if any)
+        var stepsHtml = '';
+        if (data.steps && data.steps.length > 0) {
+          var stepItemsHtml = data.steps.map(function(st) {
+            return '<div style="border:1px solid #cbd5e1; border-radius:6px; padding:10px 14px; margin-bottom:12px; background:#ffffff; page-break-inside:avoid; break-inside:avoid;">' +
+              '<div style="font-size:11.5px; font-weight:800; color:#0f172a; margin-bottom:6px; padding-bottom:4px; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; gap:5px;">' +
+              escapeHtml(st.title) +
+              '</div>' +
+              '<div style="font-size:10.5px; line-height:1.55; color:#1e293b;">' +
+              st.html +
+              '</div>' +
+              '</div>';
+          }).join('');
+
+          stepsHtml = `
+            <div style="margin-bottom: 18px; page-break-inside:avoid; break-inside:avoid;">
+              <div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#0f172a; margin-bottom:6px; border-left:3px solid #007b8f; padding-left:8px;">
+                4. Step-by-Step Working &amp; Calculation Proofs
+              </div>
+              ${stepItemsHtml}
+            </div>
+          `;
         }
 
         sheet.innerHTML = `
@@ -1867,6 +2287,7 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
             <div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#0f172a; margin-bottom:6px; border-left:3px solid #007b8f; padding-left:8px;">
               3. Output Values (Calculation Results)
             </div>
+            ${heroBannerHtml}
             <table style="width:100%; border-collapse:collapse; font-size:11px; border:1px solid #cbd5e1;">
               <thead>
                 <tr style="background:#f1f5f9;">
@@ -1880,6 +2301,8 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
             </table>
           </div>
 
+          ${diagramsHtml}
+          ${stepsHtml}
           ${tablesHtml}
 
           <div style="border-top: 1px solid #e2e8f0; padding-top: 8px; margin-top: 20px; font-size: 9.5px; color: #94a3b8; display:flex; justify-content:space-between;">
@@ -2186,6 +2609,44 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
       font-size: 11pt !important;
       line-height: 1.5 !important;
       box-sizing: border-box !important;
+    }
+
+    #print-sheet-strict table {
+      width: 100% !important;
+      border-collapse: collapse !important;
+      margin-top: 4px !important;
+      margin-bottom: 4px !important;
+    }
+    #print-sheet-strict th, #print-sheet-strict td {
+      border: 1px solid #cbd5e1 !important;
+      padding: 4px 8px !important;
+      font-size: 10pt !important;
+    }
+    #print-sheet-strict th {
+      background: #f1f5f9 !important;
+      font-weight: 700 !important;
+      color: #334155 !important;
+    }
+    #print-sheet-strict .font-mono, #print-sheet-strict [class*="font-mono"] {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
+    }
+    #print-sheet-strict ul, #print-sheet-strict ol {
+      margin: 4px 0 !important;
+      padding-left: 18px !important;
+    }
+    #print-sheet-strict li {
+      margin-bottom: 2px !important;
+    }
+    #print-sheet-strict code {
+      background: #f1f5f9 !important;
+      padding: 1px 4px !important;
+      border-radius: 4px !important;
+      font-family: monospace !important;
+      font-size: 9.5pt !important;
+    }
+    #print-sheet-strict .text-blue-600, #print-sheet-strict .text-blue-700, #print-sheet-strict [class*="text-blue-"] {
+      color: #007b8f !important;
+      font-weight: 700 !important;
     }
   }
 </style>

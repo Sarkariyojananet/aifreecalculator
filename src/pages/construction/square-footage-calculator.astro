@@ -1,0 +1,1658 @@
+---
+import CalculatorLayout from "../../layouts/CalculatorLayout.astro";
+
+const faqs = [
+  {
+    question: "How do I calculate square footage for different shapes?",
+    answer: "For rectangles and squares, multiply Length × Width in feet. For circles, use π × radius² (or π × (diameter/2)²). For triangles, use ½ × Base × Height or Heron's formula if all three sides are known. For complex or L-shaped rooms, divide the floor plan into separate geometric sections, calculate each section's area, and add them together."
+  },
+  {
+    question: "Can I convert between square feet and other units using this calculator?",
+    answer: "Yes. The calculator automatically converts square footage into square inches (multiply by 144), square yards (divide by 9), square meters (multiply by 0.092903 / divide by 10.7639), and acres (divide by 43,560)."
+  },
+  {
+    question: "How do I measure and estimate materials for a construction or flooring project?",
+    answer: "Input your room or surface dimensions to calculate the net area, then add a standard waste factor (typically 5% for simple rectangular rooms, 10% for standard tile/hardwood, or 15% for diagonal and herringbone patterns). Enter the unit price or box coverage to see exact package counts and cost estimates."
+  },
+  {
+    question: "Can this calculator help with landscaping and garden projects?",
+    answer: "Yes. You can estimate square footage, square yards, or acres for lawns, sod rolls, paver walkways, mulch beds, or circular patios, and calculate total material purchase costs easily."
+  }
+];
+---
+
+<CalculatorLayout
+  title="Square Footage Calculator – Calculate Area, Materials & Costs for Any Shape | AI Free Calculator"
+  description="Free online Square Footage Calculator to estimate square feet, square meters, square yards, and acres for rectangles, circles, triangles, borders, walls, and irregular shapes with cost and waste factors."
+  category="Construction"
+  calculatorName="Square Footage Calculator"
+  slug="square-footage-calculator"
+  keywords={[
+    "square footage calculator",
+    "sq ft calculator",
+    "square foot calculator",
+    "area calculator",
+    "square feet calculator",
+    "flooring calculator",
+    "paint calculator",
+    "cost per square foot",
+    "room square footage",
+    "square yardage calculator",
+    "wall area calculator"
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- HERO HEADER & DESCRIPTION -->
+    <div class="rounded-3xl border border-slate-200/90 bg-linear-to-r from-blue-50/60 via-indigo-50/40 to-white p-5 dark:border-slate-800 dark:from-slate-900 dark:via-blue-950/20 dark:to-slate-900 sm:p-6 shadow-xs">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center gap-2 rounded-full bg-blue-100/80 px-3 py-1 text-xs font-bold text-blue-800 dark:bg-blue-900/60 dark:text-blue-300 mb-2">
+            <span>🏗️</span> Professional Area &amp; Material Estimator
+          </div>
+          <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            Square Footage Calculator
+          </h1>
+          <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-3xl">
+            The Square Footage Calculator estimates the square footage of a lot, house, or other surfaces in several common shapes.
+            If the surface is complex in shape, it may be possible to section the surface into simple shapes and add their square footages together.
+          </p>
+        </div>
+
+        <div class="shrink-0 flex items-center gap-2 rounded-2xl border border-slate-200/80 bg-white/90 p-3 shadow-2xs dark:border-slate-800 dark:bg-slate-950/80 text-xs">
+          <span class="text-base">📐</span>
+          <div>
+            <div class="font-bold text-slate-800 dark:text-slate-200">12 Geometric Shapes</div>
+            <div class="text-[11px] text-slate-500">Supports Multi-Room Sum</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- INSTRUCTION NOTICE BAR (Matching Reference Image) -->
+      <div class="mt-4 flex items-center justify-center gap-2.5 rounded-xl bg-blue-700 px-4 py-2 text-xs font-bold text-white shadow-xs dark:bg-blue-800">
+        <span class="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 text-xs">▼</span>
+        <span>Modify the values and click the Calculate button to use</span>
+      </div>
+    </div>
+
+    <!-- MAIN CALCULATOR WORKSPACE -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+      <!-- LEFT COLUMN: SHAPE SELECTION & INPUTS (8 Cols) -->
+      <div class="lg:col-span-8 space-y-6">
+
+        <!-- SHAPE SELECTOR TABS -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 shadow-xs">
+          <div class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5 flex items-center justify-between">
+            <span>Select Surface Shape</span>
+            <span class="text-[11px] text-blue-600 dark:text-blue-400 font-semibold" id="active-shape-indicator">Current: Rectangle</span>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-1.5 text-xs">
+            <button type="button" data-shape="rectangle" class="shape-tab-btn active flex items-center gap-2 rounded-xl border border-blue-600 bg-blue-50/80 p-2 text-left font-bold text-blue-900 transition dark:border-blue-500 dark:bg-blue-950/40 dark:text-blue-200">
+              <span class="text-base shrink-0">🔲</span>
+              <span class="truncate">Rectangle</span>
+            </button>
+            <button type="button" data-shape="rectangle-border" class="shape-tab-btn flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/60 p-2 text-left font-medium text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 transition">
+              <span class="text-base shrink-0">🖼️</span>
+              <span class="truncate">Rect. Border</span>
+            </button>
+            <button type="button" data-shape="square" class="shape-tab-btn flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/60 p-2 text-left font-medium text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 transition">
+              <span class="text-base shrink-0">⏹️</span>
+              <span class="truncate">Square</span>
+            </button>
+            <button type="button" data-shape="circle" class="shape-tab-btn flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/60 p-2 text-left font-medium text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 transition">
+              <span class="text-base shrink-0">⭕</span>
+              <span class="truncate">Circle</span>
+            </button>
+            <button type="button" data-shape="ring" class="shape-tab-btn flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/60 p-2 text-left font-medium text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 transition">
+              <span class="text-base shrink-0">🍩</span>
+              <span class="truncate">Ring / Annulus</span>
+            </button>
+            <button type="button" data-shape="triangle-edges" class="shape-tab-btn flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/60 p-2 text-left font-medium text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 transition">
+              <span class="text-base shrink-0">📐</span>
+              <span class="truncate">Triangle (3 Sides)</span>
+            </button>
+            <button type="button" data-shape="triangle-base" class="shape-tab-btn flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/60 p-2 text-left font-medium text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 transition">
+              <span class="text-base shrink-0">📐</span>
+              <span class="truncate">Triangle (Base-Ht)</span>
+            </button>
+            <button type="button" data-shape="trapezoid" class="shape-tab-btn flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/60 p-2 text-left font-medium text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 transition">
+              <span class="text-base shrink-0">⏢</span>
+              <span class="truncate">Trapezoid</span>
+            </button>
+            <button type="button" data-shape="sector" class="shape-tab-btn flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/60 p-2 text-left font-medium text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 transition">
+              <span class="text-base shrink-0">🍰</span>
+              <span class="truncate">Sector</span>
+            </button>
+            <button type="button" data-shape="parallelogram" class="shape-tab-btn flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/60 p-2 text-left font-medium text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 transition">
+              <span class="text-base shrink-0">▱</span>
+              <span class="truncate">Parallelogram</span>
+            </button>
+            <button type="button" data-shape="wall-openings" class="shape-tab-btn flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/60 p-2 text-left font-medium text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 transition">
+              <span class="text-base shrink-0">🚪</span>
+              <span class="truncate">Wall w/ Openings</span>
+            </button>
+            <button type="button" data-shape="cathedral-wall" class="shape-tab-btn flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50/60 p-2 text-left font-medium text-slate-700 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-300 transition">
+              <span class="text-base shrink-0">⛪</span>
+              <span class="truncate">Cathedral Wall</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ACTIVE SHAPE INPUT CARD WITH SVG DIAGRAM -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 shadow-xs">
+          
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+
+            <!-- FORM CONTROLS (7 Cols) -->
+            <div class="md:col-span-7 space-y-4" id="shape-inputs-container">
+
+              <!-- DYNAMIC SHAPE FIELDS INJECTED HERE -->
+
+            </div>
+
+            <!-- DIAGRAM PREVIEW PANEL (5 Cols) (Matching Reference Image Style) -->
+            <div class="md:col-span-5 flex flex-col items-center justify-center p-4 rounded-xl border border-slate-100 bg-slate-50/80 dark:border-slate-800/80 dark:bg-slate-950/60 min-h-55">
+              <div id="shape-diagram-container" class="w-full flex items-center justify-center">
+                <!-- SVG rendered dynamically -->
+              </div>
+              <div id="diagram-caption" class="mt-2 text-center text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                Visual Geometry Diagram
+              </div>
+            </div>
+
+          </div>
+
+          <!-- COMMON CONTROLS: QUANTITY, WASTE, MATERIAL COST ESTIMATOR -->
+          <div class="mt-6 pt-5 border-t border-slate-200 dark:border-slate-800 space-y-4">
+            
+            <!-- ROW 1: Quantity & Waste Factor -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <!-- Quantity -->
+              <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
+                <label for="inp-quantity" class="flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+                  <span class="flex items-center gap-1.5">
+                    <span>🔢</span> Quantity / Multiplier
+                  </span>
+                  <span class="text-[11px] font-normal text-slate-500">Multiply identical areas</span>
+                </label>
+                <input 
+                  type="number" 
+                  id="inp-quantity" 
+                  value="1" 
+                  min="1" 
+                  max="1000" 
+                  class="w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2 text-xs sm:text-sm font-bold text-slate-900 shadow-2xs focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white" 
+                />
+              </div>
+
+              <!-- Waste Margin % (Optional) -->
+              <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/60">
+                <label for="inp-waste" class="flex items-center justify-between text-xs font-bold text-slate-800 dark:text-slate-200 mb-1.5">
+                  <span class="flex items-center gap-1.5">
+                    <span>📐</span> Waste Factor % (Optional)
+                  </span>
+                  <span class="text-[11px] font-normal text-slate-500">None by default</span>
+                </label>
+                <select 
+                  id="inp-waste" 
+                  class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs sm:text-sm font-semibold text-slate-800 shadow-2xs focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+                >
+                  <option value="0" selected>None (0% - Exact Net Area)</option>
+                  <option value="5">5% (Simple Rectangular Rooms)</option>
+                  <option value="10">10% (Standard Tile &amp; Flooring Cuts)</option>
+                  <option value="15">15% (Diagonal / Herringbone Patterns)</option>
+                  <option value="20">20% (Complex &amp; Curved Layouts)</option>
+                  <option value="custom">Custom Percentage...</option>
+                </select>
+                <div id="custom-waste-wrap" class="mt-2" style="display: none;">
+                  <div class="flex items-center gap-2">
+                    <input 
+                      type="number" 
+                      id="inp-custom-waste" 
+                      value="10" 
+                      min="0" 
+                      max="100" 
+                      step="any"
+                      class="flex-1 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs sm:text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" 
+                      placeholder="Custom waste %" 
+                    />
+                    <span class="text-xs font-bold text-slate-500">% Waste</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- ROW 2: DEDICATED MATERIAL COST ESTIMATOR (SPACIOUS & PROMINENT ON PC & MOBILE) -->
+            <div class="rounded-2xl border border-emerald-200/80 bg-linear-to-r from-emerald-50/50 via-teal-50/30 to-white p-4 dark:border-emerald-900/40 dark:from-slate-900 dark:via-emerald-950/20 dark:to-slate-900 shadow-xs space-y-3">
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <div class="flex items-center gap-2 font-bold text-xs sm:text-sm text-slate-900 dark:text-white">
+                  <span>💰</span>
+                  <span>Material Price &amp; Cost Estimator (Optional)</span>
+                </div>
+                <div class="text-[11px] text-slate-500 dark:text-slate-400">
+                  Leave empty if you only need area measurements
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-12 gap-3 items-center">
+                <!-- Price Input Box (7 columns on PC = generous typing space) -->
+                <div class="sm:col-span-7">
+                  <label for="inp-price" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Unit Price ($)
+                  </label>
+                  <div class="relative flex items-center">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-base font-black text-emerald-700 dark:text-emerald-400 select-none">
+                      $
+                    </span>
+                    <input 
+                      type="number" 
+                      id="inp-price" 
+                      step="0.01" 
+                      min="0" 
+                      placeholder="e.g. 4.50" 
+                      class="w-full rounded-xl border border-slate-300 bg-white pl-9 pr-4 py-2.5 text-sm sm:text-base font-bold text-slate-900 shadow-2xs focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" 
+                    />
+                  </div>
+                </div>
+
+                <!-- Unit Selector (5 columns on PC) -->
+                <div class="sm:col-span-5">
+                  <label for="inp-price-unit" class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">
+                    Pricing Basis
+                  </label>
+                  <select 
+                    id="inp-price-unit" 
+                    class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-xs sm:text-sm font-semibold text-slate-800 shadow-2xs focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer"
+                  >
+                    <option value="sqft" selected>per Square Foot ($/sq ft)</option>
+                    <option value="sqyd">per Square Yard ($/sq yd)</option>
+                    <option value="sqm">per Square Meter ($/sq m)</option>
+                    <option value="sqin">per Square Inch ($/sq in)</option>
+                    <option value="package">per Box / Package</option>
+                  </select>
+                </div>
+              </div>
+
+              <!-- Optional Package/Box Coverage (Shown when per box/pkg selected) -->
+              <div id="box-coverage-wrap" class="rounded-xl border border-emerald-200 bg-white p-3 dark:border-emerald-900/50 dark:bg-slate-900/90 text-xs flex flex-wrap items-center justify-between gap-3" style="display: none;">
+                <div class="flex items-center gap-1.5 font-semibold text-emerald-950 dark:text-emerald-200">
+                  <span>📦</span>
+                  <span>Tile / Flooring Box Coverage:</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <input 
+                    type="number" 
+                    id="inp-box-sqft" 
+                    value="20" 
+                    min="0.1" 
+                    step="0.1" 
+                    class="w-28 rounded-lg border border-emerald-300 bg-slate-50 px-3 py-1.5 text-xs sm:text-sm text-right font-bold text-slate-900 dark:border-emerald-800 dark:bg-slate-800 dark:text-white" 
+                  />
+                  <span class="font-bold text-slate-700 dark:text-slate-300">sq ft / box</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- ACTION BUTTONS: CALCULATE (Green Play Icon like reference), CLEAR, & ADD TO PROJECT -->
+            <div class="flex flex-wrap items-center gap-3 pt-2">
+              <button
+                type="button"
+                id="btn-calculate"
+                class="inline-flex items-center gap-2 rounded-xl bg-emerald-700 px-6 py-2.5 text-xs sm:text-sm font-bold text-white shadow-md hover:bg-emerald-800 hover:shadow-lg transition cursor-pointer"
+              >
+                <span>Calculate</span>
+                <span class="flex h-5 w-5 items-center justify-center rounded-full bg-white/20 text-[10px]">▶</span>
+              </button>
+
+              <button
+                type="button"
+                id="btn-clear"
+                class="rounded-xl border border-slate-300 bg-slate-200/80 px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-300 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition cursor-pointer"
+              >
+                Clear
+              </button>
+
+              <button
+                type="button"
+                id="btn-add-room"
+                class="inline-flex items-center gap-1.5 rounded-xl border border-blue-300 bg-blue-50/80 px-3.5 py-2.5 text-xs font-bold text-blue-700 hover:bg-blue-100 hover:border-blue-400 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300 transition cursor-pointer ml-auto"
+                title="Add current area to multi-room project accumulator"
+              >
+                <span>➕</span> Add to Multi-Room Project
+              </button>
+            </div>
+
+            <!-- Error Notification Alert -->
+            <div id="calc-error-box" class="rounded-xl border border-rose-200 bg-rose-50/90 p-3 text-xs text-rose-800 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-300 font-medium" style="display: none;">
+              <!-- Dynamic error message -->
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: RESULTS & SUMMARY (4 Cols) -->
+      <div class="lg:col-span-4 space-y-6">
+
+        <!-- PRIMARY RESULT PANEL -->
+        <div id="results-panel" class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 shadow-sm space-y-5">
+          
+          <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+              <span>📊</span> Calculation Results
+            </h2>
+            <span id="badge-shape-name" class="rounded-full bg-blue-100 px-2.5 py-0.5 text-[11px] font-bold text-blue-800 dark:bg-blue-900/60 dark:text-blue-300">
+              Rectangle
+            </span>
+          </div>
+
+          <!-- PRIMARY HEADLINE METRIC: TOTAL SQUARE FOOTAGE -->
+          <div class="rounded-2xl border border-blue-200 bg-linear-to-br from-blue-50/90 via-indigo-50/40 to-white p-4.5 text-center dark:border-blue-900/50 dark:from-slate-900 dark:via-blue-950/30 dark:to-slate-950 shadow-2xs">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">
+              Total Area Required
+            </div>
+            <div id="res-total-sqft" class="mt-1 text-3xl sm:text-4xl font-black text-slate-900 dark:text-white font-mono tracking-tight">
+              0.00
+            </div>
+            <div class="mt-0.5 text-xs font-bold text-blue-800 dark:text-blue-300">
+              Square Feet (sq ft / ft²)
+            </div>
+            <div id="res-waste-note" class="mt-1 text-[11px] text-slate-500 dark:text-slate-400">
+              Includes 10% safety waste factor
+            </div>
+          </div>
+
+          <!-- UNIT CONVERSIONS GRID -->
+          <div class="space-y-2">
+            <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Equivalent Measurements
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-xs">
+              <div class="rounded-xl border border-slate-200/80 bg-slate-50/60 p-2.5 dark:border-slate-800 dark:bg-slate-950/60">
+                <span class="text-[10px] text-slate-500 block">Square Yards:</span>
+                <span id="res-sqyd" class="font-mono font-bold text-slate-800 dark:text-slate-200">0.00</span>
+                <span class="text-[10px] text-slate-400 ml-1">yd²</span>
+              </div>
+              <div class="rounded-xl border border-slate-200/80 bg-slate-50/60 p-2.5 dark:border-slate-800 dark:bg-slate-950/60">
+                <span class="text-[10px] text-slate-500 block">Square Meters:</span>
+                <span id="res-sqm" class="font-mono font-bold text-slate-800 dark:text-slate-200">0.00</span>
+                <span class="text-[10px] text-slate-400 ml-1">m²</span>
+              </div>
+              <div class="rounded-xl border border-slate-200/80 bg-slate-50/60 p-2.5 dark:border-slate-800 dark:bg-slate-950/60">
+                <span class="text-[10px] text-slate-500 block">Square Inches:</span>
+                <span id="res-sqin" class="font-mono font-bold text-slate-800 dark:text-slate-200">0</span>
+                <span class="text-[10px] text-slate-400 ml-1">in²</span>
+              </div>
+              <div class="rounded-xl border border-slate-200/80 bg-slate-50/60 p-2.5 dark:border-slate-800 dark:bg-slate-950/60">
+                <span class="text-[10px] text-slate-500 block">Acres:</span>
+                <span id="res-acres" class="font-mono font-bold text-slate-800 dark:text-slate-200">0.0000</span>
+                <span class="text-[10px] text-slate-400 ml-1">ac</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- MATERIAL COST ESTIMATE CARD (When Price Entered) -->
+          <div id="cost-result-card" class="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-3.5 dark:border-emerald-900/40 dark:bg-emerald-950/20 text-xs space-y-1.5" style="display: none;">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-emerald-900 dark:text-emerald-200">💰 Estimated Material Cost:</span>
+              <span id="res-total-cost" class="font-mono font-black text-base text-emerald-800 dark:text-emerald-300">$0.00</span>
+            </div>
+            <div id="res-box-breakdown" class="text-[11px] text-emerald-700 dark:text-emerald-400" style="display: none;">
+              <!-- Package count -->
+            </div>
+          </div>
+
+          <!-- DETAILED STEP-BY-STEP BREAKDOWN -->
+          <div class="space-y-2 border-t border-slate-100 dark:border-slate-800 pt-3 text-xs">
+            <div class="font-bold text-slate-700 dark:text-slate-300">
+              Calculation Breakdown
+            </div>
+            <div id="res-calculation-steps" class="space-y-1 font-mono text-[11px] text-slate-600 dark:text-slate-400 bg-slate-50/80 dark:bg-slate-950/50 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800">
+              <div>Base Net Area: 0.00 sq ft</div>
+              <div>Quantity: 1</div>
+              <div>Waste Margin: 0.00 sq ft</div>
+              <div class="font-bold text-slate-900 dark:text-white">Gross Area: 0.00 sq ft</div>
+            </div>
+          </div>
+
+          <!-- ACTIONS: COPY, PRINT PDF, SHARE -->
+          <div class="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-slate-800">
+            <button
+              type="button"
+              id="btn-copy-result"
+              class="flex-1 rounded-xl border border-slate-200 bg-white py-2 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition cursor-pointer text-center"
+            >
+              📋 Copy
+            </button>
+            <button
+              type="button"
+              id="btn-print-report"
+              class="flex-1 rounded-xl border border-slate-200 bg-white py-2 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition cursor-pointer text-center"
+            >
+              🖨️ Print / PDF
+            </button>
+            <button
+              type="button"
+              id="btn-share-result"
+              class="flex-1 rounded-xl border border-slate-200 bg-white py-2 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 transition cursor-pointer text-center"
+            >
+              🔗 Share
+            </button>
+          </div>
+
+        </div>
+
+        <!-- MULTI-ROOM PROJECT ACCUMULATOR PANEL -->
+        <div id="project-accumulator-panel" class="rounded-2xl border border-indigo-200 bg-white p-4.5 dark:border-indigo-900/50 dark:bg-slate-900 shadow-sm space-y-3" style="display: none;">
+          <div class="flex items-center justify-between border-b border-indigo-100 dark:border-indigo-900/40 pb-2.5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-indigo-900 dark:text-indigo-200 flex items-center gap-1.5">
+              <span>🏠</span> Multi-Room Project Total
+            </h3>
+            <button type="button" id="btn-clear-project" class="text-[11px] font-bold text-rose-600 hover:underline dark:text-rose-400 cursor-pointer">
+              Clear All
+            </button>
+          </div>
+
+          <div id="project-rooms-list" class="space-y-1.5 max-h-48 overflow-y-auto pr-1 text-xs divide-y divide-slate-100 dark:divide-slate-800">
+            <!-- Dynamic room items -->
+          </div>
+
+          <div class="rounded-xl border border-indigo-200/80 bg-indigo-50/60 p-3 dark:border-indigo-900/40 dark:bg-indigo-950/40 text-xs space-y-1">
+            <div class="flex justify-between items-center font-bold text-indigo-950 dark:text-indigo-200">
+              <span>Project Grand Total:</span>
+              <span id="proj-grand-sqft" class="font-mono text-sm">0.00 sq ft</span>
+            </div>
+            <div id="proj-grand-cost-wrap" class="flex justify-between items-center text-emerald-800 dark:text-emerald-300 font-semibold" style="display: none;">
+              <span>Total Material Cost:</span>
+              <span id="proj-grand-cost" class="font-mono">$0.00</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div><!-- End Main Calculator Space -->
+
+  <!-- EDUCATIONAL SEO & USER GUIDE ARTICLE (Integrated from User's Full Source Text) -->
+  <Fragment slot="content">
+    <div class="space-y-10">
+
+      <!-- SECTION 1: WHAT IS SQUARE FOOTAGE & INTRO -->
+      <div>
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+          What is Square Footage?
+        </h2>
+        <p class="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          Square footage is a standard unit of measurement used to quantify the <strong>2-dimensional area of a flat space</strong> where dimensions such as length, width, or diameter are measured in feet. When you multiply two linear measurements in feet, the resulting unit is <strong>square feet (ft² or sq ft)</strong>. The word "square" in front of any unit of measure simply indicates that you are measuring a flat surface, rather than a 1-dimensional line (length) or a 3-dimensional volume (cubic feet).
+        </p>
+        <p class="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          Likewise, <strong>square yardage</strong> represents area measured in yards (often used for carpeting and turf), and <strong>square meters</strong> represents area measured in meters (standard in international architectural drawings). Whether you are installing hardwood flooring, hanging drywall, painting walls, pouring concrete slabs, or planting sod in your backyard, determining precise square footage ensures you procure accurate quantities and avoid costly project delays.
+        </p>
+      </div>
+
+      <!-- SECTION 2: REFERENCE AREA & LENGTH CONVERSIONS TABLE -->
+      <div class="space-y-4">
+        <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>📐</span> Standard Reference Area &amp; Length Conversions
+        </h3>
+        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          When working across architectural drawings, building materials, and site plans, you will often need to convert between square feet and other common units of area and length:
+        </p>
+
+        <!-- Area Conversion Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+          <div class="rounded-xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900">
+            <div class="font-bold text-slate-800 dark:text-slate-200">1 Acre</div>
+            <div class="mt-1 font-mono text-sm font-bold text-blue-600 dark:text-blue-400">43,560 sq ft</div>
+            <div class="text-[11px] text-slate-500 mt-0.5">≈ 4,046.86 m² / 0.4047 ha</div>
+          </div>
+          <div class="rounded-xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900">
+            <div class="font-bold text-slate-800 dark:text-slate-200">1 Square Yard</div>
+            <div class="mt-1 font-mono text-sm font-bold text-blue-600 dark:text-blue-400">9 sq ft</div>
+            <div class="text-[11px] text-slate-500 mt-0.5">Exact (3 ft × 3 ft)</div>
+          </div>
+          <div class="rounded-xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900">
+            <div class="font-bold text-slate-800 dark:text-slate-200">1 Square Meter</div>
+            <div class="mt-1 font-mono text-sm font-bold text-blue-600 dark:text-blue-400">10.7639 sq ft</div>
+            <div class="text-[11px] text-slate-500 mt-0.5">Commonly rounded to 10.76</div>
+          </div>
+          <div class="rounded-xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900">
+            <div class="font-bold text-slate-800 dark:text-slate-200">1 Square Inch</div>
+            <div class="mt-1 font-mono text-sm font-bold text-blue-600 dark:text-blue-400">1/144 sq ft</div>
+            <div class="text-[11px] text-slate-500 mt-0.5">≈ 0.006944 sq ft (0.000645 m²)</div>
+          </div>
+        </div>
+
+        <!-- Technical Accuracy Correction Note -->
+        <div class="rounded-xl border border-amber-200 bg-amber-50/70 p-3.5 dark:border-amber-900/40 dark:bg-amber-950/30 text-xs space-y-1">
+          <div class="font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+            <span>💡</span> Technical Accuracy Note on Square Inches
+          </div>
+          <p class="text-slate-700 dark:text-slate-300 leading-relaxed">
+            In some casual references, <em>1 square inch</em> is mistakenly cited as <em>0.00064516 sq ft</em>. That figure is actually the conversion from <strong>square inches to square meters</strong> (1 in² = 0.0254² = 0.00064516 m²). In square feet, because 1 foot = 12 inches, 1 sq ft = 12 × 12 = 144 sq in, meaning exactly 1 sq in = 1/144 ≈ 0.00694444 sq ft. Our calculator applies the rigorous, exact mathematical relationship.
+          </p>
+        </div>
+
+        <!-- Length Conversion Rules -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 text-xs space-y-2">
+          <div class="font-bold text-slate-900 dark:text-white">Basic Length Conversion Rules to Feet:</div>
+          <ul class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-600 dark:text-slate-300">
+            <li>• <strong>Inches to feet:</strong> Divide inches by 12 (e.g., 54 in ÷ 12 = 4.5 ft)</li>
+            <li>• <strong>Yards to feet:</strong> Multiply yards by 3 (e.g., 5 yd × 3 = 15 ft)</li>
+            <li>• <strong>Meters to feet:</strong> Multiply meters by 3.28084 (or divide by 0.3048)</li>
+            <li>• <strong>Centimeters to feet:</strong> Divide centimeters by 30.48 (e.g., 300 cm ÷ 30.48 = 9.84 ft)</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- SECTION 3: HOW TO USE THE CALCULATOR -->
+      <div class="space-y-3">
+        <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>⚙️</span> How to Use the Square Footage Calculator
+        </h3>
+        <ol class="list-decimal list-inside space-y-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          <li><strong>Select your shape:</strong> Click the tab matching your project surface (Rectangle, Square, Rectangle Border, Wall with Openings, Cathedral Wall, Circle, Ring, Triangle, Trapezoid, Sector, or Parallelogram).</li>
+          <li><strong>Enter your measurements:</strong> Type the dimensions into the corresponding fields and pick your measurement unit (feet, inches, yards, meters, centimeters, or millimeters).</li>
+          <li><strong>Enter quantity:</strong> If you are calculating multiple identical rooms, windows, or panels, adjust the quantity multiplier.</li>
+          <li><strong>Select optional waste factor:</strong> For flooring, tile, and drywall, select 5% to 15% to guarantee adequate material for trimming, cutting around obstacles, and breakage.</li>
+          <li><strong>Enter optional unit price:</strong> Enter your material price (per sq ft, sq yd, sq m, or per box) to view total estimated material costs and required box counts.</li>
+          <li><strong>Click Calculate:</strong> View immediate conversions into square feet, square yards, square meters, acres, and itemized calculations.</li>
+          <li><strong>Section irregular spaces:</strong> For L-shaped or T-shaped floors, calculate each section and click <em>"Add to Multi-Room Project"</em> to tally the entire home's square footage into one project bill!</li>
+        </ol>
+      </div>
+
+      <!-- SECTION 4: AREA FORMULAS FOR ALL GEOMETRIC SHAPES -->
+      <div class="space-y-6">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            Area Formulas for Different Shapes
+          </h2>
+          <p class="mt-1 text-xs sm:text-sm text-slate-600 dark:text-slate-300">
+            Below are the exact geometric formulas and diagrams used by our calculator for each supported shape:
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <!-- 1. Rectangle -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 text-xs space-y-2">
+            <div class="flex items-center justify-between font-bold text-slate-900 dark:text-white text-sm">
+              <span>1. Rectangle Shape</span>
+              <span class="text-blue-600 dark:text-blue-400 font-mono">Area = Length × Width</span>
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+              The fundamental formula for any 4-sided rectangular space. Measure length and width in feet, then multiply them together to calculate square footage.
+            </p>
+            <div class="p-2 rounded-lg bg-slate-50 dark:bg-slate-950 font-mono text-[11px] text-slate-700 dark:text-slate-300">
+              Example: 12 ft × 10 ft = <strong>120 sq ft</strong>
+            </div>
+          </div>
+
+          <!-- 2. Square -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 text-xs space-y-2">
+            <div class="flex items-center justify-between font-bold text-slate-900 dark:text-white text-sm">
+              <span>2. Square Shape</span>
+              <span class="text-blue-600 dark:text-blue-400 font-mono">Area = Side²</span>
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+              Because all four sides of a square are equal in length, the area is simply the side length multiplied by itself.
+            </p>
+            <div class="p-2 rounded-lg bg-slate-50 dark:bg-slate-950 font-mono text-[11px] text-slate-700 dark:text-slate-300">
+              Example: 10 ft × 10 ft = <strong>100 sq ft</strong>
+            </div>
+          </div>
+
+          <!-- 3. Rectangle Border -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 text-xs space-y-2">
+            <div class="flex items-center justify-between font-bold text-slate-900 dark:text-white text-sm">
+              <span>3. Rectangle Border</span>
+              <span class="text-blue-600 dark:text-blue-400 font-mono">A_total − A_inner</span>
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+              Calculates the border area around an interior rectangle (such as a deck border or walkway):<br />
+              <code>Outer Area = (Length + 2B) × (Width + 2B)</code><br />
+              <code>Border Area = Outer Area − (Length × Width)</code>
+            </p>
+          </div>
+
+          <!-- 4. Wall Minus Openings -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 text-xs space-y-2">
+            <div class="flex items-center justify-between font-bold text-slate-900 dark:text-white text-sm">
+              <span>4. Wall Minus Openings</span>
+              <span class="text-blue-600 dark:text-blue-400 font-mono">A_wall − A_openings</span>
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+              Essential for drywall and paint estimating. Calculates total gross wall area and subtracts the combined area of windows, doors, or alcoves.
+            </p>
+          </div>
+
+          <!-- 5. Cathedral Wall -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 text-xs space-y-2">
+            <div class="flex items-center justify-between font-bold text-slate-900 dark:text-white text-sm">
+              <span>5. Cathedral Wall</span>
+              <span class="text-blue-600 dark:text-blue-400 font-mono">½ × W × (H₁ + H₂)</span>
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+              Geometrically known as a right trapezoid. Used for gable-end or cathedral ceiling walls with one short wall height ($H_1$) and one tall wall height ($H_2$).
+            </p>
+          </div>
+
+          <!-- 6. Circle -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 text-xs space-y-2">
+            <div class="flex items-center justify-between font-bold text-slate-900 dark:text-white text-sm">
+              <span>6. Circle Shape</span>
+              <span class="text-blue-600 dark:text-blue-400 font-mono">Area = π × (d/2)²</span>
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+              Calculates circular patios, gazebos, or round fire pit slabs using circle diameter or radius ($\pi \approx 3.14159265$).
+            </p>
+          </div>
+
+          <!-- 7. Ring / Annulus -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 text-xs space-y-2">
+            <div class="flex items-center justify-between font-bold text-slate-900 dark:text-white text-sm">
+              <span>7. Ring / Annulus</span>
+              <span class="text-blue-600 dark:text-blue-400 font-mono">π × (R² − r²)</span>
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+              Calculates donut-shaped circular walkways or circular tree bed borders by subtracting inner circle area from outer circle area.
+            </p>
+          </div>
+
+          <!-- 8. Triangle (Heron's Formula) -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 text-xs space-y-2">
+            <div class="flex items-center justify-between font-bold text-slate-900 dark:text-white text-sm">
+              <span>8. Triangle (3 Sides)</span>
+              <span class="text-blue-600 dark:text-blue-400 font-mono">Heron's Formula</span>
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+              For any triangle with edge lengths $a, b, c$:<br />
+              <code>s = (a + b + c) ÷ 2</code><br />
+              <code>Area = √[s(s − a)(s − b)(s − c)]</code><br />
+              Validates triangle inequality before computing.
+            </p>
+          </div>
+
+          <!-- 9. Triangle (Base & Height) -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 text-xs space-y-2">
+            <div class="flex items-center justify-between font-bold text-slate-900 dark:text-white text-sm">
+              <span>9. Triangle (Base &amp; Ht)</span>
+              <span class="text-blue-600 dark:text-blue-400 font-mono">Area = ½ × b × h</span>
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+              Standard triangular calculation when perpendicular height from base to apex is known.
+            </p>
+          </div>
+
+          <!-- 10. Trapezoid -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 text-xs space-y-2">
+            <div class="flex items-center justify-between font-bold text-slate-900 dark:text-white text-sm">
+              <span>10. Trapezoid Shape</span>
+              <span class="text-blue-600 dark:text-blue-400 font-mono">½ × (a + b) × h</span>
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+              Where $a$ and $b$ are the parallel top and bottom bases, and $h$ is the perpendicular distance between them.
+            </p>
+          </div>
+
+          <!-- 11. Sector -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 text-xs space-y-2">
+            <div class="flex items-center justify-between font-bold text-slate-900 dark:text-white text-sm">
+              <span>11. Sector Shape</span>
+              <span class="text-blue-600 dark:text-blue-400 font-mono">π × r² × (θ / 360°)</span>
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+              Calculates pie-slice shaped areas where radius $r$ and central angle $\theta$ (in degrees) are known.
+            </p>
+          </div>
+
+          <!-- 12. Parallelogram -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 text-xs space-y-2">
+            <div class="flex items-center justify-between font-bold text-slate-900 dark:text-white text-sm">
+              <span>12. Parallelogram</span>
+              <span class="text-blue-600 dark:text-blue-400 font-mono">Area = Base × Height</span>
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+              For slanted 4-sided shapes where opposite sides are parallel. Uses base length multiplied by vertical perpendicular height.
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- SECTION 5: CALCULATING COST PER SQUARE FOOT -->
+      <div class="space-y-4">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+          Calculating Cost Per Square Foot in Remodeling
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          When painting a house, installing flooring, or building a home, the square footage of the property is the fundamental metric used to determine material volumes and labor quotations. The baseline calculation is straightforward:
+        </p>
+        <div class="rounded-xl border border-slate-200 bg-slate-50/80 p-3.5 text-center font-mono font-bold text-xs sm:text-sm text-slate-800 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200">
+          Cost Per Square Foot = Total Project Cost ÷ Total Square Footage
+        </div>
+
+        <!-- THREE KEY REAL-WORLD USE CASES (From User's Source Text) -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+
+          <!-- Painting a House -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4.5 dark:border-slate-800 dark:bg-slate-900 space-y-2.5 text-xs">
+            <div class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
+              <span>🎨</span> Painting a House
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+              Professional house painters typically base price quotations on square footage. Total cost includes paint, primer, tape, masking paper, brushes, rollers, equipment, surface prep, and labor.
+            </p>
+            <div class="rounded-lg bg-blue-50/70 dark:bg-blue-950/30 p-2.5 text-[11px] text-blue-900 dark:text-blue-300 space-y-1">
+              <div><strong>Paint Coverage:</strong> 350–400 sq ft / gallon</div>
+              <div><strong>Primer Coverage:</strong> 200–300 sq ft / gallon</div>
+            </div>
+          </div>
+
+          <!-- Flooring Materials -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4.5 dark:border-slate-800 dark:bg-slate-900 space-y-2.5 text-xs">
+            <div class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
+              <span>🪵</span> Flooring Installation
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+              Flooring options vary significantly in durability, maintenance, and cost per square foot:
+            </p>
+            <ul class="space-y-1 text-slate-600 dark:text-slate-300 text-[11px] list-disc list-inside">
+              <li><strong>Hardwood:</strong> Durable, refinishable, classic resale value.</li>
+              <li><strong>Engineered Wood:</strong> Plywood/HDF core, superior moisture &amp; heat resistance.</li>
+              <li><strong>Bamboo:</strong> Eco-friendly grass, susceptible to claw/furniture scratches.</li>
+              <li><strong>Laminate:</strong> Tough wear layer, budget-friendly, non-refinishable.</li>
+              <li><strong>Tile:</strong> Ranging from $0.60 to $100+/sq ft; waterproof but requires skilled labor.</li>
+            </ul>
+          </div>
+
+          <!-- Building a Home -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4.5 dark:border-slate-800 dark:bg-slate-900 space-y-2.5 text-xs">
+            <div class="font-bold text-slate-900 dark:text-white text-sm flex items-center gap-2">
+              <span>🏡</span> Building a Home
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+              Building cost per square foot is an average benchmark rather than a fixed rule. Factors include foundation type, roof pitch, local building code permits, and luxury architectural finishes (marble baths, curved stairs).
+            </p>
+            <p class="text-slate-500 dark:text-slate-400 text-[11px]">
+              Always request itemized builder bids rather than relying solely on high-level square footage estimates.
+            </p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- SECTION 6: MATERIAL QUANTITY, WASTE FACTORS, AND PACKAGE COUNTS -->
+      <div class="rounded-2xl border border-blue-200/80 bg-linear-to-br from-blue-50/50 to-indigo-50/30 p-5 dark:border-blue-900/40 dark:from-slate-900 dark:to-blue-950/20 space-y-3 text-xs">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>📦</span> Calculating Material Waste &amp; Box Requirements
+        </h3>
+        <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+          When purchasing tile, hardwood planks, or pavers, materials are sold in discrete boxes or packages rather than exact single square feet. To avoid running short mid-job:
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-slate-700 dark:text-slate-300">
+          <div class="rounded-xl bg-white p-3 border border-blue-100 dark:border-slate-800 dark:bg-slate-900">
+            <strong>1. Apply Waste Factor:</strong><br />
+            <code>Total Area = Net Area × (1 + Waste% / 100)</code><br />
+            Example: 300 sq ft with 10% waste = 330 sq ft.
+          </div>
+          <div class="rounded-xl bg-white p-3 border border-blue-100 dark:border-slate-800 dark:bg-slate-900">
+            <strong>2. Round Boxes Up:</strong><br />
+            <code>Boxes Needed = ⌈ Total Area ÷ Sq Ft per Box ⌉</code><br />
+            Example: 330 sq ft ÷ 22 sq ft/box = 15 boxes.
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 7: RELATED TOOLS INTERNAL LINKS -->
+      <div class="space-y-3">
+        <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>🔗</span> Related Construction &amp; Math Calculators
+        </h3>
+        <div class="flex flex-wrap gap-2 text-xs">
+          <a href="/construction/concrete-calculator/" class="rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-semibold text-blue-700 hover:border-blue-500 hover:shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-blue-400 transition">Concrete Volume Calculator &rarr;</a>
+          <a href="/math/ratio-calculator/" class="rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-semibold text-blue-700 hover:border-blue-500 hover:shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-blue-400 transition">Ratio &amp; Scale Calculator &rarr;</a>
+          <a href="/math/percentage-calculator/" class="rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-semibold text-blue-700 hover:border-blue-500 hover:shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-blue-400 transition">Percentage Calculator &rarr;</a>
+          <a href="/math/lcm-calculator/" class="rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-semibold text-blue-700 hover:border-blue-500 hover:shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-blue-400 transition">LCM &amp; Tile Alignment Calculator &rarr;</a>
+        </div>
+      </div>
+
+    </div>
+  </Fragment>
+
+  <!-- CLIENT-SIDE CALCULATION ENGINE & INTERACTIVE CONTROLS SCRIPT -->
+  <script is:inline>
+    // Length conversion multiplier to feet (ft)
+    const UNIT_TO_FEET = {
+      feet: 1.0,
+      ft: 1.0,
+      inches: 1.0 / 12.0,
+      in: 1.0 / 12.0,
+      yards: 3.0,
+      yd: 3.0,
+      meters: 1.0 / 0.3048, // 3.280839895013123 ft
+      m: 1.0 / 0.3048,
+      centimeters: 0.01 / 0.3048,
+      cm: 0.01 / 0.3048,
+      millimeters: 0.001 / 0.3048,
+      mm: 0.001 / 0.3048
+    };
+
+    // State
+    let currentShape = 'rectangle';
+    const projectRooms = [];
+
+    // Configuration of input fields per shape
+    const SHAPE_CONFIGS = {
+      rectangle: {
+        name: 'Rectangle',
+        fields: [
+          { id: 'length', label: 'Length', defaultVal: 30, defaultUnit: 'meters' },
+          { id: 'width', label: 'Width', defaultVal: 20, defaultUnit: 'meters' }
+        ]
+      },
+      'rectangle-border': {
+        name: 'Rectangle Border',
+        fields: [
+          { id: 'length', label: 'Length', defaultVal: 30, defaultUnit: 'meters' },
+          { id: 'width', label: 'Width', defaultVal: 20, defaultUnit: 'meters' },
+          { id: 'border', label: 'Border Width', defaultVal: 2, defaultUnit: 'meters' }
+        ]
+      },
+      square: {
+        name: 'Square',
+        fields: [
+          { id: 'side', label: 'Side Length', defaultVal: 10, defaultUnit: 'feet' }
+        ]
+      },
+      circle: {
+        name: 'Circle',
+        fields: [
+          { id: 'diameter', label: 'Diameter', defaultVal: 30, defaultUnit: 'meters' }
+        ]
+      },
+      ring: {
+        name: 'Ring / Annulus',
+        fields: [
+          { id: 'outer_diameter', label: 'Outer Diameter', defaultVal: 30, defaultUnit: 'meters' },
+          { id: 'border', label: 'Border Width', defaultVal: 2, defaultUnit: 'meters' }
+        ]
+      },
+      'triangle-edges': {
+        name: 'Triangle with Edge Lengths',
+        fields: [
+          { id: 'edge1', label: 'Edge 1 (a)', defaultVal: 30, defaultUnit: 'meters' },
+          { id: 'edge2', label: 'Edge 2 (b)', defaultVal: 45, defaultUnit: 'meters' },
+          { id: 'edge3', label: 'Edge 3 (c)', defaultVal: 50, defaultUnit: 'meters' }
+        ]
+      },
+      'triangle-base': {
+        name: 'Triangle with Base & Height',
+        fields: [
+          { id: 'base', label: 'Base', defaultVal: 30, defaultUnit: 'meters' },
+          { id: 'height', label: 'Height', defaultVal: 20, defaultUnit: 'meters' }
+        ]
+      },
+      trapezoid: {
+        name: 'Trapezoid',
+        fields: [
+          { id: 'base1', label: 'Base 1 (a)', defaultVal: 30, defaultUnit: 'meters' },
+          { id: 'base2', label: 'Base 2 (b)', defaultVal: 45, defaultUnit: 'meters' },
+          { id: 'height', label: 'Height', defaultVal: 20, defaultUnit: 'meters' }
+        ]
+      },
+      sector: {
+        name: 'Sector',
+        fields: [
+          { id: 'radius', label: 'Radius', defaultVal: 30, defaultUnit: 'meters' },
+          { id: 'angle', label: 'Angle (degree °)', defaultVal: 90, isAngle: true }
+        ]
+      },
+      parallelogram: {
+        name: 'Parallelogram',
+        fields: [
+          { id: 'base', label: 'Base', defaultVal: 30, defaultUnit: 'meters' },
+          { id: 'height', label: 'Height', defaultVal: 20, defaultUnit: 'meters' }
+        ]
+      },
+      'wall-openings': {
+        name: 'Wall Minus Openings',
+        fields: [
+          { id: 'wall_width', label: 'Wall Width', defaultVal: 20, defaultUnit: 'feet' },
+          { id: 'wall_height', label: 'Wall Height', defaultVal: 9, defaultUnit: 'feet' },
+          { id: 'open_width', label: 'Window / Door Width', defaultVal: 3, defaultUnit: 'feet' },
+          { id: 'open_height', label: 'Window / Door Height', defaultVal: 5, defaultUnit: 'feet' },
+          { id: 'open_count', label: 'Number of Openings', defaultVal: 2, min: 1, step: 1 }
+        ]
+      },
+      'cathedral-wall': {
+        name: 'Cathedral Wall (Right Trapezoid)',
+        fields: [
+          { id: 'width', label: 'Wall Width', defaultVal: 24, defaultUnit: 'feet' },
+          { id: 'height1', label: 'Short Height (H1)', defaultVal: 8, defaultUnit: 'feet' },
+          { id: 'height2', label: 'Peak Height (H2)', defaultVal: 14, defaultUnit: 'feet' }
+        ]
+      }
+    };
+
+    // Helper to generate input fields HTML
+    function renderShapeFields(shapeKey) {
+      const container = document.getElementById('shape-inputs-container');
+      if (!container) return;
+
+      const config = SHAPE_CONFIGS[shapeKey] || SHAPE_CONFIGS.rectangle;
+      let html = `<div class="font-bold text-slate-800 dark:text-slate-100 text-sm mb-2">${config.name} Dimensions</div>`;
+
+      config.fields.forEach(field => {
+        if (field.isAngle) {
+          html += `
+            <div class="flex items-center justify-between gap-3 text-xs">
+              <label for="fld-${field.id}" class="w-36 font-semibold text-slate-700 dark:text-slate-300">
+                ${field.label}
+              </label>
+              <div class="flex-1 flex items-center gap-2">
+                <input type="number" id="fld-${field.id}" value="${field.defaultVal}" min="0.1" max="360" step="any" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                <span class="w-24 text-slate-500 font-semibold text-right pr-2">degree °</span>
+              </div>
+            </div>
+          `;
+        } else if (field.id === 'open_count') {
+          html += `
+            <div class="flex items-center justify-between gap-3 text-xs">
+              <label for="fld-${field.id}" class="w-36 font-semibold text-slate-700 dark:text-slate-300">
+                ${field.label}
+              </label>
+              <div class="flex-1 flex items-center gap-2">
+                <input type="number" id="fld-${field.id}" value="${field.defaultVal}" min="1" max="50" step="1" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                <span class="w-24 text-slate-500 font-semibold text-right pr-2">Count</span>
+              </div>
+            </div>
+          `;
+        } else {
+          const defaultUnit = field.defaultUnit || 'feet';
+          html += `
+            <div class="flex items-center justify-between gap-3 text-xs">
+              <label for="fld-${field.id}" class="w-36 font-semibold text-slate-700 dark:text-slate-300 truncate">
+                ${field.label}
+              </label>
+              <div class="flex-1 flex items-center gap-2">
+                <input type="number" id="fld-${field.id}" value="${field.defaultVal}" min="0.001" step="any" class="w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" />
+                <select id="unit-${field.id}" class="w-28 rounded-xl border border-slate-300 bg-white px-2 py-1.5 text-xs font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer">
+                  <option value="feet" ${defaultUnit === 'feet' ? 'selected' : ''}>feet</option>
+                  <option value="meters" ${defaultUnit === 'meters' ? 'selected' : ''}>meters</option>
+                  <option value="inches" ${defaultUnit === 'inches' ? 'selected' : ''}>inches</option>
+                  <option value="yards" ${defaultUnit === 'yards' ? 'selected' : ''}>yards</option>
+                  <option value="centimeters" ${defaultUnit === 'centimeters' ? 'selected' : ''}>cm</option>
+                  <option value="millimeters" ${defaultUnit === 'millimeters' ? 'selected' : ''}>mm</option>
+                </select>
+              </div>
+            </div>
+          `;
+        }
+      });
+
+      container.innerHTML = html;
+      renderShapeDiagram(shapeKey);
+    }
+
+    // Render clean SVG diagram matching reference images
+    function renderShapeDiagram(shapeKey) {
+      const container = document.getElementById('shape-diagram-container');
+      const caption = document.getElementById('diagram-caption');
+      if (!container) return;
+
+      let svg = '';
+      if (shapeKey === 'rectangle') {
+        svg = `
+          <svg viewBox="0 0 160 100" class="w-36 h-24 stroke-slate-800 dark:stroke-slate-200 fill-slate-200 dark:fill-slate-800 stroke-[2.5]">
+            <rect x="20" y="20" width="120" height="60" rx="2" />
+          </svg>
+        `;
+        if (caption) caption.textContent = 'Rectangle: Length × Width';
+      } else if (shapeKey === 'rectangle-border') {
+        svg = `
+          <svg viewBox="0 0 180 120" class="w-44 h-28 stroke-slate-800 dark:stroke-slate-200 stroke-[2]">
+            <rect x="15" y="15" width="150" height="90" class="fill-slate-300 dark:fill-slate-700" />
+            <rect x="35" y="35" width="110" height="50" class="fill-white dark:fill-slate-900" />
+            <!-- Dimension arrows -->
+            <path d="M 15 112 L 165 112" stroke-width="1.5" />
+            <text x="90" y="118" font-size="9" text-anchor="middle" class="fill-slate-600 dark:fill-slate-400 font-bold">Width</text>
+            <text x="5" y="65" font-size="9" text-anchor="middle" class="fill-slate-600 dark:fill-slate-400 font-bold" transform="rotate(-90 5 65)">Height</text>
+            <text x="145" y="63" font-size="8" class="fill-slate-700 dark:fill-slate-300 font-bold">Border</text>
+          </svg>
+        `;
+        if (caption) caption.textContent = 'Rectangle Border: Outer Area − Inner Area';
+      } else if (shapeKey === 'square') {
+        svg = `
+          <svg viewBox="0 0 120 120" class="w-28 h-28 stroke-slate-800 dark:stroke-slate-200 fill-slate-200 dark:fill-slate-800 stroke-[2.5]">
+            <rect x="20" y="20" width="80" height="80" rx="2" />
+            <text x="60" y="112" font-size="9" text-anchor="middle" class="fill-slate-600 dark:fill-slate-400 font-bold">Side</text>
+          </svg>
+        `;
+        if (caption) caption.textContent = 'Square: Side Length²';
+      } else if (shapeKey === 'circle') {
+        svg = `
+          <svg viewBox="0 0 120 120" class="w-28 h-28 stroke-slate-800 dark:stroke-slate-200 fill-slate-200 dark:fill-slate-800 stroke-[2.5]">
+            <circle cx="60" cy="60" r="45" />
+            <line x1="15" y1="60" x2="105" y2="60" stroke-dasharray="3 3" stroke-width="1.5" class="stroke-blue-600 dark:stroke-blue-400" />
+            <text x="60" y="55" font-size="9" text-anchor="middle" class="fill-blue-600 dark:fill-blue-400 font-bold">Diameter</text>
+          </svg>
+        `;
+        if (caption) caption.textContent = 'Circle: π × (Diameter ÷ 2)²';
+      } else if (shapeKey === 'ring') {
+        svg = `
+          <svg viewBox="0 0 140 140" class="w-32 h-32 stroke-slate-800 dark:stroke-slate-200 stroke-[2]">
+            <circle cx="70" cy="70" r="55" class="fill-slate-300 dark:fill-slate-700" />
+            <circle cx="70" cy="70" r="32" class="fill-white dark:fill-slate-900" />
+            <line x1="15" y1="130" x2="125" y2="130" stroke-width="1.5" />
+            <text x="70" y="138" font-size="9" text-anchor="middle" class="fill-slate-600 dark:fill-slate-400 font-bold">Outer Diameter</text>
+            <text x="105" y="70" font-size="8" class="fill-slate-700 dark:fill-slate-300 font-bold">Border</text>
+          </svg>
+        `;
+        if (caption) caption.textContent = 'Ring / Annulus: π × (R² − r²)';
+      } else if (shapeKey === 'triangle-edges') {
+        svg = `
+          <svg viewBox="0 0 140 120" class="w-32 h-28 stroke-slate-800 dark:stroke-slate-200 fill-slate-200 dark:fill-slate-800 stroke-[2.5]">
+            <polygon points="70,15 15,100 125,100" />
+            <text x="35" y="55" font-size="9" class="fill-slate-600 dark:fill-slate-400 font-bold">a</text>
+            <text x="105" y="55" font-size="9" class="fill-slate-600 dark:fill-slate-400 font-bold">b</text>
+            <text x="70" y="114" font-size="9" text-anchor="middle" class="fill-slate-600 dark:fill-slate-400 font-bold">c</text>
+          </svg>
+        `;
+        if (caption) caption.textContent = "Triangle (3 Sides): Heron's Formula";
+      } else if (shapeKey === 'triangle-base') {
+        svg = `
+          <svg viewBox="0 0 140 120" class="w-32 h-28 stroke-slate-800 dark:stroke-slate-200 fill-slate-200 dark:fill-slate-800 stroke-[2.5]">
+            <polygon points="40,20 20,100 120,100" />
+            <line x1="40" y1="20" x2="40" y2="100" stroke-dasharray="3 2" class="stroke-blue-600 dark:stroke-blue-400" stroke-width="1.5" />
+            <rect x="40" y="92" width="8" height="8" class="fill-none stroke-blue-600 dark:stroke-blue-400" stroke-width="1" />
+            <text x="45" y="60" font-size="9" class="fill-blue-600 dark:fill-blue-400 font-bold">Height</text>
+            <text x="70" y="114" font-size="9" text-anchor="middle" class="fill-slate-600 dark:fill-slate-400 font-bold">Base</text>
+          </svg>
+        `;
+        if (caption) caption.textContent = 'Triangle: ½ × Base × Height';
+      } else if (shapeKey === 'trapezoid') {
+        svg = `
+          <svg viewBox="0 0 160 100" class="w-36 h-24 stroke-slate-800 dark:stroke-slate-200 fill-slate-200 dark:fill-slate-800 stroke-[2.5]">
+            <polygon points="45,20 115,20 145,80 15,80" />
+            <text x="80" y="15" font-size="9" text-anchor="middle" class="fill-slate-600 dark:fill-slate-400 font-bold">Base 1 (a)</text>
+            <text x="80" y="94" font-size="9" text-anchor="middle" class="fill-slate-600 dark:fill-slate-400 font-bold">Base 2 (b)</text>
+          </svg>
+        `;
+        if (caption) caption.textContent = 'Trapezoid: ½ × (a + b) × Height';
+      } else if (shapeKey === 'sector') {
+        svg = `
+          <svg viewBox="0 0 140 120" class="w-32 h-28 stroke-slate-800 dark:stroke-slate-200 fill-slate-200 dark:fill-slate-800 stroke-[2.5]">
+            <path d="M 70 100 L 25 35 A 65 65 0 0 1 115 35 Z" />
+            <text x="70" y="55" font-size="9" text-anchor="middle" class="fill-blue-600 dark:fill-blue-400 font-bold">angle</text>
+            <text x="95" y="80" font-size="9" class="fill-slate-600 dark:fill-slate-400 font-bold">radius</text>
+          </svg>
+        `;
+        if (caption) caption.textContent = 'Sector: π × r² × (Angle ÷ 360°)';
+      } else if (shapeKey === 'parallelogram') {
+        svg = `
+          <svg viewBox="0 0 160 90" class="w-36 h-22 stroke-slate-800 dark:stroke-slate-200 fill-slate-200 dark:fill-slate-800 stroke-[2.5]">
+            <polygon points="45,15 145,15 115,75 15,75" />
+            <text x="65" y="88" font-size="9" text-anchor="middle" class="fill-slate-600 dark:fill-slate-400 font-bold">Base</text>
+          </svg>
+        `;
+        if (caption) caption.textContent = 'Parallelogram: Base × Height';
+      } else if (shapeKey === 'wall-openings') {
+        svg = `
+          <svg viewBox="0 0 160 110" class="w-36 h-26 stroke-slate-800 dark:stroke-slate-200 stroke-[2]">
+            <rect x="15" y="15" width="130" height="80" class="fill-slate-300 dark:fill-slate-700" />
+            <rect x="35" y="30" width="30" height="35" class="fill-white dark:fill-slate-900" />
+            <rect x="85" y="30" width="30" height="35" class="fill-white dark:fill-slate-900" />
+            <text x="80" y="105" font-size="9" text-anchor="middle" class="fill-slate-600 dark:fill-slate-400 font-bold">Wall Width</text>
+          </svg>
+        `;
+        if (caption) caption.textContent = 'Wall Area − Total Openings Area';
+      } else if (shapeKey === 'cathedral-wall') {
+        svg = `
+          <svg viewBox="0 0 160 110" class="w-36 h-26 stroke-slate-800 dark:stroke-slate-200 fill-slate-200 dark:fill-slate-800 stroke-[2.5]">
+            <polygon points="20,50 140,15 140,95 20,95" />
+            <text x="10" y="75" font-size="8" class="fill-slate-600 dark:fill-slate-400 font-bold">H1</text>
+            <text x="145" y="55" font-size="8" class="fill-slate-600 dark:fill-slate-400 font-bold">H2</text>
+            <text x="80" y="106" font-size="9" text-anchor="middle" class="fill-slate-600 dark:fill-slate-400 font-bold">Width</text>
+          </svg>
+        `;
+        if (caption) caption.textContent = 'Cathedral Wall: ½ × Width × (H1 + H2)';
+      }
+
+      container.innerHTML = svg;
+    }
+
+    // Helper to read dimension converted to feet
+    function getDimensionInFeet(fieldId) {
+      const input = document.getElementById(`fld-${fieldId}`);
+      if (!input) return 0;
+      const val = parseFloat(input.value);
+      if (isNaN(val) || val <= 0) return 0;
+
+      const unitSelect = document.getElementById(`unit-${fieldId}`);
+      const unit = unitSelect ? unitSelect.value : 'feet';
+      const factor = UNIT_TO_FEET[unit] || 1.0;
+      return val * factor;
+    }
+
+    // Main calculation function
+    function calculateSquareFootage() {
+      let baseSqFt = 0;
+      const errorBox = document.getElementById('calc-error-box');
+
+      try {
+        if (currentShape === 'rectangle') {
+          const l = getDimensionInFeet('length');
+          const w = getDimensionInFeet('width');
+          if (l <= 0 || w <= 0) throw new Error('Please enter positive values for both Length and Width.');
+          baseSqFt = l * w;
+        } else if (currentShape === 'square') {
+          const s = getDimensionInFeet('side');
+          if (s <= 0) throw new Error('Please enter a positive value for Side Length.');
+          baseSqFt = s * s;
+        } else if (currentShape === 'rectangle-border') {
+          const l = getDimensionInFeet('length');
+          const w = getDimensionInFeet('width');
+          const b = getDimensionInFeet('border');
+          if (l <= 0 || w <= 0 || b <= 0) throw new Error('Please enter positive values for Length, Width, and Border Width.');
+          const outerArea = (l + 2 * b) * (w + 2 * b);
+          const innerArea = l * w;
+          baseSqFt = outerArea - innerArea;
+        } else if (currentShape === 'circle') {
+          const d = getDimensionInFeet('diameter');
+          if (d <= 0) throw new Error('Please enter a positive diameter for the circle.');
+          const r = d / 2.0;
+          baseSqFt = Math.PI * r * r;
+        } else if (currentShape === 'ring') {
+          const outerD = getDimensionInFeet('outer_diameter');
+          const b = getDimensionInFeet('border');
+          if (outerD <= 0 || b <= 0) throw new Error('Please enter positive values for Outer Diameter and Border Width.');
+          if (b >= outerD / 2.0) throw new Error('Border width must be less than half of the outer diameter.');
+          const outerR = outerD / 2.0;
+          const innerR = outerR - b;
+          baseSqFt = Math.PI * (outerR * outerR - innerR * innerR);
+        } else if (currentShape === 'triangle-edges') {
+          const a = getDimensionInFeet('edge1');
+          const b = getDimensionInFeet('edge2');
+          const c = getDimensionInFeet('edge3');
+          if (a <= 0 || b <= 0 || c <= 0) throw new Error('Please enter positive values for all 3 edge lengths.');
+          // Validate triangle inequality
+          if (a + b <= c || a + c <= b || b + c <= a) {
+            throw new Error(`Impossible Triangle: The sum of any two sides must exceed the third side. (${a.toFixed(1)} + ${b.toFixed(1)} > ${c.toFixed(1)})`);
+          }
+          const s = (a + b + c) / 2.0;
+          baseSqFt = Math.sqrt(s * (s - a) * (s - b) * (s - c));
+        } else if (currentShape === 'triangle-base') {
+          const b = getDimensionInFeet('base');
+          const h = getDimensionInFeet('height');
+          if (b <= 0 || h <= 0) throw new Error('Please enter positive values for Base and Height.');
+          baseSqFt = 0.5 * b * h;
+        } else if (currentShape === 'trapezoid') {
+          const b1 = getDimensionInFeet('base1');
+          const b2 = getDimensionInFeet('base2');
+          const h = getDimensionInFeet('height');
+          if (b1 <= 0 || b2 <= 0 || h <= 0) throw new Error('Please enter positive values for Base 1, Base 2, and Height.');
+          baseSqFt = 0.5 * (b1 + b2) * h;
+        } else if (currentShape === 'sector') {
+          const r = getDimensionInFeet('radius');
+          const angleInput = document.getElementById('fld-angle');
+          const angle = angleInput ? parseFloat(angleInput.value) : 0;
+          if (r <= 0 || isNaN(angle) || angle <= 0 || angle > 360) {
+            throw new Error('Please enter a positive radius and an angle between 0.1° and 360°.');
+          }
+          baseSqFt = Math.PI * r * r * (angle / 360.0);
+        } else if (currentShape === 'parallelogram') {
+          const b = getDimensionInFeet('base');
+          const h = getDimensionInFeet('height');
+          if (b <= 0 || h <= 0) throw new Error('Please enter positive values for Base and Height.');
+          baseSqFt = b * h;
+        } else if (currentShape === 'wall-openings') {
+          const ww = getDimensionInFeet('wall_width');
+          const wh = getDimensionInFeet('wall_height');
+          const ow = getDimensionInFeet('open_width');
+          const oh = getDimensionInFeet('open_height');
+          const countInput = document.getElementById('fld-open_count');
+          const count = countInput ? Math.max(1, parseInt(countInput.value) || 1) : 1;
+
+          if (ww <= 0 || wh <= 0) throw new Error('Please enter positive values for Wall Width and Wall Height.');
+          const wallArea = ww * wh;
+          const totalOpenings = ow * oh * count;
+          if (totalOpenings >= wallArea) {
+            throw new Error('The total opening area exceeds or equals the total wall area. Please verify window/door dimensions.');
+          }
+          baseSqFt = wallArea - totalOpenings;
+        } else if (currentShape === 'cathedral-wall') {
+          const w = getDimensionInFeet('width');
+          const h1 = getDimensionInFeet('height1');
+          const h2 = getDimensionInFeet('height2');
+          if (w <= 0 || h1 <= 0 || h2 <= 0) throw new Error('Please enter positive values for Width, Short Height (H1), and Peak Height (H2).');
+          baseSqFt = 0.5 * w * (h1 + h2);
+        }
+
+        // Quantity & Waste
+        const qInput = document.getElementById('inp-quantity');
+        const quantity = qInput ? Math.max(1, parseInt(qInput.value) || 1) : 1;
+
+        const wasteSelect = document.getElementById('inp-waste');
+        let wastePct = 0;
+        if (wasteSelect) {
+          if (wasteSelect.value === 'custom') {
+            const customInput = document.getElementById('inp-custom-waste');
+            wastePct = customInput ? Math.max(0, parseFloat(customInput.value) || 0) : 0;
+          } else {
+            wastePct = parseFloat(wasteSelect.value) || 0;
+          }
+        }
+
+        const areaWithQty = baseSqFt * quantity;
+        const wasteSqFt = areaWithQty * (wastePct / 100.0);
+        const totalSqFt = areaWithQty + wasteSqFt;
+
+        // Conversions
+        const sqYards = totalSqFt / 9.0;
+        const sqMeters = totalSqFt * 0.09290304; // 1 ft² = 0.09290304 m²
+        const sqInches = Math.round(totalSqFt * 144.0);
+        const acres = totalSqFt / 43560.0;
+
+        // Pricing
+        let materialCost;
+        let boxesNeeded;
+        const priceInput = document.getElementById('inp-price');
+        const priceUnitSelect = document.getElementById('inp-price-unit');
+
+        if (priceInput && priceInput.value && !isNaN(parseFloat(priceInput.value))) {
+          const unitPrice = parseFloat(priceInput.value);
+          const priceUnit = priceUnitSelect ? priceUnitSelect.value : 'sqft';
+
+          if (priceUnit === 'sqft') {
+            materialCost = totalSqFt * unitPrice;
+          } else if (priceUnit === 'sqyd') {
+            materialCost = sqYards * unitPrice;
+          } else if (priceUnit === 'sqm') {
+            materialCost = sqMeters * unitPrice;
+          } else if (priceUnit === 'sqin') {
+            materialCost = sqInches * unitPrice;
+          } else if (priceUnit === 'package') {
+            const boxInput = document.getElementById('inp-box-sqft');
+            const sqftPerBox = boxInput ? Math.max(0.1, parseFloat(boxInput.value) || 20) : 20;
+            boxesNeeded = Math.ceil(totalSqFt / sqftPerBox);
+            materialCost = boxesNeeded * unitPrice;
+          }
+        }
+
+        if (errorBox) errorBox.style.display = 'none';
+
+        return {
+          success: true,
+          baseSqFt,
+          totalSqFt,
+          sqYards,
+          sqMeters,
+          sqInches,
+          acres,
+          quantity,
+          wastePct,
+          wasteSqFt,
+          materialCost,
+          boxesNeeded
+        };
+
+      } catch (err) {
+        if (errorBox) {
+          errorBox.textContent = err.message || 'Invalid input dimensions.';
+          errorBox.style.display = 'block';
+        }
+        return {
+          success: false,
+          baseSqFt: 0,
+          totalSqFt: 0,
+          sqYards: 0,
+          sqMeters: 0,
+          sqInches: 0,
+          acres: 0,
+          quantity: 1,
+          wastePct: 0,
+          wasteSqFt: 0,
+          errorMsg: err.message
+        };
+      }
+    }
+
+    // Update UI Results
+    function updateResultsDisplay() {
+      const res = calculateSquareFootage();
+      if (!res.success) return;
+
+      const elTotalSqFt = document.getElementById('res-total-sqft');
+      const elSqYd = document.getElementById('res-sqyd');
+      const elSqM = document.getElementById('res-sqm');
+      const elSqIn = document.getElementById('res-sqin');
+      const elAcres = document.getElementById('res-acres');
+      const elWasteNote = document.getElementById('res-waste-note');
+      const elSteps = document.getElementById('res-calculation-steps');
+      const elBadgeShape = document.getElementById('badge-shape-name');
+      const costCard = document.getElementById('cost-result-card');
+      const elTotalCost = document.getElementById('res-total-cost');
+      const elBoxBreakdown = document.getElementById('res-box-breakdown');
+
+      if (elTotalSqFt) elTotalSqFt.textContent = res.totalSqFt.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elSqYd) elSqYd.textContent = res.sqYards.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elSqM) elSqM.textContent = res.sqMeters.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      if (elSqIn) elSqIn.textContent = res.sqInches.toLocaleString('en-US');
+      if (elAcres) elAcres.textContent = res.acres < 0.01 ? res.acres.toFixed(5) : res.acres.toLocaleString('en-US', { minimumFractionDigits: 4, maximumFractionDigits: 4 });
+
+      if (elBadgeShape) {
+        const shapeConfig = SHAPE_CONFIGS[currentShape];
+        elBadgeShape.textContent = shapeConfig ? shapeConfig.name : 'Custom Shape';
+      }
+
+      if (elWasteNote) {
+        elWasteNote.textContent = res.wastePct > 0 
+          ? `Includes ${res.wastePct}% safety waste factor (+${res.wasteSqFt.toFixed(1)} sq ft)`
+          : 'Exact net area (no waste factor added)';
+      }
+
+      if (elSteps) {
+        if (res.wastePct > 0) {
+          elSteps.innerHTML = `
+            <div>• Base Shape Area: <strong>${res.baseSqFt.toFixed(2)} sq ft</strong></div>
+            <div>• Quantity: <strong>${res.quantity}</strong> (Subtotal: ${(res.baseSqFt * res.quantity).toFixed(2)} sq ft)</div>
+            <div>• Waste Margin (${res.wastePct}%): <strong>+${res.wasteSqFt.toFixed(2)} sq ft</strong></div>
+            <div class="font-bold text-slate-900 dark:text-white">• Gross Total Area: <strong>${res.totalSqFt.toFixed(2)} sq ft</strong> (${res.sqMeters.toFixed(2)} m²)</div>
+          `;
+        } else {
+          elSteps.innerHTML = `
+            <div>• Base Shape Area: <strong>${res.baseSqFt.toFixed(2)} sq ft</strong></div>
+            ${res.quantity > 1 ? `<div>• Quantity: <strong>${res.quantity}</strong></div>` : ''}
+            <div class="font-bold text-slate-900 dark:text-white">• Total Net Area: <strong>${res.totalSqFt.toFixed(2)} sq ft</strong> (${res.sqMeters.toFixed(2)} m²)</div>
+          `;
+        }
+      }
+
+      if (costCard && elTotalCost) {
+        if (typeof res.materialCost === 'number') {
+          costCard.style.display = 'block';
+          elTotalCost.textContent = `$${res.materialCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+          if (elBoxBreakdown && typeof res.boxesNeeded === 'number') {
+            elBoxBreakdown.style.display = 'block';
+            elBoxBreakdown.innerHTML = `Required Packages: <strong>${res.boxesNeeded} boxes</strong> (rounded up for full coverage)`;
+          } else if (elBoxBreakdown) {
+            elBoxBreakdown.style.display = 'none';
+          }
+        } else {
+          costCard.style.display = 'none';
+        }
+      }
+
+      try {
+        document.dispatchEvent(new CustomEvent('calculator:updated'));
+      } catch (e) {}
+    }
+
+    // Event listener initialization
+    document.addEventListener('DOMContentLoaded', () => {
+      renderShapeFields(currentShape);
+
+      // Shape selector tabs
+      const tabBtns = document.querySelectorAll('.shape-tab-btn');
+      tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          tabBtns.forEach(b => {
+            b.classList.remove('active', 'border-blue-600', 'bg-blue-50/80', 'text-blue-900', 'dark:border-blue-500', 'dark:bg-blue-950/40', 'dark:text-blue-200');
+            b.classList.add('border-slate-200', 'bg-slate-50/60', 'text-slate-700', 'dark:border-slate-800', 'dark:bg-slate-900/60', 'dark:text-slate-300');
+          });
+
+          btn.classList.add('active', 'border-blue-600', 'bg-blue-50/80', 'text-blue-900', 'dark:border-blue-500', 'dark:bg-blue-950/40', 'dark:text-blue-200');
+          btn.classList.remove('border-slate-200', 'bg-slate-50/60', 'text-slate-700', 'dark:border-slate-800', 'dark:bg-slate-900/60', 'dark:text-slate-300');
+
+          const shapeKey = btn.getAttribute('data-shape') || 'rectangle';
+          currentShape = shapeKey;
+
+          const indicator = document.getElementById('active-shape-indicator');
+          if (indicator) {
+            const config = SHAPE_CONFIGS[shapeKey];
+            indicator.textContent = `Current: ${config ? config.name : shapeKey}`;
+          }
+
+          renderShapeFields(shapeKey);
+          updateResultsDisplay();
+        });
+      });
+
+      // Waste select toggle
+      const wasteSelect = document.getElementById('inp-waste');
+      const customWasteWrap = document.getElementById('custom-waste-wrap');
+      if (wasteSelect && customWasteWrap) {
+        wasteSelect.addEventListener('change', () => {
+          customWasteWrap.style.display = wasteSelect.value === 'custom' ? 'block' : 'none';
+          updateResultsDisplay();
+        });
+      }
+
+      const customWasteInput = document.getElementById('inp-custom-waste');
+      if (customWasteInput) {
+        customWasteInput.addEventListener('input', () => {
+          updateResultsDisplay();
+        });
+      }
+
+      // Quantity input listener
+      const qInput = document.getElementById('inp-quantity');
+      if (qInput) {
+        qInput.addEventListener('input', () => {
+          updateResultsDisplay();
+        });
+      }
+
+      // Price input & unit toggle
+      const priceInput = document.getElementById('inp-price');
+      const priceUnitSelect = document.getElementById('inp-price-unit');
+      const boxCoverageWrap = document.getElementById('box-coverage-wrap');
+      const boxInput = document.getElementById('inp-box-sqft');
+
+      if (priceInput) {
+        priceInput.addEventListener('input', () => {
+          updateResultsDisplay();
+        });
+      }
+
+      if (priceUnitSelect && boxCoverageWrap) {
+        priceUnitSelect.addEventListener('change', () => {
+          boxCoverageWrap.style.display = priceUnitSelect.value === 'package' ? 'flex' : 'none';
+          updateResultsDisplay();
+        });
+      }
+
+      if (boxInput) {
+        boxInput.addEventListener('input', () => {
+          updateResultsDisplay();
+        });
+      }
+
+      // Shape input dynamic container listener (delegated)
+      const shapeContainer = document.getElementById('shape-inputs-container');
+      if (shapeContainer) {
+        shapeContainer.addEventListener('input', () => {
+          updateResultsDisplay();
+        });
+        shapeContainer.addEventListener('change', () => {
+          updateResultsDisplay();
+        });
+      }
+
+      // Calculate Button
+      const calcBtn = document.getElementById('btn-calculate');
+      if (calcBtn) {
+        calcBtn.addEventListener('click', () => {
+          updateResultsDisplay();
+        });
+      }
+
+      // Clear Button
+      const clearBtn = document.getElementById('btn-clear');
+      if (clearBtn) {
+        clearBtn.addEventListener('click', () => {
+          renderShapeFields(currentShape);
+          if (priceInput) priceInput.value = '';
+          if (qInput) qInput.value = '1';
+          if (wasteSelect) {
+            wasteSelect.value = '0';
+            if (customWasteWrap) customWasteWrap.style.display = 'none';
+          }
+          if (priceUnitSelect) {
+            priceUnitSelect.value = 'sqft';
+            if (boxCoverageWrap) boxCoverageWrap.style.display = 'none';
+          }
+          updateResultsDisplay();
+        });
+      }
+
+      // Add to Project Button
+      const addRoomBtn = document.getElementById('btn-add-room');
+      const projectPanel = document.getElementById('project-accumulator-panel');
+      const roomsList = document.getElementById('project-rooms-list');
+      const grandSqFt = document.getElementById('proj-grand-sqft');
+      const grandCost = document.getElementById('proj-grand-cost');
+      const grandCostWrap = document.getElementById('proj-grand-cost-wrap');
+
+      if (addRoomBtn && projectPanel && roomsList && grandSqFt) {
+        addRoomBtn.addEventListener('click', () => {
+          const res = calculateSquareFootage();
+          if (!res.success) return;
+
+          const shapeName = SHAPE_CONFIGS[currentShape]?.name || 'Shape';
+          const roomItem = {
+            id: 'room-' + Date.now(),
+            name: `${shapeName} (×${res.quantity})`,
+            sqft: res.totalSqFt,
+            cost: res.materialCost
+          };
+          projectRooms.push(roomItem);
+
+          renderProjectRooms();
+        });
+      }
+
+      function renderProjectRooms() {
+        if (!projectPanel || !roomsList || !grandSqFt) return;
+        if (projectRooms.length === 0) {
+          projectPanel.style.display = 'none';
+          return;
+        }
+
+        projectPanel.style.display = 'block';
+        let totalSqFt = 0;
+        let totalCost = 0;
+        let hasCost = false;
+
+        roomsList.innerHTML = projectRooms.map((r, idx) => {
+          totalSqFt += r.sqft;
+          if (typeof r.cost === 'number') {
+            totalCost += r.cost;
+            hasCost = true;
+          }
+          return `
+            <div class="flex items-center justify-between py-1.5 text-xs text-slate-700 dark:text-slate-300">
+              <span class="font-medium">${idx + 1}. ${r.name}</span>
+              <div class="flex items-center gap-2">
+                <span class="font-mono font-bold">${r.sqft.toFixed(1)} sq ft</span>
+                ${typeof r.cost === 'number' ? `<span class="text-emerald-700 dark:text-emerald-400 font-mono text-[11px] font-semibold">($${r.cost.toFixed(2)})</span>` : ''}
+                <button type="button" class="del-room-btn text-rose-500 hover:text-rose-700 font-bold px-1" data-id="${r.id}">✕</button>
+              </div>
+            </div>
+          `;
+        }).join('');
+
+        grandSqFt.textContent = `${totalSqFt.toFixed(2)} sq ft (${(totalSqFt * 0.092903).toFixed(2)} m²)`;
+
+        if (grandCostWrap && grandCost) {
+          if (hasCost) {
+            grandCostWrap.style.display = 'flex';
+            grandCost.textContent = `$${totalCost.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+          } else {
+            grandCostWrap.style.display = 'none';
+          }
+        }
+
+        // Bind delete buttons
+        const delBtns = roomsList.querySelectorAll('.del-room-btn');
+        delBtns.forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = btn.getAttribute('data-id');
+            const findIdx = projectRooms.findIndex(r => r.id === id);
+            if (findIdx !== -1) {
+              projectRooms.splice(findIdx, 1);
+              renderProjectRooms();
+            }
+          });
+        });
+      }
+
+      // Clear all project rooms
+      const clearProjectBtn = document.getElementById('btn-clear-project');
+      if (clearProjectBtn) {
+        clearProjectBtn.addEventListener('click', () => {
+          projectRooms.length = 0;
+          renderProjectRooms();
+        });
+      }
+
+      // Copy Result
+      const copyBtn = document.getElementById('btn-copy-result');
+      if (copyBtn) {
+        copyBtn.addEventListener('click', () => {
+          const res = calculateSquareFootage();
+          if (!res.success) return;
+          const text = `Square Footage Result:\nShape: ${SHAPE_CONFIGS[currentShape]?.name || 'Shape'}\nTotal Area: ${res.totalSqFt.toFixed(2)} sq ft (${res.sqMeters.toFixed(2)} m² / ${res.sqYards.toFixed(2)} sq yd)\nWaste Factor: ${res.wastePct}%\nQuantity: ${res.quantity}${typeof res.materialCost === 'number' ? `\nEstimated Cost: $${res.materialCost.toFixed(2)}` : ''}\nCalculated via AI Free Calculator: https://aifreecalculator.com/construction/square-footage-calculator/`;
+          navigator.clipboard.writeText(text).then(() => {
+            const old = copyBtn.textContent;
+            copyBtn.textContent = '✓ Copied!';
+            setTimeout(() => { copyBtn.textContent = old; }, 2000);
+          });
+        });
+      }
+
+      // Print Report
+      const printBtn = document.getElementById('btn-print-report');
+      if (printBtn) {
+        printBtn.addEventListener('click', () => {
+          const barPrintBtn = document.getElementById('btn-print-calc');
+          if (barPrintBtn) {
+            barPrintBtn.click();
+          } else {
+            window.print();
+          }
+        });
+      }
+
+      // Share Result
+      const shareBtn = document.getElementById('btn-share-result');
+      if (shareBtn) {
+        shareBtn.addEventListener('click', () => {
+          if (navigator.share) {
+            navigator.share({
+              title: 'Square Footage Calculator',
+              text: 'Check out this free Square Footage and Material Estimator!',
+              url: window.location.href
+            }).catch(() => {});
+          } else {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+              const old = shareBtn.textContent;
+              shareBtn.textContent = '✓ Link Copied!';
+              setTimeout(() => { shareBtn.textContent = old; }, 2000);
+            });
+          }
+        });
+      }
+
+      // Initial calculation
+      updateResultsDisplay();
+    });
+  </script>
+</CalculatorLayout>

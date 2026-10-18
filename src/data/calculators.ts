@@ -52,9 +52,11 @@ const CALCULATOR_ALIASES: Record<string, string[]> = {
   'age-calculator': ['exact age', 'date of birth calculator', 'dob calculator', 'birthday count', 'umra calculator'],
   'percentage-calculator': ['percent calc', 'marks percentage', 'discount percent', 'cgpa to percentage', 'pratishat'],
   'ratio-calculator': ['ratio calculator', 'proportion calculator', 'solve ratio', 'ratio simplifier', 'ratio scaling', 'equivalent ratio', 'aspect ratio calculator', 'anupat calculator', 'scale ratio'],
+  'lcm-calculator': ['lcm calculator', 'least common multiple', 'lowest common multiple', 'lcm finder', 'find lcm', 'lcm with steps', 'lcm gcd', 'lcd calculator', 'laghutam samapavartak'],
   'roman-numeral-calculator': ['roman numeral calculator', 'roman numerals calculator', 'add roman numerals', 'roman math', 'roman arithmetic', 'calculate roman numerals'],
   'roman-numeral-converter': ['roman numeral converter', 'roman numerals converter', 'convert roman numerals to numbers', 'numbers to roman numerals', 'roman to arabic', 'arabic to roman', 'roman number translator'],
   'roman-numeral-date-converter': ['roman numeral date converter', 'date to roman numerals', 'roman date converter', 'roman numeral tattoo date', 'wedding anniversary roman numerals', 'birthday in roman numerals'],
+  'square-footage-calculator': ['square footage calculator', 'sq ft calculator', 'square foot calculator', 'area calculator', 'square feet calculator', 'square yardage calculator', 'flooring calculator', 'paint calculator', 'room area', 'cost per square foot', 'sqft calc', 'carpet calculator', 'tile calculator'],
   'simple-interest-calculator': ['si calculator', 'sadharan byaj', 'interest rate calculation'],
   'compound-interest-calculator': ['ci calculator', 'chakravriddhi byaj', 'compounding calculator', 'annual interest'],
   'calorie-calculator': ['tdee calculator', 'daily calories', 'calorie intake', 'weight loss calories'],
@@ -456,6 +458,19 @@ const CALCULATOR_ALIASES: Record<string, string[]> = {
     'year calendar timetable',
     'monthly timetable printable',
     'month wise schedule maker'
+  ],
+  'cubic-yards-calculator': [
+    'cubic yards calculator',
+    'cubic yard calculator',
+    'yardage calculator',
+    'calculate cubic yards',
+    'cubic yards to cubic feet',
+    'cubic feet to cubic yards',
+    'mulch calculator',
+    'soil calculator',
+    'gravel calculator',
+    'concrete cubic yards',
+    'cubic yard volume calculator'
   ]
 };
 

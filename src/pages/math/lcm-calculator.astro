@@ -1,0 +1,1782 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+
+const cakeMethodSteps = [
+  { prime: "2", n1: "10", n2: "12", n3: "15", n4: "75", note: "Divides 10 and 12 evenly; bring down 15 and 75" },
+  { prime: "3", n1: "5", n2: "6", n3: "15", n4: "75", note: "Divides 6, 15, and 75 evenly; bring down 5" },
+  { prime: "5", n1: "5", n2: "2", n3: "5", n4: "25", note: "Divides 5, 5, and 25 evenly; bring down 2" },
+  { prime: "—", n1: "1", n2: "2", n3: "1", n4: "5", note: "Final bottom row (no prime divides ≥ 2 numbers)" }
+];
+
+const divisionMethodSteps = [
+  { prime: "2", n1: "10", n2: "18", n3: "25", note: "Divide by lowest prime 2 (divides 10, 18)" },
+  { prime: "3", n1: "5", n2: "9", n3: "25", note: "Divide by 3 (divides 9)" },
+  { prime: "3", n1: "5", n2: "3", n3: "25", note: "Divide by 3 (divides 3)" },
+  { prime: "5", n1: "5", n2: "1", n3: "25", note: "Divide by 5 (divides 5, 25)" },
+  { prime: "5", n1: "1", n2: "1", n3: "5", note: "Divide by 5 (divides 5)" },
+  { prime: "—", n1: "1", n2: "1", n3: "1", note: "All quotients are 1; division complete" }
+];
+
+const methodsComparison = [
+  {
+    name: "Listing Multiples",
+    bestFor: "2 to 3 small numbers (e.g. 6, 10)",
+    speed: "Slow for large numbers",
+    keyAdvantage: "Visual and intuitive; great for learning"
+  },
+  {
+    name: "Prime Factorization & Exponents",
+    bestFor: "Any number of integers of moderate size",
+    speed: "Fast and systematic",
+    keyAdvantage: "Guarantees exact minimal product of highest prime powers"
+  },
+  {
+    name: "Greatest Common Factor (GCF) Formula",
+    bestFor: "Two large numbers or fast iterative computation",
+    speed: "Extremely fast (Euclidean algorithm)",
+    keyAdvantage: "Avoids full prime factoring; computationally optimal"
+  },
+  {
+    name: "Cake / Ladder Method",
+    bestFor: "Classroom math and 3 to 5 numbers",
+    speed: "Quick manual calculation",
+    keyAdvantage: "Compact grid requiring only simple division"
+  },
+  {
+    name: "Division Method",
+    bestFor: "Systematic manual division for multiple numbers",
+    speed: "Reliable and organized",
+    keyAdvantage: "Stops cleanly when all numbers reach 1"
+  },
+  {
+    name: "Venn Diagram",
+    bestFor: "Visualizing 2 or 3 numbers",
+    speed: "Conceptual / pedagogical",
+    keyAdvantage: "Clear visual of shared factors (GCF) vs total union (LCM)"
+  }
+];
+---
+
+<CalculatorLayout
+  title="LCM Calculator – Least Common Multiple with Step-by-Step Solutions"
+  description="Free online LCM Calculator to find the least common multiple of two or more numbers with step-by-step solutions using prime factorization, listing multiples, and GCF."
+  category="Math"
+  calculatorName="LCM Calculator"
+  slug="lcm-calculator"
+  keywords={[
+    "lcm calculator",
+    "least common multiple calculator",
+    "lowest common multiple",
+    "find lcm",
+    "lcm with steps",
+    "prime factorization lcm",
+    "lcm and gcf calculator",
+    "lcd calculator",
+    "least common divisor"
+  ]}
+>
+  <div class="space-y-4">
+
+    <!-- HERO & PRESETS BAR -->
+    <div class="rounded-2xl border border-slate-200/90 bg-linear-to-r from-blue-50/70 via-indigo-50/30 to-white p-3.5 sm:p-4 shadow-2xs dark:border-slate-800 dark:from-slate-900 dark:via-blue-950/20 dark:to-slate-900">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">🔢</span>
+          <h1 class="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight">
+            Least Common Multiple (LCM) Calculator
+          </h1>
+          <span class="hidden sm:inline-flex rounded-md bg-blue-100 px-2 py-0.5 text-[11px] font-bold text-blue-800 dark:bg-blue-900/60 dark:text-blue-300">
+            2+ Numbers
+          </span>
+        </div>
+
+        <!-- QUICK PRESETS -->
+        <div class="flex flex-wrap items-center gap-1 text-[11px]">
+          <span class="text-slate-500 font-semibold mr-0.5">Presets:</span>
+          <button type="button" class="btn-lcm-preset rounded-md border border-slate-200 bg-white px-2 py-0.5 font-bold text-slate-700 hover:border-blue-500 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-val="12, 18, 30">12, 18, 30</button>
+          <button type="button" class="btn-lcm-preset rounded-md border border-slate-200 bg-white px-2 py-0.5 font-bold text-slate-700 hover:border-blue-500 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-val="6, 10">6, 10</button>
+          <button type="button" class="btn-lcm-preset rounded-md border border-slate-200 bg-white px-2 py-0.5 font-bold text-slate-700 hover:border-blue-500 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-val="21, 14, 38">21, 14, 38</button>
+          <button type="button" class="btn-lcm-preset rounded-md border border-slate-200 bg-white px-2 py-0.5 font-bold text-slate-700 hover:border-blue-500 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-val="10, 18, 25">10, 18, 25</button>
+          <button type="button" class="btn-lcm-preset rounded-md border border-slate-200 bg-white px-2 py-0.5 font-bold text-slate-700 hover:border-blue-500 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-val="10, 12, 15, 75">10, 12, 15, 75</button>
+          <button type="button" class="btn-lcm-preset rounded-md border border-slate-200 bg-white px-2 py-0.5 font-bold text-slate-700 hover:border-blue-500 hover:text-blue-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-val="18, 26">18, 26</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN INPUT CARD -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div>
+          <label for="lcm-raw-input" class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5">
+            Find the LCM <span class="text-slate-400 font-normal italic">(enter two or more numbers)</span>:
+          </label>
+          <div class="relative">
+            <input
+              type="text"
+              id="lcm-raw-input"
+              value=""
+              placeholder="e.g. 12 18 30 or 12, 18, 30"
+              class="w-full rounded-xl border border-slate-300 bg-slate-50/90 p-3 text-base sm:text-lg font-mono font-bold text-slate-900 placeholder:text-slate-400 shadow-2xs focus:border-blue-500 focus:bg-white focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white dark:focus:bg-slate-950 dark:focus:border-blue-400 dark:placeholder:text-slate-500"
+            />
+          </div>
+          <p class="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+            Accepts commas (<code>,</code>), spaces, or semicolons (<code>;</code>). Values must be whole numbers from 1 to 10,000,000. Do not include commas within thousands (enter <code>2500, 1000</code>, not <code>2,500, 1,000</code>).
+          </p>
+        </div>
+
+        <div>
+          <label for="lcm-method-select" class="block text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5">
+            Show Steps for Working Out:
+          </label>
+          <select
+            id="lcm-method-select"
+            class="w-full rounded-xl border border-slate-300 bg-white p-3 text-sm font-bold text-slate-800 shadow-2xs focus:border-blue-500 focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:bg-slate-950 dark:focus:border-blue-400 cursor-pointer"
+          >
+            <option value="none">None</option>
+            <option value="listing">Listing Multiples</option>
+            <option value="prime" selected>Prime Factorization</option>
+            <option value="cake">Cake / Ladder</option>
+            <option value="division">Division Method</option>
+            <option value="gcf">GCF Method</option>
+            <option value="venn">Venn Diagram</option>
+            <option value="all">All Methods</option>
+          </select>
+          <p class="mt-1.5 text-[11px] text-slate-500 dark:text-slate-400">
+            Choose which mathematical method and step-by-step proof to display with the result.
+          </p>
+        </div>
+      </div>
+
+      <!-- ACTION BUTTONS -->
+      <div class="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-100 dark:border-slate-800/80">
+        <button
+          type="button"
+          id="btn-lcm-calc"
+          class="flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-5 py-2.5 text-xs font-black text-white shadow-xs hover:bg-blue-700 active:scale-95 transition cursor-pointer"
+        >
+          <span>Calculate LCM</span> <span>▶</span>
+        </button>
+        <button
+          type="button"
+          id="btn-lcm-clear"
+          class="rounded-xl border border-slate-200 bg-slate-100 px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 dark:hover:text-white cursor-pointer"
+        >
+          Clear
+        </button>
+      </div>
+
+      <!-- INLINE VALIDATION ALERT -->
+      <div id="lcm-error-box" class="hidden rounded-xl border border-rose-300 bg-rose-50 p-3 text-xs font-medium text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300">
+        <!-- Error text injected dynamically -->
+      </div>
+
+      <!-- VALUE CHANGED / STALE OUTPUT NOTICE -->
+      <div id="lcm-stale-notice" class="hidden">
+        <div class="rounded-xl border border-amber-300 bg-amber-50 p-3 text-xs font-medium text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200 flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="text-base">⚠️</span>
+            <span>Input numbers changed. Click <strong>Calculate LCM</strong> to update the results.</span>
+          </div>
+          <button type="button" id="btn-recalculate" class="shrink-0 rounded-lg bg-amber-600 px-3 py-1 text-xs font-bold text-white hover:bg-amber-700 transition cursor-pointer">
+            Recalculate
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MASTER RESULTS CONTAINER (HIDDEN UNTIL CALCULATED) -->
+    <div id="lcm-results-card" class="hidden rounded-2xl border border-blue-300/80 bg-linear-to-br from-blue-50/50 via-white to-indigo-50/30 p-3.5 sm:p-5 shadow-sm dark:border-blue-900/40 dark:from-slate-950 dark:via-slate-900 dark:to-blue-950/20 space-y-4">
+      
+      <!-- Primary Answer Header -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-blue-100/80 pb-3 dark:border-blue-900/50">
+        <div class="space-y-0.5">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            Least Common Multiple (LCM):
+          </div>
+          <div class="flex items-baseline gap-2">
+            <span class="text-2xl sm:text-3xl font-mono font-black text-blue-700 dark:text-blue-400 tracking-tight" id="res-lcm-value">
+              0
+            </span>
+            <span class="text-xs font-medium text-slate-600 dark:text-slate-300" id="res-lcm-equation">
+              = LCM(...)
+            </span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1.5 self-end sm:self-auto">
+          <button type="button" id="btn-copy-lcm" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer">
+            <span>📋</span> Copy Result
+          </button>
+          <button type="button" id="btn-print-lcm" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer">
+            <span>🖨️</span> Print
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+        <div class="rounded-xl border border-slate-200/80 bg-white p-2.5 dark:border-slate-800 dark:bg-slate-900">
+          <div class="text-[10px] font-bold uppercase text-slate-400">Numbers Given</div>
+          <div class="font-mono font-bold text-slate-800 dark:text-slate-200 mt-0.5" id="metric-inputs">
+            —
+          </div>
+        </div>
+        <div class="rounded-xl border border-slate-200/80 bg-white p-2.5 dark:border-slate-800 dark:bg-slate-900">
+          <div class="text-[10px] font-bold uppercase text-slate-400">Greatest Common Factor (GCF)</div>
+          <div class="font-mono font-bold text-blue-700 dark:text-blue-400 mt-0.5" id="metric-gcf">
+            —
+          </div>
+        </div>
+        <div class="rounded-xl border border-slate-200/80 bg-white p-2.5 dark:border-slate-800 dark:bg-slate-900">
+          <div class="text-[10px] font-bold uppercase text-slate-400">Count of Numbers</div>
+          <div class="font-mono font-bold text-slate-800 dark:text-slate-200 mt-0.5" id="metric-count">
+            —
+          </div>
+        </div>
+        <div class="rounded-xl border border-slate-200/80 bg-white p-2.5 dark:border-slate-800 dark:bg-slate-900">
+          <div class="text-[10px] font-bold uppercase text-slate-400">Total Product</div>
+          <div class="font-mono font-bold text-slate-800 dark:text-slate-200 mt-0.5" id="metric-product">
+            —
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP-BY-STEP CALCULATION PROOFS CONTAINER -->
+      <div id="lcm-steps-container" class="space-y-3 pt-1">
+        <div class="text-xs font-bold text-slate-900 dark:text-white flex items-center justify-between">
+          <span class="flex items-center gap-1.5">
+            <span>📝</span> Step-by-Step Working &amp; Verification Methods
+          </span>
+          <span class="text-[11px] font-medium text-slate-500" id="current-method-badge">Method: Prime Factorization</span>
+        </div>
+
+        <!-- 1. Prime Factorization Breakdown Card -->
+        <div id="card-step-prime" class="calc-step-card rounded-xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900 text-xs space-y-2">
+          <div class="step-card-title font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+            <span>🌿</span> Method 1: Prime Factorization &amp; Exponents
+          </div>
+          <div id="step-prime-details" class="step-card-details border-t border-slate-100 dark:border-slate-800 pt-2 text-slate-600 dark:text-slate-300">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- 2. GCF / Iterative Euclidean Formula Card -->
+        <div id="card-step-gcf" class="calc-step-card rounded-xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900 text-xs space-y-2">
+          <div class="step-card-title font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+            <span>📐</span> Method 2: Greatest Common Factor (GCF) Formula
+          </div>
+          <div id="step-gcf-details" class="step-card-details border-t border-slate-100 dark:border-slate-800 pt-2 text-slate-600 dark:text-slate-300 font-mono">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- 3. Listing Multiples Card -->
+        <div id="card-step-multiples" class="calc-step-card rounded-xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900 text-xs space-y-2">
+          <div class="step-card-title font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+            <span>📋</span> Method 3: Listing Multiples
+          </div>
+          <div id="step-multiples-details" class="step-card-details border-t border-slate-100 dark:border-slate-800 pt-2 text-slate-600 dark:text-slate-300">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- 4. Cake / Ladder Method Card -->
+        <div id="card-step-cake" class="calc-step-card rounded-xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900 text-xs space-y-2">
+          <div class="step-card-title font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+            <span>🎂</span> Method 4: Cake / Ladder Method (Box / Grid)
+          </div>
+          <div id="step-cake-details" class="step-card-details border-t border-slate-100 dark:border-slate-800 pt-2 text-slate-600 dark:text-slate-300">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- 5. Division Method Card -->
+        <div id="card-step-division" class="calc-step-card rounded-xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900 text-xs space-y-2">
+          <div class="step-card-title font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+            <span>➗</span> Method 5: Division Method
+          </div>
+          <div id="step-division-details" class="step-card-details border-t border-slate-100 dark:border-slate-800 pt-2 text-slate-600 dark:text-slate-300">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <!-- 6. Venn Diagram Card -->
+        <div id="card-step-venn" class="calc-step-card rounded-xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900 text-xs space-y-2">
+          <div class="step-card-title font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+            <span>⭕</span> Method 6: Venn Diagram Method
+          </div>
+          <div id="step-venn-details" class="step-card-details border-t border-slate-100 dark:border-slate-800 pt-2 text-slate-600 dark:text-slate-300">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+      </div>
+
+    </div><!-- End Master Results Card -->
+
+  </div><!-- End Calculator Tool Container -->
+
+  <!-- EDUCATIONAL SEO & USER GUIDE ARTICLE -->
+  <Fragment slot="content">
+    <div class="space-y-8">
+
+      <!-- SECTION 1: WHAT IS THE LEAST COMMON MULTIPLE? -->
+      <div>
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+          What is the Least Common Multiple (LCM)?
+        </h2>
+        <p class="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          In mathematics, the <strong>Least Common Multiple</strong>, also known as the <strong>lowest common multiple (LCM)</strong> or <strong>least common divisor (LCD)</strong> of two or more integers <em>a</em> and <em>b</em>, is the smallest positive integer that is evenly divisible by each number in the set without leaving a remainder. It is commonly denoted as <strong>LCM(a, b)</strong> or <strong>LCM(a, b, c)</strong>.
+        </p>
+        <p class="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          For example:
+        </p>
+        <ul class="mt-2 space-y-1 list-disc list-inside text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-mono">
+          <li><strong>LCM(2, 3) = 6</strong> (6 is the smallest number divisible by both 2 and 3)</li>
+          <li><strong>LCM(6, 10) = 30</strong> (30 is divisible by both 6 and 10; smaller shared multiples do not exist)</li>
+          <li><strong>LCM(12, 18, 30) = 180</strong> (180 is the smallest integer divisible by all three numbers)</li>
+        </ul>
+      </div>
+
+      <!-- SECTION 2: HOW TO USE THE CALCULATOR -->
+      <div class="space-y-3">
+        <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>⚙️</span> How to Use the LCM Calculator
+        </h3>
+        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          This calculator finds the LCM of any set of two or more positive integers and generates complete mathematical proofs with steps:
+        </p>
+        <ol class="list-decimal list-inside space-y-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          <li><strong>Enter your numbers:</strong> Type two or more positive integers separated by commas (<code>,</code>) or spaces into the input box (e.g. <code>12, 18, 30</code>).</li>
+          <li><strong>Formatting rule:</strong> Do not include commas within individual numbers (for example, enter <code>2500, 1000</code> rather than <code>2,500, 1,000</code>).</li>
+          <li><strong>Click Calculate LCM:</strong> The tool instantly displays the final LCM, the GCF, the product, and three interactive step-by-step methods: prime factorization with exponents, iterative GCF formulas, and listing multiples.</li>
+        </ol>
+      </div>
+
+      <!-- SECTION 3: THE 6 METHODS FOR FINDING LCM -->
+      <div class="space-y-6">
+        <div>
+          <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            How to Find the Least Common Multiple (LCM): 6 Different Methods
+          </h2>
+          <p class="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            There are several viable mathematical methods for calculating the least common multiple. Each method has its own strengths depending on whether you are working by hand, solving algebra problems, or analyzing large numbers.
+          </p>
+        </div>
+
+        <!-- METHOD 1: LISTING MULTIPLES -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-900/60 space-y-3">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>1️⃣</span> 1. Listing Multiples (Brute Force Method)
+          </h3>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            The most fundamental approach is the listing method: write out the multiples of each number in ascending order until at least one positive integer appears on every list. The smallest number appearing across all lists is the LCM.
+          </p>
+
+          <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-950/40 space-y-2 text-xs">
+            <div class="font-bold text-slate-800 dark:text-slate-200">Example A: Find LCM(18, 26)</div>
+            <p class="text-slate-600 dark:text-slate-400">List positive multiples of each integer:</p>
+            <div class="font-mono space-y-1 text-slate-700 dark:text-slate-300">
+              <div><strong>Multiples of 18:</strong> 18, 36, 54, 72, 90, 108, 126, 144, 162, 180, 198, 216, <span class="font-bold text-blue-600 dark:text-blue-400">234</span>, 252...</div>
+              <div><strong>Multiples of 26:</strong> 26, 52, 78, 104, 130, 156, 182, 208, <span class="font-bold text-blue-600 dark:text-blue-400">234</span>, 260...</div>
+            </div>
+            <p class="text-slate-700 dark:text-slate-300 font-semibold">
+              The smallest shared multiple is <strong>234</strong>. Therefore, <strong>LCM(18, 26) = 234</strong>.
+            </p>
+          </div>
+
+          <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-950/40 space-y-2 text-xs">
+            <div class="font-bold text-slate-800 dark:text-slate-200">Example B: Find LCM(6, 7, 21)</div>
+            <div class="font-mono space-y-1 text-slate-700 dark:text-slate-300">
+              <div><strong>Multiples of 6:</strong> 6, 12, 18, 24, 30, 36, <span class="font-bold text-blue-600 dark:text-blue-400">42</span>, 48, 54, 60...</div>
+              <div><strong>Multiples of 7:</strong> 7, 14, 21, 28, 35, <span class="font-bold text-blue-600 dark:text-blue-400">42</span>, 49, 56, 63...</div>
+              <div><strong>Multiples of 21:</strong> 21, <span class="font-bold text-blue-600 dark:text-blue-400">42</span>, 63...</div>
+            </div>
+            <p class="text-slate-700 dark:text-slate-300 font-semibold">
+              The smallest number on all three lists is <strong>42</strong>. So, <strong>LCM(6, 7, 21) = 42</strong>.
+            </p>
+          </div>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400 italic">
+            Note: While listing multiples is easy to understand, it becomes tedious and impractical for large numbers or sets with little common factorization.
+          </p>
+        </div>
+
+        <!-- METHOD 2: PRIME FACTORIZATION & EXPONENTS -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-900/60 space-y-3">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>2️⃣</span> 2. Prime Factorization Method &amp; Prime Factorization with Exponents
+          </h3>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Prime factorization breaks each number down into its prime building blocks. The LCM is obtained by identifying all unique prime factors and raising each to the <strong>highest power</strong> (largest exponent) with which it appears in any single number's factorization, then multiplying those values together.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+            <!-- Example 21, 14, 38 -->
+            <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-950/40 space-y-2">
+              <div class="font-bold text-slate-800 dark:text-slate-200">Example: LCM(21, 14, 38)</div>
+              <ul class="font-mono space-y-0.5 text-slate-700 dark:text-slate-300">
+                <li>21 = 3 × 7</li>
+                <li>14 = 2 × 7</li>
+                <li>38 = 2 × 19</li>
+              </ul>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                Unique prime factors: 2, 3, 7, 19 (each appearing at most once per number).
+              </p>
+              <div class="font-mono font-bold text-blue-700 dark:text-blue-400">
+                LCM = 2 × 3 × 7 × 19 = 798
+              </div>
+            </div>
+
+            <!-- Example 12, 30 -->
+            <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-950/40 space-y-2">
+              <div class="font-bold text-slate-800 dark:text-slate-200">Example: LCM(12, 30)</div>
+              <ul class="font-mono space-y-0.5 text-slate-700 dark:text-slate-300">
+                <li>12 = 2 × 2 × 3 = 2² × 3¹</li>
+                <li>30 = 2 × 3 × 5 = 2¹ × 3¹ × 5¹</li>
+              </ul>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                Highest power of 2 is 2², of 3 is 3¹, of 5 is 5¹.
+              </p>
+              <div class="font-mono font-bold text-blue-700 dark:text-blue-400">
+                LCM = 2² × 3¹ × 5¹ = 4 × 3 × 5 = 60
+              </div>
+            </div>
+
+            <!-- Example 24, 300 -->
+            <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-950/40 space-y-2">
+              <div class="font-bold text-slate-800 dark:text-slate-200">Example: LCM(24, 300)</div>
+              <ul class="font-mono space-y-0.5 text-slate-700 dark:text-slate-300">
+                <li>24 = 2 × 2 × 2 × 3 = 2³ × 3¹</li>
+                <li>300 = 2 × 2 × 3 × 5 × 5 = 2² × 3¹ × 5²</li>
+              </ul>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                Highest powers: 2³, 3¹, 5².
+              </p>
+              <div class="font-mono font-bold text-blue-700 dark:text-blue-400">
+                LCM = 2³ × 3¹ × 5² = 8 × 3 × 25 = 600
+              </div>
+            </div>
+
+            <!-- Example 12, 18, 30 -->
+            <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-950/40 space-y-2">
+              <div class="font-bold text-slate-800 dark:text-slate-200">Example: LCM(12, 18, 30)</div>
+              <ul class="font-mono space-y-0.5 text-slate-700 dark:text-slate-300">
+                <li>12 = 2² × 3¹</li>
+                <li>18 = 2¹ × 3²</li>
+                <li>30 = 2¹ × 3¹ × 5¹</li>
+              </ul>
+              <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+                Highest powers: 2², 3², 5¹.
+              </p>
+              <div class="font-mono font-bold text-blue-700 dark:text-blue-400">
+                LCM = 2² × 3² × 5¹ = 4 × 9 × 5 = 180
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- METHOD 3: CAKE / LADDER METHOD -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-900/60 space-y-3">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>3️⃣</span> 3. The Cake Method (Ladder, Box, or Grid Method)
+          </h3>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            The <strong>Cake method</strong> (also referred to as the ladder, box, factor box, or grid method) uses compact division steps. Numbers are written in a horizontal layer. You divide by a prime number that evenly divides into <em>two or more numbers</em> in the layer, bringing down the quotients and any undividable numbers to the next layer. Repeat until no prime number divides into two or more remaining terms.
+          </p>
+
+          <div class="space-y-2 pt-1">
+            <div class="text-xs font-bold text-slate-800 dark:text-slate-200">
+              Worked Example: Find LCM(10, 12, 15, 75) using the Cake/Ladder Method
+            </div>
+            <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+              <table class="w-full text-left text-xs">
+                <thead class="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/80 font-bold text-slate-800 dark:text-slate-200">
+                  <tr>
+                    <th class="p-2.5">Prime Divisor (Left Column)</th>
+                    <th class="p-2.5 text-center">Col 1</th>
+                    <th class="p-2.5 text-center">Col 2</th>
+                    <th class="p-2.5 text-center">Col 3</th>
+                    <th class="p-2.5 text-center">Col 4</th>
+                    <th class="p-2.5">Operation Notes</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono text-slate-700 dark:text-slate-300">
+                  {cakeMethodSteps.map((row) => (
+                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                      <td class="p-2.5 font-bold text-blue-700 dark:text-blue-400">{row.prime}</td>
+                      <td class="p-2.5 text-center">{row.n1}</td>
+                      <td class="p-2.5 text-center">{row.n2}</td>
+                      <td class="p-2.5 text-center">{row.n3}</td>
+                      <td class="p-2.5 text-center">{row.n4}</td>
+                      <td class="p-2.5 font-sans text-slate-500 dark:text-slate-400 text-[11px]">{row.note}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-blue-100 bg-blue-50/60 p-3.5 dark:border-blue-900/40 dark:bg-blue-950/30 text-xs space-y-1">
+            <div class="font-bold text-blue-900 dark:text-blue-200">L-Shape Product Rule:</div>
+            <p class="text-slate-600 dark:text-slate-300">
+              The LCM is the product of all numbers forming the "L" shape (the left-hand column prime divisors multiplied by the bottom row remaining values, ignoring 1s):
+            </p>
+            <div class="font-mono font-bold text-blue-800 dark:text-blue-300">
+              LCM = 2 × 3 × 5 × (1 × 2 × 1 × 5) = 30 × 10 = 300
+            </div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">
+              Therefore, <strong>LCM(10, 12, 15, 75) = 300</strong>.
+            </div>
+          </div>
+        </div>
+
+        <!-- METHOD 4: DIVISION METHOD -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-900/60 space-y-3">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>4️⃣</span> 4. The Division Method
+          </h3>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            In the <strong>Division method</strong>, you arrange the numbers in a row and divide by the smallest prime number that divides evenly into <em>at least one</em> of the numbers. Bring down quotients for divisible numbers and carry down untouched numbers. Continue dividing until the final row consists entirely of 1s. The product of the prime numbers in the first column is the LCM.
+          </p>
+
+          <div class="space-y-2 pt-1">
+            <div class="text-xs font-bold text-slate-800 dark:text-slate-200">
+              Worked Example: Find LCM(10, 18, 25) using the Division Method
+            </div>
+            <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+              <table class="w-full text-left text-xs">
+                <thead class="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/80 font-bold text-slate-800 dark:text-slate-200">
+                  <tr>
+                    <th class="p-2.5">Prime Divisor (Column 1)</th>
+                    <th class="p-2.5 text-center">10</th>
+                    <th class="p-2.5 text-center">18</th>
+                    <th class="p-2.5 text-center">25</th>
+                    <th class="p-2.5">Step Description</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono text-slate-700 dark:text-slate-300">
+                  {divisionMethodSteps.map((row) => (
+                    <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                      <td class="p-2.5 font-bold text-blue-700 dark:text-blue-400">{row.prime}</td>
+                      <td class="p-2.5 text-center">{row.n1}</td>
+                      <td class="p-2.5 text-center">{row.n2}</td>
+                      <td class="p-2.5 text-center">{row.n3}</td>
+                      <td class="p-2.5 font-sans text-slate-500 dark:text-slate-400 text-[11px]">{row.note}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="rounded-xl border border-blue-100 bg-blue-50/60 p-3.5 dark:border-blue-900/40 dark:bg-blue-950/30 text-xs space-y-1">
+            <div class="font-bold text-blue-900 dark:text-blue-200">Column Multiplication:</div>
+            <p class="text-slate-600 dark:text-slate-300">
+              Multiply all the prime numbers in the first column:
+            </p>
+            <div class="font-mono font-bold text-blue-800 dark:text-blue-300">
+              LCM = 2 × 3 × 3 × 5 × 5 = 450
+            </div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">
+              Therefore, <strong>LCM(10, 18, 25) = 450</strong>.
+            </div>
+          </div>
+        </div>
+
+        <!-- METHOD 5: GREATEST COMMON FACTOR (GCF) FORMULA -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-900/60 space-y-3">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>5️⃣</span> 5. Finding LCM using the Greatest Common Factor (GCF / GCD)
+          </h3>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            A factor (or divisor) is an integer that divides evenly into another number. The <strong>Greatest Common Factor (GCF)</strong>, also widely known as the <strong>Greatest Common Divisor (GCD)</strong>, Highest Common Factor (HCF), Highest Common Divisor (HCD), Greatest Common Measure (GCM), or Highest Common Measure (HCM), is the largest positive integer that divides all numbers in the set.
+          </p>
+
+          <div class="rounded-xl border border-slate-200 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-950/40 space-y-2 text-xs">
+            <div class="font-bold text-slate-900 dark:text-white">The Two-Number GCF-LCM Formula:</div>
+            <div class="font-mono text-sm font-bold text-blue-700 dark:text-blue-400 bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800 text-center">
+              LCM(a, b) = (a × b) / GCF(a, b)
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+              <strong>Example: Find LCM(6, 10)</strong>
+            </p>
+            <ol class="list-decimal list-inside space-y-1 font-mono text-slate-700 dark:text-slate-300">
+              <li>Find GCF(6, 10) = 2</li>
+              <li>Calculate: (6 × 10) / 2 = 60 / 2 = <strong>30</strong></li>
+              <li>So LCM(6, 10) = <strong>30</strong></li>
+            </ol>
+          </div>
+
+          <div class="rounded-xl border border-amber-200 bg-amber-50/60 p-3.5 dark:border-amber-900/40 dark:bg-amber-950/30 text-xs space-y-1.5">
+            <div class="font-bold text-amber-900 dark:text-amber-200">
+              Important: Extension to Three or More Numbers (Iterative Application)
+            </div>
+            <p class="text-slate-700 dark:text-slate-300 leading-relaxed">
+              The direct equation <code>LCM(a, b) × GCF(a, b) = a × b</code> holds strictly for <strong>two numbers</strong>. For three or more numbers (e.g. <em>a</em>, <em>b</em>, <em>c</em>), you determine the LCM by computing iteratively:
+            </p>
+            <div class="font-mono font-bold text-amber-900 dark:text-amber-300 text-center bg-white/70 dark:bg-slate-900/60 p-2 rounded-lg border border-amber-200/60 dark:border-amber-900/50">
+              LCM(a, b, c) = LCM(LCM(a, b), c)
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+              <strong>Example: Find LCM(21, 14, 38)</strong>
+            </p>
+            <ul class="font-mono space-y-1 text-slate-700 dark:text-slate-300">
+              <li>Step 1: GCF(14, 38) = 2 ⟹ LCM(14, 38) = (14 × 38) / 2 = 532 / 2 = <strong>266</strong></li>
+              <li>Step 2: GCF(266, 21) = 7 ⟹ LCM(266, 21) = (266 × 21) / 7 = 5,586 / 7 = <strong>798</strong></li>
+              <li>Therefore, <strong>LCM(21, 14, 38) = 798</strong>.</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- METHOD 6: VENN DIAGRAM METHOD -->
+        <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-900/60 space-y-3">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>6️⃣</span> 6. The Venn Diagram Method
+          </h3>
+          <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Venn diagrams use overlapping circles to visualize prime factor distributions. For two numbers <em>A</em> and <em>B</em>, each number is represented by a circle:
+          </p>
+          <ul class="list-disc list-inside space-y-1.5 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            <li><strong>Intersection (Center Overlap):</strong> Contains the prime factors shared by both numbers. Multiplying the numbers in this overlap gives the <strong>Greatest Common Factor (GCF)</strong>.</li>
+            <li><strong>Outer Lobes:</strong> Contain the unique prime factors belonging to only that individual number.</li>
+            <li><strong>Union (All Regions Combined):</strong> To find the <strong>LCM</strong>, multiply every prime factor across all sections of the Venn diagram (counting shared factors in the intersection only once).</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- SECTION 4: LCM OF DECIMAL NUMBERS -->
+      <div class="space-y-3">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+          How to Find the LCM of Decimal Numbers
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          While the classical definition of the least common multiple applies to positive integers, decimal quantities with terminating fractional parts can be evaluated using a standard decimal scaling technique:
+        </p>
+
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-900/50 space-y-3 text-xs sm:text-sm text-slate-700 dark:text-slate-300">
+          <ol class="list-decimal list-inside space-y-2">
+            <li><strong>Identify decimal places (D):</strong> Count the maximum number of decimal places across all numbers in your set. Let that count be <em>D</em>.</li>
+            <li><strong>Convert to integers:</strong> Shift the decimal point <em>D</em> places to the right (multiply each number by 10<sup>D</sup>) to convert every value into an integer.</li>
+            <li><strong>Calculate integer LCM:</strong> Find the LCM of this new set of integers using prime factorization or the GCF formula.</li>
+            <li><strong>Re-scale result:</strong> Divide the resulting integer LCM by 10<sup>D</sup> (shift the decimal point <em>D</em> places back to the left). This yields the least common multiple for the original decimal set.</li>
+          </ol>
+
+          <div class="rounded-xl border border-slate-200 bg-white p-3.5 dark:border-slate-800 dark:bg-slate-900 space-y-1 text-xs">
+            <div class="font-bold text-slate-900 dark:text-white">Example: Find the LCM of 0.12 and 0.18</div>
+            <p class="text-slate-600 dark:text-slate-400">
+              Both numbers have <em>D = 2</em> decimal places. Multiply by 10² = 100 to obtain integers 12 and 18.
+            </p>
+            <div class="font-mono text-slate-700 dark:text-slate-300">
+              LCM(12, 18) = 36 ⟹ 36 / 100 = <strong>0.36</strong>
+            </div>
+            <p class="text-slate-600 dark:text-slate-400 text-[11px]">
+              0.36 is the smallest positive decimal evenly divisible by 0.12 (0.36 / 0.12 = 3) and 0.18 (0.36 / 0.18 = 2).
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 5: MATHEMATICAL PROPERTIES OF LCM -->
+      <div class="space-y-4">
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+          Mathematical Properties of the Least Common Multiple
+        </h2>
+        <p class="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          The least common multiple obeys several fundamental algebraic laws:
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <!-- Commutative -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-1.5">
+            <div class="font-bold text-blue-700 dark:text-blue-400 uppercase text-[11px] tracking-wider">
+              Commutative Property
+            </div>
+            <div class="font-mono font-bold text-slate-900 dark:text-white text-sm">
+              LCM(a, b) = LCM(b, a)
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+              The order of the numbers does not affect the least common multiple. For example, LCM(4, 6) = LCM(6, 4) = 12.
+            </p>
+          </div>
+
+          <!-- Associative -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-1.5">
+            <div class="font-bold text-blue-700 dark:text-blue-400 uppercase text-[11px] tracking-wider">
+              Associative Property
+            </div>
+            <div class="font-mono font-bold text-slate-900 dark:text-white text-sm">
+              LCM(a, b, c) = LCM(LCM(a, b), c)
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+              When calculating the LCM of three or more numbers, grouping order does not matter: LCM(a, LCM(b, c)) produces the identical result.
+            </p>
+          </div>
+
+          <!-- Distributive -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-1.5">
+            <div class="font-bold text-blue-700 dark:text-blue-400 uppercase text-[11px] tracking-wider">
+              Distributive Property
+            </div>
+            <div class="font-mono font-bold text-slate-900 dark:text-white text-sm">
+              LCM(da, db, dc) = d × LCM(a, b, c)
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+              Multiplying each term by a positive integer <em>d</em> scales the least common multiple by exactly that factor <em>d</em>.
+            </p>
+          </div>
+
+          <!-- GCF Relationship -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-1.5">
+            <div class="font-bold text-blue-700 dark:text-blue-400 uppercase text-[11px] tracking-wider">
+              GCF-LCM Relationship (Pairs)
+            </div>
+            <div class="font-mono font-bold text-slate-900 dark:text-white text-sm">
+              LCM(a, b) × GCF(a, b) = a × b
+            </div>
+            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+              The product of two positive integers is always equal to the product of their LCM and GCF. Hence, GCF(a, b) = (a × b) / LCM(a, b).
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 6: COMPARISON TABLE OF METHODS -->
+      <div class="space-y-3">
+        <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>📊</span> Comparison: Which LCM Method Should You Use?
+        </h3>
+        <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950/60">
+          <table class="w-full text-left text-xs">
+            <thead class="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/90 text-slate-800 dark:text-slate-200 font-bold">
+              <tr>
+                <th class="p-3">Calculation Method</th>
+                <th class="p-3">Best Suited For</th>
+                <th class="p-3">Computation Speed</th>
+                <th class="p-3">Key Practical Advantage</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 text-slate-600 dark:text-slate-300">
+              {methodsComparison.map((row) => (
+                <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                  <td class="p-3 font-bold text-slate-900 dark:text-white">{row.name}</td>
+                  <td class="p-3">{row.bestFor}</td>
+                  <td class="p-3 font-semibold text-blue-700 dark:text-blue-400">{row.speed}</td>
+                  <td class="p-3">{row.keyAdvantage}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SECTION 7: FAQS -->
+      <div class="rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 dark:border-slate-800 dark:bg-slate-900/60 space-y-4">
+        <h2 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>❓</span> Frequently Asked Questions About LCM
+        </h2>
+
+        <div class="space-y-3 text-xs sm:text-sm">
+          <details class="group rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 dark:border-slate-800 dark:bg-slate-950/40">
+            <summary class="cursor-pointer font-bold text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400">
+              What is the difference between LCM and GCF (GCD)?
+            </summary>
+            <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed">
+              The <strong>Greatest Common Factor (GCF)</strong> is the largest number that divides <em>into</em> all the given numbers, making it smaller than or equal to the smallest number. The <strong>Least Common Multiple (LCM)</strong> is the smallest number that all the given numbers divide into, making it greater than or equal to the largest number in the set.
+            </p>
+          </details>
+
+          <details class="group rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 dark:border-slate-800 dark:bg-slate-950/40">
+            <summary class="cursor-pointer font-bold text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400">
+              Can the LCM be smaller than any of the input numbers?
+            </summary>
+            <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed">
+              No. By definition, a multiple of a positive integer <em>n</em> must be at least <em>n</em>. Therefore, the least common multiple of a set of numbers is always greater than or equal to the maximum number in that set: <code>LCM(a, b, ...) ≥ max(a, b, ...)</code>.
+            </p>
+          </details>
+
+          <details class="group rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 dark:border-slate-800 dark:bg-slate-950/40">
+            <summary class="cursor-pointer font-bold text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400">
+              What is the LCM of two coprime or prime numbers?
+            </summary>
+            <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed">
+              If two numbers are prime or coprime (meaning they share no common prime factors, so GCF = 1), their least common multiple is simply their direct product: <code>LCM(a, b) = a × b</code>. For example, LCM(5, 7) = 35 and LCM(8, 9) = 72.
+            </p>
+          </details>
+
+          <details class="group rounded-xl border border-slate-200 bg-slate-50/50 p-3.5 dark:border-slate-800 dark:bg-slate-950/40">
+            <summary class="cursor-pointer font-bold text-slate-800 dark:text-slate-200 hover:text-blue-600 dark:hover:text-blue-400">
+              How is LCM used in fractions as the Least Common Denominator (LCD)?
+            </summary>
+            <p class="mt-2 text-slate-600 dark:text-slate-300 leading-relaxed">
+              The <strong>Least Common Denominator (LCD)</strong> of two or more fractions is exactly the least common multiple of their denominators. Finding the LCM allows you to convert unequal fractions to equivalent fractions with a shared denominator for straightforward addition and subtraction.
+            </p>
+          </details>
+        </div>
+      </div>
+
+      <!-- SECTION 8: RELATED MATH TOOLS -->
+      <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 dark:border-slate-800 dark:bg-slate-900/50 space-y-3">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>🔗</span> Related Math &amp; Arithmetic Calculators
+        </h3>
+        <div class="flex flex-wrap gap-2 text-xs">
+          <a href="/math/fraction-calculator/" class="rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-semibold text-blue-700 hover:border-blue-500 hover:shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-blue-400 transition">Fraction Calculator (LCD) &rarr;</a>
+          <a href="/math/ratio-calculator/" class="rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-semibold text-blue-700 hover:border-blue-500 hover:shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-blue-400 transition">Ratio Calculator &rarr;</a>
+          <a href="/math/percentage-calculator/" class="rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-semibold text-blue-700 hover:border-blue-500 hover:shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-blue-400 transition">Percentage Calculator &rarr;</a>
+          <a href="/math/scientific-calculator/" class="rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-semibold text-blue-700 hover:border-blue-500 hover:shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-blue-400 transition">Scientific Calculator &rarr;</a>
+        </div>
+      </div>
+
+    </div>
+  </Fragment>
+
+  <!-- CLIENT-SIDE SCRIPT -->
+  <script>
+    function isPrime(n: number): boolean {
+      if (n < 2) return false;
+      if (n === 2 || n === 3) return true;
+      if (n % 2 === 0 || n % 3 === 0) return false;
+      for (let i = 5; i * i <= n; i += 6) {
+        if (n % i === 0 || n % (i + 2) === 0) return false;
+      }
+      return true;
+    }
+
+    function nextPrime(p: number): number {
+      let next = p + 1;
+      while (!isPrime(next)) {
+        next++;
+      }
+      return next;
+    }
+
+    function gcd(a: number, b: number): number {
+      let x = Math.abs(a);
+      let y = Math.abs(b);
+      while (y !== 0) {
+        const t = y;
+        y = x % y;
+        x = t;
+      }
+      return x;
+    }
+
+    function getPrimeFactors(n: number): Record<number, number> {
+      const factors: Record<number, number> = {};
+      let d = 2;
+      let temp = n;
+      while (d * d <= temp) {
+        while (temp % d === 0) {
+          factors[d] = (factors[d] || 0) + 1;
+          temp = Math.floor(temp / d);
+        }
+        d = d === 2 ? 3 : d + 2;
+      }
+      if (temp > 1) {
+        factors[temp] = (factors[temp] || 0) + 1;
+      }
+      return factors;
+    }
+
+    function getPrimeFactorsList(n: number): number[] {
+      const list: number[] = [];
+      let d = 2;
+      let temp = n;
+      while (d * d <= temp) {
+        while (temp % d === 0) {
+          list.push(d);
+          temp = Math.floor(temp / d);
+        }
+        d = d === 2 ? 3 : d + 2;
+      }
+      if (temp > 1) {
+        list.push(temp);
+      }
+      return list;
+    }
+
+    function formatFactorString(factors: Record<number, number>): string {
+      const parts: string[] = [];
+      const primes = Object.keys(factors).map(Number).sort((a, b) => a - b);
+      for (const p of primes) {
+        const exp = factors[p];
+        if (exp === 1) {
+          parts.push(`${p}`);
+        } else {
+          parts.push(`${p}<sup>${exp}</sup>`);
+        }
+      }
+      return parts.join(' × ') || '1';
+    }
+
+    function initLcmCalculator() {
+      const inputEl = document.getElementById('lcm-raw-input') as HTMLInputElement | null;
+      const methodSelect = document.getElementById('lcm-method-select') as HTMLSelectElement | null;
+      const btnCalc = document.getElementById('btn-lcm-calc') as HTMLButtonElement | null;
+      const btnClear = document.getElementById('btn-lcm-clear') as HTMLButtonElement | null;
+      const btnRecalc = document.getElementById('btn-recalculate') as HTMLButtonElement | null;
+      const errorBox = document.getElementById('lcm-error-box');
+      const staleNotice = document.getElementById('lcm-stale-notice');
+      const resultsCard = document.getElementById('lcm-results-card');
+
+      const resLcmVal = document.getElementById('res-lcm-value');
+      const resLcmEq = document.getElementById('res-lcm-equation');
+      const metricInputs = document.getElementById('metric-inputs');
+      const metricGcf = document.getElementById('metric-gcf');
+      const metricCount = document.getElementById('metric-count');
+      const metricProduct = document.getElementById('metric-product');
+      const methodBadge = document.getElementById('current-method-badge');
+
+      const stepsContainer = document.getElementById('lcm-steps-container');
+      const cardPrime = document.getElementById('card-step-prime');
+      const cardGcf = document.getElementById('card-step-gcf');
+      const cardMultiples = document.getElementById('card-step-multiples');
+      const cardCake = document.getElementById('card-step-cake');
+      const cardDivision = document.getElementById('card-step-division');
+      const cardVenn = document.getElementById('card-step-venn');
+
+      const stepPrimeDetails = document.getElementById('step-prime-details');
+      const stepGcfDetails = document.getElementById('step-gcf-details');
+      const stepMultiplesDetails = document.getElementById('step-multiples-details');
+      const stepCakeDetails = document.getElementById('step-cake-details');
+      const stepDivisionDetails = document.getElementById('step-division-details');
+      const stepVennDetails = document.getElementById('step-venn-details');
+
+      const btnCopy = document.getElementById('btn-copy-lcm');
+      const btnPrint = document.getElementById('btn-print-lcm');
+
+      if (!inputEl || !btnCalc) return;
+
+      let hasCalculated = false;
+      let lastCalculatedInput = '';
+      let cachedNumbers: number[] = [];
+
+      function showError(msg: string) {
+        if (!errorBox) return;
+        errorBox.textContent = msg;
+        errorBox.classList.remove('hidden');
+        if (staleNotice) staleNotice.classList.add('hidden');
+        if (resultsCard) resultsCard.classList.add('hidden');
+      }
+
+      function clearError() {
+        if (!errorBox) return;
+        errorBox.textContent = '';
+        errorBox.classList.add('hidden');
+      }
+
+      function updateStepVisibility(selectedMethod: string) {
+        if (!stepsContainer) return;
+
+        if (selectedMethod === 'none') {
+          stepsContainer.classList.add('hidden');
+          return;
+        }
+
+        stepsContainer.classList.remove('hidden');
+
+        const allCards = [
+          { el: cardPrime, key: 'prime', label: 'Method 1: Prime Factorization' },
+          { el: cardGcf, key: 'gcf', label: 'Method 2: GCF Formula' },
+          { el: cardMultiples, key: 'listing', label: 'Method 3: Listing Multiples' },
+          { el: cardCake, key: 'cake', label: 'Method 4: Cake / Ladder Method' },
+          { el: cardDivision, key: 'division', label: 'Method 5: Division Method' },
+          { el: cardVenn, key: 'venn', label: 'Method 6: Venn Diagram' }
+        ];
+
+        if (methodBadge) {
+          const match = allCards.find(c => c.key === selectedMethod);
+          methodBadge.textContent = selectedMethod === 'all' ? 'Showing All Methods' : `Method: ${match ? match.label : 'Selected'}`;
+        }
+
+        for (const item of allCards) {
+          if (!item.el) continue;
+          if (selectedMethod === 'all' || selectedMethod === item.key) {
+            item.el.classList.remove('hidden');
+          } else {
+            item.el.classList.add('hidden');
+          }
+        }
+      }
+
+      function renderCakeMethod(nums: number[]): string {
+        if (nums.length < 2) return '';
+        const current = [...nums];
+        const steps: { divisor: number; quotients: number[] }[] = [];
+        
+        let iterations = 0;
+        while (iterations < 60) {
+          iterations++;
+          const maxVal = Math.max(...current);
+          let foundPrime = 0;
+          let p = 2;
+          while (p <= maxVal) {
+            const count = current.filter(x => x % p === 0).length;
+            if (count >= 2) {
+              foundPrime = p;
+              break;
+            }
+            p = nextPrime(p);
+          }
+
+          if (foundPrime === 0) break;
+
+          for (let i = 0; i < current.length; i++) {
+            if (current[i] % foundPrime === 0) {
+              current[i] = current[i] / foundPrime;
+            }
+          }
+          steps.push({ divisor: foundPrime, quotients: [...current] });
+        }
+
+        const divisors = steps.map(s => s.divisor);
+        const bottomRow = current;
+
+        let html = `
+          <div class="space-y-2">
+            <div class="text-xs text-slate-600 dark:text-slate-400">
+              Divide layers by prime numbers that divide <strong>at least two numbers</strong> in the row, carrying down undividable values:
+            </div>
+            <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+              <table class="w-full text-left text-xs">
+                <thead class="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/80 font-bold text-slate-800 dark:text-slate-200">
+                  <tr>
+                    <th class="p-2.5">Prime Divisor (Layer)</th>
+                    ${nums.map((_, i) => `<th class="p-2.5 text-center">Col ${i + 1}</th>`).join('')}
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono text-slate-700 dark:text-slate-300">
+                  <tr class="bg-slate-50/40 dark:bg-slate-900/40">
+                    <td class="p-2.5 font-bold text-slate-400">Initial Row</td>
+                    ${nums.map(n => `<td class="p-2.5 text-center font-bold text-slate-800 dark:text-slate-200">${n}</td>`).join('')}
+                  </tr>
+        `;
+
+        for (const step of steps) {
+          html += `
+            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+              <td class="p-2.5 font-bold text-blue-700 dark:text-blue-400">${step.divisor}</td>
+              ${step.quotients.map(q => `<td class="p-2.5 text-center">${q}</td>`).join('')}
+            </tr>
+          `;
+        }
+
+        html += `
+                  <tr class="bg-amber-50/70 dark:bg-amber-950/40 font-bold text-amber-900 dark:text-amber-300">
+                    <td class="p-2.5">Bottom Row</td>
+                    ${bottomRow.map(b => `<td class="p-2.5 text-center">${b}</td>`).join('')}
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+        `;
+
+        const lShapeTerms = [...divisors, ...bottomRow.filter(x => x > 1)];
+        const lShapeProduct = lShapeTerms.reduce((acc, v) => acc * v, 1);
+
+        html += `
+            <div class="rounded-lg bg-blue-50/70 dark:bg-blue-950/40 p-2.5 font-mono text-xs text-blue-900 dark:text-blue-300 font-bold border border-blue-200/60 dark:border-blue-900/40">
+              L-Shape Product = (${divisors.join(' × ') || '1'}) × (${bottomRow.join(' × ')}) = ${lShapeProduct.toLocaleString()}
+            </div>
+          </div>
+        `;
+        return html;
+      }
+
+      function renderDivisionMethod(nums: number[]): string {
+        if (nums.length < 2) return '';
+        const current = [...nums];
+        const rows: { divisor: number; quotients: number[] }[] = [];
+        
+        let p = 2;
+        let iterations = 0;
+        while (!current.every(x => x === 1) && iterations < 80) {
+          iterations++;
+          const divides = current.some(x => x % p === 0);
+          if (divides) {
+            for (let i = 0; i < current.length; i++) {
+              if (current[i] % p === 0) {
+                current[i] = current[i] / p;
+              }
+            }
+            rows.push({ divisor: p, quotients: [...current] });
+          } else {
+            p = nextPrime(p);
+          }
+        }
+
+        let html = `
+          <div class="space-y-2">
+            <div class="text-xs text-slate-600 dark:text-slate-400">
+              Divide rows by the lowest prime number that divides into at least one value, bringing down quotients and remaining values until all values reach 1:
+            </div>
+            <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+              <table class="w-full text-left text-xs">
+                <thead class="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/80 font-bold text-slate-800 dark:text-slate-200">
+                  <tr>
+                    <th class="p-2.5">Prime Divisor (Col 1)</th>
+                    ${nums.map(n => `<th class="p-2.5 text-center">${n}</th>`).join('')}
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 dark:divide-slate-800 font-mono text-slate-700 dark:text-slate-300">
+        `;
+
+        for (const row of rows) {
+          html += `
+            <tr class="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+              <td class="p-2.5 font-bold text-blue-700 dark:text-blue-400">${row.divisor}</td>
+              ${row.quotients.map(q => `<td class="p-2.5 text-center">${q}</td>`).join('')}
+            </tr>
+          `;
+        }
+
+        const allDivisors = rows.map(r => r.divisor);
+        const totalLcm = allDivisors.reduce((acc, v) => acc * v, 1);
+
+        html += `
+                </tbody>
+              </table>
+            </div>
+            <div class="rounded-lg bg-blue-50/70 dark:bg-blue-950/40 p-2.5 font-mono text-xs text-blue-900 dark:text-blue-300 font-bold border border-blue-200/60 dark:border-blue-900/40">
+              LCM = Product of Column 1 Primes = ${allDivisors.join(' × ')} = ${totalLcm.toLocaleString()}
+            </div>
+          </div>
+        `;
+        return html;
+      }
+
+      function renderVennDiagram(nums: number[]): string {
+        if (nums.length < 2) return '';
+
+        if (nums.length === 2) {
+          const a = nums[0];
+          const b = nums[1];
+          const fa = getPrimeFactorsList(a);
+          const fb = getPrimeFactorsList(b);
+
+          const intersection: number[] = [];
+          const onlyA = [...fa];
+          const onlyB = [...fb];
+
+          for (let i = onlyA.length - 1; i >= 0; i--) {
+            const idx = onlyB.indexOf(onlyA[i]);
+            if (idx !== -1) {
+              intersection.push(onlyA[i]);
+              onlyA.splice(i, 1);
+              onlyB.splice(idx, 1);
+            }
+          }
+          intersection.sort((x, y) => x - y);
+          onlyA.sort((x, y) => x - y);
+          onlyB.sort((x, y) => x - y);
+
+          const allUnion = [...onlyA, ...intersection, ...onlyB].sort((x, y) => x - y);
+          const lcmVal = allUnion.reduce((acc, v) => acc * v, 1);
+          const gcfVal = intersection.length > 0 ? intersection.reduce((acc, v) => acc * v, 1) : 1;
+
+          const strOnlyA = onlyA.length > 0 ? onlyA.join(' · ') : '';
+          const strInter = intersection.length > 0 ? intersection.join(' · ') : '';
+          const strOnlyB = onlyB.length > 0 ? onlyB.join(' · ') : '';
+
+          return `
+            <div class="space-y-3">
+              <div class="text-xs text-slate-600 dark:text-slate-300">
+                Visual 2-circle Venn diagram distribution for <strong>${a}</strong> and <strong>${b}</strong>:
+              </div>
+
+              <!-- Visual SVG Venn Diagram -->
+              <div class="w-full overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/80 p-2 sm:p-4 my-2 flex justify-center">
+                <svg id="svg-lcm-venn-diagram" class="visual-diagram w-full h-auto max-w-lg" viewBox="0 0 500 240" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="vennGradA" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.32" />
+                      <stop offset="100%" stop-color="#0284c7" stop-opacity="0.16" />
+                    </linearGradient>
+                    <linearGradient id="vennGradB" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#a855f7" stop-opacity="0.32" />
+                      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0.16" />
+                    </linearGradient>
+                  </defs>
+                  <style>
+                    .v-title-a { fill: #0284c7; font-weight: 800; font-size: 13px; font-family: system-ui, sans-serif; }
+                    .v-title-b { fill: #7c3aed; font-weight: 800; font-size: 13px; font-family: system-ui, sans-serif; }
+                    .v-title-mid { fill: #4338ca; font-weight: 700; font-size: 11px; font-family: system-ui, sans-serif; }
+                    .v-num-a { fill: #0f172a; font-weight: 800; font-size: 16px; font-family: ui-monospace, SFMono-Regular, monospace; }
+                    .v-num-mid { fill: #4338ca; font-weight: 900; font-size: 17px; font-family: ui-monospace, SFMono-Regular, monospace; }
+                    .v-num-b { fill: #0f172a; font-weight: 800; font-size: 16px; font-family: ui-monospace, SFMono-Regular, monospace; }
+                    .v-sub { fill: #64748b; font-size: 10px; font-family: system-ui, sans-serif; }
+                    :global(.dark) .v-title-a, html.dark .v-title-a { fill: #38bdf8; }
+                    :global(.dark) .v-title-b, html.dark .v-title-b { fill: #c084fc; }
+                    :global(.dark) .v-title-mid, html.dark .v-title-mid { fill: #facc15; }
+                    :global(.dark) .v-num-a, html.dark .v-num-a { fill: #f8fafc; }
+                    :global(.dark) .v-num-mid, html.dark .v-num-mid { fill: #fef08a; }
+                    :global(.dark) .v-num-b, html.dark .v-num-b { fill: #f8fafc; }
+                    :global(.dark) .v-sub, html.dark .v-sub { fill: #94a3b8; }
+                  </style>
+
+                  <!-- Circle A -->
+                  <circle cx="190" cy="120" r="95" fill="url(#vennGradA)" stroke="#0284c7" stroke-width="2.5" />
+                  
+                  <!-- Circle B -->
+                  <circle cx="310" cy="120" r="95" fill="url(#vennGradB)" stroke="#7c3aed" stroke-width="2.5" />
+
+                  <!-- Titles -->
+                  <text x="145" y="36" text-anchor="middle" class="v-title-a">Set A (${a})</text>
+                  <text x="355" y="36" text-anchor="middle" class="v-title-b">Set B (${b})</text>
+
+                  <!-- Region 1: Only in A -->
+                  ${strOnlyA ? `<text x="145" y="128" text-anchor="middle" class="v-num-a">${strOnlyA}</text>` : ''}
+
+                  <!-- Region 2: Intersection -->
+                  ${strInter ? `<text x="250" y="128" text-anchor="middle" class="v-num-mid">${strInter}</text>` : ''}
+
+                  <!-- Region 3: Only in B -->
+                  ${strOnlyB ? `<text x="355" y="128" text-anchor="middle" class="v-num-b">${strOnlyB}</text>` : ''}
+                </svg>
+              </div>
+
+              <!-- Region Breakdown Chips -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+                <div class="rounded-xl border border-sky-200 bg-sky-50/70 p-2.5 dark:border-sky-900/60 dark:bg-sky-950/40 text-center space-y-1">
+                  <div class="font-bold text-sky-800 dark:text-sky-300">Factors Exclusive to ${a}</div>
+                  <div class="font-mono text-sm font-bold text-slate-800 dark:text-slate-100">${strOnlyA || '— (None)'}</div>
+                </div>
+                <div class="rounded-xl border border-indigo-200 bg-indigo-50/70 p-2.5 dark:border-indigo-900/60 dark:bg-indigo-950/40 text-center space-y-1">
+                  <div class="font-bold text-indigo-800 dark:text-indigo-300">Shared Factors (Intersection)</div>
+                  <div class="font-mono text-sm font-bold text-indigo-700 dark:text-yellow-300">${strInter || '— (None)'}</div>
+                  <div class="text-[10px] text-slate-500 dark:text-slate-400">GCF = ${gcfVal}</div>
+                </div>
+                <div class="rounded-xl border border-purple-200 bg-purple-50/70 p-2.5 dark:border-purple-900/60 dark:bg-purple-950/40 text-center space-y-1">
+                  <div class="font-bold text-purple-800 dark:text-purple-300">Factors Exclusive to ${b}</div>
+                  <div class="font-mono text-sm font-bold text-slate-800 dark:text-slate-100">${strOnlyB || '— (None)'}</div>
+                </div>
+              </div>
+
+              <div class="rounded-lg bg-blue-50/70 dark:bg-blue-950/50 p-2.5 font-mono text-xs text-blue-900 dark:text-blue-300 font-bold border border-blue-200/60 dark:border-blue-900/50">
+                LCM = Union of all prime factors = ${allUnion.join(' × ')} = ${lcmVal.toLocaleString()}
+              </div>
+            </div>
+          `;
+        } else if (nums.length === 3) {
+          const [a, b, c] = nums;
+          const fa = getPrimeFactorsList(a);
+          const fb = getPrimeFactorsList(b);
+          const fc = getPrimeFactorsList(c);
+
+          const primes = Array.from(new Set([...fa, ...fb, ...fc])).sort((x, y) => x - y);
+          
+          const centerABC: number[] = [];
+          const overlapAB: number[] = [];
+          const overlapAC: number[] = [];
+          const overlapBC: number[] = [];
+          const onlyA: number[] = [];
+          const onlyB: number[] = [];
+          const onlyC: number[] = [];
+
+          for (const p of primes) {
+            let pa = fa.filter(x => x === p).length;
+            let pb = fb.filter(x => x === p).length;
+            let pc = fc.filter(x => x === p).length;
+
+            const cAll = Math.min(pa, pb, pc);
+            for (let i = 0; i < cAll; i++) centerABC.push(p);
+            pa -= cAll;
+            pb -= cAll;
+            pc -= cAll;
+
+            const cAB = Math.min(pa, pb);
+            for (let i = 0; i < cAB; i++) overlapAB.push(p);
+            pa -= cAB;
+            pb -= cAB;
+
+            const cAC = Math.min(pa, pc);
+            for (let i = 0; i < cAC; i++) overlapAC.push(p);
+            pa -= cAC;
+            pc -= cAC;
+
+            const cBC = Math.min(pb, pc);
+            for (let i = 0; i < cBC; i++) overlapBC.push(p);
+            pb -= cBC;
+            pc -= cBC;
+
+            for (let i = 0; i < pa; i++) onlyA.push(p);
+            for (let i = 0; i < pb; i++) onlyB.push(p);
+            for (let i = 0; i < pc; i++) onlyC.push(p);
+          }
+
+          const allUnion = [...centerABC, ...overlapAB, ...overlapAC, ...overlapBC, ...onlyA, ...onlyB, ...onlyC].sort((x, y) => x - y);
+          const lcmVal = allUnion.reduce((acc, v) => acc * v, 1);
+          const gcfVal = centerABC.length > 0 ? centerABC.reduce((acc, v) => acc * v, 1) : 1;
+
+          const sCenter = centerABC.length > 0 ? centerABC.join(' · ') : '';
+          const sAB = overlapAB.length > 0 ? overlapAB.join(' · ') : '';
+          const sAC = overlapAC.length > 0 ? overlapAC.join(' · ') : '';
+          const sBC = overlapBC.length > 0 ? overlapBC.join(' · ') : '';
+          const sA = onlyA.length > 0 ? onlyA.join(' · ') : '';
+          const sB = onlyB.length > 0 ? onlyB.join(' · ') : '';
+          const sC = onlyC.length > 0 ? onlyC.join(' · ') : '';
+
+          return `
+            <div class="space-y-3">
+              <div class="text-xs text-slate-600 dark:text-slate-300">
+                Visual 3-circle Venn diagram showing prime factor distribution for <strong>${a}</strong>, <strong>${b}</strong>, and <strong>${c}</strong>:
+              </div>
+
+              <!-- Visual 3-Circle SVG Venn Diagram -->
+              <div class="w-full overflow-hidden rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/80 p-2 sm:p-4 my-2 flex justify-center">
+                <svg id="svg-lcm-venn-diagram" class="visual-diagram w-full h-auto max-w-md sm:max-w-lg" viewBox="0 0 540 400" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="venn3A" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.30" />
+                      <stop offset="100%" stop-color="#0284c7" stop-opacity="0.14" />
+                    </linearGradient>
+                    <linearGradient id="venn3B" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#c084fc" stop-opacity="0.30" />
+                      <stop offset="100%" stop-color="#7c3aed" stop-opacity="0.14" />
+                    </linearGradient>
+                    <linearGradient id="venn3C" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stop-color="#34d399" stop-opacity="0.30" />
+                      <stop offset="100%" stop-color="#059669" stop-opacity="0.14" />
+                    </linearGradient>
+                  </defs>
+                  <style>
+                    .v3-title-a { fill: #0284c7; font-weight: 800; font-size: 14px; font-family: system-ui, sans-serif; }
+                    .v3-title-b { fill: #7c3aed; font-weight: 800; font-size: 14px; font-family: system-ui, sans-serif; }
+                    .v3-title-c { fill: #059669; font-weight: 800; font-size: 14px; font-family: system-ui, sans-serif; }
+                    .v3-num-main { fill: #0f172a; font-weight: 800; font-size: 18px; font-family: ui-monospace, SFMono-Regular, monospace; }
+                    .v3-num-center { fill: #d97706; font-weight: 900; font-size: 20px; font-family: ui-monospace, SFMono-Regular, monospace; }
+                    :global(.dark) .v3-title-a, html.dark .v3-title-a { fill: #38bdf8; }
+                    :global(.dark) .v3-title-b, html.dark .v3-title-b { fill: #c084fc; }
+                    :global(.dark) .v3-title-c, html.dark .v3-title-c { fill: #34d399; }
+                    :global(.dark) .v3-num-main, html.dark .v3-num-main { fill: #f8fafc; }
+                    :global(.dark) .v3-num-center, html.dark .v3-num-center { fill: #fde047; }
+                  </style>
+
+                  <!-- Circle A (Top Left) -->
+                  <circle cx="210" cy="175" r="115" fill="url(#venn3A)" stroke="#0284c7" stroke-width="2.5" />
+
+                  <!-- Circle B (Top Right) -->
+                  <circle cx="330" cy="175" r="115" fill="url(#venn3B)" stroke="#7c3aed" stroke-width="2.5" />
+
+                  <!-- Circle C (Bottom Center) -->
+                  <circle cx="270" cy="265" r="115" fill="url(#venn3C)" stroke="#059669" stroke-width="2.5" />
+
+                  <!-- Set Titles -->
+                  <text x="140" y="46" text-anchor="middle" class="v3-title-a">Set A (${a})</text>
+                  <text x="400" y="46" text-anchor="middle" class="v3-title-b">Set B (${b})</text>
+                  <text x="270" y="398" text-anchor="middle" class="v3-title-c">Set C (${c})</text>
+
+                  <!-- Center: Shared by all 3 (GCF) -->
+                  ${sCenter ? `<text x="270" y="218" text-anchor="middle" class="v3-num-center">${sCenter}</text>` : ''}
+
+                  <!-- Overlap AB -->
+                  ${sAB ? `<text x="270" y="145" text-anchor="middle" class="v3-num-main">${sAB}</text>` : ''}
+
+                  <!-- Overlap AC -->
+                  ${sAC ? `<text x="205" y="246" text-anchor="middle" class="v3-num-main">${sAC}</text>` : ''}
+
+                  <!-- Overlap BC -->
+                  ${sBC ? `<text x="335" y="246" text-anchor="middle" class="v3-num-main">${sBC}</text>` : ''}
+
+                  <!-- Only A -->
+                  ${sA ? `<text x="150" y="175" text-anchor="middle" class="v3-num-main">${sA}</text>` : ''}
+
+                  <!-- Only B -->
+                  ${sB ? `<text x="390" y="175" text-anchor="middle" class="v3-num-main">${sB}</text>` : ''}
+
+                  <!-- Only C -->
+                  ${sC ? `<text x="270" y="332" text-anchor="middle" class="v3-num-main">${sC}</text>` : ''}
+                </svg>
+              </div>
+
+              <!-- Region Breakdown Grid for all 7 regions -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 text-xs">
+                <div class="rounded-xl border border-amber-300 bg-amber-50/80 p-2 dark:border-amber-900/60 dark:bg-amber-950/50 text-center">
+                  <div class="text-[10px] font-bold text-amber-800 dark:text-amber-300 uppercase">Center (All 3)</div>
+                  <div class="font-mono font-bold text-amber-700 dark:text-yellow-300 mt-0.5">${sCenter || '—'}</div>
+                  <div class="text-[9px] text-slate-500 dark:text-slate-400">GCF = ${gcfVal}</div>
+                </div>
+                <div class="rounded-xl border border-blue-200 bg-blue-50/70 p-2 dark:border-blue-900/60 dark:bg-blue-950/40 text-center">
+                  <div class="text-[10px] font-bold text-blue-800 dark:text-blue-300 uppercase">${a} &amp; ${b} Only</div>
+                  <div class="font-mono font-bold text-slate-800 dark:text-slate-100 mt-0.5">${sAB || '—'}</div>
+                </div>
+                <div class="rounded-xl border border-teal-200 bg-teal-50/70 p-2 dark:border-teal-900/60 dark:bg-teal-950/40 text-center">
+                  <div class="text-[10px] font-bold text-teal-800 dark:text-teal-300 uppercase">${a} &amp; ${c} Only</div>
+                  <div class="font-mono font-bold text-slate-800 dark:text-slate-100 mt-0.5">${sAC || '—'}</div>
+                </div>
+                <div class="rounded-xl border border-purple-200 bg-purple-50/70 p-2 dark:border-purple-900/60 dark:bg-purple-950/40 text-center">
+                  <div class="text-[10px] font-bold text-purple-800 dark:text-purple-300 uppercase">${b} &amp; ${c} Only</div>
+                  <div class="font-mono font-bold text-slate-800 dark:text-slate-100 mt-0.5">${sBC || '—'}</div>
+                </div>
+                <div class="rounded-xl border border-sky-200 bg-sky-50/70 p-2 dark:border-sky-900/60 dark:bg-sky-950/40 text-center">
+                  <div class="text-[10px] font-bold text-sky-800 dark:text-sky-300 uppercase">Only in ${a}</div>
+                  <div class="font-mono font-bold text-slate-800 dark:text-slate-100 mt-0.5">${sA || '—'}</div>
+                </div>
+                <div class="rounded-xl border border-violet-200 bg-violet-50/70 p-2 dark:border-violet-900/60 dark:bg-violet-950/40 text-center">
+                  <div class="text-[10px] font-bold text-violet-800 dark:text-violet-300 uppercase">Only in ${b}</div>
+                  <div class="font-mono font-bold text-slate-800 dark:text-slate-100 mt-0.5">${sB || '—'}</div>
+                </div>
+                <div class="rounded-xl border border-emerald-200 bg-emerald-50/70 p-2 dark:border-emerald-900/60 dark:bg-emerald-950/40 text-center">
+                  <div class="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase">Only in ${c}</div>
+                  <div class="font-mono font-bold text-slate-800 dark:text-slate-100 mt-0.5">${sC || '—'}</div>
+                </div>
+              </div>
+
+              <div class="rounded-lg bg-blue-50/70 dark:bg-blue-950/50 p-2.5 font-mono text-xs text-blue-900 dark:text-blue-300 font-bold border border-blue-200/60 dark:border-blue-900/50">
+                LCM = Product of all unique Venn regions = ${allUnion.join(' × ')} = ${lcmVal.toLocaleString()}
+              </div>
+            </div>
+          `;
+        } else {
+          return `
+            <div class="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300">
+              Geometric Venn diagrams are designed for sets of 2 or 3 numbers. For ${nums.length} numbers, please view the <strong>Method 1: Prime Factorization</strong> or <strong>Method 5: Division Method</strong> above.
+            </div>
+          `;
+        }
+      }
+
+      function calculate() {
+        clearError();
+        const raw = (inputEl?.value || '').trim();
+
+        if (!raw) {
+          showError('Please enter at least two positive integers separated by commas or spaces.');
+          return;
+        }
+
+        if (raw.includes('.')) {
+          showError('Decimals are not permitted in standard integer LCM calculation. Please enter positive whole numbers.');
+          return;
+        }
+
+        const tokens = raw.split(/[,;\s]+/).filter((t) => t.length > 0);
+
+        if (tokens.length < 2) {
+          showError('Please enter at least two numbers to calculate the least common multiple.');
+          return;
+        }
+
+        const numbers: number[] = [];
+        for (const token of tokens) {
+          if (!/^\d+$/.test(token)) {
+            showError(`Invalid character or token "${token}". Please enter positive integers only (e.g. 12, 18, 30).`);
+            return;
+          }
+          const num = parseInt(token, 10);
+          if (isNaN(num) || num <= 0) {
+            showError(`Numbers must be positive integers greater than zero. Received: "${token}".`);
+            return;
+          }
+          if (num > 10000000) {
+            showError(`Number ${num.toLocaleString()} exceeds the maximum supported limit of 10,000,000.`);
+            return;
+          }
+          numbers.push(num);
+        }
+
+        // Calculate LCM iteratively with overflow protection
+        let currentLcm = numbers[0];
+        let currentGcd = numbers[0];
+        let totalProduct = 1;
+        let productOverflow = false;
+
+        const gcfSteps: { a: number; b: number; g: number; lcm: number; stepNum: number }[] = [];
+
+        for (let i = 0; i < numbers.length; i++) {
+          const n = numbers[i];
+          if (!productOverflow) {
+            if (totalProduct > Number.MAX_SAFE_INTEGER / n) {
+              productOverflow = true;
+            } else {
+              totalProduct *= n;
+            }
+          }
+
+          if (i > 0) {
+            const prevLcm = currentLcm;
+            const g = gcd(prevLcm, n);
+            const nextLcm = Math.floor(prevLcm / g) * n;
+
+            if (nextLcm > Number.MAX_SAFE_INTEGER) {
+              showError('Calculation overflow: The resulting LCM exceeds JavaScript safe integer limit (9,007,199,254,740,991).');
+              return;
+            }
+
+            gcfSteps.push({
+              stepNum: i,
+              a: prevLcm,
+              b: n,
+              g,
+              lcm: nextLcm
+            });
+
+            currentLcm = nextLcm;
+            currentGcd = gcd(currentGcd, n);
+          }
+        }
+
+        // Factorization Breakdown
+        const numFactors: { num: number; factors: Record<number, number>; formatted: string }[] = [];
+        const maxPrimePowers: Record<number, number> = {};
+
+        for (const num of numbers) {
+          const f = getPrimeFactors(num);
+          numFactors.push({
+            num,
+            factors: f,
+            formatted: formatFactorString(f)
+          });
+          for (const [pStr, exp] of Object.entries(f)) {
+            const p = Number(pStr);
+            maxPrimePowers[p] = Math.max(maxPrimePowers[p] || 0, exp);
+          }
+        }
+
+        // Render Primary Results
+        if (resLcmVal) resLcmVal.textContent = currentLcm.toLocaleString();
+        if (resLcmEq) resLcmEq.textContent = `= LCM(${numbers.join(', ')})`;
+        if (metricInputs) metricInputs.textContent = numbers.join(', ');
+        if (metricGcf) metricGcf.textContent = currentGcd.toLocaleString();
+        if (metricCount) metricCount.textContent = numbers.length.toString();
+        if (metricProduct) metricProduct.textContent = productOverflow ? '> Safe Integer Limit' : totalProduct.toLocaleString();
+
+        // Render Method 1: Prime Factorization
+        if (stepPrimeDetails) {
+          const sortedPrimes = Object.keys(maxPrimePowers).map(Number).sort((a, b) => a - b);
+          const maxParts: string[] = [];
+          const expParts: string[] = [];
+          let computedCheck = 1;
+
+          for (const p of sortedPrimes) {
+            const exp = maxPrimePowers[p];
+            const powVal = Math.pow(p, exp);
+            computedCheck *= powVal;
+            if (exp === 1) {
+              maxParts.push(`${p}`);
+              expParts.push(`${p}`);
+            } else {
+              maxParts.push(`${p}<sup>${exp}</sup>`);
+              expParts.push(`${powVal}`);
+            }
+          }
+
+          let html = `
+            <div class="space-y-2">
+              <div class="font-semibold text-slate-800 dark:text-slate-200">1. Find the prime factorization of each number:</div>
+              <ul class="font-mono space-y-1 pl-2 border-l-2 border-blue-200 dark:border-blue-900">
+          `;
+          for (const item of numFactors) {
+            html += `<li><strong>${item.num}</strong> = ${item.formatted}</li>`;
+          }
+          html += `
+              </ul>
+              <div class="font-semibold text-slate-800 dark:text-slate-200 pt-1">2. Identify highest power for each unique prime factor:</div>
+              <ul class="list-disc list-inside space-y-0.5 pl-1 text-slate-600 dark:text-slate-400">
+          `;
+          for (const p of sortedPrimes) {
+            const exp = maxPrimePowers[p];
+            html += `<li>Prime <strong>${p}</strong>: highest power is <strong>${p}<sup>${exp}</sup></strong> = ${Math.pow(p, exp)}</li>`;
+          }
+          html += `
+              </ul>
+              <div class="rounded-lg bg-blue-50/70 dark:bg-blue-950/40 p-2.5 font-mono text-blue-900 dark:text-blue-300 font-bold border border-blue-200/60 dark:border-blue-900/40">
+                LCM = ${maxParts.join(' × ')} = ${expParts.join(' × ')} = ${currentLcm.toLocaleString()}
+              </div>
+            </div>
+          `;
+          stepPrimeDetails.innerHTML = html;
+        }
+
+        // Render Method 2: GCF Formula
+        if (stepGcfDetails) {
+          let html = `<div class="space-y-2">`;
+          html += `<div class="text-slate-500 dark:text-slate-400 text-xs font-sans">Formula: <code>LCM(a, b) = (a × b) / GCF(a, b)</code></div>`;
+          for (const step of gcfSteps) {
+            html += `
+              <div class="rounded-lg border border-slate-100 bg-slate-50/80 p-2 dark:border-slate-800 dark:bg-slate-950/50">
+                <div class="font-bold text-slate-800 dark:text-slate-200">Step ${step.stepNum}: LCM(${step.a}, ${step.b})</div>
+                <div class="text-slate-600 dark:text-slate-400 pl-2">
+                  GCF(${step.a}, ${step.b}) = ${step.g}<br/>
+                  LCM = (${step.a} × ${step.b}) / ${step.g} = ${step.a * step.b} / ${step.g} = <strong>${step.lcm.toLocaleString()}</strong>
+                </div>
+              </div>
+            `;
+          }
+          html += `</div>`;
+          stepGcfDetails.innerHTML = html;
+        }
+
+        // Render Method 3: Multiples Listing
+        if (stepMultiplesDetails) {
+          let html = `<div class="space-y-2">`;
+          const maxMultCount = 10;
+          for (const num of numbers) {
+            const multiplesList: string[] = [];
+            const countToShow = Math.min(Math.floor(currentLcm / num), maxMultCount);
+            for (let m = 1; m <= countToShow; m++) {
+              const val = num * m;
+              if (val === currentLcm) {
+                multiplesList.push(`<span class="font-bold text-blue-600 dark:text-blue-400 underline">${val}</span>`);
+              } else {
+                multiplesList.push(val.toString());
+              }
+            }
+            if (currentLcm / num > maxMultCount) {
+              multiplesList.push(`... <span class="font-bold text-blue-600 dark:text-blue-400 underline">${currentLcm.toLocaleString()}</span>`);
+            }
+            html += `
+              <div class="font-mono text-xs">
+                <strong>Multiples of ${num}:</strong> ${multiplesList.join(', ')}
+              </div>
+            `;
+          }
+          html += `
+            <div class="text-xs text-slate-600 dark:text-slate-400 pt-1 font-sans">
+              The smallest common multiple appearing on every list is <strong class="text-blue-600 dark:text-blue-400">${currentLcm.toLocaleString()}</strong>.
+            </div>
+          </div>`;
+          stepMultiplesDetails.innerHTML = html;
+        }
+
+        // Render Method 4: Cake / Ladder Method
+        if (stepCakeDetails) {
+          stepCakeDetails.innerHTML = renderCakeMethod(numbers);
+        }
+
+        // Render Method 5: Division Method
+        if (stepDivisionDetails) {
+          stepDivisionDetails.innerHTML = renderDivisionMethod(numbers);
+        }
+
+        // Render Method 6: Venn Diagram
+        if (stepVennDetails) {
+          stepVennDetails.innerHTML = renderVennDiagram(numbers);
+        }
+
+        // Filter visible steps based on dropdown
+        const selectedMethod = methodSelect?.value || 'prime';
+        updateStepVisibility(selectedMethod);
+
+        // State update
+        hasCalculated = true;
+        lastCalculatedInput = raw;
+        cachedNumbers = numbers;
+
+        // Reveal results card and hide stale notice
+        if (staleNotice) staleNotice.classList.add('hidden');
+        if (resultsCard) resultsCard.classList.remove('hidden');
+
+        try {
+          document.dispatchEvent(new CustomEvent('calculator:updated'));
+        } catch (e) {}
+      }
+
+      // Event: Calculate Button
+      btnCalc.addEventListener('click', calculate);
+
+      // Event: Recalculate Button
+      btnRecalc?.addEventListener('click', calculate);
+
+      // Event: Dropdown Selection Change
+      methodSelect?.addEventListener('change', () => {
+        if (hasCalculated) {
+          updateStepVisibility(methodSelect.value);
+        }
+      });
+
+      // Event: Clear Button
+      btnClear?.addEventListener('click', () => {
+        if (inputEl) {
+          inputEl.value = '';
+          inputEl.focus();
+        }
+        hasCalculated = false;
+        lastCalculatedInput = '';
+        cachedNumbers = [];
+        clearError();
+        if (staleNotice) staleNotice.classList.add('hidden');
+        if (resultsCard) resultsCard.classList.add('hidden');
+        try {
+          document.dispatchEvent(new CustomEvent('calculator:updated'));
+        } catch (e) {}
+      });
+
+      // Event: Input Keydown (Enter to calculate)
+      inputEl.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          calculate();
+        }
+      });
+
+      // Event: Input Value Change (Stale State Handling)
+      inputEl.addEventListener('input', () => {
+        if (hasCalculated) {
+          const currentVal = inputEl.value.trim();
+          if (currentVal !== lastCalculatedInput) {
+            // Hide old output and show prompt to recalculate
+            if (resultsCard) resultsCard.classList.add('hidden');
+            if (staleNotice) staleNotice.classList.remove('hidden');
+            try {
+              document.dispatchEvent(new CustomEvent('calculator:updated'));
+            } catch (e) {}
+          } else {
+            // Returned to identical calculated value
+            if (resultsCard) resultsCard.classList.remove('hidden');
+            if (staleNotice) staleNotice.classList.add('hidden');
+            try {
+              document.dispatchEvent(new CustomEvent('calculator:updated'));
+            } catch (e) {}
+          }
+        }
+      });
+
+      // Event: Presets
+      document.querySelectorAll<HTMLButtonElement>('.btn-lcm-preset').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const val = btn.getAttribute('data-val');
+          if (val && inputEl) {
+            inputEl.value = val;
+            if (staleNotice) staleNotice.classList.add('hidden');
+            calculate();
+          }
+        });
+      });
+
+      // Copy Action
+      btnCopy?.addEventListener('click', () => {
+        const textToCopy = resLcmVal?.textContent || '';
+        if (textToCopy) {
+          navigator.clipboard.writeText(textToCopy).then(() => {
+            const prev = btnCopy.innerHTML;
+            btnCopy.innerHTML = '<span>✅</span> Copied!';
+            setTimeout(() => {
+              btnCopy.innerHTML = prev;
+            }, 1500);
+          });
+        }
+      });
+
+      // Print Action
+      btnPrint?.addEventListener('click', () => {
+        const barPrintBtn = document.getElementById('btn-print-calc');
+        if (barPrintBtn) {
+          barPrintBtn.click();
+        } else {
+          window.print();
+        }
+      });
+
+      // Note: Do NOT calculate automatically on initial page load!
+      // The page starts clean with empty input and hidden results card.
+    }
+
+    // Run on initial load and Astro page transitions
+    document.addEventListener('DOMContentLoaded', initLcmCalculator);
+    document.addEventListener('astro:page-load', initLcmCalculator);
+    if (document.readyState !== 'loading') {
+      initLcmCalculator();
+    }
+  </script>
+</CalculatorLayout>
