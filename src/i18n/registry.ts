@@ -116,6 +116,10 @@ export function getTranslatedCalculatorStaticPaths() {
   }> = [];
 
   for (const calc of calculators) {
+    // Exclude consolidated tools that are handled via HTTP 301 redirects
+    if (calc.slug === 'date-difference-calculator' || calc.slug === 'standard-deviation-calculator') {
+      continue;
+    }
     const pathMatch = calc.path.match(/^\/([^/]+)\/([^/]+)\/$/);
     const catSlug = pathMatch ? pathMatch[1] : calc.category.toLowerCase().replace(/\s+/g, '-');
     for (const lang of nonEnLocales) {
@@ -143,7 +147,6 @@ export function getTranslatedCalculatorStaticPaths() {
 
   // Also include legacy category paths so Astro prerenders the 301 redirects
   const legacySlugs = [
-    { slug: 'percentage-calculator', legacyCategory: 'general' },
     { slug: 'image-compressor', legacyCategory: 'image-tools' },
     { slug: 'image-resizer', legacyCategory: 'image-tools' },
     { slug: 'jpg-to-png', legacyCategory: 'image-tools' },

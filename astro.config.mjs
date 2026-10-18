@@ -55,6 +55,38 @@ export default defineConfig({
   },
 
   redirects: {
+    // Date Difference Calculator redirects (consolidated into time-calculator)
+    '/general/date-difference-calculator': '/general/time-calculator/',
+    '/hi/general/date-difference-calculator': '/hi/general/time-calculator/',
+    '/es/general/date-difference-calculator': '/es/general/time-calculator/',
+    '/ja/general/date-difference-calculator': '/ja/general/time-calculator/',
+    '/fr/general/date-difference-calculator': '/fr/general/time-calculator/',
+    '/de/general/date-difference-calculator': '/de/general/time-calculator/',
+    '/pt/general/date-difference-calculator': '/pt/general/time-calculator/',
+    '/ko/general/date-difference-calculator': '/ko/general/time-calculator/',
+    '/it/general/date-difference-calculator': '/it/general/time-calculator/',
+
+    // Standard Deviation Calculator redirects (consolidated into scientific-calculator)
+    '/math/standard-deviation-calculator': '/math/scientific-calculator/',
+    '/hi/math/standard-deviation-calculator': '/hi/math/scientific-calculator/',
+    '/es/math/standard-deviation-calculator': '/es/math/scientific-calculator/',
+    '/ja/math/standard-deviation-calculator': '/ja/math/scientific-calculator/',
+    '/fr/math/standard-deviation-calculator': '/fr/math/scientific-calculator/',
+    '/de/math/standard-deviation-calculator': '/de/math/scientific-calculator/',
+    '/pt/math/standard-deviation-calculator': '/pt/math/scientific-calculator/',
+    '/ko/math/standard-deviation-calculator': '/ko/math/scientific-calculator/',
+    '/it/math/standard-deviation-calculator': '/it/math/scientific-calculator/',
+
+    // Percentage Calculator legacy category redirects
+    '/general/percentage-calculator': '/math/percentage-calculator/',
+    '/hi/general/percentage-calculator': '/hi/math/percentage-calculator/',
+    '/es/general/percentage-calculator': '/es/math/percentage-calculator/',
+    '/ja/general/percentage-calculator': '/ja/math/percentage-calculator/',
+    '/fr/general/percentage-calculator': '/fr/math/percentage-calculator/',
+    '/de/general/percentage-calculator': '/de/math/percentage-calculator/',
+    '/pt/general/percentage-calculator': '/pt/math/percentage-calculator/',
+    '/ko/general/percentage-calculator': '/ko/math/percentage-calculator/',
+    '/it/general/percentage-calculator': '/it/math/percentage-calculator/',
     '/finance/sukanya-samriddhi-calculator': '/finance/sukanya-samriddhi-yojana-calculator',
     '/brickwork-calculator': '/construction/brickwork-calculator',
     '/finance/loan-calculator': '/finance/emi-calculator/?type=personal',
