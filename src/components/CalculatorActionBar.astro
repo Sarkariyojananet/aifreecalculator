@@ -906,7 +906,7 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
           // B. Result Cards (handles multi-line, structured divs & sub-metrics)
           var cardItems = resContainer.querySelectorAll('.unit-result-card, [class*="rounded-xl"], [class*="rounded-2xl"], [class*="rounded-3xl"]');
           cardItems.forEach(function (card) {
-            if (card.querySelector('table') || card.closest('table') || card === barContainer || barContainer.contains(card)) return;
+            if (card.tagName === 'DETAILS' || card.querySelector('table') || card.closest('table') || card === barContainer || barContainer.contains(card)) return;
 
             var lblEl = card.querySelector('[class*="uppercase"], label, .text-xs, .text-\\[11px\\], .text-\\[10px\\], .text-slate-500, span:first-child');
             var valEl = card.querySelector('[class*="font-black"], [class*="font-bold"], .text-lg, .text-xl, .text-2xl, .text-3xl, [id^="res-"], [id^="nps-res-"], [id^="mat-"]');
@@ -946,7 +946,7 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
           });
 
           // C. Explicit fallback for all named result elements
-          var explicitValElements = resContainer.querySelectorAll('[id^="res-"], [id*="-res-"], [id^="nps-res-"], [id^="mat-"], [id^="k-res-"], [id^="k-summary-"], [id*="-amount"], [id*="-pension"]');
+          var explicitValElements = resContainer.querySelectorAll('[id^="res-"], [id*="-res-"], [id^="nps-res-"], [id^="mat-"], [id^="k-res-"], [id^="k-summary-"], [id*="-amount"], [id*="-pension"], [id^="fmt-"], [id*="-fmt-"], [id^="break-"], [id*="-break-"]');
           explicitValElements.forEach(function (el) {
             var vText = (el.textContent || '').trim().replace(/\s+/g, ' ');
             if (!vText || vText === '--' || vText === '-- m³' || vText === '-- kg' || vText.startsWith('--')) return;
@@ -961,7 +961,7 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
               }
             }
             if (!lText) {
-              lText = el.id.replace(/^(res-|nps-res-|mat-|k-res-|k-summary-)/, '').replace(/-/g, ' ');
+              lText = el.id.replace(/^(res-|nps-res-|mat-|k-res-|k-summary-|tbl-fmt-|tbl-break-|fmt-|break-)/, '').replace(/-/g, ' ');
               lText = lText.charAt(0).toUpperCase() + lText.slice(1);
             }
 
@@ -1713,6 +1713,17 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
                 'Metric BMI = Weight (kg) / [Height (m)]²',
                 'Imperial BMI = [Weight (lbs) / (Height (inches))²] × 703',
                 'WHO Classification: Underweight (<18.5), Normal (18.5-24.9), Overweight (25-29.9), Obese (30+)'
+              ]
+            });
+          } else if (s.includes('roman')) {
+            formulas.push({
+              heading: 'Roman Numeral Date Conversion Rules (Subtractive Notation)',
+              items: [
+                'Standard Roman Values: I = 1, V = 5, X = 10, L = 50, C = 100, D = 500, M = 1000',
+                'Subtractive Pairs: IV = 4, IX = 9, XL = 40, XC = 90, CD = 400, CM = 900',
+                'US Date Pattern: [Roman Month] · [Roman Day] · [Roman Year]',
+                'European Date Pattern: [Roman Day] · [Roman Month] · [Roman Year]',
+                'ISO 8601 Date Pattern: [Roman Year] · [Roman Month] · [Roman Day]'
               ]
             });
           } else {

@@ -1,0 +1,837 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+
+const popularTattooSeparators = [
+  { name: "Middle Dot (Classical Roman)", symbol: "·", example: "VI · XX · MMXXIV" },
+  { name: "Bullet Point", symbol: "•", example: "VI • XX • MMXXIV" },
+  { name: "Slash", symbol: "/", example: "VI / XX / MMXXIV" },
+  { name: "Hyphen / Dash", symbol: "-", example: "VI - XX - MMXXIV" },
+  { name: "Space", symbol: " ", example: "VI XX MMXXIV" }
+];
+
+const sevenSymbols = [
+  { symbol: "I", value: "1" },
+  { symbol: "V", value: "5" },
+  { symbol: "X", value: "10" },
+  { symbol: "L", value: "50" },
+  { symbol: "C", value: "100" },
+  { symbol: "D", value: "500" },
+  { symbol: "M", value: "1,000" }
+];
+
+const daysOfWeek = [
+  { day: "Monday", num: "1st", roman: "I" },
+  { day: "Tuesday", num: "2nd", roman: "II" },
+  { day: "Wednesday", num: "3rd", roman: "III" },
+  { day: "Thursday", num: "4th", roman: "IV" },
+  { day: "Friday", num: "5th", roman: "V" },
+  { day: "Saturday", num: "6th", roman: "VI" },
+  { day: "Sunday", num: "7th", roman: "VII" }
+];
+---
+
+<CalculatorLayout
+  title="Roman Numeral Date Converter – Convert Dates to Roman Numerals (Tattoos & Rings)"
+  description="Free Roman Numeral Date Converter: convert birthdays, wedding anniversaries, and calendar dates into Roman numerals in tattoo, jewelry, US, and EU formats."
+  category="Math"
+  calculatorName="Roman Numeral Date Converter"
+  slug="roman-numeral-date-converter"
+  keywords={[
+    "roman numeral date converter",
+    "date to roman numerals",
+    "roman numeral birthday",
+    "roman numeral tattoo date",
+    "wedding anniversary in roman numerals",
+    "roman date generator",
+    "convert date to roman numerals"
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- COMPACT HERO HEADER -->
+    <div class="rounded-2xl border border-amber-200/80 bg-linear-to-r from-amber-500/10 via-orange-500/5 to-amber-500/10 p-3 sm:p-3.5 dark:border-amber-900/40 dark:from-amber-950/20">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <h1 class="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight flex items-center gap-1.5">
+            <span>📅</span> Roman Numeral Date Converter
+          </h1>
+          <p class="text-xs text-slate-600 dark:text-slate-400">
+            Convert birthdays, anniversaries, and memorial dates into classical Roman numeral tattoo and jewelry formats.
+          </p>
+        </div>
+        <div class="flex flex-wrap items-center gap-1 text-[11px] shrink-0">
+          <span class="font-bold text-slate-500 dark:text-slate-400">Presets:</span>
+          <button type="button" class="btn-preset-date rounded-md border border-slate-300 bg-white px-2 py-0.5 font-semibold text-slate-700 hover:border-amber-500 hover:text-amber-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-y="2026" data-m="10" data-d="18">Today</button>
+          <button type="button" class="btn-preset-date rounded-md border border-slate-300 bg-white px-2 py-0.5 font-semibold text-slate-700 hover:border-amber-500 hover:text-amber-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-y="2000" data-m="1" data-d="1">2000</button>
+          <button type="button" class="btn-preset-date rounded-md border border-slate-300 bg-white px-2 py-0.5 font-semibold text-slate-700 hover:border-amber-500 hover:text-amber-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-y="1776" data-m="7" data-d="4">1776</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN COMPACT CONVERTER WIDGET -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 space-y-3">
+
+      <!-- MODE TOGGLE & FORMAT CONTROLS ROW -->
+      <div class="flex flex-wrap items-center justify-between gap-2 pb-1 border-b border-slate-100 dark:border-slate-800 text-xs">
+        <div class="inline-flex rounded-xl border border-slate-200 bg-slate-100 p-0.5 dark:border-slate-800 dark:bg-slate-950">
+          <button
+            type="button"
+            id="tab-mode-date"
+            class="date-mode-btn active rounded-lg bg-white px-3 py-1 font-bold text-amber-800 shadow-xs dark:bg-slate-800 dark:text-amber-300 cursor-pointer transition text-xs"
+          >
+            Calendar &rarr; Roman
+          </button>
+          <button
+            type="button"
+            id="tab-mode-text"
+            class="date-mode-btn rounded-lg px-3 py-1 font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer transition text-xs"
+          >
+            Roman &rarr; Calendar
+          </button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2 text-[11px]">
+          <div class="flex items-center gap-1">
+            <span class="text-slate-500">Order:</span>
+            <select id="date-order" class="rounded-md border border-slate-300 bg-white px-1.5 py-0.5 font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:scheme-dark cursor-pointer">
+              <option value="MDY" class="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100" selected>MM·DD·YYYY (US)</option>
+              <option value="DMY" class="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100">DD·MM·YYYY (UK/World)</option>
+              <option value="YMD" class="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100">YYYY·MM·DD (ISO)</option>
+            </select>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="text-slate-500">Separator:</span>
+            <select id="date-separator" class="rounded-md border border-slate-300 bg-white px-1.5 py-0.5 font-semibold text-slate-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:scheme-dark cursor-pointer">
+              <option value="·" class="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100" selected>Dot ( · ) Tattoos</option>
+              <option value="•" class="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100">Bullet ( • )</option>
+              <option value="/" class="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100">Slash ( / )</option>
+              <option value="-" class="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100">Hyphen ( - )</option>
+              <option value="." class="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100">Period ( . )</option>
+              <option value=" " class="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100">Space ( &nbsp; )</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL 1: CALENDAR DATE PICKER (Compact Grid) -->
+      <div id="panel-calendar-mode" class="space-y-3">
+        <div class="grid grid-cols-1 sm:grid-cols-12 gap-2 items-end">
+          <!-- Month -->
+          <div class="sm:col-span-5 space-y-1">
+            <label for="date-month" class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Month</label>
+            <select
+              id="date-month"
+              class="w-full rounded-xl border border-slate-300 bg-white px-2.5 py-2 text-xs font-semibold text-slate-800 shadow-2xs focus:border-amber-500 focus:bg-white focus:outline-hidden dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:scheme-dark cursor-pointer"
+            >
+              <option value="1" class="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100">1 - January (I)</option>
+              <option value="2" class="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100">2 - February (II)</option>
+              <option value="3" class="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100">3 - March (III)</option>
+              <option value="4" class="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100">4 - April (IV)</option>
+              <option value="5" class="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100">5 - May (V)</option>
+              <option value="6" class="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100">6 - June (VI)</option>
+              <option value="7" class="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100">7 - July (VII)</option>
+              <option value="8" class="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100">8 - August (VIII)</option>
+              <option value="9" class="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100">9 - September (IX)</option>
+              <option value="10" class="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100" selected>10 - October (X)</option>
+              <option value="11" class="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100">11 - November (XI)</option>
+              <option value="12" class="bg-white text-slate-800 dark:bg-slate-900 dark:text-slate-100">12 - December (XII)</option>
+            </select>
+          </div>
+
+          <!-- Day -->
+          <div class="sm:col-span-3 space-y-1">
+            <label for="date-day" class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Day (1–31)</label>
+            <input
+              type="number"
+              id="date-day"
+              value="18"
+              min="1"
+              max="31"
+              class="w-full rounded-xl border border-slate-300 bg-slate-50/50 px-2.5 py-2 text-center text-sm font-bold text-slate-900 shadow-2xs focus:border-amber-500 focus:bg-white focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+            />
+          </div>
+
+          <!-- Year -->
+          <div class="sm:col-span-4 space-y-1">
+            <label for="date-year" class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Year (1–3999)</label>
+            <input
+              type="number"
+              id="date-year"
+              value="2026"
+              min="1"
+              max="3999"
+              class="w-full rounded-xl border border-slate-300 bg-slate-50/50 px-2.5 py-2 text-center text-sm font-bold text-slate-900 shadow-2xs focus:border-amber-500 focus:bg-white focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+            />
+          </div>
+        </div>
+      </div>
+
+      <!-- PANEL 2: REVERSE ROMAN TEXT INPUT (Hidden by default) -->
+      <div id="panel-text-mode" class="hidden space-y-1.5">
+        <label for="inp-roman-date-str" class="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+          Enter Roman Date String (e.g. X · XVIII · MMXXVI or 18/10/2026):
+        </label>
+        <input
+          type="text"
+          id="inp-roman-date-str"
+          placeholder="e.g. X · XVIII · MMXXVI"
+          class="w-full rounded-xl border border-slate-300 bg-slate-50/50 px-3 py-2 text-center text-base font-mono font-black uppercase text-slate-900 shadow-2xs focus:border-amber-500 focus:bg-white focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+        />
+      </div>
+
+      <!-- Action Buttons Row -->
+      <div class="flex items-center justify-center gap-2 pt-1">
+        <button
+          type="button"
+          id="btn-calc-date"
+          class="flex items-center gap-1.5 rounded-xl bg-amber-600 px-6 py-2.5 text-xs sm:text-sm font-black text-white shadow-sm hover:bg-amber-700 active:scale-98 transition cursor-pointer"
+        >
+          <span>Convert Date</span> <span>▶</span>
+        </button>
+        <button
+          type="button"
+          id="btn-clear-date"
+          class="rounded-xl border border-slate-300 bg-slate-100 px-4 py-2.5 text-xs sm:text-sm font-bold text-slate-700 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700 transition cursor-pointer"
+        >
+          Clear
+        </button>
+      </div>
+
+      <!-- Inline Error -->
+      <div id="date-error-box" class="hidden rounded-xl border border-rose-300 bg-rose-50 p-2.5 text-xs font-medium text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300 text-center">
+      </div>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- MASTER COMPACT RESULT BANNER (REVEALED ON "CONVERT DATE ▶" CLICK ONLY) -->
+    <!-- ========================================================================= -->
+    <div id="date-result-section" class="hidden rounded-2xl border border-amber-300/80 bg-linear-to-br from-amber-50/60 via-white to-orange-50/40 p-3.5 sm:p-4 shadow-sm dark:border-amber-900/50 dark:from-slate-950 dark:via-slate-900 dark:to-amber-950/20 space-y-3">
+
+      <!-- Compact Primary Result Banner -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-white dark:bg-slate-900 rounded-xl p-3 border-2 border-amber-400 dark:border-amber-600">
+        <div class="space-y-0.5">
+          <div class="flex items-center gap-2">
+            <span class="text-[10px] font-black uppercase tracking-wider text-amber-700 dark:text-amber-400">★ Tattoo &amp; Ring Format:</span>
+            <span class="text-[11px] text-slate-500" id="res-date-readable">October 18, 2026</span>
+          </div>
+          <div class="text-xl sm:text-2xl font-mono font-black text-slate-900 dark:text-white tracking-widest select-all" id="res-primary-tattoo">
+            X · XVIII · MMXXVI
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5 shrink-0">
+          <button type="button" class="btn-copy-val text-xs font-bold text-amber-700 bg-amber-50 dark:bg-amber-950/60 dark:text-amber-300 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800 hover:bg-amber-100 cursor-pointer" data-target="res-primary-tattoo">
+            Copy Primary
+          </button>
+          <button type="button" id="btn-print-date" class="inline-flex items-center gap-1 rounded-lg border border-slate-300 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer">
+            <span>🖨️</span> PDF
+          </button>
+        </div>
+      </div>
+
+      <!-- Collapsible Additional Formats & Breakdown -->
+      <details id="details-all-formats" class="group rounded-xl border border-slate-200 bg-slate-50/70 p-2.5 dark:border-slate-800 dark:bg-slate-950/40 text-xs">
+        <summary class="cursor-pointer font-bold text-slate-700 hover:text-amber-600 dark:text-slate-300 flex items-center justify-between select-none">
+          <span class="flex items-center gap-1.5">
+            <span>📋</span> View All Formats (US, EU, ISO, Written) &amp; Element Breakdown
+          </span>
+          <span class="text-[11px] text-slate-400 group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+
+        <div class="mt-3 pt-2 border-t border-slate-200/80 dark:border-slate-800 space-y-3">
+          <!-- Formats Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div class="unit-result-card flex items-center justify-between gap-1 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+              <div class="min-w-0">
+                <span class="text-[10px] text-slate-500 block">US (MM · DD · YYYY)</span>
+                <span class="font-mono font-bold text-amber-700 dark:text-amber-400 text-xs truncate block" id="fmt-us">X · XVIII · MMXXVI</span>
+              </div>
+              <button type="button" class="btn-copy-val shrink-0 rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-bold text-slate-600 hover:text-amber-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-target="fmt-us">Copy</button>
+            </div>
+
+            <div class="unit-result-card flex items-center justify-between gap-1 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+              <div class="min-w-0">
+                <span class="text-[10px] text-slate-500 block">European (DD · MM · YYYY)</span>
+                <span class="font-mono font-bold text-amber-700 dark:text-amber-400 text-xs truncate block" id="fmt-eu">XVIII · X · MMXXVI</span>
+              </div>
+              <button type="button" class="btn-copy-val shrink-0 rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-bold text-slate-600 hover:text-amber-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-target="fmt-eu">Copy</button>
+            </div>
+
+            <div class="unit-result-card flex items-center justify-between gap-1 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+              <div class="min-w-0">
+                <span class="text-[10px] text-slate-500 block">ISO (YYYY · MM · DD)</span>
+                <span class="font-mono font-bold text-amber-700 dark:text-amber-400 text-xs truncate block" id="fmt-iso">MMXXVI · X · XVIII</span>
+              </div>
+              <button type="button" class="btn-copy-val shrink-0 rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-bold text-slate-600 hover:text-amber-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-target="fmt-iso">Copy</button>
+            </div>
+
+            <div class="unit-result-card flex items-center justify-between gap-1 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+              <div class="min-w-0">
+                <span class="text-[10px] text-slate-500 block">Slash Separator ( / )</span>
+                <span class="font-mono font-bold text-slate-800 dark:text-slate-200 text-xs truncate block" id="fmt-slash">X / XVIII / MMXXVI</span>
+              </div>
+              <button type="button" class="btn-copy-val shrink-0 rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-bold text-slate-600 hover:text-amber-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-target="fmt-slash">Copy</button>
+            </div>
+          </div>
+
+          <!-- Written Form -->
+          <div class="unit-result-card flex items-center justify-between gap-2 p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            <div>
+              <span class="text-[10px] text-slate-500 block">Written Month with Roman Day &amp; Year</span>
+              <span class="font-semibold text-slate-900 dark:text-white text-xs" id="fmt-written">October XVIII, MMXXVI</span>
+            </div>
+            <button type="button" class="btn-copy-val shrink-0 rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-bold text-slate-600 hover:text-amber-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-target="fmt-written">Copy</button>
+          </div>
+
+          <!-- Component Breakdown -->
+          <div class="grid grid-cols-3 gap-2 text-center text-xs pt-1 font-mono">
+            <div class="unit-result-card p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+              <span class="text-[10px] text-slate-500 block">Month</span>
+              <strong class="text-amber-700 dark:text-amber-400 text-xs block" id="break-month">X (10)</strong>
+            </div>
+            <div class="unit-result-card p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+              <span class="text-[10px] text-slate-500 block">Day</span>
+              <strong class="text-amber-700 dark:text-amber-400 text-xs block" id="break-day">XVIII (18)</strong>
+            </div>
+            <div class="unit-result-card p-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+              <span class="text-[10px] text-slate-500 block">Year</span>
+              <strong class="text-amber-700 dark:text-amber-400 text-xs block" id="break-year">MMXXVI (2026)</strong>
+            </div>
+          </div>
+
+          <!-- Formats & Element Breakdown Table (For Print/Preview & Clear Structured Breakdown) -->
+          <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 mt-2">
+            <table id="table-formats-breakdown" class="w-full border-collapse text-left text-xs">
+              <thead>
+                <tr class="bg-slate-100 dark:bg-slate-800/80 text-[10.5px] font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-800">
+                  <th class="p-2">Format / Component</th>
+                  <th class="p-2">Pattern</th>
+                  <th class="p-2 text-right">Roman Numeral Output</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono text-xs">
+                <tr class="bg-white dark:bg-slate-900">
+                  <td class="p-2 font-sans font-semibold text-slate-700 dark:text-slate-200">US Date Format</td>
+                  <td class="p-2 text-slate-500 text-[11px]">MM · DD · YYYY</td>
+                  <td class="p-2 text-right font-bold text-amber-700 dark:text-amber-400" id="tbl-fmt-us">X · XVIII · MMXXVI</td>
+                </tr>
+                <tr class="bg-slate-50/50 dark:bg-slate-950/40">
+                  <td class="p-2 font-sans font-semibold text-slate-700 dark:text-slate-200">European Date Format</td>
+                  <td class="p-2 text-slate-500 text-[11px]">DD · MM · YYYY</td>
+                  <td class="p-2 text-right font-bold text-amber-700 dark:text-amber-400" id="tbl-fmt-eu">XVIII · X · MMXXVI</td>
+                </tr>
+                <tr class="bg-white dark:bg-slate-900">
+                  <td class="p-2 font-sans font-semibold text-slate-700 dark:text-slate-200">ISO 8601 Date Format</td>
+                  <td class="p-2 text-slate-500 text-[11px]">YYYY · MM · DD</td>
+                  <td class="p-2 text-right font-bold text-amber-700 dark:text-amber-400" id="tbl-fmt-iso">MMXXVI · X · XVIII</td>
+                </tr>
+                <tr class="bg-slate-50/50 dark:bg-slate-950/40">
+                  <td class="p-2 font-sans font-semibold text-slate-700 dark:text-slate-200">Slash Separator Format</td>
+                  <td class="p-2 text-slate-500 text-[11px]">MM / DD / YYYY</td>
+                  <td class="p-2 text-right font-bold text-slate-800 dark:text-slate-200" id="tbl-fmt-slash">X / XVIII / MMXXVI</td>
+                </tr>
+                <tr class="bg-white dark:bg-slate-900">
+                  <td class="p-2 font-sans font-semibold text-slate-700 dark:text-slate-200">Written Month &amp; Roman Day/Year</td>
+                  <td class="p-2 font-sans text-slate-500 text-[11px]">Month Day, Year</td>
+                  <td class="p-2 text-right font-sans font-semibold text-slate-900 dark:text-white" id="tbl-fmt-written">October XVIII, MMXXVI</td>
+                </tr>
+                <tr class="bg-slate-50/50 dark:bg-slate-950/40">
+                  <td class="p-2 font-sans font-semibold text-slate-700 dark:text-slate-200">Month Component</td>
+                  <td class="p-2 font-sans text-slate-500 text-[11px]">Month Number</td>
+                  <td class="p-2 text-right font-bold text-amber-700 dark:text-amber-400" id="tbl-break-month">X (October - 10)</td>
+                </tr>
+                <tr class="bg-white dark:bg-slate-900">
+                  <td class="p-2 font-sans font-semibold text-slate-700 dark:text-slate-200">Day Component</td>
+                  <td class="p-2 font-sans text-slate-500 text-[11px]">Day of Month</td>
+                  <td class="p-2 text-right font-bold text-amber-700 dark:text-amber-400" id="tbl-break-day">XVIII (Day 18)</td>
+                </tr>
+                <tr class="bg-slate-50/50 dark:bg-slate-950/40">
+                  <td class="p-2 font-sans font-semibold text-slate-700 dark:text-slate-200">Year Component</td>
+                  <td class="p-2 font-sans text-slate-500 text-[11px]">Calendar Year</td>
+                  <td class="p-2 text-right font-bold text-amber-700 dark:text-amber-400" id="tbl-break-year">MMXXVI (Year 2026)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
+
+    </div><!-- End #date-result-section -->
+
+  </div><!-- End Calculator Tool Widget Container -->
+
+  <!-- EDUCATIONAL SEO & GUIDE ARTICLE (Slotted into CalculatorLayout content slot) -->
+  <Fragment slot="content">
+    <div class="space-y-8">
+
+      <!-- SECTION 1: OVERVIEW & HISTORY -->
+      <div>
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+          How to Convert Dates to Roman Numerals (and Vice Versa)
+        </h2>
+        <p class="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          A Roman numeral is a system for expressing numbers that originated in the Roman Empire. Roman numerals were widely used across Europe long after the fall of the empire, remaining the primary numerical notation until Arabic numerals began replacing them around the 14th century. Today, Hindu-Arabic numerals are used globally for standard mathematics, while Roman numerals continue to be used for formal, decorative, and commemorative purposes—such as on clock faces, book chapter headings, monarch regnal numbers, and major recurring sporting events like the Olympics and the Super Bowl.
+        </p>
+        <p class="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          Converting meaningful calendar dates—such as birthdays, wedding anniversaries, graduation years, and memorial dates—into Roman numerals is especially popular in typography, jewelry engraving (like wedding ring bands), and body art (tattoos).
+        </p>
+      </div>
+
+      <!-- SECTION 2: THE 7 BASIC ROMAN NUMERALS -->
+      <div class="space-y-3">
+        <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>📜</span> The 7 Basic Roman Numerals Used Today
+        </h3>
+        <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+          Every standard Roman numeral date is constructed from combinations of just seven letters from the Latin alphabet. Unlike the decimal system, Roman numerals do not include a symbol for zero.
+        </p>
+        <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950/60 shadow-2xs">
+          <table class="w-full text-left text-xs">
+            <thead class="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/90 text-slate-800 dark:text-slate-200 font-bold">
+              <tr>
+                <th class="p-3">Roman Numeral</th>
+                {sevenSymbols.map((s) => (
+                  <th class="p-3 text-center font-mono font-bold text-amber-700 dark:text-amber-400 text-sm">{s.symbol}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody class="text-slate-700 dark:text-slate-300">
+              <tr>
+                <td class="p-3 font-semibold text-slate-900 dark:text-white">Arabic Number</td>
+                {sevenSymbols.map((s) => (
+                  <td class="p-3 text-center font-mono font-bold">{s.value}</td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SECTION 3: WAYS TO REPRESENT DATES IN ROMAN NUMERALS -->
+      <div class="space-y-4">
+        <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>📅</span> Ways to Represent Dates in Roman Numeral Form
+        </h3>
+        <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+          There are two primary methods for writing calendar dates with Roman numerals:
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Method 1: Full Conversion -->
+          <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-950/40 space-y-2.5">
+            <h4 class="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+              <span>1.</span> Full Date Component Conversion
+            </h4>
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              Every date component (the month, day, and year) is converted entirely into Roman numerals. The order depends on your regional convention:
+            </p>
+            <ul class="text-xs text-slate-700 dark:text-slate-300 space-y-1.5 font-mono">
+              <li>• <strong>US (MM · DD · YYYY):</strong> e.g., March 4, 2025 &rarr; <span class="font-bold text-amber-700 dark:text-amber-400">III · IV · MMXXV</span></li>
+              <li>• <strong>European / UK (DD · MM · YYYY):</strong> e.g., 4 March 2025 &rarr; <span class="font-bold text-amber-700 dark:text-amber-400">IV · III · MMXXV</span></li>
+              <li>• <strong>ISO 8601 (YYYY · MM · DD):</strong> e.g., 2025-03-04 &rarr; <span class="font-bold text-amber-700 dark:text-amber-400">MMXXV / III / IV</span></li>
+            </ul>
+          </div>
+
+          <!-- Method 2: Mixed Format -->
+          <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-950/40 space-y-2.5">
+            <h4 class="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
+              <span>2.</span> Mixed Arabic &amp; Roman Format
+            </h4>
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              Another common convention is to write only the month in Roman numerals while keeping the day and year as Arabic numbers. For example, March 4th, 2025 can be written as:
+            </p>
+            <div class="space-y-1 font-mono text-xs text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800">
+              <div>• <strong>Month First:</strong> <span class="font-bold text-amber-700 dark:text-amber-400">III / 4 / 2025</span></div>
+              <div>• <strong>Day First:</strong> <span class="font-bold text-amber-700 dark:text-amber-400">4 / III / 2025</span></div>
+            </div>
+            <p class="text-[11px] text-slate-500">Note: When using this mixed style, placing the year first is rarely used in practice.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 4: SEPARATORS GUIDE -->
+      <div class="space-y-3">
+        <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>✒️</span> Supported Separators &amp; Tattoo Formatting
+        </h3>
+        <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+          Because Roman numerals consist of capital letter glyphs (like I, X, and V), placing components side by side without a separator causes visual ambiguity. For instance, month 11 (<code class="font-bold">XI</code>) directly followed by day 11 (<code class="font-bold">XI</code>) could be misread as <code class="font-bold">XIXI</code>. Our converter accepts and formats dates using standard separators: middle dots (·), bullet points (•), slashes (/), hyphens (-), periods (.), or spaces.
+        </p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+          {popularTattooSeparators.map((sep) => (
+            <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-950/40 space-y-1">
+              <span class="font-bold text-amber-800 dark:text-amber-300 block">{sep.name}</span>
+              <div class="font-mono font-black text-sm text-slate-900 dark:text-white">{sep.example}</div>
+              <span class="text-[11px] text-slate-500">Glyph: "{sep.symbol}"</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- SECTION 5: MONTHS & DAYS OF THE WEEK TABLES -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- 12 Months -->
+        <div class="space-y-3">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>📅</span> 12 Months in Roman Numerals
+          </h3>
+          <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 text-xs">
+            {[
+              { m: "January", r: "I" }, { m: "February", r: "II" }, { m: "March", r: "III" },
+              { m: "April", r: "IV" }, { m: "May", r: "V" }, { m: "June", r: "VI" },
+              { m: "July", r: "VII" }, { m: "August", r: "VIII" }, { m: "September", r: "IX" },
+              { m: "October", r: "X" }, { m: "November", r: "XI" }, { m: "December", r: "XII" }
+            ].map((item, idx) => (
+              <div class="rounded-xl border border-slate-200 bg-white p-2 text-center dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
+                <span class="block text-slate-500 text-[10px]">{idx + 1}. {item.m}</span>
+                <span class="font-mono font-black text-amber-700 dark:text-amber-400 text-sm">{item.r}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <!-- Days of the Week -->
+        <div class="space-y-3">
+          <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>🗓️</span> Days of the Week in Roman Numerals
+          </h3>
+          <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950/60 shadow-2xs">
+            <table class="w-full text-left text-xs">
+              <thead class="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/90 text-slate-800 dark:text-slate-200 font-bold">
+                <tr>
+                  <th class="p-2.5">Day of Week</th>
+                  <th class="p-2.5 text-center">Order</th>
+                  <th class="p-2.5 text-right">Roman Numeral</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 text-slate-700 dark:text-slate-300 font-medium">
+                {daysOfWeek.map((d) => (
+                  <tr class="hover:bg-slate-50/70 dark:hover:bg-slate-800/40">
+                    <td class="p-2.5">{d.day}</td>
+                    <td class="p-2.5 text-center text-slate-500 text-[11px]">{d.num} day</td>
+                    <td class="p-2.5 text-right font-mono font-bold text-amber-700 dark:text-amber-400">{d.roman}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 6: RELATED TOOLS -->
+      <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 dark:border-slate-800 dark:bg-slate-900/50 space-y-3">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>🔗</span> Related Roman Numeral &amp; Math Tools
+        </h3>
+        <p class="text-xs text-slate-600 dark:text-slate-400">
+          Looking to calculate arithmetic expressions or convert arbitrary numbers beyond calendar dates? Explore our related math tools:
+        </p>
+        <div class="flex flex-wrap gap-2 text-xs">
+          <a href="/math/roman-numeral-converter/" class="rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-semibold text-amber-700 hover:border-amber-500 hover:shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-amber-400 transition">Roman Numeral Converter (1 – 3,999) &rarr;</a>
+          <a href="/math/roman-numeral-calculator/" class="rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-semibold text-amber-700 hover:border-amber-500 hover:shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-amber-400 transition">Roman Numeral Arithmetic Calculator (+, &minus;, &times;, &divide;) &rarr;</a>
+          <a href="/general/time-calculator/" class="rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-semibold text-blue-600 hover:border-blue-500 hover:shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-blue-400 transition">Time &amp; Date Duration Calculator &rarr;</a>
+        </div>
+      </div>
+
+    </div>
+  </Fragment>
+
+  <!-- CLIENT-SIDE SCRIPT -->
+  <script>
+    const ROMAN_MAP: [number, string][] = [
+      [1000, "M"], [900, "CM"], [500, "D"], [400, "CD"],
+      [100, "C"], [90, "XC"], [50, "L"], [40, "XL"],
+      [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]
+    ];
+
+    const CHAR_MAP: Record<string, number> = {
+      I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000
+    };
+
+    const MONTH_NAMES = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+
+    function toRoman(num: number): string {
+      if (num <= 0 || num > 3999) return num.toString();
+      let n = num;
+      let res = '';
+      for (const [val, sym] of ROMAN_MAP) {
+        while (n >= val) {
+          res += sym;
+          n -= val;
+        }
+      }
+      return res;
+    }
+
+    function romanToArabic(roman: string): number | null {
+      const clean = roman.toUpperCase().trim();
+      if (!clean || !/^[IVXLCDM]+$/.test(clean)) return null;
+      let total = 0;
+      let prev = 0;
+      for (let i = clean.length - 1; i >= 0; i--) {
+        const val = CHAR_MAP[clean[i]];
+        if (!val) return null;
+        if (val < prev) {
+          total -= val;
+        } else {
+          total += val;
+          prev = val;
+        }
+      }
+      return total;
+    }
+
+    function init() {
+      const tabDate = document.getElementById('tab-mode-date');
+      const tabText = document.getElementById('tab-mode-text');
+      const panelDate = document.getElementById('panel-calendar-mode');
+      const panelText = document.getElementById('panel-text-mode');
+      const selMonth = document.getElementById('date-month') as HTMLSelectElement | null;
+      const inpDay = document.getElementById('date-day') as HTMLInputElement | null;
+      const inpYear = document.getElementById('date-year') as HTMLInputElement | null;
+      const selOrder = document.getElementById('date-order') as HTMLSelectElement | null;
+      const selSep = document.getElementById('date-separator') as HTMLSelectElement | null;
+      const inpRomanStr = document.getElementById('inp-roman-date-str') as HTMLInputElement | null;
+      const btnCalc = document.getElementById('btn-calc-date');
+      const btnClear = document.getElementById('btn-clear-date');
+      const errBox = document.getElementById('date-error-box');
+      const resSection = document.getElementById('date-result-section');
+
+      let currentMode: 'calendar' | 'reverse' = 'calendar';
+
+      function setMode(mode: 'calendar' | 'reverse') {
+        currentMode = mode;
+        if (mode === 'calendar') {
+          tabDate?.classList.add('active', 'bg-white', 'text-amber-800', 'dark:bg-slate-800', 'dark:text-amber-300');
+          tabDate?.classList.remove('text-slate-600', 'dark:text-slate-400');
+          tabText?.classList.remove('active', 'bg-white', 'text-amber-800', 'dark:bg-slate-800', 'dark:text-amber-300');
+          tabText?.classList.add('text-slate-600', 'dark:text-slate-400');
+          panelDate?.classList.remove('hidden');
+          panelText?.classList.add('hidden');
+        } else {
+          tabText?.classList.add('active', 'bg-white', 'text-amber-800', 'dark:bg-slate-800', 'dark:text-amber-300');
+          tabText?.classList.remove('text-slate-600', 'dark:text-slate-400');
+          tabDate?.classList.remove('active', 'bg-white', 'text-amber-800', 'dark:bg-slate-800', 'dark:text-amber-300');
+          tabDate?.classList.add('text-slate-600', 'dark:text-slate-400');
+          panelText?.classList.remove('hidden');
+          panelDate?.classList.add('hidden');
+        }
+      }
+
+      tabDate?.addEventListener('click', () => setMode('calendar'));
+      tabText?.addEventListener('click', () => setMode('reverse'));
+
+      // Presets
+      document.querySelectorAll('.btn-preset-date').forEach((b) => {
+        b.addEventListener('click', (e) => {
+          const btn = e.currentTarget as HTMLElement;
+          const y = btn.getAttribute('data-y');
+          const m = btn.getAttribute('data-m');
+          const d = btn.getAttribute('data-d');
+          if (selMonth && m) selMonth.value = m;
+          if (inpDay && d) inpDay.value = d;
+          if (inpYear && y) inpYear.value = y;
+          setMode('calendar');
+          calculateDate();
+        });
+      });
+
+      function calculateDate() {
+        if (!resSection || !errBox) return;
+
+        let month = 10;
+        let day = 18;
+        let year = 2026;
+
+        if (currentMode === 'calendar') {
+          if (!selMonth || !inpDay || !inpYear) return;
+          month = parseInt(selMonth.value, 10);
+          day = parseInt(inpDay.value, 10);
+          year = parseInt(inpYear.value, 10);
+
+          if (isNaN(day) || day < 1 || day > 31) {
+            errBox.textContent = "Please enter a valid day of the month (1–31).";
+            errBox.classList.remove('hidden');
+            resSection.classList.add('hidden');
+            return;
+          }
+          if (isNaN(year) || year < 1 || year > 3999) {
+            errBox.textContent = "Please enter a valid year between 1 and 3,999.";
+            errBox.classList.remove('hidden');
+            resSection.classList.add('hidden');
+            return;
+          }
+        } else {
+          // Reverse mode: parse roman date string
+          if (!inpRomanStr) return;
+          const raw = inpRomanStr.value.trim().toUpperCase();
+          if (!raw) {
+            errBox.textContent = "Please enter a Roman numeral date to decode.";
+            errBox.classList.remove('hidden');
+            resSection.classList.add('hidden');
+            return;
+          }
+          const tokens = raw.split(/[\s·•\/\-\.\,]+/).filter(Boolean);
+          if (tokens.length !== 3) {
+            errBox.textContent = "Could not parse 3 date components (Month, Day, Year). Please separate them with dots, slashes, or dashes.";
+            errBox.classList.remove('hidden');
+            resSection.classList.add('hidden');
+            return;
+          }
+          const p1 = romanToArabic(tokens[0]);
+          const p2 = romanToArabic(tokens[1]);
+          const p3 = romanToArabic(tokens[2]);
+
+          if (p1 === null || p2 === null || p3 === null) {
+            errBox.textContent = "One or more date tokens contain invalid Roman numeral characters.";
+            errBox.classList.remove('hidden');
+            resSection.classList.add('hidden');
+            return;
+          }
+
+          // Heuristic: determine which is year
+          if (p3 > 31) {
+            year = p3;
+            if (p1 <= 12 && p2 <= 31) {
+              month = p1;
+              day = p2;
+            } else {
+              day = p1;
+              month = p2;
+            }
+          } else if (p1 > 31) {
+            year = p1;
+            month = p2;
+            day = p3;
+          } else {
+            month = p1;
+            day = p2;
+            year = p3;
+          }
+        }
+
+        errBox.classList.add('hidden');
+
+        const romanM = toRoman(month);
+        const romanD = toRoman(day);
+        const romanY = toRoman(year);
+        const sep = selSep ? selSep.value : ' · ';
+        const order = selOrder ? selOrder.value : 'MDY';
+
+        let primaryTattoo = '';
+        if (order === 'DMY') {
+          primaryTattoo = `${romanD} ${sep} ${romanM} ${sep} ${romanY}`;
+        } else if (order === 'YMD') {
+          primaryTattoo = `${romanY} ${sep} ${romanM} ${sep} ${romanD}`;
+        } else {
+          primaryTattoo = `${romanM} ${sep} ${romanD} ${sep} ${romanY}`;
+        }
+
+        const usFmt = `${romanM} · ${romanD} · ${romanY}`;
+        const euFmt = `${romanD} · ${romanM} · ${romanY}`;
+        const isoFmt = `${romanY} · ${romanM} · ${romanD}`;
+        const slashFmt = `${romanM} / ${romanD} / ${romanY}`;
+        const monthName = MONTH_NAMES[month - 1] || 'Month';
+        const writtenFmt = `${monthName} ${romanD}, ${romanY}`;
+
+        // Update UI
+        const resRead = document.getElementById('res-date-readable');
+        if (resRead) resRead.textContent = `${monthName} ${day}, ${year}`;
+
+        const elPrimary = document.getElementById('res-primary-tattoo');
+        if (elPrimary) elPrimary.textContent = primaryTattoo;
+
+        const elUs = document.getElementById('fmt-us');
+        if (elUs) elUs.textContent = usFmt;
+        const tblUs = document.getElementById('tbl-fmt-us');
+        if (tblUs) tblUs.textContent = usFmt;
+
+        const elEu = document.getElementById('fmt-eu');
+        if (elEu) elEu.textContent = euFmt;
+        const tblEu = document.getElementById('tbl-fmt-eu');
+        if (tblEu) tblEu.textContent = euFmt;
+
+        const elIso = document.getElementById('fmt-iso');
+        if (elIso) elIso.textContent = isoFmt;
+        const tblIso = document.getElementById('tbl-fmt-iso');
+        if (tblIso) tblIso.textContent = isoFmt;
+
+        const elSlash = document.getElementById('fmt-slash');
+        if (elSlash) elSlash.textContent = slashFmt;
+        const tblSlash = document.getElementById('tbl-fmt-slash');
+        if (tblSlash) tblSlash.textContent = slashFmt;
+
+        const elWritten = document.getElementById('fmt-written');
+        if (elWritten) elWritten.textContent = writtenFmt;
+        const tblWritten = document.getElementById('tbl-fmt-written');
+        if (tblWritten) tblWritten.textContent = writtenFmt;
+
+        const elBm = document.getElementById('break-month');
+        if (elBm) elBm.textContent = `${romanM} (${monthName} - ${month})`;
+        const tblBm = document.getElementById('tbl-break-month');
+        if (tblBm) tblBm.textContent = `${romanM} (${monthName} - ${month})`;
+
+        const elBd = document.getElementById('break-day');
+        if (elBd) elBd.textContent = `${romanD} (Day ${day})`;
+        const tblBd = document.getElementById('tbl-break-day');
+        if (tblBd) tblBd.textContent = `${romanD} (Day ${day})`;
+
+        const elBy = document.getElementById('break-year');
+        if (elBy) elBy.textContent = `${romanY} (Year ${year})`;
+        const tblBy = document.getElementById('tbl-break-year');
+        if (tblBy) tblBy.textContent = `${romanY} (Year ${year})`;
+
+        resSection.classList.remove('hidden');
+        resSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      btnCalc?.addEventListener('click', calculateDate);
+
+      btnClear?.addEventListener('click', () => {
+        if (inpDay) inpDay.value = '';
+        if (inpYear) inpYear.value = '';
+        if (inpRomanStr) inpRomanStr.value = '';
+        if (errBox) errBox.classList.add('hidden');
+        if (resSection) resSection.classList.add('hidden');
+      });
+
+      // Individual copy buttons
+      document.querySelectorAll('.btn-copy-val').forEach((b) => {
+        b.addEventListener('click', (e) => {
+          const btn = e.currentTarget as HTMLElement;
+          const targetId = btn.getAttribute('data-target');
+          if (targetId) {
+            const el = document.getElementById(targetId);
+            const text = el?.textContent || '';
+            navigator.clipboard.writeText(text).then(() => {
+              const orig = btn.textContent;
+              btn.textContent = 'Copied!';
+              setTimeout(() => { btn.textContent = orig; }, 1800);
+            });
+          }
+        });
+      });
+
+      // Print
+      document.getElementById('btn-print-date')?.addEventListener('click', () => {
+        const detailsEl = document.getElementById('details-all-formats') as HTMLDetailsElement | null;
+        if (detailsEl) detailsEl.open = true;
+        window.print();
+      });
+
+      window.addEventListener('beforeprint', () => {
+        const detailsEl = document.getElementById('details-all-formats') as HTMLDetailsElement | null;
+        if (detailsEl) detailsEl.open = true;
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</CalculatorLayout>

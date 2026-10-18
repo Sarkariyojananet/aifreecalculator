@@ -1,0 +1,684 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+
+const commonRomanNumbers = [
+  { n: 1, r: "I" }, { n: 2, r: "II" }, { n: 3, r: "III" }, { n: 4, r: "IV" }, { n: 5, r: "V" },
+  { n: 6, r: "VI" }, { n: 7, r: "VII" }, { n: 8, r: "VIII" }, { n: 9, r: "IX" }, { n: 10, r: "X" },
+  { n: 20, r: "XX" }, { n: 30, r: "XXX" }, { n: 40, r: "XL" }, { n: 50, r: "L" }, { n: 60, r: "LX" },
+  { n: 70, r: "LXX" }, { n: 80, r: "LXXX" }, { n: 90, r: "XC" }, { n: 100, r: "C" }, { n: 500, r: "D" },
+  { n: 1000, r: "M" }, { n: 1984, r: "MCMLXXXIV" }, { n: 1999, r: "MCMXCIX" }, { n: 2000, r: "MM" },
+  { n: 2024, r: "MMXXIV" }, { n: 2025, r: "MMXXV" }, { n: 2026, r: "MMXXVI" }, { n: 3000, r: "MMM" }
+];
+
+const sevenSymbols = [
+  { symbol: "I", value: "1" },
+  { symbol: "V", value: "5" },
+  { symbol: "X", value: "10" },
+  { symbol: "L", value: "50" },
+  { symbol: "C", value: "100" },
+  { symbol: "D", value: "500" },
+  { symbol: "M", value: "1,000" }
+];
+---
+
+<CalculatorLayout
+  title="Roman Numeral Converter – Convert Numbers to Roman Numerals & Vice Versa"
+  description="Free two-way Roman Numeral Converter: convert Roman numerals to numbers (Arabic) and numbers to Roman numerals instantly with expansion breakdown and validation."
+  category="Math"
+  calculatorName="Roman Numeral Converter"
+  slug="roman-numeral-converter"
+  keywords={[
+    "roman numeral converter",
+    "roman numerals converter",
+    "convert roman numerals to numbers",
+    "numbers to roman numerals",
+    "roman to arabic converter",
+    "arabic to roman converter",
+    "roman numeral translator",
+    "roman number converter"
+  ]}
+>
+  <div class="space-y-4">
+
+    <!-- COMPACT HERO & PRESETS -->
+    <div class="rounded-2xl border border-slate-200/90 bg-linear-to-r from-amber-50/70 via-yellow-50/30 to-white p-3.5 sm:p-4 shadow-2xs dark:border-slate-800 dark:from-slate-900 dark:via-amber-950/20 dark:to-slate-900">
+      <div class="flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">🔄</span>
+          <h1 class="text-base sm:text-lg font-black text-slate-900 dark:text-white tracking-tight">
+            Roman Numeral Converter
+          </h1>
+          <span class="hidden sm:inline-flex rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800 dark:bg-amber-900/60 dark:text-amber-300">
+            1 – 3,999
+          </span>
+        </div>
+
+        <!-- QUICK PRESETS INLINE -->
+        <div class="flex flex-wrap items-center gap-1 text-[11px]">
+          <span class="text-slate-500 font-semibold mr-0.5">Presets:</span>
+          <button type="button" class="btn-preset-conv rounded-md border border-slate-200 bg-white px-2 py-0.5 font-bold text-slate-700 hover:border-amber-500 hover:text-amber-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-val="2026">2026</button>
+          <button type="button" class="btn-preset-conv rounded-md border border-slate-200 bg-white px-2 py-0.5 font-bold text-slate-700 hover:border-amber-500 hover:text-amber-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-val="MMXXIV">MMXXIV</button>
+          <button type="button" class="btn-preset-conv rounded-md border border-slate-200 bg-white px-2 py-0.5 font-bold text-slate-700 hover:border-amber-500 hover:text-amber-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-val="1999">1999</button>
+          <button type="button" class="btn-preset-conv rounded-md border border-slate-200 bg-white px-2 py-0.5 font-bold text-slate-700 hover:border-amber-500 hover:text-amber-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-val="LIX">LIX</button>
+          <button type="button" class="btn-preset-conv rounded-md border border-slate-200 bg-white px-2 py-0.5 font-bold text-slate-700 hover:border-amber-500 hover:text-amber-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-val="100">100 (C)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN CONVERTER WIDGET (COMPACT) -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 sm:p-5 shadow-xs dark:border-slate-800 dark:bg-slate-900 space-y-3">
+
+      <!-- MODE TOGGLE -->
+      <div class="flex items-center justify-between gap-2 border-b border-slate-100 dark:border-slate-800/80 pb-2">
+        <div class="inline-flex rounded-xl border border-slate-200 bg-slate-100 p-0.5 dark:border-slate-800 dark:bg-slate-950 text-xs">
+          <button
+            type="button"
+            id="tab-mode-num"
+            class="mode-toggle-btn active rounded-lg bg-white px-3 py-1 font-bold text-amber-800 shadow-2xs dark:bg-slate-800 dark:text-amber-300 cursor-pointer transition"
+          >
+            Number &rarr; Roman
+          </button>
+          <button
+            type="button"
+            id="tab-mode-rom"
+            class="mode-toggle-btn rounded-lg px-3 py-1 font-semibold text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer transition"
+          >
+            Roman &rarr; Number
+          </button>
+        </div>
+
+        <span class="text-[11px] text-amber-600 dark:text-amber-400 font-mono" id="inp-status-hint">Auto-detecting</span>
+      </div>
+
+      <!-- INPUT & CONVERT ROW -->
+      <div class="flex flex-col sm:flex-row items-center gap-2">
+        <div class="relative w-full">
+          <input
+            type="text"
+            id="conv-input"
+            value="2026"
+            placeholder="e.g. 2026 or MMXXVI"
+            class="w-full rounded-xl border border-slate-300 bg-slate-50/70 p-2.5 sm:p-3 text-center sm:text-left sm:pl-4 text-base sm:text-lg font-mono font-black uppercase text-slate-900 shadow-2xs focus:border-amber-500 focus:bg-white focus:outline-hidden dark:border-slate-700 dark:bg-slate-950 dark:text-white"
+          />
+        </div>
+
+        <div class="flex items-center gap-1.5 w-full sm:w-auto shrink-0">
+          <button
+            type="button"
+            id="btn-convert"
+            class="w-full sm:w-auto flex items-center justify-center gap-1 rounded-xl bg-amber-600 px-6 py-2.5 sm:py-3 text-xs font-black text-white shadow-xs hover:bg-amber-700 active:scale-95 transition cursor-pointer"
+          >
+            <span>Convert</span> <span>▶</span>
+          </button>
+          <button
+            type="button"
+            id="btn-clear-conv"
+            class="w-auto rounded-xl border border-slate-200 bg-slate-100 px-3.5 py-2.5 sm:py-3 text-xs font-bold text-slate-600 hover:bg-slate-200 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+          >
+            Clear
+          </button>
+        </div>
+      </div>
+
+      <!-- COMPACT KEYPAD BAR -->
+      <div id="virtual-roman-keypad" class="flex flex-wrap items-center justify-between gap-1 pt-1 text-xs">
+        <span class="text-[11px] text-slate-400 font-medium">Symbols:</span>
+        <div class="flex flex-wrap items-center gap-1">
+          {["I", "V", "X", "L", "C", "D", "M"].map((ch) => (
+            <button
+              type="button"
+              class="btn-keypad-char rounded-md border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-mono font-bold text-slate-800 hover:bg-amber-100 hover:text-amber-800 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-amber-900/60 dark:hover:text-amber-300 cursor-pointer"
+              data-char={ch}
+            >
+              {ch}
+            </button>
+          ))}
+          <button
+            type="button"
+            id="btn-backspace"
+            class="rounded-md border border-slate-200 bg-slate-100 px-2 py-1 text-xs font-bold text-slate-600 hover:bg-rose-100 hover:text-rose-700 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-300 cursor-pointer"
+          >
+            ⌫
+          </button>
+        </div>
+      </div>
+
+      <!-- Inline error alert -->
+      <div id="conv-error-box" class="hidden rounded-xl border border-rose-300 bg-rose-50 p-2.5 text-xs font-medium text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/40 dark:text-rose-300">
+        <!-- Error details -->
+      </div>
+
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- COMPACT CONVERSION RESULT CONTAINER -->
+    <!-- ========================================================================= -->
+    <div id="conv-result-section" class="hidden rounded-2xl border border-amber-300/80 bg-linear-to-br from-amber-50/50 via-white to-orange-50/30 p-3.5 sm:p-5 shadow-sm dark:border-amber-900/40 dark:from-slate-950 dark:via-slate-900 dark:to-amber-950/20 space-y-3">
+
+      <!-- Result Highlight Bar -->
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-amber-100/80 pb-2.5 dark:border-amber-900/50">
+        <div class="flex items-baseline gap-3">
+          <span class="text-xs font-bold text-slate-500 uppercase tracking-wider" id="lbl-primary-output">Roman:</span>
+          <span class="text-2xl sm:text-3xl font-mono font-black text-amber-700 dark:text-amber-400 tracking-wider" id="res-primary-output">
+            MMXXVI
+          </span>
+          <span class="text-sm font-bold text-slate-600 dark:text-slate-400 font-mono" id="res-secondary-output">
+            (= 2,026)
+          </span>
+        </div>
+        <div class="flex items-center gap-1.5 self-end sm:self-auto">
+          <button type="button" id="btn-copy-conv" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer">
+            <span>📋</span> Copy
+          </button>
+          <button type="button" id="btn-print-conv" class="inline-flex items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-bold text-slate-700 shadow-2xs hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer">
+            <span>🖨️</span> Print
+          </button>
+        </div>
+      </div>
+
+      <!-- Collapsible Expansion Breakdown -->
+      <details class="group rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900 text-xs transition">
+        <summary class="flex cursor-pointer items-center justify-between font-bold text-slate-800 dark:text-slate-200">
+          <span class="flex items-center gap-1.5">
+            <span>🔍</span> View Additive / Subtractive Breakdown
+          </span>
+          <span class="text-slate-400 group-open:rotate-180 transition-transform">▼</span>
+        </summary>
+        <div id="res-breakdown-content" class="mt-2.5 space-y-1 font-mono text-slate-700 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800 pt-2">
+          <!-- Populated by script -->
+        </div>
+      </details>
+
+    </div><!-- End #conv-result-section -->
+
+  </div><!-- End Calculator Tool Widget Container -->
+
+  <!-- EDUCATIONAL SEO & GUIDE ARTICLE (Slotted into CalculatorLayout content slot) -->
+  <Fragment slot="content">
+    <div class="space-y-8">
+
+      <!-- SECTION 1: OVERVIEW & ORIGINS -->
+      <div>
+        <h2 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+          How to Convert Roman Numerals and Numbers
+        </h2>
+        <p class="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          A Roman numeral is a system for expressing numbers that originated in the Roman Empire. Roman numerals were widely used long after the fall of the Roman Empire, remaining the primary numerical notation across Europe until Arabic numerals started to replace them around the 14th century. Arabic numerals (0, 1, 2, 3...) are the base-10 numerals that we are most accustomed to using worldwide today.
+        </p>
+        <p class="mt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+          Although Arabic numerals have replaced Roman numerals for day-to-day mathematics, Roman numerals are still used today in specific cultural and formal contexts—such as on clock faces, book chapter headings, copyright dates on films, monarch regnal numbers, and numbering major recurring events like the Olympics and the Super Bowl.
+        </p>
+      </div>
+
+      <!-- SECTION 2: THE 7 ROMAN NUMERALS CHART -->
+      <div class="space-y-3">
+        <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>📜</span> The 7 Basic Roman Numerals
+        </h3>
+        <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+          In general, Roman numerals use a symbol to denote each power of ten (1, 10, 100, 1,000) and intermediary halves (5, 50, 500). Also notice that there is no zero symbol in Roman numerals. The chart below shows the seven Roman numerals used today alongside their corresponding Arabic numerical values:
+        </p>
+        <div class="overflow-x-auto rounded-2xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950/60 shadow-2xs">
+          <table class="w-full text-left text-xs">
+            <thead class="border-b border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-800/90 text-slate-800 dark:text-slate-200 font-bold">
+              <tr>
+                <th class="p-3">Roman Numeral</th>
+                {sevenSymbols.map((s) => (
+                  <th class="p-3 text-center font-mono font-bold text-amber-700 dark:text-amber-400 text-sm">{s.symbol}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody class="text-slate-700 dark:text-slate-300">
+              <tr>
+                <td class="p-3 font-semibold text-slate-900 dark:text-white">Arabic Number</td>
+                {sevenSymbols.map((s) => (
+                  <td class="p-3 text-center font-mono font-bold">{s.value}</td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SECTION 3: RULES FOR READING AND WRITING -->
+      <div class="space-y-4">
+        <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>⚖️</span> Rules for Reading and Writing Roman Numerals
+        </h3>
+        <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+          Because there is no zero symbol and only seven base letters, Roman numerals rely on a combination of additive and subtractive rules to express a wide range of values:
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Rule 1: Additive -->
+          <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-950/40 space-y-2">
+            <h4 class="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider">
+              1. Additive Value Rule
+            </h4>
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              Consecutive Roman numerals have their values added when the numerals are equivalent, or when the numeral directly to the left is larger than the one to its right.
+            </p>
+            <div class="font-mono text-xs text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1">
+              <div>• <strong>III</strong> = 1 + 1 + 1 = 3</div>
+              <div>• <strong>VI</strong> = 5 + 1 = 6</div>
+              <div>• <strong>MCL</strong> = 1,000 + 100 + 50 = 1,150</div>
+            </div>
+          </div>
+
+          <!-- Rule 2: Subtractive -->
+          <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-950/40 space-y-2">
+            <h4 class="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider">
+              2. Subtractive Value Rule
+            </h4>
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              When a numeral of smaller value is followed immediately by one of larger value, the smaller numeral is subtracted from the larger one. If this pair is part of a longer string, after determining the subtracted pair value, the rest of the numerals are added normally.
+            </p>
+            <div class="font-mono text-xs text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-900 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1">
+              <div>• <strong>IV</strong> = 5 &minus; 1 = 4</div>
+              <div>• <strong>XIV</strong> = 10 + (5 &minus; 1) = 14</div>
+              <div>• <strong>CD</strong> = 500 &minus; 100 = 400</div>
+              <div>• <strong>CDXIV</strong> = (500 &minus; 100) + 10 + (5 &minus; 1) = 414</div>
+            </div>
+          </div>
+
+          <!-- Rule 3: V, L, D Restrictions -->
+          <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-950/40 space-y-2">
+            <h4 class="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider">
+              3. V, L, and D are Never Repeated or Subtracted
+            </h4>
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              The symbols <strong>V (5)</strong>, <strong>L (50)</strong>, and <strong>D (500)</strong> are never repeated consecutively, nor can they be placed before a larger symbol to be subtracted. For example, <em>VX</em> does not exist (15 is written as <strong>XV</strong>, not VX). Similarly, neither <em>LC</em> nor <em>DM</em> exist, as they would create ambiguity.
+            </p>
+          </div>
+
+          <!-- Rule 4 & 5: Three-repeat & Pair Limits -->
+          <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-950/40 space-y-2">
+            <h4 class="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider">
+              4. Three-Repeat Limit &amp; Subtraction Pairs
+            </h4>
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              Only up to <strong>three consecutive identical numerals</strong> can be written (e.g. <strong>III, XXX, CCC, MMM</strong>). Expressions like <em>IIII, XXXX, or MMMM</em> do not exist in standard Roman numerals. Furthermore:
+            </p>
+            <ul class="text-xs text-slate-700 dark:text-slate-300 space-y-1">
+              <li>• <strong>I</strong> can only be subtracted from <strong>V</strong> (IV = 4) or <strong>X</strong> (IX = 9).</li>
+              <li>• <strong>X</strong> can only be subtracted from <strong>L</strong> (XL = 40) or <strong>C</strong> (XC = 90).</li>
+              <li>• <strong>C</strong> can only be subtracted from <strong>D</strong> (CD = 400) or <strong>M</strong> (CM = 900).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 4: STEP-BY-STEP WORKED CONVERSION EXAMPLES -->
+      <div class="space-y-4">
+        <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>🔢</span> How to Convert Between Roman and Arabic Numerals
+        </h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Arabic to Roman: Example 768 -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-900 space-y-2.5 shadow-2xs">
+            <h4 class="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider">
+              Converting Arabic Numerals to Roman: Example 768
+            </h4>
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              One straightforward way to convert Arabic numerals to Roman numerals is to break the number into its decimal place-value components:
+            </p>
+            <div class="font-mono text-xs bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1">
+              <div class="text-slate-700 dark:text-slate-300"><strong>768</strong> = 700 + 60 + 8</div>
+              <div class="pt-1 text-slate-600 dark:text-slate-400">• 700 = <strong class="text-amber-700 dark:text-amber-400">DCC</strong></div>
+              <div class="text-slate-600 dark:text-slate-400">• 60 = <strong class="text-amber-700 dark:text-amber-400">LX</strong></div>
+              <div class="text-slate-600 dark:text-slate-400">• 8 = <strong class="text-amber-700 dark:text-amber-400">VIII</strong></div>
+              <div class="pt-1 font-bold text-slate-900 dark:text-white">Combining left to right: 768 = DCCLXVIII</div>
+            </div>
+          </div>
+
+          <!-- Roman to Arabic: Example MMMCCLXXVIII -->
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 sm:p-5 dark:border-slate-800 dark:bg-slate-900 space-y-2.5 shadow-2xs">
+            <h4 class="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider">
+              Converting Roman Numerals to Arabic: Example MMMCCLXXVIII
+            </h4>
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              To convert Roman numerals to Arabic numerals, break the string into grouped values and sum each component:
+            </p>
+            <div class="font-mono text-xs bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800 space-y-1">
+              <div class="text-slate-600 dark:text-slate-400">• <strong>MMM</strong> = 3,000</div>
+              <div class="text-slate-600 dark:text-slate-400">• <strong>CC</strong> = 200</div>
+              <div class="text-slate-600 dark:text-slate-400">• <strong>LXX</strong> = 70</div>
+              <div class="text-slate-600 dark:text-slate-400">• <strong>VIII</strong> = 8</div>
+              <div class="pt-1 font-bold text-slate-900 dark:text-white">MMMCCLXXVIII = 3,000 + 200 + 70 + 8 = 3,278</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SECTION 5: LARGE NUMBERS & HISTORICAL SYSTEMS -->
+      <div class="space-y-3">
+        <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>🏛️</span> Large Numbers Beyond 3,999: Vinculum and Apostrophus
+        </h3>
+        <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+          Because no Roman numeral symbol can be repeated more than three consecutive times, and there is no standard symbol larger than <strong>M (1,000)</strong>, the highest value expressible in classical standard Roman numerals is <strong>3,999 (MMMCMXCIX)</strong>. Historically, Romans developed two distinct methods for writing numbers larger than 3,999:
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+          <!-- Vinculum -->
+          <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-950/40 space-y-2">
+            <h4 class="font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider">
+              1. The Vinculum (Overline Multiplier)
+            </h4>
+            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+              A <strong>vinculum</strong> is a horizontal bar placed above a Roman numeral indicating that its value is multiplied by <strong>1,000</strong>. For example, <span class="overline font-mono font-bold">V</span> = 5,000; <span class="overline font-mono font-bold">X</span> = 10,000; <span class="overline font-mono font-bold">L</span> = 50,000; <span class="overline font-mono font-bold">C</span> = 100,000; <span class="overline font-mono font-bold">D</span> = 500,000; and <span class="overline font-mono font-bold">M</span> = 1,000,000. Under this system, numbers up to 3,999,999 could be constructed.
+            </p>
+          </div>
+
+          <!-- Apostrophus -->
+          <div class="rounded-2xl border border-slate-200 bg-slate-50/60 p-4 dark:border-slate-800 dark:bg-slate-950/40 space-y-2">
+            <h4 class="font-bold text-amber-800 dark:text-amber-300 uppercase tracking-wider">
+              2. The Apostrophus Method
+            </h4>
+            <p class="text-slate-600 dark:text-slate-300 leading-relaxed">
+              The apostrophus method uses combinations of the letters <strong>C</strong> and <strong>Ↄ</strong> (an inverted C, akin to parentheses) where additional nested sets represent factors of 10. For instance: <strong>IↃ = 500</strong>, <strong>CIↃ = 1,000</strong>, <strong>IↃↃ = 5,000</strong>, <strong>CCIↃↃ = 10,000</strong>, <strong>IↃↃↃ = 50,000</strong>, and <strong>CCCIↃↃↃ = 100,000</strong>.
+            </p>
+          </div>
+        </div>
+        <p class="text-[11px] text-slate-500 italic">
+          Note: This interactive converter focuses strictly on the universally recognized standard classical range of 1 to 3,999 (I to MMMCMXCIX).
+        </p>
+      </div>
+
+      <!-- SECTION 6: COMMON ROMAN NUMERAL REFERENCE CHART -->
+      <div class="space-y-3">
+        <h3 class="text-base sm:text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>📋</span> Common Roman Numeral Conversion Chart
+        </h3>
+        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 text-xs">
+          {commonRomanNumbers.map((c) => (
+            <div class="rounded-xl border border-slate-200 bg-white p-2.5 text-center dark:border-slate-800 dark:bg-slate-900 shadow-2xs">
+              <span class="block text-slate-500 font-bold text-[10px]">{c.n}</span>
+              <span class="font-mono font-black text-amber-700 dark:text-amber-400 text-sm">{c.r}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <!-- SECTION 7: RELATED TOOLS -->
+      <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 dark:border-slate-800 dark:bg-slate-900/50 space-y-3">
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <span>🔗</span> Related Roman Numeral &amp; Math Tools
+        </h3>
+        <p class="text-xs text-slate-600 dark:text-slate-400">
+          Need to perform arithmetic operations or format birthdays and anniversaries into Roman numerals? Try our specialized companion tools:
+        </p>
+        <div class="flex flex-wrap gap-2 text-xs">
+          <a href="/math/roman-numeral-calculator/" class="rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-semibold text-amber-700 hover:border-amber-500 hover:shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-amber-400 transition">Roman Numeral Calculator (+, &minus;, &times;, &divide;) &rarr;</a>
+          <a href="/math/roman-numeral-date-converter/" class="rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-semibold text-amber-700 hover:border-amber-500 hover:shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-amber-400 transition">Roman Numeral Date Converter (Tattoos &amp; Rings) &rarr;</a>
+          <a href="/math/fraction-calculator/" class="rounded-xl border border-slate-200 bg-white px-3 py-1.5 font-semibold text-blue-600 hover:border-blue-500 hover:shadow-xs dark:border-slate-700 dark:bg-slate-800 dark:text-blue-400 transition">Fraction Calculator &rarr;</a>
+        </div>
+      </div>
+
+    </div>
+  </Fragment>
+
+  <!-- CLIENT-SIDE CONVERTER SCRIPT -->
+  <script>
+    const ROMAN_MAP: [number, string][] = [
+      [1000, "M"], [900, "CM"], [500, "D"], [400, "CD"],
+      [100, "C"], [90, "XC"], [50, "L"], [40, "XL"],
+      [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]
+    ];
+
+    const CHAR_MAP: Record<string, number> = {
+      I: 1, V: 5, X: 10, L: 50, C: 100, D: 500, M: 1000
+    };
+
+    function toRomanWithBreakdown(num: number): { roman: string; breakdown: string } {
+      if (num <= 0 || num > 3999) return { roman: num.toString(), breakdown: 'Out of standard range' };
+      let n = num;
+      let roman = '';
+      const parts: string[] = [];
+
+      for (const [val, sym] of ROMAN_MAP) {
+        while (n >= val) {
+          roman += sym;
+          parts.push(`${sym} (${val})`);
+          n -= val;
+        }
+      }
+      return { roman, breakdown: parts.join(' + ') };
+    }
+
+    function fromRomanWithBreakdown(roman: string): { num: number; breakdown: string } | null {
+      const clean = roman.toUpperCase().trim();
+      if (!clean || !/^[IVXLCDM]+$/.test(clean)) return null;
+
+      let total = 0;
+      let prev = 0;
+      const terms: string[] = [];
+
+      for (let i = clean.length - 1; i >= 0; i--) {
+        const ch = clean[i];
+        const val = CHAR_MAP[ch];
+        if (!val) return null;
+        if (val < prev) {
+          total -= val;
+          terms.unshift(`-${val}`);
+        } else {
+          total += val;
+          terms.unshift(`+${val}`);
+          prev = val;
+        }
+      }
+
+      // Check if reconverting total yields same roman (strict validation)
+      const rechecked = toRomanWithBreakdown(total).roman;
+      const isValid = (rechecked === clean);
+
+      return {
+        num: total,
+        breakdown: `${clean} = ${terms.join(' ')} = ${total} ${!isValid ? '(Non-standard Roman spelling)' : ''}`
+      };
+    }
+
+    function init() {
+      const inp = document.getElementById('conv-input') as HTMLInputElement | null;
+      const btnConvert = document.getElementById('btn-convert');
+      const btnClear = document.getElementById('btn-clear-conv');
+      const errBox = document.getElementById('conv-error-box');
+      const resSection = document.getElementById('conv-result-section');
+      const tabNum = document.getElementById('tab-mode-num');
+      const tabRom = document.getElementById('tab-mode-rom');
+      const lblInput = document.getElementById('lbl-conv-input');
+
+      let currentMode: 'num-to-rom' | 'rom-to-num' = 'num-to-rom';
+
+      function setMode(mode: 'num-to-rom' | 'rom-to-num') {
+        currentMode = mode;
+        if (mode === 'num-to-rom') {
+          tabNum?.classList.add('active', 'bg-white', 'text-amber-800', 'dark:bg-slate-800', 'dark:text-amber-300');
+          tabNum?.classList.remove('text-slate-600', 'dark:text-slate-400');
+          tabRom?.classList.remove('active', 'bg-white', 'text-amber-800', 'dark:bg-slate-800', 'dark:text-amber-300');
+          tabRom?.classList.add('text-slate-600', 'dark:text-slate-400');
+          if (lblInput) lblInput.innerHTML = `<span>Enter Arabic Number (1 – 3,999):</span>`;
+          if (inp) {
+            inp.placeholder = "e.g. 2026 or 1984";
+            if (!/^\d+$/.test(inp.value)) inp.value = "2026";
+          }
+        } else {
+          tabRom?.classList.add('active', 'bg-white', 'text-amber-800', 'dark:bg-slate-800', 'dark:text-amber-300');
+          tabRom?.classList.remove('text-slate-600', 'dark:text-slate-400');
+          tabNum?.classList.remove('active', 'bg-white', 'text-amber-800', 'dark:bg-slate-800', 'dark:text-amber-300');
+          tabNum?.classList.add('text-slate-600', 'dark:text-slate-400');
+          if (lblInput) lblInput.innerHTML = `<span>Enter Roman Numeral:</span>`;
+          if (inp) {
+            inp.placeholder = "e.g. MMXXVI or MCMXCIX";
+            if (!/^[A-Z]+$/i.test(inp.value)) inp.value = "MMXXVI";
+          }
+        }
+      }
+
+      tabNum?.addEventListener('click', () => setMode('num-to-rom'));
+      tabRom?.addEventListener('click', () => setMode('rom-to-num'));
+
+      // Keypad input
+      document.querySelectorAll('.btn-keypad-char').forEach((b) => {
+        b.addEventListener('click', (e) => {
+          const btn = e.currentTarget as HTMLElement;
+          const char = btn.getAttribute('data-char');
+          if (inp && char) {
+            inp.value = (inp.value + char).toUpperCase();
+          }
+        });
+      });
+
+      document.getElementById('btn-backspace')?.addEventListener('click', () => {
+        if (inp && inp.value.length > 0) {
+          inp.value = inp.value.slice(0, -1);
+        }
+      });
+
+      // Preset buttons
+      document.querySelectorAll('.btn-preset-conv').forEach((b) => {
+        b.addEventListener('click', (e) => {
+          const btn = e.currentTarget as HTMLElement;
+          const val = btn.getAttribute('data-val');
+          if (inp && val) {
+            inp.value = val;
+            if (/^\d+$/.test(val)) {
+              setMode('num-to-rom');
+            } else {
+              setMode('rom-to-num');
+            }
+            convert();
+          }
+        });
+      });
+
+      function convert() {
+        if (!inp || !errBox || !resSection) return;
+        const raw = inp.value.trim().toUpperCase();
+
+        if (!raw) {
+          errBox.textContent = "Please enter a number or Roman numeral to convert.";
+          errBox.classList.remove('hidden');
+          resSection.classList.add('hidden');
+          return;
+        }
+
+        // Auto-detect if user typed numbers vs Roman
+        const isNumeric = /^\d+$/.test(raw);
+
+        if (isNumeric) {
+          const num = parseInt(raw, 10);
+          if (num < 1 || num > 3999) {
+            errBox.textContent = "Please enter an Arabic integer between 1 and 3,999.";
+            errBox.classList.remove('hidden');
+            resSection.classList.add('hidden');
+            return;
+          }
+          errBox.classList.add('hidden');
+
+          const { roman, breakdown } = toRomanWithBreakdown(num);
+
+          // Update UI
+          const lblPri = document.getElementById('lbl-primary-output');
+          const resPri = document.getElementById('res-primary-output');
+          const resPriDesc = document.getElementById('res-primary-desc');
+          const lblSec = document.getElementById('lbl-secondary-output');
+          const resSec = document.getElementById('res-secondary-output');
+          const resSecDesc = document.getElementById('res-secondary-desc');
+          const sumLine = document.getElementById('res-conversion-summary');
+          const bdContent = document.getElementById('res-breakdown-content');
+
+          if (lblPri) lblPri.textContent = "Roman Numeral Output";
+          if (resPri) resPri.textContent = roman;
+          if (resPriDesc) resPriDesc.textContent = "Classical Roman Numeral";
+          if (lblSec) lblSec.textContent = "Input Arabic Value";
+          if (resSec) resSec.textContent = num.toLocaleString();
+          if (resSecDesc) resSecDesc.textContent = "Base-10 Integer";
+          if (sumLine) sumLine.textContent = `${num.toLocaleString()} = ${roman}`;
+
+          if (bdContent) {
+            bdContent.innerHTML = `
+              <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 space-y-1">
+                <span class="text-slate-500 font-bold">Sum of Symbol Values:</span><br />
+                <strong>${breakdown} = ${num}</strong>
+              </div>
+            `;
+          }
+
+        } else {
+          // Roman to number
+          const res = fromRomanWithBreakdown(raw);
+          if (!res) {
+            errBox.textContent = "Invalid Roman numeral string. Use only I, V, X, L, C, D, M.";
+            errBox.classList.remove('hidden');
+            resSection.classList.add('hidden');
+            return;
+          }
+          errBox.classList.add('hidden');
+
+          const lblPri = document.getElementById('lbl-primary-output');
+          const resPri = document.getElementById('res-primary-output');
+          const resPriDesc = document.getElementById('res-primary-desc');
+          const lblSec = document.getElementById('lbl-secondary-output');
+          const resSec = document.getElementById('res-secondary-output');
+          const resSecDesc = document.getElementById('res-secondary-desc');
+          const sumLine = document.getElementById('res-conversion-summary');
+          const bdContent = document.getElementById('res-breakdown-content');
+
+          if (lblPri) lblPri.textContent = "Arabic Decimal Value";
+          if (resPri) resPri.textContent = res.num.toLocaleString();
+          if (resPriDesc) resPriDesc.textContent = "Base-10 Integer";
+          if (lblSec) lblSec.textContent = "Input Roman Numeral";
+          if (resSec) resSec.textContent = raw;
+          if (resSecDesc) resSecDesc.textContent = "Roman Symbols";
+          if (sumLine) sumLine.textContent = `${raw} = ${res.num.toLocaleString()}`;
+
+          if (bdContent) {
+            bdContent.innerHTML = `
+              <div class="p-3 rounded-xl bg-slate-50 dark:bg-slate-800 space-y-1">
+                <span class="text-slate-500 font-bold">Additive &amp; Subtractive Breakdown:</span><br />
+                <strong>${res.breakdown}</strong>
+              </div>
+            `;
+          }
+        }
+
+        resSection.classList.remove('hidden');
+        resSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      btnConvert?.addEventListener('click', convert);
+
+      btnClear?.addEventListener('click', () => {
+        if (inp) inp.value = '';
+        if (errBox) errBox.classList.add('hidden');
+        if (resSection) resSection.classList.add('hidden');
+      });
+
+      // Copy
+      document.getElementById('btn-copy-conv')?.addEventListener('click', () => {
+        const text = document.getElementById('res-primary-output')?.textContent || '';
+        navigator.clipboard.writeText(text).then(() => {
+          const btn = document.getElementById('btn-copy-conv');
+          if (btn) {
+            const orig = btn.innerHTML;
+            btn.innerHTML = '<span>✅</span> Copied!';
+            setTimeout(() => { btn.innerHTML = orig; }, 2000);
+          }
+        });
+      });
+
+      // Print
+      document.getElementById('btn-print-conv')?.addEventListener('click', () => {
+        window.print();
+      });
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+  </script>
+</CalculatorLayout>
