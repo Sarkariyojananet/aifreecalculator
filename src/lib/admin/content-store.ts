@@ -91,7 +91,7 @@ const DEFAULT_HOMEPAGE_SECTIONS: HomepageSection[] = [
   {
     id: 'directory',
     title: 'All Calculators Directory',
-    description: 'Complete directory of all 119+ verified calculation tools.',
+    description: 'Complete directory of all 129+ verified calculation tools.',
     enabled: true,
     sortOrder: 4,
   },

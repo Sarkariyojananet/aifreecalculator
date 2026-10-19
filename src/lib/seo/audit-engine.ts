@@ -83,7 +83,7 @@ export const CORE_PAGES: { path: string; name: string; title: string; descriptio
   {
     path: '/',
     name: 'Homepage',
-    title: 'AI Free Calculator - 119+ Free Accurate Online Calculators',
+    title: 'AI Free Calculator - 129+ Free Accurate Online Calculators',
     description: 'Free online calculators for civil construction, loan EMI, finance, taxes, health, body mass index, scientific math, and everyday calculations.',
   },
   {
@@ -191,7 +191,7 @@ export async function runFullSEOAudit(locals?: any): Promise<SEOAuditReport> {
   });
 
   // -------------------------------------------------------------
-  // A. AUDIT CALCULATOR PAGES (119+ Tools)
+  // A. AUDIT CALCULATOR PAGES (129+ Tools)
   // -------------------------------------------------------------
   /**
    * H1 Analysis Note:

@@ -8,6 +8,9 @@
 
 import { getCalculatorTranslation } from '../i18n/translations/calculators';
 import { isValidLocale, type Locale } from '../i18n/config';
+import { getCategoryFeatures } from '../i18n/translations/category-features';
+import { getEEATContent } from '../i18n/translations/eeat-standards';
+import { getLocalizedPath } from '../i18n/utils';
 
 interface Props {
   calculatorName: string;
@@ -60,8 +63,11 @@ const categoryIntros: Record<string, string> = {
   'compiler-tools': `This ${calculatorName} provides an in-browser code editor and execution sandbox, allowing you to test syntax, practice algorithms, and inspect output instantly without local toolchain installation.`
 };
 
-const introText = translation?.intro || translation?.shortDescription || translation?.description || categoryIntros[categoryKey] || categoryIntros.general;
-const formulaDesc = translation?.formulaDescription && translation.formulaDescription !== translation.description ? translation.formulaDescription : null;
+const introText =
+  (validLang !== 'en' && translation && translation.status === 'translated')
+    ? (translation.intro || translation.shortDescription || translation.description || '')
+    : (translation?.intro || translation?.shortDescription || translation?.description || categoryIntros[categoryKey] || categoryIntros.general);
+const formulaDesc = (translation?.formulaDescription && translation.formulaDescription !== translation.description && (validLang === 'en' || translation.status === 'translated')) ? translation.formulaDescription : null;
 
 // Localized UI dictionary
 const uiLabels: Record<Locale, {
@@ -453,83 +459,9 @@ function getUseCases(cat: string, name: string, locale: Locale): string[] {
 
 const useCases = getUseCases(categoryKey, calculatorName, validLang);
 
-// Localized standard features
-const featureTemplates: Record<Locale, Array<{ icon: string; title: string; desc: string }>> = {
-  en: [
-    { icon: '⚡', title: 'Instant Execution', desc: 'Evaluates results in milliseconds as you input values, without page reloads' },
-    { icon: '🔒', title: 'Client-Side Privacy', desc: 'All processing operates locally in your browser—inputs and files are never stored' },
-    { icon: '📱', title: 'Universal Compatibility', desc: 'Optimized for high-resolution desktops, laptops, tablets, and smartphones' },
-    { icon: '💯', title: '100% Free Access', desc: 'Unlimited calculations and tool usage without accounts, sign-ups, or subscriptions' },
-    { icon: '🧩', title: 'Transparent Formulas', desc: 'Clear variable definitions and verified formulas ensure trustworthy results' },
-    { icon: '♻️', title: 'Flexible & Reusable', desc: 'Adjust parameters and re-calculate alternative scenarios as often as needed' }
-  ],
-  hi: [
-    { icon: '⚡', title: 'त्वरित परिणाम', desc: 'पेज रीलोड किए बिना मान दर्ज करते ही मिलीसेकंड में सटीक परिणाम प्राप्त करें' },
-    { icon: '🔒', title: 'पूर्ण गोपनीयता', desc: 'सभी गणनाएं सीधे आपके ब्राउज़र में होती हैं—डेटा कभी भी सर्वर पर नहीं भेजा जाता' },
-    { icon: '📱', title: 'सभी डिवाइस पर अनुकूल', desc: 'मोबाइल, टैबलेट, लैपटॉप और कंप्यूटर की स्क्रीन पर सुचारू रूप से कार्य करता है' },
-    { icon: '💯', title: '100% निःशुल्क', desc: 'बिना किसी लॉगिन या शुल्क के असीमित बार सभी टूल्स का उपयोग करें' },
-    { icon: '🧩', title: 'पारदर्शी गणितीय विधि', desc: 'स्पष्ट सूत्र और चरण-दर-चरण गणना से विश्वसनीय और सटीक परिणाम सुनिश्चित' },
-    { icon: '♻️', title: 'पुन: प्रयोज्य', desc: 'जब चाहें संख्याएं बदलकर नए परिदृश्यों का तुरंत विश्लेषण करें' }
-  ],
-  es: [
-    { icon: '⚡', title: 'Ejecución Instantánea', desc: 'Calcula resultados en milisegundos a medida que ingresas datos, sin recargas' },
-    { icon: '🔒', title: 'Privacidad del Navegador', desc: 'El procesamiento ocurre 100% en tu dispositivo, sin almacenar entradas en servidores' },
-    { icon: '📱', title: 'Compatibilidad Universal', desc: 'Optimizado para teléfonos inteligentes, tabletas, portátiles y ordenadores' },
-    { icon: '💯', title: '100% Gratuito', desc: 'Uso ilimitado de herramientas y cálculos sin registro ni suscripciones' },
-    { icon: '🧩', title: 'Fórmulas Transparentes', desc: 'Fórmulas verificadas y definiciones claras de variables para resultados fiables' },
-    { icon: '♻️', title: 'Flexible y Reutilizable', desc: 'Ajusta parámetros y evalúa escenarios alternativos tantas veces como necesites' }
-  ],
-  fr: [
-    { icon: '⚡', title: 'Exécution Instantanée', desc: 'Calcul immédiat en millisecondes sans rechargement de page' },
-    { icon: '🔒', title: 'Confidentialité Totale', desc: 'Traitement 100% local dans votre navigateur sans téléversement sur serveur' },
-    { icon: '📱', title: 'Compatibilité Universelle', desc: 'Optimisé pour ordinateurs, tablettes et smartphones' },
-    { icon: '💯', title: '100% Gratuit', desc: 'Accès illimité sans compte, sans inscription ni abonnement' },
-    { icon: '🧩', title: 'Formules Vérifiées', desc: 'Définitions claires des variables et méthodes mathématiques transparentes' },
-    { icon: '♻️', title: 'Flexible et Réutilisable', desc: 'Modifiez les valeurs et recalculez de nouveaux scénarios à volonté' }
-  ],
-  de: [
-    { icon: '⚡', title: 'Sofortige Berechnung', desc: 'Ergebnisse in Millisekunden während der Eingabe, ohne Seitenneuladen' },
-    { icon: '🔒', title: 'Lokaler Datenschutz', desc: 'Berechnung direkt im Browser – Eingaben werden niemals auf Servern gespeichert' },
-    { icon: '📱', title: 'Universelle Kompatibilität', desc: 'Optimal angepasst für Desktop-PCs, Laptops, Tablets und Smartphones' },
-    { icon: '💯', title: '100% Kostenfrei', desc: 'Unbegrenzte Nutzung aller Werkzeuge ohne Registrierung oder Kosten' },
-    { icon: '🧩', title: 'Transparente Formeln', desc: 'Geprüfte Rechenwege und klare Variablen für verlässliche Ergebnisse' },
-    { icon: '♻️', title: 'Flexibel & Wiederverwendbar', desc: 'Werte beliebig anpassen und verschiedene Szenarien durchrechnen' }
-  ],
-  it: [
-    { icon: '⚡', title: 'Calcolo Istantaneo', desc: 'Fornisce risultati in millisecondi in tempo reale senza ricaricare la pagina' },
-    { icon: '🔒', title: 'Privacy Garantita', desc: 'Tutto il calcolo avviene nel tuo browser senza invio di dati a server esterni' },
-    { icon: '📱', title: 'Compatibilità Totale', desc: 'Funziona perfettamente su smartphone, tablet, laptop e computer desktop' },
-    { icon: '💯', title: '100% Gratuito', desc: 'Accesso illimitato a tutti i calcoli senza registrazione né costi' },
-    { icon: '🧩', title: 'Formule Verificate', desc: 'Spiegazioni matematiche chiare e variabili definite con rigore' },
-    { icon: '♻️', title: 'Flessibile e Modificabile', desc: 'Cambia i parametri e ricalcola nuove simulazioni in qualsiasi momento' }
-  ],
-  pt: [
-    { icon: '⚡', title: 'Execução Instantânea', desc: 'Calcula resultados em milissegundos conforme você digita, sem recarregar a página' },
-    { icon: '🔒', title: 'Privacidade Total', desc: 'Processamento local no seu navegador: nenhum dado é gravado em servidores' },
-    { icon: '📱', title: 'Compatibilidade Universal', desc: 'Otimizado para celulares, tablets, notebooks e computadores de mesa' },
-    { icon: '💯', title: '100% Gratuito', desc: 'Acesso livre e irrestrito sem cadastro, contas ou assinaturas' },
-    { icon: '🧩', title: 'Fórmulas Transparentes', desc: 'Equações verificadas e variáveis explícitas para garantir confiabilidade' },
-    { icon: '♻️', title: 'Flexível e Reutilizável', desc: 'Altere parâmetros e recalcule hipóteses quantas vezes quiser' }
-  ],
-  ja: [
-    { icon: '⚡', title: '瞬時の計算実行', desc: '数値を入力するとページを再読み込みすることなくミリ秒単位で結果を計算' },
-    { icon: '🔒', title: '確かなプライバシー', desc: '全処理がお使いのブラウザ内で完結し、外部サーバーに入力データが保存されません' },
-    { icon: '📱', title: 'マルチデバイス最適化', desc: 'スマートフォン、タブレット、ノートPC、大画面デスクトップで快適に動作' },
-    { icon: '💯', title: '完全無料・登録不要', desc: 'ログインや会員登録なしで、すべての計算機能を無制限に利用可能' },
-    { icon: '🧩', title: '透明な計算ロジック', desc: '明確な数式と定義された変数により、常に信頼できる試算結果を提供' },
-    { icon: '♻️', title: '何度でも自由に変更', desc: '条件や数値を自在に変更して、複数のシミュレーションを即座に比較' }
-  ],
-  ko: [
-    { icon: '⚡', title: '즉각적인 연산 처리', desc: '값을 입력하는 즉시 페이지 새로고침 없이 수 밀리초 만에 결과를 산출합니다' },
-    { icon: '🔒', title: '완벽한 기기 내 보안', desc: '모든 연산이 브라우저 로컬에서 수행되며 서버로 데이터가 전송되지 않습니다' },
-    { icon: '📱', title: '모든 기기 완벽 호환', desc: '스마트폰, 태블릿, 노트북, 데스크톱 화면에 맞춰 최적화된 반응형 인터페이스' },
-    { icon: '💯', title: '100% 완전 무료 이용', desc: '회원가입, 로그인, 유료 결제 없이 무제한으로 모든 도구를 자유롭게 활용' },
-    { icon: '🧩', title: '투명하고 검증된 공식', desc: '명확한 변수 정의와 검증된 수학 공식을 통해 높은 신뢰도의 결과 제공' },
-    { icon: '♻️', title: '자유로운 반복 계산', desc: '언제든 입력값을 변경하여 다양한 조건의 계산을 실시간으로 다시 확인' }
-  ]
-};
-
-const features = featureTemplates[validLang] || featureTemplates.en;
+// Category-aware contextual feature cards (Finance, Construction, Health, PDF, Images, Compilers, Timetables, Math, General)
+const features = getCategoryFeatures(categoryKey, validLang);
+const eeat = getEEATContent(categoryKey, validLang);
 ---
 
 <div class="space-y-8">
@@ -543,6 +475,21 @@ const features = featureTemplates[validLang] || featureTemplates.en;
     <p class="text-sm leading-relaxed text-slate-700 dark:text-slate-300">
       {introText}
     </p>
+  </div>
+
+  <!-- Trust & Privacy Guarantee Strip -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+    {eeat.trustBadges.map((badge) => (
+      <div class="rounded-2xl border border-slate-200/90 bg-slate-50/70 p-3.5 dark:border-slate-800 dark:bg-slate-900/60 shadow-2xs">
+        <div class="flex items-center gap-2">
+          <span class="text-lg shrink-0">{badge.icon}</span>
+          <h3 class="text-xs font-bold text-slate-900 dark:text-white leading-tight">{badge.title}</h3>
+        </div>
+        <p class="mt-1.5 text-[11px] leading-relaxed text-slate-600 dark:text-slate-400">
+          {badge.desc}
+        </p>
+      </div>
+    ))}
   </div>
 
   <!-- Mathematical Formula (When Available) -->
@@ -638,6 +585,21 @@ const features = featureTemplates[validLang] || featureTemplates.en;
     </div>
   )}
 
+  <!-- Calculation Methodology & Reference Standards -->
+  <div class="space-y-3 rounded-2xl border border-blue-200/80 bg-linear-to-br from-blue-50/40 via-white to-indigo-50/30 p-5 dark:border-blue-900/40 dark:from-slate-900 dark:via-slate-900 dark:to-blue-950/20 shadow-2xs">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-300">
+        <span>📐</span> {eeat.methodology.title}
+      </div>
+      <span class="rounded-full border border-blue-200 bg-blue-100/80 px-2.5 py-0.5 text-[10px] font-bold text-blue-800 dark:border-blue-800 dark:bg-blue-900/60 dark:text-blue-200">
+        {eeat.methodology.standardName}
+      </span>
+    </div>
+    <p class="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+      {eeat.methodology.description}
+    </p>
+  </div>
+
   <!-- Why Use This Tool/Calculator -->
   <div class="space-y-4">
     <h2 class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -675,28 +637,54 @@ const features = featureTemplates[validLang] || featureTemplates.en;
     </ul>
   </div>
 
-  <!-- Official Domain Disclaimers & Limitations -->
-  <div class="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-900/40 dark:bg-amber-950/20 space-y-2">
-    <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
-      <span>⚠️</span> {labels.disclaimers}
+  <!-- Technical Limitations & Domain Disclaimers -->
+  <div class="space-y-4">
+    <div class="rounded-2xl border border-amber-200 bg-amber-50/60 p-5 dark:border-amber-900/40 dark:bg-amber-950/20 space-y-3">
+      <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300">
+        <span>⚠️</span> {eeat.limitations.title}
+      </div>
+      <div class="space-y-2 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+        <p class="font-medium text-slate-800 dark:text-slate-200">
+          • {eeat.limitations.disclaimer}
+        </p>
+        <p>
+          • {eeat.limitations.technicalNote}
+        </p>
+        {isHealth && (
+          <p>• {labels.medicalNotice}</p>
+        )}
+        {isFinance && (
+          <p>• {labels.financialNotice}</p>
+        )}
+        {isConstruction && (
+          <p>• {labels.engineeringNotice}</p>
+        )}
+        {isCompiler && (
+          <p>• {labels.executionNotice}</p>
+        )}
+        {(isImageTool || isPdfTool) && (
+          <p>• {labels.privacyGuarantee}</p>
+        )}
+        <p>• {labels.disclaimerVerify}</p>
+      </div>
     </div>
-    <div class="space-y-1.5 text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
-      {isHealth && (
-        <p>• {labels.medicalNotice}</p>
-      )}
-      {isFinance && (
-        <p>• {labels.financialNotice}</p>
-      )}
-      {isConstruction && (
-        <p>• {labels.engineeringNotice}</p>
-      )}
-      {isCompiler && (
-        <p>• {labels.executionNotice}</p>
-      )}
-      {(isImageTool || isPdfTool) && (
-        <p>• {labels.privacyGuarantee}</p>
-      )}
-      <p>• {labels.disclaimerVerify}</p>
+
+    <!-- Peer Review & Feedback Channel -->
+    <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs shadow-2xs">
+      <div class="space-y-0.5">
+        <div class="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+          <span>🤝</span> {eeat.limitations.peerReviewNote}
+        </div>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400">
+          Our engineering team regularly reviews algorithms against updated regulatory and technical publications.
+        </p>
+      </div>
+      <a
+        href={getLocalizedPath('/contact/', validLang)}
+        class="shrink-0 rounded-lg bg-slate-100 hover:bg-slate-200 px-3.5 py-1.5 text-xs font-bold text-blue-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-blue-300 transition cursor-pointer"
+      >
+        {eeat.limitations.feedbackLinkText}
+      </a>
     </div>
   </div>
 

@@ -150,11 +150,62 @@ const contactHref = `${getLocalizedPath("/contact/", lang)}#calc=${encodeURIComp
 
 // Build interconnected Schema.org @graph (WebApplication + BreadcrumbList + HowTo)
 const resolvedFaqs =
-  hasTranslatedFaqs && calcTranslation?.faqs
-    ? calcTranslation.faqs
-    : calcTranslation?.faqs && calcTranslation.faqs.length > 0
+  lang === "en"
+    ? calcTranslation?.faqs && calcTranslation.faqs.length > 0
+      ? calcTranslation.faqs
+      : undefined
+    : hasTranslatedFaqs && calcTranslation?.faqs && calcTranslation.faqs.length > 0
       ? calcTranslation.faqs
       : undefined;
+
+const feedbackCardTranslations: Record<Locale, { prompt: string; linkText: string; buttonText: string }> = {
+  en: {
+    prompt: "Found an issue? If a tool is not working as expected or you spot an error, please",
+    linkText: "contact us",
+    buttonText: "Contact Support →",
+  },
+  hi: {
+    prompt: "कोई समस्या मिली? यदि कोई टूल ठीक से काम नहीं कर रहा है, तो कृपया",
+    linkText: "हमसे संपर्क करें",
+    buttonText: "सहायता प्राप्त करें →",
+  },
+  es: {
+    prompt: "¿Encontró un error? Si una herramienta no funciona como esperaba, por favor",
+    linkText: "contáctenos",
+    buttonText: "Contactar Soporte →",
+  },
+  ja: {
+    prompt: "不具合を見つけましたか？ツールが正常に動作しない場合は、",
+    linkText: "お問い合わせ",
+    buttonText: "サポートへ連絡 →",
+  },
+  fr: {
+    prompt: "Un problème ? Si un outil ne fonctionne pas comme prévu, veuillez",
+    linkText: "nous contacter",
+    buttonText: "Contacter le support →",
+  },
+  de: {
+    prompt: "Fehler gefunden? Wenn ein Tool nicht wie erwartet funktioniert, bitte",
+    linkText: "kontaktieren Sie uns",
+    buttonText: "Support kontaktieren →",
+  },
+  pt: {
+    prompt: "Encontrou um erro? Se uma ferramenta não estiver funcionando como esperado, por favor",
+    linkText: "fale conosco",
+    buttonText: "Contatar Suporte →",
+  },
+  ko: {
+    prompt: "문제를 발견하셨나요? 도구가 예상대로 작동하지 않는 경우 언제든",
+    linkText: "문의해 주세요",
+    buttonText: "고객지원 문의 →",
+  },
+  it: {
+    prompt: "Hai riscontrato un errore? Se uno strumento non funziona come previsto, ti invitiamo a",
+    linkText: "contattarci",
+    buttonText: "Contatta il supporto →",
+  },
+};
+const tFeedback = feedbackCardTranslations[lang] || feedbackCardTranslations.en;
 
 const graphFaqs = resolvedFaqs?.map((f) => ({
   question: f.question,
@@ -270,16 +321,14 @@ const graphSchema = buildCalculatorGraphSchema({
               <div class="flex items-center gap-2.5 text-slate-700 dark:text-slate-300">
                 <span class="text-base shrink-0">💬</span>
                 <span>
-                  <strong>Found an issue?</strong> If a tool is not working as
-                  expected or you spot an error, please{" "}
+                  {tFeedback.prompt}{" "}
                   <a
                     href={contactHref}
                     rel="nofollow"
                     class="font-bold text-blue-600 underline dark:text-blue-400"
                   >
-                    contact us
-                  </a>{" "}
-                  so we can help.
+                    {tFeedback.linkText}
+                  </a>.
                 </span>
               </div>
               <a
@@ -287,7 +336,7 @@ const graphSchema = buildCalculatorGraphSchema({
                 rel="nofollow"
                 class="shrink-0 inline-flex items-center justify-center gap-1 rounded-xl bg-blue-600 px-3.5 py-1.5 font-bold text-white shadow-xs hover:bg-blue-700 transition"
               >
-                Contact Support →
+                {tFeedback.buttonText}
               </a>
             </div>
           )}
@@ -318,16 +367,14 @@ const graphSchema = buildCalculatorGraphSchema({
                   <div class="flex items-center gap-2.5 text-slate-700 dark:text-slate-300">
                     <span class="text-base shrink-0">💬</span>
                     <span>
-                      <strong>Found an issue?</strong> If a calculator is not
-                      working as expected or you spot an error, please{" "}
+                      {tFeedback.prompt}{" "}
                       <a
                         href={contactHref}
                         rel="nofollow"
                         class="font-bold text-blue-600 underline dark:text-blue-400"
                       >
-                        contact us
-                      </a>{" "}
-                      so we can help.
+                        {tFeedback.linkText}
+                      </a>.
                     </span>
                   </div>
                   <a
@@ -335,7 +382,7 @@ const graphSchema = buildCalculatorGraphSchema({
                     rel="nofollow"
                     class="shrink-0 inline-flex items-center justify-center gap-1 rounded-xl bg-blue-600 px-3.5 py-1.5 font-bold text-white shadow-xs hover:bg-blue-700 transition"
                   >
-                    Contact Support →
+                    {tFeedback.buttonText}
                   </a>
                 </div>
               )}
@@ -354,19 +401,19 @@ const graphSchema = buildCalculatorGraphSchema({
             class="prose prose-slate max-w-none dark:prose-invert prose-headings:font-bold prose-headings:tracking-tight prose-a:text-blue-600 dark:prose-a:text-blue-400"
           >
             {
-              Astro.slots.has("content") ? (
-                <slot name="content" />
-              ) : !useSlotContent &&
-              hasTranslatedSeo &&
-              calcTranslation?.contentHtml ? (
+              lang === "en" ? (
+                Astro.slots.has("content") ? (
+                  <slot name="content" />
+                ) : (
+                  <CalculatorSEOContent
+                    calculatorName={effectiveName}
+                    category={category}
+                    slug={slug}
+                    lang="en"
+                  />
+                )
+              ) : hasTranslatedSeo && calcTranslation?.contentHtml ? (
                 <div class="space-y-6" set:html={calcTranslation.contentHtml} />
-              ) : !useSlotContent && lang !== "en" && hasTranslatedSeo ? (
-                <CalculatorSEOContent
-                  calculatorName={effectiveName}
-                  category={category}
-                  slug={slug}
-                  lang={lang}
-                />
               ) : (
                 <CalculatorSEOContent
                   calculatorName={effectiveName}
@@ -381,13 +428,33 @@ const graphSchema = buildCalculatorGraphSchema({
 
         <!-- FAQs Section -->
         {
-          Astro.slots.has("faq") ? (
-            <div class="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/60 sm:p-8">
-              <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white mb-6 flex items-center gap-2">
-                <span>❓</span> {tCommon.sections.faq}
-              </h2>
-              <slot name="faq" />
-            </div>
+          lang === "en" ? (
+            Astro.slots.has("faq") ? (
+              <div class="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/60 sm:p-8">
+                <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+                  <span>❓</span> {tCommon.sections.faq}
+                </h2>
+                <slot name="faq" />
+              </div>
+            ) : resolvedFaqs && resolvedFaqs.length > 0 ? (
+              <div class="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/60 sm:p-8">
+                <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white mb-6 flex items-center gap-2">
+                  <span>❓</span> {tCommon.sections.faq}
+                </h2>
+                <div class="space-y-4">
+                  {resolvedFaqs.map((faq) => (
+                    <details class="group rounded-xl border border-slate-200 bg-slate-50/50 p-4 dark:border-slate-800 dark:bg-slate-900/40">
+                      <summary class="cursor-pointer font-semibold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400">
+                        {faq.question}
+                      </summary>
+                      <p class="mt-2 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                        {faq.answer}
+                      </p>
+                    </details>
+                  ))}
+                </div>
+              </div>
+            ) : null
           ) : resolvedFaqs && resolvedFaqs.length > 0 ? (
             <div class="rounded-3xl border border-slate-200 bg-white p-6 dark:border-slate-800 dark:bg-slate-900/60 sm:p-8">
               <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-white mb-6 flex items-center gap-2">
