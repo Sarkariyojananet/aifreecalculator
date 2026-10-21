@@ -1,7 +1,4 @@
 import { defineMiddleware } from 'astro:middleware';
-import { getRedirectRules, getFastRedirect, isRedirectMapLoaded } from './lib/admin/content-store';
-import { record404Hit } from './lib/redirects/monitor';
-import { recordError } from './lib/monitoring/store';
 import { isValidLocale } from './i18n/config';
 import { safeWaitUntil } from './lib/cloudflare-env';
 
@@ -132,7 +129,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
     lowerPath.endsWith('.log') ||
     lowerPath.startsWith('/scratch/') ||
     lowerPath.startsWith('/src/lib/') ||
-    lowerPath.startsWith('/src/pages/api/admin/') ||
     lowerPath.startsWith('/src/data/') ||
     (!import.meta.env.DEV && lowerPath.startsWith('/src/'));
 
@@ -178,24 +174,18 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   const isGetOrHead = context.request.method === 'GET' || context.request.method === 'HEAD';
-  const isAdminRoute = pathname.startsWith('/admin') || pathname.startsWith('/api/admin');
   const isApiRoute = pathname.startsWith('/api/');
-
-
-  // Ultra-fast cookie presence check without parsing entire cookie jar
-  const cookieHeader = context.request.headers.get('cookie') || '';
-  const hasAdminCookie = cookieHeader.includes('admin_session=');
 
   const cache = typeof caches !== 'undefined' && (caches as any).default ? ((caches as any).default as Cache) : null;
 
-  // Standard HTML page identification (strictly exclude admin, API, static assets, and paths with file extensions)
-  const isHtmlPagePath = !isAdminRoute && !isApiRoute && !pathname.includes('.');
+  // Standard HTML page identification (strictly exclude API, static assets, and paths with file extensions)
+  const isHtmlPagePath = !isApiRoute && !pathname.includes('.');
   const isPrerenderOrBuild =
     Boolean((context as any).isPrerendered) ||
     (typeof process !== 'undefined' && Array.isArray(process.argv) && process.argv.includes('build'));
   const isLocalHost = context.url.hostname === 'localhost' || context.url.hostname === '127.0.0.1';
-  const isWorkerCacheEligible = !isPrerenderOrBuild && isGetOrHead && isHtmlPagePath && !hasAdminCookie && !import.meta.env.DEV && !isLocalHost;
-  const isCacheablePage = isGetOrHead && isHtmlPagePath && !hasAdminCookie;
+  const isWorkerCacheEligible = !isPrerenderOrBuild && isGetOrHead && isHtmlPagePath && !import.meta.env.DEV && !isLocalHost;
+  const isCacheablePage = isGetOrHead && isHtmlPagePath;
   const deployVer = import.meta.env.PUBLIC_GIT_COMMIT_HASH || 'v1';
   const cacheKey = isWorkerCacheEligible ? `${getNormalizedCacheKey(context.url)}?__cf_ver=${deployVer}` : null;
 
@@ -212,35 +202,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
-  // 2. Check dynamic 301/302 redirects managed in Admin CMS (strictly on HTML page routes)
-  if (isHtmlPagePath) {
-    try {
-      let rule = isRedirectMapLoaded() ? getFastRedirect(pathname) : null;
-
-      if (!rule && !isRedirectMapLoaded()) {
-        const redirects = await getRedirectRules(context.locals);
-        const normalizedPath = pathname.endsWith('/') ? pathname : `${pathname}/`;
-        rule = redirects.find(
-          (r) => r.active !== false && (r.source === pathname || r.source === normalizedPath || `${r.source}/` === normalizedPath)
-        ) || null;
-      }
-
-      if (rule && rule.destination) {
-        const redirectResponse = context.redirect(rule.destination, rule.statusCode || 301);
-        if (rule.statusCode !== 302) {
-          redirectResponse.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=604800');
-          redirectResponse.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=604800');
-        } else {
-          redirectResponse.headers.set('Cache-Control', 'public, max-age=300, s-maxage=600');
-        }
-        return redirectResponse;
-      }
-    } catch {
-      // Fail safely to avoid blocking request
-    }
-  }
-
-  // 2b. Redirect legacy PDF tools paths across ALL languages to /pdf-tools/...
+  // 2. Redirect legacy PDF tools paths across ALL languages to /pdf-tools/...
   if (isHtmlPagePath && pathname.includes('free-online-tools/')) {
     const pdfSlugs = ['pdf-merge', 'pdf-split', 'pdf-compress', 'pdf-to-image', 'image-to-pdf'];
     for (const slug of pdfSlugs) {
@@ -264,7 +226,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
-  // 2c. Canonicalize legacy query parameter `?lang=xx` to clean path `/{lang}/...`
+  // 2b. Canonicalize legacy query parameter `?lang=xx` to clean path `/{lang}/...`
   // Fast path: Only parse if query string actually contains 'lang='
   if (isHtmlPagePath && context.url.search?.includes('lang=')) {
     const queryLang = context.url.searchParams.get('lang');
@@ -283,7 +245,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
-  // 2d. Canonicalize obsolete SearchAction template query /?q={search_term_string} to clean home /
+  // 2c. Canonicalize obsolete SearchAction template query /?q={search_term_string} to clean home /
   if (
     isHtmlPagePath &&
     (pathname === '/' || pathname === '') &&
@@ -299,30 +261,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
   try {
     response = await next();
   } catch (err: any) {
-    const errorMsg = err?.message || 'Uncaught Server Exception';
-    safeWaitUntil(
-      context,
-      recordError(context.locals, {
-        route: pathname,
-        category: isApiRoute ? 'api' : 'worker_server',
-        severity: 'critical',
-        message: errorMsg,
-      })
-    );
     throw err;
-  }
-
-  // Record 5xx responses during live runtime
-  if (response.status >= 500 && !pathname.startsWith('/500')) {
-    safeWaitUntil(
-      context,
-      recordError(context.locals, {
-        route: pathname,
-        category: isApiRoute ? 'api' : 'worker_server',
-        severity: 'critical',
-        message: `HTTP ${response.status} Server Error`,
-      })
-    );
   }
 
   // 3. Ensure response has mutable headers (e.g. if returned from Cache API) and attach security headers
@@ -344,14 +283,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
   }
 
   // 4. Cache-Control Header Policy:
-  // Admin & Authenticated routes: NEVER cache on CDN or browser
-  if (isAdminRoute || hasAdminCookie) {
-    response.headers.set('Cache-Control', 'private, no-cache, no-store, must-revalidate, max-age=0');
-    response.headers.set('Pragma', 'no-cache');
-    response.headers.set('Cloudflare-CDN-Cache-Control', 'no-store');
-    return response;
-  }
-
   // API Endpoints: Handled individually by route handlers; ensure sensible defaults for mutations
   if (isApiRoute) {
     if (!response.headers.has('Cache-Control')) {
@@ -381,9 +312,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
-  // 5. Genuine 404 Detection & Monitoring
-  if (response.status === 404 && isGetOrHead && !isAdminRoute && !isApiRoute) {
-    safeWaitUntil(context, record404Hit(context.url, context.request, context.locals));
+  // 5. Genuine 404 Detection & Response Headers
+  if (response.status === 404 && isGetOrHead && !isApiRoute) {
     response.headers.set('Cache-Control', 'public, max-age=60, s-maxage=300');
     response.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=300');
   }

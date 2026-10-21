@@ -110,7 +110,6 @@ export function getRuntimeEnvSync(locals?: any, explicitCfEnv?: any): Record<str
     // Direct binding fallbacks attached to locals
     const directBindings: Record<string, any> = {};
     if (locals.DB) directBindings.DB = locals.DB;
-    if (locals.SESSION) directBindings.SESSION = locals.SESSION;
     if (locals.CONTACT_EMAIL) directBindings.CONTACT_EMAIL = locals.CONTACT_EMAIL;
     if (Object.keys(directBindings).length > 0) {
       sources.push(directBindings);

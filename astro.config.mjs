@@ -182,7 +182,6 @@ export default defineConfig({
               urlPath === '/wrangler.toml' ||
               urlPath.startsWith('/scratch/') ||
               urlPath.startsWith('/src/lib/') ||
-              urlPath.startsWith('/src/pages/api/admin/') ||
               urlPath.startsWith('/src/data/') ||
               urlPath.endsWith('.env') ||
               urlPath.endsWith('.sql') ||
