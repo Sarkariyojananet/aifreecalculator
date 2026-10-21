@@ -42,7 +42,10 @@ export default defineConfig({
 
   vite: {
     optimizeDeps: {
-      exclude: ['astro:middleware'],
+      exclude: ['astro:middleware', 'astro/virtual-modules/middleware.js'],
+    },
+    ssr: {
+      noExternal: ['astro'],
     },
   },
 

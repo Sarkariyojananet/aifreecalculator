@@ -677,11 +677,11 @@ const homePopularSlugs = [
   'emi-calculator',
   'sip-calculator',
   'income-tax-calculator',
-  'rcc-slab-steel-calculator',
-  'bmi-calculator',
+  'sleep-calculator',
   'age-calculator',
   'percentage-calculator',
-  'calorie-calculator',
+  'concrete-calculator',
+  'pdf-compress',
 ];
 export const PRECOMPUTED_HOME_POPULAR_CALCULATORS = homePopularSlugs
   .map((slug) => getCalculatorBySlug(slug))

@@ -296,10 +296,24 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
     return { label: '❌ Insufficient', cls: 'text-red-600 dark:text-red-400' };
   }
 
-  function showSleepResults(badge, times, latency) {
+  let lastSleepCalculation = null;
+
+  function showSleepResults(badge, times, latency, modeDetails) {
+    lastSleepCalculation = {
+      mode: modeDetails.mode,
+      modeTitle: modeDetails.title,
+      badge,
+      latency,
+      inputs: modeDetails.inputs,
+      times,
+      durationText: '',
+      cyclesText: '',
+      qualityText: '',
+      isOk: modeDetails.isOk
+    };
+
     document.getElementById('sleep-badge').textContent = badge;
     const grid = document.getElementById('sleep-times-grid');
-    const recommended = [5, 6, 7, 8, 9];
     grid.innerHTML = '';
     times.forEach(({ time, cycles, label }) => {
       const q = getCycleQuality(cycles);
@@ -314,34 +328,61 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
 
     const bestCycles = Math.max(...times.map(t => t.cycles));
     const best = times.find(t => t.cycles === bestCycles);
-    document.getElementById('sleep-res-duration').textContent = (best.cycles * 1.5) + ' hrs';
-    document.getElementById('sleep-res-cycles').textContent = best.cycles + ' Cycles';
-    document.getElementById('sleep-res-latency').textContent = latency + ' min';
+    const durationStr = (best.cycles * 1.5) + ' hrs';
+    const cyclesStr = best.cycles + ' Cycles';
+    const latencyStr = latency + ' min';
     const q = getCycleQuality(best.cycles);
+
+    document.getElementById('sleep-res-duration').textContent = durationStr;
+    document.getElementById('sleep-res-cycles').textContent = cyclesStr;
+    document.getElementById('sleep-res-latency').textContent = latencyStr;
     document.getElementById('sleep-res-quality').textContent = q.label;
     document.getElementById('sleep-res-quality').className = 'mt-1 text-sm font-bold ' + q.cls;
+
+    lastSleepCalculation.durationText = durationStr;
+    lastSleepCalculation.cyclesText = cyclesStr;
+    lastSleepCalculation.latencyText = latencyStr;
+    lastSleepCalculation.qualityText = q.label;
+
     sleepResults.classList.remove('hidden');
     sleepResults.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   document.getElementById('form-sleep-wakeup')?.addEventListener('submit', () => {
-    const wakeMin = parseTime(document.getElementById('wake-time').value);
-    const latency = parseInt(document.getElementById('fall-asleep').value);
+    const wakeVal = document.getElementById('wake-time').value;
+    const wakeMin = parseTime(wakeVal);
+    const latencySel = document.getElementById('fall-asleep');
+    const latency = parseInt(latencySel.value);
+    const latencyText = latencySel.options[latencySel.selectedIndex]?.text || `${latency} minutes`;
     const times = [];
     for (let cycles = 9; cycles >= 3; cycles--) {
       const sleepMinutes = cycles * 90;
       const bedtime = wakeMin - sleepMinutes - latency;
       times.push({ time: minToTime(bedtime), cycles, label: cycles + ' cycles' });
     }
-    const badge = '🌙 Best Bedtimes to Wake Up at ' + document.getElementById('wake-time').value;
-    showSleepResults(badge, times, latency);
+    const badge = '🌙 Best Bedtimes to Wake Up at ' + wakeVal;
+    showSleepResults(badge, times, latency, {
+      mode: 'wakeup',
+      title: 'Bedtime Calculator — When Should I Go to Sleep?',
+      inputs: [
+        ['Desired Wake-Up Time', wakeVal],
+        ['Time to Fall Asleep', latencyText],
+        ['Cycle Duration Reference', '90 Minutes per cycle']
+      ]
+    });
   });
 
-  document.getElementById('btn-wakeup-clear')?.addEventListener('click', () => sleepResults?.classList.add('hidden'));
+  document.getElementById('btn-wakeup-clear')?.addEventListener('click', () => {
+    lastSleepCalculation = null;
+    sleepResults?.classList.add('hidden');
+  });
 
   document.getElementById('form-sleep-bedtime')?.addEventListener('submit', () => {
-    const bedMin = parseTime(document.getElementById('bed-time').value);
-    const latency = parseInt(document.getElementById('fall-asleep-b').value);
+    const bedVal = document.getElementById('bed-time').value;
+    const bedMin = parseTime(bedVal);
+    const latencySel = document.getElementById('fall-asleep-b');
+    const latency = parseInt(latencySel.value);
+    const latencyText = latencySel.options[latencySel.selectedIndex]?.text || `${latency} minutes`;
     const asleepMin = bedMin + latency;
     const times = [];
     for (let cycles = 3; cycles <= 9; cycles++) {
@@ -349,42 +390,87 @@ import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
       const wakeMin = asleepMin + sleepMinutes;
       times.push({ time: minToTime(wakeMin), cycles, label: cycles + ' cycles' });
     }
-    const badge = '⏰ Best Wake-Up Times After Sleeping at ' + document.getElementById('bed-time').value;
-    showSleepResults(badge, times, latency);
+    const badge = '⏰ Best Wake-Up Times After Sleeping at ' + bedVal;
+    showSleepResults(badge, times, latency, {
+      mode: 'bedtime',
+      title: 'Wake-Up Calculator — When Should I Wake Up?',
+      inputs: [
+        ['Planned Bedtime', bedVal],
+        ['Time to Fall Asleep', latencyText],
+        ['Cycle Duration Reference', '90 Minutes per cycle']
+      ]
+    });
   });
 
-  document.getElementById('btn-bedtime-clear')?.addEventListener('click', () => sleepResults?.classList.add('hidden'));
+  document.getElementById('btn-bedtime-clear')?.addEventListener('click', () => {
+    lastSleepCalculation = null;
+    sleepResults?.classList.add('hidden');
+  });
 
   document.getElementById('form-sleep-howmany')?.addEventListener('submit', () => {
-    const bedMin = parseTime(document.getElementById('hm-bed').value);
-    const wakeMin = parseTime(document.getElementById('hm-wake').value);
+    const bedVal = document.getElementById('hm-bed').value;
+    const wakeVal = document.getElementById('hm-wake').value;
+    const ageSel = document.getElementById('hm-age');
+    const ageGroup = ageSel.value;
+    const ageText = ageSel.options[ageSel.selectedIndex]?.text || ageGroup;
+
+    const bedMin = parseTime(bedVal);
+    const wakeMin = parseTime(wakeVal);
     let diffMin = wakeMin - bedMin;
     if (diffMin < 0) diffMin += 1440;
     const cycles = Math.round(diffMin / 90);
-    const ageGroup = document.getElementById('hm-age').value;
     const minRec = ageGroup === '65+' ? 7 : 7;
     const maxRec = ageGroup === '14-17' ? 10 : 9;
     const hoursGot = +(diffMin / 60).toFixed(1);
     const badge = `😴 You're Sleeping ${hoursGot} Hours (${cycles} Cycles)`;
-    const times = [{ time: hoursGot + ' hours', cycles }];
+    const times = [{ time: hoursGot + ' hours', cycles, label: cycles + ' cycles' }];
     document.getElementById('sleep-badge').textContent = badge;
     const grid = document.getElementById('sleep-times-grid');
     const isOk = hoursGot >= minRec && hoursGot <= maxRec;
+    const statusMsg = isOk
+      ? 'Great! This meets the recommended ' + minRec + '–' + maxRec + ' hours for your age group.'
+      : 'Below the recommended ' + minRec + '–' + maxRec + ' hours for your age group. Consider adjusting your schedule.';
+
     grid.innerHTML = `<div class="col-span-full rounded-2xl border ${isOk ? 'border-emerald-300 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-950/30' : 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-950/30'} p-4 text-center">
       <div class="text-3xl font-black ${isOk ? 'text-emerald-700 dark:text-emerald-300' : 'text-red-700 dark:text-red-300'}">${hoursGot} Hours</div>
       <div class="text-sm font-bold mt-1 text-slate-600 dark:text-slate-300">${cycles} complete sleep cycles</div>
-      <div class="text-sm font-bold mt-2 ${isOk ? 'text-emerald-600' : 'text-red-600'}">${isOk ? '✅ Great! This meets the recommended ' + minRec + '–' + maxRec + ' hours for your age group.' : '⚠️ Below the recommended ' + minRec + '–' + maxRec + ' hours for your age group. Consider adjusting your schedule.'}</div>
+      <div class="text-sm font-bold mt-2 ${isOk ? 'text-emerald-600' : 'text-red-600'}">${isOk ? '✅ ' + statusMsg : '⚠️ ' + statusMsg}</div>
     </div>`;
+
     document.getElementById('sleep-res-duration').textContent = hoursGot + ' hrs';
     document.getElementById('sleep-res-cycles').textContent = cycles + ' Cycles';
     document.getElementById('sleep-res-latency').textContent = 'N/A';
     const q = getCycleQuality(cycles);
     document.getElementById('sleep-res-quality').textContent = q.label;
     document.getElementById('sleep-res-quality').className = 'mt-1 text-sm font-bold ' + q.cls;
+
+    lastSleepCalculation = {
+      mode: 'howmany',
+      modeTitle: 'How Many Hours of Sleep Do I Need?',
+      badge,
+      latency: 0,
+      latencyText: 'N/A',
+      inputs: [
+        ['Bedtime', bedVal],
+        ['Wake-Up Time', wakeVal],
+        ['Age Group', ageText],
+        ['Target Range for Age', `${minRec}–${maxRec} hours per night`]
+      ],
+      times,
+      durationText: hoursGot + ' hrs',
+      cyclesText: cycles + ' Cycles',
+      qualityText: q.label,
+      isOk,
+      statusMsg
+    };
+
     sleepResults.classList.remove('hidden');
+    sleepResults.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   });
 
-  document.getElementById('btn-howmany-clear')?.addEventListener('click', () => sleepResults?.classList.add('hidden'));
+  document.getElementById('btn-howmany-clear')?.addEventListener('click', () => {
+    sleepResults?.classList.add('hidden');
+  });
 </script>
 
 <script type="application/ld+json" set:html={JSON.stringify({

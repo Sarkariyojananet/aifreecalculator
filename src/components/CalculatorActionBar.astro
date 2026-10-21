@@ -1173,10 +1173,70 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
             results.push({ label: 'Estimated Material Cost', value: (cyCost.textContent || '').trim(), isHero: true });
           }
         }
-        var cyBags = container.querySelector('#res-bag-count');
-        if (cyBags && cyCostCard && !cyCostCard.classList.contains('hidden')) {
-          if (!results.some(function(r) { return r.label.toLowerCase().includes('bag'); })) {
-            results.push({ label: 'Estimated Bags Needed', value: (cyBags.textContent || '').trim(), isHero: false });
+        // C4. Specialized capture for Sleep Calculator (#sleep-results)
+        var sleepRes = container.querySelector('#sleep-results');
+        if (sleepRes && !sleepRes.classList.contains('hidden')) {
+          var sleepBadge = sleepRes.querySelector('#sleep-badge');
+          if (sleepBadge) {
+            var bText = (sleepBadge.textContent || '').trim().replace(/\s+/g, ' ');
+            if (bText && !results.some(function(r) { return r.label.toLowerCase().includes('sleep schedule') || r.label.toLowerCase().includes('recommended'); })) {
+              results.unshift({ label: 'Recommended Sleep Schedule', value: bText, isHero: true });
+            }
+          }
+
+          var sleepDuration = sleepRes.querySelector('#sleep-res-duration');
+          if (sleepDuration && !results.some(function(r) { return r.label.toLowerCase() === 'sleep duration'; })) {
+            results.push({ label: 'Sleep Duration', value: (sleepDuration.textContent || '').trim(), isHero: true });
+          }
+
+          var sleepCycles = sleepRes.querySelector('#sleep-res-cycles');
+          if (sleepCycles && !results.some(function(r) { return r.label.toLowerCase() === 'sleep cycles'; })) {
+            results.push({ label: 'Sleep Cycles', value: (sleepCycles.textContent || '').trim(), isHero: true });
+          }
+
+          var sleepLatency = sleepRes.querySelector('#sleep-res-latency');
+          if (sleepLatency && !results.some(function(r) { return r.label.toLowerCase() === 'fall asleep in'; })) {
+            results.push({ label: 'Fall Asleep In', value: (sleepLatency.textContent || '').trim(), isHero: false });
+          }
+
+          var sleepQuality = sleepRes.querySelector('#sleep-res-quality');
+          if (sleepQuality && !results.some(function(r) { return r.label.toLowerCase() === 'circadian sleep quality'; })) {
+            results.push({ label: 'Circadian Sleep Quality', value: (sleepQuality.textContent || '').trim(), isHero: false });
+          }
+
+          // Capture sleep times grid into a structured table if not already captured
+          var timesGrid = sleepRes.querySelector('#sleep-times-grid');
+          if (timesGrid && timesGrid.children.length > 0) {
+            var gridCards = timesGrid.querySelectorAll('.rounded-2xl');
+            if (gridCards.length > 0) {
+              var sRows = [];
+              gridCards.forEach(function (c) {
+                var timeEl = c.querySelector('.text-lg, .text-3xl');
+                var cycleEl = c.querySelector('.text-\\[11px\\], .text-sm');
+                var qualEl = c.querySelector('.text-\\[11px\\].font-semibold, .text-sm.font-bold:last-child');
+                var isRecEl = c.querySelector('.text-\\[10px\\]');
+
+                var tVal = timeEl ? (timeEl.textContent || '').trim() : '';
+                var cVal = cycleEl ? (cycleEl.textContent || '').trim() : '';
+                var qVal = qualEl ? (qualEl.textContent || '').trim() : '';
+                var rVal = isRecEl ? '⭐ Recommended' : 'Alternative';
+
+                if (tVal) {
+                  sRows.push([tVal, cVal, qVal, rVal]);
+                }
+              });
+
+              if (sRows.length > 0) {
+                var activeTab = container.querySelector('.btn-sleep-tab.active');
+                var tabType = activeTab ? activeTab.getAttribute('data-tab') : 'wakeup';
+                var firstColHeader = tabType === 'bedtime' ? 'Wake-Up Time' : (tabType === 'howmany' ? 'Total Sleep Duration' : 'Optimal Bedtime');
+                tables.unshift({
+                  title: 'Calculated Sleep Cycles & Timing Schedule',
+                  headers: [firstColHeader, 'Duration & Cycles', 'Sleep Quality', 'Guidance Recommendation'],
+                  rows: sRows
+                });
+              }
+            }
           }
         }
 
@@ -1404,13 +1464,16 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
           }
         });
 
+        var cleanUrl = window.location.origin + window.location.pathname;
+
         return {
           calculatorName: calcName,
           slug: calcSlug,
           category: calcCategory,
           timestamp: new Date().toISOString(),
           formattedDate: new Date().toLocaleString(),
-          url: window.location.href,
+          url: cleanUrl,
+          cleanUrl: cleanUrl,
           shareableUrl: generateShareableUrl(),
           inputs: inputs,
           results: uniqueResults,
@@ -1892,10 +1955,17 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
           'code { background: #f1f5f9; padding: 2px 5px; border-radius: 4px; font-family: monospace; font-size: 11px; }' +
           '.text-blue-600, .text-blue-700, [class*="text-blue-"] { color: #1d4ed8; font-weight: 700; }' +
           '@media print {' +
+          '  @page { size: A4 portrait; margin: 10mm 12mm; }' +
           '  .top-nav { display: none !important; }' +
-          '  body { background: white !important; font-size: 10.5pt; }' +
+          '  body { background: white !important; font-size: 9pt !important; line-height: 1.35 !important; }' +
           '  .report-wrapper { margin: 0 !important; padding: 0 !important; max-width: 100% !important; }' +
           '  .report-card { border: none !important; box-shadow: none !important; padding: 0 !important; }' +
+          '  .report-card::before { display: none !important; }' +
+          '  .section-title { margin: 10px 0 4px 0 !important; font-size: 10pt !important; page-break-after: avoid !important; }' +
+          '  .report-header { margin-bottom: 8px !important; padding-bottom: 6px !important; }' +
+          '  table { margin: 2px 0 !important; page-break-inside: avoid !important; break-inside: avoid !important; }' +
+          '  th, td { padding: 3px 6px !important; font-size: 8.5pt !important; }' +
+          '  .report-footer { margin-top: 10px !important; padding-top: 6px !important; }' +
           '}' +
           '</style></head><body>' +
           '<div class="top-nav">' +
@@ -1905,7 +1975,7 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
           '  </div>' +
           '  <div class="nav-btns">' +
           '    <button class="btn btn-primary" onclick="window.print()">🖨️ Print / Save PDF</button>' +
-          '    <a class="btn" href="' + escapeHtml(data.shareableUrl || data.url) + '" target="_blank">🔗 Open Live Tool</a>' +
+          '    <a class="btn" href="' + escapeHtml(data.cleanUrl) + '" target="_blank">🔗 Open Live Tool</a>' +
           '    <button class="btn" onclick="window.close()">✕ Close</button>' +
           '  </div>' +
           '</div>' +
@@ -1933,7 +2003,7 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
           tablesHtml +
           '  <div class="report-footer">' +
           '    <span>AI Free Calculator • 100% Client-Side Private Computation</span>' +
-          '    <span>' + escapeHtml(data.shareableUrl || data.url) + '</span>' +
+          '    <span style="font-family:monospace;font-weight:600;color:#475569;">' + escapeHtml(data.cleanUrl) + '</span>' +
           '  </div>' +
           '</div></div></body></html>';
 
@@ -2092,6 +2162,18 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
                 'Bag Estimator: 2.0 cu ft Bags = ceil(Total ft³ ÷ 2.0)'
               ]
             });
+          } else if (s.includes('sleep')) {
+            formulas.push({
+              heading: 'Circadian Sleep Cycle & Latency Formulas',
+              items: [
+                'Sleep Cycle Duration = 90 Minutes (Standard Ultradian Sleep Rhythm)',
+                'Bedtime Formula: Bedtime = Desired Wake Time - (Cycles × 90 min) - Sleep Latency',
+                'Wake-Up Formula: Wake Time = Bedtime + Sleep Latency + (Cycles × 90 min)',
+                'Sleep Quality Reference: 5–6 Cycles (7.5–9.0 hours) = Recommended for Adults & Young Adults',
+                'Average Sleep Latency = 14 Minutes (Normal Healthy Time to Fall Asleep)',
+                'Sleep Architecture: Light Sleep (~50%), Deep Slow-Wave (~25%), REM Dream Sleep (~25%)'
+              ]
+            });
           } else {
             formulas.push({
               heading: 'Mathematical Calculation Model',
@@ -2119,13 +2201,13 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
         // Build Given Values Table
         var inputsHtml = '';
         if (data.inputs.length === 0) {
-          inputsHtml = '<tr><td colspan="2" style="padding:8px 12px;color:#64748b;font-style:italic;">Standard default inputs used</td></tr>';
+          inputsHtml = '<tr><td colspan="2" style="padding:4px 8px;color:#64748b;font-style:italic;font-size:9.5px;">Standard default inputs used</td></tr>';
         } else {
           data.inputs.forEach(function(inp, i) {
             var bg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
             inputsHtml += '<tr style="background:' + bg + ';">' +
-              '<td style="padding:6px 10px;border:1px solid #cbd5e1;font-weight:600;color:#334155;width:55%;">' + escapeHtml(inp.label) + '</td>' +
-              '<td style="padding:6px 10px;border:1px solid #cbd5e1;font-weight:700;color:#0f172a;width:45%;">' + escapeHtml(inp.value) + '</td>' +
+              '<td style="padding:3.5px 7px;border:1px solid #cbd5e1;font-weight:600;color:#334155;width:52%;">' + escapeHtml(inp.label) + '</td>' +
+              '<td style="padding:3.5px 7px;border:1px solid #cbd5e1;font-weight:700;color:#0f172a;width:48%;">' + escapeHtml(inp.value) + '</td>' +
               '</tr>';
           });
         }
@@ -2133,11 +2215,11 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
         // Build Formulas HTML
         var formulasHtml = '';
         formulas.forEach(function(f) {
-          formulasHtml += '<div style="margin-bottom:8px;">' +
-            '<div style="font-weight:700;color:#0f172a;margin-bottom:4px;font-size:11px;text-transform:uppercase;">' + escapeHtml(f.heading) + ':</div>' +
-            '<ul style="margin:0;padding-left:18px;line-height:1.6;">' +
+          formulasHtml += '<div style="margin-bottom:4px;">' +
+            '<div style="font-weight:700;color:#0f172a;margin-bottom:2px;font-size:9.5px;text-transform:uppercase;">' + escapeHtml(f.heading) + ':</div>' +
+            '<ul style="margin:0;padding-left:14px;line-height:1.35;">' +
             f.items.map(function(item) {
-              return '<li style="margin-bottom:2px;font-family:monospace;font-size:11px;color:#1e293b;">' + escapeHtml(item) + '</li>';
+              return '<li style="margin-bottom:1.5px;font-family:monospace;font-size:9px;color:#1e293b;">' + escapeHtml(item) + '</li>';
             }).join('') +
             '</ul></div>';
         });
@@ -2146,12 +2228,12 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
         var primaryHero = data.results.find(function(r) { return r.isHero; }) || (data.results.length > 0 ? data.results[0] : null);
         var heroBannerHtml = '';
         if (primaryHero) {
-          heroBannerHtml = '<div style="background:#f0fdf4; border:1.5px solid #22c55e; border-radius:8px; padding:10px 14px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">' +
+          heroBannerHtml = '<div style="background:#f0fdf4; border:1px solid #22c55e; border-radius:6px; padding:5px 10px; margin-bottom:6px; display:flex; justify-content:space-between; align-items:center;">' +
             '<div>' +
-            '<div style="font-size:10px; font-weight:800; text-transform:uppercase; color:#166534; letter-spacing:0.5px;">' + escapeHtml(primaryHero.label) + '</div>' +
-            '<div style="font-size:22px; font-weight:900; color:#15803d; font-family:monospace; margin-top:2px;">' + escapeHtml(primaryHero.value) + '</div>' +
+            '<div style="font-size:9px; font-weight:800; text-transform:uppercase; color:#166534; letter-spacing:0.4px;">' + escapeHtml(primaryHero.label) + '</div>' +
+            '<div style="font-size:16px; font-weight:900; color:#15803d; font-family:monospace; margin-top:1px;">' + escapeHtml(primaryHero.value) + '</div>' +
             '</div>' +
-            '<div style="background:#dcfce7; color:#166534; font-size:10.5px; font-weight:800; padding:4px 8px; border-radius:6px; border:1px solid #bbf7d0;">Verified Calculation</div>' +
+            '<div style="background:#dcfce7; color:#166534; font-size:9.5px; font-weight:800; padding:2px 6px; border-radius:4px; border:1px solid #bbf7d0;">Verified Calculation</div>' +
             '</div>';
         }
 
@@ -2159,13 +2241,13 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
         var diagramsHtml = '';
         if (data.diagrams && data.diagrams.length > 0) {
           var dCards = data.diagrams.map(function(d) {
-            return '<div style="margin-bottom:10px; text-align:center; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:10px; page-break-inside:avoid; break-inside:avoid;">' +
-              '<div style="font-size:10.5px; font-weight:800; text-transform:uppercase; color:#334155; margin-bottom:6px;">' + escapeHtml(d.title) + '</div>' +
-              '<div style="max-height:160px; overflow:hidden; display:flex; justify-content:center; align-items:center;">' + d.html + '</div>' +
+            return '<div style="margin-bottom:6px; text-align:center; background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; padding:6px; page-break-inside:avoid; break-inside:avoid;">' +
+              '<div style="font-size:9.5px; font-weight:800; text-transform:uppercase; color:#334155; margin-bottom:4px;">' + escapeHtml(d.title) + '</div>' +
+              '<div style="max-height:120px; overflow:hidden; display:flex; justify-content:center; align-items:center;">' + d.html + '</div>' +
               '</div>';
           }).join('');
-          diagramsHtml = '<div style="margin-bottom: 18px; page-break-inside:avoid; break-inside:avoid;">' +
-            '<div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#0f172a; margin-bottom:6px; border-left:3px solid #007b8f; padding-left:8px;">' +
+          diagramsHtml = '<div style="margin-bottom: 8px; page-break-inside:avoid; break-inside:avoid;">' +
+            '<div style="font-size:10.5px; font-weight:800; text-transform:uppercase; color:#0f172a; margin-bottom:4px; border-left:3px solid #007b8f; padding-left:6px;">' +
             'Geometric Detailing Diagram' +
             '</div>' +
             dCards +
@@ -2175,14 +2257,14 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
         // Build Outputs Table
         var outputsHtml = '';
         if (data.results.length === 0) {
-          outputsHtml = '<tr><td colspan="2" style="padding:8px 12px;color:#64748b;font-style:italic;">Calculation outputs pending</td></tr>';
+          outputsHtml = '<tr><td colspan="2" style="padding:4px 8px;color:#64748b;font-style:italic;font-size:9.5px;">Calculation outputs pending</td></tr>';
         } else {
           data.results.forEach(function(res, i) {
             var bg = i % 2 === 0 ? '#ffffff' : '#f8fafc';
             var isHero = res.isHero;
             outputsHtml += '<tr style="background:' + bg + ';">' +
-              '<td style="padding:6px 10px;border:1px solid #cbd5e1;font-weight:600;color:#334155;width:55%;">' + escapeHtml(res.label) + '</td>' +
-              '<td style="padding:6px 10px;border:1px solid #cbd5e1;font-weight:800;' + (isHero ? 'color:#007b8f;' : 'color:#0f172a;') + 'width:45%;">' + escapeHtml(res.value) + '</td>' +
+              '<td style="padding:3.5px 7px;border:1px solid #cbd5e1;font-weight:600;color:#334155;width:52%;">' + escapeHtml(res.label) + '</td>' +
+              '<td style="padding:3.5px 7px;border:1px solid #cbd5e1;font-weight:800;' + (isHero ? 'color:#007b8f;' : 'color:#0f172a;') + 'width:48%;">' + escapeHtml(res.value) + '</td>' +
               '</tr>';
           });
         }
@@ -2192,26 +2274,26 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
         if (data.tables && data.tables.length > 0) {
           data.tables.forEach(function(tbl, idx) {
             var headersHtml = tbl.headers.map(function(h) {
-              return '<th style="padding:6px 8px;border:1px solid #cbd5e1;background:#f1f5f9;color:#334155;font-weight:700;text-align:left;font-size:10px;">' + escapeHtml(h) + '</th>';
+              return '<th style="padding:4px 6px;border:1px solid #cbd5e1;background:#f1f5f9;color:#334155;font-weight:700;text-align:left;font-size:9px;">' + escapeHtml(h) + '</th>';
             }).join('');
             var maxPrintRows = 120;
             var rowsHtml = tbl.rows.slice(0, maxPrintRows).map(function(r, rIdx) {
               var bg = rIdx % 2 === 0 ? '#ffffff' : '#f8fafc';
               var cells = r.map(function(c) {
-                return '<td style="padding:5px 8px;border:1px solid #cbd5e1;font-size:10px;font-family:monospace;">' + escapeHtml(c) + '</td>';
+                return '<td style="padding:3px 6px;border:1px solid #cbd5e1;font-size:9px;font-family:monospace;">' + escapeHtml(c) + '</td>';
               }).join('');
               return '<tr style="background:' + bg + ';">' + cells + '</tr>';
             }).join('');
 
             var tblHeading = tbl.title || ('Detailed Breakdown Table ' + (data.tables.length > 1 ? (idx + 1) : ''));
 
-            tablesHtml += '<div style="margin-top:16px;">' +
-              '<div style="font-weight:700;font-size:11px;text-transform:uppercase;color:#334155;margin-bottom:6px;">' + escapeHtml(tblHeading) + '</div>' +
-              '<table style="width:100%;border-collapse:collapse;border:1px solid #cbd5e1;font-size:10px;">' +
+            tablesHtml += '<div style="margin-top:8px; page-break-inside:avoid; break-inside:avoid;">' +
+              '<div style="font-weight:700;font-size:10px;text-transform:uppercase;color:#334155;margin-bottom:3px;border-left:3px solid #007b8f;padding-left:6px;">' + escapeHtml(tblHeading) + '</div>' +
+              '<table style="width:100%;border-collapse:collapse;border:1px solid #cbd5e1;font-size:9px;">' +
               '<thead><tr>' + headersHtml + '</tr></thead>' +
               '<tbody>' + rowsHtml + '</tbody>' +
               '</table>' +
-              (tbl.rows.length > maxPrintRows ? '<div style="font-size:9px;color:#64748b;margin-top:4px;font-style:italic;">Showing first ' + maxPrintRows + ' rows of ' + tbl.rows.length + ' total rows.</div>' : '') +
+              (tbl.rows.length > maxPrintRows ? '<div style="font-size:8px;color:#64748b;margin-top:2px;font-style:italic;">Showing first ' + maxPrintRows + ' rows of ' + tbl.rows.length + ' total rows.</div>' : '') +
               '</div>';
           });
         }
@@ -2220,19 +2302,19 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
         var stepsHtml = '';
         if (data.steps && data.steps.length > 0) {
           var stepItemsHtml = data.steps.map(function(st) {
-            return '<div style="border:1px solid #cbd5e1; border-radius:6px; padding:10px 14px; margin-bottom:12px; background:#ffffff; page-break-inside:avoid; break-inside:avoid;">' +
-              '<div style="font-size:11.5px; font-weight:800; color:#0f172a; margin-bottom:6px; padding-bottom:4px; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; gap:5px;">' +
+            return '<div style="border:1px solid #cbd5e1; border-radius:6px; padding:6px 10px; margin-bottom:6px; background:#ffffff; page-break-inside:avoid; break-inside:avoid;">' +
+              '<div style="font-size:10px; font-weight:800; color:#0f172a; margin-bottom:3px; padding-bottom:2px; border-bottom:1px solid #e2e8f0; display:flex; align-items:center; gap:4px;">' +
               escapeHtml(st.title) +
               '</div>' +
-              '<div style="font-size:10.5px; line-height:1.55; color:#1e293b;">' +
+              '<div style="font-size:9px; line-height:1.4; color:#1e293b;">' +
               st.html +
               '</div>' +
               '</div>';
           }).join('');
 
           stepsHtml = `
-            <div style="margin-bottom: 18px; page-break-inside:avoid; break-inside:avoid;">
-              <div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#0f172a; margin-bottom:6px; border-left:3px solid #007b8f; padding-left:8px;">
+            <div style="margin-bottom: 8px; page-break-inside:avoid; break-inside:avoid;">
+              <div style="font-size:10.5px; font-weight:800; text-transform:uppercase; color:#0f172a; margin-bottom:4px; border-left:3px solid #007b8f; padding-left:6px;">
                 4. Step-by-Step Working &amp; Calculation Proofs
               </div>
               ${stepItemsHtml}
@@ -2241,58 +2323,59 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
         }
 
         sheet.innerHTML = `
-          <div style="border-bottom: 2px solid #007b8f; padding-bottom: 10px; margin-bottom: 18px;">
+          <div style="border-bottom: 2px solid #007b8f; padding-bottom: 6px; margin-bottom: 10px;">
             <div style="display:flex; justify-content:space-between; align-items:flex-end;">
               <div>
-                <div style="font-size:11px; font-weight:800; color:#007b8f; text-transform:uppercase; letter-spacing:0.5px;">AI Free Calculator • Official Calculation Sheet</div>
-                <h1 style="font-size:20px; font-weight:900; margin:3px 0 0 0; color:#0f172a;">${escapeHtml(data.calculatorName)}</h1>
+                <div style="font-size:10px; font-weight:800; color:#007b8f; text-transform:uppercase; letter-spacing:0.5px;">AI Free Calculator • Official Calculation Sheet</div>
+                <h1 style="font-size:17px; font-weight:900; margin:2px 0 0 0; color:#0f172a;">${escapeHtml(data.calculatorName)}</h1>
               </div>
-              <div style="text-align:right; font-size:10px; color:#64748b;">
+              <div style="text-align:right; font-size:9.5px; color:#64748b;">
                 <div><strong>Date:</strong> ${escapeHtml(data.formattedDate)}</div>
-                <div style="margin-top:2px;"><strong>Source:</strong> aifreecalculator.com</div>
+                <div style="margin-top:1px;"><strong>Source:</strong> aifreecalculator.com</div>
               </div>
             </div>
           </div>
 
-          <!-- 1. Given Values -->
-          <div style="margin-bottom: 18px;">
-            <div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#0f172a; margin-bottom:6px; border-left:3px solid #007b8f; padding-left:8px;">
-              1. Given Values (Input Parameters)
+          <!-- 1 & 2. Given Values & Formulas Side-by-Side (Fit on 1 page) -->
+          <div style="display:flex; gap:12px; margin-bottom:10px; align-items:stretch;">
+            <div style="flex:1 1 50%; min-width:0;">
+              <div style="font-size:10.5px; font-weight:800; text-transform:uppercase; color:#0f172a; margin-bottom:4px; border-left:3px solid #007b8f; padding-left:6px;">
+                1. Given Values (Input Parameters)
+              </div>
+              <table style="width:100%; border-collapse:collapse; font-size:9.5px; border:1px solid #cbd5e1;">
+                <thead>
+                  <tr style="background:#f1f5f9;">
+                    <th style="padding:3.5px 6px; border:1px solid #cbd5e1; text-align:left; color:#334155; width:52%;">Input Parameter</th>
+                    <th style="padding:3.5px 6px; border:1px solid #cbd5e1; text-align:left; color:#334155; width:48%;">Given Value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${inputsHtml}
+                </tbody>
+              </table>
             </div>
-            <table style="width:100%; border-collapse:collapse; font-size:11px; border:1px solid #cbd5e1;">
-              <thead>
-                <tr style="background:#f1f5f9;">
-                  <th style="padding:6px 10px; border:1px solid #cbd5e1; text-align:left; color:#334155; width:55%;">Input Parameter</th>
-                  <th style="padding:6px 10px; border:1px solid #cbd5e1; text-align:left; color:#334155; width:45%;">Given Value</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${inputsHtml}
-              </tbody>
-            </table>
-          </div>
 
-          <!-- 2. Calculation Formula -->
-          <div style="margin-bottom: 18px;">
-            <div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#0f172a; margin-bottom:6px; border-left:3px solid #007b8f; padding-left:8px;">
-              2. Calculation Formula & Methodology
-            </div>
-            <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:10px 14px;">
-              ${formulasHtml}
+            <div style="flex:1 1 50%; min-width:0;">
+              <div style="font-size:10.5px; font-weight:800; text-transform:uppercase; color:#0f172a; margin-bottom:4px; border-left:3px solid #007b8f; padding-left:6px;">
+                2. Calculation Formula &amp; Methodology
+              </div>
+              <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:6px 9px; box-sizing:border-box;">
+                ${formulasHtml}
+              </div>
             </div>
           </div>
 
           <!-- 3. Output Values -->
-          <div style="margin-bottom: 18px;">
-            <div style="font-size:12px; font-weight:800; text-transform:uppercase; color:#0f172a; margin-bottom:6px; border-left:3px solid #007b8f; padding-left:8px;">
+          <div style="margin-bottom: 10px; page-break-inside:avoid; break-inside:avoid;">
+            <div style="font-size:10.5px; font-weight:800; text-transform:uppercase; color:#0f172a; margin-bottom:4px; border-left:3px solid #007b8f; padding-left:6px;">
               3. Output Values (Calculation Results)
             </div>
             ${heroBannerHtml}
-            <table style="width:100%; border-collapse:collapse; font-size:11px; border:1px solid #cbd5e1;">
+            <table style="width:100%; border-collapse:collapse; font-size:9.5px; border:1px solid #cbd5e1;">
               <thead>
                 <tr style="background:#f1f5f9;">
-                  <th style="padding:6px 10px; border:1px solid #cbd5e1; text-align:left; color:#334155; width:55%;">Output Metric Description</th>
-                  <th style="padding:6px 10px; border:1px solid #cbd5e1; text-align:left; color:#334155; width:45%;">Calculated Result</th>
+                  <th style="padding:3.5px 6px; border:1px solid #cbd5e1; text-align:left; color:#334155; width:52%;">Output Metric Description</th>
+                  <th style="padding:3.5px 6px; border:1px solid #cbd5e1; text-align:left; color:#334155; width:48%;">Calculated Result</th>
                 </tr>
               </thead>
               <tbody>
@@ -2305,9 +2388,9 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
           ${stepsHtml}
           ${tablesHtml}
 
-          <div style="border-top: 1px solid #e2e8f0; padding-top: 8px; margin-top: 20px; font-size: 9.5px; color: #94a3b8; display:flex; justify-content:space-between;">
+          <div style="border-top: 1px solid #cbd5e1; padding-top: 5px; margin-top: 10px; font-size: 8.5px; color: #64748b; display:flex; justify-content:space-between; align-items:center;">
             <span>AI Free Calculator • Free verified calculation tools</span>
-            <span>${escapeHtml(data.shareableUrl || data.url)}</span>
+            <span style="font-family:monospace; color:#334155; font-weight:600;">${escapeHtml(data.cleanUrl)}</span>
           </div>
         `;
       }
@@ -2592,6 +2675,11 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
   }
 
   @media print {
+    @page {
+      size: A4 portrait;
+      margin: 8mm 10mm;
+    }
+
     /* Completely hide everything on body except our strict sheet */
     body > *:not(#print-sheet-strict) {
       display: none !important;
@@ -2602,25 +2690,32 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
       position: static !important;
       width: 100% !important;
       margin: 0 !important;
-      padding: 12mm 15mm !important;
+      padding: 0 !important;
       background: #ffffff !important;
       color: #0f172a !important;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif !important;
-      font-size: 11pt !important;
-      line-height: 1.5 !important;
+      font-size: 9pt !important;
+      line-height: 1.35 !important;
+      box-sizing: border-box !important;
+    }
+
+    #print-sheet-strict * {
       box-sizing: border-box !important;
     }
 
     #print-sheet-strict table {
       width: 100% !important;
       border-collapse: collapse !important;
-      margin-top: 4px !important;
-      margin-bottom: 4px !important;
+      margin-top: 2px !important;
+      margin-bottom: 3px !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
     }
     #print-sheet-strict th, #print-sheet-strict td {
       border: 1px solid #cbd5e1 !important;
-      padding: 4px 8px !important;
-      font-size: 10pt !important;
+      padding: 3px 6px !important;
+      font-size: 8.5pt !important;
+      line-height: 1.25 !important;
     }
     #print-sheet-strict th {
       background: #f1f5f9 !important;
@@ -2631,18 +2726,18 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace !important;
     }
     #print-sheet-strict ul, #print-sheet-strict ol {
-      margin: 4px 0 !important;
-      padding-left: 18px !important;
+      margin: 2px 0 !important;
+      padding-left: 15px !important;
     }
     #print-sheet-strict li {
-      margin-bottom: 2px !important;
+      margin-bottom: 1.5px !important;
     }
     #print-sheet-strict code {
       background: #f1f5f9 !important;
-      padding: 1px 4px !important;
-      border-radius: 4px !important;
+      padding: 1px 3px !important;
+      border-radius: 3px !important;
       font-family: monospace !important;
-      font-size: 9.5pt !important;
+      font-size: 8pt !important;
     }
     #print-sheet-strict .text-blue-600, #print-sheet-strict .text-blue-700, #print-sheet-strict [class*="text-blue-"] {
       color: #007b8f !important;
