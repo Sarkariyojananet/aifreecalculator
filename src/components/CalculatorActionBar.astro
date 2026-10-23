@@ -631,11 +631,13 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
         });
       }
 
-      // Auto-populate inputs if opened with shareable URL parameters
+      // Auto-populate inputs if opened with shareable URL parameters (supports hash # and legacy query ?)
       function autoPopulateFromUrl() {
-        if (!window.location.search) return;
+        var rawQuery = (window.location.hash ? window.location.hash.replace(/^#/, '') : '') ||
+                       (window.location.search ? window.location.search.replace(/^\?/, '') : '');
+        if (!rawQuery) return;
         try {
-          var params = new URLSearchParams(window.location.search);
+          var params = new URLSearchParams(rawQuery);
           var hasApplied = false;
 
           params.forEach(function (val, key) {
@@ -852,12 +854,13 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
       });
       setTimeout(syncBarVisibility, 200);
 
-      // Generate shareable URL with parameters
+      // Generate shareable URL with parameters (uses # hash fragment so search crawlers never index parameter variations)
       function generateShareableUrl() {
         var url = new URL(window.location.origin + window.location.pathname);
         var container = barContainer.parentElement || document.body;
         var inputElements = container.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]):not(#inp-project-name):not(#inp-calc-title):not(#inp-calc-notes):not(#inp-share-url), select:not(#inp-project-name), textarea:not(#inp-calc-notes)');
 
+        var hashParams = new URLSearchParams();
         inputElements.forEach(function (inp) {
           if (!inp.offsetParent) return;
           var key = inp.id || inp.name;
@@ -874,10 +877,14 @@ const tAction = actionBarTranslations[lang] || actionBarTranslations.en;
           }
 
           if (val !== '') {
-            url.searchParams.set(key, val);
+            hashParams.set(key, val);
           }
         });
 
+        var hashStr = hashParams.toString();
+        if (hashStr) {
+          url.hash = hashStr;
+        }
         return url.toString();
       }
 

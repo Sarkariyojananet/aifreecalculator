@@ -92,7 +92,7 @@ export default defineConfig({
     '/it/general/percentage-calculator': '/it/math/percentage-calculator/',
     '/finance/sukanya-samriddhi-calculator': '/finance/sukanya-samriddhi-yojana-calculator',
     '/brickwork-calculator': '/construction/brickwork-calculator',
-    '/finance/loan-calculator': '/finance/emi-calculator/?type=personal',
+    '/finance/loan-calculator': '/finance/emi-calculator/#type=personal',
     '/tools': '/free-online-tools/',
     '/weight-calculator': '/general/weight-calculator/',
     '/age-calculator': '/general/age-calculator/',

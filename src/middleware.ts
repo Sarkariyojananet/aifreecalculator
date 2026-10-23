@@ -184,25 +184,100 @@ export const onRequest = defineMiddleware(async (context, next) => {
     Boolean((context as any).isPrerendered) ||
     (typeof process !== 'undefined' && Array.isArray(process.argv) && process.argv.includes('build'));
   const isLocalHost = context.url.hostname === 'localhost' || context.url.hostname === '127.0.0.1';
-  const isWorkerCacheEligible = !isPrerenderOrBuild && isGetOrHead && isHtmlPagePath && !import.meta.env.DEV && !isLocalHost;
-  const isCacheablePage = isGetOrHead && isHtmlPagePath;
-  const deployVer = import.meta.env.PUBLIC_GIT_COMMIT_HASH || 'v1';
-  const cacheKey = isWorkerCacheEligible ? `${getNormalizedCacheKey(context.url)}?__cf_ver=${deployVer}` : null;
 
-  // 1. Check Cloudflare Worker Cache API for public HTML GET requests
-  // Strips tracking query parameters so social/campaign traffic immediately hits cache
-  if (cache && cacheKey && isWorkerCacheEligible) {
-    try {
-      const cachedResponse = await cache.match(cacheKey);
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-    } catch {
-      // Graceful fallback to fresh render on cache match error
-    }
+  // =========================================================================
+  // CANONICAL REDIRECTS (Executed before cache lookup so Googlebot & clients
+  // always receive proper 301 redirects to canonical URLs instead of 200 OK alternates)
+  // =========================================================================
+
+  // A. CANONICAL HOST & PROTOCOL: Redirect www -> non-www and http -> https
+  const host = context.url.hostname.toLowerCase();
+  const isWww = host.startsWith('www.');
+  const forwardedProto = context.request.headers.get('x-forwarded-proto');
+  const isHttp = forwardedProto === 'http' || context.url.protocol === 'http:';
+
+  if (!isLocalHost && (isWww || isHttp)) {
+    const canonicalHost = isWww ? host.replace(/^www\./, '') : host;
+    const cleanUrl = `https://${canonicalHost}${pathname}${context.url.search}`;
+    const redirectResponse = context.redirect(cleanUrl, 301);
+    redirectResponse.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+    redirectResponse.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=604800');
+    return redirectResponse;
   }
 
-  // 2. Redirect legacy PDF tools paths across ALL languages to /pdf-tools/...
+  // B. CONTACT PAGE QUERY CANONICALIZATION:
+  // Convert contact query parameters (?calc=...&name=...&type=bug) to hash fragments (#calc=...).
+  // Googlebot strips #hash and indexes only the canonical contact URL, clearing "Alternate page with proper canonical tag",
+  // while client browsers preserve the hash to auto-fill the contact form.
+  const isContactPage =
+    pathname === '/contact' ||
+    pathname === '/contact/' ||
+    /^\/[a-z]{2}\/contact\/?$/i.test(pathname);
+
+  if (isContactPage && context.url.search && context.url.search.length > 1) {
+    const normalizedPath = pathname.endsWith('/') ? pathname : `${pathname}/`;
+    const searchStr = context.url.search.replace(/^\?/, '');
+    const targetUrl = `${normalizedPath}#${searchStr}`;
+    const redirectResponse = context.redirect(targetUrl, 301);
+    redirectResponse.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+    redirectResponse.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=604800');
+    return redirectResponse;
+  }
+
+  // C. UNIVERSAL CALC/BUG QUERY PARAMETERS CANONICALIZATION:
+  // Any page requested with ?calc= or ?type=bug is 301 redirected to use # hash fragment.
+  if (
+    context.url.search &&
+    (context.url.search.includes('type=bug') ||
+     context.url.search.includes('calc=') ||
+     context.url.searchParams.has('calc') ||
+     context.url.searchParams.get('type') === 'bug')
+  ) {
+    const normalizedPath = pathname.endsWith('/') ? pathname : `${pathname}/`;
+    const searchStr = context.url.search.replace(/^\?/, '');
+    const targetUrl = `${normalizedPath}#${searchStr}`;
+    const redirectResponse = context.redirect(targetUrl, 301);
+    redirectResponse.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+    redirectResponse.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=604800');
+    return redirectResponse;
+  }
+
+  // D. CALCULATOR FORM/MODE PARAMETERS CANONICALIZATION:
+  // Redirect legacy ?type=personal on /finance/emi-calculator/ to #type=personal
+  if (pathname.includes('/emi-calculator') && context.url.search && context.url.search.includes('type=')) {
+    const normalizedPath = pathname.endsWith('/') ? pathname : `${pathname}/`;
+    const searchStr = context.url.search.replace(/^\?/, '');
+    const targetUrl = `${normalizedPath}#${searchStr}`;
+    const redirectResponse = context.redirect(targetUrl, 301);
+    redirectResponse.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+    redirectResponse.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=604800');
+    return redirectResponse;
+  }
+
+  // E. OBSOLETE SEARCH TEMPLATES & QUERIES:
+  // Canonicalize /?q={search_term_string}, /?q=..., /?s=... to clean pathname
+  if (
+    isHtmlPagePath &&
+    context.url.search &&
+    (context.url.searchParams.has('q') ||
+     context.url.searchParams.has('s') ||
+     context.url.search.includes('search_term_string') ||
+     context.url.search.includes('%7Bsearch_term_string%7D'))
+  ) {
+    const cleanSearch = new URLSearchParams(context.url.searchParams);
+    cleanSearch.delete('q');
+    cleanSearch.delete('s');
+    const remaining = cleanSearch.toString();
+    const normalizedPath = pathname.endsWith('/') ? pathname : `${pathname}/`;
+    const targetUrl = remaining ? `${normalizedPath}?${remaining}` : normalizedPath;
+    const redirectResponse = context.redirect(targetUrl, 301);
+    redirectResponse.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+    redirectResponse.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=604800');
+    return redirectResponse;
+  }
+
+  // F. LEGACY TOOL PATHS:
+  // Redirect legacy PDF tools paths across ALL languages to /pdf-tools/...
   if (isHtmlPagePath && pathname.includes('free-online-tools/')) {
     const pdfSlugs = ['pdf-merge', 'pdf-split', 'pdf-compress', 'pdf-to-image', 'image-to-pdf'];
     for (const slug of pdfSlugs) {
@@ -226,8 +301,8 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
-  // 2b. Canonicalize legacy query parameter `?lang=xx` to clean path `/{lang}/...`
-  // Fast path: Only parse if query string actually contains 'lang='
+  // G. LEGACY QUERY PARAMETER ?lang=xx CANONICALIZATION:
+  // Canonicalize legacy query parameter `?lang=xx` to clean path `/{lang}/...`
   if (isHtmlPagePath && context.url.search?.includes('lang=')) {
     const queryLang = context.url.searchParams.get('lang');
     if (queryLang && isValidLocale(queryLang) && queryLang !== 'en') {
@@ -245,16 +320,23 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
-  // 2c. Canonicalize obsolete SearchAction template query /?q={search_term_string} to clean home /
-  if (
-    isHtmlPagePath &&
-    (pathname === '/' || pathname === '') &&
-    (context.url.search?.includes('search_term_string') || context.url.search?.includes('%7Bsearch_term_string%7D'))
-  ) {
-    const redirectResponse = context.redirect('/', 301);
-    redirectResponse.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=604800');
-    redirectResponse.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=604800');
-    return redirectResponse;
+  // =========================================================================
+  // WORKER CACHE LOOKUP (For valid, canonical HTML GET requests)
+  // =========================================================================
+  const isWorkerCacheEligible = !isPrerenderOrBuild && isGetOrHead && isHtmlPagePath && !import.meta.env.DEV && !isLocalHost;
+  const isCacheablePage = isGetOrHead && isHtmlPagePath;
+  const deployVer = import.meta.env.PUBLIC_GIT_COMMIT_HASH || 'v1';
+  const cacheKey = isWorkerCacheEligible ? `${getNormalizedCacheKey(context.url)}?__cf_ver=${deployVer}` : null;
+
+  if (cache && cacheKey && isWorkerCacheEligible) {
+    try {
+      const cachedResponse = await cache.match(cacheKey);
+      if (cachedResponse) {
+        return cachedResponse;
+      }
+    } catch {
+      // Graceful fallback to fresh render on cache match error
+    }
   }
 
   let response: Response;
