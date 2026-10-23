@@ -591,8 +591,15 @@ const contactName = tCommon.nav.contact || pageData.h1;
     }
   });
 
-  // Pre-fill Calculator Context from URL if user clicked 'Found an issue?'
+  // Pre-fill Calculator Context & Instant URL Canonicalization
   try {
+    // If URL has query parameters (e.g. ?calc=...&type=bug), instantly rewrite to # hash
+    if (window.location.search && (window.location.search.includes('calc=') || window.location.search.includes('type=bug'))) {
+      const cleanSearch = window.location.search.replace(/^\?/, '');
+      const cleanPath = window.location.pathname.endsWith('/') ? window.location.pathname : `${window.location.pathname}/`;
+      history.replaceState(null, '', `${cleanPath}#${cleanSearch}`);
+    }
+
     const hashParams = new URLSearchParams(window.location.hash ? window.location.hash.replace(/^#/, '') : '');
     const searchParams = new URLSearchParams(window.location.search ? window.location.search.replace(/^\?/, '') : '');
     const calcSlug = hashParams.get('calc') || searchParams.get('calc') || '';
