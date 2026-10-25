@@ -41,7 +41,7 @@ export const DEFAULT_SMART_THROTTLING: SmartThrottlingConfig = {
   disableOnSlowConnection: true,
   lazyLoadWithMargin: true,
   lazyLoadMarginPx: 300,
-  delayUntilInteraction: false,
+  delayUntilInteraction: true,
   maxMobileAds: 2,
   preventClsPlaceholders: true,
 };
