@@ -27,11 +27,65 @@ const REDIRECT_SOURCE_KEYS = new Set([
   'free-online-tools/pdf-compress',
   'free-online-tools/pdf-to-image',
   'free-online-tools/image-to-pdf',
+  'free-online-tools/monthly-time-table-maker',
   'image-tools/image-compressor',
   'image-tools/image-resizer',
   'image-tools/jpg-to-png',
   'image-tools/png-to-jpg',
 ]);
+
+const NON_EN_LOCALES = ['hi', 'es', 'ja', 'fr', 'de', 'pt', 'ko', 'it'];
+
+// Localized legacy PDF tool redirects -> /pdf-tools/...
+const localizedPdfRedirects = {};
+const pdfSlugs = ['pdf-merge', 'pdf-split', 'pdf-compress', 'pdf-to-image', 'image-to-pdf'];
+for (const slug of pdfSlugs) {
+  for (const lang of NON_EN_LOCALES) {
+    localizedPdfRedirects[`/${lang}/free-online-tools/${slug}`] = `/${lang}/pdf-tools/${slug}/`;
+  }
+}
+
+// Localized legacy image tool redirects -> /free-online-tools/...
+const localizedImageRedirects = {};
+const imageSlugs = ['image-compressor', 'image-resizer', 'jpg-to-png', 'png-to-jpg', 'compress-image', 'resize-image', 'qr-code-generator'];
+for (const slug of imageSlugs) {
+  for (const lang of NON_EN_LOCALES) {
+    const destSlug = slug === 'compress-image' ? 'image-compressor' : (slug === 'resize-image' ? 'image-resizer' : slug);
+    localizedImageRedirects[`/${lang}/image-tools/${slug}`] = `/${lang}/free-online-tools/${destSlug}/`;
+  }
+}
+
+// Localized legacy timetable redirects -> /time-table-tools/...
+const timetableRedirectMap = {
+  'exam-timetable-maker': 'study-timetable-maker',
+  'student-timetable-maker': 'study-timetable-maker',
+  'school-timetable-maker': 'study-timetable-maker',
+  'college-timetable-maker': 'study-timetable-maker',
+  'university-timetable-maker': 'study-timetable-maker',
+  'class-timetable-generator': 'study-timetable-maker',
+  'class-schedule-maker': 'study-timetable-maker',
+  'teacher-timetable-maker': 'study-timetable-maker',
+  'kids-timetable-maker': 'daily-timetable-maker',
+  'kids-daily-routine-planner': 'daily-timetable-maker',
+  'boys-daily-routine-planner': 'daily-timetable-maker',
+  'girls-daily-routine-planner': 'daily-timetable-maker',
+  'personal-timetable-maker': 'daily-timetable-maker',
+  'home-routine-planner': 'weekly-timetable-maker',
+  'employee-work-timetable': 'work-shift-schedule-maker',
+  'printable-timetable-maker': 'timetable-maker',
+  'smart-timetable-generator': 'timetable-maker',
+};
+const localizedTimetableRedirects = {};
+for (const [source, dest] of Object.entries(timetableRedirectMap)) {
+  for (const lang of NON_EN_LOCALES) {
+    localizedTimetableRedirects[`/${lang}/time-table-tools/${source}`] = `/${lang}/time-table-tools/${dest}/`;
+  }
+}
+
+const localizedMonthlyTimetableRedirects = {};
+for (const lang of NON_EN_LOCALES) {
+  localizedMonthlyTimetableRedirects[`/${lang}/free-online-tools/monthly-time-table-maker`] = `/${lang}/time-table-tools/monthly-time-table-maker/`;
+}
 
 export default defineConfig({
   site: 'https://aifreecalculator.com',
@@ -127,6 +181,10 @@ export default defineConfig({
     '/time-table-tools/employee-work-timetable': '/time-table-tools/work-shift-schedule-maker/',
     '/time-table-tools/printable-timetable-maker': '/time-table-tools/timetable-maker/',
     '/time-table-tools/smart-timetable-generator': '/time-table-tools/timetable-maker/',
+    ...localizedPdfRedirects,
+    ...localizedImageRedirects,
+    ...localizedTimetableRedirects,
+    ...localizedMonthlyTimetableRedirects,
   },
 
   cache: {

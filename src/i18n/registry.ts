@@ -145,66 +145,8 @@ export function getTranslatedCalculatorStaticPaths() {
     }
   }
 
-  // Also include legacy category paths so Astro prerenders the 301 redirects
-  const legacySlugs = [
-    { slug: 'image-compressor', legacyCategory: 'image-tools' },
-    { slug: 'image-resizer', legacyCategory: 'image-tools' },
-    { slug: 'jpg-to-png', legacyCategory: 'image-tools' },
-    { slug: 'png-to-jpg', legacyCategory: 'image-tools' },
-    { slug: 'pdf-merge', legacyCategory: 'free-online-tools' },
-    { slug: 'pdf-split', legacyCategory: 'free-online-tools' },
-    { slug: 'pdf-compress', legacyCategory: 'free-online-tools' },
-    { slug: 'pdf-to-image', legacyCategory: 'free-online-tools' },
-    { slug: 'image-to-pdf', legacyCategory: 'free-online-tools' },
-    // Phase 2A/2B: 17 Consolidated Timetable Tools
-    { slug: 'exam-timetable-maker', legacyCategory: 'time-table-tools' },
-    { slug: 'student-timetable-maker', legacyCategory: 'time-table-tools' },
-    { slug: 'school-timetable-maker', legacyCategory: 'time-table-tools' },
-    { slug: 'college-timetable-maker', legacyCategory: 'time-table-tools' },
-    { slug: 'university-timetable-maker', legacyCategory: 'time-table-tools' },
-    { slug: 'class-timetable-generator', legacyCategory: 'time-table-tools' },
-    { slug: 'class-schedule-maker', legacyCategory: 'time-table-tools' },
-    { slug: 'teacher-timetable-maker', legacyCategory: 'time-table-tools' },
-    { slug: 'kids-timetable-maker', legacyCategory: 'time-table-tools' },
-    { slug: 'kids-daily-routine-planner', legacyCategory: 'time-table-tools' },
-    { slug: 'boys-daily-routine-planner', legacyCategory: 'time-table-tools' },
-    { slug: 'girls-daily-routine-planner', legacyCategory: 'time-table-tools' },
-    { slug: 'personal-timetable-maker', legacyCategory: 'time-table-tools' },
-    { slug: 'home-routine-planner', legacyCategory: 'time-table-tools' },
-    { slug: 'employee-work-timetable', legacyCategory: 'time-table-tools' },
-    { slug: 'printable-timetable-maker', legacyCategory: 'time-table-tools' },
-    { slug: 'smart-timetable-generator', legacyCategory: 'time-table-tools' },
-  ];
-
-  for (const item of legacySlugs) {
-    const calc = calculators.find((c) => c.slug === item.slug) || ({
-      slug: item.slug,
-      name: item.slug,
-      category: item.legacyCategory,
-      path: `/${item.legacyCategory}/${item.slug}/`,
-    } as any);
-    for (const lang of nonEnLocales) {
-      if (isCalculatorTranslated(item.slug, lang)) {
-        const translation = getCalculatorTranslation(item.slug, lang);
-        if (translation) {
-          paths.push({
-            params: {
-              lang,
-              category: item.legacyCategory,
-              slug: item.slug,
-            },
-            props: {
-              lang,
-              category: item.legacyCategory,
-              slug: item.slug,
-              calculator: calc,
-              translation,
-            },
-          });
-        }
-      }
-    }
-  }
+  // Note: Legacy category paths are handled via HTTP 301 edge redirects in astro.config.mjs
+  // and must NOT be prerendered as static HTML stubs to prevent Cloudflare Assets from serving them as 200 OK.
 
   return paths;
 }
