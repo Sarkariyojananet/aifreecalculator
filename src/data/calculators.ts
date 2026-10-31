@@ -52,6 +52,7 @@ const CALCULATOR_ALIASES: Record<string, string[]> = {
   'age-calculator': ['exact age', 'date of birth calculator', 'dob calculator', 'birthday count', 'umra calculator'],
   'percentage-calculator': ['percent calc', 'marks percentage', 'discount percent', 'cgpa to percentage', 'pratishat'],
   'ratio-calculator': ['ratio calculator', 'proportion calculator', 'solve ratio', 'ratio simplifier', 'ratio scaling', 'equivalent ratio', 'aspect ratio calculator', 'anupat calculator', 'scale ratio'],
+  'negative-marking-calculator': ['negative marking calculator', 'upsc negative marking calculator', '1/3 negative marking calculator', '0.25 negative marking calculator', '1/4 negative marking calculator', 'negative marking', 'negative marks', 'negative marking formula', 'exam score calculator', 'upsc negative marking', 'neet negative marking', 'jee negative marking', 'ssc negative marking', 'gate negative marks', 'wrong answer penalty', 'negative marks deduction'],
   'lcm-calculator': ['lcm calculator', 'least common multiple', 'lowest common multiple', 'lcm finder', 'find lcm', 'lcm with steps', 'lcm gcd', 'lcd calculator', 'laghutam samapavartak'],
   'roman-numeral-calculator': ['roman numeral calculator', 'roman numerals calculator', 'add roman numerals', 'roman math', 'roman arithmetic', 'calculate roman numerals'],
   'roman-numeral-converter': ['roman numeral converter', 'roman numerals converter', 'convert roman numerals to numbers', 'numbers to roman numerals', 'roman to arabic', 'arabic to roman', 'roman number translator'],
