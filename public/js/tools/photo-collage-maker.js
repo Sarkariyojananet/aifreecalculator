@@ -235,7 +235,7 @@
   let inlineSlotRotate, inlineSlotRotateVal;
   let inlineSlotPanX, inlineSlotPanXVal;
   let inlineSlotPanY, inlineSlotPanYVal;
-  let inlineBtnReset, inlineBtnFit, inlineBtnFill, inlineBtnFlipH, inlineBtnFlipV;
+  let inlineBtnReset, inlineBtnFit, inlineBtnFill, inlineBtnStretch, inlineBtnFlipH, inlineBtnFlipV;
 
   let downloadPngBtn, downloadJpgBtn, downloadPdfBtn;
   let statusResolution, statusDpi;
@@ -310,6 +310,7 @@
     inlineBtnReset = document.getElementById('inline-btn-reset-adjust');
     inlineBtnFit = document.getElementById('inline-btn-fit');
     inlineBtnFill = document.getElementById('inline-btn-fill');
+    inlineBtnStretch = document.getElementById('inline-btn-stretch');
     inlineBtnFlipH = document.getElementById('inline-btn-fliph');
     inlineBtnFlipV = document.getElementById('inline-btn-flipv');
 
@@ -869,19 +870,91 @@
   }
 
   function updateInlineFitButtons(mode) {
-    if (inlineBtnFit && inlineBtnFill) {
-      if (mode === 'contain') {
-        inlineBtnFit.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
-        inlineBtnFit.classList.remove('bg-white', 'text-slate-700', 'dark:bg-slate-800', 'dark:text-slate-200');
-        inlineBtnFill.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
-        inlineBtnFill.classList.add('bg-white', 'text-slate-700', 'dark:bg-slate-800', 'dark:text-slate-200');
+    const list = [
+      { btn: inlineBtnFit, active: mode === 'contain' },
+      { btn: inlineBtnFill, active: mode === 'cover' },
+      { btn: inlineBtnStretch, active: mode === 'stretch' }
+    ];
+
+    list.forEach(({ btn, active }) => {
+      if (!btn) return;
+      if (active) {
+        btn.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
+        btn.classList.remove('bg-white', 'text-slate-700', 'dark:bg-slate-800', 'dark:text-slate-200');
       } else {
-        inlineBtnFill.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
-        inlineBtnFill.classList.remove('bg-white', 'text-slate-700', 'dark:bg-slate-800', 'dark:text-slate-200');
-        inlineBtnFit.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
-        inlineBtnFit.classList.add('bg-white', 'text-slate-700', 'dark:bg-slate-800', 'dark:text-slate-200');
+        btn.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
+        btn.classList.add('bg-white', 'text-slate-700', 'dark:bg-slate-800', 'dark:text-slate-200');
+      }
+    });
+  }
+
+  // Helper: word-wrap text into lines respecting canvas boundaries and explicit newlines
+  function getHeaderLines(text, context, maxWidth) {
+    if (!text || text.trim() === '') return [];
+    const paragraphs = text.split(/\r?\n/);
+    const lines = [];
+
+    for (const para of paragraphs) {
+      if (para.trim() === '') {
+        lines.push('');
+        continue;
+      }
+      const words = para.split(/\s+/);
+      let currentLine = '';
+
+      for (let i = 0; i < words.length; i++) {
+        const word = words[i];
+        const testLine = currentLine ? currentLine + ' ' + word : word;
+        const testWidth = context.measureText(testLine).width;
+
+        if (testWidth <= maxWidth || !currentLine) {
+          currentLine = testLine;
+        } else {
+          lines.push(currentLine);
+          if (context.measureText(word).width > maxWidth) {
+            let charChunk = '';
+            for (const char of word) {
+              if (context.measureText(charChunk + char).width <= maxWidth) {
+                charChunk += char;
+              } else {
+                if (charChunk) lines.push(charChunk);
+                charChunk = char;
+              }
+            }
+            currentLine = charChunk;
+          } else {
+            currentLine = word;
+          }
+        }
+      }
+      if (currentLine) {
+        lines.push(currentLine);
       }
     }
+    return lines;
+  }
+
+  function computeHeaderLayout(context, maxWidth) {
+    if (!state.headerText || state.headerText.trim() === '') {
+      return { lines: [], fontSizePx: 0, lineHeight: 0, headerAreaHeight: 0 };
+    }
+
+    const fontSizePx = ptToPx(state.headerFontSizePt || 16);
+    let fontStyleStr = '';
+    if (state.headerItalic) fontStyleStr += 'italic ';
+    if (state.headerBold) fontStyleStr += 'bold ';
+    context.font = `${fontStyleStr}${fontSizePx}px Inter, sans-serif`;
+
+    const lines = getHeaderLines(state.headerText, context, maxWidth);
+    if (lines.length === 0) {
+      return { lines: [], fontSizePx, lineHeight: 0, headerAreaHeight: 0 };
+    }
+
+    const lineHeight = Math.round(fontSizePx * 1.35);
+    const bottomGap = Math.round(fontSizePx * 0.5);
+    const headerAreaHeight = (lines.length * lineHeight) + bottomGap;
+
+    return { lines, fontSizePx, lineHeight, headerAreaHeight };
   }
 
   // --- Main Canvas Render (Supports fast preview and 300 DPI export) ---
@@ -931,52 +1004,57 @@
       borderColor = '#cbd5e1';
     }
 
-    // Header Text Render
+    // Header Text Render (Multi-line word wrap support)
     let headerAreaHeight = 0;
     if (state.headerText && state.headerText.trim() !== '') {
-      const fontSizePx = ptToPx(state.headerFontSizePt || 16);
-      let fontStyleStr = '';
-      if (state.headerItalic) fontStyleStr += 'italic ';
-      if (state.headerBold) fontStyleStr += 'bold ';
-      targetCtx.font = `${fontStyleStr}${fontSizePx}px Inter, sans-serif`;
+      const maxTextWidth = Math.max(10, W - marginPx * 2);
+      const headerLayout = computeHeaderLayout(targetCtx, maxTextWidth);
+      headerAreaHeight = headerLayout.headerAreaHeight;
 
-      headerAreaHeight = fontSizePx * 1.8;
+      if (headerLayout.lines.length > 0) {
+        targetCtx.save();
+        targetCtx.fillStyle = state.headerColor;
+        targetCtx.textBaseline = 'top';
 
-      targetCtx.save();
-      targetCtx.fillStyle = state.headerColor;
-      targetCtx.textBaseline = 'top';
+        const fontSizePx = headerLayout.fontSizePx;
+        const lineHeight = headerLayout.lineHeight;
 
-      let textX = marginPx;
-      if (state.headerAlign === 'center') {
-        targetCtx.textAlign = 'center';
-        textX = W / 2;
-      } else if (state.headerAlign === 'right') {
-        targetCtx.textAlign = 'right';
-        textX = W - marginPx;
-      } else {
-        targetCtx.textAlign = 'left';
-        textX = marginPx;
+        headerLayout.lines.forEach((lineText, lineIdx) => {
+          if (!lineText) return;
+          let textX = marginPx;
+          if (state.headerAlign === 'center') {
+            targetCtx.textAlign = 'center';
+            textX = W / 2;
+          } else if (state.headerAlign === 'right') {
+            targetCtx.textAlign = 'right';
+            textX = W - marginPx;
+          } else {
+            targetCtx.textAlign = 'left';
+            textX = marginPx;
+          }
+
+          const textY = marginPx + (lineIdx * lineHeight);
+          targetCtx.fillText(lineText, textX, textY);
+
+          if (state.headerUnderline) {
+            const textMetrics = targetCtx.measureText(lineText);
+            let lineStartX = textX;
+            if (state.headerAlign === 'center') {
+              lineStartX = textX - textMetrics.width / 2;
+            } else if (state.headerAlign === 'right') {
+              lineStartX = textX - textMetrics.width;
+            }
+            targetCtx.lineWidth = Math.max(2, Math.round(fontSizePx * 0.08));
+            targetCtx.strokeStyle = state.headerColor;
+            targetCtx.beginPath();
+            targetCtx.moveTo(lineStartX, textY + fontSizePx * 1.15);
+            targetCtx.lineTo(lineStartX + textMetrics.width, textY + fontSizePx * 1.15);
+            targetCtx.stroke();
+          }
+        });
+
+        targetCtx.restore();
       }
-
-      const textY = marginPx;
-      targetCtx.fillText(state.headerText, textX, textY);
-
-      if (state.headerUnderline) {
-        const textMetrics = targetCtx.measureText(state.headerText);
-        let lineStartX = textX;
-        if (state.headerAlign === 'center') {
-          lineStartX = textX - textMetrics.width / 2;
-        } else if (state.headerAlign === 'right') {
-          lineStartX = textX - textMetrics.width;
-        }
-        targetCtx.lineWidth = Math.max(2, Math.round(fontSizePx * 0.08));
-        targetCtx.strokeStyle = state.headerColor;
-        targetCtx.beginPath();
-        targetCtx.moveTo(lineStartX, textY + fontSizePx * 1.15);
-        targetCtx.lineTo(lineStartX + textMetrics.width, textY + fontSizePx * 1.15);
-        targetCtx.stroke();
-      }
-      targetCtx.restore();
     }
 
     const layout = LAYOUTS[state.currentLayoutId];
@@ -1091,6 +1169,9 @@
         baseH = sh;
         baseW = sh * imgAspect;
       }
+    } else if (fitMode === 'stretch') {
+      baseW = sw;
+      baseH = sh;
     } else {
       if (imgAspect > slotAspect) {
         baseH = sh;
@@ -1236,6 +1317,9 @@
         state.slotsData.forEach((s) => {
           if (s) s.fitMode = e.target.value;
         });
+        if (state.selectedSlotIndex >= 0) {
+          updateInlineFitButtons(e.target.value);
+        }
         renderCollage();
       });
     }
@@ -1434,6 +1518,17 @@
       });
     }
 
+    if (inlineBtnStretch) {
+      inlineBtnStretch.addEventListener('click', () => {
+        const s = state.slotsData[state.selectedSlotIndex];
+        if (s) {
+          s.fitMode = 'stretch';
+          updateInlineFitButtons('stretch');
+          renderCollage();
+        }
+      });
+    }
+
     if (inlineBtnFlipH) {
       inlineBtnFlipH.addEventListener('click', () => {
         const s = state.slotsData[state.selectedSlotIndex];
@@ -1526,7 +1621,14 @@
     const gapPx = mmToPx(state.gapMm);
     let headerAreaHeight = 0;
     if (state.headerText && state.headerText.trim() !== '') {
-      headerAreaHeight = ptToPx(state.headerFontSizePt || 16) * 1.8;
+      const activeCtx = ctx || (canvas && canvas.getContext('2d'));
+      if (activeCtx) {
+        const maxWidth = Math.max(10, state.width - marginPx * 2);
+        const headerLayout = computeHeaderLayout(activeCtx, maxWidth);
+        headerAreaHeight = headerLayout.headerAreaHeight;
+      } else {
+        headerAreaHeight = ptToPx(state.headerFontSizePt || 16) * 1.8;
+      }
     }
 
     const gridTop = marginPx + headerAreaHeight;
