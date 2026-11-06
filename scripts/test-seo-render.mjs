@@ -1,10 +1,10 @@
 async function test() {
   const urls = [
-    'http://localhost:4321/general/bmi-calculator/',
-    'http://localhost:4321/hi/general/bmi-calculator/',
-    'http://localhost:4321/es/general/bmi-calculator/',
-    'http://localhost:4321/de/general/bmi-calculator/',
-    'http://localhost:4321/ja/general/bmi-calculator/'
+    'http://localhost:4321/health/bmi-calculator/',
+    'http://localhost:4321/hi/health/bmi-calculator/',
+    'http://localhost:4321/es/health/bmi-calculator/',
+    'http://localhost:4321/de/health/bmi-calculator/',
+    'http://localhost:4321/ja/health/bmi-calculator/'
   ];
   for (const url of urls) {
     try {

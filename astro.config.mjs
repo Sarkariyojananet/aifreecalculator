@@ -19,6 +19,7 @@ import sitemap from '@astrojs/sitemap';
 //   /free-online-tools/pdf-*|image-to-pdf -> /pdf-tools/...
 //   /image-tools/image-*|jpg-*|png-*      -> /free-online-tools/...
 const REDIRECT_SOURCE_KEYS = new Set([
+  'general/bmi-calculator',
   'general/percentage-calculator',
   'general/date-difference-calculator',
   'math/standard-deviation-calculator',
@@ -144,6 +145,17 @@ export default defineConfig({
     '/pt/general/percentage-calculator': '/pt/math/percentage-calculator/',
     '/ko/general/percentage-calculator': '/ko/math/percentage-calculator/',
     '/it/general/percentage-calculator': '/it/math/percentage-calculator/',
+
+    // BMI Calculator category shift redirects (/general/ -> /health/)
+    '/general/bmi-calculator': '/health/bmi-calculator/',
+    '/hi/general/bmi-calculator': '/hi/health/bmi-calculator/',
+    '/es/general/bmi-calculator': '/es/health/bmi-calculator/',
+    '/ja/general/bmi-calculator': '/ja/health/bmi-calculator/',
+    '/fr/general/bmi-calculator': '/fr/health/bmi-calculator/',
+    '/de/general/bmi-calculator': '/de/health/bmi-calculator/',
+    '/pt/general/bmi-calculator': '/pt/health/bmi-calculator/',
+    '/ko/general/bmi-calculator': '/ko/health/bmi-calculator/',
+    '/it/general/bmi-calculator': '/it/health/bmi-calculator/',
     '/finance/sukanya-samriddhi-calculator': '/finance/sukanya-samriddhi-yojana-calculator',
     '/brickwork-calculator': '/construction/brickwork-calculator',
     '/finance/loan-calculator': '/finance/emi-calculator/#type=personal',

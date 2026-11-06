@@ -26,8 +26,8 @@ export function normalizePath(path: string): string {
  * Extracts current locale and clean un-prefixed path from any URL or pathname.
  *
  * Example:
- *   '/hi/general/bmi-calculator/' => { locale: 'hi', cleanPath: '/general/bmi-calculator/' }
- *   '/general/bmi-calculator/'    => { locale: 'en', cleanPath: '/general/bmi-calculator/' }
+ *   '/hi/health/bmi-calculator/' => { locale: 'hi', cleanPath: '/health/bmi-calculator/' }
+ *   '/health/bmi-calculator/'    => { locale: 'en', cleanPath: '/health/bmi-calculator/' }
  */
 export function extractLocaleFromPath(pathname: string): { locale: Locale; lang: Locale; cleanPath: string } {
   const normalized = normalizePath(pathname);
@@ -48,8 +48,8 @@ export function extractLocaleFromPath(pathname: string): { locale: Locale; lang:
  * Default locale ('en') NEVER has a language prefix.
  *
  * Examples:
- *   getLocalizedPath('/general/bmi-calculator/', 'en') => '/general/bmi-calculator/'
- *   getLocalizedPath('/general/bmi-calculator/', 'hi') => '/hi/general/bmi-calculator/'
+ *   getLocalizedPath('/health/bmi-calculator/', 'en') => '/health/bmi-calculator/'
+ *   getLocalizedPath('/health/bmi-calculator/', 'hi') => '/hi/health/bmi-calculator/'
  *   getLocalizedPath('/', 'es')                       => '/es/'
  *   getLocalizedPath('/', 'en')                       => '/'
  */
