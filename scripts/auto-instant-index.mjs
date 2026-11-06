@@ -4,6 +4,7 @@
  * Supports:
  *  1. Google Indexing API (Googlebot crawling prompt)
  *  2. IndexNow API (Bing, Yandex, Seznam, Naver)
+ *  3. Bing Webmaster Tools URL Submission API (Direct Key)
  * 
  * Safety Rules:
  *  - STRICTLY BLOCKS any localhost / 127.0.0.1 URLs.
@@ -24,6 +25,7 @@ const DOMAIN = 'https://aifreecalculator.com';
 const HOST = 'aifreecalculator.com';
 const INDEXNOW_KEY = '9f8e4d2a1b7c3e5a6f0b8c2d4e1a7f9b';
 const INDEXNOW_KEY_LOCATION = `${DOMAIN}/${INDEXNOW_KEY}.txt`;
+const BING_WEBMASTER_API_KEY = process.env.BING_WEBMASTER_API_KEY || '7005328021e646e5b177a8ed147c4dc9';
 const CACHE_FILE = path.join(process.cwd(), '.indexed-cache.json');
 const SERVICE_ACCOUNT_FILE = path.join(process.cwd(), 'service-account.json');
 
@@ -139,6 +141,27 @@ async function submitToIndexNow(urlList) {
   return { status: res.status, ok: res.ok || res.status === 200 || res.status === 202 };
 }
 
+// --- Submit batch to Bing Webmaster Tools API ---
+async function submitToBingWebmaster(urlList) {
+  const safeList = urlList.filter(isSafeProductionUrl);
+  if (safeList.length === 0) return { ok: true, count: 0 };
+  if (!BING_WEBMASTER_API_KEY) return { ok: false, error: 'No Bing API Key configured' };
+
+  try {
+    const res = await fetch(`https://ssl.bing.com/webmaster/api.svc/json/SubmitUrlbatch?apikey=${BING_WEBMASTER_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8' },
+      body: JSON.stringify({
+        siteUrl: DOMAIN,
+        urlList: safeList.slice(0, 500)
+      })
+    });
+    return { status: res.status, ok: res.ok || res.status === 200, count: safeList.length };
+  } catch (err) {
+    return { ok: false, status: 500, error: err.message };
+  }
+}
+
 // --- Scan Canonical URLs from Project ---
 function getCanonicalUrls() {
   const urls = [];
@@ -245,10 +268,15 @@ async function main() {
       console.log(gRes.ok ? 'SUCCESS' : `FAILED (${gRes.status})`);
     }
 
-    // 2. IndexNow
+    // 2. IndexNow (Bing / Yandex / Seznam)
     process.stdout.write('  -> IndexNow (Bing/Yandex)... ');
     const inRes = await submitToIndexNow([singleUrl]);
     console.log(inRes.ok ? 'SUCCESS' : `FAILED (${inRes.status})`);
+
+    // 3. Bing Webmaster Tools API
+    process.stdout.write('  -> Bing Webmaster Tools API... ');
+    const bRes = await submitToBingWebmaster([singleUrl]);
+    console.log(bRes.ok ? 'SUCCESS' : `FAILED (${bRes.status || bRes.error})`);
     return;
   }
 
@@ -312,12 +340,12 @@ async function main() {
   }
 
   // 1. Submit batch to IndexNow (Unlimited / All in one request)
-  console.log('\n📡 [1/2] Submitting to IndexNow (Bing, Yandex, Seznam)...');
-  const indexNowUrlList = liveUrls.map(p => p.url);
+  console.log('\n📡 [1/3] Submitting to IndexNow (Bing, Yandex, Seznam)...');
+  const liveUrlList = liveUrls.map(p => p.url);
   try {
-    const inRes = await submitToIndexNow(indexNowUrlList);
+    const inRes = await submitToIndexNow(liveUrlList);
     if (inRes.ok) {
-      console.log(`✅ IndexNow: Successfully submitted ${indexNowUrlList.length} URLs in a single batch!`);
+      console.log(`✅ IndexNow: Successfully submitted ${liveUrlList.length} URLs in a single batch!`);
     } else {
       console.warn(`⚠️ IndexNow returned HTTP status: ${inRes.status}`);
     }
@@ -325,9 +353,22 @@ async function main() {
     console.error('❌ IndexNow Error:', err.message);
   }
 
-  // 2. Submit to Google Indexing API (Max 200/day per quota)
+  // 2. Submit batch to Bing Webmaster Tools API (Direct API Key)
+  console.log('\n📡 [2/3] Submitting to Bing Webmaster Tools API...');
+  try {
+    const bingRes = await submitToBingWebmaster(liveUrlList);
+    if (bingRes.ok) {
+      console.log(`✅ Bing Webmaster API: Successfully submitted ${bingRes.count} URLs!`);
+    } else {
+      console.warn(`⚠️ Bing Webmaster API returned status: ${bingRes.status || bingRes.error}`);
+    }
+  } catch (err) {
+    console.error('❌ Bing Webmaster API Error:', err.message);
+  }
+
+  // 3. Submit to Google Indexing API (Max 200/day per quota)
   if (googleToken) {
-    console.log('\n📡 [2/2] Submitting to Google Indexing API (Googlebot Queue)...');
+    console.log('\n📡 [3/3] Submitting to Google Indexing API (Googlebot Queue)...');
     const googleLimit = 190;
     const toSubmitGoogle = liveUrls.slice(0, googleLimit);
 
