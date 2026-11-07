@@ -1,0 +1,1462 @@
+---
+import CalculatorLayout from '../../layouts/CalculatorLayout.astro';
+import { extractLocaleFromPath } from '../../i18n/utils';
+import type { Locale } from '../../i18n/config';
+
+interface Props {
+  lang?: Locale;
+}
+
+const { lang: propLang } = Astro.props;
+const currentPath = Astro.url.pathname;
+const { locale: pathLocale } = extractLocaleFromPath(currentPath);
+const lang: Locale = (propLang || pathLocale || 'en') as Locale;
+
+const uiTranslations: Record<Locale, {
+  quickPresets: string;
+  carLoanPreset: string;
+  mortgage30Preset: string;
+  mortgage15Preset: string;
+  creditCardPreset: string;
+  personalLoanPreset: string;
+  cardTitle: string;
+  cardSubtitle: string;
+  currency: string;
+  tabFixedTerm: string;
+  tabFixedPayment: string;
+  loanAmount: string;
+  interestRate: string;
+  annualRate: string;
+  loanTerm: string;
+  years: string;
+  months: string;
+  monthlyPaymentAmount: string;
+  popularTerms: string;
+  term3yr: string;
+  term4yr: string;
+  term5yr: string;
+  term6yr: string;
+  term15yr: string;
+  term30yr: string;
+  negAmortTitle: string;
+  negAmortDesc: string;
+  lblMonthlyPayment: string;
+  subMonthlyPayment: string;
+  lblPayoffTime: string;
+  subPayoffTime: string;
+  lblTotalInterest: string;
+  lblTotalPayment: string;
+  subTotalPayment: string;
+  lblPayoffDate: string;
+  subPayoffDate: string;
+  proportionTitle: string;
+  proportionSub: string;
+  principal: string;
+  interest: string;
+  ofTotalPayment: string;
+  scheduleTitle: string;
+  scheduleSub: string;
+  yearlySummary: string;
+  monthlyBreakdown: string;
+  exportCsv: string;
+  thPeriodYear: string;
+  thPeriodMonth: string;
+  thPayment: string;
+  thPrincipal: string;
+  thInterest: string;
+  thTotalInterest: string;
+  thEndingBalance: string;
+}> = {
+  en: {
+    quickPresets: 'Quick Presets:',
+    carLoanPreset: '🚗 Car Payment ($35k, 5 Yrs @ 6.5%)',
+    mortgage30Preset: '🏡 Mortgage Payment (30 Yrs $400k @ 6.8%)',
+    mortgage15Preset: '🏡 Mortgage Payment (15 Yrs $400k @ 6.1%)',
+    creditCardPreset: '💳 Credit Card ($8k @ 21.9%, $250/mo)',
+    personalLoanPreset: '💵 Personal Loan ($15k, 3 Yrs @ 9.5%)',
+    cardTitle: 'Payment Calculator',
+    cardSubtitle: 'Calculate loan repayments by fixed duration or fixed monthly payment amount with interest breakdown.',
+    currency: 'Currency:',
+    tabFixedTerm: '📅 Fixed Term (Determine Monthly Payment)',
+    tabFixedPayment: '💵 Fixed Monthly Payment (Determine Payoff Time)',
+    loanAmount: 'Loan Amount',
+    interestRate: 'Interest Rate / APR (%)',
+    annualRate: 'Annual rate',
+    loanTerm: 'Loan Term Duration',
+    years: 'Yrs',
+    months: 'Mos',
+    monthlyPaymentAmount: 'Monthly Payment Amount',
+    popularTerms: 'Popular Terms:',
+    term3yr: '3 Yrs (36 Mos)',
+    term4yr: '4 Yrs (48 Mos)',
+    term5yr: '5 Yrs (60 Mos)',
+    term6yr: '6 Yrs (72 Mos)',
+    term15yr: '15 Yrs (Mortgage)',
+    term30yr: '30 Yrs (Mortgage)',
+    negAmortTitle: 'Payment Cannot Cover Interest (Negative Amortization)',
+    negAmortDesc: 'Your monthly payment is not enough to cover the initial interest charge of this loan. The loan balance will grow over time instead of decreasing. Increase your monthly payment or reduce the loan amount.',
+    lblMonthlyPayment: 'Monthly Payment',
+    subMonthlyPayment: 'Regular monthly payment due',
+    lblPayoffTime: 'Time to Debt Free',
+    subPayoffTime: 'Estimated payoff duration',
+    lblTotalInterest: 'Total Interest Paid',
+    lblTotalPayment: 'Total Amount Paid',
+    subTotalPayment: 'Principal + Total Interest',
+    lblPayoffDate: 'Estimated Payoff Date',
+    subPayoffDate: 'total monthly payments',
+    proportionTitle: 'Principal vs Interest Proportion',
+    proportionSub: 'Proportion of borrowed money versus lender finance charges',
+    principal: 'Principal',
+    interest: 'Interest',
+    ofTotalPayment: 'of total payment',
+    scheduleTitle: 'Loan Amortization Schedule',
+    scheduleSub: 'Inspect annual summaries or month by month principal and balance reduction.',
+    yearlySummary: 'Yearly Summary',
+    monthlyBreakdown: 'Monthly Breakdown',
+    exportCsv: 'Export CSV',
+    thPeriodYear: 'Year',
+    thPeriodMonth: 'Month',
+    thPayment: 'Payment',
+    thPrincipal: 'Principal',
+    thInterest: 'Interest',
+    thTotalInterest: 'Total Interest',
+    thEndingBalance: 'Ending Balance'
+  },
+  hi: {
+    quickPresets: 'त्वरित प्रीसेट:',
+    carLoanPreset: '🚗 कार पेमेंट ($35k, 5 वर्ष @ 6.5%)',
+    mortgage30Preset: '🏡 मॉर्टगेज पेमेंट (30 वर्ष $400k @ 6.8%)',
+    mortgage15Preset: '🏡 मॉर्टगेज पेमेंट (15 वर्ष $400k @ 6.1%)',
+    creditCardPreset: '💳 क्रेडिट कार्ड ($8k @ 21.9%, $250/माह)',
+    personalLoanPreset: '💵 व्यक्तिगत ऋण ($15k, 3 वर्ष @ 9.5%)',
+    cardTitle: 'पेमेंट कैलकुलेटर',
+    cardSubtitle: 'निश्चित अवधि या निश्चित मासिक किस्त के आधार पर ब्याज विवरण के साथ ऋण भुगतान की गणना करें।',
+    currency: 'मुद्रा:',
+    tabFixedTerm: '📅 निश्चित अवधि (मासिक भुगतान ज्ञात करें)',
+    tabFixedPayment: '💵 निश्चित मासिक भुगतान (ऋणमुक्ति समय ज्ञात करें)',
+    loanAmount: 'ऋण राशि',
+    interestRate: 'ब्याज दर / APR (%)',
+    annualRate: 'वार्षिक दर',
+    loanTerm: 'ऋण अवधि',
+    years: 'वर्ष',
+    months: 'माह',
+    monthlyPaymentAmount: 'मासिक भुगतान राशि',
+    popularTerms: 'लोकप्रिय अवधियां:',
+    term3yr: '3 वर्ष (36 माह)',
+    term4yr: '4 वर्ष (48 माह)',
+    term5yr: '5 वर्ष (60 माह)',
+    term6yr: '6 वर्ष (72 माह)',
+    term15yr: '15 वर्ष (मॉर्टगेज)',
+    term30yr: '30 वर्ष (मॉर्टगेज)',
+    negAmortTitle: 'भुगतान से ब्याज पूरा नहीं हो रहा (नकारात्मक परिशोधन)',
+    negAmortDesc: 'आपका मासिक भुगतान इस ऋण के शुरुआती मासिक ब्याज को पूरा करने के लिए अपर्याप्त है। शेष ऋण घटने के बजाय बढ़ता रहेगा। मासिक भुगतान बढ़ाएं या ऋण राशि घटाएं।',
+    lblMonthlyPayment: 'मासिक भुगतान',
+    subMonthlyPayment: 'नियमित मासिक देय किस्त',
+    lblPayoffTime: 'ऋणमुक्ति में लगने वाला समय',
+    subPayoffTime: 'अनुमानित ऋणमुक्ति अवधि',
+    lblTotalInterest: 'कुल देय ब्याज',
+    lblTotalPayment: 'कुल भुगतान राशि',
+    subTotalPayment: 'मूलधन + कुल ब्याज',
+    lblPayoffDate: 'अनुमानित ऋणमुक्ति तिथि',
+    subPayoffDate: 'कुल मासिक किस्तें',
+    proportionTitle: 'मूलधन बनाम ब्याज अनुपात',
+    proportionSub: 'उधार ली गई राशि बनाम बैंक ब्याज शुल्क का अनुपात',
+    principal: 'मूलधन',
+    interest: 'ब्याज',
+    ofTotalPayment: 'कुल भुगतान का हिस्सा',
+    scheduleTitle: 'ऋण परिशोधन अनुसूची (Amortization)',
+    scheduleSub: 'वार्षिक सारांश या महीने दर महीने मूलधन व शेष राशि में कमी देखें।',
+    yearlySummary: 'वार्षिक सारांश',
+    monthlyBreakdown: 'मासिक विवरण',
+    exportCsv: 'CSV डाउनलोड करें',
+    thPeriodYear: 'वर्ष',
+    thPeriodMonth: 'माह',
+    thPayment: 'भुगतान',
+    thPrincipal: 'मूलधन',
+    thInterest: 'ब्याज',
+    thTotalInterest: 'संचयी ब्याज',
+    thEndingBalance: 'अंतिम शेष'
+  },
+  es: {
+    quickPresets: 'Ajustes rápidos:',
+    carLoanPreset: '🚗 Préstamo Auto ($35k, 5 Años @ 6.5%)',
+    mortgage30Preset: '🏡 Hipoteca 30 Años ($400k @ 6.8%)',
+    mortgage15Preset: '🏡 Hipoteca 15 Años ($400k @ 6.1%)',
+    creditCardPreset: '💳 Tarjeta de Crédito ($8k @ 21.9%, $250/mes)',
+    personalLoanPreset: '💵 Préstamo Personal ($15k, 3 Años @ 9.5%)',
+    cardTitle: 'Calculadora de Pagos',
+    cardSubtitle: 'Calcule pagos de préstamos por plazo fijo o pago mensual fijo con desglose de intereses.',
+    currency: 'Moneda:',
+    tabFixedTerm: '📅 Plazo Fijo (Calcular Cuota Mensual)',
+    tabFixedPayment: '💵 Pago Mensual Fijo (Calcular Tiempo de Pago)',
+    loanAmount: 'Monto del Préstamo',
+    interestRate: 'Tasa de Interés / APR (%)',
+    annualRate: 'Tasa anual',
+    loanTerm: 'Duración del Préstamo',
+    years: 'Años',
+    months: 'Meses',
+    monthlyPaymentAmount: 'Monto del Pago Mensual',
+    popularTerms: 'Plazos Populares:',
+    term3yr: '3 Años (36 Meses)',
+    term4yr: '4 Años (48 Meses)',
+    term5yr: '5 Años (60 Meses)',
+    term6yr: '6 Años (72 Meses)',
+    term15yr: '15 Años (Hipoteca)',
+    term30yr: '30 Años (Hipoteca)',
+    negAmortTitle: 'El pago no cubre el interés (Amortización Negativa)',
+    negAmortDesc: 'Su cuota mensual no cubre el interés inicial generado. La deuda aumentará con el tiempo en lugar de disminuir. Aumente la cuota o reduzca el capital.',
+    lblMonthlyPayment: 'Cuota Mensual',
+    subMonthlyPayment: 'Pago regular debido cada mes',
+    lblPayoffTime: 'Tiempo para Liquidar Deuda',
+    subPayoffTime: 'Duración estimada del pago',
+    lblTotalInterest: 'Total de Intereses Pagados',
+    lblTotalPayment: 'Monto Total Pagado',
+    subTotalPayment: 'Principal + Intereses Totales',
+    lblPayoffDate: 'Fecha Estimada de Liquidación',
+    subPayoffDate: 'pagos mensuales totales',
+    proportionTitle: 'Proporción Principal vs Interés',
+    proportionSub: 'Proporción de capital prestado frente a cargos financieros',
+    principal: 'Principal',
+    interest: 'Interés',
+    ofTotalPayment: 'del pago total',
+    scheduleTitle: 'Tabla de Amortización del Préstamo',
+    scheduleSub: 'Consulte el resumen anual o el desglose mensual de pagos y saldo restante.',
+    yearlySummary: 'Resumen Anual',
+    monthlyBreakdown: 'Desglose Mensual',
+    exportCsv: 'Exportar CSV',
+    thPeriodYear: 'Año',
+    thPeriodMonth: 'Mes',
+    thPayment: 'Pago',
+    thPrincipal: 'Principal',
+    thInterest: 'Interés',
+    thTotalInterest: 'Interés Acumulado',
+    thEndingBalance: 'Saldo Final'
+  },
+  ja: {
+    quickPresets: 'クイック設定:',
+    carLoanPreset: '🚗 マイカーローン ($35k, 5年 @ 6.5%)',
+    mortgage30Preset: '🏡 住宅ローン 30年 ($400k @ 6.8%)',
+    mortgage15Preset: '🏡 住宅ローン 15年 ($400k @ 6.1%)',
+    creditCardPreset: '💳 クレジットカード ($8k @ 21.9%, $250/月)',
+    personalLoanPreset: '💵 フリーローン ($15k, 3年 @ 9.5%)',
+    cardTitle: 'ローン支払い計算機',
+    cardSubtitle: '固定返済期間または固定毎月返済額から利息内訳とともに返済計画を算出します。',
+    currency: '通貨:',
+    tabFixedTerm: '📅 返済期間指定 (毎月返済額を計算)',
+    tabFixedPayment: '💵 毎月返済額指定 (完済期間を計算)',
+    loanAmount: '借入金額',
+    interestRate: '年利 / APR (%)',
+    annualRate: '年利',
+    loanTerm: '返済期間',
+    years: '年',
+    months: 'ヶ月',
+    monthlyPaymentAmount: '毎月の返済希望額',
+    popularTerms: '代表的な期間:',
+    term3yr: '3年 (36回)',
+    term4yr: '4年 (48回)',
+    term5yr: '5年 (60回)',
+    term6yr: '6年 (72回)',
+    term15yr: '15年 (住宅ローン)',
+    term30yr: '30年 (住宅ローン)',
+    negAmortTitle: '返済額が利息を下回っています (負の償却)',
+    negAmortDesc: '指定された毎月の返済額では発生する利息を補えません。借入残高が減らずに増加します。返済額を増やすか借入額を減らしてください。',
+    lblMonthlyPayment: '毎月の返済額',
+    subMonthlyPayment: '定期毎月支払額',
+    lblPayoffTime: '完済までの所要期間',
+    subPayoffTime: '推定返済期間',
+    lblTotalInterest: '支払利息総額',
+    lblTotalPayment: '返済総額',
+    subTotalPayment: '元金 + 利息総額',
+    lblPayoffDate: '完済予定年月',
+    subPayoffDate: '合計返済回数',
+    proportionTitle: '元金と利息の比率',
+    proportionSub: '借入元金と金融機関利息の構成比',
+    principal: '借入元金',
+    interest: '利息',
+    ofTotalPayment: '支払総額に対する比率',
+    scheduleTitle: 'ローン返済償却スケジュール',
+    scheduleSub: '年別サマリーまたは月別の元金返済と残高推移を確認できます。',
+    yearlySummary: '年別サマリー',
+    monthlyBreakdown: '月別詳細内訳',
+    exportCsv: 'CSV出力',
+    thPeriodYear: '年',
+    thPeriodMonth: '月',
+    thPayment: '返済額',
+    thPrincipal: '元金充当額',
+    thInterest: '利息充当額',
+    thTotalInterest: '累計利息',
+    thEndingBalance: '借入残高'
+  },
+  fr: {
+    quickPresets: 'Préréglages rapides :',
+    carLoanPreset: '🚗 Prêt Auto ($35k, 5 Ans @ 6.5%)',
+    mortgage30Preset: '🏡 Prêt Immobilier 30 Ans ($400k @ 6.8%)',
+    mortgage15Preset: '🏡 Prêt Immobilier 15 Ans ($400k @ 6.1%)',
+    creditCardPreset: '💳 Carte de Crédit ($8k @ 21.9%, $250/mois)',
+    personalLoanPreset: '💵 Prêt Personnel ($15k, 3 Ans @ 9.5%)',
+    cardTitle: 'Calculateur de Remboursement',
+    cardSubtitle: 'Calculez vos mensualités par durée fixe ou versement mensuel fixe avec tableau d\'amortissement.',
+    currency: 'Devise :',
+    tabFixedTerm: '📅 Durée Fixe (Calculer la mensualité)',
+    tabFixedPayment: '💵 Mensualité Fixe (Calculer la durée)',
+    loanAmount: 'Montant du Prêt',
+    interestRate: 'Taux d\'Intérêt / TAEG (%)',
+    annualRate: 'Taux annuel',
+    loanTerm: 'Durée du Prêt',
+    years: 'Ans',
+    months: 'Mois',
+    monthlyPaymentAmount: 'Montant de la Mensualité',
+    popularTerms: 'Durées Fréquentes :',
+    term3yr: '3 Ans (36 Mois)',
+    term4yr: '4 Ans (48 Mois)',
+    term5yr: '5 Ans (60 Mois)',
+    term6yr: '6 Ans (72 Mois)',
+    term15yr: '15 Ans (Immobilier)',
+    term30yr: '30 Ans (Immobilier)',
+    negAmortTitle: 'La mensualité ne couvre pas les intérêts (Amortissement Négatif)',
+    negAmortDesc: 'Votre paiement mensuel est inférieur aux intérêts initiaux. Le capital restant dû augmentera au lieu de diminuer. Augmentez la mensualité ou réduisez le capital.',
+    lblMonthlyPayment: 'Mensualité Estimée',
+    subMonthlyPayment: 'Échéance mensuelle régulière',
+    lblPayoffTime: 'Temps de Remboursement',
+    subPayoffTime: 'Durée estimée pour solder la dette',
+    lblTotalInterest: 'Total des Intérêts Payés',
+    lblTotalPayment: 'Coût Total du Prêt',
+    subTotalPayment: 'Capital + Intérêts cumulés',
+    lblPayoffDate: 'Date Estimée de Fin de Prêt',
+    subPayoffDate: 'mensualités au total',
+    proportionTitle: 'Proportion Capital vs Intérêts',
+    proportionSub: 'Répartition entre capital emprunté et intérêts bancaires',
+    principal: 'Capital Emprunté',
+    interest: 'Intérêts',
+    ofTotalPayment: 'du paiement total',
+    scheduleTitle: 'Tableau d\'Amortissement du Prêt',
+    scheduleSub: 'Consultez le récapitulatif annuel ou le détail mensuel du capital restant dû.',
+    yearlySummary: 'Synthèse Annuelle',
+    monthlyBreakdown: 'Détail Mensuel',
+    exportCsv: 'Exporter en CSV',
+    thPeriodYear: 'Année',
+    thPeriodMonth: 'Mois',
+    thPayment: 'Mensualité',
+    thPrincipal: 'Capital',
+    thInterest: 'Intérêts',
+    thTotalInterest: 'Intérêts Cumulés',
+    thEndingBalance: 'Capital Restant Dû'
+  },
+  de: {
+    quickPresets: 'Schnell-Voreinstellungen:',
+    carLoanPreset: '🚗 Autokredit ($35k, 5 Jahre @ 6.5%)',
+    mortgage30Preset: '🏡 Baufinanzierung 30 Jahre ($400k @ 6.8%)',
+    mortgage15Preset: '🏡 Baufinanzierung 15 Jahre ($400k @ 6.1%)',
+    creditCardPreset: '💳 Kreditkartenschulden ($8k @ 21.9%, $250/Monat)',
+    personalLoanPreset: '💵 Ratenkredit ($15k, 3 Jahre @ 9.5%)',
+    cardTitle: 'Kreditrechner',
+    cardSubtitle: 'Berechnen Sie Kreditraten nach fester Laufzeit oder fester monatlicher Rate samt Zinsaufschlüsselung.',
+    currency: 'Währung:',
+    tabFixedTerm: '📅 Feste Laufzeit (Monatliche Rate ermitteln)',
+    tabFixedPayment: '💵 Feste Monatsrate (Tilgungsdauer ermitteln)',
+    loanAmount: 'Darlehensbetrag',
+    interestRate: 'Zinssatz / Effektivzins (%)',
+    annualRate: 'Jahreszinssatz',
+    loanTerm: 'Kreditlaufzeit',
+    years: 'Jahre',
+    months: 'Monate',
+    monthlyPaymentAmount: 'Monatliche Ratenhöhe',
+    popularTerms: 'Beliebte Laufzeiten:',
+    term3yr: '3 Jahre (36 Mon.)',
+    term4yr: '4 Jahre (48 Mon.)',
+    term5yr: '5 Jahre (60 Mon.)',
+    term6yr: '6 Jahre (72 Mon.)',
+    term15yr: '15 Jahre (Baufinanzierung)',
+    term30yr: '30 Jahre (Baufinanzierung)',
+    negAmortTitle: 'Rate deckt Zinsen nicht (Negative Tilgung)',
+    negAmortDesc: 'Ihre Monatsrate reicht nicht aus, um die anfallenden Zinsen zu decken. Die Restschuld wächst weiter an. Erhöhen Sie die Rate oder verringern Sie die Kreditsumme.',
+    lblMonthlyPayment: 'Monatliche Rate',
+    subMonthlyPayment: 'Reguläre monatliche Zahlungsverpflichtung',
+    lblPayoffTime: 'Zeit bis zur Schuldenfreiheit',
+    subPayoffTime: 'Geschätzte Tilgungsdauer',
+    lblTotalInterest: 'Gesamte Zinskosten',
+    lblTotalPayment: 'Gesamter Rückzahlungsbetrag',
+    subTotalPayment: 'Nettodarlehen + Gesamtzinsen',
+    lblPayoffDate: 'Voraussichtliches Tilgungsdatum',
+    subPayoffDate: 'monatliche Raten insgesamt',
+    proportionTitle: 'Verhältnis Tilgung zu Zinsen',
+    proportionSub: 'Aufteilung zwischen aufgenommenem Darlehen und Zinskosten',
+    principal: 'Darlehen (Tilgung)',
+    interest: 'Zinsen',
+    ofTotalPayment: 'der Gesamtrückzahlung',
+    scheduleTitle: 'Tilgungsplan (Amortisationsplan)',
+    scheduleSub: 'Prüfen Sie die jährliche Zusammenfassung oder den monatlichen Verlauf der Restschuld.',
+    yearlySummary: 'Jährliche Übersicht',
+    monthlyBreakdown: 'Monatliche Aufstellung',
+    exportCsv: 'CSV exportieren',
+    thPeriodYear: 'Jahr',
+    thPeriodMonth: 'Monat',
+    thPayment: 'Rate',
+    thPrincipal: 'Tilgungsanteil',
+    thInterest: 'Zinsanteil',
+    thTotalInterest: 'Zinsen kumuliert',
+    thEndingBalance: 'Restschuld'
+  },
+  pt: {
+    quickPresets: 'Predefinições rápidas:',
+    carLoanPreset: '🚗 Financiamento Auto ($35k, 5 Anos @ 6.5%)',
+    mortgage30Preset: '🏡 Financiamento Imobiliário 30 Anos ($400k @ 6.8%)',
+    mortgage15Preset: '🏡 Financiamento Imobiliário 15 Anos ($400k @ 6.1%)',
+    creditCardPreset: '💳 Cartão de Crédito ($8k @ 21.9%, $250/mês)',
+    personalLoanPreset: '💵 Empréstimo Pessoal ($15k, 3 Anos @ 9.5%)',
+    cardTitle: 'Calculadora de Pagamento de Empréstimo',
+    cardSubtitle: 'Calcule parcelas mensais por prazo fixo ou valor fixo com tabela completa de amortização.',
+    currency: 'Moeda:',
+    tabFixedTerm: '📅 Prazo Fixo (Calcular Parcela Mensal)',
+    tabFixedPayment: '💵 Parcela Mensal Fixa (Calcular Tempo de Quitação)',
+    loanAmount: 'Valor do Empréstimo',
+    interestRate: 'Taxa de Juros / CET (%)',
+    annualRate: 'Taxa anual',
+    loanTerm: 'Prazo do Financiamento',
+    years: 'Anos',
+    months: 'Meses',
+    monthlyPaymentAmount: 'Valor da Parcela Mensal',
+    popularTerms: 'Prazos Comuns:',
+    term3yr: '3 Anos (36 Meses)',
+    term4yr: '4 Anos (48 Meses)',
+    term5yr: '5 Anos (60 Meses)',
+    term6yr: '6 Anos (72 Meses)',
+    term15yr: '15 Anos (Imobiliário)',
+    term30yr: '30 Anos (Imobiliário)',
+    negAmortTitle: 'Pagamento não cobre juros (Amortização Negativa)',
+    negAmortDesc: 'O valor da parcela não cobre os juros mensais iniciais. A dívida aumentará ao longo do tempo. Aumente o pagamento ou reduza o valor do empréstimo.',
+    lblMonthlyPayment: 'Parcela Mensal',
+    subMonthlyPayment: 'Valor mensal regular devido',
+    lblPayoffTime: 'Tempo até a Quitação',
+    subPayoffTime: 'Duração estimada para quitar a dívida',
+    lblTotalInterest: 'Total de Juros Pagos',
+    lblTotalPayment: 'Valor Total Pago',
+    subTotalPayment: 'Principal + Juros Totais',
+    lblPayoffDate: 'Data Estimada de Quitação',
+    subPayoffDate: 'parcelas mensais no total',
+    proportionTitle: 'Proporção Principal vs Juros',
+    proportionSub: 'Divisão entre capital emprestado e custos de juros do banco',
+    principal: 'Principal',
+    interest: 'Juros',
+    ofTotalPayment: 'do total pago',
+    scheduleTitle: 'Tabela de Amortização do Financiamento',
+    scheduleSub: 'Examine o resumo anual ou o detalhamento mês a mês da evolução do saldo.',
+    yearlySummary: 'Resumo Anual',
+    monthlyBreakdown: 'Detalhamento Mensal',
+    exportCsv: 'Exportar CSV',
+    thPeriodYear: 'Ano',
+    thPeriodMonth: 'Mês',
+    thPayment: 'Parcela',
+    thPrincipal: 'Amortização',
+    thInterest: 'Juros',
+    thTotalInterest: 'Juros Acumulados',
+    thEndingBalance: 'Saldo Devedor'
+  },
+  ko: {
+    quickPresets: '빠른 설정:',
+    carLoanPreset: '🚗 자동차 할부 ($35k, 5년 @ 6.5%)',
+    mortgage30Preset: '🏡 주택담보대출 30년 ($400k @ 6.8%)',
+    mortgage15Preset: '🏡 주택담보대출 15년 ($400k @ 6.1%)',
+    creditCardPreset: '💳 신용카드 부채 ($8k @ 21.9%, $250/월)',
+    personalLoanPreset: '💵 신용대출 ($15k, 3년 @ 9.5%)',
+    cardTitle: '대출 상환 계산기',
+    cardSubtitle: '고정 대출 기간 또는 매월 고정 상환액을 기준으로 이자 내역 및 상환 계획표를 산출합니다.',
+    currency: '통화:',
+    tabFixedTerm: '📅 고정 기간 기준 (월 상환액 계산)',
+    tabFixedPayment: '💵 고정 월 상환액 기준 (완납 기간 계산)',
+    loanAmount: '대출 원금',
+    interestRate: '이자율 / 연이율 (%)',
+    annualRate: '연이율',
+    loanTerm: '대출 기간',
+    years: '년',
+    months: '개월',
+    monthlyPaymentAmount: '희망 월 상환액',
+    popularTerms: '대표 기간:',
+    term3yr: '3년 (36개월)',
+    term4yr: '4년 (48개월)',
+    term5yr: '5년 (60개월)',
+    term6yr: '6년 (72개월)',
+    term15yr: '15년 (주택담보대출)',
+    term30yr: '30년 (주택담보대출)',
+    negAmortTitle: '상환액이 이자보다 부족합니다 (음의 상환)',
+    negAmortDesc: '설정한 월 상환액이 초기 월 이자보다 적습니다. 대출 잔액이 감소하지 않고 증가하게 됩니다. 상환액을 늘리거나 대출 원금을 줄이세요.',
+    lblMonthlyPayment: '월 상환액',
+    subMonthlyPayment: '매월 정기 납부 금액',
+    lblPayoffTime: '완납 소요 기간',
+    subPayoffTime: '예상 부채 청산 기간',
+    lblTotalInterest: '총 납부 이자',
+    lblTotalPayment: '총 상환 금액',
+    subTotalPayment: '원금 + 총 이자 합계',
+    lblPayoffDate: '예상 대출 완납일',
+    subPayoffDate: '총 납부 개월 수',
+    proportionTitle: '원금 대비 이자 비율',
+    proportionSub: '대출 원금과 금융기관 이자 비용의 구성비',
+    principal: '대출 원금',
+    interest: '이자 비용',
+    ofTotalPayment: '총 상환액 중 비율',
+    scheduleTitle: '대출 원리금 상환 계획표',
+    scheduleSub: '연도별 요약 또는 월별 원금 상환 및 대출 잔액 감소 추이를 확인하세요.',
+    yearlySummary: '연도별 요약',
+    monthlyBreakdown: '월별 상세 내역',
+    exportCsv: 'CSV 내보내기',
+    thPeriodYear: '연도',
+    thPeriodMonth: '월',
+    thPayment: '상환액',
+    thPrincipal: '원금 상환',
+    thInterest: '이자',
+    thTotalInterest: '누적 이자',
+    thEndingBalance: '대출 잔액'
+  },
+  it: {
+    quickPresets: 'Preimpostazioni rapide:',
+    carLoanPreset: '🚗 Prestito Auto ($35k, 5 Anni @ 6.5%)',
+    mortgage30Preset: '🏡 Mutuo 30 Anni ($400k @ 6.8%)',
+    mortgage15Preset: '🏡 Mutuo 15 Anni ($400k @ 6.1%)',
+    creditCardPreset: '💳 Carta di Credito ($8k @ 21.9%, $250/mese)',
+    personalLoanPreset: '💵 Prestito Personale ($15k, 3 Anni @ 9.5%)',
+    cardTitle: 'Calcolatore Rate e Pagamenti',
+    cardSubtitle: 'Calcola la rata mensile del prestito o la durata del rimborso con piano di ammortamento completo.',
+    currency: 'Valuta:',
+    tabFixedTerm: '📅 Durata Fissa (Calcola la Rata Mensile)',
+    tabFixedPayment: '💵 Rata Mensile Fissa (Calcola il Tempo di Estinzione)',
+    loanAmount: 'Importo del Finanziamento',
+    interestRate: 'Tasso di Interesse / TAN-TAEG (%)',
+    annualRate: 'Tasso annuo',
+    loanTerm: 'Durata del Finanziamento',
+    years: 'Anni',
+    months: 'Mesi',
+    monthlyPaymentAmount: 'Importo della Rata Mensile',
+    popularTerms: 'Scadenze Frequenti:',
+    term3yr: '3 Anni (36 Mesi)',
+    term4yr: '4 Anni (48 Mesi)',
+    term5yr: '5 Anni (60 Mesi)',
+    term6yr: '6 Anni (72 Mesi)',
+    term15yr: '15 Anni (Mutuo)',
+    term30yr: '30 Anni (Mutuo)',
+    negAmortTitle: 'La rata non copre gli interessi (Ammortamento Negativo)',
+    negAmortDesc: 'La rata mensile indicata non copre la quota di interessi iniziali. Il debito residuo aumenterà invece di diminuire. Aumenta la rata o riduci il capitale.',
+    lblMonthlyPayment: 'Rata Mensile',
+    subMonthlyPayment: 'Rata periodica mensile dovuta',
+    lblPayoffTime: 'Tempo per Estinguere il Debito',
+    subPayoffTime: 'Durata stimata per saldare il debito',
+    lblTotalInterest: 'Totale Interessi Pagati',
+    lblTotalPayment: 'Importo Totale Restituito',
+    subTotalPayment: 'Capitale + Interessi Totali',
+    lblPayoffDate: 'Data Estimata di Estinzione',
+    subPayoffDate: 'rate mensili totali',
+    proportionTitle: 'Rapporto Capitale vs Interessi',
+    proportionSub: 'Ripartizione tra denaro preso in prestito e costi di interesse bancari',
+    principal: 'Capitale',
+    interest: 'Interessi',
+    ofTotalPayment: 'del totale versato',
+    scheduleTitle: 'Piano di Ammortamento del Finanziamento',
+    scheduleSub: 'Consulta il riepilogo annuale o la riduzione mensile di quota capitale e debito residuo.',
+    yearlySummary: 'Riepilogo Annuale',
+    monthlyBreakdown: 'Dettaglio Mensile',
+    exportCsv: 'Esporta CSV',
+    thPeriodYear: 'Anno',
+    thPeriodMonth: 'Mese',
+    thPayment: 'Rata',
+    thPrincipal: 'Quota Capitale',
+    thInterest: 'Quota Interessi',
+    thTotalInterest: 'Interessi Cumulati',
+    thEndingBalance: 'Debito Residuo'
+  }
+};
+
+const t = uiTranslations[lang] || uiTranslations.en;
+---
+
+<CalculatorLayout
+  title="Payment Calculator: Loan, Mortgage & Car Payment Estimator"
+  description="Calculate monthly payments for car loans, mortgages, and personal debt. Compare fixed loan terms or fixed monthly payments with complete amortization schedules."
+  category="Finance"
+  calculatorName="Payment Calculator"
+  slug="payment-calculator"
+  lang={lang}
+  keywords={[
+    'payment calculator',
+    'car payment calculator',
+    'mortgage payment calculator',
+    'loan payment calculator',
+    'car loan payment calculator',
+    'monthly payment calculator',
+    'fixed term loan calculator',
+    'loan payoff calculator',
+    'apr payment calculator'
+  ]}
+>
+  <div class="space-y-6">
+
+    <!-- QUICK PRESETS BAR -->
+    <div class="rounded-2xl border border-slate-200/90 bg-white p-3.5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
+      <div class="flex flex-wrap items-center gap-1.5 text-xs">
+        <span class="font-bold text-slate-600 dark:text-slate-400 mr-1 flex items-center gap-1">
+          <span>⚡</span> {t.quickPresets}
+        </span>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-mode="term" data-amt="35000" data-rate="6.5" data-years="5" data-months="0">{t.carLoanPreset}</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-mode="term" data-amt="400000" data-rate="6.8" data-years="30" data-months="0">{t.mortgage30Preset}</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-mode="term" data-amt="400000" data-rate="6.1" data-years="15" data-months="0">{t.mortgage15Preset}</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-mode="payment" data-amt="8000" data-rate="21.9" data-pay="250">{t.creditCardPreset}</button>
+        <button type="button" class="btn-preset rounded-lg border border-slate-300 bg-white px-2.5 py-1 font-semibold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer" data-mode="term" data-amt="15000" data-rate="9.5" data-years="3" data-months="0">{t.personalLoanPreset}</button>
+      </div>
+    </div>
+
+    <!-- MAIN CALCULATOR FORM CONTAINER -->
+    <div class="overflow-hidden rounded-3xl border border-slate-200/90 bg-linear-to-br from-white via-slate-50 to-blue-50/30 p-5 shadow-xl shadow-slate-900/5 dark:border-slate-800 dark:from-slate-950 dark:via-slate-950 dark:to-blue-950/20 sm:p-7">
+      
+      <div class="border-b border-slate-200/80 pb-4 dark:border-slate-800">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+              <span>💳</span> {t.cardTitle}
+            </h2>
+            <p class="mt-1 text-xs text-slate-600 dark:text-slate-400">
+              {t.cardSubtitle}
+            </p>
+          </div>
+
+          <!-- CURRENCY SELECTOR -->
+          <div class="flex items-center gap-2 self-start sm:self-auto">
+            <label for="sel-currency" class="text-xs font-bold text-slate-600 dark:text-slate-400">{t.currency}</label>
+            <select id="sel-currency" class="rounded-xl border border-slate-300 bg-white px-2.5 py-1 text-xs font-bold text-slate-800 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer">
+              <option value="$" selected>USD ($)</option>
+              <option value="₹">INR (₹)</option>
+              <option value="€">EUR (€)</option>
+              <option value="£">GBP (£)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- MODE SELECTION TABS -->
+        <div class="mt-4 inline-flex w-full rounded-2xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-800 dark:bg-slate-900/80 text-xs font-bold sm:w-auto">
+          <button type="button" id="tab-mode-term" class="mode-tab-btn active flex-1 sm:flex-none rounded-xl bg-blue-600 px-4 py-2 text-white shadow-xs transition cursor-pointer" data-mode="term">
+            {t.tabFixedTerm}
+          </button>
+          <button type="button" id="tab-mode-payment" class="mode-tab-btn flex-1 sm:flex-none rounded-xl px-4 py-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition cursor-pointer" data-mode="payment">
+            {t.tabFixedPayment}
+          </button>
+        </div>
+      </div>
+
+      <form id="form-payment" class="mt-5 space-y-4" novalidate onsubmit="return false;" data-i18n={JSON.stringify(t)}>
+        
+        <div class="rounded-2xl border border-slate-200/80 bg-white/70 p-4 dark:border-slate-800 dark:bg-slate-900/50 space-y-4">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            
+            <!-- Loan Principal Amount -->
+            <div>
+              <label for="inp-loan-amount" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                {t.loanAmount} (<span class="currency-label">$</span>)
+              </label>
+              <input type="number" id="inp-loan-amount" value="35000" step="500" min="100" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="35,000" />
+            </div>
+
+            <!-- Interest Rate / APR -->
+            <div>
+              <div class="flex items-center justify-between">
+                <label for="inp-loan-rate" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                  {t.interestRate}
+                </label>
+                <span class="text-[11px] text-slate-500 dark:text-slate-400">{t.annualRate}</span>
+              </div>
+              <input type="number" id="inp-loan-rate" value="6.5" step="0.05" min="0" max="99" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="6.5" />
+            </div>
+
+            <!-- Dynamic Third Field: Term (when Fixed Term) OR Monthly Payment (when Fixed Payment) -->
+            <div id="container-field-term">
+              <label class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                {t.loanTerm}
+              </label>
+              <div class="mt-1.5 grid grid-cols-2 gap-2">
+                <div>
+                  <div class="relative">
+                    <label for="inp-term-years" class="sr-only">{t.loanTerm} ({t.years})</label>
+                    <input type="number" id="inp-term-years" value="5" step="1" min="0" max="50" class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-12 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="5" />
+                    <span class="absolute right-3 top-2.5 text-xs font-semibold text-slate-400">{t.years}</span>
+                  </div>
+                </div>
+                <div>
+                  <div class="relative">
+                    <label for="inp-term-months" class="sr-only">{t.loanTerm} ({t.months})</label>
+                    <input type="number" id="inp-term-months" value="0" step="1" min="0" max="11" class="w-full rounded-xl border border-slate-300 bg-white p-2.5 pr-12 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="0" />
+                    <span class="absolute right-3 top-2.5 text-xs font-semibold text-slate-400">{t.months}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="container-field-payment" class="hidden">
+              <label for="inp-monthly-payment" class="block text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                {t.monthlyPaymentAmount} (<span class="currency-label">$</span>)
+              </label>
+              <input type="number" id="inp-monthly-payment" value="250" step="10" min="1" class="mt-1.5 w-full rounded-xl border border-slate-300 bg-white p-2.5 text-sm font-bold text-slate-900 dark:border-slate-700 dark:bg-slate-800 dark:text-white" placeholder="250" />
+            </div>
+
+          </div>
+
+          <!-- Term Presets Quick Chips (visible in Fixed Term mode) -->
+          <div id="chips-term" class="flex flex-wrap items-center gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-800 text-xs">
+            <span class="text-slate-500 dark:text-slate-400 font-semibold text-[11px]">{t.popularTerms}</span>
+            <button type="button" class="btn-term-chip rounded-lg bg-slate-100 px-2 py-0.5 font-bold text-slate-700 hover:bg-blue-100 hover:text-blue-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-years="3" data-months="0">{t.term3yr}</button>
+            <button type="button" class="btn-term-chip rounded-lg bg-slate-100 px-2 py-0.5 font-bold text-slate-700 hover:bg-blue-100 hover:text-blue-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-years="4" data-months="0">{t.term4yr}</button>
+            <button type="button" class="btn-term-chip rounded-lg bg-blue-50 px-2 py-0.5 font-bold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 cursor-pointer" data-years="5" data-months="0">{t.term5yr}</button>
+            <button type="button" class="btn-term-chip rounded-lg bg-slate-100 px-2 py-0.5 font-bold text-slate-700 hover:bg-blue-100 hover:text-blue-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-years="6" data-months="0">{t.term6yr}</button>
+            <button type="button" class="btn-term-chip rounded-lg bg-slate-100 px-2 py-0.5 font-bold text-slate-700 hover:bg-blue-100 hover:text-blue-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-years="15" data-months="0">{t.term15yr}</button>
+            <button type="button" class="btn-term-chip rounded-lg bg-slate-100 px-2 py-0.5 font-bold text-slate-700 hover:bg-blue-100 hover:text-blue-700 dark:bg-slate-800 dark:text-slate-300 cursor-pointer" data-years="30" data-months="0">{t.term30yr}</button>
+          </div>
+        </div>
+
+        <!-- WARNING ALERT FOR NEGATIVE AMORTIZATION -->
+        <div id="alert-insufficient-payment" class="hidden rounded-2xl border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 space-y-1">
+          <div class="flex items-center gap-2 font-black text-sm">
+            <span>⚠️</span> {t.negAmortTitle}
+          </div>
+          <p class="text-xs leading-relaxed" id="txt-alert-message">
+            {t.negAmortDesc}
+          </p>
+        </div>
+
+        <!-- STANDARDIZED RESULTS SECTION CONTAINER -->
+        <div id="results-section" class="space-y-4">
+
+          <!-- PRIMARY RESULT CARDS -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            
+            <!-- Card 1: Primary Output (Monthly Payment OR Payoff Time) -->
+            <div class="rounded-2xl border border-blue-200 bg-blue-50/70 p-4 dark:border-blue-900/60 dark:bg-blue-950/30">
+              <div id="lbl-result-primary" class="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase tracking-wider">{t.lblMonthlyPayment}</div>
+              <div id="res-payment-primary" class="mt-1 text-2xl font-black text-blue-900 dark:text-blue-100">$684.86</div>
+              <div id="sub-result-primary" class="mt-0.5 text-[11px] text-blue-600 dark:text-blue-400">{t.subMonthlyPayment}</div>
+            </div>
+
+            <!-- Card 2: Total Interest -->
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+              <div id="lbl-result-interest" class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t.lblTotalInterest}</div>
+              <div id="res-total-interest" class="mt-1 text-2xl font-black text-red-600 dark:text-red-400">$6,091.60</div>
+              <div id="sub-result-interest" class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">14.8% {t.ofTotalPayment}</div>
+            </div>
+
+            <!-- Card 3: Total Repayment Amount -->
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+              <div id="lbl-result-total" class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t.lblTotalPayment}</div>
+              <div id="res-total-payment" class="mt-1 text-2xl font-black text-slate-900 dark:text-white">$41,091.60</div>
+              <div class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">{t.subTotalPayment}</div>
+            </div>
+
+            <!-- Card 4: Estimated Payoff Date -->
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+              <div id="lbl-result-date" class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">{t.lblPayoffDate}</div>
+              <div id="res-payoff-date" class="mt-1 text-2xl font-black text-emerald-600 dark:text-emerald-400">Nov 2031</div>
+              <div id="sub-result-date" class="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">60 {t.subPayoffDate}</div>
+            </div>
+
+          </div>
+
+          <!-- PRINCIPAL VS INTEREST BREAKDOWN BAR -->
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 space-y-3">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+              <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                <span>📊</span> {t.proportionTitle}
+              </h3>
+              <span class="text-[11px] text-slate-500 dark:text-slate-400">
+                {t.proportionSub}
+              </span>
+            </div>
+
+            <div class="space-y-2">
+              <div class="h-4 w-full overflow-hidden rounded-full bg-slate-100 flex dark:bg-slate-800" role="progressbar" aria-label="Principal vs Interest Ratio">
+                <div id="bar-principal" class="bg-blue-600 transition-all duration-300" style="width: 85.2%;" title="Principal Borrowed"></div>
+                <div id="bar-interest" class="bg-red-500 transition-all duration-300" style="width: 14.8%;" title="Interest Cost"></div>
+              </div>
+              <div class="flex flex-wrap items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400">
+                <span class="flex items-center gap-1.5">
+                  <span class="inline-block h-3 w-3 rounded-full bg-blue-600"></span>
+                  <span id="lbl-bar-principal">{t.principal}: $35,000 (85.2%)</span>
+                </span>
+                <span class="flex items-center gap-1.5">
+                  <span class="inline-block h-3 w-3 rounded-full bg-red-500"></span>
+                  <span id="lbl-bar-interest">{t.interest}: $6,091.60 (14.8%)</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- AMORTIZATION SCHEDULE ACCORDION & TABLE -->
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div>
+                <h3 class="text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 flex items-center gap-1.5">
+                  <span>📅</span> {t.scheduleTitle}
+                </h3>
+                <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                  {t.scheduleSub}
+                </p>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2">
+                <div class="inline-flex rounded-xl border border-slate-200 bg-slate-100 p-1 dark:border-slate-700 dark:bg-slate-800 text-xs font-bold">
+                  <button type="button" id="tab-sched-yearly" class="rounded-lg bg-white px-3 py-1 text-slate-900 shadow-2xs dark:bg-slate-900 dark:text-white cursor-pointer">
+                    {t.yearlySummary}
+                  </button>
+                  <button type="button" id="tab-sched-monthly" class="rounded-lg px-3 py-1 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer">
+                    {t.monthlyBreakdown}
+                  </button>
+                </div>
+
+                <button type="button" id="btn-export-csv" class="inline-flex items-center gap-1 rounded-xl border border-slate-300 bg-white px-3 py-1 text-xs font-bold text-slate-700 hover:border-blue-500 hover:text-blue-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 cursor-pointer shadow-2xs">
+                  <span>📥</span> {t.exportCsv}
+                </button>
+              </div>
+            </div>
+
+            <!-- Schedule Table Container -->
+            <div class="overflow-x-auto max-h-96 rounded-2xl border border-slate-200 dark:border-slate-800">
+              <table class="w-full text-left text-xs">
+                <thead class="sticky top-0 bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-200 font-bold uppercase tracking-wider border-b border-slate-200 dark:border-slate-700">
+                  <tr>
+                    <th scope="col" class="p-3" id="th-period">{t.thPeriodYear}</th>
+                    <th scope="col" class="p-3">{t.thPayment}</th>
+                    <th scope="col" class="p-3">{t.thPrincipal}</th>
+                    <th scope="col" class="p-3">{t.thInterest}</th>
+                    <th scope="col" class="p-3">{t.thTotalInterest}</th>
+                    <th scope="col" class="p-3">{t.thEndingBalance}</th>
+                  </tr>
+                </thead>
+                <tbody id="tbl-amortization-body" class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-600 dark:text-slate-300">
+                  <!-- Dynamically populated rows -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+
+      </form>
+    </div>
+
+  </div>
+
+  <Fragment slot="content">
+    <div class="space-y-10">
+
+      <section class="space-y-4">
+        <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+          How Loan and Credit Repayment Calculations Work
+        </h2>
+        <p class="text-slate-700 dark:text-slate-300 leading-relaxed">
+          A loan represents a legally binding contract between a borrower and a lender. The lender delivers an upfront capital sum, termed the principal, and the borrower commits to repaying that balance along with interest charges over an agreed timeframe. Because loans govern major personal milestones like buying a home, purchasing a vehicle, or consolidating credit balances, testing your payment options before signing prevents expensive long-term commitments.
+        </p>
+        <p class="text-slate-700 dark:text-slate-300 leading-relaxed">
+          This payment calculator models both key decision paths used in consumer finance: fixing the loan term to reveal your monthly obligation, or fixing your monthly payment to discover how quickly your debt disappears. Whether you need a flexible loan payment calculator for personal debt, a dedicated mortgage payment calculator to compare 15-year and 30-year options, or a reliable car payment calculator and car loan payment calculator to avoid high dealership interest, the math follows the same fundamental principles. You can explore targeted tools like our <a href="/finance/mortgage-calculator/" class="font-bold text-blue-600 underline dark:text-blue-400">Mortgage Calculator</a> or <a href="/finance/auto-loan-calculator/" class="font-bold text-blue-600 underline dark:text-blue-400">Auto Loan Calculator</a> for asset-specific details, or test broader repayment plans with our <a href="/finance/emi-calculator/" class="font-bold text-blue-600 underline dark:text-blue-400">EMI Calculator</a>, <a href="/finance/compound-interest-calculator/" class="font-bold text-blue-600 underline dark:text-blue-400">Compound Interest Calculator</a>, <a href="/finance/annual-income-calculator/" class="font-bold text-blue-600 underline dark:text-blue-400">Annual Income Calculator</a>, <a href="/finance/salary-calculator/" class="font-bold text-blue-600 underline dark:text-blue-400">Salary Calculator</a>, and <a href="/finance/amortization-calculator/" class="font-bold text-blue-600 underline dark:text-blue-400">Amortization Schedule Calculator</a>.
+        </p>
+      </section>
+
+      <section class="space-y-4">
+        <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+          Fixed Term Repayment: Mortgages and Auto Loans
+        </h2>
+        <p class="text-slate-700 dark:text-slate-300 leading-relaxed">
+          Most conventional lending operates on a fixed-term schedule. Mortgages, vehicle loans, and federal student loans define an exact finish line, such as 36, 60, 180, or 360 months. The lender divides each installment into two parts: one portion pays down accrued interest for that specific month, while the remaining dollars reduce the principal balance.
+        </p>
+
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 dark:border-slate-800 dark:bg-slate-900/40 space-y-3">
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+            Mortgage Terms: 15 Years vs 30 Years
+          </h3>
+          <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Choosing between a 15-year and a 30-year home loan shapes your household budget for decades. Consider a $400,000 mortgage:
+          </p>
+          <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-100 dark:bg-slate-800 font-bold uppercase text-slate-700 dark:text-slate-200">
+                <tr>
+                  <th class="p-3">Mortgage Option</th>
+                  <th class="p-3">Interest Rate</th>
+                  <th class="p-3">Monthly Payment</th>
+                  <th class="p-3">Total Interest Paid</th>
+                  <th class="p-3">Lifetime Total Cost</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 dark:divide-slate-800 text-slate-600 dark:text-slate-300">
+                <tr>
+                  <td class="p-3 font-semibold text-slate-900 dark:text-white">30-Year Fixed Term</td>
+                  <td class="p-3">6.80%</td>
+                  <td class="p-3 font-bold text-blue-600 dark:text-blue-400">$2,607.72</td>
+                  <td class="p-3 font-bold text-red-600 dark:text-red-400">$538,779.20</td>
+                  <td class="p-3">$938,779.20</td>
+                </tr>
+                <tr>
+                  <td class="p-3 font-semibold text-slate-900 dark:text-white">15-Year Fixed Term</td>
+                  <td class="p-3">6.10%</td>
+                  <td class="p-3 font-bold text-blue-600 dark:text-blue-400">$3,396.40</td>
+                  <td class="p-3 font-bold text-emerald-600 dark:text-emerald-400">$211,352.00</td>
+                  <td class="p-3">$611,352.00</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            While the 15-year loan requires $788.68 more each month, it cuts lifetime interest costs by $327,427.20. Borrowers often select shorter mortgage durations when they hold ample emergency reserves and seek lower interest rates. Conversely, a 30-year term offers lower mandatory payments, allowing homeowners to align final debt retirement with Social Security or pension benefits while preserving cash flow during earlier career stages.
+          </p>
+        </div>
+
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 dark:border-slate-800 dark:bg-slate-900/40 space-y-3">
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+            Car Loan Durations: The Trap of 72 and 84 Month Terms
+          </h3>
+          <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Financing a vehicle across 12 to 96 months has become common at auto dealerships. Buyers frequently gravitate toward 72 or 84 month contracts because smaller monthly numbers feel manageable. However, the shortest practical loan term almost always yields the lowest overall cost for the vehicle. Testing numbers in a car payment calculator before agreeing to terms prevents costly misunderstandings.
+          </p>
+          <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Vehicles depreciate quickly during their initial three years on the road. A long term contract evaluated through a car loan payment calculator illustrates how negative equity develops, where the car is worth less than the remaining loan balance. If the car is totaled in an accident or traded in early, the owner must cover that financial gap out of pocket. Experimenting with both term length and down payment helps buyers secure a healthy monthly payment without paying thousands in preventable interest charges.
+          </p>
+        </div>
+      </section>
+
+      <section class="space-y-4">
+        <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+          Fixed Monthly Payment Strategy: Accelerating Credit Card and Debt Payoff
+        </h2>
+        <p class="text-slate-700 dark:text-slate-300 leading-relaxed">
+          The second calculation method reverses the problem. Instead of letting the bank set your calendar, you establish an affordable monthly budget and compute the exact payoff date. People frequently rely on this technique when paying down revolving balances, such as credit cards, or when assessing how an extra $100 or $200 allocated each month speeds up mortgage retirement. You can compare multi-account strategies directly using our <a href="/finance/credit-card-payoff-calculator/" class="font-bold text-blue-600 underline dark:text-blue-400">Credit Card Payoff Calculator</a>.
+        </p>
+        <p class="text-slate-700 dark:text-slate-300 leading-relaxed">
+          A fundamental mathematical rule governs debt elimination: your monthly payment must surpass the monthly accrued interest. If a borrower owes $10,000 at 24% annual interest, the first month accrues exactly $200 in interest ($10,000 multiplied by 0.24 divided by 12). If the borrower tenders only $180, the unpaid $20 rolls back into the balance. This condition, known as negative amortization, causes debt to expand indefinitely. The calculator monitors this threshold and displays an immediate alert whenever an input combination fails to pay down principal.
+        </p>
+      </section>
+
+      <section class="space-y-4">
+        <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+          Interest Rate vs Annual Percentage Rate (APR)
+        </h2>
+        <p class="text-slate-700 dark:text-slate-300 leading-relaxed">
+          Borrowers frequently confuse the nominal interest rate with the Annual Percentage Rate (APR). On substantial debts like mortgages or auto loans, overlooking this distinction can result in thousands of dollars in unexpected charges. The <a href="https://www.consumerfinance.gov/consumer-tools/mortgages/" target="_blank" rel="noopener noreferrer" class="font-bold text-blue-600 underline dark:text-blue-400">Consumer Financial Protection Bureau (CFPB)</a> emphasizes comparing APR rather than nominal rates when shopping between multiple lenders.
+        </p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Nominal Interest Rate</h3>
+            <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              The nominal interest rate reflects purely the cost of borrowing the principal loan amount. It dictates the baseline monthly installment math without incorporating ancillary lender fees, application charges, or discount points.
+            </p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+            <h3 class="text-base font-bold text-slate-900 dark:text-white">Annual Percentage Rate (APR)</h3>
+            <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              APR delivers a comprehensive measure of total borrowing expense. It bundles the nominal interest rate with broker fees, origination points, appraisal expenses, and administrative closing charges, amortizing those expenses across the loan lifespan.
+            </p>
+          </div>
+        </div>
+
+        <p class="text-slate-700 dark:text-slate-300 leading-relaxed">
+          When a lender levies zero upfront fees, the nominal interest rate and the APR match exactly. When evaluating loan estimates, entering the advertised APR into our payment calculator yields a far truer representation of your total financial commitment.
+        </p>
+      </section>
+
+      <section class="space-y-4">
+        <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+          Fixed Rate vs Variable Rate Financing
+        </h2>
+        <p class="text-slate-700 dark:text-slate-300 leading-relaxed">
+          Financing products fall into two broad interest rate categories: fixed or variable (adjustable). Conventional mortgages, auto loans, and federal student loans predominantly employ fixed rates, preserving identical monthly payments throughout the entire multi-year contract. In contrast, adjustable-rate mortgages (ARMs), home equity lines of credit (HELOCs), and credit cards commonly employ variable interest rates.
+        </p>
+
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-5 dark:border-slate-800 dark:bg-slate-900/40 space-y-3">
+          <h3 class="text-lg font-bold text-slate-900 dark:text-white">
+            How Variable Rates Fluctuate with Economic Indices
+          </h3>
+          <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Variable rates peg your borrowing cost to benchmark indicators, such as the federal funds rate established by the <a href="https://www.federalreserve.gov/consumerscommunities/loans.htm" target="_blank" rel="noopener noreferrer" class="font-bold text-blue-600 underline dark:text-blue-400">Federal Reserve Board</a> or international references like the Secured Overnight Financing Rate (SOFR). When economic conditions prompt central banks to adjust benchmark rates, commercial lenders update their prime lending margins accordingly.
+          </p>
+          <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            These shifts produce immediate financial consequences for borrowers: a rate increase elevates both your required monthly installment and the cumulative interest owed over the life of the agreement. Responsible variable loan agreements incorporate contractual interest caps, including periodic adjustment caps and lifetime ceiling caps that limit maximum allowable rate hikes.
+          </p>
+          <p class="text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+            Credit card providers, by contrast, frequently issue variable rates that adjust automatically whenever prime rates move, without requiring sixty-day advance warnings for index-driven fluctuations. If you carry variable credit card debt, building an accelerated payoff schedule shields your finances against future interest rate hikes.
+          </p>
+        </div>
+      </section>
+
+      <section class="space-y-4">
+        <h2 class="text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+          Practical Tips to Minimize Total Loan Costs
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+            <span class="text-xl">⚡</span>
+            <h3 class="font-bold text-slate-900 dark:text-white">Make Biweekly Payments</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              Splitting your standard monthly installment in half and paying every two weeks yields 26 half-payments per year. That equals 13 full payments annually, trimming years off mortgages without straining daily cash flow.
+            </p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+            <span class="text-xl">🎯</span>
+            <h3 class="font-bold text-slate-900 dark:text-white">Target Principal Reductions</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              Whenever you receive bonuses, tax refunds, or work promotions, instruct your loan servicer to apply extra dollars strictly toward principal reduction rather than future payment advances.
+            </p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 space-y-2">
+            <span class="text-xl">🔄</span>
+            <h3 class="font-bold text-slate-900 dark:text-white">Refinance High Rate Debt</h3>
+            <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              When credit scores improve or market benchmark rates decline, refinancing existing auto loans or mortgages into lower rates reduces interest accumulation and accelerates debt freedom.
+            </p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </Fragment>
+</CalculatorLayout>
+
+<script is:inline>
+  (function () {
+    let currentMode = 'term'; // 'term' or 'payment'
+    let currentCurrency = '$';
+    let scheduleView = 'yearly'; // 'yearly' or 'monthly'
+    let latestSchedule = [];
+
+    // Form & i18n
+    const formEl = document.getElementById('form-payment');
+    const i18n = JSON.parse(formEl ? formEl.getAttribute('data-i18n') || '{}' : '{}');
+
+    // DOM Elements
+    const selCurrency = document.getElementById('sel-currency');
+    const currencyLabels = document.querySelectorAll('.currency-label');
+    const tabModeTerm = document.getElementById('tab-mode-term');
+    const tabModePayment = document.getElementById('tab-mode-payment');
+    const containerFieldTerm = document.getElementById('container-field-term');
+    const containerFieldPayment = document.getElementById('container-field-payment');
+    const chipsTerm = document.getElementById('chips-term');
+    const alertBox = document.getElementById('alert-insufficient-payment');
+    const alertMsg = document.getElementById('txt-alert-message');
+
+    // Inputs
+    const inpLoanAmount = document.getElementById('inp-loan-amount');
+    const inpLoanRate = document.getElementById('inp-loan-rate');
+    const inpTermYears = document.getElementById('inp-term-years');
+    const inpTermMonths = document.getElementById('inp-term-months');
+    const inpMonthlyPayment = document.getElementById('inp-monthly-payment');
+
+    // Result DOMs
+    const lblResultPrimary = document.getElementById('lbl-result-primary');
+    const valResultPrimary = document.getElementById('res-payment-primary');
+    const subResultPrimary = document.getElementById('sub-result-primary');
+    const valResultInterest = document.getElementById('res-total-interest');
+    const subResultInterest = document.getElementById('sub-result-interest');
+    const valResultTotal = document.getElementById('res-total-payment');
+    const valResultDate = document.getElementById('res-payoff-date');
+    const subResultDate = document.getElementById('sub-result-date');
+
+    // Bar chart DOMs
+    const barPrincipal = document.getElementById('bar-principal');
+    const barInterest = document.getElementById('bar-interest');
+    const lblBarPrincipal = document.getElementById('lbl-bar-principal');
+    const lblBarInterest = document.getElementById('lbl-bar-interest');
+
+    // Schedule DOMs
+    const tabSchedYearly = document.getElementById('tab-sched-yearly');
+    const tabSchedMonthly = document.getElementById('tab-sched-monthly');
+    const thPeriod = document.getElementById('th-period');
+    const tblBody = document.getElementById('tbl-amortization-body');
+    const btnExportCsv = document.getElementById('btn-export-csv');
+
+    function formatMoney(amount) {
+      if (typeof amount !== 'number' || isNaN(amount) || !isFinite(amount)) return currentCurrency + '0.00';
+      return currentCurrency + amount.toLocaleString('en-US', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+    }
+
+    function updateCurrencySymbols() {
+      if (selCurrency && 'value' in selCurrency) {
+        currentCurrency = selCurrency.value;
+      }
+      currencyLabels.forEach(el => {
+        el.textContent = currentCurrency;
+      });
+      calculate();
+    }
+
+    function setMode(mode) {
+      currentMode = mode;
+      if (mode === 'term') {
+        if (tabModeTerm) {
+          tabModeTerm.classList.add('bg-blue-600', 'text-white', 'shadow-xs');
+          tabModeTerm.classList.remove('text-slate-600', 'dark:text-slate-400');
+        }
+        if (tabModePayment) {
+          tabModePayment.classList.remove('bg-blue-600', 'text-white', 'shadow-xs');
+          tabModePayment.classList.add('text-slate-600', 'dark:text-slate-400');
+        }
+        
+        if (containerFieldTerm) containerFieldTerm.classList.remove('hidden');
+        if (chipsTerm) chipsTerm.classList.remove('hidden');
+        if (containerFieldPayment) containerFieldPayment.classList.add('hidden');
+        if (lblResultPrimary) lblResultPrimary.textContent = i18n.lblMonthlyPayment || 'Monthly Payment';
+        if (subResultPrimary) subResultPrimary.textContent = i18n.subMonthlyPayment || 'Regular monthly payment due';
+      } else {
+        if (tabModePayment) {
+          tabModePayment.classList.add('bg-blue-600', 'text-white', 'shadow-xs');
+          tabModePayment.classList.remove('text-slate-600', 'dark:text-slate-400');
+        }
+        if (tabModeTerm) {
+          tabModeTerm.classList.remove('bg-blue-600', 'text-white', 'shadow-xs');
+          tabModeTerm.classList.add('text-slate-600', 'dark:text-slate-400');
+        }
+
+        if (containerFieldTerm) containerFieldTerm.classList.add('hidden');
+        if (chipsTerm) chipsTerm.classList.add('hidden');
+        if (containerFieldPayment) containerFieldPayment.classList.remove('hidden');
+        if (lblResultPrimary) lblResultPrimary.textContent = i18n.lblPayoffTime || 'Time to Debt Free';
+        if (subResultPrimary) subResultPrimary.textContent = i18n.subPayoffTime || 'Estimated payoff duration';
+      }
+      calculate();
+    }
+
+    function calculate() {
+      const principal = Math.max(0, parseFloat(inpLoanAmount ? inpLoanAmount.value : '0') || 0);
+      const annualRate = Math.max(0, parseFloat(inpLoanRate ? inpLoanRate.value : '0') || 0);
+      const monthlyRate = annualRate / 100 / 12;
+
+      if (alertBox) alertBox.classList.add('hidden');
+      latestSchedule = [];
+
+      if (principal <= 0) {
+        if (valResultPrimary) valResultPrimary.textContent = formatMoney(0);
+        if (valResultInterest) valResultInterest.textContent = formatMoney(0);
+        if (valResultTotal) valResultTotal.textContent = formatMoney(0);
+        if (valResultDate) valResultDate.textContent = 'N/A';
+        if (subResultDate) subResultDate.textContent = '0 ' + (i18n.subPayoffDate || 'total monthly payments');
+        renderSchedule([]);
+        return;
+      }
+
+      if (currentMode === 'term') {
+        const years = parseInt(inpTermYears ? inpTermYears.value : '0', 10) || 0;
+        const months = parseInt(inpTermMonths ? inpTermMonths.value : '0', 10) || 0;
+        const totalMonths = (years * 12) + months;
+
+        if (totalMonths <= 0) {
+          if (valResultPrimary) valResultPrimary.textContent = formatMoney(0);
+          if (valResultInterest) valResultInterest.textContent = formatMoney(0);
+          if (valResultTotal) valResultTotal.textContent = formatMoney(0);
+          renderSchedule([]);
+          return;
+        }
+
+        let monthlyPayment = 0;
+        if (monthlyRate === 0) {
+          monthlyPayment = principal / totalMonths;
+        } else {
+          monthlyPayment = principal * (monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) / (Math.pow(1 + monthlyRate, totalMonths) - 1);
+        }
+
+        const totalPaid = monthlyPayment * totalMonths;
+        const totalInterest = Math.max(0, totalPaid - principal);
+
+        if (valResultPrimary) valResultPrimary.textContent = formatMoney(monthlyPayment);
+        if (valResultInterest) valResultInterest.textContent = formatMoney(totalInterest);
+        if (valResultTotal) valResultTotal.textContent = formatMoney(totalPaid);
+
+        const intPct = totalPaid > 0 ? ((totalInterest / totalPaid) * 100).toFixed(1) : '0';
+        const princPct = totalPaid > 0 ? (100 - parseFloat(intPct)).toFixed(1) : '100';
+        if (subResultInterest) subResultInterest.textContent = intPct + '% ' + (i18n.ofTotalPayment || 'of total payment');
+
+        if (barPrincipal) barPrincipal.style.width = princPct + '%';
+        if (barInterest) barInterest.style.width = intPct + '%';
+        if (lblBarPrincipal) lblBarPrincipal.textContent = (i18n.principal || 'Principal') + ': ' + formatMoney(principal) + ' (' + princPct + '%)';
+        if (lblBarInterest) lblBarInterest.textContent = (i18n.interest || 'Interest') + ': ' + formatMoney(totalInterest) + ' (' + intPct + '%)';
+
+        // Payoff date
+        const now = new Date();
+        const payoffDate = new Date(now.getFullYear(), now.getMonth() + totalMonths, 1);
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        if (valResultDate) valResultDate.textContent = monthNames[payoffDate.getMonth()] + ' ' + payoffDate.getFullYear();
+        if (subResultDate) subResultDate.textContent = totalMonths + ' ' + (i18n.subPayoffDate || 'total monthly payments');
+
+        // Build amortization schedule
+        let balance = principal;
+        let cumulativeInterest = 0;
+
+        for (let m = 1; m <= totalMonths; m++) {
+          const interestPortion = balance * monthlyRate;
+          let principalPortion = monthlyPayment - interestPortion;
+          if (m === totalMonths || principalPortion > balance) {
+            principalPortion = balance;
+          }
+          cumulativeInterest += interestPortion;
+          balance = Math.max(0, balance - principalPortion);
+
+          latestSchedule.push({
+            month: m,
+            payment: principalPortion + interestPortion,
+            principal: principalPortion,
+            interest: interestPortion,
+            totalInterest: cumulativeInterest,
+            balance: balance
+          });
+
+          if (balance <= 0) break;
+        }
+
+        renderSchedule(latestSchedule);
+
+      } else {
+        // Fixed monthly payment mode
+        const monthlyPayment = parseFloat(inpMonthlyPayment ? inpMonthlyPayment.value : '0') || 0;
+        const initialMonthlyInterest = principal * monthlyRate;
+
+        if (monthlyRate > 0 && monthlyPayment <= initialMonthlyInterest) {
+          if (alertBox) alertBox.classList.remove('hidden');
+          if (alertMsg) alertMsg.textContent = i18n.negAmortDesc || 'Your monthly payment is not enough to cover the initial interest charge of this loan. The loan balance will grow over time instead of decreasing. Increase your monthly payment or reduce the loan amount.';
+          if (valResultPrimary) valResultPrimary.textContent = 'Never (Negative Amortization)';
+          if (valResultInterest) valResultInterest.textContent = 'Infinite';
+          if (valResultTotal) valResultTotal.textContent = 'Infinite';
+          if (valResultDate) valResultDate.textContent = 'N/A';
+          if (subResultDate) subResultDate.textContent = 'Balance grows indefinitely';
+          renderSchedule([]);
+          return;
+        }
+
+        let totalMonths = 0;
+        if (monthlyRate === 0) {
+          totalMonths = Math.ceil(principal / monthlyPayment);
+        } else {
+          totalMonths = Math.ceil(-Math.log(1 - (principal * monthlyRate) / monthlyPayment) / Math.log(1 + monthlyRate));
+        }
+
+        if (totalMonths > 600) { // Capped at 50 years
+          totalMonths = 600;
+        }
+
+        const yearsNeeded = Math.floor(totalMonths / 12);
+        const monthsRemainder = totalMonths % 12;
+        let timeStr = '';
+        if (yearsNeeded > 0) {
+          timeStr += yearsNeeded + ' ' + (i18n.years || 'Yrs') + ' ';
+        }
+        if (monthsRemainder > 0 || yearsNeeded === 0) {
+          timeStr += monthsRemainder + ' ' + (i18n.months || 'Mos');
+        }
+
+        if (valResultPrimary) valResultPrimary.textContent = timeStr.trim();
+        if (subResultPrimary) subResultPrimary.textContent = totalMonths + ' ' + (i18n.subPayoffDate || 'total monthly payments');
+
+        // Build schedule
+        let balance = principal;
+        let cumulativeInterest = 0;
+        let totalPaid = 0;
+
+        for (let m = 1; m <= totalMonths + 12; m++) {
+          const interestPortion = balance * monthlyRate;
+          let principalPortion = monthlyPayment - interestPortion;
+          if (principalPortion > balance) {
+            principalPortion = balance;
+          }
+          const actualPayment = principalPortion + interestPortion;
+          cumulativeInterest += interestPortion;
+          balance = Math.max(0, balance - principalPortion);
+          totalPaid += actualPayment;
+
+          latestSchedule.push({
+            month: m,
+            payment: actualPayment,
+            principal: principalPortion,
+            interest: interestPortion,
+            totalInterest: cumulativeInterest,
+            balance: balance
+          });
+
+          if (balance <= 0.001) break;
+        }
+
+        if (valResultInterest) valResultInterest.textContent = formatMoney(cumulativeInterest);
+        if (valResultTotal) valResultTotal.textContent = formatMoney(totalPaid);
+
+        const intPct = totalPaid > 0 ? ((cumulativeInterest / totalPaid) * 100).toFixed(1) : '0';
+        const princPct = totalPaid > 0 ? (100 - parseFloat(intPct)).toFixed(1) : '100';
+        if (subResultInterest) subResultInterest.textContent = intPct + '% ' + (i18n.ofTotalPayment || 'of total payment');
+
+        if (barPrincipal) barPrincipal.style.width = princPct + '%';
+        if (barInterest) barInterest.style.width = intPct + '%';
+        if (lblBarPrincipal) lblBarPrincipal.textContent = (i18n.principal || 'Principal') + ': ' + formatMoney(principal) + ' (' + princPct + '%)';
+        if (lblBarInterest) lblBarInterest.textContent = (i18n.interest || 'Interest') + ': ' + formatMoney(cumulativeInterest) + ' (' + intPct + '%)';
+
+        const now = new Date();
+        const payoffDate = new Date(now.getFullYear(), now.getMonth() + latestSchedule.length, 1);
+        const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        if (valResultDate) valResultDate.textContent = monthNames[payoffDate.getMonth()] + ' ' + payoffDate.getFullYear();
+        if (subResultDate) subResultDate.textContent = latestSchedule.length + ' ' + (i18n.subPayoffDate || 'monthly payments');
+
+        renderSchedule(latestSchedule);
+      }
+    }
+
+    function renderSchedule(schedule) {
+      if (!tblBody) return;
+      tblBody.innerHTML = '';
+      if (!schedule || schedule.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = '<td colspan="6" class="p-4 text-center text-slate-400">No amortization data available. Enter valid loan inputs above.</td>';
+        tblBody.appendChild(row);
+        return;
+      }
+
+      if (scheduleView === 'monthly') {
+        if (thPeriod) thPeriod.textContent = i18n.thPeriodMonth || 'Month';
+        schedule.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50';
+          tr.innerHTML = `
+            <td class="p-3 font-bold text-slate-900 dark:text-white">${escapeText(i18n.thPeriodMonth || 'Mo')} ${item.month}</td>
+            <td class="p-3 font-semibold text-slate-800 dark:text-slate-200">${formatMoney(item.payment)}</td>
+            <td class="p-3 text-blue-600 dark:text-blue-400 font-semibold">${formatMoney(item.principal)}</td>
+            <td class="p-3 text-red-600 dark:text-red-400">${formatMoney(item.interest)}</td>
+            <td class="p-3 text-slate-500">${formatMoney(item.totalInterest)}</td>
+            <td class="p-3 font-bold text-slate-900 dark:text-white">${formatMoney(item.balance)}</td>
+          `;
+          tblBody.appendChild(tr);
+        });
+      } else {
+        // Yearly summary
+        if (thPeriod) thPeriod.textContent = i18n.thPeriodYear || 'Year';
+        const yearlyData = [];
+        let curYear = 1;
+        let sumPayment = 0;
+        let sumPrincipal = 0;
+        let sumInterest = 0;
+        let lastEndBal = 0;
+        let lastCumInt = 0;
+
+        schedule.forEach((item, idx) => {
+          sumPayment += item.payment;
+          sumPrincipal += item.principal;
+          sumInterest += item.interest;
+          lastEndBal = item.balance;
+          lastCumInt = item.totalInterest;
+
+          if (item.month % 12 === 0 || idx === schedule.length - 1) {
+            yearlyData.push({
+              year: curYear,
+              payment: sumPayment,
+              principal: sumPrincipal,
+              interest: sumInterest,
+              totalInterest: lastCumInt,
+              balance: lastEndBal
+            });
+            curYear++;
+            sumPayment = 0;
+            sumPrincipal = 0;
+            sumInterest = 0;
+          }
+        });
+
+        yearlyData.forEach(item => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50';
+          tr.innerHTML = `
+            <td class="p-3 font-bold text-slate-900 dark:text-white">${escapeText(i18n.thPeriodYear || 'Year')} ${item.year}</td>
+            <td class="p-3 font-semibold text-slate-800 dark:text-slate-200">${formatMoney(item.payment)}</td>
+            <td class="p-3 text-blue-600 dark:text-blue-400 font-semibold">${formatMoney(item.principal)}</td>
+            <td class="p-3 text-red-600 dark:text-red-400">${formatMoney(item.interest)}</td>
+            <td class="p-3 text-slate-500">${formatMoney(item.totalInterest)}</td>
+            <td class="p-3 font-bold text-slate-900 dark:text-white">${formatMoney(item.balance)}</td>
+          `;
+          tblBody.appendChild(tr);
+        });
+      }
+    }
+
+    function escapeText(str) {
+      if (!str) return '';
+      return String(str).replace(/[&<>"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+      });
+    }
+
+    function exportCsv() {
+      if (!latestSchedule || latestSchedule.length === 0) {
+        alert('No amortization schedule to export.');
+        return;
+      }
+
+      let csv = 'Month,Payment,Principal,Interest,Cumulative Interest,Ending Balance\n';
+      latestSchedule.forEach(item => {
+        csv += `${item.month},${item.payment.toFixed(2)},${item.principal.toFixed(2)},${item.interest.toFixed(2)},${item.totalInterest.toFixed(2)},${item.balance.toFixed(2)}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'loan-payment-amortization-schedule.csv');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    // Event Listeners
+    if (selCurrency) selCurrency.addEventListener('change', updateCurrencySymbols);
+
+    if (tabModeTerm) tabModeTerm.addEventListener('click', () => setMode('term'));
+    if (tabModePayment) tabModePayment.addEventListener('click', () => setMode('payment'));
+
+    [inpLoanAmount, inpLoanRate, inpTermYears, inpTermMonths, inpMonthlyPayment].forEach(input => {
+      if (input) input.addEventListener('input', calculate);
+    });
+
+    // Preset buttons
+    document.querySelectorAll('.btn-preset').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const mode = btn.getAttribute('data-mode') || 'term';
+        setMode(mode);
+        if (inpLoanAmount) inpLoanAmount.value = btn.getAttribute('data-amt') || '35000';
+        if (inpLoanRate) inpLoanRate.value = btn.getAttribute('data-rate') || '6.5';
+        if (mode === 'term') {
+          if (inpTermYears) inpTermYears.value = btn.getAttribute('data-years') || '5';
+          if (inpTermMonths) inpTermMonths.value = btn.getAttribute('data-months') || '0';
+        } else {
+          if (inpMonthlyPayment) inpMonthlyPayment.value = btn.getAttribute('data-pay') || '250';
+        }
+        calculate();
+      });
+    });
+
+    // Term Chip buttons
+    document.querySelectorAll('.btn-term-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        if (inpTermYears) inpTermYears.value = chip.getAttribute('data-years') || '5';
+        if (inpTermMonths) inpTermMonths.value = chip.getAttribute('data-months') || '0';
+        calculate();
+      });
+    });
+
+    // Schedule View Tabs
+    if (tabSchedYearly) {
+      tabSchedYearly.addEventListener('click', () => {
+        scheduleView = 'yearly';
+        tabSchedYearly.className = 'rounded-lg bg-white px-3 py-1 text-slate-900 shadow-2xs dark:bg-slate-900 dark:text-white cursor-pointer';
+        if (tabSchedMonthly) tabSchedMonthly.className = 'rounded-lg px-3 py-1 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer';
+        renderSchedule(latestSchedule);
+      });
+    }
+
+    if (tabSchedMonthly) {
+      tabSchedMonthly.addEventListener('click', () => {
+        scheduleView = 'monthly';
+        tabSchedMonthly.className = 'rounded-lg bg-white px-3 py-1 text-slate-900 shadow-2xs dark:bg-slate-900 dark:text-white cursor-pointer';
+        if (tabSchedYearly) tabSchedYearly.className = 'rounded-lg px-3 py-1 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white cursor-pointer';
+        renderSchedule(latestSchedule);
+      });
+    }
+
+    if (btnExportCsv) btnExportCsv.addEventListener('click', exportCsv);
+
+    // Initial calculation on load
+    calculate();
+  })();
+</script>

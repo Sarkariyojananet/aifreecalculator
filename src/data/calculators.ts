@@ -41,6 +41,7 @@ const CALCULATOR_ALIASES: Record<string, string[]> = {
   'brickwork-calculator': ['brick calculator', 'number of bricks', 'eent calculator', 'wall bricks', 'masonry estimator'],
   'plaster-calculator': ['plaster cement sand', 'plaster ratio', 'plastering estimator', 'wall plaster'],
   'emi-calculator': ['loan emi', 'home loan emi', 'car loan emi', 'personal loan calculator', 'personal loan emi', 'personal loan', 'kist calculator', 'monthly payment', 'installment calculator'],
+  'payment-calculator': ['loan payment calculator', 'car payment calculator', 'mortgage payment calculator', 'car loan payment calculator', 'loan calculator', 'monthly payment calculator', 'loan term calculator', 'loan payoff calculator', 'amortization payment'],
   'sip-calculator': ['mutual fund sip', 'sip returns', 'step up sip', 'wealth calculator', 'crorepati calculator'],
   'swp-calculator': ['swp calculator', 'systematic withdrawal plan', 'swp with inflation', 'mutual fund swp', 'sbi swp calculator', 'swp planner', 'monthly withdrawal'],
   'xirr-calculator': ['xirr calculator', 'extended internal rate of return', 'sip xirr', 'mutual fund xirr', 'annualized return', 'irregular cash flow return', 'cagr vs xirr'],
