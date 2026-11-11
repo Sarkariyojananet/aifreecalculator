@@ -193,6 +193,19 @@ export default defineConfig({
     '/time-table-tools/employee-work-timetable': '/time-table-tools/work-shift-schedule-maker/',
     '/time-table-tools/printable-timetable-maker': '/time-table-tools/timetable-maker/',
     '/time-table-tools/smart-timetable-generator': '/time-table-tools/timetable-maker/',
+    // Payment Calculator search alias redirects
+    '/finance/car-payment-calculator': '/finance/payment-calculator/',
+    '/finance/car-loan-payment-calculator': '/finance/payment-calculator/',
+    '/finance/loan-payment-calculator': '/finance/payment-calculator/',
+    '/finance/mortgage-payment-calculator': '/finance/payment-calculator/',
+    ...Object.fromEntries(
+      NON_EN_LOCALES.flatMap((lang) => [
+        [`/${lang}/finance/car-payment-calculator`, `/${lang}/finance/payment-calculator/`],
+        [`/${lang}/finance/car-loan-payment-calculator`, `/${lang}/finance/payment-calculator/`],
+        [`/${lang}/finance/loan-payment-calculator`, `/${lang}/finance/payment-calculator/`],
+        [`/${lang}/finance/mortgage-payment-calculator`, `/${lang}/finance/payment-calculator/`],
+      ])
+    ),
     ...localizedPdfRedirects,
     ...localizedImageRedirects,
     ...localizedTimetableRedirects,
