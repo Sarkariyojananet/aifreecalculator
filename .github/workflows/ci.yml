@@ -1,0 +1,39 @@
+name: CI Build Verification
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Linux Production Build Verification
+    runs-on: ubuntu-latest
+
+    env:
+      NPM_CONFIG_LEGACY_PEER_DEPS: 'true'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js (24.x)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.x'
+          cache: 'npm'
+
+      - name: Install dependencies from lockfile
+        run: npm ci
+
+      - name: Run multilingual & i18n validator
+        run: npm run validate
+
+      - name: Execute Astro production build
+        run: npm run build
+
+      - name: Verify build artifacts
+        run: |
+          test -d dist/client || { echo "Error: dist/client directory not found"; exit 1; }
+          test -d dist/server || { echo "Error: dist/server directory not found"; exit 1; }
+          echo "Production build artifacts verified successfully."
