@@ -254,21 +254,11 @@ async function main() {
 
     console.log(`✅ Verified live (HTTP 200). Submitting to search engines...`);
 
-    // Check Google credentials
-    let googleToken = null;
-    if (fs.existsSync(SERVICE_ACCOUNT_FILE)) {
-      const key = JSON.parse(fs.readFileSync(SERVICE_ACCOUNT_FILE, 'utf8'));
-      googleToken = await getGoogleAccessToken(key);
-    }
+    // NOTE: Google Indexing API is disabled — it is only authorised for JobPosting
+    // and BroadcastEvent (livestream) structured data pages. Submitting general
+    // calculator/tool pages violates Google's API usage policy.
 
-    // 1. Google
-    if (googleToken) {
-      process.stdout.write('  -> Google Indexing API... ');
-      const gRes = await submitToGoogle(googleToken, singleUrl);
-      console.log(gRes.ok ? 'SUCCESS' : `FAILED (${gRes.status})`);
-    }
-
-    // 2. IndexNow (Bing / Yandex / Seznam)
+    // 1. IndexNow (Bing / Yandex / Seznam)
     process.stdout.write('  -> IndexNow (Bing/Yandex)... ');
     const inRes = await submitToIndexNow([singleUrl]);
     console.log(inRes.ok ? 'SUCCESS' : `FAILED (${inRes.status})`);
@@ -327,20 +317,13 @@ async function main() {
 
   console.log(`✅ Verified ${liveUrls.length} page(s) live and ready for indexing.`);
 
-  // Check Google credentials
-  let googleToken = null;
-  if (fs.existsSync(SERVICE_ACCOUNT_FILE)) {
-    try {
-      const key = JSON.parse(fs.readFileSync(SERVICE_ACCOUNT_FILE, 'utf8'));
-      googleToken = await getGoogleAccessToken(key);
-      console.log('✅ Google Search Console Service Account: Authenticated');
-    } catch (err) {
-      console.warn('⚠️ Google Auth Warning:', err.message);
-    }
-  }
+  // NOTE: Google Indexing API is disabled — it is only authorised for JobPosting
+  // and BroadcastEvent (livestream) structured data pages. Submitting general
+  // calculator/tool pages violates Google's API usage policy and may trigger
+  // a manual quality review. Use IndexNow for general URL notifications instead.
 
   // 1. Submit batch to IndexNow (Unlimited / All in one request)
-  console.log('\n📡 [1/3] Submitting to IndexNow (Bing, Yandex, Seznam)...');
+  console.log('\n📡 [1/2] Submitting to IndexNow (Bing, Yandex, Seznam)...');
   const liveUrlList = liveUrls.map(p => p.url);
   try {
     const inRes = await submitToIndexNow(liveUrlList);
@@ -354,7 +337,7 @@ async function main() {
   }
 
   // 2. Submit batch to Bing Webmaster Tools API (Direct API Key)
-  console.log('\n📡 [2/3] Submitting to Bing Webmaster Tools API...');
+  console.log('\n📡 [2/2] Submitting to Bing Webmaster Tools API...');
   try {
     const bingRes = await submitToBingWebmaster(liveUrlList);
     if (bingRes.ok) {
@@ -366,43 +349,12 @@ async function main() {
     console.error('❌ Bing Webmaster API Error:', err.message);
   }
 
-  // 3. Submit to Google Indexing API (Max 200/day per quota)
-  if (googleToken) {
-    console.log('\n📡 [3/3] Submitting to Google Indexing API (Googlebot Queue)...');
-    const googleLimit = 190;
-    const toSubmitGoogle = liveUrls.slice(0, googleLimit);
-
-    let successCount = 0;
-    let failCount = 0;
-
-    for (let i = 0; i < toSubmitGoogle.length; i++) {
-      const item = toSubmitGoogle[i];
-      const res = await submitToGoogle(googleToken, item.url);
-      if (res.ok) {
-        successCount++;
-        cache[item.url] = {
-          lastIndexed: new Date().toISOString(),
-          hash: item.hash
-        };
-      } else {
-        failCount++;
-        console.warn(`  [!] Failed ${item.url}: ${res.data?.error?.message || res.status}`);
-      }
-
-      await new Promise(r => setTimeout(r, 80));
-    }
-
-    console.log(`✅ Google Indexing API: ${successCount} submitted, ${failCount} failed.`);
-    if (liveUrls.length > googleLimit) {
-      console.log(`ℹ️ Note: Remaining ${liveUrls.length - googleLimit} URLs deferred to respect daily quota.`);
-    }
-  } else {
-    for (const item of liveUrls) {
-      cache[item.url] = {
-        lastIndexed: new Date().toISOString(),
-        hash: item.hash
-      };
-    }
+  // Update cache for all submitted URLs (Google Indexing API removed)
+  for (const item of liveUrls) {
+    cache[item.url] = {
+      lastIndexed: new Date().toISOString(),
+      hash: item.hash
+    };
   }
 
   saveCache(cache);

@@ -349,6 +349,14 @@ export default defineConfig({
         !page.includes('/sitemap') &&
         !page.includes('/404') &&
         !page.includes('/500') &&
+        // Temporarily exclude all non-English locale pages until their content
+        // quality is improved to match English depth (currently 17–37% of EN).
+        // Thin non-English pages dilute the site-wide quality score and cause
+        // Google to refuse indexing them as "Crawled – currently not indexed".
+        // Re-enable per locale once translated content reaches ≥60% of EN word count.
+        !['hi', 'es', 'ja', 'fr', 'de', 'pt', 'ko', 'it'].some(
+          (lang) => new URL(page).pathname.startsWith(`/${lang}/`)
+        ) &&
         // Exclude only the top-level redirect source '/brickwork-calculator'
         // (a redirect stub), NOT its canonical destination
         // '/construction/brickwork-calculator/'.
