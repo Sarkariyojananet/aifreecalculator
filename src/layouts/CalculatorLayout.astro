@@ -18,7 +18,7 @@ import {
   getCalculatorOverrides,
 } from "../lib/admin/content-store";
 import { buildCalculatorGraphSchema } from "../lib/seo/schema-builder";
-import { extractLocaleFromPath, getLocalizedPath } from "../i18n/utils";
+import { extractLocaleFromPath, getLocalizedPath, getBcp47Lang } from "../i18n/utils";
 import { getCommonTranslations } from "../i18n/translations/common";
 import {
   CATEGORIES_CONFIG,
@@ -212,12 +212,20 @@ const graphFaqs = resolvedFaqs?.map((f) => ({
   answer: f.answer,
 }));
 
+const siteOrigin = (Astro.site ? Astro.site.origin : 'https://aifreecalculator.com').replace(/\/$/, '');
+const canonicalTarget = effectiveCanonical || `${siteOrigin}${Astro.url.pathname}`;
+const bcp47Lang = getBcp47Lang(lang);
+
 const graphSchema = buildCalculatorGraphSchema({
   name: effectiveName,
   description: effectiveDescription,
-  url: Astro.url.href,
+  url: canonicalTarget,
   category,
   faqs: graphFaqs,
+  lang: bcp47Lang,
+  homeName: tCommon.nav.home,
+  categoryName: localizedCategoryName,
+  categoryUrl: `${siteOrigin}${categoryPath}`,
 });
 ---
 

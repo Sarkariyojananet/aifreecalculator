@@ -23,6 +23,10 @@ export interface CalculatorSchemaParams {
   siteName?: string;
   faqs?: SchemaFAQ[];
   steps?: SchemaStep[];
+  lang?: string;
+  homeName?: string;
+  categoryName?: string;
+  categoryUrl?: string;
 }
 
 const DEFAULT_SITE_URL = 'https://aifreecalculator.com';
@@ -41,11 +45,15 @@ export function buildCalculatorGraphSchema(params: CalculatorSchemaParams): Reco
     siteName = DEFAULT_SITE_NAME,
     faqs = [],
     steps = [],
+    lang = 'en-US',
+    homeName = 'Home',
+    categoryName,
+    categoryUrl: customCategoryUrl,
   } = params;
 
   const cleanCategory = (category || 'General').trim();
   const categorySlug = cleanCategory.toLowerCase().replace(/\s+/g, '-');
-  const categoryUrl = `${siteUrl}/${categorySlug}/`;
+  const categoryUrl = customCategoryUrl || `${siteUrl}/${categorySlug}/`;
 
   // 1. WebApplication Schema
   const webAppSchema: Record<string, any> = {
@@ -57,7 +65,7 @@ export function buildCalculatorGraphSchema(params: CalculatorSchemaParams): Reco
     applicationCategory: `${cleanCategory}Application`,
     operatingSystem: 'All',
     browserRequirements: 'Requires JavaScript. Requires HTML5.',
-    inLanguage: 'en-US',
+    inLanguage: lang,
     isAccessibleForFree: true,
     offers: {
       '@type': 'Offer',
@@ -74,6 +82,7 @@ export function buildCalculatorGraphSchema(params: CalculatorSchemaParams): Reco
   };
 
   // 2. BreadcrumbList Schema
+  const homeUrl = lang && !lang.startsWith('en') ? `${siteUrl}/${lang.split('-')[0]}/` : siteUrl;
   const breadcrumbSchema: Record<string, any> = {
     '@type': 'BreadcrumbList',
     '@id': `${url}#breadcrumb`,
@@ -81,13 +90,13 @@ export function buildCalculatorGraphSchema(params: CalculatorSchemaParams): Reco
       {
         '@type': 'ListItem',
         position: 1,
-        name: 'Home',
-        item: siteUrl,
+        name: homeName,
+        item: homeUrl,
       },
       {
         '@type': 'ListItem',
         position: 2,
-        name: `${cleanCategory} Calculators`,
+        name: categoryName || `${cleanCategory} Calculators`,
         item: categoryUrl,
       },
       {
