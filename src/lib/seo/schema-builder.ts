@@ -1,3 +1,5 @@
+import { getReviewerForCategory } from '../../data/editorial-team';
+
 /**
  * Advanced Multi-Schema Graph Generator (Rank Math Pro Standard)
  * Generates valid, interconnected JSON-LD @graph schemas for Google Rich Snippets:
@@ -54,6 +56,7 @@ export function buildCalculatorGraphSchema(params: CalculatorSchemaParams): Reco
   const cleanCategory = (category || 'General').trim();
   const categorySlug = cleanCategory.toLowerCase().replace(/\s+/g, '-');
   const categoryUrl = customCategoryUrl || `${siteUrl}/${categorySlug}/`;
+  const reviewer = getReviewerForCategory(cleanCategory);
 
   // 1. WebApplication Schema
   const webAppSchema: Record<string, any> = {
@@ -78,6 +81,16 @@ export function buildCalculatorGraphSchema(params: CalculatorSchemaParams): Reco
       '@type': 'Organization',
       name: siteName,
       url: siteUrl,
+    },
+    author: {
+      '@type': 'Person',
+      name: reviewer.name,
+      jobTitle: reviewer.title,
+    },
+    reviewedBy: {
+      '@type': 'Person',
+      name: reviewer.name,
+      jobTitle: reviewer.title,
     },
   };
 
@@ -108,13 +121,23 @@ export function buildCalculatorGraphSchema(params: CalculatorSchemaParams): Reco
     ],
   };
 
-  const graph: any[] = [webAppSchema, breadcrumbSchema];
+  // 3. Expert Reviewer Person Schema (E-E-A-T)
+  const reviewerSchema: Record<string, any> = {
+    '@type': 'Person',
+    '@id': `${siteUrl}/about/#${reviewer.id}`,
+    name: reviewer.name,
+    jobTitle: reviewer.title,
+    description: reviewer.role,
+    knowsAbout: reviewer.verifiedStandards,
+  };
+
+  const graph: any[] = [webAppSchema, breadcrumbSchema, reviewerSchema];
 
   // 3. HowTo Schema (How to use this calculator)
   // The generic fallback steps describe a numeric-calculator workflow
   // ("enter parameters -> calculate -> download PDF"). That workflow does not
-  // apply to interactive tool categories - timetable, image, PDF, compiler,
-  // and browser utilities - so HowTo is emitted only when real steps are
+  // apply to interactive tool categories (timetable, image, PDF, compiler,
+  // and browser utilities), so HowTo is emitted only when real steps are
   // supplied, or when the category is an actual calculator category.
   const HOWTO_EXCLUDED_CATEGORIES = new Set([
     'time-table-tools',

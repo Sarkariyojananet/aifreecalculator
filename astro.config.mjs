@@ -91,8 +91,11 @@ for (const lang of NON_EN_LOCALES) {
 export default defineConfig({
   site: 'https://aifreecalculator.com',
 
+  session: false,
+
   adapter: cloudflare({
     imageService: 'passthrough',
+    prerenderEnvironment: 'node',
   }),
 
   vite: {

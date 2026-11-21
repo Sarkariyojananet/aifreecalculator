@@ -18,6 +18,7 @@ import {
   getCalculatorOverrides,
 } from "../lib/admin/content-store";
 import { buildCalculatorGraphSchema } from "../lib/seo/schema-builder";
+import { getReviewerForCategory } from "../data/editorial-team";
 import { extractLocaleFromPath, getLocalizedPath, getBcp47Lang } from "../i18n/utils";
 import { getCommonTranslations } from "../i18n/translations/common";
 import {
@@ -215,6 +216,20 @@ const graphFaqs = resolvedFaqs?.map((f) => ({
 const siteOrigin = (Astro.site ? Astro.site.origin : 'https://aifreecalculator.com').replace(/\/$/, '');
 const canonicalTarget = effectiveCanonical || `${siteOrigin}${Astro.url.pathname}`;
 const bcp47Lang = getBcp47Lang(lang);
+const reviewer = getReviewerForCategory(category);
+
+const reviewerBadgeMap: Record<Locale, { badge: string; verified: string; policy: string }> = {
+  en: { badge: 'Verified Specialist', verified: 'Standards Verified', policy: 'Editorial Standards' },
+  hi: { badge: 'प्रमाणित विशेषज्ञ', verified: 'मानक सत्यापित', policy: 'संपादकीय मानक' },
+  es: { badge: 'Especialista Verificado', verified: 'Normas Verificadas', policy: 'Normas Editoriales' },
+  ja: { badge: '専門家による監修', verified: '技術基準検証済', policy: '編集基準' },
+  de: { badge: 'Fachlich Geprüft', verified: 'Geprüfte Standards', policy: 'Redaktionsrichtlinien' },
+  fr: { badge: 'Expert Vérifié', verified: 'Normes Vérifiées', policy: 'Ligne Éditoriale' },
+  it: { badge: 'Revisionato da Esperti', verified: 'Standard Verificati', policy: 'Standard Editoriali' },
+  pt: { badge: 'Especialista Verificado', verified: 'Padrões Verificados', policy: 'Padrões Editoriais' },
+  ko: { badge: '전문가 검증 완료', verified: '공학 및 기술 표준 검증', policy: '편집 및 검증 기준' }
+};
+const reviewerLabels = reviewerBadgeMap[lang] || reviewerBadgeMap.en;
 
 const graphSchema = buildCalculatorGraphSchema({
   name: effectiveName,
@@ -400,6 +415,39 @@ const graphSchema = buildCalculatorGraphSchema({
 
         <!-- In-Feed Result Ad Slot -->
         <AdSlotInline />
+
+        <!-- Authoritative Editorial & Reviewer Verification Badge (E-E-A-T) -->
+        <div class="rounded-3xl border border-slate-200/90 bg-linear-to-r from-blue-50/70 via-slate-50/50 to-indigo-50/50 p-4 sm:p-5 dark:border-slate-800 dark:from-slate-900/90 dark:via-slate-900/60 dark:to-indigo-950/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs text-xs">
+          <div class="flex items-center gap-3.5">
+            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-blue-600 text-white font-black text-sm shadow-xs">
+              {reviewer.name.charAt(0)}
+            </div>
+            <div class="space-y-0.5">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="font-bold text-slate-900 dark:text-white text-sm">
+                  {reviewer.name}
+                </span>
+                <span class="rounded-full border border-blue-200 bg-blue-100/80 px-2.5 py-0.5 text-[10px] font-bold text-blue-800 dark:border-blue-900 dark:bg-blue-950 dark:text-blue-300">
+                  {reviewerLabels.badge}
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-600 dark:text-slate-400">
+                {reviewer.title} • {reviewer.credentials}
+              </p>
+            </div>
+          </div>
+          <div class="flex shrink-0 items-center gap-3 text-[11px] text-slate-500 dark:text-slate-400">
+            <span class="flex items-center gap-1 font-semibold text-emerald-700 dark:text-emerald-400">
+              <span>✓</span> {reviewerLabels.verified}
+            </span>
+            <a
+              href={getLocalizedPath('/about/#editorial-board', lang)}
+              class="font-semibold text-blue-600 hover:underline dark:text-blue-400 cursor-pointer"
+            >
+              {reviewerLabels.policy} →
+            </a>
+          </div>
+        </div>
 
         <!-- Educational Content / Formula / How to Calculate Slot -->
         <div
