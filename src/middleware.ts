@@ -191,18 +191,20 @@ export const onRequest = defineMiddleware(async (context, next) => {
   // =========================================================================
 
   // A. CANONICAL HOST & PROTOCOL: Redirect www -> non-www and http -> https
-  const host = context.url.hostname.toLowerCase();
-  const isWww = host.startsWith('www.');
-  const forwardedProto = context.request.headers.get('x-forwarded-proto');
-  const isHttp = forwardedProto === 'http' || context.url.protocol === 'http:';
+  if (!isLocalHost && !isPrerenderOrBuild && !(context as any).isPrerendered) {
+    const host = context.url.hostname.toLowerCase();
+    const isWww = host.startsWith('www.');
+    const forwardedProto = context.request.headers.get('x-forwarded-proto');
+    const isHttp = forwardedProto === 'http' || context.url.protocol === 'http:';
 
-  if (!isLocalHost && (isWww || isHttp)) {
-    const canonicalHost = isWww ? host.replace(/^www\./, '') : host;
-    const cleanUrl = `https://${canonicalHost}${pathname}${context.url.search}`;
-    const redirectResponse = context.redirect(cleanUrl, 301);
-    redirectResponse.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=604800');
-    redirectResponse.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=604800');
-    return redirectResponse;
+    if (isWww || isHttp) {
+      const canonicalHost = isWww ? host.replace(/^www\./, '') : host;
+      const cleanUrl = `https://${canonicalHost}${pathname}${context.url.search}`;
+      const redirectResponse = context.redirect(cleanUrl, 301);
+      redirectResponse.headers.set('Cache-Control', 'public, max-age=86400, s-maxage=604800');
+      redirectResponse.headers.set('Cloudflare-CDN-Cache-Control', 'max-age=604800');
+      return redirectResponse;
+    }
   }
 
   // B. CONTACT PAGE QUERY CANONICALIZATION:
