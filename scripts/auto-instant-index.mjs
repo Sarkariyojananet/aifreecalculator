@@ -2,14 +2,13 @@
 /**
  * Automated Instant Indexing Script for aifreecalculator.com
  * Supports:
- *  1. Google Indexing API (Googlebot crawling prompt)
- *  2. IndexNow API (Bing, Yandex, Seznam, Naver)
- *  3. Bing Webmaster Tools URL Submission API (Direct Key)
+ *  1. IndexNow API (Bing, Yandex, Seznam, Naver)
+ *  2. Bing Webmaster Tools URL Submission API (Direct Key)
  * 
  * Safety Rules:
  *  - STRICTLY BLOCKS any localhost / 127.0.0.1 URLs.
  *  - Verifies that every URL is 100% ONLINE & LIVE on https://aifreecalculator.com (HTTP 200)
- *    before notifying Google, preventing crawl errors for unreleased pages.
+ *    before notifying search engines, preventing crawl errors for unreleased pages.
  * 
  * Usage:
  *  npm run instant-index                               # Auto-detects new/changed live URLs and indexes them
@@ -27,16 +26,6 @@ const INDEXNOW_KEY = '9f8e4d2a1b7c3e5a6f0b8c2d4e1a7f9b';
 const INDEXNOW_KEY_LOCATION = `${DOMAIN}/${INDEXNOW_KEY}.txt`;
 const BING_WEBMASTER_API_KEY = process.env.BING_WEBMASTER_API_KEY || '7005328021e646e5b177a8ed147c4dc9';
 const CACHE_FILE = path.join(process.cwd(), '.indexed-cache.json');
-const SERVICE_ACCOUNT_FILE = path.join(process.cwd(), 'service-account.json');
-
-// --- Helper: Base64URL for JWT ---
-function base64Url(str) {
-  return Buffer.from(str)
-    .toString('base64')
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
-}
 
 // --- Safety: Strictly Disallow Localhost URLs ---
 function isSafeProductionUrl(url) {
@@ -59,68 +48,6 @@ async function isUrlLiveOnline(url) {
   } catch {
     return false;
   }
-}
-
-// --- Google OAuth2 JWT Generator ---
-async function getGoogleAccessToken(key) {
-  const now = Math.floor(Date.now() / 1000);
-  const header = { alg: 'RS256', typ: 'JWT' };
-  const claim = {
-    iss: key.client_email,
-    scope: 'https://www.googleapis.com/auth/indexing',
-    aud: 'https://oauth2.googleapis.com/token',
-    exp: now + 3600,
-    iat: now
-  };
-
-  const encodedHeader = base64Url(JSON.stringify(header));
-  const encodedClaim = base64Url(JSON.stringify(claim));
-  const signatureInput = `${encodedHeader}.${encodedClaim}`;
-
-  const signer = crypto.createSign('RSA-SHA256');
-  signer.update(signatureInput);
-  const signature = signer.sign(key.private_key, 'base64')
-    .replace(/=/g, '')
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_');
-
-  const jwt = `${signatureInput}.${signature}`;
-
-  const res = await fetch('https://oauth2.googleapis.com/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: jwt
-    })
-  });
-
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error('Google OAuth token error: ' + JSON.stringify(data));
-  }
-  return data.access_token;
-}
-
-// --- Submit single URL to Google Indexing API ---
-async function submitToGoogle(token, url) {
-  if (!isSafeProductionUrl(url)) {
-    return { ok: false, status: 400, data: { error: { message: 'Blocked non-production URL' } } };
-  }
-
-  const res = await fetch('https://indexing.googleapis.com/v3/urlNotifications:publish', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${token}`
-    },
-    body: JSON.stringify({
-      url,
-      type: 'URL_UPDATED'
-    })
-  });
-  const data = await res.json();
-  return { status: res.status, ok: res.ok, data };
 }
 
 // --- Submit batch to IndexNow ---

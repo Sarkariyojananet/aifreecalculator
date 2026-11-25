@@ -22,8 +22,13 @@ const candidateLang = (astroLocale && isValidLocale(astroLocale) ? astroLocale :
 const currentLang: Locale = isValidLocale(candidateLang) ? candidateLang : DEFAULT_LOCALE;
 const currentLocaleInfo = LOCALES_MAP[currentLang];
 
+const availableLocales = new Set(getAvailableLocalesForPath(effectivePath));
+
 const languageOptions = LOCALES.map((locale) => {
-  const targetHref = getLocalizedPath(cleanPath, locale);
+  const isAvailable = availableLocales.has(locale);
+  const targetHref = isAvailable
+    ? getLocalizedPath(cleanPath, locale)
+    : getLocalizedPath('/', locale);
   
   return {
     code: locale,
@@ -32,7 +37,7 @@ const languageOptions = LOCALES.map((locale) => {
     flag: LOCALES_MAP[locale].flag,
     href: targetHref,
     isActive: locale === currentLang,
-    isAvailable: true,
+    isAvailable,
   };
 });
 ---
