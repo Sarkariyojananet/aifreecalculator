@@ -86,11 +86,14 @@ export function buildCalculatorGraphSchema(params: CalculatorSchemaParams): Reco
       '@type': 'Person',
       name: reviewer.name,
       jobTitle: reviewer.title,
+      url: `${siteUrl}/about/#${reviewer.id}`,
+      sameAs: reviewer.sameAs,
     },
     reviewedBy: {
       '@type': 'Person',
       name: reviewer.name,
       jobTitle: reviewer.title,
+      url: `${siteUrl}/about/#${reviewer.id}`,
     },
   };
 
