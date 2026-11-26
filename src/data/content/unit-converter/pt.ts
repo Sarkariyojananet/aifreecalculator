@@ -2,7 +2,7 @@ import type { UnitConverterContent } from './types';
 
 export const ptContent: UnitConverterContent = {
   meta: {
-    title: 'Conversor de Unidades – Calculadora Gratuita Métrico e Imperial',
+    title: 'Conversor de Unidades Online – Métrica e Imperial',
     description: 'Mega conversor de unidades online gratuito. Converta instantaneamente comprimento, peso, temperatura, área, volume, velocidade, tempo, pressão, energia, potência, dados e culinária com fórmulas precisas.',
     keywords: [
       'conversor de unidades',

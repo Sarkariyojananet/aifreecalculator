@@ -124,14 +124,14 @@ function getEnglishEEAT(cat: string): EEATData {
       {
         icon: '⏱️',
         title: 'Quarterly Review Cycle',
-        desc: 'Regularly verified by our engineering team against updated tax provisions, building codes, and web specifications.',
+        desc: 'Regularly verified against updated tax provisions, building codes, and web specifications.',
       },
     ],
     limitations: {
       title: 'Technical Limitations & Appropriate Use',
       disclaimer: 'This tool is provided for educational and preliminary planning estimation purposes only.',
       technicalNote,
-      peerReviewNote: 'Notice an equation discrepancy or want to suggest a standard update? Our editorial team welcomes peer review.',
+      peerReviewNote: 'Notice an equation discrepancy or want to suggest a standard update? Feedback and peer review are always welcome.',
       feedbackLinkText: 'Submit Feedback & Peer Review →',
     },
   };
